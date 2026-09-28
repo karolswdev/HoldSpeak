@@ -1,0 +1,125 @@
+"""PHILO-9 grounding round two: Codex Astra r1's probes, reproduced on an isolated HOME.
+
+P1 source addition: suggestions minted through the real scanner and persistence
+   (SuggestedSourceService.scan_transcript + create_suggestions, the calls
+   holdspeak/intel_queue.py:383-385 makes), then the real HTTP routes the face
+   calls (URL-encoded reference, web/src/features/project-room/api.ts:178).
+P2 archive: a steward policy enabled + unattended, then project.archive over MCP
+   as the owner; the policy and the watches read back; kernel rows counted.
+P3 a PROJECT credential (Settings -> Remote Access), no delegation: the agent calls
+   project.configure_steward(unattended_enabled=True) and project.archive.
+Writes one JSON record; prints it.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sqlite3
+import sys
+import urllib.error
+import urllib.request
+from pathlib import Path
+from urllib.parse import quote
+
+sys.path.insert(0, os.getcwd())
+from scripts import graph_walk as gw  # noqa: E402
+
+OUT = Path(sys.argv[1])
+OUT.mkdir(parents=True, exist_ok=True)
+home = Path(os.environ["HOME"])
+hub = gw.Hub(home, token="p9-r2-token").start()
+rec: dict = {"hub_db": None}
+
+
+def mcp(name: str, args: dict, bearer: str | None = None) -> dict:
+    body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                       "params": {"name": name, "arguments": args}}).encode()
+    req = urllib.request.Request(f"{hub.url}/api/mcp", data=body, method="POST",
+                                 headers={"Authorization": f"Bearer {bearer or hub.token}",
+                                          "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            env = json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        return {"http": e.code, "body": e.read().decode()[:500]}
+    res = env.get("result") or {}
+    text = (res.get("content") or [{}])[0].get("text")
+    try:
+        val = json.loads(text) if isinstance(text, str) else text
+    except ValueError:
+        val = text
+    return {"isError": bool(res.get("isError")), "value": val, "error": env.get("error")}
+
+
+def db_rows(sql: str, args: tuple = ()) -> list[dict]:
+    con = sqlite3.connect(f"file:{hub.db_path}?mode=ro", uri=True)
+    con.row_factory = sqlite3.Row
+    try:
+        return [dict(r) for r in con.execute(sql, args).fetchall()]
+    finally:
+        con.close()
+
+
+def kernel_names() -> dict:
+    return {r["name"]: r["n"] for r in db_rows("SELECT name, COUNT(*) n FROM kernel_operations GROUP BY name")}
+
+
+try:
+    rec["hub_db"] = hub.db_path
+    # ── P1: source addition ────────────────────────────────────────────
+    st, created = hub.api("POST", "/api/projects", {"name": "Source probe"})
+    pid = created["project"]["id"]
+    from holdspeak.db import get_database
+    from holdspeak.services.suggested_source_service import SuggestedSourceService
+    svc = SuggestedSourceService(get_database())
+    found = svc.scan_transcript("We should watch example/payments and PAY-123 before the cutover.",
+                                pid, "mtg-probe")
+    minted = svc.create_suggestions(pid, "mtg-probe", found)
+    rec["p1_minted"] = [{k: m[k] for k in ("id", "provider", "reference", "status")} for m in minted]
+    st, listed = hub.api("GET", f"/api/projects/{pid}/suggested-sources")
+    rec["p1_list"] = {"http": st, "refs": [s["reference"] for s in (listed or {}).get("suggestions", [])]}
+    out = {}
+    for m in minted:
+        ref = m["reference"]
+        st, body = hub.api("POST", f"/api/projects/{pid}/suggested-sources/{quote(ref, safe='')}/add")
+        row = db_rows("SELECT status FROM source_suggestions WHERE id=?", (m["id"],))
+        out[ref] = {"path": f"/api/projects/{{pid}}/suggested-sources/{quote(ref, safe='')}/add",
+                    "http": st, "body": body if isinstance(body, dict) else str(body)[:300],
+                    "suggestion_status_after": row[0]["status"] if row else None}
+    rec["p1_add"] = out
+    rec["p1_after"] = {
+        "project_resources": db_rows("SELECT resource_ref FROM project_resources WHERE project_id=?", (pid,)),
+        "connector_watches": db_rows("SELECT id, connector_id, state FROM connector_watches WHERE project_id=?", (pid,)),
+    }
+    # ── P2: archive as the owner ──────────────────────────────────────
+    st, created = hub.api("POST", "/api/projects", {"name": "Archive probe"})
+    pid2 = created["project"]["id"]
+    k0 = kernel_names()
+    cfg = mcp("project.configure_steward", {"project_id": pid2, "enabled": True, "unattended_enabled": True})
+    before = db_rows("SELECT enabled, unattended_enabled FROM steward_policies WHERE project_id=?", (pid2,))
+    arch = mcp("project.archive", {"project_id": pid2})
+    after = db_rows("SELECT enabled, unattended_enabled FROM steward_policies WHERE project_id=?", (pid2,))
+    rec["p2"] = {"project": pid2, "configure": cfg.get("isError"), "policy_before": before,
+                 "archive": arch, "policy_after": after,
+                 "kernel_before": k0, "kernel_after": kernel_names()}
+    # ── P3: a PROJECT credential, no delegation ───────────────────────
+    st_e, _ = hub.api("PUT", "/api/settings/remote", {"enabled": True})
+    st_c, issued = hub.api("POST", "/api/settings/remote/credentials", {"identity": "probe-agent", "palette": "PROJECT"})
+    bearer = issued.get("token") if isinstance(issued, dict) else None
+    st, created = hub.api("POST", "/api/projects", {"name": "Agent probe"})
+    pid3 = created["project"]["id"]
+    k0 = kernel_names()
+    a_cfg = mcp("project.configure_steward", {"project_id": pid3, "unattended_enabled": True}, bearer)
+    pol = db_rows("SELECT enabled, unattended_enabled FROM steward_policies WHERE project_id=?", (pid3,))
+    a_arch = mcp("project.archive", {"project_id": pid3}, bearer)
+    proj = db_rows("SELECT is_archived FROM projects WHERE id=?", (pid3,))
+    rec["p3"] = {"remote_enable_http": st_e, "issue_http": st_c,
+                 "credential": {k: v for k, v in (issued or {}).items() if k != "token"},
+                 "project": pid3, "agent_configure": a_cfg, "policy_after_agent": pol,
+                 "agent_archive": a_arch, "project_after_agent": proj,
+                 "kernel_before": k0, "kernel_after": kernel_names(),
+                 "delegations": db_rows("SELECT * FROM kernel_desk_delegations")}
+finally:
+    hub.stop()
+(OUT / "r2-probes.json").write_text(json.dumps(rec, indent=1, default=str))
+print(json.dumps(rec, indent=1, default=str)[:6000])

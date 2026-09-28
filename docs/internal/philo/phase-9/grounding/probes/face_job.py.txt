@@ -1,0 +1,144 @@
+"""PHILO-9 grounding: the project job on the Room's face, one width.
+
+Make a project at the New Project door, open its Room, draft and publish an
+update, open the Steward, look at HISTORY. Every shot is taken with the
+visible buttons and text; each verb press is recorded with what it did.
+"""
+from __future__ import annotations
+
+import json
+import sys
+import urllib.request
+from pathlib import Path
+from urllib.parse import quote
+
+from playwright.sync_api import sync_playwright
+
+URL, TOKEN, OUT, WIDTH = sys.argv[1], sys.argv[2], Path(sys.argv[3]), int(sys.argv[4])
+HEIGHT = 900 if WIDTH == 1440 else 852
+OUT.mkdir(parents=True, exist_ok=True)
+log: list[dict] = []
+NAME = f"Card ledger cutover {WIDTH}"
+
+
+def hub(path: str):
+    req = urllib.request.Request(f"{URL}{path}", headers={"X-HoldSpeak-Token": TOKEN})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read().decode())
+
+
+def obscured(page, label: str) -> dict:
+    """Is the named button hit at its centre by itself (visible, unobscured)?"""
+    return page.evaluate("""(label) => {
+      const els = [...document.querySelectorAll('button')].filter(b => (b.innerText||'').trim() === label);
+      return els.map(b => { const r = b.getBoundingClientRect();
+        const x = r.left + r.width/2, y = r.top + r.height/2;
+        const hit = document.elementFromPoint(x, y);
+        return {rect: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)],
+                inViewport: r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth,
+                hitSelf: !!hit && (hit === b || b.contains(hit)),
+                hitBy: hit ? (hit.className || hit.tagName).toString().slice(0, 80) : null}; });
+    }""", label)
+
+
+def shot(page, name: str, note: str = "") -> None:
+    page.screenshot(path=str(OUT / f"{name}-{WIDTH}.png"))
+    buttons = page.evaluate("""() => [...document.querySelectorAll('button')]
+      .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight; })
+      .map(e => (e.getAttribute('aria-label') || e.innerText || '').trim().replace(/\\s+/g,' ').slice(0,60)).filter(Boolean)""")
+    win = page.locator(".surface-window, [data-surface-window]").last
+    text = page.evaluate("() => document.body.innerText.slice(0, 4000)")
+    log.append({"shot": f"{name}-{WIDTH}.png", "note": note, "buttons": buttons, "text": text})
+    print(f"--- {name}-{WIDTH} {note}\n  BTN {buttons}\n  TXT {text[:1600]!r}")
+
+
+def press(page, label: str, *, exact: bool = True, timeout: float = 5000) -> bool:
+    loc = page.get_by_role("button", name=label, exact=exact)
+    if not loc.count():
+        log.append({"press": label, "found": False})
+        print(f"  (no button {label!r})")
+        return False
+    loc.last.click(timeout=timeout)
+    log.append({"press": label, "found": True})
+    return True
+
+
+with sync_playwright() as p:
+    browser = p.chromium.launch()
+    page = browser.new_page(viewport={"width": WIDTH, "height": HEIGHT})
+    console: list[str] = []
+    page.on("console", lambda m: console.append(f"{m.type}: {m.text}"[:300]) if m.type in ("error", "warning") else None)
+    net: list[str] = []
+    page.on("response", lambda r: net.append(f"{r.request.method} {r.url.split(URL)[-1][:120]} {r.status}")
+            if "/api/" in r.url and r.request.method != "GET" else None)
+    page.goto(f"{URL}/?token={quote(TOKEN)}", wait_until="networkidle")
+    page.wait_for_timeout(2000)
+    if page.get_by_role("button", name="Continue later").count():
+        page.get_by_role("button", name="Continue later").first.click()
+        page.wait_for_timeout(2000)
+    # 1. New Project from the palette (the Desk menu offers it too)
+    page.keyboard.press("Meta+k")
+    page.wait_for_timeout(700)
+    page.keyboard.type("New Project")
+    page.wait_for_timeout(900)
+    shot(page, "10-palette-new-project")
+    page.get_by_text("New Project", exact=True).last.click()
+    page.wait_for_timeout(2500)
+    shot(page, "11-door")
+    page.get_by_test_id("door-outcome-input").fill(NAME)
+    page.wait_for_timeout(300)
+    page.get_by_test_id("door-create").click()
+    page.wait_for_timeout(3500)
+    shot(page, "12-after-create", "after Create Project")
+    projects = hub("/api/projects")["projects"]
+    mine = [p for p in projects if p["name"] == NAME]
+    log.append({"hub_projects_named": len(mine), "names": [p["name"] for p in projects]})
+    print("  HUB projects:", [p["name"] for p in projects])
+    # 2. The Room (if the door did not open it, open it from the palette)
+    if not page.get_by_role("button", name="Draft update").count():
+        page.keyboard.press("Meta+k")
+        page.wait_for_timeout(700)
+        page.keyboard.type(NAME)
+        page.wait_for_timeout(900)
+        page.get_by_text(f"Open {NAME}").first.click()
+        page.wait_for_timeout(3000)
+    shot(page, "13-room", "the Room")
+    log.append({"obscured_steward": obscured(page, "Steward"), "obscured_draft": obscured(page, "Draft update")})
+    print("  Steward hit:", obscured(page, "Steward"))
+    # 3. Draft and publish an update
+    if press(page, "Draft update"):
+        page.wait_for_timeout(2000)
+        shot(page, "14-update-posture")
+        if press(page, "Draft"):
+            page.wait_for_timeout(3500)
+            shot(page, "15-update-drafted")
+            if press(page, "Publish"):
+                page.wait_for_timeout(3000)
+                shot(page, "16-update-published")
+        press(page, "Back") or press(page, "Close")
+        page.wait_for_timeout(1500)
+    # 4. The steward
+    try:
+        if press(page, "Steward", timeout=4000):
+            page.wait_for_timeout(2000)
+            shot(page, "17-steward-posture")
+            press(page, "Back")
+            page.wait_for_timeout(1500)
+    except Exception as exc:  # noqa: BLE001 -- record, never hide
+        log.append({"press": "Steward", "error": str(exc)[:400]})
+        print("  Steward press failed:", str(exc)[:300])
+    # 5. History
+    if press(page, "HISTORY"):
+        page.wait_for_timeout(1500)
+        shot(page, "18-history")
+    pid = mine[0]["id"] if mine else None
+    readback = {}
+    if pid:
+        readback["room"] = hub(f"/api/projects/{pid}/room")
+        readback["updates"] = hub(f"/api/projects/{pid}/updates") if True else None
+    (OUT / f"face-job-{WIDTH}.json").write_text(json.dumps(
+        {"log": log, "console": console, "writes": net, "project_id": pid,
+         "readback": readback}, indent=1, default=str))
+    print("  WRITES", net)
+    print("  CONSOLE", console[:8])
+    browser.close()

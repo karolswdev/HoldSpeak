@@ -1,0 +1,154 @@
+"""PHILO-9 grounding: do the D2 desk debts still reproduce on main? One width.
+
+1. ::selection contrast (web/src/styles/global.css:68) on the list's zone name field.
+2. The list face: text under 12 px, the SHOWN plural, the Zone column cut at 393,
+   raw sort-header buttons, the row menu's Delete row cut at the bottom at 393.
+Seeds its own objects through the hub's HTTP routes (isolated HOME).
+"""
+from __future__ import annotations
+
+import json
+import sys
+import urllib.request
+from pathlib import Path
+from urllib.parse import quote
+
+from playwright.sync_api import sync_playwright
+
+URL, TOKEN, OUT, WIDTH = sys.argv[1], sys.argv[2], Path(sys.argv[3]), int(sys.argv[4])
+HEIGHT = 900 if WIDTH == 1440 else 852
+OUT.mkdir(parents=True, exist_ok=True)
+
+
+def api(method: str, path: str, body=None):
+    req = urllib.request.Request(f"{URL}{path}", data=json.dumps(body).encode() if body is not None else None,
+                                 method=method, headers={"X-HoldSpeak-Token": TOKEN, "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.status, json.loads(r.read().decode() or "null")
+    except urllib.error.HTTPError as e:  # type: ignore[attr-defined]
+        return e.code, e.read().decode()[:300]
+
+
+def lum(rgb):
+    def ch(c):
+        c = c / 255
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b = rgb
+    return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b)
+
+
+def parse(css: str):
+    nums = [float(x) for x in css[css.index("(") + 1:css.index(")")].replace("/", ",").split(",")]
+    return nums[:3], (nums[3] if len(nums) > 3 else 1.0)
+
+
+def over(fg, alpha, bg):
+    return [round(alpha * f + (1 - alpha) * b) for f, b in zip(fg, bg)]
+
+
+def contrast(a, b):
+    la, lb = sorted((lum(a), lum(b)), reverse=True)
+    return round((la + 0.05) / (lb + 0.05), 2)
+
+
+if WIDTH == 1440:  # seed once (the 393 run reads the same hub)
+    zones = []
+    for n in ("Payments", "Hiring", "Architecture reviews"):
+        zones.append(api("POST", "/api/directories", {"name": n}))
+    notes = []
+    titles = ["Ledger cutover plan", "Priya 1:1 notes", "Tomas growth plan", "Vendor risk list",
+              "Q4 capacity", "Incident review 42",
+              "A very long note title that names the whole architecture decision record for the card ledger"]
+    for t in titles:
+        notes.append(api("POST", "/api/notes", {"title": t, "body": t}))
+    print("SEED zones", [z[0] for z in zones], "notes", [n[0] for n in notes])
+    z0 = zones[0][1]
+    zid = (z0.get("directory") or z0).get("id") if isinstance(z0, dict) else None
+    n0 = notes[0][1]
+    nid = (n0.get("note") or n0).get("id") if isinstance(n0, dict) else None
+    if zid and nid:
+        print("FILE", api("PUT", f"/api/directories/{zid}/members/note:{nid}", {})[0])
+
+result: dict = {"width": WIDTH}
+with sync_playwright() as p:
+    b = p.chromium.launch()
+    page = b.new_page(viewport={"width": WIDTH, "height": HEIGHT}, device_scale_factor=2)
+    page.goto(f"{URL}/?token={quote(TOKEN)}", wait_until="networkidle")
+    page.wait_for_timeout(1500)
+    if page.get_by_role("button", name="Continue later").count():
+        page.get_by_role("button", name="Continue later").first.click()
+        page.wait_for_timeout(1500)
+    page.locator("[data-testid=chair-floor-toggle]").click()
+    page.wait_for_timeout(1500)
+    if WIDTH > 720:
+        page.locator("[aria-controls=desk-tool-shelf]").click()
+        page.locator("[aria-controls=desk-palette-listbox]").fill("List view")
+        page.locator("[id='desk-palette-option-desk.toggle-view']").click()
+    page.locator(".desk-listmode").wait_for(timeout=20000)
+    page.wait_for_timeout(1200)
+    page.screenshot(path=str(OUT / f"list-{WIDTH}.png"))
+    result["list"] = page.evaluate("""() => {
+      const root = document.querySelector('.desk-listmode');
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      const small = []; let n;
+      while ((n = walker.nextNode())) {
+        const t = n.textContent.trim(); if (!t) continue;
+        const el = n.parentElement; const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.bottom < 0 || r.top > innerHeight) continue;
+        const fs = parseFloat(getComputedStyle(el).fontSize);
+        if (fs < 12) small.push({text: t.slice(0, 40), px: fs, cls: el.className.toString().slice(0, 60)});
+      }
+      const census = root.querySelector('.desk-list-census'); const status = root.querySelector('.desk-list-status');
+      const heads = [...root.querySelectorAll('th button, thead button')].map(b => ({text: b.innerText.trim(), cls: b.className}));
+      const cut = [...root.querySelectorAll('td, [role=cell], .surface-ledger-cell')].map(c => {
+        const r = c.getBoundingClientRect();
+        return {text: c.innerText.trim().slice(0, 30), right: Math.round(r.right), overflow: c.scrollWidth > c.clientWidth + 1};
+      }).filter(c => c.text && (c.right > innerWidth || c.overflow));
+      return {census: census && census.innerText, census_px: census && parseFloat(getComputedStyle(census).fontSize),
+              status: status && status.innerText, status_px: status && parseFloat(getComputedStyle(status).fontSize),
+              small_count: small.length, small_sample: small.slice(0, 12), sort_heads: heads,
+              cells_cut: cut.slice(0, 12), vw: innerWidth};
+    }""")
+    # the row menu near the bottom edge
+    rows = page.locator(".desk-listmode tbody tr")
+    count = rows.count()
+    menu = None
+    for i in range(count - 1, -1, -1):
+        box = rows.nth(i).bounding_box()
+        if box and box["y"] + box["height"] < HEIGHT - 60 and box["y"] > 0:
+            page.mouse.click(box["x"] + 60, box["y"] + box["height"] / 2, button="right")
+            page.wait_for_timeout(700)
+            menu = page.evaluate("""() => { const items = [...document.querySelectorAll('[role=menuitem]')];
+              const d = items.find(e => /Delete/.test(e.innerText)); if (!d) return {items: items.map(e=>e.innerText.trim())};
+              const r = d.getBoundingClientRect(); return {row_text: null, top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight,
+                cut_px: Math.max(0, Math.round(r.bottom - innerHeight))}; }""")
+            menu["row_index"] = i
+            menu["row_y"] = round(box["y"])
+            page.screenshot(path=str(OUT / f"row-menu-{WIDTH}.png"))
+            page.keyboard.press("Escape")
+            break
+    result["row_menu"] = menu
+    # ::selection on the list's zone name field (New Zone opens it selected)
+    page.locator("[aria-controls=desk-tool-shelf]").click()
+    page.locator("[aria-controls=desk-palette-listbox]").fill("New Zone")
+    page.locator("[id='desk-palette-option-desk.new-zone']").click()
+    f = page.locator(".desk-listmode input.desk-zone-rename")
+    f.wait_for(timeout=20000)
+    page.wait_for_timeout(500)
+    sel = page.evaluate("""() => { const f=document.querySelector('.desk-listmode input.desk-zone-rename');
+      const s=getComputedStyle(f,'::selection'); const c=getComputedStyle(f);
+      let bg = c.backgroundColor, el = f;
+      while (bg === 'rgba(0, 0, 0, 0)' && el.parentElement) { el = el.parentElement; bg = getComputedStyle(el).backgroundColor; }
+      return {start:f.selectionStart,end:f.selectionEnd,focused:document.activeElement===f,
+              sel_bg:s.backgroundColor, field_bg:bg}; }""")
+    fg, a = parse(sel["sel_bg"])
+    bgc, _ = parse(sel["field_bg"])
+    sel["painted"] = over(fg, a, bgc)
+    sel["contrast_selection_vs_field"] = contrast(sel["painted"], bgc)
+    f.screenshot(path=str(OUT / f"selection-field-{WIDTH}.png"))
+    result["selection"] = sel
+    page.keyboard.press("Escape")
+    b.close()
+(OUT / f"d2-{WIDTH}.json").write_text(json.dumps(result, indent=1))
+print(json.dumps(result, indent=1)[:3500])

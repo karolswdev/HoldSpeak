@@ -1,0 +1,718 @@
+{
+ "log": [
+  {
+   "shot": "10-palette-new-project-393.png",
+   "note": "",
+   "buttons": [
+    "HoldSpeak",
+    "Go",
+    "Privacy and trust: \u2302 This device",
+    "Desk memory",
+    "Search",
+    "Connect calendar",
+    "Choose an engine",
+    "Generate",
+    "Talk",
+    "Write a thought",
+    "Record meeting",
+    "Schedule",
+    "Intelligence",
+    "Speak",
+    "Meetings",
+    "Agents",
+    "Settings",
+    "Floor",
+    "Desk memory",
+    "Delivery",
+    "Panes",
+    "\u25cc Hide the menus",
+    "Change places",
+    "Record a meeting",
+    "Speak Search tools and Desk items",
+    "\u25b8 New Project VERB",
+    "\u25a4 Desk memory PROGRAM"
+   ],
+   "text": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n02:13 PM\n1 need you\n\u25cf\n3 OF 3 AVAILABLE\nCHECKED 1 MIN AGO\nNO CALENDAR Connect calendar\nSETUP\nNo engine for summaries\nChoose an engine\nBRIEF\nTHIS DEVICE\nGenerate\nNo brief yet\nTALK\nWrite a thought\nRecord meeting\nSchedule\n\u25c8\n\u25ce\n\u25a4\n\u29c9\n\u25cc\nHide the menus\n\u25a7\nPlaces\nSearch tools and Desk items\nVERBS\n\u25b8\nNew Project\nVERB\nPROGRAMS\n\u25a4\nDesk memory\nPROGRAM"
+  },
+  {
+   "shot": "11-door-393.png",
+   "note": "",
+   "buttons": [
+    "HoldSpeak",
+    "Go",
+    "Privacy and trust: \u2302 This device",
+    "Desk memory",
+    "Search",
+    "Connect calendar",
+    "Choose an engine",
+    "Generate",
+    "Talk",
+    "Write a thought",
+    "Record meeting",
+    "Schedule",
+    "Close New Project",
+    "Minimize New Project",
+    "Speak outcome",
+    "Connect",
+    "Connect",
+    "Connect",
+    "Cancel",
+    "Create Project",
+    "Intelligence",
+    "Speak",
+    "Meetings",
+    "Agents",
+    "Settings",
+    "Floor",
+    "Desk memory",
+    "Delivery",
+    "Panes",
+    "\u25cc Hide the menus",
+    "Change places",
+    "Record a meeting",
+    "Focus New Project",
+    "Close New Project",
+    "Overview",
+    "Reset layout"
+   ],
+   "text": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n02:13 PM\n1 need you\n\u25cf\n3 OF 3 AVAILABLE\nCHECKED 1 MIN AGO\nNO CALENDAR Connect calendar\nSETUP\nNo engine for summaries\nChoose an engine\nBRIEF\nTHIS DEVICE\nGenerate\nNo brief yet\nTALK\nWrite a thought\nRecord meeting\nSchedule\nNew Project\nTHIS BECOMES THE PROJECT'S NAME\nSOURCES\nGH\nGitHub\n\u26a0\nSIGN IN\nConnect\nJ\nJira\n\u26a0\nSIGN IN\nConnect\nC\nConfluence\n\u25cb\nNOT SET UP\nConnect\nNO SOURCES \u00b7 BLANK PROJECT\nCancel\nCreate Project\n\u25c8\n\u25ce\n\u25a4\n\u29c9\n\u25cc\nHide the menus\n\u25a7\nPlaces\n\u25a3\nNew Project"
+  },
+  {
+   "shot": "12-after-create-393.png",
+   "note": "after Create Project",
+   "buttons": [
+    "HoldSpeak",
+    "Go",
+    "Privacy and trust: \u2302 This device",
+    "Desk memory",
+    "Search",
+    "Connect calendar",
+    "Choose an engine",
+    "Generate",
+    "Talk",
+    "Write a thought",
+    "Record meeting",
+    "Schedule",
+    "Close Card ledger cutover 393",
+    "Minimize Card ledger cutover 393",
+    "ROOM",
+    "HISTORY",
+    "Draft update",
+    "Steward",
+    "Speak",
+    "Choose",
+    "Submit",
+    "Refresh",
+    "Intelligence",
+    "Speak",
+    "Meetings",
+    "Agents",
+    "Settings",
+    "Floor",
+    "Desk memory",
+    "Delivery",
+    "Panes",
+    "\u25cc Hide the menus",
+    "Change places",
+    "Record a meeting",
+    "Focus Card ledger cutover 393",
+    "Close Card ledger cutover 393",
+    "Overview",
+    "Reset layout"
+   ],
+   "text": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n02:13 PM\n1 need you\n\u25cf\n3 OF 3 AVAILABLE\nCHECKED 1 MIN AGO\nNO CALENDAR Connect calendar\nSETUP\nNo engine for summaries\nChoose an engine\nBRIEF\nTHIS DEVICE\nGenerate\nNo brief yet\nTALK\nWrite a thought\nRecord meeting\nSchedule\nCard ledger cutover 393\nROOM\nHISTORY\nNothing needs you\n\u25cf\nON TRACK\nDraft update\nNEEDS YOU\n\nNothing needs you\n\nSOURCES\nSteward\nRECEIPTS 1\n\u25cf\nREAD MEETINGS\nSINCE CREATED\n\nCreated just now\n\n\u21bb\nAnswer\nPreparation brief\nMODEL \u00b7 NOT SET\nChoose\nSubmit\nREAD 14:13\nRefresh\n\u25c8\n\u25ce\n\u25a4\n\u29c9\n\u25cc\nHide the menus\n\u25a7\nPlaces\n\u25a4\nCard ledger cutover 393"
+  },
+  {
+   "hub_projects_named": 1,
+   "names": [
+    "Card ledger cutover 1440",
+    "Card ledger cutover 393",
+    "Payments migration"
+   ]
+  },
+  {
+   "shot": "13-room-393.png",
+   "note": "the Room",
+   "buttons": [
+    "HoldSpeak",
+    "Go",
+    "Privacy and trust: \u2302 This device",
+    "Desk memory",
+    "Search",
+    "Connect calendar",
+    "Choose an engine",
+    "Generate",
+    "Talk",
+    "Write a thought",
+    "Record meeting",
+    "Schedule",
+    "Close Card ledger cutover 393",
+    "Minimize Card ledger cutover 393",
+    "ROOM",
+    "HISTORY",
+    "Draft update",
+    "Steward",
+    "Speak",
+    "Choose",
+    "Submit",
+    "Refresh",
+    "Intelligence",
+    "Speak",
+    "Meetings",
+    "Agents",
+    "Settings",
+    "Floor",
+    "Desk memory",
+    "Delivery",
+    "Panes",
+    "\u25cc Hide the menus",
+    "Change places",
+    "Record a meeting",
+    "Focus Card ledger cutover 393",
+    "Close Card ledger cutover 393",
+    "Overview",
+    "Reset layout"
+   ],
+   "text": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n02:13 PM\n1 need you\n\u25cf\n3 OF 3 AVAILABLE\nCHECKED 1 MIN AGO\nNO CALENDAR Connect calendar\nSETUP\nNo engine for summaries\nChoose an engine\nBRIEF\nTHIS DEVICE\nGenerate\nNo brief yet\nTALK\nWrite a thought\nRecord meeting\nSchedule\nCard ledger cutover 393\nROOM\nHISTORY\nNothing needs you\n\u25cf\nON TRACK\nDraft update\nNEEDS YOU\n\nNothing needs you\n\nSOURCES\nSteward\nRECEIPTS 1\n\u25cf\nREAD MEETINGS\nSINCE CREATED\n\nCreated just now\n\n\u21bb\nAnswer\nPreparation brief\nMODEL \u00b7 NOT SET\nChoose\nSubmit\nREAD 14:13\nRefresh\n\u25c8\n\u25ce\n\u25a4\n\u29c9\n\u25cc\nHide the menus\n\u25a7\nPlaces\n\u25a4\nCard ledger cutover 393"
+  },
+  {
+   "obscured_steward": [
+    {
+     "rect": [
+      300,
+      425,
+      68,
+      24
+     ],
+     "inViewport": true,
+     "hitSelf": false,
+     "hitBy": "room-ask-well"
+    }
+   ],
+   "obscured_draft": [
+    {
+     "rect": [
+      25,
+      217,
+      343,
+      24
+     ],
+     "inViewport": true,
+     "hitSelf": true,
+     "hitBy": "btn btn--primary btn--sm "
+    }
+   ]
+  },
+  {
+   "press": "Draft update",
+   "found": true
+  },
+  {
+   "shot": "14-update-posture-393.png",
+   "note": "",
+   "buttons": [
+    "HoldSpeak",
+    "Go",
+    "Privacy and trust: \u2302 This device",
+    "Desk memory",
+    "Search",
+    "Connect calendar",
+    "Choose an engine",
+    "Generate",
+    "Talk",
+    "Write a thought",
+    "Record meeting",
+    "Schedule",
+    "Close Card ledger cutover 393",
+    "Minimize Card ledger cutover 393",
+    "ROOM",
+    "HISTORY",
+    "Close",
+    "Draft",
+    "Draft with model",
+    "Intelligence",
+    "Speak",
+    "Meetings",
+    "Agents",
+    "Settings",
+    "Floor",
+    "Desk memory",
+    "Delivery",
+    "Panes",
+    "\u25cc Hide the menus",
+    "Change places",
+    "Record a meeting",
+    "Focus Card ledger cutover 393",
+    "Close Card ledger cutover 393",
+    "Overview",
+    "Reset layout"
+   ],
+   "text": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n02:13 PM\n1 need you\n\u25cf\n3 OF 3 AVAILABLE\nCHECKED 1 MIN AGO\nNO CALENDAR Connect calendar\nSETUP\nNo engine for summaries\nChoose an engine\nBRIEF\nTHIS DEVICE\nGenerate\nNo brief yet\nTALK\nWrite a thought\nRecord meeting\nSchedule\nCard ledger cutover 393\nROOM\nHISTORY\nClose\nDraft\nDraft with model\nLOCAL + CLOUD\n\u25a4\nNo updates yet. Draft the first one.\nUPDATES\n\u25c8\n\u25ce\n\u25a4\n\u29c9\n\u25cc\nHide the menus\n\u25a7\nPlaces\n\u25a4\nCard ledger cutover 393"
+  },
+  {
+   "press": "Draft",
+   "found": true
+  },
+  {
+   "shot": "15-update-drafted-393.png",
+   "note": "",
+   "buttons": [
+    "HoldSpeak",
+    "Go",
+    "Privacy and trust: \u2302 This device",
+    "Desk memory",
+    "Search",
+    "Connect calendar",
+    "Choose an engine",
+    "Generate",
+    "Talk",
+    "Write a thought",
+    "Record meeting",
+    "Schedule",
+    "Close Card ledger cutover 393",
+    "Minimize Card ledger cutover 393",
+    "ROOM",
+    "HISTORY",
+    "Bold",
+    "Italic",
+    "Underline",
+    "H1",
+    "H2",
+    "H3",
+    "List",
+    "1.",
+    "</>",
+    "Link",
+    "Quote",
+    "Speak",
+    "Back",
+    "Save",
+    "Regenerate",
+    "Copy",
+    "Publish",
+    "Intelligence",
+    "Speak",
+    "Meetings",
+    "Agents",
+    "Settings",
+    "Floor",
+    "Desk memory",
+    "Delivery",
+    "Panes",
+    "\u25cc Hide the menus",
+    "Change places",
+    "Record a meeting",
+    "Focus Card ledger cutover 393",
+    "Close Card ledger cutover 393",
+    "Overview",
+    "Reset layout"
+   ],
+   "text": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n02:13 PM\n1 need you\n\u25cf\n3 OF 3 AVAILABLE\nCHECKED 1 MIN AGO\nNO CALENDAR Connect calendar\nSETUP\nNo engine for summaries\nChoose an engine\nBRIEF\nTHIS DEVICE\nGenerate\nNo brief yet\nTALK\nWrite a thought\nRecord meeting\nSchedule\nCard ledger cutover 393\nROOM\nHISTORY\n\u25cb\nDRAFT\nDETERMINISTIC\nREV 1\nB\nI\nU\nH1\nH2\nH3\nList\n1.\n</>\nLink\nQuote\n## Progress\n\n\nNo focus items in this window.\n\n\n## Decisions\n\n\nNo decisions in this window.\n\n\n## Risks & Blockers\n\n\nNo risks or blockers in this window.\n\n\n## Dependencies\n\n\nNo dependencies tracked.\n\n\n## Next Actions\n\n\nNo upcoming actions.\n\n\n## Source Coverage\n\n\nAll sources consulted successfully.\n\n\nBack\nUPDATE DRAFT \u00b7 DETERMINISTIC\nSave\nRegenerate\nCopy\nPublish\n\u25c8\n\u25ce\n\u25a4\n\u29c9\n\u25cc\nHide the menus\n\u25a7\nPlaces\n\u25a4\nCard ledger cutover 393"
+  },
+  {
+   "press": "Publish",
+   "found": true
+  },
+  {
+   "shot": "16-update-published-393.png",
+   "note": "",
+   "buttons": [
+    "HoldSpeak",
+    "Go",
+    "Privacy and trust: \u2302 This device",
+    "Desk memory",
+    "Search",
+    "Connect calendar",
+    "Choose an engine",
+    "Generate",
+    "Talk",
+    "Write a thought",
+    "Record meeting",
+    "Schedule",
+    "Close Card ledger cutover 393",
+    "Minimize Card ledger cutover 393",
+    "ROOM",
+    "HISTORY",
+    "Back",
+    "Regenerate",
+    "Copy",
+    "Intelligence",
+    "Speak",
+    "Meetings",
+    "Agents",
+    "Settings",
+    "Floor",
+    "Desk memory",
+    "Delivery",
+    "Panes",
+    "\u25cc Hide the menus",
+    "Change places",
+    "Record a meeting",
+    "Focus Card ledger cutover 393",
+    "Close Card ledger cutover 393",
+    "Overview",
+    "Reset layout"
+   ],
+   "text": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n02:13 PM\n1 need you\n\u25cf\n3 OF 3 AVAILABLE\nCHECKED 1 MIN AGO\nNO CALENDAR Connect calendar\nSETUP\nNo engine for summaries\nChoose an engine\nBRIEF\nTHIS DEVICE\nGenerate\nNo brief yet\nTALK\nWrite a thought\nRecord meeting\nSchedule\nCard ledger cutover 393\nROOM\nHISTORY\n\u2713\nPUBLISHED\nDETERMINISTIC\nREV 1\nUPDATE\nPUBLISHED UPDATES ARE READ-ONLY\nProgress\n\nNo focus items in this window.\n\nDecisions\n\nNo decisions in this window.\n\nRisks & Blockers\n\nNo risks or blockers in this window.\n\nDependencies\n\nNo dependencies tracked.\n\nNext Actions\n\nNo upcoming actions.\n\nSource Coverage\n\nAll sources consulted successfully.\n\nBack\nUPDATE PUBLISHED \u00b7 DETERMINISTIC\nRegenerate\nCopy\n\u25c8\n\u25ce\n\u25a4\n\u29c9\n\u25cc\nHide the menus\n\u25a7\nPlaces\n\u25a4\nCard ledger cutover 393"
+  },
+  {
+   "press": "Back",
+   "found": true
+  },
+  {
+   "press": "Steward",
+   "found": false
+  },
+  {
+   "press": "HISTORY",
+   "found": false
+  }
+ ],
+ "console": [],
+ "writes": [
+  "POST /api/projects/door 200",
+  "POST /api/projects/proj-64ebaa682d7b/room/read 200",
+  "POST /api/inference/assignments/editor 200",
+  "POST /api/projects/proj-64ebaa682d7b/updates/draft 200",
+  "POST /api/updates/pupd_b97028239aa34199899dfcc6d2cc10fa/publish 200"
+ ],
+ "project_id": "proj-64ebaa682d7b",
+ "readback": {
+  "room": {
+   "project_id": "proj-64ebaa682d7b",
+   "revision": 2,
+   "observed_at": "2026-09-27T14:13:43.296171",
+   "nextCheckAt": null,
+   "project": {
+    "id": "proj-64ebaa682d7b",
+    "name": "Card ledger cutover 393",
+    "description": "",
+    "keywords": [],
+    "team_members": [],
+    "context": {},
+    "detection_threshold": 0.4,
+    "is_archived": false,
+    "meeting_count": 0,
+    "created_at": "2026-09-27T14:13:34.090962",
+    "updated_at": "2026-09-27T14:13:43.296171",
+    "purpose": "Card ledger cutover 393",
+    "outcome_text": "Card ledger cutover 393",
+    "owner_ref": null,
+    "lifecycle": "active",
+    "posture": null,
+    "posture_reason": null,
+    "start_at": null,
+    "target_at": null,
+    "review_cadence_json": null,
+    "next_review_at": null,
+    "template_key": null,
+    "modules_json": null,
+    "revision": 2,
+    "last_review_id": null,
+    "last_review_at": null
+   },
+   "items": {
+    "focus": [],
+    "totals_by_type": {},
+    "total": 0,
+    "state": "ok"
+   },
+   "meetings": {
+    "count": 0,
+    "latest": null,
+    "state": "ok"
+   },
+   "resources": {
+    "count": 0,
+    "latest": null,
+    "state": "ok"
+   },
+   "changes": {
+    "recent": [
+     {
+      "id": "pchg_cb782119f3a918d5ec0f556f0b00fb2d",
+      "project_id": "proj-64ebaa682d7b",
+      "project_revision": 2,
+      "change_kind": "project.updated",
+      "target_ref": "project:proj-64ebaa682d7b",
+      "actor_ref": "principal:owner-session",
+      "command_id": "pcmd_b565c8a69b2f4e6682ba7a8964b0da80",
+      "before_hash": null,
+      "after_hash": "5d2324feffdf118ba2bfaf703b66d12b",
+      "summary_json": "{\"action\": \"update.published\", \"update_id\": \"pupd_b97028239aa34199899dfcc6d2cc10fa\"}",
+      "created_at": "2026-09-27T14:13:43.296171"
+     },
+     {
+      "id": "pchg_d527ac23208b3450dfc3a87bdb2387ac",
+      "project_id": "proj-64ebaa682d7b",
+      "project_revision": 1,
+      "change_kind": "project.created",
+      "target_ref": "project:proj-64ebaa682d7b",
+      "actor_ref": "principal:owner-session",
+      "command_id": "pcmd_9e3513e1eab5",
+      "before_hash": null,
+      "after_hash": "9fdd87447d8724ef71ba0d1bbeaf8147",
+      "summary_json": "{\"name\": \"Card ledger cutover 393\", \"source\": \"setup\", \"watches_activated\": 0}",
+      "created_at": "2026-09-27T14:13:34.090962"
+     }
+    ],
+    "state": "ok"
+   },
+   "review": {
+    "last_accepted_at": null,
+    "pending_count": 0,
+    "open_review_id": null,
+    "state": "ok"
+   },
+   "needsYou": {
+    "items": [],
+    "count": 0,
+    "state": "ok"
+   },
+   "sources": {
+    "items": [],
+    "count": 0,
+    "nextCheckAt": null,
+    "state": "ok"
+   },
+   "health": {
+    "assessment": "on_track",
+    "reason": null,
+    "inputs": {
+     "overdue": 0,
+     "ciFailing": false,
+     "reviewWaitingDays": null,
+     "targetPassed": false
+    },
+    "signals": {
+     "review_wait": {
+      "present": false,
+      "tone": "green",
+      "median_days": 0.0,
+      "waiting_count": 0,
+      "per_reviewer": []
+     },
+     "issue_aging": {
+      "present": false,
+      "tone": "green",
+      "aged_count": 0,
+      "threshold_days": 14
+     },
+     "ci": {
+      "present": false,
+      "tone": "green",
+      "failures_last_3": 0,
+      "flaky_branch_count": 0,
+      "queue": 0
+     },
+     "release": {
+      "present": false,
+      "tone": "green",
+      "composite": "green",
+      "signals": {
+       "review_wait": "green",
+       "ci": "green",
+       "blockers": "green",
+       "overdue": "green"
+      },
+      "blockers_count": 0,
+      "blockers": []
+     }
+    },
+    "checked_at": null,
+    "merge_queue_depth": 0,
+    "people": [],
+    "state": "ok"
+   },
+   "sinceRead": {
+    "readAt": "2026-09-27T14:13:34.412775",
+    "groups": [
+     {
+      "source": "Room",
+      "summary": "1 updated",
+      "entries": [
+       {
+        "phrase": "updated \u00b7 update.published",
+        "at": "2026-09-27T14:13:43.296171",
+        "url": null
+       }
+      ]
+     }
+    ],
+    "state": "ok"
+   },
+   "decisions": {
+    "items": [],
+    "state": "ok"
+   },
+   "commitments": {
+    "items": [],
+    "state": "ok"
+   },
+   "target": {
+    "targetAt": null,
+    "daysLeft": null,
+    "passed": false,
+    "state": "ok"
+   },
+   "updates": {
+    "state": "absent",
+    "reason": "not_yet_built"
+   },
+   "steward": {
+    "state": "absent",
+    "reason": "not_yet_built"
+   },
+   "receipts": {
+    "items": [
+     {
+      "id": "f7bba171-65bd-4ed3-828d-ccd46fe494c1",
+      "op": "list_meetings",
+      "label": "ProjectService.list_meetings",
+      "title": "ProjectService.list_meetings",
+      "outcome": "ok",
+      "origin": null,
+      "caller": null,
+      "identity": null,
+      "at": 1790540027.864413,
+      "timestamp": 1790540027.864413
+     },
+     {
+      "id": "ce80c682-b80f-4a8f-bcd6-37dc472ff024",
+      "op": "get_project",
+      "label": "ProjectService.get_project",
+      "title": "ProjectService.get_project",
+      "outcome": "ok",
+      "origin": null,
+      "caller": null,
+      "identity": null,
+      "at": 1790540023.311174,
+      "timestamp": 1790540023.311174
+     },
+     {
+      "id": "3d05850c-7bc7-4060-94a2-fd171a9e76d6",
+      "op": "since_last_meeting",
+      "label": "ProjectService.since_last_meeting",
+      "title": "ProjectService.since_last_meeting",
+      "outcome": "ok",
+      "origin": null,
+      "caller": null,
+      "identity": null,
+      "at": 1790540023.307909,
+      "timestamp": 1790540023.307909
+     },
+     {
+      "id": "870e279a-00dc-40b6-aa54-67384917180b",
+      "op": "list_artifacts",
+      "label": "ProjectService.list_artifacts",
+      "title": "ProjectService.list_artifacts",
+      "outcome": "ok",
+      "origin": null,
+      "caller": null,
+      "identity": null,
+      "at": 1790540023.305835,
+      "timestamp": 1790540023.305835
+     },
+     {
+      "id": "19bf39f5-afd8-4676-91bc-b5edd89d3cd0",
+      "op": "list_decisions",
+      "label": "DecisionLifecycleService.list_decisions",
+      "title": "DecisionLifecycleService.list_decisions",
+      "outcome": "ok",
+      "origin": null,
+      "caller": null,
+      "identity": null,
+      "at": 1790540023.305208,
+      "timestamp": 1790540023.305208
+     },
+     {
+      "id": "34baf8ab-3150-41ec-84e0-eed9dc790afc",
+      "op": "list_meetings",
+      "label": "ProjectService.list_meetings",
+      "title": "ProjectService.list_meetings",
+      "outcome": "ok",
+      "origin": null,
+      "caller": null,
+      "identity": null,
+      "at": 1790540023.3044322,
+      "timestamp": 1790540023.3044322
+     },
+     {
+      "id": "448ee9c5-8079-49e3-9e15-7eadbe31588b",
+      "op": "list_meetings",
+      "label": "ProjectService.list_meetings",
+      "title": "ProjectService.list_meetings",
+      "outcome": "ok",
+      "origin": null,
+      "caller": null,
+      "identity": null,
+      "at": 1790540023.2985,
+      "timestamp": 1790540023.2985
+     },
+     {
+      "id": "1ff2e446-3355-482d-a223-41fc62edc59c",
+      "op": "room",
+      "label": "ProjectService.room",
+      "title": "ProjectService.room",
+      "outcome": "ok",
+      "origin": null,
+      "caller": null,
+      "identity": null,
+      "at": 1790540023.298316,
+      "timestamp": 1790540023.298316
+     },
+     {
+      "id": "0a8614f6-8692-4e56-a525-edccc06ce1b4",
+      "op": "list_meetings",
+      "label": "ProjectService.list_meetings",
+      "title": "ProjectService.list_meetings",
+      "outcome": "ok",
+      "origin": null,
+      "caller": null,
+      "identity": null,
+      "at": 1790540019.73936,
+      "timestamp": 1790540019.73936
+     },
+     {
+      "id": "741e17fb-0b16-40e0-a606-e43b9762b942",
+      "op": "room",
+      "label": "ProjectService.room",
+      "title": "ProjectService.room",
+      "outcome": "ok",
+      "origin": null,
+      "caller": null,
+      "identity": null,
+      "at": 1790540019.7389948,
+      "timestamp": 1790540019.7389948
+     }
+    ],
+    "state": "ok"
+   }
+  },
+  "updates": {
+   "updates": [
+    {
+     "id": "pupd_b97028239aa34199899dfcc6d2cc10fa",
+     "project_id": "proj-64ebaa682d7b",
+     "project_revision": 1,
+     "review_id": null,
+     "lifecycle": "published",
+     "draft_revision": 1,
+     "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+     "claims_json": "[]",
+     "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+     "generator": "deterministic",
+     "generator_host": null,
+     "generator_model": null,
+     "created_at": "2026-09-27T20:13:39+00:00",
+     "updated_at": "2026-09-27T20:13:43+00:00",
+     "published_at": "2026-09-27T20:13:43+00:00",
+     "fallback_reason": null,
+     "fallback_receipt": null,
+     "generatorHost": null,
+     "generatorModel": null
+    }
+   ]
+  }
+ }
+}

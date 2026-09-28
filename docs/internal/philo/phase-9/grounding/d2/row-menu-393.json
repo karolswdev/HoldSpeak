@@ -1,0 +1,23 @@
+[
+ {
+  "menu_items": [
+   "Open",
+   "Get Info",
+   "Ask this project \u00b7 Select a Project",
+   "Ask AI",
+   "Continue in thread",
+   "Edit",
+   "Rename",
+   "Duplicate",
+   "Move to Zone",
+   "Delete"
+  ],
+  "delete_top": 839,
+  "delete_bottom": 867,
+  "vh": 852,
+  "cut_px": 15,
+  "row": "[ ]\n1:1 prep\tNOTE",
+  "row_top": 642,
+  "click_y": 674
+ }
+]

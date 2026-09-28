@@ -1,0 +1,10 @@
+#!/bin/zsh
+# Run a command with an isolated HOME, inside the lane worktree.
+cd <repo> || exit 1
+export HOME_REAL=$HOME_REAL
+export UV_CACHE_DIR=$HOME_REAL/.cache/uv
+export PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright
+export npm_config_cache=$HOME_REAL/.npm
+export HOME=$(mktemp -d <scratch>/home.XXXX)
+echo "ISO HOME=$HOME" >&2
+exec "$@"

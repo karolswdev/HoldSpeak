@@ -1,0 +1,57 @@
+"""PHILO-9 grounding: look at the desk and find the Room, at one width."""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from urllib.parse import quote
+
+from playwright.sync_api import sync_playwright
+
+URL, TOKEN, OUT, WIDTH = sys.argv[1], sys.argv[2], Path(sys.argv[3]), int(sys.argv[4])
+HEIGHT = 900 if WIDTH == 1440 else 852
+OUT.mkdir(parents=True, exist_ok=True)
+log: list[dict] = []
+
+
+def visible_buttons(page) -> list[str]:
+    return page.evaluate("""() => [...document.querySelectorAll('button,[role=button],a')]
+      .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight; })
+      .map(e => (e.getAttribute('aria-label') || e.innerText || '').trim().replace(/\\s+/g,' ').slice(0,60))
+      .filter(Boolean)""")
+
+
+def shot(page, name: str) -> None:
+    page.screenshot(path=str(OUT / f"{name}-{WIDTH}.png"))
+    log.append({"shot": f"{name}-{WIDTH}.png", "url": page.url,
+                "buttons": visible_buttons(page)[:80],
+                "text": page.evaluate("() => document.body.innerText.slice(0, 3000)")})
+
+
+with sync_playwright() as p:
+    browser = p.chromium.launch()
+    page = browser.new_page(viewport={"width": WIDTH, "height": HEIGHT})
+    console: list[str] = []
+    page.on("console", lambda m: console.append(f"{m.type}: {m.text}"[:300]) if m.type in ("error", "warning") else None)
+    page.goto(f"{URL}/?token={quote(TOKEN)}", wait_until="networkidle")
+    page.wait_for_timeout(2500)
+    shot(page, "01-arrival")
+    if page.get_by_role("button", name="Continue later").count():
+        page.get_by_role("button", name="Continue later").first.click()
+        page.wait_for_timeout(2500)
+    shot(page, "02-chair")
+    page.keyboard.press("Meta+k")
+    page.wait_for_timeout(800)
+    page.keyboard.type("Payments")
+    page.wait_for_timeout(1200)
+    shot(page, "03-palette-payments")
+    page.get_by_text("Open Payments migration").first.click()
+    page.wait_for_timeout(3000)
+    shot(page, "04-room")
+    (OUT / f"probe-{WIDTH}.json").write_text(json.dumps({"log": log, "console": console}, indent=1))
+    browser.close()
+l = log[-1]
+print(l["shot"], l["url"])
+print("  BTN", l["buttons"])
+print("  TXT", l["text"][:2500].replace("\n", " | "))
+print("  CONSOLE", console[:10])
