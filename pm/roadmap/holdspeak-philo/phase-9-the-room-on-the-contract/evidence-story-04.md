@@ -56,6 +56,11 @@
   - **Unit Tests: fail, inherited.** 24 failed + 31 errors; every one of the 55 is in main's own red on `1afcc576` (run 36369788814, job 108763477466: 27 failed, 31 errors; 58 ids, a superset: the Playwright-browser-missing unit rigs, the Phase 143 censuses, `test_product_copy`, `test_thread_modes`, the git-show-of-history tests). Branch-new: none.
   - **DeskOS Web Quality: fail, one vitest case, not this diff:** `RecallFace.test.tsx` "Carry into brief … keeps focus" (a focus assertion). `RecallFace` imports neither file round two changed; the same job passed on `f58cb5b0`; the file passes 5/5 locally at `0d7e987b`. Flaky; re-run on the next head.
   - **E2E Tests (macOS): fail.** (1) **Mine:** `test_the_launch_submenu_keeps_itself_in_view` hit the suite's 300 s per-test bound on the runner (the spatial Floor plus the nine-point pointer pass over every submenu row; the other fences took up to 200 s each there), which ends the pytest process; every other PHILO-9-04 fence passed in that job (18 of 18). Paid: `@pytest.mark.timeout(900)` on it, `600` on the two other pointer-pass fences. (2) **Inherited:** the `test_philo8_one_delete_glass.py` 1440 reds (main's run lists 16 E2E reds, this family among them); of the two not in main's list, `test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]` fails locally on main's product (`swap.sh main`) as on the branch (the palette option "detached from the DOM"), and `test_the_list_palette_delete_removes_the_selected_object[1440]` passes locally on both (flaky). PR #682 (`fix/main-e2e-inherited-reds`) is the home of that family.
+- **Codex Astra counsel r2 through `9dcb569d`: RATIFY-WITH-CONDITIONS** (`checks/story-04-built-astra-r2.md`, verbatim). Its merge condition: on the merge head the Launch test completes and passes on CI, and every remaining red has a named, evidenced classification. Its BACKLOG row (the pointer passes 15× slower with motion; reduced motion, then lower the 900/600 s bounds) is in "PHILO-9-04 follow-ups".
+- **CI on `9dcb569d` (run 36404923266), classified:**
+  - Documentation Navigation, Critical Journeys (G0), Linux Smoke, **DeskOS Web Quality** (the `RecallFace` case green on its first run: the flake reading on `0d7e987b` stands), Route screenshots, Integration Tests (macOS): pass.
+  - **E2E Tests (macOS): all 19 PHILO-9-04 fences PASSED, `test_the_launch_submenu_keeps_itself_in_view` among them** (it completed under the 900 s bound). The job's 19 reds: 16 are main's own list (run 36369788814). Three are not in main's list, all `test_philo8_one_delete_glass.py`, run three times on main's product and three on the branch (capture 12:51:38Z): `test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]` fails 2 of 3 on main's product and passes 3 of 3 on the branch: **inherited flake** (red on main); `test_leaving_the_face_inside_the_window_commits_the_delete[list-393]` and `test_the_list_palette_delete_removes_the_selected_object[1440]` pass 3 of 3 on both: **flakes** under the runner's load, not this diff (PR #682's family). Branch-new: none.
+  - **Unit Tests:** 56 reds. 55 are in main's own red (run 36369788814). **One was branch-new and mine:** `test_phase200_doc_claims.py::test_registered_claim_matches_its_state[holds:UX-CANON.md:179]` — the canon sentence still said "ratchet of 106" after the ratchet. Paid: `docs/internal/UX-CANON.md` and its registry row (`tests/unit/doc_claims/registry.py`) say 105, dated, by PHILO-9-04; the ratchet capture now runs the doc-claims fence too (11:27:26Z: 106 passed).
 - **The raw-`<button>` ratchet (Muad'Dib's word, 2026-09-28):** A1 106 → 105 in `tests/ux_canon_ceiling.json` (per-rule and the `DeskSortableTable` face, now `{A8: 1}`) and `A1_RATCHET` in `tests/unit/test_ux_canon_ratchet.py`, dated with the reason. Capture 09:37:16Z: the four canon fences 59 passed; the healing notice no longer lists A1 (A3-prose 48 → 43 and B 32 → 30 still heal, not lowered here: not this story's).
 - **Green after round two:** capture 06:27:52Z (the glass, 19 cases incl. the five round-two runs, the unit and atlas fences, 237 passed; the rig's eight atlas runs pass); web unit 06:37:07Z (zero branch-new, 2927 passed, no Errors line, `npm run check` green); Documentation Navigation 06:40:25Z (every step exit 0). A capture at 06:18:29Z failed on a stale atlas source anchor (`DeskMenu.tsx`'s line moved); the atlas was regenerated and the next capture is green.
 
@@ -783,4 +788,49 @@ ratchet: B 32 -> 30 -- lower the ceiling
 ...ratchet: A3-prose 48 -> 43 -- lower the ceiling
 ratchet: B 32 -> 30 -- lower the ceiling
 59 passed in 3.46s
+```
+
+### Captured run — 2026-09-28T11:27:26Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-04-proof/ratchet.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** be71bac2e8d3da82d60488b12cbc08aa2fa0305c
+
+```text
+...ratchet: A3-prose 48 -> 43 -- lower the ceiling
+ratchet: B 32 -> 30 -- lower the ceiling
+106 passed in 5.16s
+```
+
+### Captured run — 2026-09-28T12:51:38Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-04-proof/classify_e2e.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** be71bac2e8d3da82d60488b12cbc08aa2fa0305c
+
+```text
+=== main's product (d05e0eb5e)
+✓ built in 4.68s
+try 1: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[list-393]
+try 1: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[1440]
+try 1: FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]
+try 2: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[list-393]
+try 2: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[1440]
+try 2: FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]
+try 3: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[list-393]
+try 3: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[1440]
+try 3: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]
+✓ built in 4.64s
+=== the branch (9dcb569d5)
+try 1: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[list-393]
+try 1: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[1440]
+try 1: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]
+try 2: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[list-393]
+try 2: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[1440]
+try 2: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]
+try 3: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[list-393]
+try 3: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[1440]
+try 3: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]
 ```
