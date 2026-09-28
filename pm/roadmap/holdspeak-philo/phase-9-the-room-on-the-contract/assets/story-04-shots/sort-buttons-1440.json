@@ -1,0 +1,147 @@
+{
+  "pointer": [
+    {
+      "face": {
+        "h": 24,
+        "w": 31.7
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "NAME"
+    },
+    {
+      "face": {
+        "h": 24,
+        "w": 31.7
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "KIND"
+    },
+    {
+      "face": {
+        "h": 24,
+        "w": 47.6
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "ZONE ↑"
+    },
+    {
+      "face": {
+        "h": 24,
+        "w": 71.3
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "ATTENTION"
+    },
+    {
+      "face": {
+        "h": 24,
+        "w": 130.3
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Architecture reviews"
+    },
+    {
+      "face": {
+        "h": 24,
+        "w": 61.6
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Decisions"
+    },
+    {
+      "face": {
+        "h": 24,
+        "w": 37.8
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Hiring"
+    },
+    {
+      "face": {
+        "h": 24,
+        "w": 34.7
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Inbox"
+    },
+    {
+      "face": {
+        "h": 24,
+        "w": 58.6
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Meetings"
+    },
+    {
+      "face": {
+        "h": 24,
+        "w": 62.1
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Payments"
+    },
+    {
+      "face": {
+        "h": 24,
+        "w": 21.6
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "ALL"
+    }
+  ],
+  "verbs": [
+    {
+      "library": true,
+      "pressed": "false",
+      "text": "NAME",
+      "visible": true
+    },
+    {
+      "library": true,
+      "pressed": "false",
+      "text": "Kind",
+      "visible": false
+    },
+    {
+      "library": true,
+      "pressed": "true",
+      "text": "Zone ↑",
+      "visible": false
+    },
+    {
+      "library": true,
+      "pressed": "false",
+      "text": "Attention",
+      "visible": false
+    },
+    {
+      "library": true,
+      "pressed": "false",
+      "text": "KIND",
+      "visible": true
+    },
+    {
+      "library": true,
+      "pressed": "true",
+      "text": "ZONE ↑",
+      "visible": true
+    },
+    {
+      "library": true,
+      "pressed": "false",
+      "text": "ATTENTION",
+      "visible": true
+    }
+  ]
+}

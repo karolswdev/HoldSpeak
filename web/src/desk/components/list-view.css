@@ -35,7 +35,7 @@
   display: block;
   margin: 12px 8px 2px;
   color: var(--text-muted);
-  font: 600 10px var(--font-mono);
+  font: 600 var(--desk-surface-label-size) var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -43,7 +43,7 @@
   display: inline-block;
   min-width: 26px;
   color: var(--text-faint);
-  font: 600 11px var(--font-mono);
+  font: 600 var(--desk-surface-label-size) var(--font-mono);
 }
 .desk-next .desk-list-mark[data-selected] {
   color: var(--accent);
@@ -58,22 +58,30 @@
   flex: none;
   min-width: 96px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--desk-surface-label-size);
   letter-spacing: 0.05em;
 }
 .desk-next .desk-list-face .desk-surface {
   /* HS-111-10 walk: in the ledger head the back verb FLOWS in the
      census line — the fixed chrome position (spatial dive) was
      stamping "← ALL" over ITEMS at 393. */
-  position: static;
+  /* PHILO-9-04: `relative`, not `static`, so the Button's 44 px halo
+     (`.btn::after`, global.css) stays on its own Button; a static Button let
+     the halo resolve against `.desk-listmode` and span the list plus 1 px
+     each side (page width 394 at 393). The spatial dive's offsets
+     (pullout.css `.desk-surface`, top 60px, left 18px) are reset. The
+     ember's lighter step: --accent on --surface-2 is 3.92:1. */
+  position: relative;
+  inset: auto;
   margin-right: 10px;
-  color: var(--accent);
+  color: var(--accent-hover);
   font: inherit;
+  font-size: var(--desk-surface-label-size);
 }
 .desk-next .desk-list-status {
   margin: 0;
   color: var(--text-muted);
-  font: 600 10px var(--font-mono);
+  font: 600 var(--desk-surface-label-size) var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -131,8 +139,10 @@
   color: var(--accent);
   outline-offset: 3px;
 }
+/* PHILO-9-04: the ember's lighter step (--accent on --surface-2 is 3.92:1;
+   --accent-hover is 4.99:1). */
 .desk-next .desk-list-attention {
-  color: var(--accent);
+  color: var(--accent-hover);
 }
 .desk-next .desk-list-more {
   margin-top: var(--space-3);
@@ -177,7 +187,7 @@
 }
 .desk-sortable-table thead th {
   color: var(--text-muted);
-  font: 600 10px var(--font-mono);
+  font: 600 var(--desk-surface-label-size) var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -196,6 +206,28 @@
 .desk-sortable-table-sort.is-current {
   color: var(--text);
 }
+/* PHILO-9-04: the sort headers are the library Button (ghost, dense); the
+   th keeps the table's mono caps and the Button takes them. The fold's sort
+   Buttons ride the first sortable header (`is-narrow-only`). */
+.desk-sortable-table-sorts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 4px;
+}
+.desk-sortable-table thead .desk-sortable-table-sort.btn {
+  margin-inline-start: -8px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--text-muted);
+}
+.desk-sortable-table thead .desk-sortable-table-sort.btn.is-current {
+  color: var(--text);
+}
+.desk-sortable-table .is-narrow-only {
+  display: none;
+}
 .desk-sortable-table-direction {
   color: var(--accent);
 }
@@ -204,7 +236,7 @@
   border-bottom: 0;
   color: var(--text-muted);
   background: var(--surface-2);
-  font: 600 10px var(--font-mono);
+  font: 600 var(--desk-surface-label-size) var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -270,7 +302,7 @@
   border-bottom: 0;
   background: var(--surface-2);
   color: var(--text-muted);
-  font: 600 10px var(--font-mono);
+  font: 600 var(--desk-surface-label-size) var(--font-mono);
   letter-spacing: 0.06em;
 }
 .desk-next .desk-list-sortable.desk-sortable-table-wrap {
@@ -280,7 +312,7 @@
 .desk-next .desk-list-sortable .desk-sortable-table td:nth-child(4),
 .desk-next .desk-list-sortable .desk-sortable-table td:nth-child(5) {
   color: var(--text-muted);
-  font: 600 10px var(--font-mono);
+  font: 600 var(--desk-surface-label-size) var(--font-mono);
   letter-spacing: 0.05em;
 }
 .desk-list-name-cell {
@@ -298,6 +330,67 @@
   .desk-list-face .desk-list-sortable .desk-sortable-table th:nth-child(4),
   .desk-list-face .desk-list-sortable .desk-sortable-table td:nth-child(4) {
     display: none;
+  }
+}
+
+/* PHILO-9-04 (the owner ratified the list canvas, 2026-09-27) - the list
+   face is a `surface` container. The Floor's list is in no window body, so
+   no ancestor was a `surface` container and the `@container surface` rules
+   above never applied to it (its columns ran off the right edge at 393).
+   The container is the face section, not `.desk-listmode`: layout
+   containment would capture the fixed foot inside `.desk-listmode`. */
+.desk-next .desk-list-face {
+  container-type: inline-size;
+  container-name: surface;
+}
+/* The fold: in a surface of 720 px or less Kind, Zone and Attention leave
+   the grid and ride a second line inside the name Button (one target holds
+   both lines); their sort Buttons join the Name header. */
+.desk-list-fold {
+  display: none;
+}
+@container surface (max-width: 720px) {
+  .desk-sortable-table th.is-fold,
+  .desk-sortable-table td.is-fold {
+    display: none;
+  }
+  .desk-sortable-table .is-narrow-only {
+    display: inline-flex;
+  }
+  .desk-sortable-table thead .desk-sortable-table-sort.btn {
+    margin-inline-start: 0;
+  }
+  .desk-next .desk-list-sortable .desk-sortable-table td:nth-child(2),
+  .desk-next .desk-list-sortable .desk-sortable-table th:nth-child(2) {
+    width: 100%;
+    white-space: normal;
+  }
+  .desk-next .desk-list-sortable .desk-sortable-table-open {
+    display: grid;
+    justify-items: start;
+    justify-content: start;
+    white-space: normal;
+    text-align: left;
+    height: auto;
+    row-gap: 2px;
+  }
+  .desk-next .desk-list-sortable .desk-list-name-cell {
+    grid-template-columns: auto 1fr;
+    column-gap: 5px;
+  }
+  .desk-list-fold {
+    display: flex;
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+    gap: 0 6px;
+    color: var(--text-muted);
+    font: 600 var(--desk-surface-label-size) var(--font-mono);
+    letter-spacing: 0.05em;
+  }
+  .desk-list-fold-token + .desk-list-fold-token::before {
+    content: "·";
+    margin-inline-end: 6px;
+    color: var(--text-faint);
   }
 }
 

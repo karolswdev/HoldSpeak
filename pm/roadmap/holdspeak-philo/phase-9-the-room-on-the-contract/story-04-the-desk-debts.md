@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** the owner's ratification of the charter; the list canvas ratified before the list face is built (the selection token needs no canvas)
 - **Unblocks:** PHILO-9-05
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks
@@ -27,13 +27,13 @@ Measured on main `b37dc2fb` (grounding `d2/`):
 
 ## Acceptance criteria
 
-- [ ] The selected zone name on the list reaches at least 3:1 against the field at 1440 and 393 (measured, as the grounding probe measures it); the palette search field too (red on main: 1.13:1).
-- [ ] The list shows no product text under 12 px at 1440 and 393 (red on main: 51 and 33 nodes).
-- [ ] The status says "SHOWN" for any count (red on main: "SHOWNS").
-- [ ] At 393 every column the canvas keeps is inside the viewport (red on main: three columns off screen); at 1440 preservation green.
-- [ ] The sort headers are the library Button (a structural fence; a mutation re-adding a raw `<button>` turns it red).
-- [ ] At 393 the row menu's last entry is inside the viewport when opened on a row near the bottom edge (red on main: cut 15 px); at 1440 preservation green (in view on main).
-- [ ] The face matches the owner-ratified canvas at both widths; the web baseline has zero branch-new.
+- [x] The selected zone name on the list reaches at least 3:1 against the field at 1440 and 393 (measured, as the grounding probe measures it); the palette search field too (red on main: 1.13:1).
+- [x] The list shows no product text under 12 px at 1440 and 393 (red on main: 51 and 33 nodes).
+- [x] The status says "SHOWN" for any count (red on main: "SHOWNS").
+- [x] At 393 every column the canvas keeps is inside the viewport (red on main: three columns off screen); at 1440 preservation green.
+- [x] The sort headers are the library Button (a structural fence; a mutation re-adding a raw `<button>` turns it red).
+- [x] At 393 the row menu's last entry is inside the viewport when opened on a row near the bottom edge (red on main: cut 15 px); at 1440 preservation green (in view on main).
+- [x] The face matches the owner-ratified canvas at both widths; the web baseline has zero branch-new.
 
 ## Effort (not a promise)
 
@@ -50,3 +50,4 @@ PROVISIONAL: 1–1.5 engineering days, the canvas included.
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. The 393 Zone column is worse than the Phase 8 record ("`1 ITEM` shows as `1 ITE`"): on this main the whole column is off screen.
 - 2026-09-27 — round two (Codex Astra r1 F7, F8 paid): preservation green at the unaffected width; the sort headers a structural fence; fences ship with the story.
+- 2026-09-27 — BUILT by the Fedaykin lane on the owner's canvas ratification ("as drawn"): the selection token desk-wide, the list face with the fold at 393, the sort verbs as the library Button, the work menu kept in view with 44 px rows at 393, the 12 px floor, SHOWN. Red on main and green on the branch at 1440 and 393 through the real hub (glass + four atlas cases in `docs/internal/philo/graph/atlas-phase9.json`); the evidence is `evidence-story-04.md`. Codex Astra's check owed.

@@ -29,6 +29,21 @@ import { DeskDeleteSeat } from "../deleteReceipt";
 import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { ZoneRenameRow } from "./ZoneRenameRow";
 
+/* PHILO-9-04 (the owner ratified the list canvas, 2026-09-27) — the second
+ * line under the name in a `surface` of 720 px or less (hidden wider): the
+ * row's Kind, Zone and Attention, the same words as the columns. The
+ * separator dot is drawn by CSS, so no empty token is ever printed. */
+function FoldLine({ tokens, attention }: { tokens: string[]; attention?: number }) {
+  const shown = tokens.filter(Boolean);
+  if (!shown.length && !attention) return null;
+  return (
+    <span className="desk-list-fold" aria-hidden="true">
+      {shown.map((t) => <span key={t} className="desk-list-fold-token">{t}</span>)}
+      {attention ? <span className="desk-list-fold-token desk-list-attention">ATTN {attention}</span> : null}
+    </span>
+  );
+}
+
 /** Rows per page — a plain "show more" pagination, no virtualization dep. */
 export const LIST_PAGE = 100;
 
@@ -261,6 +276,7 @@ export function DeskListView() {
                (`desk/surface/count.ts:39`). */
             <Button variant="ghost" dense className="desk-sortable-table-open" aria-label={[`${row.title} zone`, countToken(row.count, "item", "items")].filter(Boolean).join(", ")}>
               {row.title}
+              <FoldLine tokens={["ZONE", countToken(row.count, "ITEM") ?? "EMPTY"]} />
             </Button>
           );
         }
@@ -274,6 +290,10 @@ export function DeskListView() {
             {row.object.title}
             {row.zoneName ? <span className="sr-only"> {row.zoneName.toUpperCase()}</span> : null}
             {row.attention ? <span className="sr-only"> ATTN {row.attention}</span> : null}
+            <FoldLine
+              tokens={[(KIND_LABEL[row.object.kind] ?? row.object.kind).toUpperCase(), row.zoneName.toUpperCase()]}
+              attention={row.attention}
+            />
           </Button>
         );
       },
@@ -328,7 +348,7 @@ export function DeskListView() {
             {[countToken(objects.length, "ITEM"), countToken(zones.length, "ZONE"), countToken(attnTotal, "ATTN")].filter(Boolean).join(" · ") || "EMPTY"}
           </span>
           <p className="desk-list-status" role="status" tabIndex={-1} ref={statusRef}>
-            {countToken(visible.length, "SHOWN") || "EMPTY"} of {objects.length}
+            {countToken(visible.length, "SHOWN", "SHOWN") || "EMPTY"} OF {objects.length}
           </p>
         </div>
         <DeskSortableTable
@@ -337,6 +357,7 @@ export function DeskListView() {
           columns={columns}
           sort={sort}
           onSort={(key, dir) => setSort({ key: key as ListSortKey, dir })}
+          foldColumns={["kind", "zone", "attention"]}
           rowKey={(row) => row.type === "zone" ? `zone:${row.id}` : qualifiedRef(row.object.kind, row.object.id)}
           selectedKey={selectedKey && selectedKey.type === "object" ? qualifiedRef(selectedKey.object.kind, selectedKey.object.id) : null}
           groupBy={(row) => row.type === "zone" ? "ZONES" : divedZone ? (divedTitle || "ZONE").toUpperCase() : BAND_LABEL[row.object.kind] ?? row.object.kind.toUpperCase()}

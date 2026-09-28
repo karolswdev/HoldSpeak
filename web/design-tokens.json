@@ -497,6 +497,16 @@
         "value": "var(--accent-tint)"
       },
       {
+        "name": "--selection-bg",
+        "value": "var(--accent)",
+        "doc": "PHILO-9-04 (the owner ratified, 2026-09-27): the text selection ground, desk-wide. 4.26:1 against the field (--accent-tint read 1.13:1)."
+      },
+      {
+        "name": "--selection-ink",
+        "value": "var(--bg)",
+        "doc": "PHILO-9-04: the selected text, the page ink on the accent ground: 4.56:1."
+      },
+      {
         "name": "--field-bg",
         "value": "var(--surface-2)"
       },

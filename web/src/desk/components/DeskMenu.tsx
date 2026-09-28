@@ -12,6 +12,7 @@
 // recessed separators, ghost-reason collapse, submenu indicator.
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -472,6 +473,25 @@ export function WorkMenu({
   const [subAt, setSubAt] = useState<{ x: number; y: number } | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
   const subRef = useRef<HTMLElement | null>(null);
+
+  // PHILO-9-04 (the ratified list canvas): the species keeps its measured
+  // panel inside the viewport (8 px margin). The clamp above guesses the
+  // panel's height; a longer menu opened near the bottom edge ran past it
+  // (the list's row menu at 393: Delete cut 15 px). Runs after layout and
+  // before paint, so the panel never shows cut, then moves. Every WorkMenu
+  // consumer gets it.
+  useLayoutEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const margin = 8;
+    const r = el.getBoundingClientRect();
+    if (r.bottom > window.innerHeight - margin) {
+      el.style.top = `${Math.max(margin, window.innerHeight - margin - r.height)}px`;
+    }
+    if (!NARROW() && r.right > window.innerWidth - margin) {
+      el.style.left = `${Math.max(margin, window.innerWidth - margin - r.width)}px`;
+    }
+  });
 
   // The desktop dismissal rule: any outside pointer-down, Escape from
   // anywhere. Capture phase so a press on the world canvas closes too.
