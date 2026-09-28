@@ -146,7 +146,7 @@ STEWARD_STOP = OperationDescriptor(
     },
     principal=_ROOM_PRINCIPAL,
     effect="write",
-    result="{success: true, run_id, operation_id, receipt}: the stop request is recorded (not: the run has stopped)",
+    result="{success: true, run_id} and the kernel operation_id and receipt: the stop request is recorded (not: the run has stopped)",
     refusals=_CONTRACT_REFUSALS + ("not_found: unknown run", "steward_run_already_terminal",
                                    "steward_run_owner_required", "project_delegation_required"),
     completion="synchronous for the request; project.get_steward_run shows the run end interrupted",
@@ -230,7 +230,7 @@ NUDGE_SEND = OperationDescriptor(
     },
     principal=_ROOM_PRINCIPAL,
     effect="write",
-    result="{step_id, state: sent, receipt ...} and the kernel operation_id and receipt",
+    result="{success: true, receipt: the comment receipt (comment_url, pr_number, reviewer ...)} and the kernel operation_id and receipt",
     refusals=_CONTRACT_REFUSALS + ("nudge_not_found", "nudge_not_proposed", "empty_text", "the policy or gh refusals",
                                    "project_delegation_required"),
     completion="synchronous; steward.nudges shows it sent",
@@ -297,7 +297,7 @@ WATCH_EVALUATE = _watch_row(
     "project.watch.evaluate", "Read a watch's source now and record what changed since its last read.",
     "evaluate_once", ("http:POST /api/watches/{watch_id}/evaluate", "mcp:project.watch.evaluate"),
     Admission("admitted", "Snapshot, diff, transitions; records effects the steward can act on: egress (Q1)."),
-    result="{success: true, ...the evaluation}",
+    result="{watch_id, evaluation_id, state, transitions, observation_ids, message} and the kernel operation_id and receipt",
 )
 WATCH_SET_RULES = _watch_row(
     "project.watch.set_rules", "Set what a watch does when its source changes (its rules), and optionally how often it reads.",

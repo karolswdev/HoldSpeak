@@ -63,6 +63,10 @@ Named behaviour changes in round two: `run_once` on a project with an active run
 
 **Story 02's atlas cases:** `docs/internal/philo/graph/atlas-phase9-steward.json` (its own file, so story 05 assembles it beside `atlas-phase9.json`): `case.p9.steward.run_receipted`, `case.p9.update.mark_delivered_receipted`, `case.p9.project.archive_receipted`, `case.p9.connections.never_checked`. Actual observations (all `pass`, real hub, isolated HOME): `docs/internal/philo/graph/observations/muaddib/20260928T1449*Z-case.p9.*-muaddib-1440/observation.json`. `docs/generated/graph.json` joins `atlas.json` only, so it does not change (story 05 assembles). The atlas cases were not run red on the 24576f25 export.
 
+## Round two, delta: the declared result shapes (story 07's lane found it)
+
+`tests/unit/test_philo5_the_loop_r2.py::test_every_braced_declaration_has_a_producer_here` was red on this branch (`aeae7bd8`, `7119cfd9`) and green on main `1f332bc3`: story 02's rows declare braced result shapes, and the fence runs a real producer for every braced declaration. Classification: a fence to extend honestly, and it found three wrong declarations. Twelve producers were added (each through `hub.root.operations.invoke` on a real hub; `gh`/`acli` are canned runners at the process edge). With them, three of story 02's declarations did not match the service's real answer (`assets/story-02-proof/red-7119cfd9-declared-shapes.txt`, the new fence on a `7119cfd9` export: 3 failed): `nudge.send` returns `{success, receipt}` (declared `{step_id, state, receipt}`); `project.stop_steward` returns `{success, run_id}` (the kernel's `operation_id` and `receipt` are added by the transport); `project.watch.evaluate` returns the evaluation (`{watch_id, evaluation_id, state, transitions, observation_ids, message}`). The three declarations now state the real shape; `docs/generated/operations.json` and `api-reference.json` regenerated. Green: the capture below.
+
 ## The criteria → their proof
 
 | Criterion | Red on main | Green (fence) |
@@ -857,4 +861,64 @@ tests/web/test_hs168_connections_routes.py::TestKnownScopes::test_session_return
 tests/web/test_hs168_connections_routes.py::TestPerProviderCap::test_per_provider_cap_preserves_all_providers
 
 28 tests collected in 1.83s
+```
+
+### Captured run — 2026-09-28T15:31:32Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python -m pytest -q -n 8 -p no:cacheprovider -rf tests/unit/test_philo5_the_loop_r2.py tests/unit/test_philo5_the_loop.py tests/unit/test_philo9_room_contract.py tests/unit/test_philo9_contract.py tests/unit/test_philo9_steward_admission.py tests/unit/test_philo9_02_round_two.py tests/unit/test_philo_census.py tests/unit/test_project_mcp.py tests/unit/test_philo9_discovery.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ffd2f626b52b6ecd39d60eb490412bbe8dca0de0
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 23%]
+........................................................................ [ 47%]
+........................................................................ [ 71%]
+........................................................................ [ 94%]
+................                                                         [100%]
+304 passed in 35.24s
+```
+
+### Captured run — 2026-09-28T15:32:16Z
+
+- **Command:** `bash .tmp/docs_checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ffd2f626b52b6ecd39d60eb490412bbe8dca0de0
+
+```text
+== gen_operations_json.py --check
+OK docs/generated/operations.json
+== gen_mcp_sidecar_doc.py --check
+wrote docs/MCP_SIDECAR.md
+  237 tools across 42 families
+== check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+== philo_repository_census.py --check
+Repository census: 5 outputs verified.
+== philo_api_reference.py --check
+API reference checked
+== philo_boundary_census.py --check
+Boundary candidate census checked
+== philo_doctor_reference.py --check
+Doctor reference: 41 check functions
+== philo_config_reference.py --check
+Configuration declaration reference is current
+== philo_graph_reference.py --check
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+== validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+== generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
+== check_doc_coverage.py --check
+Documentation coverage checked.
+== residual_census.py --check
+RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-9-02
+Documentation navigation: 3 files checked; local targets and Markdown headings resolve.
+DOCS RC=0
 ```
