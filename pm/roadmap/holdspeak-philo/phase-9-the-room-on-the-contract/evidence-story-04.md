@@ -771,3 +771,16 @@ rig cases not passing:        0
 ratchet: B 32 -> 30 -- lower the ceiling
 59 passed in 3.07s
 ```
+
+### Captured run — 2026-09-28T09:39:14Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-04-proof/ratchet.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 4b7cbe40dd2024b41a53eee2db546e726166b910
+
+```text
+...ratchet: A3-prose 48 -> 43 -- lower the ceiling
+ratchet: B 32 -> 30 -- lower the ceiling
+59 passed in 3.46s
+```

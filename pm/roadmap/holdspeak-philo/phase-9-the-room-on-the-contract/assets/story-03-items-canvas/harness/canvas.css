@@ -1,0 +1,108 @@
+/* PHILO-9-03 canvas only: layout for the two proposed lines. Every species
+ * style (StringGadget, Button, StateChip, SurfaceLedger) is the product's. */
+.desk-next .p9-deliver-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.desk-next .p9-deliver-to {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: flex;
+}
+.desk-next .p9-deliver-to .gadget-string {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.desk-next .p9-update-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.desk-next .p9-deliver-outcome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+/* ── PROPOSED LIBRARY REPAIRS (Astra r1 F5) ─────────────────────────────
+ * The canvas carries the repairs its geometry needs; the story 03 build
+ * moves each into the named product file. Each is the 12 px floor
+ * (--desk-surface-label-size) or a contrast token already in tokens.css. */
+
+/* surface.css:570 `.surface-token` (no data-chip) is 11 px: the Room's head
+   chips (.room-chip-faint), the NEEDS YOU why token (.room-why-token), the
+   Update band ("DETERMINISTIC REV 1") and "Published updates are read-only". */
+html body .desk-next .surface-token {
+  font-size: var(--desk-surface-label-size);
+}
+/* provenance.css:24 `.surface-provenance-source` is 10 px. */
+html body .desk-next .surface-provenance-source {
+  font-size: var(--desk-surface-label-size);
+}
+/* inline-editor.css:129 the editor toolbar chips are 11 px, and the rail
+   scrolls sideways at 393 (overflow-x: auto on a nowrap flex). Wrap it. */
+html body .desk-next .desk-editor-toolbar {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+html body .desk-next .desk-editor-toolbar .desk-chip {
+  font-size: var(--desk-surface-label-size);
+}
+/* gadgets.css:870 the mixed/cloud egress chip text is --accent (#a86e4a):
+   4.29:1 on the surface. --accent-hover (#bc8058) is the same ember, lighter. */
+html body .desk-next .gadget-chip-egress[data-scope="mixed"],
+html body .desk-next .gadget-chip-egress[data-scope="cloud"] {
+  color: var(--accent-hover);
+}
+/* project-room.css:307 F10: at a narrow window the sticky Ask well covered the
+   Steward verb and the SOURCES head. At the narrow container the well is in
+   the flow (the last section), so it never covers a verb or a head. */
+@container surface (max-width: 559px) {
+  html body .desk-next .room-ask-container {
+    position: static;
+  }
+}
+/* CONTENT layout follows the `surface` container (UX-CANON D, Astra r2 F2):
+   a narrow window on a wide desktop gets the same repair as a phone. */
+@container surface (max-width: 559px) {
+  /* update-posture.css:57 the body mic sat absolute over the rail's "List"
+     and "1." chips; in a narrow window it takes its own line, right-aligned. */
+  html body .desk-next .update-body-editor-mic {
+    position: static;
+    align-self: flex-end;
+  }
+  /* update-posture.css:50 the editor column took its content's width (flex
+     items default to min-width: auto): the rail ran past the body. */
+  html body .desk-next .update-editor > *,
+  html body .desk-next .update-body-editor > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  /* inline-editor.css:111 `.desk-editor` is a grid with an auto column: the
+     column took the editor content's width. One shrinkable column. */
+  html body .desk-next .desk-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* DEVICE target size only (UX-CANON D's one exception, :119; the shape of
+   global.css:170): every control this canvas touches owns 44 x 44 at the
+   narrow device. These are not `.btn` (chrome species, the in-well mics), so
+   they take the size themselves. No content moves here. */
+@media (max-width: 420px) {
+  html body .desk-next .p9-deliver-to .gadget-string .desk-mic,
+  html body .desk-next .update-body-editor-mic .desk-mic {
+    width: var(--desk-button-hit-size);
+    height: var(--desk-button-hit-size);
+  }
+  html body .desk-next .desk-editor-toolbar .desk-chip,
+  html body .desk-next .desk-editor-toolbar .desk-mic {
+    min-height: var(--desk-button-hit-size);
+    min-width: var(--desk-button-hit-size);
+  }
+}
