@@ -84,7 +84,7 @@
 
 .surface-plan-step-rate {
   flex: none;
-  font-size: 10px;
+  font-size: var(--desk-surface-label-size); /* PHILO-9-03: the 12 px floor (was 10 px) */
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--letter-spacing-label-compact);
@@ -93,7 +93,7 @@
 /* ── Step detail (non-compact) ── */
 
 .surface-plan-step-detail {
-  font-size: 10px;
+  font-size: var(--desk-surface-label-size); /* PHILO-9-03: the 12 px floor (was 10 px) */
   color: var(--text-muted);
   padding-left: 20px;
   padding-bottom: 2px;

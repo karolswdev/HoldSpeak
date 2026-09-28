@@ -825,6 +825,549 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.p9.room_items.late_row",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.room_open"
+      ],
+      "state_id": "state.desk_presentation.p9_room_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "the first-use arrival completed on the hub (the glass does the same): the optional click can land before the Chair draws it"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas ledger cutover"
+          },
+          "capture_as": "project_id",
+          "capture_path": "project.id",
+          "expect_status": 200,
+          "why": "the Room under test"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/items",
+          "adapter": "http-route",
+          "body": {
+            "item_type": "milestone",
+            "title": "Atlas rehearsal",
+            "due_at": "2020-01-06"
+          },
+          "expect_status": 200,
+          "why": "a milestone still planned long after its date: late on any run date"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the palette (DeskToolShelf.tsx: PROJECTS rows `Open <name>`)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas ledger cutover"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[id='desk-palette-option-project.open.{project_id}']",
+        "why": "Open the project's Room (the one key, open-project-memory, scope project:<id>)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "DAYS LATE"
+        },
+        "observe_at": "[data-testid=item-row] [data-tone=danger]",
+        "words": "the owner opens a Room whose milestone is past its date; ITEMS (after NEEDS YOU) shows it with its days late in the danger tone, readable in the viewport, as the owner-ratified items canvas draws it. Red on main at both widths: the Room has no items section."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p9.update_list.head_updates",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.room_updates"
+      ],
+      "state_id": "state.desk_presentation.p9_room_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "the first-use arrival completed on the hub (the glass does the same): the optional click can land before the Chair draws it"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas ledger cutover"
+          },
+          "capture_as": "project_id",
+          "capture_path": "project.id",
+          "expect_status": 200,
+          "why": "the Room under test"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/updates/draft",
+          "adapter": "http-route",
+          "body": {
+            "generator": "deterministic"
+          },
+          "capture_as": "update_id",
+          "capture_path": "update.id",
+          "expect_status": 200,
+          "why": "an update to publish"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/updates/{update_id}/publish",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "a published update (the Q0 ruling: delivery needs one)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the palette (DeskToolShelf.tsx: PROJECTS rows `Open <name>`)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas ledger cutover"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "Open the project's Room (the one key, open-project-memory, scope project:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=updates-verb]",
+        "why": "the update list (ProjectRoomCore.tsx RoomHead `Draft update`)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "UPDATES 1"
+        },
+        "observe_at": ".update-list .surface-ledger-count",
+        "words": "the owner opens the Room's update list holding one published update; its head counts UPDATES, not DRAFTS (F11). Red on main at both widths: 'DRAFTS 1'."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p9.update.delivered_row",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.update_mark_delivered"
+      ],
+      "state_id": "state.desk_presentation.p9_room_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "the first-use arrival completed on the hub (the glass does the same): the optional click can land before the Chair draws it"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas ledger cutover"
+          },
+          "capture_as": "project_id",
+          "capture_path": "project.id",
+          "expect_status": 200,
+          "why": "the Room under test"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/updates/draft",
+          "adapter": "http-route",
+          "body": {
+            "generator": "deterministic"
+          },
+          "capture_as": "update_id",
+          "capture_path": "update.id",
+          "expect_status": 200,
+          "why": "an update to publish"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/updates/{update_id}/publish",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "a published update (the Q0 ruling: delivery needs one)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the palette (DeskToolShelf.tsx: PROJECTS rows `Open <name>`)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas ledger cutover"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "Open the project's Room (the one key, open-project-memory, scope project:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=updates-verb]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-update-id='{update_id}']",
+          "why": "open the published update"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[data-testid=deliver-to]",
+          "value": "Priya",
+          "why": "the optional To (the Q0 ruling)"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=deliver-verb]",
+        "why": "Mark delivered: POST /api/updates/{id}/delivered (PHILO-9-02's route)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Priya"
+        },
+        "observe_at": "[data-testid=delivery-row]",
+        "words": "the owner marks the published update delivered to Priya; the update's history lists the row the hub recorded, readable in the viewport. New (no red claimed): Mark delivered is a new capability."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p9.room_steward_verb.owned",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.room_open"
+      ],
+      "state_id": "state.desk_presentation.p9_room_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "the first-use arrival completed on the hub (the glass does the same): the optional click can land before the Chair draws it"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas ledger cutover"
+          },
+          "capture_as": "project_id",
+          "capture_path": "project.id",
+          "expect_status": 200,
+          "why": "the Room under test"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/items",
+          "adapter": "http-route",
+          "body": {
+            "item_type": "milestone",
+            "title": "Atlas rehearsal",
+            "due_at": "2020-01-06"
+          },
+          "expect_status": 200,
+          "why": "a milestone still planned long after its date: late on any run date"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the palette (DeskToolShelf.tsx: PROJECTS rows `Open <name>`)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas ledger cutover"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "Open the project's Room (the one key, open-project-memory, scope project:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "focus",
+        "adapter": "ui-keyboard",
+        "selector": "[data-testid=steward-verb]",
+        "why": "keyboard travel to the SOURCES Steward verb scrolls it into view"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "hit_target",
+          "min_width": 20,
+          "min_height": 20
+        },
+        "observe_at": "[data-testid=steward-verb]",
+        "words": "the Steward verb, once in view, owns its nine hit points: the Ask well is in the flow and covers no verb (F10). Red on main at 393: the sticky well owns the verb's points; preservation green at 1440."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
     }
   ],
   "states": [
@@ -874,6 +1417,53 @@
         "case.p9.list_sort.zone_pressed",
         "case.p9.list_row_menu.delete_in_view"
       ]
+    },
+    {
+      "id": "state.desk_presentation.p9_room_face",
+      "family": "desk_presentation",
+      "values": {
+        "room": "the Room's face as the owner ratified the story 03 canvases (2026-09-27)",
+        "width": "1440 and 393"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/features/project-room/ProjectRoomCore.tsx",
+          "symbol": "function ItemsSection",
+          "line": 992,
+          "claim": "the ITEMS section, after NEEDS YOU, omitted when empty, UNAVAILABLE + Retry on a failed read"
+        },
+        {
+          "path": "web/src/features/project-room/update/UpdatePosture.tsx",
+          "symbol": "function DeliverySection",
+          "line": 82,
+          "claim": "To + Mark delivered above the body of a published update, and the delivery history"
+        },
+        {
+          "path": "web/src/features/project-room/update/UpdatePosture.tsx",
+          "symbol": "countLabel(\"UPDATES\"",
+          "line": 363,
+          "claim": "the update list's head counts updates"
+        },
+        {
+          "path": "web/src/features/project-room/project-room.css",
+          "symbol": ".room-ask-container {",
+          "line": 307,
+          "claim": "the Ask well is in the flow at every width"
+        },
+        {
+          "path": "web/src/desk/shell.ts",
+          "symbol": "export function openProjectRoom",
+          "line": 110,
+          "claim": "the one key that opens a project's Room"
+        }
+      ],
+      "reachable_by": [
+        "case.p9.room_items.late_row",
+        "case.p9.update_list.head_updates",
+        "case.p9.update.delivered_row",
+        "case.p9.room_steward_verb.owned"
+      ]
     }
   ],
   "clocks": [
@@ -897,6 +1487,18 @@
       "applicability": "not_applicable",
       "combination": "the selection contrast (>= 3:1) and the list's 12 px text floor as atlas cases",
       "reason": "the rig has no predicate that reads a computed style or a composited contrast (scripts/graph_walk.py check_predicate); a new predicate kind is rig work outside PHILO-9-04. Both are fenced as rendered at 1440 and 393 by tests/e2e/test_philo9_04_desk_debts_glass.py (test_the_selection_is_visible, test_the_list_text_is_12px_and_readable)."
+    },
+    {
+      "id": "excluded.p9.room_face_callers_and_receipts",
+      "applicability": "not_applicable",
+      "combination": "F1 (a meeting's project button), F3 (steward counts), F7 (RECEIPTS) as atlas cases",
+      "reason": "F1 needs a meeting row, which no HTTP route seeds; F3 compares the face with the hub's run and steps read in the same test; F7's RECEIPTS section sits below the fold at both widths and the rig does not scroll an observe_at into view. All three are fenced as rendered at 1440 and 393 by tests/e2e/test_philo9_03_room_face_glass.py."
+    },
+    {
+      "id": "excluded.p9.room_face_op",
+      "applicability": "not_applicable",
+      "combination": "case.p9.room_items.late_row, case.p9.update_list.head_updates, case.p9.room_steward_verb.owned with an .op sibling",
+      "reason": "each proves a FACE fact with no durable outcome of its own; the delivery's durable outcome and its equivalence with MCP are PHILO-9-02's."
     }
   ],
   "council_readings": []

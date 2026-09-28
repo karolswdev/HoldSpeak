@@ -12,6 +12,7 @@ import { useDesk } from "../../../../desk/store";
 import { EMPTY_ITEMS } from "../../../../desk/api";
 import { ProjectRoomCore } from "../../ProjectRoomCore";
 import { computeVerticalScrollHint, isModelTouchingKind } from "../model";
+import { ApiError } from "../../../../lib/api";
 
 // ── Mocks ──
 
@@ -472,8 +473,18 @@ describe("Mounted-path: run once and view detail", () => {
 
 describe("Step rows: human labels and receipt refs", () => {
   it("renders effect kind as human label, not machine token", async () => {
+    // PHILO-9-03 (F3): the counts are the run's own (phase_results), never
+    // the phase checkpoint steps.
+    const run = completedRunFixture({
+      summary: {
+        outcome: "completed",
+        phases_completed: ["observe", "compare", "propose", "act", "verify", "record"],
+        phase_results: { observe: { coverage: { "native:meetings": { state: "ok" } } } },
+      },
+    });
     setupStewardPosture({
-      listRuns: [completedRunFixture()],
+      listRuns: [run],
+      runDetail: { run, steps: stepsForCompletedRun() },
     });
     render(<WindowHarness scope="project:p1" />);
 
@@ -1542,5 +1553,89 @@ describe("Model chip honesty: only draft_update wears the MODEL egress badge", (
     expect(title).toContain("Settings");
     expect(title).toContain("Models");
     expect(title).toContain("deterministic");
+  });
+});
+
+// ── PHILO-9-03 (F3): the counts are the run's; the review; no effect allowed ──
+
+describe("PHILO-9-03 F3: the steward face tells what the run did", () => {
+  function stewardRun(act: Record<string, unknown>) {
+    return completedRunFixture({
+      summary: {
+        outcome: "completed",
+        phases_completed: ["observe", "compare", "propose", "act", "verify", "record"],
+        phase_results: {
+          observe: { coverage: { a: {}, b: {}, c: {}, d: {} } },
+          compare: { review_id: "prev_1", proposal_count: 0 },
+          act,
+        },
+      },
+    });
+  }
+  const phaseOnly = ["observe", "compare", "propose", "act", "verify", "record"].map((phase, i) => ({
+    id: `s${i}`, phase, seq: i, state: "completed", effect_kind: `phase:${phase}`,
+    idempotency_key: `k${i}`, expected: {}, observed: {}, receipt: {}, error: null,
+  }));
+
+  it("a run with nothing allowed says so, counts no checkpoint as an effect, and shows its review", async () => {
+    const run = stewardRun({
+      actions_taken: 0, effect_receipts: [],
+      effects_skipped: [{ effect_kind: "draft_update", reason: "not_in_eligible_effect_kinds" }],
+    });
+    setupStewardPosture({ listRuns: [run], runDetail: { run, steps: phaseOnly } });
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
+    await waitFor(() => screen.getByTestId("steward-run-outcome"));
+    const plan = screen.getByTestId("steward-run-plan").textContent ?? "";
+    expect(plan).toContain("4 sources");
+    expect(plan).toContain("review opened");
+    expect(plan).toContain("no effect allowed");
+    expect(plan).not.toMatch(/1 effect/);
+    expect(screen.getByTestId("steward-run-review").getAttribute("data-review-id")).toBe("prev_1");
+    expect(screen.getByTestId("steward-no-effect-allowed").textContent).toContain("NO EFFECT ALLOWED");
+  });
+
+  it("a refused start is named by its code (steward_policy_required)", async () => {
+    setupStewardPosture({ listRuns: [] });
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
+      if (url.match(/\/steward\/runs$/) && init?.method === "POST") {
+        return Promise.reject(new ApiError(409, "refused", { code: "steward_policy_required", error_code: "steward_policy_required" }));
+      }
+      return base(url, init);
+    });
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    fireEvent.click(await screen.findByTestId("steward-verb-run"));
+    const refused = await screen.findByTestId("steward-run-refused");
+    expect(refused.getAttribute("data-code")).toBe("steward_policy_required");
+    expect(refused.textContent).toContain("REFUSED");
+    expect(refused.textContent).toContain("NO SAVED POLICY");
+  });
+});
+
+// ── PHILO-9-03 (F15, UX-CANON A.11): no verb without an action ──
+
+describe("PHILO-9-03 F15: a suggested source row offers no dead verb", () => {
+  it("the watch source row with `suggested` set draws no Button", async () => {
+    setupStewardPosture();
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
+      if (url.includes("/room") && !url.includes("/room/read")) {
+        return Promise.resolve(roomResponse({
+          sources: {
+            state: "ok", count: 1, nextCheckAt: null,
+            items: [{ watchId: "w1", provider: "github", scope: "acme/ledger", tokens: [], state: "live",
+                      host: "github.com", suggested: true }],
+          },
+        }));
+      }
+      return base(url, init);
+    });
+    render(<WindowHarness scope="project:p1" />);
+    const row = await screen.findByTestId("source-suggested-row");
+    expect(row.textContent).toContain("SUGGESTED");
+    expect(row.querySelectorAll("button").length).toBe(0);
   });
 });

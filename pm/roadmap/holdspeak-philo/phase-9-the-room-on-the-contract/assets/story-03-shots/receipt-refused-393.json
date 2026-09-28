@@ -1,0 +1,35 @@
+{
+  "face": {
+    "code": "update_not_published",
+    "lead": "failure",
+    "text": "✗ MARK DELIVERED ✗ REFUSED NOT PUBLISHED"
+  },
+  "hub": [
+    {
+      "at": 1790613433.83497,
+      "caller": null,
+      "id": "op_4cf10e5086864b0f9b0ed90f7f3fefc9",
+      "identity": "owner-session",
+      "label": "project.mark_update_delivered",
+      "op": "mark_update_delivered",
+      "origin": null,
+      "outcome": "refused",
+      "reason": "update_not_published",
+      "timestamp": 1790613433.83497,
+      "title": "project.mark_update_delivered"
+    },
+    {
+      "at": 1790613433.818321,
+      "caller": null,
+      "id": "9fe5198a-230c-455a-b3bd-8129b84abe21",
+      "identity": null,
+      "label": "ProjectService.create_project",
+      "op": "create_project",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1790613433.818321,
+      "title": "ProjectService.create_project"
+    }
+  ]
+}

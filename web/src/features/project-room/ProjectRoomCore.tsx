@@ -65,9 +65,9 @@ import type {
   NudgeCardState,
   NudgeCardAction,
 } from "./model";
-import { lifecycleLabel, resolveHealthRows, nudgeCardReducer, formatDays } from "./model";
+import { lifecycleLabel, resolveHealthRows, nudgeCardReducer, formatDays, healthReasonWords, needsYouWhyWords } from "./model";
 import { StringGadget, CycleGadget } from "../../desk/surface/gadgets";
-import { egressFor, egressForEvent, receiptLabel } from "../../desk/surface/egress";
+import { egressFor, egressForEvent, receiptFace, receiptLabel, refusalWord } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
 import { useReviewController } from "./review/useReviewController";
 import { ReviewPosture } from "./review/ReviewPosture";
@@ -261,7 +261,7 @@ function RoomHeadline({
       data-testid="room-headline"
       data-accent={isAccent || undefined}
     >
-      {count > 0 ? `${count} need you` : "Nothing needs you"}
+      {count === 1 ? "1 needs you" : count > 0 ? `${count} need you` : "Nothing needs you"}
     </span>
   );
 }
@@ -319,7 +319,7 @@ function RoomHead({
           />
         ) : null}
         {health?.reason ? (
-          <span className="surface-token room-chip-faint">{health.reason}</span>
+          <span className="surface-token room-chip-faint" data-testid="room-health-reason">{healthReasonWords(health)}</span>
         ) : null}
         {target?.targetAt ? (
           <span
@@ -884,7 +884,7 @@ function NeedsYouSection({
                     data-tone={severityTone(item.severity)}
                     data-testid="needs-you-why"
                   >
-                    {item.why}
+                    {needsYouWhyWords(item)}
                   </span>
                 }
                 trailing={
@@ -899,6 +899,146 @@ function NeedsYouSection({
               />
             );
           })}
+        </ul>
+      </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
+/* ── ITEMS section (PHILO-9-03, the Q3 ruling; the ratified items canvas) ──
+ * The project's milestones and risks (and any other item), read from the
+ * existing `GET /api/projects/{id}/items`. No Add control: items enter by
+ * owner-authenticated MCP (`project.item.create`). No verbs on a row.
+ * Order: late milestones first (most late first), then open risks (by
+ * severity), then planned milestones by date, then missed, then the closed
+ * rest. Zero items (the read succeeded): the section is omitted. A failed
+ * read is ITEMS UNAVAILABLE with Retry, never empty. */
+
+type ItemRow = {
+  id: string;
+  item_type: string;
+  title: string;
+  lifecycle: string;
+  severity: string | null;
+  due_at: string | null;
+  details_json: string | null;
+};
+
+const ITEM_MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+function dayNumber(ymd: string): number {
+  const [y, m, d] = ymd.slice(0, 10).split("-").map(Number);
+  return Math.round(new Date(y, m - 1, d).getTime() / 86_400_000);
+}
+function todayNumber(): number {
+  const n = new Date();
+  return Math.round(new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime() / 86_400_000);
+}
+function dueWord(ymd: string): string {
+  const [, m, d] = ymd.slice(0, 10).split("-").map(Number);
+  return `DUE ${ITEM_MONTHS[m - 1]} ${d}`;
+}
+/** Days late for a planned milestone past its date; 0 otherwise. */
+function daysLate(item: ItemRow): number {
+  if (item.item_type !== "milestone" || item.lifecycle !== "planned" || !item.due_at) return 0;
+  return Math.max(0, todayNumber() - dayNumber(item.due_at));
+}
+const CLOSED = new Set(["reached", "missed", "dropped", "mitigated", "accepted", "closed", "resolved", "retired", "done"]);
+const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+
+function itemRank(item: ItemRow): [number, number] {
+  const late = daysLate(item);
+  if (late > 0) return [0, -late];
+  if (item.lifecycle === "missed") return [3, 0];
+  if (CLOSED.has(item.lifecycle)) return [4, 0];
+  if (item.item_type === "risk") return [1, SEVERITY_ORDER[item.severity ?? ""] ?? 9];
+  return [2, item.due_at ? dayNumber(item.due_at) : Number.MAX_SAFE_INTEGER];
+}
+
+function ItemCells({ item }: { item: ItemRow }) {
+  const late = daysLate(item);
+  let details: Record<string, unknown> = {};
+  try { details = item.details_json ? JSON.parse(item.details_json) : {}; } catch { details = {}; }
+  const tokens: { text: string; tone?: string }[] = [{ text: item.item_type.toUpperCase() }];
+  if (item.item_type === "risk") {
+    if (details.likelihood) tokens.push({ text: `LIKELIHOOD ${String(details.likelihood).toUpperCase()}` });
+    if (details.impact) tokens.push({ text: `IMPACT ${String(details.impact).toUpperCase()}` });
+  }
+  if (item.due_at) tokens.push({ text: dueWord(item.due_at) });
+  if (late > 0) tokens.push({ text: `${pluralize(late, "DAY", "DAYS")} LATE`, tone: "danger" });
+  else if (item.lifecycle !== "planned" && item.lifecycle !== "open") tokens.push({ text: item.lifecycle.toUpperCase(), tone: item.lifecycle === "missed" ? "danger" : undefined });
+  return (
+    <>
+      {tokens.map((t, i) => (
+        <span key={i} className="surface-token" data-chip data-tone={t.tone} data-testid="item-token">
+          {t.text}
+        </span>
+      ))}
+    </>
+  );
+}
+
+function itemLead(item: ItemRow) {
+  if (daysLate(item) > 0) return <StateChip state="failure" label="" icon="●" />;
+  // Missed is a failure, dropped is idle; only a reached or resolved item
+  // earns the success check (Codex Astra canvases r1 F7).
+  if (item.lifecycle === "missed") return <StateChip state="failure" label="" icon="✗" />;
+  if (item.lifecycle === "dropped") return <StateChip state="idle" label="" icon="—" />;
+  if (CLOSED.has(item.lifecycle)) return <StateChip state="success" label="" icon="✓" />;
+  if (item.item_type === "risk") return <StateChip state="warning" label="" icon="⚠" />;
+  return <StateChip state="idle" label="" icon="○" />;
+}
+
+function ItemsSection({ projectId, revision }: { projectId: string; revision: number }) {
+  const [items, setItems] = useState<ItemRow[] | null>(null);
+  // A failed read is UNAVAILABLE, never empty (Codex Astra canvases r1 F7).
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let live = true;
+    apiFetch<{ items: ItemRow[] }>(`/api/projects/${encodeURIComponent(projectId)}/items?limit=200`)
+      .then((r) => { if (live) { setFailed(false); setItems(r.items ?? []); } })
+      .catch(() => { if (live) { setFailed(true); setItems(null); } });
+    return () => { live = false; };
+  }, [projectId, revision, attempt]);
+  if (failed) {
+    return (
+      <SurfaceSection
+        label="ITEMS"
+        actions={
+          <Button dense variant="ghost" onClick={() => setAttempt((n) => n + 1)} data-testid="items-retry">
+            Retry
+          </Button>
+        }
+      >
+        <span data-testid="items-unavailable">
+          <StateChip state="unreachable" label="ITEMS UNAVAILABLE" />
+        </span>
+      </SurfaceSection>
+    );
+  }
+  if (items === null) return null;
+  if (items.length === 0) return null;
+  const sorted = [...items].sort((a, b) => {
+    const [ra, sa] = itemRank(a);
+    const [rb, sb] = itemRank(b);
+    return ra - rb || sa - sb || a.title.localeCompare(b.title);
+  });
+  return (
+    <SurfaceSection label={countLabel("ITEMS", items.length)}>
+      <SurfaceLedger count="" cols="room">
+        <ul className="surface-ledger-rows" data-testid="items-section">
+          {sorted.map((item) => (
+            <SurfaceLedgerRow
+              key={item.id}
+              data-testid="item-row"
+              expands={false}
+              wrap
+              lead={itemLead(item)}
+              primary={<span className="surface-primary">{item.title}</span>}
+              cells={<ItemCells item={item} />}
+            />
+          ))}
         </ul>
       </SurfaceLedger>
     </SurfaceSection>
@@ -1040,6 +1180,11 @@ function SourcesSection({
             }
 
             if (src.suggested) {
+              // PHILO-9-03 (F15, UX-CANON A.11): this Add had no action -- a
+              // verb that does nothing is a lie. The hub's source read never
+              // sets `suggested` (project_service.py: every source item is
+              // `suggested: False`); a suggestion is added from the SUGGESTED
+              // rows above (Add / Dismiss, wired). The verb is withheld.
               return (
                 <SurfaceLedgerRow
                   key={src.watchId}
@@ -1047,7 +1192,7 @@ function SourcesSection({
                   primary={<span className="surface-primary">{src.scope}</span>}
                   wrap
                   cells={<span className="surface-token room-chip-faint">SUGGESTED</span>}
-                  trailing={<Button dense variant="ghost">Add</Button>}
+                  data-testid="source-suggested-row"
                 />
               );
             }
@@ -1139,18 +1284,29 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
           {items.map((item) => {
             const egress = egressForEvent({ origin: item.origin, caller: item.caller });
             const label = receiptLabel({ op: item.op, title: item.title, outcome: item.outcome });
+            // PHILO-9-03 (Codex Astra r1 finding 1): the row says what
+            // happened -- a refused write is ✗ REFUSED + the plain reason,
+            // never a success chip.
+            const face = receiptFace(item.outcome);
             return (
               <SurfaceLedgerRow
                 key={item.id}
-                lead={<StateChip state="success" label="" icon={"●"} />}
-                primary={<span className="surface-primary">{label}</span>}
+                lead={<StateChip state={face.state} label="" icon={face.icon} />}
+                primary={
+                  <span className="surface-primary" data-outcome={item.outcome || "ok"} data-code={item.reason ?? undefined}>
+                    {label}
+                  </span>
+                }
                 wrap
                 expands={false}
                 data-testid="receipt-row"
                 cells={
                   <>
-                    {item.outcome && item.outcome !== "ok" ? (
-                      <span className="surface-token">{item.outcome.toUpperCase()}</span>
+                    {face.word ? (
+                      <span data-testid="receipt-outcome"><StateChip state={face.state} label={face.word} /></span>
+                    ) : null}
+                    {face.word && item.reason ? (
+                      <span className="surface-token" data-chip data-testid="receipt-reason">{refusalWord(item.reason)}</span>
                     ) : null}
                     {egress.label ? (
                       <EgressChip label={egress.label} scope={egress.scope} data-testid="receipt-egress" />
@@ -1952,7 +2108,13 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     return (
       <>
         {hero ? hero(<Button dense variant="ghost" onClick={handleRefresh}>Refresh</Button>) : null}
-        <StewardPosture ctrl={stewardCtrl} />
+        <StewardPosture
+          ctrl={stewardCtrl}
+          onOpenReview={(reviewId: string) => {
+            stewardCtrl.exitSteward();
+            void reviewCtrl.enterReview(reviewId);
+          }}
+        />
       </>
     );
   }
@@ -2016,6 +2178,11 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
               <div className="room-section-rise" style={{ animationDelay: "40ms" }}>
                 <NeedsYouSection room={ctrl.room} ctrl={ctrl} reviewCtrl={reviewCtrl} pendingCount={pendingCount} />
               </div>
+              {/* PHILO-9-03 (the Q3 ruling, the ratified items canvas): ITEMS sits
+                  right after NEEDS YOU -- the plan he reads after what needs him. */}
+              <div className="room-section-rise" style={{ animationDelay: "50ms" }} data-section="items">
+                <ItemsSection projectId={ctrl.projectId} revision={ctrl.room.revision} />
+              </div>
               {/* HS-200-41 F5: the saved work is a SECTION in the body, and it
                   sits HERE — directly after NEEDS YOU. Unfinished work IS
                   attention, so it belongs in the reading path next to the
@@ -2045,7 +2212,8 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
               <div className="room-section-rise" style={{ animationDelay: "180ms" }}>
                 <RoomBriefsSection prepare={prepareCtrl} />
               </div>
-              {/* Condition 7: ask well sticky at the foot at ALL widths */}
+              {/* Condition 7: ask well sticky at the foot of a wide window; in the
+                  flow at a narrow one (PHILO-9-03 F10, project-room.css). */}
               <div className="room-section-rise room-ask-container" style={{ animationDelay: "200ms" }}>
                 <RoomAskWell
                   ask={askCtrl}

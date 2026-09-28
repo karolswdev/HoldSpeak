@@ -284,6 +284,8 @@ export type RoomHealthData = {
   reason: string | null;
   inputs: {
     overdue: number;
+    /** PHILO-9-01 (F2): how many of `overdue` are planned milestones past their date. */
+    overdueMilestones: number;
     ciFailing: boolean;
     reviewWaitingDays: number | null;
     targetPassed: boolean;
@@ -422,6 +424,9 @@ export type RoomReceiptItem = {
   op: string;
   title: string;
   outcome: string;
+  /** PHILO-9-03: the hub's named outcome of a refused or failed write
+   *  (e.g. `update_not_published`); null on success. */
+  reason: string | null;
   timestamp: string;
   origin: string | null;
   caller: string | null;
@@ -703,6 +708,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
         reason: s.reason != null ? String(s.reason) : null,
         inputs: {
           overdue: Number((s.inputs as Record<string, unknown> | undefined)?.overdue ?? 0),
+          overdueMilestones: Number((s.inputs as Record<string, unknown> | undefined)?.overdueMilestones ?? 0),
           ciFailing: Boolean((s.inputs as Record<string, unknown> | undefined)?.ciFailing),
           reviewWaitingDays: (s.inputs as Record<string, unknown> | undefined)?.reviewWaitingDays != null
             ? Number((s.inputs as Record<string, unknown>).reviewWaitingDays) : null,
@@ -781,6 +787,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             op: String(r.op ?? r.method ?? ""),
             title: String(r.title ?? ""),
             outcome: String(r.outcome ?? ""),
+            reason: typeof r.reason === "string" && r.reason ? r.reason : null,
             timestamp: String(r.timestamp ?? r.created_at ?? ""),
             origin: typeof r.origin === "string" ? r.origin : null,
             caller: typeof r.caller === "string" ? r.caller : null,
@@ -1058,4 +1065,31 @@ export function nudgeCardReducer(
     default:
       return state;
   }
+}
+
+/* ── PHILO-9-03 (Muad'Dib's ruling 3, 2026-09-28): build what was ratified ──
+ * The items canvas the owner ratified says `1 MILESTONE LATE` (the health
+ * reason) and `MILESTONE · 7 DAYS LATE` (the NEEDS YOU why). The hub's own
+ * words (`1 OVERDUE`, `OVERDUE · 7 DAYS`) stay unchanged over MCP; the face
+ * maps them from the hub's fields. Anything else passes through untouched. */
+
+/** The health reason as the face says it. */
+export function healthReasonWords(health: Pick<RoomHealthData, "reason" | "inputs">): string | null {
+  const reason = health.reason;
+  if (!reason) return reason;
+  const m = /^(\d+) OVERDUE$/.exec(reason.trim());
+  const late = health.inputs?.overdueMilestones ?? 0;
+  if (m && late > 0 && Number(m[1]) === late) {
+    return `${late} ${late === 1 ? "MILESTONE" : "MILESTONES"} LATE`;
+  }
+  return reason;
+}
+
+/** A NEEDS YOU row's why as the face says it. */
+export function needsYouWhyWords(item: { source: string; kind?: string; why: string }): string {
+  if (item.source === "item" && item.kind === "milestone") {
+    const m = /^OVERDUE · (\d+ DAYS?)$/.exec(item.why.trim());
+    if (m) return `MILESTONE · ${m[1]} LATE`;
+  }
+  return item.why;
 }

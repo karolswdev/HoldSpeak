@@ -3,7 +3,7 @@
 // separate busy flags, polling on non-terminal states, cleanup on unmount.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { readableError } from "../../../lib/api";
+import { ApiError, readableError } from "../../../lib/api";
 import type { StewardRun, StewardStep, StewardPolicy, StewardWatch } from "./model";
 import { isTerminal, isActive } from "./model";
 import * as stewardApi from "./api";
@@ -23,6 +23,10 @@ export function useStewardController(
   const [runs, setRuns] = useState<StewardRun[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // PHILO-9-03 (the steward beat's face half): a start the hub REFUSED with a
+  // named code (e.g. `steward_policy_required`) is said by its code, never a
+  // generic failure; cleared by the next press.
+  const [runRefusal, setRunRefusal] = useState("");
 
   // ── Detail state (single run view) ──
   const [currentRun, setCurrentRun] = useState<StewardRun | null>(null);
@@ -156,6 +160,7 @@ export function useStewardController(
     if (!projectId) return;
     setRunBusy(true);
     setError("");
+    setRunRefusal("");
     try {
       const result = await stewardApi.startRun(projectId);
       if (!result.success) {
@@ -176,6 +181,13 @@ export function useStewardController(
         startPolling(result.runId);
       }
     } catch (reason) {
+      const payload = reason instanceof ApiError ? (reason.payload as Record<string, unknown> | null) : null;
+      const code = String(payload?.error_code ?? payload?.code ?? "");
+      if (reason instanceof ApiError && reason.status >= 400 && reason.status < 500 && code
+          && code !== "active_run_exists") {
+        setRunRefusal(code);
+        return;
+      }
       // Check for 409 active_run_exists
       const msg = readableError(reason);
       if (msg.includes("active") || msg.includes("409")) {
@@ -357,6 +369,7 @@ export function useStewardController(
     posture,
     enterSteward,
     exitSteward,
+    runRefusal,
     backToList,
     enterPolicy,
 

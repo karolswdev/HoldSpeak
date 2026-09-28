@@ -194,3 +194,17 @@
   align-items: center;
   gap: var(--space-1);
 }
+
+/* PHILO-9-03 (F3): what the run did -- the review it opened, "no effect
+   allowed" -- and a refused start named by its code. */
+.steward-run-outcome,
+.steward-run-review,
+.steward-run-refused {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.steward-run-outcome {
+  margin: 6px 0;
+}

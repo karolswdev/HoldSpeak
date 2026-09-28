@@ -111,15 +111,20 @@
 /* ── Markdown formatting rail ── */
 .desk-editor {
   display: grid;
+  /* PHILO-9-03: one shrinkable column; an auto column took the editor
+     content's width and the rail ran past the body at a narrow window. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-1);
   min-width: 0;
 }
 .desk-editor-toolbar {
   display: flex;
   align-items: center;
+  /* PHILO-9-03: the rail wraps inside the body (it scrolled sideways). */
+  flex-wrap: wrap;
   gap: 3px;
   min-width: 0;
-  overflow-x: auto;
+  overflow-x: visible;
   padding: 4px;
   border: 1px solid var(--border);
   background: var(--surface-2);
@@ -131,7 +136,7 @@
   min-width: 28px;
   justify-content: center;
   padding: 0 7px;
-  font: 11px/1 var(--font-mono);
+  font: var(--desk-surface-label-size)/1 var(--font-mono); /* PHILO-9-03: 12 px floor */
 }
 .desk-editor-toolbar strong,
 .desk-editor-toolbar em {

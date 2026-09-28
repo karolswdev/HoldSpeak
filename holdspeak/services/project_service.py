@@ -265,6 +265,78 @@ ROOM_WRITE_METHODS: frozenset[str] = frozenset({
 })
 
 
+#: PHILO-9-03 (F7): admitted Room operations whose write is a ProjectService
+#: call -- already a pipeline receipt, so the kernel read skips them.
+_SERVICE_OBSERVED_OPERATIONS: frozenset[str] = frozenset({
+    "project.create", "project.archive", "project.restore", "project.update",
+    "project.link", "project.unlink",
+})
+_SERVICE_OBSERVED_PREFIXES: tuple[str, ...] = ("project.item.", "project.resource.", "project.door.")
+
+
+#: PHILO-9-03 (Codex Astra r2 finding 3): where each Room write's PRODUCER
+#: writes the project's identity -- a structured field, never any value in the
+#: payload (a title equal to another project's id is free text). The census
+#: fence (tests/unit/test_philo9_03_receipt_scope.py) holds every method of
+#: ROOM_WRITE_METHODS to exactly one entry here.
+#:   ("args", "project_id")   the call's own ``project_id`` argument
+#:   ("result", "id")         the created project's own id
+#:   ("result", "project_id") the returned record's ``project_id`` field
+_RECEIPT_SCOPE: dict[str, tuple[str, str]] = {
+    "create_project": ("result", "id"),
+    "create_from_setup": ("result", "id"),
+    **{m: ("args", "project_id") for m in (
+        "update_project", "archive_project", "restore_project", "add_resource", "remove_resource",
+        "associate_meeting", "disassociate_meeting", "create_item", "create_item_in_transaction",
+        "update_item", "transition_item", "save_ask")},
+    **{m: ("result", "project_id") for m in (
+        "record_ask_stop", "discard_ask",
+        "update_watch", "pause_watch", "resume_watch", "retire_watch",
+        "test_watch", "baseline_watch", "evaluate_once", "set_rules")},
+}
+
+
+def _top_level(summary: Any) -> dict[str, Any]:
+    """The TOP-LEVEL keys of a JSON object summary, read value by value.
+
+    The observer truncates a long summary (observer.py ``_truncate``), so the
+    object may not parse whole: the keys read before the cut still count; a
+    nested value never does.
+    """
+    if isinstance(summary, dict):
+        return summary
+    if not isinstance(summary, str) or not summary.lstrip().startswith("{"):
+        return {}
+    decoder = json.JSONDecoder()
+    text, out, i = summary.strip(), {}, 1
+    try:
+        while True:
+            while text[i] in " \n\t,":
+                i += 1
+            if text[i] == "}":
+                break
+            key, i = decoder.raw_decode(text, i)
+            while text[i] in " \n\t:":
+                i += 1
+            value, i = decoder.raw_decode(text, i)
+            out[str(key)] = value
+    except (ValueError, IndexError):
+        pass
+    return out
+
+
+def _receipt_project(method: str, args_summary: Any, result_summary: Any) -> str | None:
+    """The project a pipeline receipt belongs to, from the producer's own
+    identity field (``_RECEIPT_SCOPE``); ``None`` when the method is not a
+    Room write or the field is absent."""
+    where = _RECEIPT_SCOPE.get(method)
+    if where is None:
+        return None
+    side, key = where
+    value = _top_level(args_summary if side == "args" else result_summary).get(key)
+    return value if isinstance(value, str) else None
+
+
 def _count_unit(count: int, unit: str) -> str:
     """``1 DAY`` / ``2 DAYS`` -- HS-200-16.
 
@@ -2144,11 +2216,36 @@ class ProjectService:
             rows = conn.execute(
                 "SELECT event_id, timestamp, service, method, "
                 "       origin, caller, caller_identity, "
-                "       result_summary, error "
+                "       args_summary, result_summary, error "
                 "FROM pipeline_events "
-                f"WHERE args_summary LIKE ? AND method IN ({marks}) "
+                # PHILO-9-03 (F7; Codex Astra r2 finding 3): a write names its
+                # project in its arguments or in its result (a create, a
+                # watch's record); _RECEIPT_SCOPE below says which, exactly.
+                f"WHERE method IN ({marks}) AND (args_summary LIKE ? OR result_summary LIKE ?) "
                 "ORDER BY timestamp DESC LIMIT ?",
-                (f"%{project_id}%", *writes, _LIMIT),
+                (*writes, f"%{project_id}%", f"%{project_id}%", _LIMIT * 5),
+            ).fetchall()
+            # PHILO-9-03 (Codex Astra r1 finding 3, r2 finding 3): the LIKE
+            # above is only a prefilter. A receipt belongs to this Room when
+            # its PRODUCER's project-identity field is this project's id
+            # (_RECEIPT_SCOPE) -- never because some value in the payload (a
+            # name, a title) happens to equal or contain it.
+            rows = [row for row in rows if _receipt_project(
+                str(row["method"]), row["args_summary"], row["result_summary"]) == project_id]
+            # PHILO-9-03 (F7): the Room's admitted writes outside the observed
+            # services (publish, delivery, the steward's run, the review) are
+            # kernel receipts, not pipeline events: read them by the target
+            # the operation named -- the project, one of its updates or runs.
+            kernel_rows = conn.execute(
+                "SELECT o.operation_id, o.name, o.principal_kind, o.principal_identity, "
+                "       r.state, r.outcome, r.created_at "
+                "FROM kernel_operations o JOIN kernel_receipts r ON r.operation_id = o.operation_id "
+                "WHERE o.parent_operation_id = '' AND ("
+                "   o.target_ref = ? "
+                "   OR o.target_ref IN (SELECT 'project_update:' || id FROM project_updates WHERE project_id = ?) "
+                "   OR o.target_ref IN (SELECT 'steward_run:' || id FROM steward_runs WHERE project_id = ?)) "
+                "ORDER BY r.created_at DESC LIMIT ?",
+                (f"project:{project_id}", project_id, project_id, _LIMIT * 3),
             ).fetchall()
         items = []
         for row in rows:
@@ -2160,13 +2257,38 @@ class ProjectService:
                 "label": f"{row['service']}.{row['method']}",
                 "title": f"{row['service']}.{row['method']}",
                 "outcome": "error" if row["error"] else "ok",
+                "reason": None,
                 "origin": origin_val,
                 "caller": caller_val,
                 "identity": str(row["caller_identity"]) if row["caller_identity"] else None,
                 "at": row["timestamp"],
                 "timestamp": row["timestamp"],
             })
-        return {"items": items}
+        for row in kernel_rows:
+            name = str(row["name"])
+            # A ProjectService write is already its pipeline event above.
+            if name in _SERVICE_OBSERVED_OPERATIONS or name.startswith(_SERVICE_OBSERVED_PREFIXES):
+                continue
+            state = str(row["state"])
+            agent = str(row["principal_kind"]) != "owner"
+            items.append({
+                "id": str(row["operation_id"]),
+                "op": name.removeprefix("project."),
+                "label": name,
+                "title": name,
+                "outcome": "ok" if state == "succeeded" else state,
+                # PHILO-9-03 (Codex Astra r1 finding 1): a refused or failed
+                # write keeps the kernel's named outcome (e.g.
+                # `update_not_published`) so the face can say why.
+                "reason": None if state == "succeeded" else (str(row["outcome"] or "") or None),
+                "origin": None,
+                "caller": str(row["principal_identity"]) if agent else None,
+                "identity": str(row["principal_identity"]) or None,
+                "at": row["created_at"],
+                "timestamp": row["created_at"],
+            })
+        items.sort(key=lambda item: float(item["timestamp"] or 0), reverse=True)
+        return {"items": items[:_LIMIT]}
 
     # ── read marker (HS-169-04) ─────────────────────────────────────
 

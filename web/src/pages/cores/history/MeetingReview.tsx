@@ -22,7 +22,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
-import { openSurfaceOr } from "../../../desk/shell";
+import { openProjectRoom, openSurfaceOr } from "../../../desk/shell";
 import { useRuntimeBus } from "../../../runtime/RuntimeBus";
 import {
   ConfirmVerb,
@@ -270,7 +270,7 @@ export function MeetingReview({
 
   const openProject = () => {
     if (!model?.project) return;
-    openSurfaceOr("project-room", "/projects", model.project.id);
+    openProjectRoom(model.project.id);
   };
 
   // ── derived ──

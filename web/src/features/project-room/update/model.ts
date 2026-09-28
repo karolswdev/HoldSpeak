@@ -88,7 +88,31 @@ export type ProjectUpdate = {
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+  /** PHILO-9-03 (the Q0 ruling, "Several per update"): each confirmation
+   *  that he delivered the published text himself, oldest first. The
+   *  product sends nothing; a draft has none. */
+  deliveries: Delivery[];
 };
+
+/** One row of `project_update_deliveries`, as the update read carries it. */
+export type Delivery = {
+  id: string;
+  updateId: string;
+  deliveredAt: string;
+  deliveredTo: string | null;
+  operationId: string;
+};
+
+export function decodeDelivery(raw: Record<string, unknown>): Delivery {
+  const to = raw.delivered_to != null ? String(raw.delivered_to).trim() : "";
+  return {
+    id: String(raw.id ?? ""),
+    updateId: String(raw.update_id ?? ""),
+    deliveredAt: String(raw.delivered_at ?? ""),
+    deliveredTo: to || null,
+    operationId: String(raw.operation_id ?? ""),
+  };
+}
 
 function decodeSupportRecord(raw: unknown): ClaimSupportRecord | null {
   if (!raw || typeof raw !== "object") return null;
@@ -214,6 +238,9 @@ export function decodeUpdate(raw: Record<string, unknown>): ProjectUpdate {
     createdAt: String(raw.created_at ?? ""),
     updatedAt: String(raw.updated_at ?? ""),
     publishedAt: raw.published_at != null ? String(raw.published_at) : null,
+    deliveries: Array.isArray(raw.deliveries)
+      ? (raw.deliveries as Record<string, unknown>[]).map(decodeDelivery)
+      : [],
   };
 }
 

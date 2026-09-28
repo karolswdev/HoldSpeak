@@ -549,6 +549,8 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
         className="review-posture"
         data-testid="review-posture"
         data-phase="exhausted"
+        data-review-id={ctrl.window?.reviewId}
+        data-review-status={ctrl.window?.status}
         onKeyDown={handleKeyDown}
         tabIndex={-1}
       >
@@ -580,6 +582,8 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
       className="review-posture"
       data-testid="review-posture"
       data-phase="reviewing"
+      data-review-id={ctrl.window?.reviewId}
+      data-review-status={ctrl.window?.status}
       onKeyDown={handleKeyDown}
       tabIndex={-1}
       ref={containerRef}

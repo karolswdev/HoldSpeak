@@ -1,502 +1,502 @@
 {
- "schema_version": 1,
- "atlas_version": "phase9-steward",
- "extends": "docs/internal/philo/graph/atlas.json",
- "source_commit": "aeae7bd81d365b999f9b859307dc368926356545",
- "cases": [
-  {
-   "id": "case.p9.steward.run_receipted",
-   "job": "p9",
-   "edge_ids": [
-    "edge.tool.project_run_steward"
-   ],
-   "state_id": "state.desk_presentation.p9_steward_contract",
-   "applicability": "applicable",
-   "preconditions": [
-    "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
-   ],
-   "setup": [
+  "schema_version": 1,
+  "atlas_version": "phase9-steward",
+  "extends": "docs/internal/philo/graph/atlas.json",
+  "source_commit": "aeae7bd81d365b999f9b859307dc368926356545",
+  "cases": [
     {
-     "kind": "op",
-     "name": "project.create",
-     "args": {
-      "name": "Payments ledger cutover"
-     },
-     "adapter": "mcp-http",
-     "capture_as": "project_id",
-     "capture_path": "project.id",
-     "why": "a bare project (exempt)"
+      "id": "case.p9.steward.run_receipted",
+      "job": "p9",
+      "edge_ids": [
+        "edge.tool.project_run_steward"
+      ],
+      "state_id": "state.desk_presentation.p9_steward_contract",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "project.create",
+          "args": {
+            "name": "Payments ledger cutover"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "project_id",
+          "capture_path": "project.id",
+          "why": "a bare project (exempt)"
+        },
+        {
+          "kind": "op",
+          "name": "project.configure_steward",
+          "args": {
+            "project_id": "{project_id}",
+            "eligible_effect_kinds": [
+              "draft_update"
+            ]
+          },
+          "adapter": "mcp-http",
+          "capture_as": "policy_op",
+          "capture_path": "operation_id",
+          "why": "the owner's policy write (ADMITTED): the steward may draft the update"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "project.run_steward",
+        "args": {
+          "project_id": "{project_id}"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "run_id",
+        "capture_path": "run_id",
+        "capture_more": [
+          {
+            "as": "run_op",
+            "path": "operation_id"
+          }
+        ],
+        "why": "let the steward run now (ADMITTED); the answer is the pending handle"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "run.state",
+              "value": "completed"
+            },
+            {
+              "source": "observe",
+              "path": "operation_id",
+              "value": "{run_op}"
+            },
+            {
+              "source": "observe",
+              "path": "receipt.outcome",
+              "value": "completed"
+            },
+            {
+              "source": "trigger",
+              "path": "receipt",
+              "value": null
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "project.run_steward"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.native_receipts.0.kind",
+              "value": "authority_details"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.native_receipts.0.configure_operation_id",
+              "value": "{policy_op}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "updates",
+              "length": 1
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "project.get_steward_run",
+          "args": {
+            "run_id": "{run_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{run_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "project.list_updates",
+            "args": {
+              "project_id": "{project_id}"
+            }
+          }
+        ],
+        "words": "the start answers its run and its operation with no receipt yet; the run ends completed with ONE succeeded receipt that names the owner's policy operation; the draft effect wrote the update"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
     },
     {
-     "kind": "op",
-     "name": "project.configure_steward",
-     "args": {
-      "project_id": "{project_id}",
-      "eligible_effect_kinds": [
-       "draft_update"
+      "id": "case.p9.update.mark_delivered_receipted",
+      "job": "p9",
+      "edge_ids": [
+        "edge.tool.project_publish_update"
+      ],
+      "state_id": "state.desk_presentation.p9_steward_contract",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "project.create",
+          "args": {
+            "name": "Payments ledger cutover"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "project_id",
+          "capture_path": "project.id",
+          "why": "a bare project"
+        },
+        {
+          "kind": "op",
+          "name": "project.draft_update",
+          "args": {
+            "project_id": "{project_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "update_id",
+          "capture_path": "update.id",
+          "why": "draft my update (exempt)"
+        },
+        {
+          "kind": "op",
+          "name": "project.publish_update",
+          "args": {
+            "update_id": "{update_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "publish_op",
+          "capture_path": "operation_id",
+          "why": "publish my update in the Room (ADMITTED)"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "project.mark_update_delivered",
+        "args": {
+          "update_id": "{update_id}",
+          "delivered_to": "Priya",
+          "command_id": "atlas-confirm-1"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "mark_op",
+        "capture_path": "operation_id",
+        "why": "mark it delivered (ADMITTED): one record per confirmation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "updates",
+              "contains": {
+                "id": "{update_id}",
+                "lifecycle": "published"
+              }
+            },
+            {
+              "source": "observe",
+              "path": "updates.0.deliveries",
+              "length": 1
+            },
+            {
+              "source": "observe",
+              "path": "updates.0.deliveries.0.operation_id",
+              "value": "{mark_op}"
+            },
+            {
+              "source": "observe",
+              "path": "updates.0.deliveries.0.delivered_to",
+              "value": "Priya"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "project.mark_update_delivered"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "project.list_updates",
+          "args": {
+            "project_id": "{project_id}",
+            "lifecycle": "published"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{mark_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{publish_op}"
+            }
+          }
+        ],
+        "words": "the published update lists ONE delivery whose operation is the mark's; the mark and the publication each have their succeeded receipt"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p9.project.archive_receipted",
+      "job": "p9",
+      "edge_ids": [
+        "edge.tool.project_archive"
+      ],
+      "state_id": "state.desk_presentation.p9_steward_contract",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "project.create",
+          "args": {
+            "name": "Old initiative"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "project_id",
+          "capture_path": "project.id",
+          "why": "a bare project"
+        },
+        {
+          "kind": "op",
+          "name": "project.configure_steward",
+          "args": {
+            "project_id": "{project_id}",
+            "unattended_enabled": true
+          },
+          "adapter": "mcp-http",
+          "why": "unattended runs on (ADMITTED)"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "project.archive",
+        "args": {
+          "project_id": "{project_id}"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "archive_op",
+        "capture_path": "operation_id",
+        "why": "archive the project (ADMITTED: pauses its watches and turns unattended runs off, F18)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "is_archived",
+              "value": true
+            },
+            {
+              "source": "trigger",
+              "path": "success",
+              "value": true
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "project.archive"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "project.get",
+          "args": {
+            "project_id": "{project_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{archive_op}"
+            }
+          }
+        ],
+        "words": "archive is ONE admitted operation with its succeeded receipt; the project reads archived"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p9.connections.never_checked",
+      "job": "p9",
+      "edge_ids": [
+        "edge.tool.connection_list"
+      ],
+      "state_id": "state.desk_presentation.p9_steward_contract",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser; no connection was ever checked in this HOME."
+      ],
+      "setup": [],
+      "trigger": {
+        "kind": "op",
+        "name": "connection.list",
+        "args": {},
+        "adapter": "mcp-http",
+        "why": "see my connections (a cached read, B1)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "path": "tools",
+              "contains": {
+                "provider_id": "github",
+                "state": "never_checked",
+                "last_checked_at": null
+              }
+            },
+            {
+              "source": "trigger",
+              "path": "tools",
+              "contains": {
+                "provider_id": "confluence",
+                "state": "never_checked"
+              }
+            },
+            {
+              "source": "trigger",
+              "path": "operation_id",
+              "absent": true
+            },
+            {
+              "source": "observe",
+              "path": "tools",
+              "contains": {
+                "provider_id": "github",
+                "state": "never_checked"
+              }
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "connection.list",
+          "args": {}
+        },
+        "reads": [],
+        "words": "a fresh hub's remote connections read never_checked with no check time; the list is a read (no operation, no receipt) and probes nothing"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.p9_steward_contract",
+      "family": "desk_presentation",
+      "values": {
+        "steward": "the steward's run and its children on the kernel contract (PHILO-9-02)",
+        "delivery": "mark delivered, one admitted record per confirmation"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/services/steward_contract.py",
+          "symbol": "def start_run",
+          "line": 209,
+          "claim": "a start is admitted and answers its run and its non-terminal operation at once"
+        },
+        {
+          "path": "holdspeak/services/steward_contract.py",
+          "symbol": "def _close_run",
+          "line": 463,
+          "claim": "the run row and the run operation's one receipt commit in one transaction"
+        },
+        {
+          "path": "holdspeak/services/project_update_service.py",
+          "symbol": "def mark_update_delivered",
+          "line": 1929,
+          "claim": "each mark is its own admitted record, written with its receipt"
+        },
+        {
+          "path": "holdspeak/services/connections_service.py",
+          "symbol": "def list_tools",
+          "line": 163,
+          "claim": "the list is a cached read: no provider call"
+        }
+      ],
+      "reachable_by": [
+        "case.p9.steward.run_receipted",
+        "case.p9.update.mark_delivered_receipted",
+        "case.p9.project.archive_receipted",
+        "case.p9.connections.never_checked"
       ]
-     },
-     "adapter": "mcp-http",
-     "capture_as": "policy_op",
-     "capture_path": "operation_id",
-     "why": "the owner's policy write (ADMITTED): the steward may draft the update"
     }
-   ],
-   "trigger": {
-    "kind": "op",
-    "name": "project.run_steward",
-    "args": {
-     "project_id": "{project_id}"
-    },
-    "adapter": "mcp-http",
-    "capture_as": "run_id",
-    "capture_path": "run_id",
-    "capture_more": [
-     {
-      "as": "run_op",
-      "path": "operation_id"
-     }
-    ],
-    "why": "let the steward run now (ADMITTED); the answer is the pending handle"
-   },
-   "expected": {
-    "predicate": {
-     "kind": "op_facts",
-     "facts": [
-      {
-       "source": "observe",
-       "path": "run.state",
-       "value": "completed"
-      },
-      {
-       "source": "observe",
-       "path": "operation_id",
-       "value": "{run_op}"
-      },
-      {
-       "source": "observe",
-       "path": "receipt.outcome",
-       "value": "completed"
-      },
-      {
-       "source": "trigger",
-       "path": "receipt",
-       "value": null
-      },
-      {
-       "source": "read",
-       "index": 0,
-       "path": "objects.0.operation.name",
-       "value": "project.run_steward"
-      },
-      {
-       "source": "read",
-       "index": 0,
-       "path": "objects.0.receipt.state",
-       "value": "succeeded"
-      },
-      {
-       "source": "read",
-       "index": 0,
-       "path": "objects.0.native_receipts.0.kind",
-       "value": "authority_details"
-      },
-      {
-       "source": "read",
-       "index": 0,
-       "path": "objects.0.native_receipts.0.configure_operation_id",
-       "value": "{policy_op}"
-      },
-      {
-       "source": "read",
-       "index": 1,
-       "path": "updates",
-       "length": 1
-      }
-     ]
-    },
-    "observe_at": {
-     "kind": "op",
-     "name": "project.get_steward_run",
-     "args": {
-      "run_id": "{run_id}"
-     }
-    },
-    "reads": [
-     {
-      "kind": "op",
-      "name": "kernel.receipt.read",
-      "args": {
-       "operation_id": "{run_op}"
-      }
-     },
-     {
-      "kind": "op",
-      "name": "project.list_updates",
-      "args": {
-       "project_id": "{project_id}"
-      }
-     }
-    ],
-    "words": "the start answers its run and its operation with no receipt yet; the run ends completed with ONE succeeded receipt that names the owner's policy operation; the draft effect wrote the update"
-   },
-   "completion_bound_s": 30.0,
-   "viewports": []
-  },
-  {
-   "id": "case.p9.update.mark_delivered_receipted",
-   "job": "p9",
-   "edge_ids": [
-    "edge.tool.project_publish_update"
-   ],
-   "state_id": "state.desk_presentation.p9_steward_contract",
-   "applicability": "applicable",
-   "preconditions": [
-    "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
-   ],
-   "setup": [
+  ],
+  "clocks": [
     {
-     "kind": "op",
-     "name": "project.create",
-     "args": {
-      "name": "Payments ledger cutover"
-     },
-     "adapter": "mcp-http",
-     "capture_as": "project_id",
-     "capture_path": "project.id",
-     "why": "a bare project"
-    },
-    {
-     "kind": "op",
-     "name": "project.draft_update",
-     "args": {
-      "project_id": "{project_id}"
-     },
-     "adapter": "mcp-http",
-     "capture_as": "update_id",
-     "capture_path": "update.id",
-     "why": "draft my update (exempt)"
-    },
-    {
-     "kind": "op",
-     "name": "project.publish_update",
-     "args": {
-      "update_id": "{update_id}"
-     },
-     "adapter": "mcp-http",
-     "capture_as": "publish_op",
-     "capture_path": "operation_id",
-     "why": "publish my update in the Room (ADMITTED)"
+      "id": "clock.python_wall",
+      "source": "datetime.datetime.now() inside the hub process",
+      "mechanism": "none: no PHILO-9-02 case moves a clock",
+      "status": "available",
+      "used_by": []
     }
-   ],
-   "trigger": {
-    "kind": "op",
-    "name": "project.mark_update_delivered",
-    "args": {
-     "update_id": "{update_id}",
-     "delivered_to": "Priya",
-     "command_id": "atlas-confirm-1"
-    },
-    "adapter": "mcp-http",
-    "capture_as": "mark_op",
-    "capture_path": "operation_id",
-    "why": "mark it delivered (ADMITTED): one record per confirmation"
-   },
-   "expected": {
-    "predicate": {
-     "kind": "op_facts",
-     "facts": [
-      {
-       "source": "observe",
-       "path": "updates",
-       "contains": {
-        "id": "{update_id}",
-        "lifecycle": "published"
-       }
-      },
-      {
-       "source": "observe",
-       "path": "updates.0.deliveries",
-       "length": 1
-      },
-      {
-       "source": "observe",
-       "path": "updates.0.deliveries.0.operation_id",
-       "value": "{mark_op}"
-      },
-      {
-       "source": "observe",
-       "path": "updates.0.deliveries.0.delivered_to",
-       "value": "Priya"
-      },
-      {
-       "source": "read",
-       "index": 0,
-       "path": "objects.0.operation.name",
-       "value": "project.mark_update_delivered"
-      },
-      {
-       "source": "read",
-       "index": 0,
-       "path": "objects.0.receipt.state",
-       "value": "succeeded"
-      },
-      {
-       "source": "read",
-       "index": 1,
-       "path": "objects.0.receipt.state",
-       "value": "succeeded"
-      }
-     ]
-    },
-    "observe_at": {
-     "kind": "op",
-     "name": "project.list_updates",
-     "args": {
-      "project_id": "{project_id}",
-      "lifecycle": "published"
-     }
-    },
-    "reads": [
-     {
-      "kind": "op",
-      "name": "kernel.receipt.read",
-      "args": {
-       "operation_id": "{mark_op}"
-      }
-     },
-     {
-      "kind": "op",
-      "name": "kernel.receipt.read",
-      "args": {
-       "operation_id": "{publish_op}"
-      }
-     }
-    ],
-    "words": "the published update lists ONE delivery whose operation is the mark's; the mark and the publication each have their succeeded receipt"
-   },
-   "completion_bound_s": 30.0,
-   "viewports": []
-  },
-  {
-   "id": "case.p9.project.archive_receipted",
-   "job": "p9",
-   "edge_ids": [
-    "edge.tool.project_archive"
-   ],
-   "state_id": "state.desk_presentation.p9_steward_contract",
-   "applicability": "applicable",
-   "preconditions": [
-    "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
-   ],
-   "setup": [
-    {
-     "kind": "op",
-     "name": "project.create",
-     "args": {
-      "name": "Old initiative"
-     },
-     "adapter": "mcp-http",
-     "capture_as": "project_id",
-     "capture_path": "project.id",
-     "why": "a bare project"
-    },
-    {
-     "kind": "op",
-     "name": "project.configure_steward",
-     "args": {
-      "project_id": "{project_id}",
-      "unattended_enabled": true
-     },
-     "adapter": "mcp-http",
-     "why": "unattended runs on (ADMITTED)"
-    }
-   ],
-   "trigger": {
-    "kind": "op",
-    "name": "project.archive",
-    "args": {
-     "project_id": "{project_id}"
-    },
-    "adapter": "mcp-http",
-    "capture_as": "archive_op",
-    "capture_path": "operation_id",
-    "why": "archive the project (ADMITTED: pauses its watches and turns unattended runs off, F18)"
-   },
-   "expected": {
-    "predicate": {
-     "kind": "op_facts",
-     "facts": [
-      {
-       "source": "observe",
-       "path": "is_archived",
-       "value": true
-      },
-      {
-       "source": "trigger",
-       "path": "success",
-       "value": true
-      },
-      {
-       "source": "read",
-       "index": 0,
-       "path": "objects.0.operation.name",
-       "value": "project.archive"
-      },
-      {
-       "source": "read",
-       "index": 0,
-       "path": "objects.0.receipt.state",
-       "value": "succeeded"
-      },
-      {
-       "source": "read",
-       "index": 0,
-       "path": "objects.0.receipt.actor_kind",
-       "value": "owner"
-      }
-     ]
-    },
-    "observe_at": {
-     "kind": "op",
-     "name": "project.get",
-     "args": {
-      "project_id": "{project_id}"
-     }
-    },
-    "reads": [
-     {
-      "kind": "op",
-      "name": "kernel.receipt.read",
-      "args": {
-       "operation_id": "{archive_op}"
-      }
-     }
-    ],
-    "words": "archive is ONE admitted operation with its succeeded receipt; the project reads archived"
-   },
-   "completion_bound_s": 30.0,
-   "viewports": []
-  },
-  {
-   "id": "case.p9.connections.never_checked",
-   "job": "p9",
-   "edge_ids": [
-    "edge.tool.connection_list"
-   ],
-   "state_id": "state.desk_presentation.p9_steward_contract",
-   "applicability": "applicable",
-   "preconditions": [
-    "A fresh isolated hub; no browser; no connection was ever checked in this HOME."
-   ],
-   "setup": [],
-   "trigger": {
-    "kind": "op",
-    "name": "connection.list",
-    "args": {},
-    "adapter": "mcp-http",
-    "why": "see my connections (a cached read, B1)"
-   },
-   "expected": {
-    "predicate": {
-     "kind": "op_facts",
-     "facts": [
-      {
-       "source": "trigger",
-       "path": "tools",
-       "contains": {
-        "provider_id": "github",
-        "state": "never_checked",
-        "last_checked_at": null
-       }
-      },
-      {
-       "source": "trigger",
-       "path": "tools",
-       "contains": {
-        "provider_id": "confluence",
-        "state": "never_checked"
-       }
-      },
-      {
-       "source": "trigger",
-       "path": "operation_id",
-       "absent": true
-      },
-      {
-       "source": "observe",
-       "path": "tools",
-       "contains": {
-        "provider_id": "github",
-        "state": "never_checked"
-       }
-      }
-     ]
-    },
-    "observe_at": {
-     "kind": "op",
-     "name": "connection.list",
-     "args": {}
-    },
-    "reads": [],
-    "words": "a fresh hub's remote connections read never_checked with no check time; the list is a read (no operation, no receipt) and probes nothing"
-   },
-   "completion_bound_s": 30.0,
-   "viewports": []
-  }
- ],
- "states": [
-  {
-   "id": "state.desk_presentation.p9_steward_contract",
-   "family": "desk_presentation",
-   "values": {
-    "steward": "the steward's run and its children on the kernel contract (PHILO-9-02)",
-    "delivery": "mark delivered, one admitted record per confirmation"
-   },
-   "phase1_refs": [],
-   "sources": [
-    {
-     "path": "holdspeak/services/steward_contract.py",
-     "symbol": "def start_run",
-     "line": 209,
-     "claim": "a start is admitted and answers its run and its non-terminal operation at once"
-    },
-    {
-     "path": "holdspeak/services/steward_contract.py",
-     "symbol": "def _close_run",
-     "line": 433,
-     "claim": "the run row and the run operation's one receipt commit in one transaction"
-    },
-    {
-     "path": "holdspeak/services/project_update_service.py",
-     "symbol": "def mark_update_delivered",
-     "line": 1929,
-     "claim": "each mark is its own admitted record, written with its receipt"
-    },
-    {
-     "path": "holdspeak/services/connections_service.py",
-     "symbol": "def list_tools",
-     "line": 163,
-     "claim": "the list is a cached read: no provider call"
-    }
-   ],
-   "reachable_by": [
-    "case.p9.steward.run_receipted",
-    "case.p9.update.mark_delivered_receipted",
-    "case.p9.project.archive_receipted",
-    "case.p9.connections.never_checked"
-   ]
-  }
- ],
- "clocks": [
-  {
-   "id": "clock.python_wall",
-   "source": "datetime.datetime.now() inside the hub process",
-   "mechanism": "none: no PHILO-9-02 case moves a clock",
-   "status": "available",
-   "used_by": []
-  }
- ],
- "excluded": [],
- "council_readings": []
+  ],
+  "excluded": [],
+  "council_readings": []
 }
