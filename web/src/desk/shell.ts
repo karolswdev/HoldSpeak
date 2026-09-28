@@ -100,6 +100,18 @@ export function openSurfaceOr(
   shellNavigate?.(fallbackHref);
 }
 
+/** PHILO-9-03 (F1): the ONE key that opens a project's Room. The Room is the
+ * Desk memory surface scoped `project:<id>` (applications.ts
+ * `open-project-memory`); the old key `project-room` was registered nowhere
+ * and its fallback `/projects` is no route, so eight callers opened nothing.
+ * An empty id opens Desk memory unscoped, never a dead route. */
+export const PROJECT_ROOM_KEY = "open-project-memory";
+
+export function openProjectRoom(projectId: string | null | undefined): void {
+  const id = (projectId ?? "").trim();
+  openSurfaceOr(PROJECT_ROOM_KEY, "/project-memory", id ? `project:${id}` : undefined);
+}
+
 /** Open a desk primitive's pull-out. On the desk this opens in place; on
  * a flat route it walks home first (`/?open=<ref>` is the arrival path). */
 export function openPrimitive(ref: string): void {

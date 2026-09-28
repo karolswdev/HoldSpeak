@@ -67,19 +67,26 @@ export function useReviewController(
     : false;
 
   // ── Open/enter review ──
-  const enterReview = useCallback(async () => {
+  // PHILO-9-03 (Codex Astra r1 finding 2): with a reviewId the posture opens
+  // THAT review by its identity (GET), never a new one; a review that is no
+  // longer open (accepted) is shown read-only, checkpointed, with no verb
+  // that starts work. Without one it opens (or re-enters) the open review.
+  const enterReview = useCallback(async (reviewId?: string) => {
     if (!projectId) return;
     setLoading(true);
     setError("");
     try {
-      const w = await reviewApi.openReview(projectId);
+      const w = reviewId
+        ? await reviewApi.getReview(projectId, reviewId)
+        : await reviewApi.openReview(projectId);
+      const settled = Boolean(reviewId) && w.status !== "" && w.status !== "open";
       setWindow(w);
       setPosture("active");
       setSelectedIndex(0);
       setDispositions(new Map());
       setUndoStack([]);
       setExhausted(false);
-      setCheckpointed(false);
+      setCheckpointed(settled);
       setAcceptedAt(null);
     } catch (reason) {
       setError(readableError(reason));

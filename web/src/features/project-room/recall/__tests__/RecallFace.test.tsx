@@ -7,7 +7,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../../lib/api";
-import { openSurfaceOr } from "../../../../desk/shell";
+import { openProjectRoom, openSurfaceOr } from "../../../../desk/shell";
 import { RecallFace } from "../RecallFace";
 import { displayLine, missLine, searchedToken } from "../model";
 
@@ -18,6 +18,7 @@ vi.mock("../../../../lib/api", async (original) => ({
 vi.mock("../../../../desk/shell", async (original) => ({
   ...await original<typeof import("../../../../desk/shell")>(),
   openSurfaceOr: vi.fn(),
+  openProjectRoom: vi.fn(),
 }));
 vi.mock("../../../../desk/components/MicButton", () => ({
   MicButton: ({ label }: { label: string }) => (
@@ -170,7 +171,8 @@ describe("RecallFace (HS-200-13)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open source: MTG 09-07" }));
     expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/meetings", "meeting:m-sun?segment=2");
     fireEvent.click(screen.getAllByRole("button", { name: "Open the Project: Q4 platform" })[0]);
-    expect(openSurfaceOr).toHaveBeenCalledWith("project-room", "/projects", "project:p-q4");
+    // PHILO-9-03 (F1): the one registered Room key, through openProjectRoom.
+    expect(openProjectRoom).toHaveBeenCalledWith("p-q4");
   });
 
   it("a disputed decision is drawn under DISPUTED, never accented, never carried", async () => {

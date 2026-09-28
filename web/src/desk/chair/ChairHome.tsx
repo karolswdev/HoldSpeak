@@ -11,7 +11,7 @@ import { useDesk } from "../store";
 import { openNewThought } from "../newThought";
 import { BriefEgress, briefReceipt } from "./briefEgress";
 import { generatedLabelLocal } from "../pullouts/views/BriefView";
-import { openSurface, openSurfaceOr, openCoderSession } from "../shell";
+import { openSurface, openSurfaceOr, openCoderSession, openProjectRoom } from "../shell";
 import { reportWriteFailure, clearWriteFailure } from "../hooks/useWriteReceipt";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
@@ -848,7 +848,7 @@ function Arrival() {
     : "";
 
   const openProject = useCallback((projectId: string) => {
-    openSurfaceOr("project-room", "/projects", projectId);
+    openProjectRoom(projectId);
   }, []);
 
   // The owning verb of a coverage gap: `Retry` re-reads the aggregate
@@ -861,7 +861,7 @@ function Arrival() {
       openSurfaceOr("configure-settings", "/settings", "connections");
       return;
     }
-    openSurfaceOr("project-room", "/projects", gap.project_id ?? "");
+    openProjectRoom(gap.project_id);
   }, [readNeedsYou]);
 
   // ── NEXT line: prefer door upcoming (schedule/calendar), fall back to rooms ──
@@ -1773,7 +1773,7 @@ function NeedsYouRow({
                 ) : null}
                 {/* Every projection keeps its OWN way in (A.11): a
                     swallowed obligation with no verb is a lie. */}
-                <SourceVerb source={source} fallbackTitle={item.title} />
+                <SourceVerb source={source} fallbackTitle={item.title} projectId={item.projectId} />
               </li>
             ))}
           </ul>
@@ -1788,9 +1788,11 @@ function NeedsYouRow({
 function SourceVerb({
   source,
   fallbackTitle,
+  projectId,
 }: {
   source: AttentionSource;
   fallbackTitle: string;
+  projectId?: string;
 }) {
   const title = source.title || fallbackTitle;
   const proposalId = source.id?.startsWith("proposal:") ? source.id.slice("proposal:".length) : null;
@@ -1812,7 +1814,7 @@ function SourceVerb({
       <Button
         variant="ghost"
         dense
-        onClick={() => openSurfaceOr("project-room", "/projects", `?focus=proposal:${proposalId}`)}
+        onClick={() => openProjectRoom(projectId)}
         aria-label={`Open: ${title}`}
         data-testid="arrival-source-open"
       >
@@ -1948,13 +1950,7 @@ function NeedsYouRowVerbs({
           <Button
             variant="ghost"
             dense
-            onClick={() =>
-              openSurfaceOr(
-                "project-room",
-                "/projects",
-                `${item.projectId}?focus=proposal:${item.proposalId}`,
-              )
-            }
+            onClick={() => openProjectRoom(item.projectId)}
             aria-label={`Open: ${item.title}`}
             data-testid="arrival-proposal-open"
           >

@@ -93,6 +93,13 @@ export function receiptLabel(event: {
     return "STEWARD RUN";
   }
 
+  // PHILO-9-03 (F7): the owner's confirmation that he delivered an update.
+  // Past tense only when it happened (Codex Astra r1 finding 1): a refused
+  // or failed mark is the attempt, never "MARKED".
+  if (op === "mark_update_delivered") {
+    return receiptFace(event.outcome).state === "success" ? "MARKED DELIVERED" : "MARK DELIVERED";
+  }
+
   // Reads: list_*, get_*, room
   if (op.startsWith("list_")) {
     const noun = op.slice(5).replace(/_/g, " ").toUpperCase();
@@ -108,4 +115,42 @@ export function receiptLabel(event: {
 
   // Unmapped: method in caps, underscores as spaces
   return op.replace(/_/g, " ").toUpperCase();
+}
+
+/** PHILO-9-03: the hub's refusal codes in plain words, one table for every
+ *  face that names a refusal (the delivery line, the steward's start, the
+ *  Room's RECEIPTS). An unknown code is said in its own words. */
+const REFUSAL_WORDS: Record<string, string> = {
+  update_not_published: "NOT PUBLISHED",
+  idempotency_conflict: "ALREADY USED",
+  project_delegation_required: "OWNER ONLY",
+  steward_policy_required: "NO SAVED POLICY",
+  steward_disabled: "STEWARD OFF",
+  cooldown_active: "COOLING DOWN",
+};
+
+export function refusalWord(code: string): string {
+  return REFUSAL_WORDS[code] ?? code.toUpperCase().replace(/_/g, " ");
+}
+
+/** PHILO-9-03 (Codex Astra r1 finding 1, closed as a class): every receipt
+ *  outcome the Room's RECEIPTS can carry, and how it is drawn -- never a
+ *  success chip for anything but a success. */
+export type ReceiptFace = { state: "success" | "failure" | "idle" | "warning"; icon: string; word: string | null };
+
+export function receiptFace(outcome: string | null | undefined): ReceiptFace {
+  switch ((outcome ?? "").toLowerCase()) {
+    case "":
+    case "ok":
+    case "succeeded":
+      return { state: "success", icon: "●", word: null };
+    case "refused":
+      return { state: "failure", icon: "✗", word: "REFUSED" };
+    case "cancelled":
+      return { state: "idle", icon: "—", word: "CANCELLED" };
+    case "indeterminate":
+      return { state: "warning", icon: "⚠", word: "RESULT UNKNOWN" };
+    default: // "error", "failed", and anything the face does not know
+      return { state: "failure", icon: "✗", word: "FAILED" };
+  }
 }

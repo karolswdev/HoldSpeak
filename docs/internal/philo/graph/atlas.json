@@ -10422,7 +10422,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "hasTranscript",
-          "line": 2326,
+          "line": 2322,
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
       ],

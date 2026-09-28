@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** the owner's ratification of the charter (his Q0 and Q3 rulings); the items canvas and the copy-and-confirm canvas, each ratified before its face is built; PHILO-9-02 for the mark-delivered route; PHILO-9-01 for the backend reads (health, NEEDS YOU, RECEIPTS, the Room read); PHILO-9-02's review-id repair (F20) before the steward face can show the review its run opened
 - **Unblocks:** PHILO-9-05, PHILO-9-06
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks
@@ -30,14 +30,14 @@
 
 Per the charter's red-first matrix: behavioural red where affected, preservation green where not.
 
-- [ ] Every caller of the Room opens the Room for its project, one caller per face fenced, at 1440 and 393 (red on main at both: the meeting's project button).
-- [ ] A past-due milestone and a risk show in the Room as the ratified canvas draws them, at both widths (red on main at both).
-- [ ] Mark delivered is offered on a published update when the window is reopened after Copy (the return state, R4-3) and after an earlier delivery; Copy then Mark delivered (To "Priya"), then again (To "Tomas"), writes two rows — read back from the hub in the same fence — and the face shows both deliveries and the ratified DELIVERED chip at 1440 and 393; a double-click on one press yields one row, and the rendered transition from pending to delivered is fenced (Codex Astra r5); a mistaken delivery followed by a correct one shows both, the count includes both; a draft offers no Mark delivered; no egress badge appears (a new capability: no red claimed; readbacks and a mutation).
-- [ ] The steward face's source, proposal and effect counts equal the hub's run, read in the same fence; the opened review is shown; a run with nothing allowed says so (red on main at both widths: "Act 1 effect" for 0 actions).
-- [ ] RECEIPTS lists the writes (create, publish, steward run), as rendered after each transition (red on main at both widths).
-- [ ] At 393 `elementFromPoint` at the Steward verb's centre hits the verb (red on main: `room-ask-well`); at 1440 preservation green.
-- [ ] The update list's words are right for each lifecycle (red on main at both widths).
-- [ ] Every verb on the touched faces is the library Button; the web baseline has zero branch-new.
+- [x] Every caller of the Room opens the Room for its project, one caller per face fenced, at 1440 and 393 (red on main at both: the meeting's project button).
+- [x] A past-due milestone and a risk show in the Room as the ratified canvas draws them, at both widths (red on main at both).
+- [x] Mark delivered is offered on a published update when the window is reopened after Copy (the return state, R4-3) and after an earlier delivery; Copy then Mark delivered (To "Priya"), then again (To "Tomas"), writes two rows — read back from the hub in the same fence — and the face shows both deliveries and the ratified DELIVERED chip at 1440 and 393; a double-click on one press yields one row, and the rendered transition from pending to delivered is fenced (Codex Astra r5); a mistaken delivery followed by a correct one shows both, the count includes both; a draft offers no Mark delivered; no egress badge appears (a new capability: no red claimed; readbacks and a mutation).
+- [x] The steward face's source, proposal and effect counts equal the hub's run, read in the same fence; the opened review is shown; a run with nothing allowed says so (red on main at both widths: "Act 1 effect" for 0 actions).
+- [x] RECEIPTS lists the writes (create, publish, steward run), as rendered after each transition (red on main at both widths).
+- [x] At 393 `elementFromPoint` at the Steward verb's centre hits the verb (red on main: `room-ask-well`); at 1440 preservation green.
+- [x] The update list's words are right for each lifecycle (red on main at both widths).
+- [x] Every verb on the touched faces is the library Button; the web baseline has zero branch-new.
 
 ## Effort (not a promise)
 
@@ -51,6 +51,14 @@ PROVISIONAL: 2–3 engineering days, the two canvases included.
 - **Manual / device:** the owner's review of the canvas and the shots.
 
 ## Notes
+
+- 2026-09-28 — round three: Codex Astra r2 on `e77a5416` RATIFY-WITH-CONDITIONS (`checks/story-03-built-astra-r2.md`); both blockers paid. Its condition, on Muad'Dib's ruling FIXED not backlogged: round two's claim that the leak was paid was too strong -- `_summary_names` accepted ANY payload value equal to the id, so a risk in project B whose title is A's id put B's CREATE ITEM receipt in A. A pipeline receipt now belongs to a Room only by its PRODUCER's project-identity field (`project_service.py` `_RECEIPT_SCOPE`: the call's `project_id` argument, a created project's own `id`, or the returned record's top-level `project_id`), read from top-level keys only (`_top_level`, truncation-safe). A census fence holds every `ROOM_WRITE_METHODS` producer to one declaration (it found `create_from_setup`, the Door's create, undeclared); the free-text case is fenced through the real producer at 1440 and 393 (red on `e77a5416`, green after) and the foreign-name case stays green.
+
+- 2026-09-28 — round two: Codex Astra r1 on `62375d84` DO-NOT-RATIFY (`checks/story-03-built-astra-r1.md`), paid. (1) A refused delivery showed a green `MARKED DELIVERED · REFUSED` with no reason: the Room read keeps the kernel's named outcome (`reason`), the face draws each receipt by its outcome (`egress.ts` `receiptFace`: only a success is a success chip; refused `✗ REFUSED` + the plain word; failed, cancelled, result unknown), a mark that did not happen reads `MARK DELIVERED`; closed as a class by a census of every receipt outcome (`receiptFace.test.ts`); one shared refusal-word table (`refusalWord`) for the delivery line, the steward's start and RECEIPTS. (2) The steward's Review opened a NEW review: it now opens the run's own review by its id (`GET …/reviews/{id}`), an accepted one read-only. (3) The inherited foreign-receipt leak (a textual LIKE scope): paid for a foreign project's NAME in round two; the class was closed in round three (below). All three fenced through the real hub at 1440 and 393, red on `62375d84`, green after.
+
+- 2026-09-28 — Muad'Dib's rulings on PR #686: (1) the `_read_room_receipts` ProjectService edit STAYS (story 01's lane is closed and F7 needs it; Codex checks it). (2) The 1440 RECEIPTS overlap goes to the BACKLOG (a design call on Condition 7, not Phase 9). (3) BUILD WHAT WAS RATIFIED: the face shows the canvas words `1 MILESTONE LATE` (the health reason) and `MILESTONE · 7 DAYS LATE` (the NEEDS YOU why), mapped on the face from the hub's fields (`model.ts` `healthReasonWords`, `needsYouWhyWords`); the hub's own words stay unchanged over MCP; fenced at both widths (`test_the_late_words_are_the_canvas_words`, red on the first PR head, green after). (4) The scheduled `steward_policy_required` not on the face goes to the BACKLOG (filed). (5) The four fence updates stand; Codex checks them. Walked on an isolated hub: the Chair's `arrival-proposal-open` (MORE on a proposal row) opens the Room of the row's project, which lists the proposal, at 1440 and 393; `arrival-source-open` was not reached (it draws only inside a row that merges several projections; the seed made none).
+
+- 2026-09-28 — BUILT by the Fedaykin lane on `feat/philo-9-03` (based on PHILO-9-02's head `aeae7bd8`): both ratified canvases ported into the product, every criterion red on the base (main + PHILO-9-02) and green on the branch at 1440 and 393 ([evidence](evidence-story-03.md)). Owed to Muad'Dib's ruling: the `_read_room_receipts` edit made in this lane (story 01 is merged, no live lane), the 1440 RECEIPTS overlap left as drawn (Condition 7), the story 01 health words (BACKLOG "PHILO-9-03 follow-ups").
 
 - 2026-09-27 — both canvases RATIFIED by the owner ("Ratify as drawn"), after Codex Astra canvases r1 DNR → r2 DNR → r3 RATIFY: the items section after NEEDS YOU, omitted when empty (Q1); `DELIVERED ×N` (Q2); To + Mark delivered above the body (Q3). Canvases: `assets/story-03-items-canvas/`, `assets/story-03-delivery-canvas/`.
 - 2026-09-27 — canvases round three (Codex Astra canvases r2 finding 5): the build owns one open the canvas accepted: at 1440 the sticky Ask well covers the `RECEIPTS` head on first view (items canvas boards 1a, 2a); the F10 repair drawn at 393 does not reach it. Repair it in this build, fenced at 1440.

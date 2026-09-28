@@ -1,0 +1,18 @@
+{
+  "created": [
+    "CREATE ITEM",
+    "CREATE PROJECT"
+  ],
+  "published": [
+    "PUBLISH UPDATE",
+    "CREATE ITEM",
+    "CREATE PROJECT"
+  ],
+  "ran": [
+    "STEWARD RUN",
+    "MARKED DELIVERED",
+    "PUBLISH UPDATE",
+    "CREATE ITEM",
+    "CREATE PROJECT"
+  ]
+}

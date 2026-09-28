@@ -1,0 +1,243 @@
+{
+  "a": {
+    "ask_well_position": null,
+    "controls_in_items": 0,
+    "deliver_to": {
+      "disabled": true,
+      "value": "Lena"
+    },
+    "deliver_verb": "Retry",
+    "delivered_chips": [],
+    "delivery_egress": 0,
+    "delivery_head": "DELIVERED 1",
+    "delivery_rows": [
+      "✓ Lena SEP 28 10:36"
+    ],
+    "h_overflow": false,
+    "head_chips": [],
+    "headline": null,
+    "item_danger_tokens": [],
+    "item_leads": [],
+    "item_rows": [],
+    "items_head": null,
+    "items_section_present": false,
+    "modal": false,
+    "needs_you": [],
+    "plan": [],
+    "raw_buttons": [],
+    "receipts": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "steward_outcome": null,
+    "title": "Payments ledger cutover",
+    "under_ask_well": [],
+    "update_emblems": [],
+    "update_list_head": null,
+    "update_rows": [],
+    "window": true,
+    "words_send": false
+  },
+  "b": {
+    "ask_well_position": null,
+    "controls_in_items": 0,
+    "deliver_to": {
+      "disabled": false,
+      "value": ""
+    },
+    "deliver_verb": "Mark delivered",
+    "delivered_chips": [],
+    "delivery_egress": 0,
+    "delivery_head": "DELIVERY",
+    "delivery_rows": [],
+    "h_overflow": false,
+    "head_chips": [],
+    "headline": null,
+    "item_danger_tokens": [],
+    "item_leads": [],
+    "item_rows": [],
+    "items_head": null,
+    "items_section_present": false,
+    "modal": false,
+    "needs_you": [],
+    "plan": [],
+    "raw_buttons": [],
+    "receipts": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "steward_outcome": null,
+    "title": "Payments ledger cutover",
+    "under_ask_well": [],
+    "update_emblems": [],
+    "update_list_head": null,
+    "update_rows": [],
+    "window": true,
+    "words_send": false
+  },
+  "calls": [
+    {
+      "command_id": "54e41196-0d05-4b26-bbb0-df77fa93e537",
+      "delivered_to": "Priya",
+      "update_id": "pupd_3c47ef0045864ff9899a3e13bfd116b2",
+      "url": "/api/updates/pupd_3c47ef0045864ff9899a3e13bfd116b2/delivered"
+    },
+    {
+      "command_id": "05096abe-e31e-4e4a-aede-51b3962cb928",
+      "delivered_to": "Priya",
+      "update_id": "pupd_3c47ef0045864ff9899a3e13bfd116b2",
+      "url": "/api/updates/pupd_3c47ef0045864ff9899a3e13bfd116b2/delivered"
+    },
+    {
+      "command_id": "0efecf0a-7bd8-47b0-bc35-472722a0a4dc",
+      "delivered_to": "Lena",
+      "update_id": "pupd_3c47ef0045864ff9899a3e13bfd116b2",
+      "url": "/api/updates/pupd_3c47ef0045864ff9899a3e13bfd116b2/delivered"
+    },
+    {
+      "command_id": "0efecf0a-7bd8-47b0-bc35-472722a0a4dc",
+      "delivered_to": "Lena",
+      "update_id": "pupd_3c47ef0045864ff9899a3e13bfd116b2",
+      "url": "/api/updates/pupd_3c47ef0045864ff9899a3e13bfd116b2/delivered"
+    }
+  ],
+  "hub_a": [
+    {
+      "delivered_at": "2026-09-28T16:36:28+00:00",
+      "delivered_to": "Lena",
+      "id": "pdel_da086b80e962defe",
+      "operation_id": "op_8748d89afaa744808940ea3ca6fdc65b",
+      "project_id": "proj-0d9a21091e3f",
+      "update_id": "pupd_3c47ef0045864ff9899a3e13bfd116b2"
+    }
+  ],
+  "hub_b": [],
+  "pointer": [
+    {
+      "face": [
+        118.8,
+        24
+      ],
+      "not_owned": [],
+      "points": 9,
+      "text": "Mark delivered"
+    },
+    {
+      "face": [
+        46.8,
+        24
+      ],
+      "not_owned": [],
+      "points": 9,
+      "text": "Back"
+    }
+  ],
+  "refused": {
+    "ask_well_position": null,
+    "controls_in_items": 0,
+    "deliver_to": {
+      "disabled": false,
+      "value": "Priya"
+    },
+    "deliver_verb": "Mark delivered",
+    "delivered_chips": [],
+    "delivery_egress": 0,
+    "delivery_head": "DELIVERY",
+    "delivery_rows": [],
+    "h_overflow": false,
+    "head_chips": [],
+    "headline": null,
+    "item_danger_tokens": [],
+    "item_leads": [],
+    "item_rows": [],
+    "items_head": null,
+    "items_section_present": false,
+    "modal": false,
+    "needs_you": [],
+    "plan": [],
+    "raw_buttons": [],
+    "receipts": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "steward_outcome": null,
+    "title": "Payments ledger cutover",
+    "under_ask_well": [],
+    "update_emblems": [],
+    "update_list_head": null,
+    "update_rows": [],
+    "window": true,
+    "words_send": false
+  },
+  "retried": {
+    "ask_well_position": null,
+    "controls_in_items": 0,
+    "deliver_to": {
+      "disabled": false,
+      "value": ""
+    },
+    "deliver_verb": "Mark delivered",
+    "delivered_chips": [],
+    "delivery_egress": 0,
+    "delivery_head": "DELIVERED 1",
+    "delivery_rows": [
+      "✓ Lena SEP 28 10:36"
+    ],
+    "h_overflow": false,
+    "head_chips": [],
+    "headline": null,
+    "item_danger_tokens": [],
+    "item_leads": [],
+    "item_rows": [],
+    "items_head": null,
+    "items_section_present": false,
+    "modal": false,
+    "needs_you": [],
+    "plan": [],
+    "raw_buttons": [],
+    "receipts": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "steward_outcome": null,
+    "title": "Payments ledger cutover",
+    "under_ask_well": [],
+    "update_emblems": [],
+    "update_list_head": null,
+    "update_rows": [],
+    "window": true,
+    "words_send": false
+  },
+  "unknown": {
+    "ask_well_position": null,
+    "controls_in_items": 0,
+    "deliver_to": {
+      "disabled": true,
+      "value": "Lena"
+    },
+    "deliver_verb": "Retry",
+    "delivered_chips": [],
+    "delivery_egress": 0,
+    "delivery_head": "DELIVERY",
+    "delivery_rows": [],
+    "h_overflow": false,
+    "head_chips": [],
+    "headline": null,
+    "item_danger_tokens": [],
+    "item_leads": [],
+    "item_rows": [],
+    "items_head": null,
+    "items_section_present": false,
+    "modal": false,
+    "needs_you": [],
+    "plan": [],
+    "raw_buttons": [],
+    "receipts": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "steward_outcome": null,
+    "title": "Payments ledger cutover",
+    "under_ask_well": [],
+    "update_emblems": [],
+    "update_list_head": null,
+    "update_rows": [],
+    "window": true,
+    "words_send": false
+  }
+}

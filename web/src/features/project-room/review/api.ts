@@ -23,6 +23,15 @@ export async function openReview(projectId: string): Promise<ReviewWindow> {
   return decodeReviewWindow(raw);
 }
 
+/** GET /api/projects/{id}/reviews/{reviewId} — one review by its identity
+ *  (PHILO-9-03: the review a steward run's COMPARE opened, open or accepted). */
+export async function getReview(projectId: string, reviewId: string): Promise<ReviewWindow> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `/api/projects/${encodeURIComponent(projectId)}/reviews/${encodeURIComponent(reviewId)}`,
+  );
+  return decodeReviewWindow(raw);
+}
+
 /** POST .../proposals/{proposalId}/decide — decide one proposal. */
 export async function decideProposal(
   projectId: string,

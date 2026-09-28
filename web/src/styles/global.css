@@ -693,3 +693,22 @@ input[type="file"]::file-selector-button:hover {
 :where(.input, .select, .hs-control) {
   border-bottom-color: var(--shade-1);
 }
+
+/* PHILO-9-03 (the ratified copy-and-confirm canvas): a DEVICE target size
+ * only, the same exception as the Button halo above -- the non-`.btn`
+ * controls the Room's update face touches (the editor rail's chips and mic,
+ * the To field's and the body's in-well mics) own 44 x 44 at the narrow
+ * device. No content moves here; content layout follows `@container
+ * surface` (update-posture.css). */
+@media (max-width: 420px) {
+  :root .desk-editor-toolbar .desk-chip,
+  :root .desk-editor-toolbar .desk-mic {
+    min-height: var(--desk-button-hit-size);
+    min-width: var(--desk-button-hit-size);
+  }
+  :root .update-deliver-to .gadget-string .desk-mic,
+  :root .update-body-editor-mic .desk-mic {
+    width: var(--desk-button-hit-size);
+    height: var(--desk-button-hit-size);
+  }
+}

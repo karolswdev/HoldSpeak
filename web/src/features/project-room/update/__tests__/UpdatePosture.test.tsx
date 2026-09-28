@@ -739,6 +739,8 @@ describe("Draft list: lifecycle-honest", () => {
   });
 
   it("shows provenance in plain words (no assignment id in row text)", async () => {
+    // PHILO-9-03 (F11, the ratified canvas): the row's provenance rides its
+    // ProvenanceChip; the words stay plain and carry no assignment id.
     setupUpdatePosture({
       listUpdates: [
         draftUpdateFixture({ id: "u1", generator: "deterministic" }),
@@ -750,19 +752,15 @@ describe("Draft list: lifecycle-honest", () => {
     fireEvent.click(await screen.findByTestId("updates-verb"));
     await waitFor(() => screen.getByTestId("update-posture"));
 
-    const provenances = screen.getAllByTestId("update-list-provenance");
-    expect(provenances.length).toBe(2);
-
-    // Deterministic row says "Deterministic draft"
-    expect(provenances[0].textContent).toContain("Deterministic draft");
-
-    // Model row says "Model draft" — no assignment id visible
-    expect(provenances[1].textContent).toContain("Model draft");
-    expect(provenances[1].textContent).not.toContain("gpt-4o");
-    expect(provenances[1].textContent).not.toContain("(");
+    const items = screen.getAllByTestId("update-list-item");
+    expect(items.length).toBe(2);
+    // The ProvenanceChip names the model (it did on main too); the row's own
+    // words carry no raw generator string.
+    expect(items[1].querySelector(".update-list-row")?.textContent).not.toContain("gpt-4o");
+    expect(items[1].textContent).not.toContain("(");
   });
 
-  it("row has two-line structure: primary line + secondary line as separate children", async () => {
+  it("row words are separate tokens: lifecycle, REV, then the time slot (F11)", async () => {
     setupUpdatePosture({
       listUpdates: [draftUpdateFixture()],
     });
@@ -774,22 +772,10 @@ describe("Draft list: lifecycle-honest", () => {
     const items = screen.getAllByTestId("update-list-item");
     const row = items[0].querySelector(".update-list-row");
     expect(row).toBeTruthy();
-
-    // The row is a flex-column with two children (primary + secondary)
-    const primary = row!.querySelector(".update-list-primary");
-    const secondary = row!.querySelector(".update-list-secondary");
-    expect(primary).toBeTruthy();
-    expect(secondary).toBeTruthy();
-
-    // Primary contains lifecycle + rev + time as separate elements
-    expect(primary!.querySelector(".surface-token")).toBeTruthy();
-    expect(primary!.querySelector(".update-list-rev")).toBeTruthy();
-    expect(primary!.querySelector(".update-list-time")).toBeTruthy();
-
-    // The row sits inside .surface-ledger-primary which must allow
-    // the two-line layout (the CSS override lifts white-space:nowrap).
-    const ledgerPrimary = row!.closest(".surface-ledger-primary");
-    expect(ledgerPrimary).toBeTruthy();
+    const tokens = [...row!.querySelectorAll(".surface-token")].map((t) => t.textContent);
+    expect(tokens[0]).toBe("Draft");
+    expect(tokens[1]).toBe("REV 1");
+    expect(items[0].querySelector(".update-lead-emblem")?.textContent).toBe("▤");
   });
 
   it("row carries an open chevron affordance and is a button (keyboard-accessible)", async () => {

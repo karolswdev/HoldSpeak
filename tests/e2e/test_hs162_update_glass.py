@@ -279,16 +279,16 @@ def test_stopwatch_and_retention(
             _list_rows = page.get_by_test_id("update-list-item")
             assert _list_rows.count() >= 1, "Expected at least one draft in the list"
 
-            _provenance = page.get_by_test_id("update-list-provenance")
-            assert _provenance.count() >= 1, "List rows must have provenance secondary line"
+            # PHILO-9-03 (F11, the owner-ratified copy-and-confirm canvas): the
+            # row's words are its lifecycle and REV tokens; its provenance rides
+            # the row's ProvenanceChip in plain words (the secondary line was
+            # retired by the canvas).
+            _provenance = page.locator("[data-testid=update-list-item] .surface-provenance-chip")
+            assert _provenance.count() >= 1, "List rows must carry their provenance chip"
             for _pi in range(_provenance.count()):
-                _prov_text = _provenance.nth(_pi).inner_text().strip()
-                assert (
-                    _prov_text.startswith("Deterministic draft")
-                    or _prov_text.startswith("Model draft")
-                ), (
-                    f"Provenance must be plain words ('Deterministic draft' / 'Model draft'), "
-                    f"got: {_prov_text!r}"
+                _prov_text = _provenance.nth(_pi).inner_text().strip().lower()
+                assert _prov_text.startswith(("deterministic", "model")), (
+                    f"Provenance must be plain words (deterministic / model), got: {_prov_text!r}"
                 )
 
             for _ri in range(_list_rows.count()):

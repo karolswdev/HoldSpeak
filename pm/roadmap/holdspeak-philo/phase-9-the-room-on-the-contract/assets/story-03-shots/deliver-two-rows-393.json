@@ -1,0 +1,258 @@
+{
+  "after_copy": {
+    "ask_well_position": null,
+    "controls_in_items": 0,
+    "deliver_to": {
+      "disabled": false,
+      "value": ""
+    },
+    "deliver_verb": "Mark delivered",
+    "delivered_chips": [],
+    "delivery_egress": 0,
+    "delivery_head": "DELIVERY",
+    "delivery_rows": [],
+    "h_overflow": false,
+    "head_chips": [],
+    "headline": null,
+    "item_danger_tokens": [],
+    "item_leads": [],
+    "item_rows": [],
+    "items_head": null,
+    "items_section_present": false,
+    "modal": false,
+    "needs_you": [],
+    "plan": [],
+    "raw_buttons": [],
+    "receipts": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "steward_outcome": null,
+    "title": "Payments ledger cutover",
+    "under_ask_well": [],
+    "update_emblems": [],
+    "update_list_head": null,
+    "update_rows": [],
+    "window": true,
+    "words_send": false
+  },
+  "both": {
+    "ask_well_position": null,
+    "controls_in_items": 0,
+    "deliver_to": {
+      "disabled": false,
+      "value": ""
+    },
+    "deliver_verb": "Mark delivered",
+    "delivered_chips": [],
+    "delivery_egress": 0,
+    "delivery_head": "DELIVERED 2",
+    "delivery_rows": [
+      "✓ Priya SEP 28 10:36",
+      "✓ Tomas SEP 28 10:36"
+    ],
+    "h_overflow": false,
+    "head_chips": [],
+    "headline": null,
+    "item_danger_tokens": [],
+    "item_leads": [],
+    "item_rows": [],
+    "items_head": null,
+    "items_section_present": false,
+    "modal": false,
+    "needs_you": [],
+    "plan": [],
+    "raw_buttons": [],
+    "receipts": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "steward_outcome": null,
+    "title": "Payments ledger cutover",
+    "under_ask_well": [],
+    "update_emblems": [],
+    "update_list_head": null,
+    "update_rows": [],
+    "window": true,
+    "words_send": false
+  },
+  "calls": [
+    {
+      "command_id": "87a662b9-a3fb-4cc5-83fc-bb83a3a7ac2a",
+      "delivered_to": "Priya",
+      "update_id": "pupd_49bbaca4042947469db62c88c1ebdb2d",
+      "url": "/api/updates/pupd_49bbaca4042947469db62c88c1ebdb2d/delivered"
+    },
+    {
+      "command_id": "c6e9ddab-6d49-4e9e-87e2-0310d5aad58d",
+      "delivered_to": "Tomas",
+      "update_id": "pupd_49bbaca4042947469db62c88c1ebdb2d",
+      "url": "/api/updates/pupd_49bbaca4042947469db62c88c1ebdb2d/delivered"
+    }
+  ],
+  "clipboard_head": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nN",
+  "hub": [
+    {
+      "delivered_at": "2026-09-28T16:36:19+00:00",
+      "delivered_to": "Priya",
+      "id": "pdel_73fccf1183e75aa6",
+      "operation_id": "op_b9c01fa4997f4a318badf3c0129c2349",
+      "project_id": "proj-b4216773c33f",
+      "update_id": "pupd_49bbaca4042947469db62c88c1ebdb2d"
+    },
+    {
+      "delivered_at": "2026-09-28T16:36:20+00:00",
+      "delivered_to": "Tomas",
+      "id": "pdel_2f84f35cb103e1f7",
+      "operation_id": "op_a0aa462847834117816d2829f2a9b6f4",
+      "project_id": "proj-b4216773c33f",
+      "update_id": "pupd_49bbaca4042947469db62c88c1ebdb2d"
+    }
+  ],
+  "once": {
+    "ask_well_position": null,
+    "controls_in_items": 0,
+    "deliver_to": {
+      "disabled": false,
+      "value": ""
+    },
+    "deliver_verb": "Mark delivered",
+    "delivered_chips": [],
+    "delivery_egress": 0,
+    "delivery_head": "DELIVERED 1",
+    "delivery_rows": [
+      "✓ Priya SEP 28 10:36"
+    ],
+    "h_overflow": false,
+    "head_chips": [],
+    "headline": null,
+    "item_danger_tokens": [],
+    "item_leads": [],
+    "item_rows": [],
+    "items_head": null,
+    "items_section_present": false,
+    "modal": false,
+    "needs_you": [],
+    "plan": [],
+    "raw_buttons": [],
+    "receipts": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "steward_outcome": null,
+    "title": "Payments ledger cutover",
+    "under_ask_well": [],
+    "update_emblems": [],
+    "update_list_head": null,
+    "update_rows": [],
+    "window": true,
+    "words_send": false
+  },
+  "pending": {
+    "ask_well_position": null,
+    "controls_in_items": 0,
+    "deliver_to": {
+      "disabled": true,
+      "value": "Priya"
+    },
+    "deliver_verb": "Mark delivered",
+    "delivered_chips": [],
+    "delivery_egress": 0,
+    "delivery_head": "DELIVERY",
+    "delivery_rows": [],
+    "h_overflow": false,
+    "head_chips": [],
+    "headline": null,
+    "item_danger_tokens": [],
+    "item_leads": [],
+    "item_rows": [],
+    "items_head": null,
+    "items_section_present": false,
+    "modal": false,
+    "needs_you": [],
+    "plan": [],
+    "raw_buttons": [],
+    "receipts": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "steward_outcome": null,
+    "title": "Payments ledger cutover",
+    "under_ask_well": [],
+    "update_emblems": [],
+    "update_list_head": null,
+    "update_rows": [],
+    "window": true,
+    "words_send": false
+  },
+  "pointer": [
+    {
+      "face": [
+        118.8,
+        24
+      ],
+      "not_owned": [],
+      "points": 9,
+      "text": "Mark delivered"
+    },
+    {
+      "face": [
+        44,
+        44
+      ],
+      "not_owned": [],
+      "points": 9,
+      "text": "Speak To"
+    },
+    {
+      "face": [
+        46.8,
+        24
+      ],
+      "not_owned": [],
+      "points": 9,
+      "text": "Back"
+    },
+    {
+      "face": [
+        46.8,
+        24
+      ],
+      "not_owned": [],
+      "points": 9,
+      "text": "Copy"
+    }
+  ],
+  "returned": {
+    "ask_well_position": null,
+    "controls_in_items": 0,
+    "deliver_to": {
+      "disabled": false,
+      "value": ""
+    },
+    "deliver_verb": "Mark delivered",
+    "delivered_chips": [],
+    "delivery_egress": 0,
+    "delivery_head": "DELIVERY",
+    "delivery_rows": [],
+    "h_overflow": false,
+    "head_chips": [],
+    "headline": null,
+    "item_danger_tokens": [],
+    "item_leads": [],
+    "item_rows": [],
+    "items_head": null,
+    "items_section_present": false,
+    "modal": false,
+    "needs_you": [],
+    "plan": [],
+    "raw_buttons": [],
+    "receipts": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "steward_outcome": null,
+    "title": "Payments ledger cutover",
+    "under_ask_well": [],
+    "update_emblems": [],
+    "update_list_head": null,
+    "update_rows": [],
+    "window": true,
+    "words_send": false
+  }
+}

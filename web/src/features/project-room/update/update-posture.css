@@ -61,6 +61,56 @@
   z-index: var(--desk-z-local);
 }
 
+/* PHILO-9-03: CONTENT layout follows the `surface` container (UX-CANON D;
+   Codex Astra canvases r2 F2): a narrow window on a wide desktop gets the
+   same repair as a phone. */
+@container surface (max-width: 559px) {
+  /* The body mic sat absolute over the rail's "List" and "1." chips; in a
+     narrow window it takes its own line, right-aligned. */
+  .update-body-editor-mic {
+    position: static;
+    align-self: flex-end;
+  }
+  /* The editor column took its content's width (flex items default to
+     min-width: auto): the rail ran past the body. */
+  .update-editor > *,
+  .update-body-editor > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+/* ── PHILO-9-03: DELIVERY (the ratified copy-and-confirm canvas) ── */
+.update-deliver-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.update-deliver-to {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: flex;
+}
+.update-deliver-to .gadget-string {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.update-deliver-outcome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.update-list-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ── Document body (published / preview) ── */
 
 .update-document-body {

@@ -1,5 +1,5 @@
 // HS-167-05 -- the Update posture recomposed on the surface library.
-// DRAFTS ledger (D6): lead edit + primary + ProvenanceChip + StateChip + time + chevron.
+// UPDATES ledger (D6; PHILO-9-03 F11): lead edit + primary + ProvenanceChip + StateChip + time + chevron.
 // DeskEditor stays (sanctioned non-barrel import). CitationChips per section.
 // ActionNotice for unverified claims. Dead hand-rolled blocks removed.
 
@@ -17,6 +17,7 @@ import {
   MicButton,
   Material,
   StateChip,
+  StringGadget,
   ProvenanceChip,
   ActionNotice,
   CitationChips,
@@ -26,9 +27,9 @@ import {
   type ChipState,
 } from "../../../desk/surface";
 import { openSourceRef } from "../../../desk/surface/citations";
-import { egressFor } from "../../../desk/surface/egress";
+import { egressFor, refusalWord } from "../../../desk/surface/egress";
 import type { UpdateController } from "./useUpdateController";
-import type { ProjectUpdate, UpdateClaim } from "./model";
+import type { Delivery, ProjectUpdate, UpdateClaim } from "./model";
 import {
   claimChipTitle,
   generatorLabel,
@@ -41,6 +42,112 @@ import {
   refKind,
 } from "./model";
 import "./update-posture.css";
+
+
+/* PHILO-9-03 (the Q0 ruling, the ratified copy-and-confirm canvas): the
+   delivery words, one constant so the fence reads the same. */
+export const DELIVERY_WORDS = {
+  section: "DELIVERY",
+  history: "DELIVERED",
+  verb: "Mark delivered",
+  field: "To",
+  chip: "DELIVERED",
+  retry: "Retry",
+} as const;
+
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+/** `SEP 27 14:05` -- the owner's confirmation time, exact. */
+export function deliveryTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${MONTHS[d.getMonth()]} ${d.getDate()} ${hh}:${mm}`;
+}
+
+/** The list chip, `DELIVERED ×N` (the owner's Q2 pick). No chip at zero
+ *  deliveries. A mistaken delivery counts: undo is on the BACKLOG. */
+function DeliveredChip({ deliveries }: { deliveries: Delivery[] }) {
+  if (deliveries.length === 0) return null;
+  return (
+    <span data-testid="update-delivered-chip">
+      <StateChip state="success" label={`${DELIVERY_WORDS.chip} ×${deliveries.length}`} />
+    </span>
+  );
+}
+
+/** The confirm line and the history, on a published update: To + Mark
+ *  delivered ABOVE the body (the owner's Q3 pick). No modal, no egress badge
+ *  (the product sends nothing). */
+function DeliverySection({ ctrl, update }: { ctrl: UpdateController; update: ProjectUpdate }) {
+  const rows = update.deliveries;
+  return (
+    <SurfaceSection
+      label={rows.length > 0 ? `${DELIVERY_WORDS.history} ${rows.length}` : DELIVERY_WORDS.section}
+    >
+      <div className="update-deliver-line" data-testid="deliver-line">
+        <span className="update-deliver-to">
+          <StringGadget
+            label={DELIVERY_WORDS.field}
+            value={ctrl.deliverTo}
+            onChange={ctrl.setDeliverTo}
+            placeholder={DELIVERY_WORDS.field}
+            disabled={ctrl.deliverBusy || ctrl.deliverLocked}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void ctrl.markDelivered();
+              }
+            }}
+            inputProps={{ "data-testid": "deliver-to" } as never}
+          />
+        </span>
+        {/* With the result unknown the verb is Retry: the SAME update, the
+            SAME command_id and the SAME To (the field is locked). */}
+        <Button
+          dense
+          variant="primary"
+          loading={ctrl.deliverBusy}
+          onClick={() => void ctrl.markDelivered()}
+          data-testid={ctrl.deliverOutcome.kind === "uncertain" ? "deliver-retry" : "deliver-verb"}
+        >
+          {ctrl.deliverOutcome.kind === "uncertain" ? DELIVERY_WORDS.retry : DELIVERY_WORDS.verb}
+        </Button>
+      </div>
+      {ctrl.deliverOutcome.kind === "refused" ? (
+        // A named refusal: the result is known; nothing was recorded.
+        <span className="update-deliver-outcome" data-testid="deliver-refused" data-code={ctrl.deliverOutcome.code}>
+          <StateChip state="failure" label="REFUSED" />
+          <span className="surface-token" data-chip>
+            {refusalWord(ctrl.deliverOutcome.code)}
+          </span>
+        </span>
+      ) : ctrl.deliverOutcome.kind === "uncertain" ? (
+        // No answer: it may be recorded. Never "not marked".
+        <span className="update-deliver-outcome" data-testid="deliver-uncertain">
+          <StateChip state="warning" label="NO ANSWER · RESULT UNKNOWN" />
+        </span>
+      ) : null}
+      {rows.length > 0 ? (
+        <SurfaceLedger count="" cols="room">
+          <ul className="surface-ledger-rows" data-testid="delivery-history">
+            {rows.map((row) => (
+              <SurfaceLedgerRow
+                key={row.id}
+                data-testid="delivery-row"
+                wrap
+                expands={false}
+                lead={<StateChip state="success" label="" icon="✓" />}
+                primary={<span className="surface-primary">{row.deliveredTo ?? "—"}</span>}
+                cells={<span className="surface-token" data-chip>{deliveryTime(row.deliveredAt)}</span>}
+              />
+            ))}
+          </ul>
+        </SurfaceLedger>
+      ) : null}
+    </SurfaceSection>
+  );
+}
 
 /* ── Lifecycle to StateChip state mapping ── */
 
@@ -103,8 +210,7 @@ function SectionSourceRow({
         const kind = refChipLabel(ref);
         return (
           <span key={ref} className="update-claim-chip-group">
-            <button
-              type="button"
+            <Button variant="ghost" dense
               className="desk-chip quiet"
               data-testid="update-claim-ref"
               data-ref={ref}
@@ -114,7 +220,7 @@ function SectionSourceRow({
               onClick={() => onOpen(ref)}
             >
               {title}
-            </button>
+            </Button>
             {!verified ? (
               <span data-testid="update-claim-unverified">
                 <StateChip state="failure" label="UNVERIFIED" />
@@ -170,9 +276,8 @@ function InlineClaimsView({
           {claim.refs.map((ref) => {
             const label = refIdentityLabel(ref);
             return (
-              <button
+              <Button variant="ghost" dense
                 key={ref}
-                type="button"
                 className="desk-chip quiet"
                 data-testid="update-claim-ref"
                 data-ref={ref}
@@ -182,7 +287,7 @@ function InlineClaimsView({
                 onClick={() => onOpen(ref)}
               >
                 {label}
-              </button>
+              </Button>
             );
           })}
           {!claim.verified && !claim.hasAxes ? (
@@ -254,7 +359,8 @@ function UpdateList({
 }) {
   return (
     <div className="update-list" data-testid="update-list">
-      <SurfaceLedger count={countLabel("DRAFTS", ctrl.updates.length)} cols="room">
+      {/* PHILO-9-03 (F11): the head counts updates, not drafts. */}
+      <SurfaceLedger count={countLabel("UPDATES", ctrl.updates.length)} cols="room">
         <ul className="surface-ledger-rows">
           {ctrl.updates.map((update) => {
             const tone = lifecycleTone(update.lifecycle);
@@ -265,45 +371,41 @@ function UpdateList({
                 expands={false}
                 wrap
                 lead={
+                  // PHILO-9-03 (F11): the update glyph, not a fixed "E".
                   <span className="update-lead-emblem" aria-hidden="true">
-                    {"E"}
+                    {"▤"}
                   </span>
                 }
                 primary={
+                  // PHILO-9-03 (F11): the words spaced; the time lives in the row's time slot.
                   <span
-                    className="update-list-row"
+                    className="update-list-row" data-update-id={update.id}
                     data-lifecycle={update.lifecycle}
                     data-generator={update.generator}
-                    title={generatorLabel(update.generator)}
                   >
-                    <span className="update-list-primary">
-                      <span className="surface-token" data-tone={tone}>
-                        {lifecycleLabel(update.lifecycle)}
-                      </span>
-                      <span className="update-list-rev">Rev {update.draftRevision}</span>
-                      <span className="update-list-time">
-                        {humanTime(update.publishedAt ?? update.updatedAt)}
-                      </span>
+                    <span className="surface-token" data-chip data-tone={tone}>
+                      {lifecycleLabel(update.lifecycle)}
                     </span>
-                    <span className="update-list-secondary" data-testid="update-list-provenance">
-                      {provenancePhrase(update.generator)}
-                      {update.fallbackReason ? (
-                        <span
-                          className="surface-token"
-                          data-tone="warn"
-                          data-testid="update-fallback-reason"
-                        >
-                          {humanFallbackReason(update.fallbackReason)}
-                        </span>
-                      ) : null}
-                    </span>
+                    <span className="surface-token" data-chip>REV {update.draftRevision}</span>
+                    {update.fallbackReason ? (
+                      <span
+                        className="surface-token"
+                        data-tone="warn"
+                        data-testid="update-fallback-reason"
+                      >
+                        {humanFallbackReason(update.fallbackReason)}
+                      </span>
+                    ) : null}
                   </span>
                 }
                 cells={
-                  <ProvenanceChip
-                    source={generatorChipSource(update.generator)}
-                    boundary={generatorChipBoundary(update.generator)}
-                  />
+                  <>
+                    <DeliveredChip deliveries={update.deliveries} />
+                    <ProvenanceChip
+                      source={generatorChipSource(update.generator)}
+                      boundary={generatorChipBoundary(update.generator)}
+                    />
+                  </>
                 }
                 time={humanTime(update.publishedAt ?? update.updatedAt)}
                 trailing={
@@ -388,6 +490,16 @@ function UpdateEditor({
       onKeyDown={handleKeyDown}
       tabIndex={-1}
     >
+      {/* PHILO-9-03 (the 393 Back defect, measured on the canvas): Back sits
+          in the sticky head verbs, the seat the SurfaceVerbs species is made
+          for. At the foot of the editor the button moved 36 px at focusin on
+          pointerdown (the body scrolled; the top-sticky bar), so pointerup
+          landed outside it and no click fired. */}
+      <SurfaceVerbs>
+        <Button dense variant="ghost" onClick={() => void ctrl.backToList()} data-testid="update-verb-back">
+          Back
+        </Button>
+      </SurfaceVerbs>
       {/* Provenance + lifecycle band */}
       <div className="update-editor-band" data-testid="update-editor-band">
         <StateChip
@@ -422,6 +534,10 @@ function UpdateEditor({
         </div>
       ) : (
         <div data-testid="update-body-readonly">
+          {/* PHILO-9-03: DELIVERY sits first on a published update. */}
+          {update.lifecycle === "published" ? (
+            <div data-section="delivery"><DeliverySection ctrl={ctrl} update={update} /></div>
+          ) : null}
           <SurfaceSection
             label="Update"
             actions={
@@ -442,12 +558,6 @@ function UpdateEditor({
         <InlineClaimsView claims={update.claims} onOpen={onOpenRef} />
       ) : null}
 
-      {/* Back verb stays inside the editor (non-portalling, glass locator compat) */}
-      <SurfaceVerbs>
-        <Button dense variant="ghost" onClick={() => void ctrl.backToList()} data-testid="update-verb-back">
-          Back
-        </Button>
-      </SurfaceVerbs>
     </div>
   );
 }
