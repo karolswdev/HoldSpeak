@@ -1,0 +1,12 @@
+# PHILO-10 round four: which keyring backend the hub would get, and what keyring offers per OS (isolated HOME; nothing stored).
+import importlib.metadata as md, keyring
+from keyring.backend import get_all_keyring
+b = keyring.get_keyring()
+print("keyring version:", md.version("keyring"))
+print("active backend:", f"{type(b).__module__}.{type(b).__name__}")
+print("backends importable here:", sorted(f"{type(k).__module__}.{type(k).__name__}" for k in get_all_keyring()))
+for mod in ("keyring.backends.macOS", "keyring.backends.SecretService", "keyring.backends.Windows", "keyring.backends.fail"):
+    try:
+        importlib = __import__("importlib"); importlib.import_module(mod); print("module present:", mod)
+    except Exception as e:
+        print("module import error:", mod, type(e).__name__)
