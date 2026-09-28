@@ -161,6 +161,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-28, the story 04 canvases DRAWN (for the owner's ratification): canvas A, the SEND well (`assets/story-04-send-canvas/`, 29 boards, the whole state/width matrix), and canvas B, the Destinations group in Settings → Connections (`assets/story-04-destinations-canvas/`, 12 boards), both at 1440 and 393 on the product app and a real hub, the unbuilt wire stated in `harness/shim.ts`. Six owner questions (three per canvas, each with a recommendation; A2 asks to replace the ratified `DELIVERED ×N` with `DELIVERY ×N`). Owed: the Codex Astra check of the canvases; the owner's ratification. Nothing is built.
+
 2026-09-28, round four: **RATIFIED by the owner ("Ratify, build it")**, with Q1 ruled against Mail.app ("it wouldn’t work on non-Macs") for a declared email provider interface, SendGrid first; Q3 "Blog post"; Q6 "Scratch targets you name". Story 03 is redrawn, the design gains section 8, the Mail.app material is parked (BACKLOG "Mail.app draft channel"). Owed: the Codex Astra check of the email delta; the story 04 canvases before the face build. Nothing is built.
 
 2026-09-28, round three: Codex Astra r2 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r2.md`) — the scope is fit for the owner's discussion; its three corrections are recorded in `design/send-lifecycle.md` (4a, 5, 3), with the Confluence title probe (`docs/internal/philo/phase-10/grounding/confluence-json-probe.out.txt`: `unauthorized` before the file is read, so the JSON shape waits for the real-account leg). Owed: the owner's ratification and Q1–Q4, Q6.

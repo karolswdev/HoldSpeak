@@ -36,6 +36,7 @@ PROVISIONAL: 2–3 engineering days (canvases included).
 
 ## Notes
 
+- 2026-09-28 — the two canvases drawn (`assets/story-04-send-canvas/`, `assets/story-04-destinations-canvas/`); unratified.
 - 2026-09-28 — round four: the email fields follow the owner's Q1 ruling (a provider interface; SendGrid first).
 - 2026-09-28 — round three: the readable preview (Codex Astra r2, MISSED).
 - 2026-09-28 — round two: amended on Codex Astra r1 DO-NOT-RATIFY (`checks/charter-astra-r1.md`); bound by `design/send-lifecycle.md`.

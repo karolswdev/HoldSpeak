@@ -1,0 +1,97 @@
+/* PHILO-10-04 canvas only: layout for the proposed blocks. Every species
+ * style (Button, StateChip, EgressChip, StringGadget, SurfaceLedger, the
+ * gadget sheet) is the product's. Tokens only; no new colour. */
+
+[data-p10] .p10-none,
+[data-p10] .p10-verbs,
+[data-p10] .p10-outcome,
+[data-p10] .p10-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+[data-p10] .p10-verbs { margin-top: 8px; }
+[data-p10] .p10-open { padding: 6px 6px 10px; min-width: 0; }
+[data-p10] .p10-pick { color: var(--accent-hover); font-family: var(--font-mono); }
+[data-p10] .p10-preview { margin-top: 4px; min-width: 0; }
+[data-p10] .p10-preview-fields {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0 0 8px;
+}
+[data-p10] .p10-preview-field { display: contents; }
+[data-p10] .p10-preview-field dt { align-self: center; }
+[data-p10] .p10-preview-field dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+}
+[data-p10] .p10-preview-body { min-width: 0; overflow-wrap: anywhere; }
+[data-p10] .p10-preview-text {
+  white-space: pre-wrap;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+/* A long path or id wraps instead of running past the window. */
+[data-p10] .p10-proof-path,
+[data-p10] .p10-target {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+[data-p10] .surface-ledger[data-cols="room"] .surface-token.p10-proof-path,
+[data-p10] .surface-ledger[data-cols="room"] .surface-token.p10-target {
+  white-space: normal;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+[data-p10] .p10-manual { margin-bottom: 6px; }
+[data-p10] .update-deliver-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+[data-p10] .update-deliver-to { flex: 1 1 180px; min-width: 0; display: flex; }
+[data-p10] .update-deliver-to .gadget-string { flex: 1 1 auto; min-width: 0; }
+[data-p10] .p10-dest-form { padding: 6px 0; min-width: 0; }
+[data-p10] .p10-secret .gadget-secret { padding: 4px 0; }
+[data-p10] .surface-ledger-open { min-width: 0; }
+
+/* ── PROPOSED LIBRARY REPAIRS ───────────────────────────────────────────
+ * The canvas carries the repairs its geometry needs; the story 04 build
+ * moves each into the named product file. Each is the 12 px floor
+ * (--desk-surface-label-size). Filled in from the measurement (README). */
+
+/* gadgets.css:180 `.gadget-check-token-face` (the SYNCED token) is 11 px. */
+html body [data-p10] .gadget-check-token-face {
+  font-size: var(--desk-surface-label-size);
+}
+/* Settings -> Connections, inherited on the same window (the canvas owns the
+   whole window's text floor):
+   patterns/provenance.css:30 `.surface-provenance-boundary` is 9 px (the host on the
+   GitHub / Jira / Confluence provenance chips);
+   the TransportKey word (gadgets.tsx:734) renders 9 px (the COPY key);
+   gadgets.css:1028 `.gadget-fold-token` is 10 px (the PARKED count). */
+html body .desk-window .surface-provenance-boundary,
+html body .desk-window .gadget-transport-word,
+html body .desk-window .gadget-fold-token {
+  font-size: var(--desk-surface-label-size);
+}
+
+/* The 44 px narrow target (UX-CANON C). At a container under 420 px the
+   gadget sheet stacks (gadgets.css:87) but its controls keep their desk
+   heights: gadgets.css:324 `.gadget-string` 22 px with a 20 px input,
+   gadgets.css:365 the docked mic at --size-icon-md (20 px),
+   gadgets.css:173 `.gadget-check-token-face` 22 px, and the channel and
+   provider selects (gadgets.css:226 `.gadget-cycle select`) 22 px. The 393 pointer pass failed each of them on the
+   Destinations form. The build moves this block into gadgets.css under
+   the same container query, for every gadget sheet. */
+@container surface (max-width: 419px) {
+  html body [data-p10] .gadget-string { min-height: 46px; }
+  html body [data-p10] .gadget-string input { min-height: 44px; }
+  html body [data-p10] .gadget-string .desk-mic { width: 44px; height: 44px; margin-right: 0; }
+  html body [data-p10] .gadget-cycle select { min-height: 44px; }
+  html body [data-p10] .gadget-check-token-face { height: 44px; }
+}
