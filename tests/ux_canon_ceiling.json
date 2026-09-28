@@ -64,7 +64,6 @@
       "A3-prose": 1
     },
     "DeskSortableTable": {
-      "A1": 1,
       "A8": 1
     },
     "DeskToolInspector": {
@@ -279,7 +278,7 @@
     }
   },
   "per_rule": {
-    "A1": 106,
+    "A1": 105,
     "A3-prose": 48,
     "A3-sentence": 2,
     "A4": 0,
@@ -293,7 +292,7 @@
     "raw-ids": 17
   },
   "ratchet": {
-    "date": "2026-09-21",
-    "reason": "HS-202-03, 2026-09-21: A1 falls 174 -> 106. The surface inventory of 2026-09-20 (SURFACE-INVENTORY-2026-09-20.md \u00a73.3) found the worst raw-HTML sites were the SHARED species themselves -- every menu item (DeskMenu), every wing tab (wings), the dock (7), the editor's rail (11) -- so a stranger's first five minutes met raw HTML at every turn. 68 sites on the five first-use jobs' screens now draw through the library Button, most of them through the new `chrome` variant (Signal.tsx): the species without the plate, for a verb whose material the strip it rides already draws. The residue (106) is the inventory's ledger -- WorkbenchWindow (23), the tool inspector (10), the Session/Coder/Thread pullouts, GroundingSection -- faces the five jobs do not touch. Only shrinks. The A1_RATCHET constant in tests/unit/test_ux_canon_ratchet.py carries the same number."
+    "date": "2026-09-28",
+    "reason": "PHILO-9-04, 2026-09-28: A1 falls 106 -> 105 -- the sortable table's sort headers are one library SortButton (DeskSortableTable.tsx); no raw <button> is left in that species. Only A1 is lowered here; the other rules keep their numbers. Earlier: HS-202-03, 2026-09-21: A1 falls 174 -> 106. The surface inventory of 2026-09-20 (SURFACE-INVENTORY-2026-09-20.md \u00a73.3) found the worst raw-HTML sites were the SHARED species themselves -- every menu item (DeskMenu), every wing tab (wings), the dock (7), the editor's rail (11) -- so a stranger's first five minutes met raw HTML at every turn. 68 sites on the five first-use jobs' screens now draw through the library Button, most of them through the new `chrome` variant (Signal.tsx): the species without the plate, for a verb whose material the strip it rides already draws. The residue (106) is the inventory's ledger -- WorkbenchWindow (23), the tool inspector (10), the Session/Coder/Thread pullouts, GroundingSection -- faces the five jobs do not touch. Only shrinks. The A1_RATCHET constant in tests/unit/test_ux_canon_ratchet.py carries the same number."
   }
 }
