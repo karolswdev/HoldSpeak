@@ -1,0 +1,193 @@
+"""PHILO-9-02 source probes; run with an explicit temporary DB directory.
+
+This file is scratch evidence, not a test.  It uses real Database, steward,
+delta, collector, FastAPI route, and kernel producers.  It does not contact a
+provider or the owner's database.
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+
+def seed_project(db: Any, project_id: str) -> None:
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO projects
+               (id, name, description, keywords_json, team_members_json,
+                context_json, detection_threshold, is_archived, revision,
+                created_at, updated_at)
+               VALUES (?, ?, '', '[]', '[]', '{}', 0.5, 0, 1, ?, ?)""",
+            (project_id, "Probe project", "2026-01-01T00:00:00", "2026-01-01T00:00:00"),
+        )
+
+
+def review_and_run(db_path: Path) -> dict[str, Any]:
+    from holdspeak.db import Database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.project_delta_service import ProjectDeltaService
+    from holdspeak.services.project_evidence_collector import ProjectEvidenceCollector
+    from holdspeak.services.project_service import ProjectService
+    from holdspeak.services.project_steward_service import ProjectStewardService
+
+    db = Database(db_path)
+    project_id = "proj-review-run-probe"
+    seed_project(db, project_id)
+    principal = Principal(PrincipalKind.OWNER, "probe-owner")
+    collector = ProjectEvidenceCollector(db)
+    delta = ProjectDeltaService(
+        db, collector=collector, project_service=ProjectService(db)
+    )
+    review = delta.open_review(principal, project_id)
+    service = ProjectStewardService(db, collector, delta)
+    compare = service._phase_compare(principal, project_id)
+    run_id = service.run_once(principal, project_id)
+    run = db.steward_runs.get_run(run_id)
+    with db._connection() as conn:
+        kernel_operations = int(
+            conn.execute("SELECT count(*) FROM kernel_operations").fetchone()[0]
+        )
+    return {
+        "probe": "real_review_and_run",
+        "review_id_from_open_review": review.get("review_id"),
+        "review_row_id": db.project_observations.list_reviews(
+            project_id, status="open", limit=1
+        )[0]["id"],
+        "compare_result": compare,
+        "run_id": run_id,
+        "run_state": run["state"],
+        "run_keys": sorted(run),
+        "run_summary": json.loads(run["summary_json"]),
+        "kernel_operations": kernel_operations,
+    }
+
+
+def stop_route_adapter_only(db_path: Path) -> dict[str, Any]:
+    """Probe route logic with an injected request principal.
+
+    This deliberately bypasses the production central HTTP auth middleware;
+    it proves the route/service does not bind stop to requested_by.  It is not
+    real-credential wire proof for B2.
+    """
+    from fastapi import FastAPI, Request
+    from fastapi.testclient import TestClient
+    from holdspeak.db import Database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.project_steward_service import ProjectStewardService
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes import build_steward_router
+
+    db = Database(db_path)
+    project_id = "proj-stop-probe"
+    seed_project(db, project_id)
+    owner = Principal(PrincipalKind.OWNER, "owner-start")
+    agent = Principal(PrincipalKind.AGENT, "agent-stop")
+    service = ProjectStewardService(db, None, None)
+    run_id = service.insert_run(owner, project_id)
+
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def injected_agent(request: Request, call_next: Any) -> Any:
+        request.state.principal = agent
+        return await call_next(request)
+
+    app.include_router(
+        build_steward_router(
+            WebContext(get_state=lambda: {}, project_steward_service=service)
+        )
+    )
+    response = TestClient(app).post(f"/api/steward/runs/{run_id}/stop")
+    row = db.steward_runs.get_run(run_id)
+    return {
+        "probe": "stop_route_adapter_only_injected_principal",
+        "central_http_auth_bypassed": True,
+        "run_id": run_id,
+        "requested_by": row["requested_by"],
+        "caller": f"principal:{agent.identity}",
+        "status": response.status_code,
+        "body": response.json(),
+        "state_after": row["state"],
+    }
+
+
+def causation_child() -> dict[str, Any]:
+    from holdspeak import kernel
+    from holdspeak.db import Database
+    import holdspeak.db.core as db_core
+    from holdspeak.kernel.runtime import _as_principal, _configure
+    from holdspeak.principals import Principal, PrincipalKind
+
+    root = Path(sys.argv[1])
+    db = Database(root / "kernel-causation.db")
+    # Make the public runtime resolve the same explicit isolated DB as the
+    # configured broker; this is the production fixture's documented seam.
+    db_core._db = db
+    owner = Principal(PrincipalKind.OWNER, "probe-owner")
+    agent = Principal(PrincipalKind.AGENT, "agent:probe")
+    node = Principal(PrincipalKind.NODE, "node_proof")
+
+    def request(key: str, parent: str = "") -> dict[str, Any]:
+        raw: dict[str, Any] = {
+            "request_schema": 1,
+            "request_id": f"request-{key}",
+            "idempotency_key": f"key-{key}",
+            "operation": {"name": "tool.call", "version": 1},
+            "subject_refs": ["story:probe"],
+            "target": {"ref": f"gate:proposal-{key}"},
+            "arguments": {
+                "proposal_id": f"proposal-{key}",
+                "tool": "Bash",
+                "args_sha256": "a" * 64,
+                "args_head": "git status",
+                "cwd": "/workspace",
+                "ttl_seconds": 60,
+            },
+            "placement": "node:node_proof",
+        }
+        if parent:
+            raw["parent_operation_id"] = parent
+        return raw
+
+    broker = _configure(db, clock=lambda: 1000.0)
+    with _as_principal(agent):
+        parent = kernel.submit(request("parent"))
+    with _as_principal(owner):
+        approved = kernel.decide(
+            parent["operation_id"], "approve", parent["revision"]
+        )
+    with _as_principal(node):
+        claimed = kernel.claim()
+    with _as_principal(agent):
+        child = kernel.submit(request("child", parent["operation_id"]))
+    return {
+        "probe": "real_kernel_same_agent_child",
+        "parent_operation_id": parent["operation_id"],
+        "parent_state_after_claim": broker.store.operation(
+            parent["operation_id"]
+        )["state"],
+        "approved_state": approved["state"],
+        "claimed_operation_ids": [
+            item["operation_id"] for item in claimed.get("operations", [])
+        ],
+        "child_operation_id": child["operation_id"],
+        "child_state": child["state"],
+        "child_receipt": child.get("receipt"),
+    }
+
+
+def main() -> None:
+    root = Path(sys.argv[1]).resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    output = [
+        review_and_run(root / "review-run.db"),
+        stop_route_adapter_only(root / "stop-route.db"),
+        causation_child(),
+    ]
+    print(json.dumps(output, sort_keys=True, indent=2, default=str))
+
+
+if __name__ == "__main__":
+    main()

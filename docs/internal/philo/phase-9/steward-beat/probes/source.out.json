@@ -1,0 +1,183 @@
+[
+  {
+    "compare_result": {
+      "proposal_count": 0,
+      "proposals": [],
+      "review_id": ""
+    },
+    "kernel_operations": 0,
+    "probe": "real_review_and_run",
+    "review_id_from_open_review": "prev_ba1be911a50e47adbbc30e8277435d7f",
+    "review_row_id": "prev_ba1be911a50e47adbbc30e8277435d7f",
+    "run_id": "pstrun_7a4e7c4976604059ad113c9f2c3b2a65",
+    "run_keys": [
+      "completed_at",
+      "created_at",
+      "id",
+      "phase",
+      "policy_id",
+      "project_id",
+      "requested_by",
+      "started_at",
+      "state",
+      "stop_requested_at",
+      "summary_json",
+      "updated_at",
+      "watermark"
+    ],
+    "run_state": "completed",
+    "run_summary": {
+      "outcome": "completed",
+      "phase_results": {
+        "act": {
+          "actions_taken": 0,
+          "effect_receipts": [],
+          "effects_skipped": [
+            {
+              "effect_kind": "refresh_sources",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "create_proposals",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "apply_proposal_effects",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "draft_update",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "create_door_item",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "github_comment",
+              "reason": "not_in_eligible_effect_kinds"
+            }
+          ]
+        },
+        "compare": {
+          "proposal_count": 0,
+          "proposals": [],
+          "review_id": ""
+        },
+        "observe": {
+          "coverage": {
+            "native:decisions": {
+              "inserted": 0,
+              "no_op": 0,
+              "state": "ok"
+            },
+            "native:followthrough": {
+              "inserted": 0,
+              "no_op": 0,
+              "state": "ok"
+            },
+            "native:meetings": {
+              "inserted": 0,
+              "no_op": 0,
+              "state": "ok"
+            },
+            "native:resources": {
+              "inserted": 0,
+              "no_op": 0,
+              "state": "ok"
+            }
+          }
+        },
+        "propose": {
+          "proposal_count": 0,
+          "proposals": [],
+          "review_id": ""
+        },
+        "record": {
+          "event_recorded": true
+        },
+        "verify": {
+          "actions_taken": 0,
+          "effect_receipts": [],
+          "effects_skipped": [
+            {
+              "effect_kind": "refresh_sources",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "create_proposals",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "apply_proposal_effects",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "draft_update",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "create_door_item",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "github_comment",
+              "reason": "not_in_eligible_effect_kinds"
+            }
+          ],
+          "has_real_effects": false,
+          "proposal_count": 0,
+          "review_id": "",
+          "source_count": 4,
+          "verified_effects": 0
+        }
+      },
+      "phases_completed": [
+        "observe",
+        "compare",
+        "propose",
+        "act",
+        "verify",
+        "record"
+      ]
+    }
+  },
+  {
+    "body": {
+      "run_id": "pstrun_0b525ffb1cd74768a0c39caa36860ff9",
+      "success": true
+    },
+    "caller": "principal:agent-stop",
+    "central_http_auth_bypassed": true,
+    "probe": "stop_route_adapter_only_injected_principal",
+    "requested_by": "principal:owner-start",
+    "run_id": "pstrun_0b525ffb1cd74768a0c39caa36860ff9",
+    "state_after": "stopping",
+    "status": 200
+  },
+  {
+    "approved_state": "awaiting_execution",
+    "child_operation_id": "op_74661d87773e4b2dac1ca8a857d30d60",
+    "child_receipt": {
+      "actor_identity": "agent:probe",
+      "actor_kind": "agent",
+      "authority_basis": "refused_at_admission",
+      "created_at": 1000.0,
+      "delegator_identity": "",
+      "delegator_kind": "",
+      "operation_id": "op_74661d87773e4b2dac1ca8a857d30d60",
+      "outcome": "parent_continuation_identity_required",
+      "receipt_id": "rcpt_1e035774bc6a46b581b3bec8002f1f62",
+      "result_ref": "",
+      "state": "refused",
+      "target_ref": ""
+    },
+    "child_state": "refused",
+    "claimed_operation_ids": [
+      "op_dfc5f01b2f3c4a048fab67356968fc0a"
+    ],
+    "parent_operation_id": "op_dfc5f01b2f3c4a048fab67356968fc0a",
+    "parent_state_after_claim": "claimed",
+    "probe": "real_kernel_same_agent_child"
+  }
+]
