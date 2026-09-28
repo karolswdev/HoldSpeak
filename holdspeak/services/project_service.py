@@ -274,35 +274,67 @@ _SERVICE_OBSERVED_OPERATIONS: frozenset[str] = frozenset({
 _SERVICE_OBSERVED_PREFIXES: tuple[str, ...] = ("project.item.", "project.resource.", "project.door.")
 
 
-def _summary_names(summary: Any, project_id: str, *, key: str | None = None) -> bool:
-    """PHILO-9-03: does a pipeline summary name ``project_id`` as a VALUE, exactly?
+#: PHILO-9-03 (Codex Astra r2 finding 3): where each Room write's PRODUCER
+#: writes the project's identity -- a structured field, never any value in the
+#: payload (a title equal to another project's id is free text). The census
+#: fence (tests/unit/test_philo9_03_receipt_scope.py) holds every method of
+#: ROOM_WRITE_METHODS to exactly one entry here.
+#:   ("args", "project_id")   the call's own ``project_id`` argument
+#:   ("result", "id")         the created project's own id
+#:   ("result", "project_id") the returned record's ``project_id`` field
+_RECEIPT_SCOPE: dict[str, tuple[str, str]] = {
+    "create_project": ("result", "id"),
+    "create_from_setup": ("result", "id"),
+    **{m: ("args", "project_id") for m in (
+        "update_project", "archive_project", "restore_project", "add_resource", "remove_resource",
+        "associate_meeting", "disassociate_meeting", "create_item", "create_item_in_transaction",
+        "update_item", "transition_item", "save_ask")},
+    **{m: ("result", "project_id") for m in (
+        "record_ask_stop", "discard_ask",
+        "update_watch", "pause_watch", "resume_watch", "retire_watch",
+        "test_watch", "baseline_watch", "evaluate_once", "set_rules")},
+}
 
-    ``key`` given: only that top-level key counts (a created project's own
-    ``id``). Otherwise any string value anywhere in the JSON object counts
-    (``project_id`` at the top, or nested). A summary that is not JSON is
-    not claimed (never guessed from a substring).
+
+def _top_level(summary: Any) -> dict[str, Any]:
+    """The TOP-LEVEL keys of a JSON object summary, read value by value.
+
+    The observer truncates a long summary (observer.py ``_truncate``), so the
+    object may not parse whole: the keys read before the cut still count; a
+    nested value never does.
     """
+    if isinstance(summary, dict):
+        return summary
+    if not isinstance(summary, str) or not summary.lstrip().startswith("{"):
+        return {}
+    decoder = json.JSONDecoder()
+    text, out, i = summary.strip(), {}, 1
     try:
-        data = json.loads(summary) if isinstance(summary, str) else summary
-    except (TypeError, ValueError):
-        # The observer truncates a long summary (observer.py `_truncate`), so
-        # it may not parse: then a JSON string VALUE equal to the id, exactly.
-        if not isinstance(summary, str):
-            return False
-        name = re.escape(key) if key is not None else r"[A-Za-z_][A-Za-z0-9_]*"
-        return re.search(rf'"{name}"\s*:\s*"{re.escape(project_id)}"', summary) is not None
-    if key is not None:
-        return isinstance(data, dict) and data.get(key) == project_id
-    stack = [data]
-    while stack:
-        value = stack.pop()
-        if value == project_id:
-            return True
-        if isinstance(value, dict):
-            stack.extend(value.values())
-        elif isinstance(value, list):
-            stack.extend(value)
-    return False
+        while True:
+            while text[i] in " \n\t,":
+                i += 1
+            if text[i] == "}":
+                break
+            key, i = decoder.raw_decode(text, i)
+            while text[i] in " \n\t:":
+                i += 1
+            value, i = decoder.raw_decode(text, i)
+            out[str(key)] = value
+    except (ValueError, IndexError):
+        pass
+    return out
+
+
+def _receipt_project(method: str, args_summary: Any, result_summary: Any) -> str | None:
+    """The project a pipeline receipt belongs to, from the producer's own
+    identity field (``_RECEIPT_SCOPE``); ``None`` when the method is not a
+    Room write or the field is absent."""
+    where = _RECEIPT_SCOPE.get(method)
+    if where is None:
+        return None
+    side, key = where
+    value = _top_level(args_summary if side == "args" else result_summary).get(key)
+    return value if isinstance(value, str) else None
 
 
 def _count_unit(count: int, unit: str) -> str:
@@ -2186,20 +2218,20 @@ class ProjectService:
                 "       origin, caller, caller_identity, "
                 "       args_summary, result_summary, error "
                 "FROM pipeline_events "
-                # PHILO-9-03 (F7): the create that made the Room names its id
-                # in its result, not its arguments.
-                f"WHERE ((args_summary LIKE ? AND method IN ({marks})) "
-                "   OR (method = 'create_project' AND result_summary LIKE ?)) "
+                # PHILO-9-03 (F7; Codex Astra r2 finding 3): a write names its
+                # project in its arguments or in its result (a create, a
+                # watch's record); _RECEIPT_SCOPE below says which, exactly.
+                f"WHERE method IN ({marks}) AND (args_summary LIKE ? OR result_summary LIKE ?) "
                 "ORDER BY timestamp DESC LIMIT ?",
-                (f"%{project_id}%", *writes, f"%{project_id}%", _LIMIT * 5),
+                (*writes, f"%{project_id}%", f"%{project_id}%", _LIMIT * 5),
             ).fetchall()
-            # PHILO-9-03 (Codex Astra r1 finding 3): the LIKE above is only a
-            # prefilter. A receipt belongs to this Room when its summary NAMES
-            # this project's id as a value, exactly -- another project whose
-            # name merely contains the id is not this Room's work.
-            rows = [row for row in rows if _summary_names(
-                row["result_summary"] if row["method"] == "create_project" else row["args_summary"],
-                project_id, key="id" if row["method"] == "create_project" else None)]
+            # PHILO-9-03 (Codex Astra r1 finding 3, r2 finding 3): the LIKE
+            # above is only a prefilter. A receipt belongs to this Room when
+            # its PRODUCER's project-identity field is this project's id
+            # (_RECEIPT_SCOPE) -- never because some value in the payload (a
+            # name, a title) happens to equal or contain it.
+            rows = [row for row in rows if _receipt_project(
+                str(row["method"]), row["args_summary"], row["result_summary"]) == project_id]
             # PHILO-9-03 (F7): the Room's admitted writes outside the observed
             # services (publish, delivery, the steward's run, the review) are
             # kernel receipts, not pipeline events: read them by the target

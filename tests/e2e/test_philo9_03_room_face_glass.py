@@ -820,21 +820,29 @@ class TestRoomFaceGlass:
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", WIDTHS)
     def test_receipts_hold_only_this_rooms_work(self, width: int) -> None:
-        """Codex Astra r1 finding 3 (inherited): a project whose NAME contains
-        this project's id is not this Room's work; its create receipt stays out."""
+        """Codex Astra r1 finding 3 (inherited) and r2 finding 3: a project
+        whose NAME contains this project's id, and an item in that other
+        project whose TITLE equals this project's id, are not this Room's
+        work: only the producer's project-identity field scopes a receipt."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
             browser, page, errors = self._open(pw, width)
             try:
                 pid = self._project(page)
-                self._project(page, f"Mirror of {pid}")
+                other = self._project(page, f"Mirror of {pid}")
+                _api(page, "POST", f"/api/projects/{other}/items",
+                     {"item_type": "risk", "title": pid, "details": {"likelihood": "high", "impact": "high"}},
+                     token=TOKEN)
                 hub = _api(page, "GET", f"/api/projects/{pid}/room", token=TOKEN)["receipts"]["items"]
                 self._room(page, pid)
                 rows = self._facts(page)["receipts"]
                 _record("receipts-own-room", width, {"hub": hub, "face": rows})
                 assert [i["op"] for i in hub].count("create_project") == 1, hub
-                assert rows.count("CREATE PROJECT") == 1, rows
+                assert "create_item" not in [i["op"] for i in hub], hub
+                assert rows.count("CREATE PROJECT") == 1 and "CREATE ITEM" not in rows, rows
+                other_hub = _api(page, "GET", f"/api/projects/{other}/room", token=TOKEN)["receipts"]["items"]
+                assert "create_item" in [i["op"] for i in other_hub], other_hub  # B's own work stays B's
                 assert not errors, errors
             finally:
                 browser.close()

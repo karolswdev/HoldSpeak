@@ -37,11 +37,17 @@
 - **Generated docs:** `api-reference.json`, `boundary-candidates.json`, `graph.json` regenerated; every Documentation Navigation check rc=0 (capture 15:54:21Z).
 - **Shots (both widths, from the green capture):** `assets/story-03-shots/` — `items-late-first-view-*`, `items-late-section-*`, `items-empty-omitted-*`, `items-unavailable-*`, `deliver-1-after-copy-*` … `deliver-11-retried-one-row-*`, `steward-counts-*`, `receipts-writes-*`, `ask-well-first-view-*`, `update-list-words-*`, `f1-meeting-opens-room-*`, `f1-chair-opens-room-*`, `f1-shade-opens-room-*`, with the measurements beside them (`*.json`). Walked by eye at both widths.
 
+### Round three — Codex Astra r2 on `e77a5416` RATIFY-WITH-CONDITIONS (`checks/story-03-built-astra-r2.md`); the condition FIXED on Muad'Dib's ruling
+
+- **The class, closed.** Round two's `_summary_names` accepted any payload value equal to the id (free text: a risk in B titled with A's id put B's CREATE ITEM in A, reproduced by Codex at both widths). Replaced: a pipeline receipt belongs to a Room only by its PRODUCER's project-identity field, `holdspeak/services/project_service.py` `_RECEIPT_SCOPE` (method → `args.project_id` | `result.id` | `result.project_id`), read by `_top_level` from the summary's top-level keys only (a truncated summary keeps the keys before the cut; a nested value never counts), via `_receipt_project`. The SQL prefilter reads arguments or results (a watch's write names its project only in its returned record).
+- **The census** (`tests/unit/test_philo9_03_receipt_scope.py`): every method of `ROOM_WRITE_METHODS` has exactly one declaration, and an `args` declaration names a real `project_id` parameter; the mutation drops `create_item` and the census bites. It found one producer undeclared: `create_from_setup` (the Door's create), now `result.id`. The census of the 25 producers: 12 carry `project_id` as an argument (`update_project`, `archive_project`, `restore_project`, `add_resource`, `remove_resource`, `associate_meeting`, `disassociate_meeting`, `create_item`, `create_item_in_transaction`, `update_item`, `transition_item`, `save_ask`); 2 name the project by the created record's `id` (`create_project`, `create_from_setup`); 10 by the returned record's `project_id` (`record_ask_stop`, `discard_ask`, and the eight WatchService writes, which return `get_watch`); unit cases fence the free-text, foreign-name, truncated and nested-value cases.
+- **The fence** `test_receipts_hold_only_this_rooms_work[1440, 393]` now also creates, in project B, a risk titled with A's id: red on `e77a5416`'s reader (`'create_item' not in ['create_item', 'create_project']` failed at both widths), green after; the foreign-name case stays green; B's own CREATE ITEM stays in B.
+
 ### Round two — Codex Astra r1 on `62375d84` DO-NOT-RATIFY (`checks/story-03-built-astra-r1.md`), paid
 
 - **Finding 1 (blocking) PAID — a refused delivery appeared successful.** `holdspeak/services/project_service.py` `_read_room_receipts` keeps the kernel receipt's named outcome as `reason` for a non-success; `web/src/desk/surface/egress.ts` `receiptFace(outcome)` draws every outcome as what happened (only `ok`/`succeeded` is the success chip; `refused` → `✗ REFUSED` + the plain reason; `error`/`failed` → `✗ FAILED`; `cancelled` → `— CANCELLED`; `indeterminate` → `⚠ RESULT UNKNOWN`), and `receiptLabel` says `MARK DELIVERED` for a mark that did not happen. `ProjectRoomCore.tsx` RECEIPTS uses both. Closed as a class: `web/src/desk/__tests__/receiptFace.test.ts` is the census of every outcome the list can carry (the pipeline's two, the kernel's five). One refusal-word table (`refusalWord`) now serves the delivery line, the steward's start and RECEIPTS. Fence `test_a_refused_delivery_receipt_says_refused_and_why[1440, 393]` through the real producer (POST `/delivered` on a draft: 400, no row): red on `62375d84` (`{'lead': 'success', 'text': '● MARKED DELIVERED REFUSED'}`), green after.
 - **Finding 2 (blocking) PAID — the steward's Review opened new work.** `review/api.ts` `getReview`; `useReviewController.ts` `enterReview(reviewId?)` opens THAT review by its id (a settled one read-only, checkpointed, no verb that starts work); `StewardPosture` passes the run's `review_id`; `ReviewPosture` exposes `data-review-id` / `data-review-status`. Fence `test_review_on_a_completed_run_opens_that_review_even_after_acceptance[1440, 393]` (run, accept its review, reopen the run, press Review): red on `62375d84` (the press opened `prev_…` new: the hub's delta held a new open review), green after (the shown review is the run's, `accepted`; no open review on the hub). The existing steward fence now checks the identity too.
-- **Finding 3 (inherited) PAID — a foreign project's receipt in this Room.** The LIKE is now a prefilter; `_summary_names` claims a pipeline receipt only when its summary names the project's id as a value exactly (a created project's own `id` for `create_project`; a truncated summary by an exact JSON-string match). Fence `test_receipts_hold_only_this_rooms_work[1440, 393]` (project B named `Mirror of <A's id>`): red on `62375d84` (A's read held 2 `create_project`), green after.
+- **Finding 3 (inherited) — a foreign project's receipt in this Room. CORRECTED in round three: this round paid only the foreign-NAME case; the claim that the leak was paid was too strong (Codex Astra r2 finding 3).** The LIKE became a prefilter; `_summary_names` claimed a pipeline receipt when its summary named the project's id as ANY value exactly (a created project's own `id` for `create_project`; a truncated summary by an exact JSON-string match). Fence `test_receipts_hold_only_this_rooms_work[1440, 393]` (project B named `Mirror of <A's id>`): red on `62375d84` (A's read held 2 `create_project`), green after.
 
 - **Round two proof:** red capture 16:32:22Z (the three fences on `62375d84`'s product files: 6 failed, each an assertion on the rendered face or the hub's record); green capture 16:35:53Z (374 passed: the story 03 glass, 14 tests × 2 widths, the Room backend fences and the atlas fences; the rig 8 of 8; the 16:32:48Z green attempt failed only on the atlas line anchors the edits moved, re-anchored by `add_atlas.py`); web unit 16:39:01Z (zero branch-new, vitest 325 files / 2941 tests, `npm run check` green); docs navigation 16:42:03Z (every check rc=0); preservation 16:42:20Z (129 passed; the one red is the inherited `test_mute_toggle`).
 
@@ -937,4 +943,37 @@ rc=0
 ```text
 FAILED tests/e2e/test_hs171_rhythm_glass.py::TestRhythmFace::test_mute_toggle
 1 failed, 129 passed, 14 skipped, 4 xfailed in 192.66s (0:03:12)
+```
+
+### Captured run — 2026-09-28T17:11:06Z
+
+- **Command:** `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/red_r3.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 3e8597bc68f0d2ed00b155c9fd98c55778f02b6f
+
+```text
+E               AssertionError: [{'at': 1790615469.187072, 'caller': None, 'id': '141906bd-f74d-4875-b6eb-2eed7f309de8', 'identity': None, ...}, {'at': 1790615469.177779, 'caller': None, 'id': '3022496c-e7a8-426a-a1e2-ab4251cc95a4', 'identi
+E               assert 'create_item' not in ['create_item', 'create_project']
+E               AssertionError: [{'at': 1790615469.182739, 'caller': None, 'id': 'd7f2fe18-8d8f-4f34-b7d5-ff107cbf0769', 'identity': None, ...}, {'at': 1790615469.172641, 'caller': None, 'id': '4248b34b-7427-4067-b770-551b9d0a8bdb', 'identi
+E               assert 'create_item' not in ['create_item', 'create_project']
+FAILED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_hold_only_this_rooms_work[393]
+FAILED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_hold_only_this_rooms_work[1440]
+2 failed in 8.43s
+ 1 file changed, 70 insertions(+), 38 deletions(-)
+```
+
+### Captured run — 2026-09-28T17:11:15Z
+
+- **Command:** `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/green_r3.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 3e8597bc68f0d2ed00b155c9fd98c55778f02b6f
+
+```text
+✓ built in 4.35s
+222 passed in 70.86s (0:01:10)
+philo_api_reference --check rc=0
+philo_boundary_census --check rc=0
+philo_graph_reference --check rc=0
 ```
