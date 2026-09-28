@@ -3459,7 +3459,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "write",
-      "result": "{success: true, run_id, operation_id, receipt}: the stop request is recorded (not: the run has stopped)",
+      "result": "{success: true, run_id} and the kernel operation_id and receipt: the stop request is recorded (not: the run has stopped)",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
@@ -3642,7 +3642,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "write",
-      "result": "{step_id, state: sent, receipt ...} and the kernel operation_id and receipt",
+      "result": "{success: true, receipt: the comment receipt (comment_url, pr_number, reviewer ...)} and the kernel operation_id and receipt",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
@@ -3813,7 +3813,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged; the MCP tool reaches graduated watches only (legacy rows: legacy_watch_boundary)",
       "effect": "write",
-      "result": "{success: true, ...the evaluation}",
+      "result": "{watch_id, evaluation_id, state, transitions, observation_ids, message} and the kernel operation_id and receipt",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",

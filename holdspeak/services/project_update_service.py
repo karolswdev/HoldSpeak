@@ -2084,37 +2084,26 @@ class ProjectUpdateService:
                 refs=[project_ref],
             )
 
-            # 5. Command idempotency ledger
+            # 5. The one answer per command, and the admitted operation's end,
+            #    in THIS transaction (PHILO-9-02 round three, ruling A): a
+            #    failure anywhere rolls back the publication, the answer and
+            #    the receipt together.
             envelope = CommandResultEnvelope(
                 result_kind=ResultKind.UPDATED,
                 project_id=project_id,
                 project_revision=new_revision,
                 changed_refs=(parse_ref(project_ref),),
             )
-            result_json = json.dumps(
-                _envelope_to_dict(envelope), ensure_ascii=False,
+            published = self._project_axes(
+                self._db.project_updates.get_update_in_transaction(conn, update_id)
             )
-            conn.execute(
-                """INSERT INTO project_commands (
-                    id, project_id, command_kind, request_hash,
-                    status, result_json, completed_at, created_at
-                ) VALUES (?, ?, ?, ?, 'completed', ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    status = 'completed',
-                    result_json = excluded.result_json,
-                    completed_at = excluded.completed_at
-                """,
-                (
-                    cmd_id, project_id, "publish_update", req_hash,
-                    result_json, now_iso, now_iso,
-                ),
-            )
+            published.update(_envelope_to_dict(envelope))
+            from holdspeak.services import project_kernel
 
-        # Return the published update with the envelope merged in
-        published = self._project_axes(
-            self._db.project_updates.get_update(update_id)
-        )
-        published.update(_envelope_to_dict(envelope))
+            project_kernel.answered(
+                conn, command_id=cmd_id, project_id=project_id, command_kind="publish_update",
+                request_hash=req_hash, answer=published,
+            )
         return published
 
     # ── The reviewer path (HS-200-06, C2) ───────────────────────────

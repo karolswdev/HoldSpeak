@@ -91,7 +91,7 @@ MUTATIONS: list[tuple[str, str, str, str, list[str]]] = [
      "web/src/pages/cores/SettingsCore.tsx",
      ".filter((g) => g.project_archived && g.state === \"LIVE\")",
      ".filter((g) => false && g.project_archived && g.state === \"LIVE\")",
-     ["tests/e2e/test_philo9_07_project_grant_glass.py::TestArchivedProjectGrant::test_archive_keeps_the_stop_and_its_receipt_on_and_off[1440]"]),
+     ["tests/e2e/test_philo9_07_project_grant_glass.py::TestArchivedProjectGrant::test_archive_keeps_the_stop_and_its_receipt_on_and_off[1440-on]"]),
 ]
 
 

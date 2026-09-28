@@ -192,10 +192,17 @@ class StewardContract:
                        "unattended_enabled": bool(policy.get("unattended_enabled"))},
                 refs=[f"project:{project_id}", f"steward_policy:{policy_id}"],
             )
-            written["policy_id"] = policy_id
+            # Ruling A/B (round three): the whole answer is recorded with the
+            # write and the receipt, so a replay of this key answers THESE
+            # terms, never the policy as it is now.
+            written["answer"] = {"success": True, "policy": _serialize_policy(policy)}
+            project_kernel.answered(
+                conn, command_id=command_id, project_id=project_id, command_kind="configure_steward",
+                request_hash=project_kernel.request_hash(fields), answer=written["answer"], close=False,
+            )
 
         handle.terminal("succeeded", "succeeded", f"project:{project_id}", effect=effect)
-        return {"success": True, "policy": _serialize_policy(self._db.steward_policies.get_policy(written["policy_id"]))}
+        return written["answer"]
 
     # ── the run (project.run_steward) ─────────────────────────────────
 

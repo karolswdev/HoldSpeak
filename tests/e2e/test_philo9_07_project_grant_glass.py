@@ -512,8 +512,11 @@ class TestArchivedProjectGrant(_Rig):
     project stays on the credential row, ARCHIVED, with its Stop and never an Allow."""
 
     @pytest.mark.e2e
+    @pytest.mark.parametrize("remote", ["on", "off"])
     @pytest.mark.parametrize("width", [1440, 393])
-    def test_archive_keeps_the_stop_and_its_receipt_on_and_off(self, width: int) -> None:
+    def test_archive_keeps_the_stop_and_its_receipt_on_and_off(self, width: int, remote: str) -> None:
+        """Archive -> the line stays (ARCHIVED, Stop only) -> Stop -> the line goes, the receipt stays;
+        with Remote Access ON and OFF (Codex Astra r2: Stop pressed in both states)."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -522,24 +525,25 @@ class TestArchivedProjectGrant(_Rig):
             pay = ids[PAYMENTS]
             _api(page, "PUT", f"/api/settings/remote/delegations/{AGENT}/projects/{pay}", {}, token=TOKEN)
             _api(page, "DELETE", f"/api/projects/{pay}", token=TOKEN)  # the owner archives Payments
-            for enabled, shot in ((True, "12-archived-on"), (False, "12-archived-off")):
-                _api(page, "PUT", "/api/settings/remote", {"enabled": enabled}, token=TOKEN)
-                self._open(page)
-                _readable(_row(page, AGENT).locator('[data-testid="project-grant-summary"]'), PAYMENTS.upper())
-                self._open_projects(page)
-                line = _line(page, AGENT, pay)
-                _readable(line.locator('[data-testid="project-archived"]'), P["archived"])
-                _readable(line.locator('[data-testid="project-grant-chip"]'), P["live"])
-                _readable(line.locator('[data-testid="project-grant-verb"]'), P["stop"])
-                # Hiring (active, never granted) still offers Allow; the archived line never does.
-                _readable(_line(page, AGENT, ids[HIRING]).locator('[data-testid="project-grant-verb"]'), P["allow"])
-                _lawful(page, width)
-                self._shot(page, shot, width)
-            # Stop the archived project's grant: the line goes (no Allow on an archived
-            # project), the footer keeps its receipt.
-            _line(page, AGENT, pay).locator('[data-testid="project-grant-verb"]').click()
+            _api(page, "PUT", "/api/settings/remote", {"enabled": remote == "on"}, token=TOKEN)
+            self._open(page)
+            _readable(_row(page, AGENT).locator('[data-testid="project-grant-summary"]'), PAYMENTS.upper())
+            self._open_projects(page)
+            line = _line(page, AGENT, pay)
+            _readable(line.locator('[data-testid="project-archived"]'), P["archived"])
+            _readable(line.locator('[data-testid="project-grant-chip"]'), P["live"])
+            _readable(line.locator('[data-testid="project-grant-verb"]'), P["stop"])
+            # Hiring (active, never granted) still offers Allow; the archived line never does.
+            _readable(_line(page, AGENT, ids[HIRING]).locator('[data-testid="project-grant-verb"]'), P["allow"])
+            _lawful(page, width)
+            self._shot(page, f"12-archived-{remote}", width)
+            # Stop: the line goes (no Allow on an archived project); the footer keeps its receipt.
+            line.locator('[data-testid="project-grant-verb"]').click()
             page.wait_for_function(f"() => !document.querySelector('[data-testid=\"project-line-{pay}\"]')")
             assert _grant_rows(self.db_path) == [(pay, "REVOKED", "owner_revoked")]
+            if remote == "off":
+                # OFF: with no LIVE authority left, the credential row goes too.
+                assert _remote(page).locator(".surface-ledger-primary", has_text=AGENT).count() == 0
             foot = page.locator('[data-testid="foot-receipt"]')
             _readable(foot, "STOPPED")
             foot.click()
@@ -549,6 +553,6 @@ class TestArchivedProjectGrant(_Rig):
             receipt = _kernel(page, well.get_attribute("data-operation-id"))
             assert (receipt["operation"]["name"], receipt["receipt"]["state"]) == ("project.delegation.revoke", "succeeded")
             _lawful(page, width)
-            self._shot(page, "12-archived-stopped", width)
+            self._shot(page, f"12-archived-stopped-{remote}", width)
             assert errors == [], errors
             browser.close()
