@@ -35,7 +35,7 @@ other before anything it authored is acted on.
 | Runtime | Claude Code (this session), `claude-fable-5-1` | `codex exec`, `gpt-6-astra`, reasoning `xhigh` |
 | Reads on entry | `CLAUDE.md`, memory, this doc | `AGENTS.md` (repo root), this doc |
 | Orchestrates down to | `.claude/agents/opus-worker.md` — Opus 5.5 (`claude-opus-5-5`, ruling 2026-09-22), the Fedaykin | `spawn_agent` with `model="gpt-5.6-luna"`, `reasoning_effort="xhigh"` — the Luna lanes |
-| Invoked by | the owner, or Astra via `claude -p` | the owner, or Muad'Dib via `scripts/astra` |
+| Invoked by | the owner, or a Muad'Dib session the owner opens (a `claude -p` run by Astra is advice, not Muad'Dib — §6) | the owner, or Muad'Dib via `scripts/astra` |
 | Session record | Claude Code transcript + memory | `~/.codex/sessions/…/rollout-<ts>-<id>.jsonl` (persisted; never `--ephemeral` for real work) |
 
 Both brains carry the same three non-delegable duties from
@@ -175,20 +175,30 @@ scripts/astra <role> <brief.md | -> [--resume <session-id>] [--cd <dir>] [--effo
 - `--yolo` is the owner's standing grant: no approvals, no sandbox.
   The safety is in the laws (§5, AGENTS.md), not the prompt.
 
-### Astra → Muad'Dib: `claude -p`
+### Astra → a Claude second opinion: `claude -p` (advice, not Muad'Dib's check)
 
 When Astra authored something and Muad'Dib is not the caller (the owner
-ran `codex` directly), Astra obtains his check with:
+ran `codex` directly), Astra MAY get a Claude second opinion with:
 
 ```
 claude -p --model claude-fable-5-1 --permission-mode bypassPermissions \
   "$(cat <brief.md>)"
 ```
 
-with the same brief discipline. The result is recorded exactly as §3
-requires. If `claude -p` is unavailable in the environment, Astra
-records `UNCHECKED — Muad'Dib unreachable` on the artifact and the owner
-or the next Muad'Dib session pays the check before it is acted on.
+with the same brief discipline. It is ADVICE, never a substitute for §3:
+the artifact stays `UNCHECKED — awaiting Muad'Dib` and is not acted on
+until a Muad'Dib session checks it. The advice is recorded next to the
+artifact and LABELLED as what it is: `Check — claude -p (<model>),
+invoked by Astra` — never "Muad'Dib's check" or "Muad'Dib's counsel"
+(handover XXIX law 8). **When Muad'Dib dispatched the work
+(`scripts/astra lane|check|counsel`), Astra never self-invokes his
+check:** it reports back, the artifact stays DRAFT, and Muad'Dib checks
+it himself. (2026-09-27: PR #678 self-invoked a `claude -p` check on a
+lane Muad'Dib dispatched, labelled it Muad'Dib's and marked the design
+RATIFIED; relabelled and re-checked by Muad'Dib.) Whether or not the
+advice ran, Astra records `UNCHECKED — awaiting Muad'Dib` on the artifact,
+and the owner or the next Muad'Dib session pays the check before it is
+acted on.
 
 ### Discipline for both directions
 

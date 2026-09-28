@@ -3,9 +3,9 @@
 - **Project:** holdspeak-philo
 - **Phase:** 9
 - **Status:** backlog
-- **Depends on:** PHILO-9-01; the owner's Q1 ruling (by effect); **the steward lifecycle beat** (the charter's five points: pending handle, run/effect parentage, terminal receipt, stop, recovery), written as `design/steward-lifecycle-beat.md` and checked by Codex Astra before build
+- **Depends on:** PHILO-9-01; the owner's Q1 ruling (by effect); **[the steward lifecycle beat](../../../../docs/internal/philo/phase-9/steward-beat/README.md)** (the charter's five points, B2 and R4-1), authored by Astra and checked by Muad'Dib before build; B1 remains a separate brief condition
 - **Unblocks:** PHILO-9-07, PHILO-9-05, PHILO-9-06
-- **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks
+- **Owner:** implementation: Muad'Dib's lane (Fedaykin, Opus 5.5), Codex Astra checks; prerequisite design beat: Astra, Muad'Dib checks (owner's lane assignment, 2026-09-27)
 - **Closure finding:** `docs/internal/philo/phase-9/grounding/README.md` F5, F8, F9, F16, F17, F18, F19 (round-two probes P1–P3); Codex Astra r1 F2, F3, F4, F7 (`checks/charter-astra-r1.md`)
 - **Canvas:** none for this story's kernel work; the Connections face under B1 needs one only if it changes beyond words and chips. The project grant's face is story 07's canvas.
 
@@ -63,6 +63,8 @@ PROVISIONAL: 3.5–4.5 engineering days, plus about 0.5 for the lifecycle beat.
 - **Rig:** `op` steps that read the kernel receipt for each admitted write.
 
 ## Notes
+
+- 2026-09-27 — steward design beat linked at its assigned `docs/internal/philo/phase-9/steward-beat/README.md` home; Astra authors and Muad'Dib checks the design. Implementation ownership and story status unchanged. B1 remains separately required before the implementation brief.
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. `nudge.send` was not run in the grounding (no GitHub account on the isolated HOME).
 - 2026-09-27 — round eight (Codex Astra r5): delivery idempotency, the omitted-key rule, the enforced operation link and one-transaction persistence, with their fences.
