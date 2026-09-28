@@ -2349,17 +2349,17 @@ def bind_available(services: Mapping[str, Any]) -> OperationRegistry:
     return bind(present, tuple(d for d in DESCRIPTORS if d.service in present))
 
 
-def _bare_primitives(ctx: Any) -> Any:
+def _bare_primitives(ctx: Any, db: Any = None) -> Any:
     from holdspeak.db import get_database, get_observer
     from holdspeak.services.primitive_service import PrimitiveService
 
-    return PrimitiveService(get_database(), observer=get_observer())
+    return PrimitiveService(db if db is not None else get_database(), observer=get_observer())
 
 
 #: The bare builds a partially wired context may fall back to, by field name.
 #: Only services whose bare build is behaviourally identical off-hub (no
 #: callbacks, no runners) are here.
-def _bare_projects(ctx: Any) -> Any:
+def _bare_projects(ctx: Any, db: Any = None) -> Any:
     """PHILO-9-01: the bare ProjectService a partially wired route context reads.
 
     The hub always composes its own (``runtime.composition``); a route test
@@ -2369,7 +2369,7 @@ def _bare_projects(ctx: Any) -> Any:
     from holdspeak.db import get_database, get_observer
     from holdspeak.services.project_service import ProjectService
 
-    return ProjectService(get_database(), observer=get_observer())
+    return ProjectService(db if db is not None else get_database(), observer=get_observer())
 
 
 _BARE: dict[str, Callable[[Any], Any]] = {
@@ -2378,7 +2378,7 @@ _BARE: dict[str, Callable[[Any], Any]] = {
 }
 
 
-def for_context(ctx: Any, *bare: str, **fallbacks: Callable[[], Any]) -> OperationRegistry:
+def for_context(ctx: Any, *bare: str, bare_db: Any = None, **fallbacks: Callable[[], Any]) -> OperationRegistry:
     """The registry a route reaches through its ``WebContext``.
 
     In the hub this is ``ctx.operations``, bound at composition, and nothing
@@ -2397,7 +2397,7 @@ def for_context(ctx: Any, *bare: str, **fallbacks: Callable[[], Any]) -> Operati
         if target is None and name in fallbacks:
             target = fallbacks[name]()
         if target is None and name in bare:
-            target = _BARE[name](ctx)
+            target = _BARE[name](ctx, bare_db)
         services[name] = target
     return bind_available(services)
 

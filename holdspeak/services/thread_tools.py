@@ -270,6 +270,14 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "project.watch.retire": ("effect_proposal", False),
     "project.watch.set_rules": ("effect_proposal", False),
     "project.watch.test": ("effect_proposal", False),
+    # PHILO-9-01: the Room's item and resource tools (MCP-only, in no thread palette).
+    "project.item.list": ("evidence_read", False),
+    "project.resource.list": ("evidence_read", False),
+    "project.item.create": ("effect_proposal", False),
+    "project.item.update": ("effect_proposal", False),
+    "project.item.transition": ("effect_proposal", False),
+    "project.resource.add": ("effect_proposal", False),
+    "project.resource.remove": ("effect_proposal", False),
     # HS-172-06: suggested source tools
     "project.suggested_sources":         ("evidence_read",     False),
     "project.add_suggested_source":      ("effect_proposal",   False),

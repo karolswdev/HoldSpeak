@@ -119,7 +119,9 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
         """PHILO-9-01: the ProjectService the Room's declared operations are bound to."""
         from ... import operations
 
-        return operations.for_context(ctx, "project_service").target("project.get")
+        # A partially wired context (a route test) reads its Room through the
+        # automations service's own database, as the route did before.
+        return operations.for_context(ctx, "project_service", bare_db=service._db).target("project.get")
 
     @router.get("/automations/practice-recipes")
     async def list_practice_recipes() -> Any:

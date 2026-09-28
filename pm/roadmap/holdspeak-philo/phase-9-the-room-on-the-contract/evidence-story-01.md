@@ -58,7 +58,16 @@ The check is committed verbatim: `checks/story-01-built-astra-r1.md`. Its reprod
 
 ## CI (the full suite on the PR)
 
-Recorded after the push of the round-two commit; see "CI result" at the end of this file.
+**Run 1** — https://github.com/karolswdev/HoldSpeak/actions/runs/36373291968 on head `9b944418` (round two + main merged): **failure**. Documentation Navigation, DeskOS Web Quality, Linux Smoke and Critical Journeys (G0) green; Unit Tests, Integration Tests (macOS) and E2E Tests (macOS) red. Compared failure-by-failure with main's own run on `ffbeb04b` (https://github.com/karolswdev/HoldSpeak/actions/runs/36367372840, also **failure**: Unit Tests and E2E red): 75 failing ids here, 74 on main, **71 identical** (the Phase 143 census reds, `test_thread_modes` desk/chase sizes, `test_product_copy` debt, `test_phase200_continuity`, the CI runner's missing Playwright browser for `test_graph_walk_calibration`/`first_paint`/`philo4_02`, `git show` of commits absent from the CI checkout, and the E2E glass families). **Four were branch-new, and three were this story's regressions, now repaired:**
+
+| Branch-new in run 1 | Cause | Repair | Proof |
+|---|---|---|---|
+| `tests/unit/test_thread_tool_gate.py::…::test_every_mcp_tool_is_classified` | the seven new tools unclassified | classified in `holdspeak/services/thread_tools.py` (the two lists `evidence_read`, the five writes `effect_proposal`; `project.*` stays in no thread palette) | green (capture 09:10:44) |
+| `tests/unit/test_doc_drift_guard.py::test_mcp_tool_count_claims_match_registry` | `docs/README.md` (and `README.md`) said 229 tools | 236 | green (same capture) |
+| `tests/integration/test_phase200_recipe_catalog.py::TestWebWire::test_the_plan_compiles_against_the_real_project` | `automations.py` read the Room through the global database, not the automations service's own (a partial route context) | `operations.for_context(..., bare_db=service._db)`; the bare builds take the database the route names | green (same capture) |
+| `tests/e2e/test_philo8_one_delete_glass.py::…::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]` | not this story: the one-delete glass family times out on CI on main too (main run: `test_a_repeated_delete_never_offers_a_false_undo[list-1440]`, the same `Locator.click` 30 s timeout) | none | green locally at both widths (capture 09:09:30) |
+
+**Run 2** (the head with the three repairs): recorded below when it completes.
 
 ## Open, unpaid or unknown
 
@@ -895,4 +904,86 @@ bringing up nodes...
 =========================== short test summary info ============================
 XFAIL tests/unit/test_philo9_discovery.py::test_mark_it_delivered_maps_to_its_tool - PHILO-9-02 lands project.mark_update_delivered (R4-2)
 2701 passed, 3 skipped, 1 xfailed in 179.10s (0:02:59)
+```
+
+### Captured run — 2026-09-28T09:09:30Z
+
+- **Command:** `bash .tmp/iso.sh uv run pytest -q -p no:cacheprovider tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 8de0c667cd73acb9c1bdff4c22d165239399e5cd
+
+```text
+..                                                                       [100%]
+2 passed in 65.32s (0:01:05)
+```
+
+### Captured run — 2026-09-28T09:10:44Z
+
+- **Command:** `bash .tmp/iso.sh uv run pytest -q -p no:cacheprovider tests/integration/test_phase200_recipe_catalog.py tests/unit/test_thread_tool_gate.py tests/unit/test_doc_drift_guard.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 8de0c667cd73acb9c1bdff4c22d165239399e5cd
+
+```text
+........................................................................ [ 80%]
+..................                                                       [100%]
+90 passed in 10.56s
+```
+
+### Captured run — 2026-09-28T09:10:55Z
+
+- **Command:** `bash .tmp/run_scoped.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 8de0c667cd73acb9c1bdff4c22d165239399e5cd
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  2%]
+........................................................................ [  5%]
+........................................................................ [  7%]
+........................................................................ [ 10%]
+........................................................................ [ 13%]
+........................................................................ [ 15%]
+........................................................................ [ 18%]
+........................................................................ [ 21%]
+........................................................................ [ 23%]
+........................................................................ [ 26%]
+........................................................................ [ 29%]
+........................................................................ [ 31%]
+................................s....................................... [ 34%]
+........................................................................ [ 37%]
+........................................................................ [ 39%]
+........................................................................ [ 42%]
+........................................................................ [ 45%]
+........................................................................ [ 47%]
+........................................................................ [ 50%]
+........................................................................ [ 53%]
+........................................................................ [ 55%]
+........................................................................ [ 58%]
+.................................................................x...... [ 61%]
+........................................................................ [ 63%]
+........................................................................ [ 66%]
+........................................................................ [ 69%]
+........................................................................ [ 71%]
+........................................................................ [ 74%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 82%]
+........................................................................ [ 85%]
+........................................................................ [ 87%]
+.......................s................................................ [ 90%]
+..............................s......................................... [ 93%]
+........................................................................ [ 95%]
+........................................................................ [ 98%]
+.........................................                                [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/unit/test_delta_schema.py:640: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_project_room_schema.py:390: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_project_updates_schema.py:576: Owner's real DB not found (CI or isolated HOME)
+XFAIL tests/unit/test_philo9_discovery.py::test_mark_it_delivered_maps_to_its_tool - PHILO-9-02 lands project.mark_update_delivered (R4-2)
+2701 passed, 3 skipped, 1 xfailed in 128.35s (0:02:08)
 ```
