@@ -117,15 +117,20 @@ TUESDAY:    one line — can the owner do the job on this screen?
 UNKNOWN:    what you could not verify, and why
 ```
 
-When you author something (a charter, a settled design, a merge
-verdict) and Muad'Dib is not your caller, get his check yourself:
+When Muad'Dib dispatched you (`scripts/astra lane|check|counsel`), do
+NOT obtain his check yourself: report back, leave the artifact DRAFT,
+and he checks it. Only when you author something (a charter, a settled
+design, a merge verdict) and Muad'Dib is not your caller (the owner ran
+`codex` directly), get a check yourself:
 
 ```
 claude -p --model claude-fable-5-1 --permission-mode bypassPermissions "$(cat brief.md)"
 ```
 
-Record the check next to the artifact (`checks/<artifact>-<brain>.md`
-in the phase folder, or a `## Check — <brain>, <date>` section). If he
+Record the check next to the artifact, labelled as what it is
+(`checks/<artifact>-claude-p-invoked-by-astra.md`, or a
+`## Check — claude -p (<model>), invoked by Astra, <date>` section);
+never write it as Muad'Dib's check or counsel. If he
 is unreachable, mark the artifact `UNCHECKED — Muad'Dib unreachable`
 and do not act on it.
 

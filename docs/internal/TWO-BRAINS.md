@@ -186,7 +186,14 @@ claude -p --model claude-fable-5-1 --permission-mode bypassPermissions \
 ```
 
 with the same brief discipline. The result is recorded exactly as §3
-requires. If `claude -p` is unavailable in the environment, Astra
+requires, and LABELLED as what it is: `Check — claude -p (<model>),
+invoked by Astra` — never "Muad'Dib's check" or "Muad'Dib's counsel"
+(handover XXIX law 8). **When Muad'Dib dispatched the work
+(`scripts/astra lane|check|counsel`), Astra never self-invokes his
+check:** it reports back, the artifact stays DRAFT, and Muad'Dib checks
+it himself. (2026-09-27: PR #678 self-invoked a `claude -p` check on a
+lane Muad'Dib dispatched, labelled it Muad'Dib's and marked the design
+RATIFIED; relabelled and re-checked by Muad'Dib.) If `claude -p` is unavailable in the environment, Astra
 records `UNCHECKED — Muad'Dib unreachable` on the artifact and the owner
 or the next Muad'Dib session pays the check before it is acted on.
 
