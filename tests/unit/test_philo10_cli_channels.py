@@ -282,18 +282,19 @@ def test_an_atlassian_send_runs_inside_the_acli_lock_and_a_second_waits(hub: Hub
     t1, a1 = in_thread(lambda: send(hub, {"send_id": first}))
     assert entered.wait(30)
     t2, a2 = in_thread(lambda: send(hub, {"send_id": second}))
-    until(lambda: any(s["state"] == "dispatching" and s["id"] == second for s in sends(hub)))
     time.sleep(0.5)
-    # The second send crossed its boundary but runs no acli command while the first holds the lock.
-    assert [c.argv[1] for c in canned.calls] == ["jira", "jira", "jira"], [c.argv[:4] for c in canned.calls]
+    # PHILO-10-04 (board 14 as ratified): the second send's sign-in check runs under the same acli lock
+    # BEFORE its boundary, so it waits there; no Confluence command runs while the first holds the lock.
+    assert [c.argv[1] for c in canned.calls] == ["jira"] * 5, [c.argv[:4] for c in canned.calls]
+    assert next(s for s in sends(hub) if s["id"] == second)["state"] == "prepared"
     release.set()
     t1.join(30)
     t2.join(30)
     assert a1[0].json()["outcome"] == "sent" and a2[0].json()["outcome"] == "sent"
     order = [(c.argv[1], c.argv[2], c.argv[3]) for c in canned.calls]
-    assert order == [("jira", "auth", "switch"), ("jira", "auth", "status"), ("jira", "workitem", "comment"),
-                     ("confluence", "auth", "switch"), ("confluence", "auth", "status"),
-                     ("confluence", "blog", "create")], order
+    check = [("auth", "switch"), ("auth", "status")]
+    assert order == ([("jira", *a) for a in check] * 2 + [("jira", "workitem", "comment")]
+                     + [("confluence", *a) for a in check] * 2 + [("confluence", "blog", "create")]), order
 
 
 def test_a_status_that_names_another_account_never_creates(hub: Hub, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -302,7 +303,8 @@ def test_a_status_that_names_another_account_never_creates(hub: Hub, monkeypatch
         0, f"✓ Authenticated\n  Site: {SITE}\n  Email: someone-else@acme.example\n", "")
     _pid, update = room(hub)
     answer = send(hub, {"send_id": prepare(hub, update, _dest(hub, "jira"))["send"]["id"]}).json()
-    assert (answer["outcome"], answer["send"]["reason"]) == ("failed", "atlassian_identity_unverified")
+    # PHILO-10-04: known before the boundary now -- REFUSED by name, nothing crossed it.
+    assert answer["code"] == "atlassian_identity_unverified", answer
     assert canned.creates() == []
 
 

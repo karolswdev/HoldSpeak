@@ -34,7 +34,7 @@ Built to the owner's ratified canvases (`../story-04-send-canvas/`, `../story-04
 | B9 list; B10 CHECKED; B12 Edit; B13 old row parked; B14 Remove armed; B15 parked; B16 CANNOT READ DESTINATIONS | real routes | built + fenced |
 | 7 GitHub picked; 9 POSTED + the comment link (a double click = one create); 20 REFUSED GITHUB ACCOUNT CHANGED (no create) | story 02 GitHub channel, canned `gh` at `channel_cli.CLI_RUNNER` | built + fenced |
 | 10 Jira picked; 11 UNKNOWN TIMED OUT + Check PAY-121, no automatic re-send; 12 Send again → COMMENTED + the work item link | story 02 Jira channel, canned `acli` | built + fenced |
-| 13 Confluence picked (SPACE, TITLE, ACCOUNT); 14 the account signed out; 15 BLOG POSTED + the post link; the remote history rows | story 02 Confluence channel, canned `acli` | built + fenced. Board 14 reads **FAILED · NOT SIGNED IN · NOTHING SENT**, not the canvas's REFUSED: story 02 settles a signed-out switch as a known non-delivery after the boundary (`atlassian_not_logged_in`); the face shows what the hub recorded |
+| 13 Confluence picked (SPACE, TITLE, ACCOUNT); 14 the account signed out: **REFUSED · NOT SIGNED IN · NOTHING SENT** as ratified (the wire now checks sign-in before the boundary: no row crosses it, no create); 15 BLOG POSTED + the post link; the remote history rows | story 02 Confluence channel + the pre-boundary sign-in check, canned `acli` | built + fenced (`14-refused-confluence-sign-in`); red on the story 02 wire first |
 | 16–19 email (ACCEPTED BY SENDGRID, SENDER NOT VERIFIED), B7 KEY NOT SAVED, B11 SENDER NOT VERIFIED | story 03 | face built; NOT fenced: owed when #696 merges |
 | 8 SENDING (a create held at the process edge; Send busy and disabled, one create for a double click); 26b a prepared send running survives Back → return (stored `dispatching`); 26c its destination: SENDING, Send disabled; 27 released → POSTED stays as its result | story 02 off-loop dispatch, canned `gh` held on an Event | built + fenced |
 | 25 UNKNOWN after a restart | story 01 recovery | face renders any UNKNOWN row (fenced by `11`); the restart itself is story 01's unit fence, not re-shot here |
@@ -48,6 +48,10 @@ Built to the owner's ratified canvases (`../story-04-send-canvas/`, `../story-04
 ## Round two, part two: story 02 merged (main 3965c5e1)
 
 The channel boards above run on story 02's real channels with only the process edge canned (its own rig, `tests/unit/_philo10_cli.py`). Glass 16/16 at both widths, every board measured (on-screen, clock-masked byte fence, nine-point pointer pass), the SENDING boards included.
+
+## Board 14 as ratified (Muad'Dib's ruling on #697)
+
+The wire, not the face: the Jira and Confluence channels check the saved account's sign-in BEFORE the dispatch boundary (switch-and-verify as classified reads under the acli lock) → REFUSED `atlassian_not_signed_in` / `atlassian_switch_failed` / `atlassian_identity_unverified`, with the receipt, nothing sent. A sign-out after the check stays the post-boundary known failure. Fences: `tests/unit/test_philo10_04_atlassian_sign_in.py` (both products refused before the boundary, zero creates, the row still `prepared`; the race case FAILED after it) and glass board 14 at both widths — red on the story 02 wire, green now. Story 02's proof notes the follow-up (`../story-02-proof/captures.md`).
 
 ## Captured runs
 
@@ -311,4 +315,50 @@ VERDICT: BRANCH-NEW FAILURES: 1
 Suite totals: 2966 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
+```
+
+### Captured run — 2026-09-29T06:47:31Z (RED on the story 02 wire: a signed-out account crosses the boundary and settles FAILED; the exit is the pipeline's `grep`)
+
+- **Command:** `bash -c H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm .venv/bin/python -m pytest -q -n 3 --basetemp=$H/pt tests/unit/test_philo10_04_atlassian_sign_in.py tests/e2e/test_philo10_04_send_face_glass.py -k "sign or jira_and_confluence" -rf 2>&1 | grep -E "^(FAILED|E   )|passed|failed" | cut -c1-240 | head -24`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** a8a00ccb41d20cff87cec37b2fbf8525d8b27d04
+
+```text
+E       AssertionError: {"send":{"id":"chs_a31e61c9ec57afdf9cee4d1f","document_ref":"project_update:pupd_7fb64a31a8b44a4385ec2b749894c73b","destination_id":"chd_1d0aa59e27ab8ef1d700f310","destination_name":"confluence scratch","channel":"co
+E       assert (200 == 409)
+E        +  where 200 = <Response [200 OK]>.status_code
+E       AssertionError: {"send":{"id":"chs_9dc7eed749377ff39fadee7a","document_ref":"project_update:pupd_8e499ad3af304762b5a40d878022bceb","destination_id":"chd_395d5460d68174665b87a3b4","destination_name":"jira scratch","channel":"jira","b
+E       assert (200 == 409)
+E        +  where 200 = <Response [200 OK]>.status_code
+>       assert (body["outcome"], body["send"]["reason"]) == ("failed", "atlassian_not_logged_in"), body
+E       AssertionError: {'operation_id': 'op_8543476cb6d640a1992bf8da38442c1e', 'outcome': 'sent', 'receipt': {'actor_identity': 'owner-sessio...te': 'acme.atlassian.net'}, 'badge': 'cloud', 'channel': 'confluence', 'created_at': '2026-09-2
+E       assert ('sent', None) == ('failed', 'a...ot_logged_in')
+E         
+E         At index 0 diff: 'sent' != 'failed'
+E         Use -v to get more diff
+E           playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 20000ms exceeded.
+E           Call log:
+E             - waiting for locator("[data-testid=send-open][data-destination='Confluence space 98304'] [data-testid=send-refused]") to be visible
+E           playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 20000ms exceeded.
+E           Call log:
+E             - waiting for locator("[data-testid=send-open][data-destination='Confluence space 98304'] [data-testid=send-refused]") to be visible
+FAILED tests/unit/test_philo10_04_atlassian_sign_in.py::test_a_signed_out_account_is_refused_before_the_boundary[confluence]
+FAILED tests/unit/test_philo10_04_atlassian_sign_in.py::test_a_signed_out_account_is_refused_before_the_boundary[jira]
+FAILED tests/unit/test_philo10_04_atlassian_sign_in.py::test_a_sign_out_after_the_check_is_the_post_boundary_known_failure
+FAILED tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_jira_and_confluence[393]
+FAILED tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_jira_and_confluence[1440]
+5 failed in 47.08s
+```
+
+### Captured run — 2026-09-29T06:55:36Z
+
+- **Command:** `bash -c set -o pipefail; H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOLDSPEAK_EVIDENCE_WRITE=1 HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm .venv/bin/python -m pytest -q -n 4 --basetemp=$H/pt tests/e2e/test_philo10_04_send_face_glass.py tests/unit/test_philo10_04_atlassian_sign_in.py tests/unit/test_philo10_cli_channels.py tests/unit/test_philo10_send_contract.py tests/unit/test_philo10_send_recovery.py tests/unit/test_philo10_send_restart.py tests/unit/test_philo5_one_decision.py 2>&1 | tail -2`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** a8a00ccb41d20cff87cec37b2fbf8525d8b27d04
+
+```text
+....                                                                     [100%]
+148 passed in 255.30s (0:04:15)
 ```

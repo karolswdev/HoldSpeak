@@ -5184,6 +5184,9 @@
         "github_identity_changed",
         "github_not_logged_in",
         "github_identity_unverified",
+        "atlassian_not_signed_in",
+        "atlassian_switch_failed",
+        "atlassian_identity_unverified",
         "idempotency_conflict"
       ],
       "completion": "synchronous; channel.sends and project.list_updates (deliveries) show it",

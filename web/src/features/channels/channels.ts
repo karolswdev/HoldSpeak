@@ -123,6 +123,8 @@ const REFUSED: Record<string, string> = {
   atlassian_not_signed_in: "NOT SIGNED IN",
   atlassian_not_logged_in: "NOT SIGNED IN",
   atlassian_email_invalid: "ADDRESS NOT VALID",
+  atlassian_identity_unverified: "ACCOUNT NOT VERIFIED",
+  atlassian_switch_failed: "ACCOUNT SWITCH FAILED",
   confluence_space_invalid: "SPACE ID NOT VALID",
   destination_changed: "DESTINATION CHANGED",
   destination_parked: "DESTINATION PARKED",

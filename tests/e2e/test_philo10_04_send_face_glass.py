@@ -1112,13 +1112,19 @@ class TestSendChannelsGlass(_Rig):
                 cpick = shots.shoot(page, "13-picked-confluence", [self._row(conf), f"{self._open_sel(conf)} [data-testid=send-verb]"])
                 assert cpick["preview_fields"][0] == "SPACE 98304" and cpick["preview_fields"][1].startswith("TITLE "), cpick["preview_fields"]
                 assert cpick["preview_fields"][2] == f"ACCOUNT {ACLI_EMAIL} · {ACLI_SITE}", cpick["preview_fields"]
+                # Board 14 (as ratified): the account is signed out -- known BEFORE the boundary,
+                # so REFUSED by name, nothing sent, no dispatch (Muad'Dib's ruling on #697).
                 switch = ("acli", "confluence", "auth", "switch")
                 self.canned.answers[switch] = lambda argv: (1, "", "✗ Error: unauthorized: use 'acli jira auth login' to authenticate")
+                creates_before, sends_before = len(self.canned.creates()), len(self._sends(page, uid))
                 self._press(page, conf)
-                self._wait_receipt(page, conf, "failed")
-                signed_out = shots.shoot(page, "14-failed-confluence-sign-in", [f"{self._open_sel(conf)} [data-testid=send-failed]"], seat="CENTER:" + f"{self._open_sel(conf)} [data-testid=send-failed]")
-                assert signed_out["receipts"][0] == {"text": "✗ FAILED NOT SIGNED IN NOTHING SENT", "state": "failed",
-                                                     "code": "atlassian_not_logged_in"}, signed_out["receipts"]
+                page.locator(f"{self._open_sel(conf)} [data-testid=send-refused]").wait_for(timeout=T)
+                page.wait_for_timeout(400)
+                signed_out = shots.shoot(page, "14-refused-confluence-sign-in", [f"{self._open_sel(conf)} [data-testid=send-refused]"],
+                                         seat=f"CENTER:{self._open_sel(conf)} [data-testid=send-refused]")
+                assert signed_out["receipts"][0] == {"text": "✗ REFUSED NOT SIGNED IN NOTHING SENT", "state": "send-refused",
+                                                     "code": "atlassian_not_signed_in"}, signed_out["receipts"]
+                assert len(self.canned.creates()) == creates_before and len(self._sends(page, uid)) == sends_before
                 del self.canned.answers[switch]
                 self._focus(page)
                 self._press(page, conf)

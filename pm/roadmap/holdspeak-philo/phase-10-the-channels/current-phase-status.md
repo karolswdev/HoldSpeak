@@ -161,6 +161,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-29, story 04: board 14 as ratified — the Jira and Confluence channels refuse a signed-out account before the boundary (a follow-up to story 02, carried by #697). Owed: the email boards and board 25 with story 03 (#696).
+
 2026-09-29, story 04 on story 02 (main 3965c5e1 merged in): the GitHub / Jira / Confluence boards and SENDING across Back → return fenced on the real channels (process edge canned); glass 16/16 at both widths. Owed: the email boards with story 03 (#696), the Codex Astra check.
 
 2026-09-29, story 04 round two (PR #697): Codex Astra r1 DO-NOT-RATIFY (`checks/story-04-built-astra-r1.md`) paid — a known FAILED survives a failed read, a failed Remove stays named with Retry, `dispatch_seq` orders "latest" (equal clock fenced), B10 Checked time, armed boards measured; glass 10/10 at both widths, red first.
