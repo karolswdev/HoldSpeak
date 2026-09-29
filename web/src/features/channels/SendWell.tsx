@@ -434,7 +434,7 @@ export function SendWell({ update, sendsRead, onSettled }: {
                     </Button>
                     <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
                     {last?.state === "unknown" && far ? (
-                      <Button dense variant="ghost" data-testid="send-check" onClick={() => openFar(far)}>
+                      <Button dense variant="ghost" data-testid="send-check" data-href={far} onClick={() => openFar(far)}>
                         {`${SEND_WORDS.check} ${targetToken(d.channel, d.target)}`}
                       </Button>
                     ) : null}
@@ -635,7 +635,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                       primary={<span className="surface-primary" data-to={r.deliveredTo ?? ""}>{`${SEND_WORDS.unknownChip} · CHECK ${r.deliveredTo ?? "—"}`}</span>}
                       cells={<>
                         {reason ? <span className="surface-token" data-chip data-code={reason}>{unknownWord(reason)}</span> : null}
-                        {far ? <Button dense variant="ghost" data-testid="history-check" onClick={() => openFar(far)}>{SEND_WORDS.check}</Button> : null}
+                        {far ? <Button dense variant="ghost" data-testid="history-check" data-href={far} onClick={() => openFar(far)}>{SEND_WORDS.check}</Button> : null}
                         <span className="surface-token" data-chip>{stamp(r.deliveredAt)}</span>
                       </>} />
                   );

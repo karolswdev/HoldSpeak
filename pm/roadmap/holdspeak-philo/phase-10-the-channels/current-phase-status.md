@@ -162,6 +162,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-29, story 07 round two (PR #701): Codex Astra r1 DO-NOT-RATIFY paid — Resend is FAILED only on its whole, consistent error envelope (Codex's three probes UNKNOWN through the real routes, red 8/11 before); five Resend atlas cases at 1440 and 393 through a recording HTTPS edge and a memory key store in the rig's hub (10/10, the Phase 10 file 52/52); the atlas anchors moved by story 07 re-anchored.
+
 2026-09-29, story 07 DONE on its lane (branch `feat/philo-10-07`, the owner's closing-review ruling "We can have SendGrid and Resend"): `ResendProvider` is one class and one `EMAIL_PROVIDERS` row (`POST https://api.resend.com/emails`, its id the proof, ACCEPTED BY RESEND, a pinned (status, name) list); each provider's key has its own keychain slot (`<provider>:<key_ref>`); the Check reads its own provider's answer; the Destination form picks SendGrid or Resend.
 
 2026-09-29, story 05 round three (PR #698): Codex Astra r1 RATIFY-WITH-CONDITIONS paid — an unsupported code expression fails the face-word fence (6/6 mutations red), a failed build stops both wrapper branches (proved over 16 combinations), the summaries corrected.

@@ -987,6 +987,51 @@ def test_c7_the_check_reads_the_answer_of_its_own_provider_only(hub: Hub, wire: 
     assert (check(by_resend), check(by_sendgrid)) == ("key_changed", "ready")
 
 
+def raw_json(status: int, body: Any) -> Callable[[Any], Any]:
+    return response(status, {"Content-Type": "application/json"}, json.dumps(body).encode())
+
+
+#: Codex Astra r1 on #701 (P1): an answer that is not Resend's whole, consistent error envelope never
+#: claims FAILED ("NOTHING SENT"). Red at 1ac9a5f3: the first three settled failed.
+ENVELOPE_PROBES = [
+    ("403-unpinned-name", raw_json(403, {"name": "edge_error"}), "unpinned_403"),
+    ("429-status-mismatch", raw_json(429, {"statusCode": 500, "name": "rate_limit_exceeded",
+                                           "message": "Too many requests."}), "unpinned_429"),
+    ("403-object-message", raw_json(403, {"statusCode": 403, "name": "validation_error",
+                                          "message": {"text": DOMAIN_403}}), "unpinned_403"),
+    ("403-no-status", raw_json(403, {"name": "validation_error", "message": DOMAIN_403}), "unpinned_403"),
+    ("403-status-string", raw_json(403, {"statusCode": "403", "name": "invalid_api_key", "message": "x"}),
+     "unpinned_403"),
+    ("403-status-bool", raw_json(403, {"statusCode": True, "name": "invalid_api_key", "message": "x"}),
+     "unpinned_403"),
+    ("403-no-message", raw_json(403, {"statusCode": 403, "name": "invalid_api_key"}), "unpinned_403"),
+    ("403-name-not-string", raw_json(403, {"statusCode": 403, "name": ["invalid_api_key"], "message": "x"}),
+     "unpinned_403"),
+    ("403-unknown-name", resend_error(403, "edge_error", "blocked"), "unpinned_403"),
+    ("422-name-of-another-status", resend_error(422, "rate_limit_exceeded", "x"), "unpinned_422"),
+    ("400-array-body", raw_json(400, [{"statusCode": 400, "name": "validation_error", "message": "x"}]),
+     "unpinned_400"),
+]
+
+
+@pytest.mark.parametrize("case,answer,reason", ENVELOPE_PROBES, ids=[c[0] for c in ENVELOPE_PROBES])
+def test_c7_r1_an_answer_that_is_not_resends_consistent_envelope_is_unknown_never_failed(
+    hub: Hub, wire: Wire, case: str, answer: Any, reason: str,
+) -> None:
+    """Through the real save -> prepare -> send routes (the probe Codex ran), not only interpret()."""
+    update, dest = resend_ready(hub, wire)
+    wire.script = [answer]
+    prepared = prepare(hub, update, dest)["send"]
+    reply = send(hub, {"send_id": prepared["id"], "command_id": f"c7-r1-{case}"})
+    assert reply.status_code == 200, reply.text
+    result = reply.json()
+    assert (result["outcome"], result["send"]["reason"]) == ("unknown", reason), result["send"]
+    assert result["receipt"]["state"] == "indeterminate"
+    read_back = hub.client.get(f"/api/channels/sends?send_id={prepared['id']}").json()["sends"][0]
+    assert (read_back["state"], read_back["reason"]) == ("unknown", reason)
+    assert [r["outcome"] for r in history(hub, update)] == ["unknown"]  # never "nothing sent"
+
+
 def test_c7_resend_is_one_class_and_one_row() -> None:
     from holdspeak.services import channel_email
 

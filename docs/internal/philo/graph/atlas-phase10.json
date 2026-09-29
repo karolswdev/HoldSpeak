@@ -2686,7 +2686,7 @@
             "path": "/api/projects/{project_id}/updates"
           }
         ],
-        "words": "the owner presses Send on the GitHub issue and gh answers the pinned 'could not resolve to an issue': FAILED (a known non-delivery), the owner's failed receipt; the row reads FAILED \u00b7 ISSUE NOT FOUND \u00b7 NOTHING SENT (the channel's reason in a plain word, never the raw code), readable in the viewport; the hub holds one failed send and no history row; ONE gh create. New (no red claimed): the Send is a new capability (Phase 10); on the pre-Phase-10 main the case fails (no SEND well)."
+        "words": "the owner presses Send on the GitHub issue and gh answers the pinned 'could not resolve to an issue': FAILED (a known non-delivery), the owner's failed receipt; the row reads FAILED · ISSUE NOT FOUND · NOTHING SENT (the channel's reason in a plain word, never the raw code), readable in the viewport; the hub holds one failed send and no history row; ONE gh create. New (no red claimed): the Send is a new capability (Phase 10); on the pre-Phase-10 main the case fails (no SEND well)."
       },
       "completion_bound_s": 30,
       "viewports": [
@@ -6083,6 +6083,1571 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.p10.send.resend_setup",
+      "job": "p10",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p10_send_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "the first-use arrival completed on the hub (the glass does the same): the optional click can land before the Chair draws it"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "cli_runner",
+          "label": "the email HTTPS edge: resend-accepted.json",
+          "adapter": "email-https-edge",
+          "reply": "tests/fixtures/philo10_atlas/resend-accepted.json",
+          "why": "the email channel's real plan, the kernel's external.egress admission and the real opener run; only the socket is canned, and the key lives in the hub's memory (never the OS keychain)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas send ledger"
+          },
+          "expect_status": 200,
+          "why": "the Room under test",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/updates/draft",
+          "adapter": "http-route",
+          "body": {
+            "generator": "deterministic"
+          },
+          "expect_status": 200,
+          "why": "an update to publish",
+          "capture_as": "update_id",
+          "capture_path": "update.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/updates/{update_id}/publish",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "a published update (only a published update has a Send well)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the palette (DeskToolShelf.tsx: PROJECTS rows `Open <name>`)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas send ledger"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "Open the project's Room (the one key, open-project-memory, scope project:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=updates-verb]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=update-list]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=update-list-item] [data-update-id='{update_id}']",
+          "why": "open the published update: its SEND well and its DELIVERY history"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=send-add-destination]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=send-add-destination]",
+          "why": "B2: the Room's Add destination opens Settings AT the group, the form open"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=dest-form]"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-keyboard",
+          "selector": "[data-testid=dest-form] select[aria-label=Channel]"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "e",
+          "why": "the Channel cycle: E is Email (the select's own type-ahead)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=dest-form][data-channel=email] select[aria-label=Provider]"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-keyboard",
+          "selector": "[data-testid=dest-form] select[aria-label=Provider]"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "r",
+          "why": "the Provider cycle: R is Resend"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[data-testid=dest-from]",
+          "value": "karol@example.com"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[data-testid=dest-to]",
+          "value": "priya@example.com"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=dest-key-row] button:has-text('Replace')",
+          "why": "the key row: Replace arms the one field"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[data-testid=dest-key-row] input[type=password]",
+          "value": "re_atlas_synthetic_key_0000"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "Enter",
+          "why": "the key goes to the hub once (PUT /api/channels/email-keys/resend-karol@example.com)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "Resend key"
+          },
+          "observe_at": "[data-testid=dest-key-row]",
+          "timeout_s": 10,
+          "why": "the key row names Resend (never SendGrid) once Resend is picked"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "SET"
+          },
+          "observe_at": "[data-testid=dest-key-row] .gadget-chip[data-set]",
+          "timeout_s": 10,
+          "why": "the key went to the hub once: the row reads SET before the Save (the key is never shown)"
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=dest-save]",
+          "block": "center",
+          "why": "the owner scrolls Save into view"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=dest-save]",
+        "why": "Save: POST /api/channels/destinations (provider resend, the key's NAME)",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/destinations"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/destinations",
+              "status": 200,
+              "body_fields": {
+                "destination.channel": "email",
+                "destination.account.provider": "resend",
+                "destination.account.key_ref": "resend-karol@example.com"
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "API.RESEND.COM"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "destinations",
+                    "match": {
+                      "channel": "email",
+                      "account.provider": "resend",
+                      "account.from_email": "karol@example.com"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "cli_calls",
+              "argv_prefix": [
+                "https"
+              ],
+              "count": 0
+            }
+          ]
+        },
+        "observe_at": "[data-testid=dest-list] [data-testid=dest-row]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/destinations"
+          }
+        ],
+        "words": "the owner sets up a Resend destination from the Room's Add destination: the Destinations form opens in Settings, he picks Email then Resend, the key row reads Resend key and SET after the key is typed once, and Save lists the row whose egress chip reads API.RESEND.COM, readable in the viewport; the hub holds one email destination with provider resend and the key's name resend-karol@example.com; no request left for Resend. New (no red claimed): Resend is a new provider (PHILO-10-07); on main 05d01ffb the Provider cycle has SendGrid only and the hub has no Resend provider."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p10.send.resend_accepted",
+      "job": "p10",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p10_send_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "the first-use arrival completed on the hub (the glass does the same): the optional click can land before the Chair draws it"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "cli_runner",
+          "label": "the email HTTPS edge: resend-accepted.json",
+          "adapter": "email-https-edge",
+          "reply": "tests/fixtures/philo10_atlas/resend-accepted.json",
+          "why": "the email channel's real plan, the kernel's external.egress admission and the real opener run; only the socket is canned, and the key lives in the hub's memory (never the OS keychain)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas send ledger"
+          },
+          "expect_status": 200,
+          "why": "the Room under test",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/updates/draft",
+          "adapter": "http-route",
+          "body": {
+            "generator": "deterministic"
+          },
+          "expect_status": 200,
+          "why": "an update to publish",
+          "capture_as": "update_id",
+          "capture_path": "update.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/updates/{update_id}/publish",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "a published update (only a published update has a Send well)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "ResendPriya",
+            "channel": "email",
+            "provider": "resend",
+            "from_email": "karol@example.com",
+            "from_name": "Karol",
+            "key_ref": "resend-atlas",
+            "to": [
+              "priya@example.com"
+            ]
+          },
+          "expect_status": 200,
+          "why": "a saved Resend destination (it names its key by NAME)",
+          "capture_as": "key_ref",
+          "capture_path": "destination.account.key_ref"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": null,
+          "expect_status": 200,
+          "why": "the saved destination's id, by its name",
+          "capture_as": "dest_id",
+          "capture_path": "destinations",
+          "capture_match": {
+            "name": "ResendPriya"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/channels/email-keys/{key_ref}",
+          "adapter": "http-route",
+          "body": {
+            "api_key": "re_atlas_synthetic_key_0000",
+            "provider": "resend"
+          },
+          "expect_status": 200,
+          "why": "the Resend key saved under that name (a synthetic key, into the hub's MEMORY key store)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the palette (DeskToolShelf.tsx: PROJECTS rows `Open <name>`)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas send ledger"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "Open the project's Room (the one key, open-project-memory, scope project:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=updates-verb]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=update-list]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=update-list-item] [data-update-id='{update_id}']",
+          "why": "open the published update: its SEND well and its DELIVERY history"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=send-well]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=destination-row]:has([data-destination='ResendPriya'])"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=destination-row]:has([data-destination='ResendPriya'])",
+          "why": "A1: the pick opens the preview and Send in place, under the row"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-preview]",
+          "why": "the readable preview the hub derived from the frozen request (Send waits for it)"
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-verbs]",
+          "block": "center",
+          "why": "the owner scrolls Send to the middle of the window, so its answer lands in view"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-verb]",
+        "why": "the owner's press: POST /api/channels/send (update, destination, the preview's digest, a new key)",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/send"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/send",
+              "status": 200,
+              "body_fields": {
+                "outcome": "sent",
+                "send.proof.provider": "resend",
+                "send.proof.word": "ACCEPTED BY RESEND",
+                "send.proof.message_id": "re-atlas-4ef9-0001",
+                "receipt.state": "succeeded",
+                "receipt.actor_kind": "owner"
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "ACCEPTED BY RESEND"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "state": "sent",
+                      "destination_id": "{dest_id}",
+                      "proof.provider": "resend",
+                      "proof.word": "ACCEPTED BY RESEND"
+                    },
+                    "count": 1
+                  }
+                },
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "updates",
+                    "match": {
+                      "id": "{update_id}",
+                      "deliveries.0.channel": "email",
+                      "deliveries.0.outcome": "sent"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "cli_calls",
+              "argv_prefix": [
+                "https",
+                "POST",
+                "api.resend.com",
+                "/emails"
+              ],
+              "count": 1
+            }
+          ]
+        },
+        "observe_at": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-sent]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?update_id={update_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/projects/{project_id}/updates"
+          }
+        ],
+        "words": "the owner presses Send on the Resend destination and Resend accepts it (200 and its id): the answer is SENT with the id as proof and the owner's succeeded receipt; the row reads ACCEPTED BY RESEND, readable in the viewport; the hub holds one sent send whose proof names Resend and ONE history row; ONE request to api.resend.com/emails. New (no red claimed): Resend is a new provider (PHILO-10-07); on main 05d01ffb the Provider cycle has SendGrid only and the hub has no Resend provider."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p10.send.resend_prepared",
+      "job": "p10",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p10_send_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "the first-use arrival completed on the hub (the glass does the same): the optional click can land before the Chair draws it"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "cli_runner",
+          "label": "the email HTTPS edge: resend-accepted.json",
+          "adapter": "email-https-edge",
+          "reply": "tests/fixtures/philo10_atlas/resend-accepted.json",
+          "why": "the email channel's real plan, the kernel's external.egress admission and the real opener run; only the socket is canned, and the key lives in the hub's memory (never the OS keychain)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas send ledger"
+          },
+          "expect_status": 200,
+          "why": "the Room under test",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/updates/draft",
+          "adapter": "http-route",
+          "body": {
+            "generator": "deterministic"
+          },
+          "expect_status": 200,
+          "why": "an update to publish",
+          "capture_as": "update_id",
+          "capture_path": "update.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/updates/{update_id}/publish",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "a published update (only a published update has a Send well)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "ResendPriya",
+            "channel": "email",
+            "provider": "resend",
+            "from_email": "karol@example.com",
+            "from_name": "Karol",
+            "key_ref": "resend-atlas",
+            "to": [
+              "priya@example.com"
+            ]
+          },
+          "expect_status": 200,
+          "why": "a saved Resend destination (it names its key by NAME)",
+          "capture_as": "key_ref",
+          "capture_path": "destination.account.key_ref"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": null,
+          "expect_status": 200,
+          "why": "the saved destination's id, by its name",
+          "capture_as": "dest_id",
+          "capture_path": "destinations",
+          "capture_match": {
+            "name": "ResendPriya"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/channels/email-keys/{key_ref}",
+          "adapter": "http-route",
+          "body": {
+            "api_key": "re_atlas_synthetic_key_0000",
+            "provider": "resend"
+          },
+          "expect_status": 200,
+          "why": "the Resend key saved under that name (a synthetic key, into the hub's MEMORY key store)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/sends",
+          "adapter": "http-route",
+          "body": {
+            "update_id": "{update_id}",
+            "destination_id": "{dest_id}"
+          },
+          "expect_status": 200,
+          "why": "prepare (the owner): a prepared row with the frozen request and preview",
+          "capture_as": "send_id",
+          "capture_path": "send.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the palette (DeskToolShelf.tsx: PROJECTS rows `Open <name>`)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas send ledger"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "Open the project's Room (the one key, open-project-memory, scope project:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=updates-verb]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=update-list]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=update-list-item] [data-update-id='{update_id}']",
+          "why": "open the published update: its SEND well and its DELIVERY history"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=send-well]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=prepared-open] [data-testid=prepared-send]"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=prepared-open] [data-testid=prepared-send]",
+        "why": "the prepared row's Send: POST /api/channels/send {send_id}",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/send"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/send",
+              "status": 200,
+              "body_fields": {
+                "outcome": "sent",
+                "send.id": "{send_id}",
+                "send.proof.word": "ACCEPTED BY RESEND",
+                "receipt.state": "succeeded"
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "ACCEPTED BY RESEND"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "id": "{send_id}",
+                      "state": "sent",
+                      "proof.provider": "resend"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "cli_calls",
+              "argv_prefix": [
+                "https",
+                "POST",
+                "api.resend.com",
+                "/emails"
+              ],
+              "count": 1
+            }
+          ]
+        },
+        "observe_at": "[data-testid=prepared-result-word][data-state=sent]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?update_id={update_id}"
+          }
+        ],
+        "words": "a transition, PREPARED to SENT: a send prepared to the Resend destination waits in the SEND well; the owner presses its own Send and the prepared row turns to ACCEPTED BY RESEND, readable in the viewport; the hub holds that send sent with Resend's proof; ONE request to api.resend.com/emails. New (no red claimed): Resend is a new provider (PHILO-10-07); on main 05d01ffb the Provider cycle has SendGrid only and the hub has no Resend provider."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p10.send.resend_history",
+      "job": "p10",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p10_send_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "the first-use arrival completed on the hub (the glass does the same): the optional click can land before the Chair draws it"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "cli_runner",
+          "label": "the email HTTPS edge: resend-accepted.json",
+          "adapter": "email-https-edge",
+          "reply": "tests/fixtures/philo10_atlas/resend-accepted.json",
+          "why": "the email channel's real plan, the kernel's external.egress admission and the real opener run; only the socket is canned, and the key lives in the hub's memory (never the OS keychain)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas send ledger"
+          },
+          "expect_status": 200,
+          "why": "the Room under test",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/updates/draft",
+          "adapter": "http-route",
+          "body": {
+            "generator": "deterministic"
+          },
+          "expect_status": 200,
+          "why": "an update to publish",
+          "capture_as": "update_id",
+          "capture_path": "update.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/updates/{update_id}/publish",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "a published update (only a published update has a Send well)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "ResendPriya",
+            "channel": "email",
+            "provider": "resend",
+            "from_email": "karol@example.com",
+            "from_name": "Karol",
+            "key_ref": "resend-atlas",
+            "to": [
+              "priya@example.com"
+            ]
+          },
+          "expect_status": 200,
+          "why": "a saved Resend destination (it names its key by NAME)",
+          "capture_as": "key_ref",
+          "capture_path": "destination.account.key_ref"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": null,
+          "expect_status": 200,
+          "why": "the saved destination's id, by its name",
+          "capture_as": "dest_id",
+          "capture_path": "destinations",
+          "capture_match": {
+            "name": "ResendPriya"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/channels/email-keys/{key_ref}",
+          "adapter": "http-route",
+          "body": {
+            "api_key": "re_atlas_synthetic_key_0000",
+            "provider": "resend"
+          },
+          "expect_status": 200,
+          "why": "the Resend key saved under that name (a synthetic key, into the hub's MEMORY key store)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/preview",
+          "adapter": "http-route",
+          "body": {
+            "update_id": "{update_id}",
+            "destination_id": "{dest_id}"
+          },
+          "expect_status": 200,
+          "why": "the preview's digest",
+          "capture_as": "digest",
+          "capture_path": "payload_digest"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/send",
+          "adapter": "http-route",
+          "body": {
+            "update_id": "{update_id}",
+            "destination_id": "{dest_id}",
+            "preview_digest": "{digest}",
+            "command_id": "atlas-p10-07-earlier"
+          },
+          "expect_status": 200,
+          "why": "an earlier send to Resend (the owner's token, the send route)",
+          "capture_as": "sent_op",
+          "capture_path": "operation_id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the palette (DeskToolShelf.tsx: PROJECTS rows `Open <name>`)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas send ledger"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "Open the project's Room (the one key, open-project-memory, scope project:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=updates-verb]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=update-list]"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=update-list-item] [data-update-id='{update_id}']",
+        "why": "open the published update: its SEND well and its DELIVERY history",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": "[data-testid=delivery-history] [data-testid=delivery-row]"
+          },
+          {
+            "kind": "ui",
+            "action": "scroll_into_view",
+            "adapter": "ui-pointer",
+            "selector": "[data-testid=delivery-history] [data-testid=delivery-row]",
+            "block": "center",
+            "why": "he scrolls down to the DELIVERY history under the SEND well"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "ACCEPTED BY RESEND"
+            },
+            {
+              "kind": "readable_text",
+              "value": "ID re-atlas-4ef9-0001"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "state": "sent",
+                      "destination_id": "{dest_id}",
+                      "proof.provider": "resend",
+                      "proof.word": "ACCEPTED BY RESEND"
+                    },
+                    "count": 1
+                  }
+                },
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "updates",
+                    "match": {
+                      "id": "{update_id}",
+                      "deliveries.0.channel": "email",
+                      "deliveries.0.outcome": "sent"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "cli_calls",
+              "argv_prefix": [
+                "https",
+                "POST",
+                "api.resend.com",
+                "/emails"
+              ],
+              "count": 1
+            }
+          ]
+        },
+        "observe_at": "[data-testid=delivery-history] [data-testid=delivery-row]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?update_id={update_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/projects/{project_id}/updates"
+          }
+        ],
+        "words": "the DELIVERY history after a send to Resend: he opens the update and its history row reads ACCEPTED BY RESEND with Resend's id, readable in the viewport; the hub holds one sent send with Resend's proof and ONE history row; ONE request to api.resend.com/emails. New (no red claimed): Resend is a new provider (PHILO-10-07); on main 05d01ffb the Provider cycle has SendGrid only and the hub has no Resend provider."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p10.send.resend_unknown",
+      "job": "p10",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p10_send_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "the first-use arrival completed on the hub (the glass does the same): the optional click can land before the Chair draws it"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "cli_runner",
+          "label": "the email HTTPS edge: resend-unknown.json",
+          "adapter": "email-https-edge",
+          "reply": "tests/fixtures/philo10_atlas/resend-unknown.json",
+          "why": "the email channel's real plan, the kernel's external.egress admission and the real opener run; only the socket is canned, and the key lives in the hub's memory (never the OS keychain)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas send ledger"
+          },
+          "expect_status": 200,
+          "why": "the Room under test",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/updates/draft",
+          "adapter": "http-route",
+          "body": {
+            "generator": "deterministic"
+          },
+          "expect_status": 200,
+          "why": "an update to publish",
+          "capture_as": "update_id",
+          "capture_path": "update.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/updates/{update_id}/publish",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "a published update (only a published update has a Send well)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "ResendPriya",
+            "channel": "email",
+            "provider": "resend",
+            "from_email": "karol@example.com",
+            "from_name": "Karol",
+            "key_ref": "resend-atlas",
+            "to": [
+              "priya@example.com"
+            ]
+          },
+          "expect_status": 200,
+          "why": "a saved Resend destination (it names its key by NAME)",
+          "capture_as": "key_ref",
+          "capture_path": "destination.account.key_ref"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": null,
+          "expect_status": 200,
+          "why": "the saved destination's id, by its name",
+          "capture_as": "dest_id",
+          "capture_path": "destinations",
+          "capture_match": {
+            "name": "ResendPriya"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/channels/email-keys/{key_ref}",
+          "adapter": "http-route",
+          "body": {
+            "api_key": "re_atlas_synthetic_key_0000",
+            "provider": "resend"
+          },
+          "expect_status": 200,
+          "why": "the Resend key saved under that name (a synthetic key, into the hub's MEMORY key store)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the palette (DeskToolShelf.tsx: PROJECTS rows `Open <name>`)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas send ledger"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "Open the project's Room (the one key, open-project-memory, scope project:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=updates-verb]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=update-list]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=update-list-item] [data-update-id='{update_id}']",
+          "why": "open the published update: its SEND well and its DELIVERY history"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=send-well]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=destination-row]:has([data-destination='ResendPriya'])"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=destination-row]:has([data-destination='ResendPriya'])",
+          "why": "A1: the pick opens the preview and Send in place, under the row"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-preview]",
+          "why": "the readable preview the hub derived from the frozen request (Send waits for it)"
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-verbs]",
+          "block": "center",
+          "why": "the owner scrolls Send to the middle of the window, so its answer lands in view"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-verb]",
+        "why": "the owner's press: POST /api/channels/send (update, destination, the preview's digest, a new key)",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/send"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/send",
+              "status": 200,
+              "body_fields": {
+                "outcome": "unknown",
+                "send.reason": "unpinned_503",
+                "receipt.state": "indeterminate"
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "Check priya@example.com"
+            },
+            {
+              "kind": "attr_equals",
+              "attr": "data-href",
+              "value": "https://resend.com/emails"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "state": "unknown",
+                      "reason": "unpinned_503"
+                    },
+                    "count": 1
+                  }
+                },
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "updates",
+                    "match": {
+                      "id": "{update_id}",
+                      "deliveries.0.outcome": "unknown"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "cli_calls",
+              "argv_prefix": [
+                "https",
+                "POST",
+                "api.resend.com",
+                "/emails"
+              ],
+              "count": 1
+            }
+          ]
+        },
+        "observe_at": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-check]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?update_id={update_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/projects/{project_id}/updates"
+          }
+        ],
+        "words": "the owner presses Send on the Resend destination and the answer is not Resend's (a 503 page from an edge): RESULT UNKNOWN, the receipt indeterminate, never a false NOTHING SENT; the row offers Check priya@example.com and its far side is the Resend activity page (https://resend.com/emails), readable in the viewport; the hub holds one unknown send and ONE history row (outcome unknown); ONE request to api.resend.com/emails. New (no red claimed): Resend is a new provider (PHILO-10-07); on main 05d01ffb the Provider cycle has SendGrid only and the hub has no Resend provider."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
     }
   ],
   "states": [
@@ -6116,13 +7681,13 @@
         {
           "path": "holdspeak/services/channel_service.py",
           "symbol": "def send(self, principal",
-          "line": 396,
+          "line": 400,
           "claim": "the owner's press: the checks, the durable dispatch boundary, one settle"
         },
         {
           "path": "holdspeak/services/channel_service.py",
           "symbol": "def discard(self, principal",
-          "line": 376,
+          "line": 380,
           "claim": "prepared -> discarded by one conditional write; against Send, one wins"
         },
         {
@@ -6134,7 +7699,7 @@
         {
           "path": "scripts/graph_walk.py",
           "symbol": "def _install_cli_runner",
-          "line": 2744,
+          "line": 2750,
           "claim": "the rig's recording runner (PHILO-10-05)"
         }
       ],
@@ -6200,8 +7765,14 @@
     {
       "id": "excluded.p10.other_channels",
       "applicability": "not_applicable",
-      "combination": "the Jira, Confluence and email variants of SENT, FAILED and UNKNOWN (COMMENTED, BLOG POSTED, ACCEPTED BY SENDGRID)",
-      "reason": "each Send state has its atlas case on the file channel (a real write) or on GitHub (the recording runner); the other channels' words are the same states. Jira and Confluence need acli switch/status answers and a connected account through the Phase 9 connection producer; email needs the HTTPS edge and a memory keyring inside the hub, seams the rig's hub does not carry. Fenced as rendered at 1440 and 393 by tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_jira_and_confluence and ::TestSendEmailGlass::test_the_email_boards; their real sends are story 06's leg B."
+      "combination": "the Jira, Confluence and SendGrid email variants of SENT, FAILED and UNKNOWN (COMMENTED, BLOG POSTED, ACCEPTED BY SENDGRID)",
+      "reason": "each Send state has its atlas case on the file channel (a real write), on GitHub (the recording runner) or on Resend (PHILO-10-07: the recording HTTPS edge and a memory key store in the hub); the other channels' words are the same states. Jira and Confluence need acli switch/status answers and a connected account through the Phase 9 connection producer; SendGrid is the same email channel as Resend with its own answer shape. Fenced as rendered at 1440 and 393 by tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_jira_and_confluence and ::TestSendEmailGlass::test_the_email_boards; their real sends are story 06's leg B."
+    },
+    {
+      "id": "excluded.p10.resend_op",
+      "applicability": "not_applicable",
+      "combination": "case.p10.send.resend_setup, case.p10.send.resend_accepted, case.p10.send.resend_prepared, case.p10.send.resend_history, case.p10.send.resend_unknown with an .op sibling",
+      "reason": "each Resend face case reads its durable outcome in the same observation (the press's own answer with its receipt, the hub's send and history rows, the recording edge's count); the operation form of every Resend answer is fenced through the real save, prepare and send routes by tests/unit/test_philo10_email_channel.py test_c7_*."
     }
   ],
   "council_readings": []

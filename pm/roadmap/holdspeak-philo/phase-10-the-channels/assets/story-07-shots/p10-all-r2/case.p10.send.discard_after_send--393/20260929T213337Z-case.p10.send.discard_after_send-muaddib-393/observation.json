@@ -1,0 +1,1133 @@
+{
+  "id": "obs-20260929T213337Z-case.p10.send.discard_after_send-muaddib-393",
+  "run_id": "20260929T213337Z-case.p10.send.discard_after_send-muaddib-393",
+  "case_id": "case.p10.send.discard_after_send",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase10.json",
+  "job": "p10",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p10_send_face",
+  "provenance": {
+    "revision": "1ac9a5f3b33e204e41bfb138fa5d444aba9713d5",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "18f299869d984fd50e4ce99c6855356a2ed7d5c1317b688ef4c2d2bbd54e4ddb",
+      "assets": [
+        "index-CRd8xHI_.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:61099",
+      "port": 61099,
+      "pid": 58026,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T21:33:37.737817+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase10.json",
+      "sha256": "e4be86992649e386ab352ab696f6adde5f6e7cd9e649211a1fe9124f6ae9134b",
+      "version": "phase10-send"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-29T15:33:42.091832"
+        }
+      },
+      "response_sha256": "d218dcaf7d2f6957bc8ff4719e7b48c8e89bc6b4d16288b4f4b09eec85f3c8a9"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-afe914cfcaed",
+          "name": "Atlas send ledger",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-09-29T15:33:42.120885",
+          "updated_at": "2026-09-29T15:33:42.120885",
+          "result_kind": "created",
+          "project_id": "proj-afe914cfcaed",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-afe914cfcaed"
+          ]
+        }
+      },
+      "response_sha256": "9a88eaeccd9f8d15999c6e259238998ed6e22293a1bae8dee03991695a968756",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-afe914cfcaed"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects/proj-afe914cfcaed/updates/draft",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_0050013798004f769242ae03e43152e6",
+          "project_id": "proj-afe914cfcaed",
+          "project_revision": 1,
+          "review_id": null,
+          "lifecycle": "draft",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-09-29T21:33:42+00:00",
+          "updated_at": "2026-09-29T21:33:42+00:00",
+          "published_at": null,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generatorHost": null,
+          "generatorModel": null
+        }
+      },
+      "response_sha256": "3e45ddf97259213f52382c424826f0b2ded17c6b459c323f23979b395bc0ef35",
+      "captured": {
+        "name": "update_id",
+        "path": "update.id",
+        "value": "pupd_0050013798004f769242ae03e43152e6"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/updates/pupd_0050013798004f769242ae03e43152e6/publish",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_0050013798004f769242ae03e43152e6",
+          "project_id": "proj-afe914cfcaed",
+          "project_revision": 2,
+          "review_id": null,
+          "lifecycle": "published",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-09-29T21:33:42+00:00",
+          "updated_at": "2026-09-29T21:33:42+00:00",
+          "published_at": "2026-09-29T21:33:42+00:00",
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "result_kind": "updated",
+          "changed_refs": [
+            "project:proj-afe914cfcaed"
+          ],
+          "generatorHost": null,
+          "generatorModel": null
+        },
+        "operation_id": "op_7538a7c3c59d4c9da9bacf2b623a0c0f",
+        "receipt": {
+          "receipt_id": "rcpt_20170c8a302846859311d74233e0fb3a",
+          "operation_id": "op_7538a7c3c59d4c9da9bacf2b623a0c0f",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project_update:pupd_0050013798004f769242ae03e43152e6",
+          "created_at": 1790717622.1301188,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project_update:pupd_0050013798004f769242ae03e43152e6"
+        }
+      },
+      "response_sha256": "6218761a21833f706dc8a1781ed956c6fd57e98d28fc4d1c73c37d4d4f79e598"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/destinations",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "destination": {
+          "id": "chd_d78a425e4ef519bea6c292b4",
+          "name": "Payments",
+          "channel": "file",
+          "account": {},
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp"
+          },
+          "target_digest": "b0bbcbdb6d6c2ed4f833894795126af58f0fef82f876a0561b5b6235d14fc855",
+          "synced": false,
+          "state": "active",
+          "badge": "local",
+          "created_at": "2026-09-29T21:33:42+00:00",
+          "parked_at": null,
+          "connection": null
+        },
+        "replaced": null,
+        "operation_id": "op_229a533378d148c6b863ed3ab10265a4",
+        "receipt": {
+          "receipt_id": "rcpt_c7f7d08162ce415cab1e00d1c7cc64ab",
+          "operation_id": "op_229a533378d148c6b863ed3ab10265a4",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_destination:chd_d78a425e4ef519bea6c292b4",
+          "created_at": 1790717622.136365,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_destination"
+        }
+      },
+      "response_sha256": "55f82446bbcfba6be3cbddec9d8c2da4af6e3afbd86731d2e357b75d7cae02cc",
+      "captured": {
+        "name": "dest_id",
+        "path": "destination.id",
+        "value": "chd_d78a425e4ef519bea6c292b4"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/sends",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "send": {
+          "id": "chs_948c14119c7ff5b1107ebe31",
+          "document_ref": "project_update:pupd_0050013798004f769242ae03e43152e6",
+          "destination_id": "chd_d78a425e4ef519bea6c292b4",
+          "destination_name": "Payments",
+          "channel": "file",
+          "badge": "local",
+          "account": {},
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp"
+          },
+          "target_digest": "b0bbcbdb6d6c2ed4f833894795126af58f0fef82f876a0561b5b6235d14fc855",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "size": 286,
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": "op_bc09371463794c3cbd74f36a582aa234",
+          "send_operation_id": null,
+          "state": "prepared",
+          "reason": null,
+          "proof": null,
+          "file_path": null,
+          "created_at": "2026-09-29T21:33:42+00:00",
+          "dispatch_started_at": null,
+          "settled_at": null,
+          "dispatch_seq": null
+        },
+        "outcome": "prepared",
+        "operation_id": "op_bc09371463794c3cbd74f36a582aa234",
+        "receipt": {
+          "receipt_id": "rcpt_6a72d5a3b01344fda9307277c0528e81",
+          "operation_id": "op_bc09371463794c3cbd74f36a582aa234",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_send:chs_948c14119c7ff5b1107ebe31",
+          "created_at": 1790717622.140047,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project_update:pupd_0050013798004f769242ae03e43152e6"
+        }
+      },
+      "response_sha256": "a0ffd96a2b48f27eac00ebd1bd77f63a133517a054ad1fe2e973f06889212333",
+      "captured": {
+        "name": "send_id",
+        "path": "send.id",
+        "value": "chs_948c14119c7ff5b1107ebe31"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-project.open.proj-afe914cfcaed']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=room-body]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=updates-verb]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=update-list]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=update-list-item] [data-update-id='pupd_0050013798004f769242ae03e43152e6']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=send-well]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=prepared-open] [data-testid=prepared-discard]",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/send",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "send": {
+          "id": "chs_948c14119c7ff5b1107ebe31",
+          "document_ref": "project_update:pupd_0050013798004f769242ae03e43152e6",
+          "destination_id": "chd_d78a425e4ef519bea6c292b4",
+          "destination_name": "Payments",
+          "channel": "file",
+          "badge": "local",
+          "account": {},
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp"
+          },
+          "target_digest": "b0bbcbdb6d6c2ed4f833894795126af58f0fef82f876a0561b5b6235d14fc855",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "size": 286,
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": "op_bc09371463794c3cbd74f36a582aa234",
+          "send_operation_id": "op_05d0559d65e64f689044f69434de4366",
+          "state": "sent",
+          "reason": null,
+          "proof": {
+            "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/2026-09-29-atlas-send-ledger-r1-948c1411.md",
+            "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "size": 286
+          },
+          "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/2026-09-29-atlas-send-ledger-r1-948c1411.md",
+          "created_at": "2026-09-29T21:33:42+00:00",
+          "dispatch_started_at": "2026-09-29T21:33:44.922450+00:00",
+          "settled_at": "2026-09-29T21:33:44+00:00",
+          "dispatch_seq": 1
+        },
+        "outcome": "sent",
+        "operation_id": "op_05d0559d65e64f689044f69434de4366",
+        "receipt": {
+          "receipt_id": "rcpt_107f2f9b99d546a38ab79b9cc43db421",
+          "operation_id": "op_05d0559d65e64f689044f69434de4366",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_send:chs_948c14119c7ff5b1107ebe31",
+          "created_at": 1790717624.92303,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "channel_send:chs_948c14119c7ff5b1107ebe31"
+        }
+      },
+      "response_sha256": "6234582183c9f90a49d1bbdc255bcf7308fce3ec1b173d00f89a5d3fb833a765",
+      "captured": {
+        "name": "send_op",
+        "path": "operation_id",
+        "value": "op_05d0559d65e64f689044f69434de4366"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp",
+    "project_id": "proj-afe914cfcaed",
+    "update_id": "pupd_0050013798004f769242ae03e43152e6",
+    "dest_id": "chd_d78a425e4ef519bea6c292b4",
+    "send_id": "chs_948c14119c7ff5b1107ebe31",
+    "send_op": "op_05d0559d65e64f689044f69434de4366"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=prepared-open] [data-testid=prepared-discard]",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=prepared-open] [data-testid=prepared-discard]",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "\u2713\nSAVED\n/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/2026-09-29-atlas-send-ledger-r1-948c1411.md"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "send-line",
+        "data-testid": "prepared-result-word",
+        "data-state": "sent",
+        "data-code": ""
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 47,
+        "y": 333,
+        "w": 325,
+        "h": 74
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "c3ca7a9e0d05edc32090d0dde518eecf4831fbdf0446f74ee2ddd9622742cf3b",
+      "after": "f718c5c79b1604f575e8c1f5de03fa6ca41d15755263f4e58b17a9be22183b10"
+    },
+    "document_text_len": {
+      "before": 1311,
+      "after": 1053
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "div > section.surface-section > div.update-deliver-line.send-manual > span.update-deliver-to > span.gadget-string > input",
+          "value": ""
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=prepared-result-word][data-state=sent]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [
+      {
+        "selector": "div > section.surface-section > div.update-deliver-line.send-manual > span.update-deliver-to > span.gadget-string > input",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n03:33 PM\n1 need you\n\u25cf\n3 OF",
+    "url": "http://127.0.0.1:61099/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "c3ca7a9e0d05edc32090d0dde518eecf4831fbdf0446f74ee2ddd9622742cf3b",
+    "document_text_len": 1311,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?update_id=pupd_0050013798004f769242ae03e43152e6",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_948c14119c7ff5b1107ebe31",
+              "document_ref": "project_update:pupd_0050013798004f769242ae03e43152e6",
+              "destination_id": "chd_d78a425e4ef519bea6c292b4",
+              "destination_name": "Payments",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp"
+              },
+              "target_digest": "b0bbcbdb6d6c2ed4f833894795126af58f0fef82f876a0561b5b6235d14fc855",
+              "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "size": 286,
+              "preview": {
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_bc09371463794c3cbd74f36a582aa234",
+              "send_operation_id": "op_05d0559d65e64f689044f69434de4366",
+              "state": "sent",
+              "reason": null,
+              "proof": {
+                "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/2026-09-29-atlas-send-ledger-r1-948c1411.md",
+                "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+                "size": 286
+              },
+              "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/2026-09-29-atlas-send-ledger-r1-948c1411.md",
+              "created_at": "2026-09-29T21:33:42+00:00",
+              "dispatch_started_at": "2026-09-29T21:33:44.922450+00:00",
+              "settled_at": "2026-09-29T21:33:44+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "62aa16d3509d19e09ec600188a6e9cd4553ab559068f330a538aa322d6146d55"
+      }
+    ],
+    "at_utc": "2026-09-29T21:33:45.363343+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=prepared-result-word][data-state=sent]",
+    "target_present": true,
+    "text": "\u2713\nSAVED\n/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/2026-09-29-atlas-send-ledger-r1-948c1411.md",
+    "attrs": {
+      "class": "send-line",
+      "data-testid": "prepared-result-word",
+      "data-state": "sent",
+      "data-code": ""
+    },
+    "rect": {
+      "x": 47,
+      "y": 333,
+      "w": 325,
+      "h": 74
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 47,
+        "y": 333,
+        "w": 325,
+        "h": 74
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 49,
+          "y": 335,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 49,
+          "y": 370,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-token.send-literal"
+        },
+        {
+          "x": 49,
+          "y": 405,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-token.send-literal"
+        },
+        {
+          "x": 210,
+          "y": 335,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line"
+        },
+        {
+          "x": 210,
+          "y": 370,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-token.send-literal"
+        },
+        {
+          "x": 210,
+          "y": 405,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-token.send-literal"
+        },
+        {
+          "x": 370,
+          "y": 335,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line"
+        },
+        {
+          "x": 370,
+          "y": 370,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-token.send-literal"
+        },
+        {
+          "x": 370,
+          "y": 405,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-token.send-literal"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n03:33 PM\n1 need you\n\u25cf\n3 OF",
+    "url": "http://127.0.0.1:61099/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "f718c5c79b1604f575e8c1f5de03fa6ca41d15755263f4e58b17a9be22183b10",
+    "document_text_len": 1053,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?update_id=pupd_0050013798004f769242ae03e43152e6",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_948c14119c7ff5b1107ebe31",
+              "document_ref": "project_update:pupd_0050013798004f769242ae03e43152e6",
+              "destination_id": "chd_d78a425e4ef519bea6c292b4",
+              "destination_name": "Payments",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp"
+              },
+              "target_digest": "b0bbcbdb6d6c2ed4f833894795126af58f0fef82f876a0561b5b6235d14fc855",
+              "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "size": 286,
+              "preview": {
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_bc09371463794c3cbd74f36a582aa234",
+              "send_operation_id": "op_05d0559d65e64f689044f69434de4366",
+              "state": "sent",
+              "reason": null,
+              "proof": {
+                "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/2026-09-29-atlas-send-ledger-r1-948c1411.md",
+                "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+                "size": 286
+              },
+              "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/2026-09-29-atlas-send-ledger-r1-948c1411.md",
+              "created_at": "2026-09-29T21:33:42+00:00",
+              "dispatch_started_at": "2026-09-29T21:33:44.922450+00:00",
+              "settled_at": "2026-09-29T21:33:44+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "62aa16d3509d19e09ec600188a6e9cd4553ab559068f330a538aa322d6146d55"
+      }
+    ],
+    "at_utc": "2026-09-29T21:33:46.506159+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/channels/sends/chs_948c14119c7ff5b1107ebe31/discard",
+      "status": 409,
+      "body_sha256": "92060877d0d2b9d64082f1eaddc5ae9342c91e8b02eaae80ab16f50346aaf1c8",
+      "body": {
+        "success": false,
+        "code": "send_already_settled",
+        "error_code": "send_already_settled",
+        "message": "Send chs_948c14119c7ff5b1107ebe31 is no longer prepared",
+        "operation_id": "op_5e51dd083f0148aabe92e44de045d4a8",
+        "receipt": {
+          "receipt_id": "rcpt_17c944e9e7624dbc882b2a6416586a74",
+          "operation_id": "op_5e51dd083f0148aabe92e44de045d4a8",
+          "state": "refused",
+          "outcome": "send_already_settled",
+          "result_ref": "",
+          "created_at": 1790717625.466269,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "channel_send:chs_948c14119c7ff5b1107ebe31"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/sends/chs_948c14119c7ff5b1107ebe31/discard"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=prepared-result-word][data-state=sent]",
+    "target_present": true,
+    "text": "\u2713\nSAVED\n/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/2026-09-29-atlas-send-ledger-r1-948c1411.md",
+    "attrs": {
+      "class": "send-line",
+      "data-testid": "prepared-result-word",
+      "data-state": "sent",
+      "data-code": ""
+    },
+    "rect": {
+      "x": 47,
+      "y": 333,
+      "w": 325,
+      "h": 74
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 47,
+        "y": 333,
+        "w": 325,
+        "h": 74
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 49,
+          "y": 335,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 49,
+          "y": 370,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-token.send-literal"
+        },
+        {
+          "x": 49,
+          "y": 405,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-token.send-literal"
+        },
+        {
+          "x": 210,
+          "y": 335,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line"
+        },
+        {
+          "x": 210,
+          "y": 370,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-token.send-literal"
+        },
+        {
+          "x": 210,
+          "y": 405,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-token.send-literal"
+        },
+        {
+          "x": 370,
+          "y": 335,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line"
+        },
+        {
+          "x": 370,
+          "y": 370,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-token.send-literal"
+        },
+        {
+          "x": 370,
+          "y": 405,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-line > span.surface-token.send-literal"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n03:33 PM\n1 need you\n\u25cf\n3 OF",
+    "url": "http://127.0.0.1:61099/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "f718c5c79b1604f575e8c1f5de03fa6ca41d15755263f4e58b17a9be22183b10",
+    "document_text_len": 1053,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?update_id=pupd_0050013798004f769242ae03e43152e6",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_948c14119c7ff5b1107ebe31",
+              "document_ref": "project_update:pupd_0050013798004f769242ae03e43152e6",
+              "destination_id": "chd_d78a425e4ef519bea6c292b4",
+              "destination_name": "Payments",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp"
+              },
+              "target_digest": "b0bbcbdb6d6c2ed4f833894795126af58f0fef82f876a0561b5b6235d14fc855",
+              "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "size": 286,
+              "preview": {
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_bc09371463794c3cbd74f36a582aa234",
+              "send_operation_id": "op_05d0559d65e64f689044f69434de4366",
+              "state": "sent",
+              "reason": null,
+              "proof": {
+                "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/2026-09-29-atlas-send-ledger-r1-948c1411.md",
+                "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+                "size": 286
+              },
+              "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/2026-09-29-atlas-send-ledger-r1-948c1411.md",
+              "created_at": "2026-09-29T21:33:42+00:00",
+              "dispatch_started_at": "2026-09-29T21:33:44.922450+00:00",
+              "settled_at": "2026-09-29T21:33:44+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "62aa16d3509d19e09ec600188a6e9cd4553ab559068f330a538aa322d6146d55"
+      }
+    ],
+    "at_utc": "2026-09-29T21:33:46.374893+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/channels/sends/chs_948c14119c7ff5b1107ebe31/discard",
+      "status": 409,
+      "body_sha256": "92060877d0d2b9d64082f1eaddc5ae9342c91e8b02eaae80ab16f50346aaf1c8",
+      "body": {
+        "success": false,
+        "code": "send_already_settled",
+        "error_code": "send_already_settled",
+        "message": "Send chs_948c14119c7ff5b1107ebe31 is no longer prepared",
+        "operation_id": "op_5e51dd083f0148aabe92e44de045d4a8",
+        "receipt": {
+          "receipt_id": "rcpt_17c944e9e7624dbc882b2a6416586a74",
+          "operation_id": "op_5e51dd083f0148aabe92e44de045d4a8",
+          "state": "refused",
+          "outcome": "send_already_settled",
+          "result_ref": "",
+          "created_at": 1790717625.466269,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "channel_send:chs_948c14119c7ff5b1107ebe31"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/sends/chs_948c14119c7ff5b1107ebe31/discard"
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/channels/sends/chs_948c14119c7ff5b1107ebe31/discard answered 409, wanted 409 (body sha256 92060877d0d2); response body contains the declared admission facts | readable_text: 'SAVED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 47, 'y': 333, 'w': 325, 'h': 74} | protocol_reads: GET /api/channels/sends?update_id=pupd_0050013798004f769242ae03e43152e6 answered 200 with 1 row(s) {'id': 'chs_948c14119c7ff5b1107ebe31', 'state': 'sent'}",
+    "elapsed_s": 0.952
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/channels/sends/chs_948c14119c7ff5b1107ebe31/discard answered 409, wanted 409 (body sha256 92060877d0d2); response body contains the declared admission facts | readable_text: 'SAVED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 47, 'y': 333, 'w': 325, 'h': 74} | protocol_reads: GET /api/channels/sends?update_id=pupd_0050013798004f769242ae03e43152e6 answered 200 with 1 row(s) {'id': 'chs_948c14119c7ff5b1107ebe31', 'state': 'sent'}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.082,
+    "first_satisfied_at_s": 0.952,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_status: POST /api/channels/sends/chs_948c14119c7ff5b1107ebe31/discard answered 409, wanted 409 (body sha256 92060877d0d2); response body contains the declared admission facts | readable_text: 'SAVED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 47, 'y': 333, 'w': 325, 'h': 74} | protocol_reads: GET /api/channels/sends?update_id=pupd_0050013798004f769242ae03e43152e6 answered 200 with 1 row(s) {'id': 'chs_948c14119c7ff5b1107ebe31', 'state': 'sent'}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/channels/sends/chs_948c14119c7ff5b1107ebe31/discard",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/channels/sends/chs_948c14119c7ff5b1107ebe31/discard",
+      "status": 409,
+      "body_sha256": "92060877d0d2b9d64082f1eaddc5ae9342c91e8b02eaae80ab16f50346aaf1c8",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/sends/chs_948c14119c7ff5b1107ebe31/discard"
+    },
+    "why": "chosen by the declared trigger_route POST /api/channels/sends/chs_948c14119c7ff5b1107ebe31/discard",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/channels/sends/chs_948c14119c7ff5b1107ebe31/discard",
+        "status": 409,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-10-07/.tmp/p10s07/p10-all-r2/case.p10.send.discard_after_send--393/20260929T213337Z-case.p10.send.discard_after_send-muaddib-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-10-07/.tmp/p10s07/p10-all-r2/case.p10.send.discard_after_send--393/20260929T213337Z-case.p10.send.discard_after_send-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n86gt0jp/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:61099"
+  ],
+  "duration_s": 9.113
+}

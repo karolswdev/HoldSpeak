@@ -325,7 +325,12 @@ export function Destinations() {
   const parked = rows.filter((d) => d.state === "parked");
   const form = (
     <DestForm conns={conns} initial={EMPTY} keys={keys} onKey={onKey}
-      onDone={() => { setAdding(false); reload(); }}
+      onDone={() => {
+        // PHILO-10-07: after Save the form closes; the saved row stays in view (at 393 the closed form
+        // otherwise leaves the list above the window).
+        setAdding(false); reload();
+        requestAnimationFrame(() => groupRef.current?.scrollIntoView({ block: "start" }));
+      }}
       onCancel={active.length ? () => setAdding(false) : undefined} />
   );
   return (

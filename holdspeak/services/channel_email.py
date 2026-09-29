@@ -247,10 +247,12 @@ class ResendProvider:
     (resend.com/docs/api-reference/emails/send-email and /errors, 2026-09-29).
 
     ``200`` + ``{"id": ...}`` in the JSON body is SENT; its word is ACCEPTED BY RESEND (accepted, never
-    "delivered"). A 4xx is FAILED only when Resend itself answered it (its ``{statusCode, name, message}``
-    error body) and the (status, name) pair is on the pinned list; a ``403`` whose message says the
-    domain is not verified (or that a test sender sends only to its owner) is ``sender_not_verified``;
-    any other 403 Resend answered is ``resend_forbidden``. Everything else is UNKNOWN.
+    "delivered"). A 4xx is FAILED only when the body is Resend's whole, consistent error envelope (a JSON
+    object: an integer ``statusCode`` EQUAL to the HTTP status, a string ``name``, a string ``message``;
+    :func:`resend_error`) AND the (status, name) pair is on the pinned list. A pinned ``403
+    validation_error`` whose message says the domain is not verified (or that a test sender sends only to
+    its owner) is ``sender_not_verified``. Everything else -- an unknown name, a name of another status, a
+    malformed or inconsistent envelope -- is UNKNOWN (Codex Astra r1 on #701: never a false "nothing sent").
     """
 
     name = "resend"
@@ -269,6 +271,8 @@ class ResendProvider:
         (403, "invalid_api_key"): "resend_key_invalid",
         (403, "restricted_api_key"): "resend_key_invalid",
         (403, "suspended_api_key"): "resend_key_invalid",
+        (403, "invalid_permission"): "resend_forbidden",
+        (403, "validation_error"): "resend_forbidden",
         (422, "validation_error"): "resend_invalid_request",
         (422, "missing_required_field"): "resend_invalid_request",
         (422, "missing_required_parameter"): "resend_invalid_request",
@@ -305,7 +309,8 @@ class ResendProvider:
         return {"Authorization": "Bearer " + key, "User-Agent": cls.USER_AGENT}
 
     def interpret(self, status: int, headers: Mapping[str, str], body: bytes) -> Outcome:
-        name, message = resend_error(body) if status >= 400 else ("", "")
+        envelope = resend_error(body, status) if status >= 400 else None
+        name, message = envelope or ("", "")
         detail = {"error": message} if message else {}
         if status == 200:
             message_id = resend_id(body)
@@ -315,24 +320,29 @@ class ResendProvider:
                                           "scope": "accepted for processing, not delivery"})
         if 300 <= status < 400:
             return Outcome("unknown", "redirect_refused", detail)
-        if name and status == 403 and any(m in message.lower() for m in self.SENDER_NOT_VERIFIED):
+        if envelope is None or (status, name) not in self.PINNED:
+            return Outcome("unknown", f"unpinned_{status}", detail)
+        if (status, name) == (403, "validation_error") and any(m in message.lower() for m in self.SENDER_NOT_VERIFIED):
             return Outcome("failed", "sender_not_verified", detail)
-        if name and (status, name) in self.PINNED:
-            return Outcome("failed", self.PINNED[status, name], detail)
-        if name and status == 403:
-            return Outcome("failed", "resend_forbidden", detail)
-        return Outcome("unknown", f"unpinned_{status}", detail)
+        return Outcome("failed", self.PINNED[status, name], detail)
 
 
-def resend_error(raw: bytes) -> tuple[str, str]:
-    """Resend's own error answer: ``(name, message)``, bounded; ``("", "")`` when it is not Resend's."""
+def resend_error(raw: bytes, status: int) -> Optional[tuple[str, str]]:
+    """Resend's own error envelope, validated whole: ``(name, message)`` bounded, or None.
+
+    A JSON object with an integer ``statusCode`` equal to *status* (a bool is not an integer), a string
+    ``name`` and a string ``message``. Anything else is not Resend's answer, and it proves nothing.
+    """
     try:
         data = json.loads(bytes(raw).decode("utf-8", errors="replace"))
     except ValueError:
-        return "", ""
-    if not isinstance(data, dict) or not isinstance(data.get("name"), str):
-        return "", ""
-    return str(data["name"])[:80], str(data.get("message") or "")[:500]
+        return None
+    if not isinstance(data, dict):
+        return None
+    answered, name, message = data.get("statusCode"), data.get("name"), data.get("message")
+    if type(answered) is not int or answered != int(status) or not isinstance(name, str) or not isinstance(message, str):
+        return None
+    return name[:80], message[:500]
 
 
 def resend_id(raw: bytes) -> str:

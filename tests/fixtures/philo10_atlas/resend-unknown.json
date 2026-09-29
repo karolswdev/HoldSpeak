@@ -1,0 +1,9 @@
+{
+  "about": "PHILO-10-07: an answer that is not Resend's error envelope (a 503 page from an edge): HoldSpeak cannot know, RESULT UNKNOWN. No request reaches the network.",
+  "answers": [],
+  "https": [
+    {"host": "api.resend.com", "path": "/emails", "status": 503,
+     "headers": {"Content-Type": "text/html"},
+     "body": "<html>503 Service Unavailable</html>"}
+  ]
+}

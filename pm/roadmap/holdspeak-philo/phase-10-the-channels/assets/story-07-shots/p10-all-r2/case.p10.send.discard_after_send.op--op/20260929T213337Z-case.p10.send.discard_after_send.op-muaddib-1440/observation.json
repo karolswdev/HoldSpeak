@@ -1,0 +1,2079 @@
+{
+  "id": "obs-20260929T213337Z-case.p10.send.discard_after_send.op-muaddib-1440",
+  "run_id": "20260929T213337Z-case.p10.send.discard_after_send.op-muaddib-1440",
+  "case_id": "case.p10.send.discard_after_send.op",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase10.json",
+  "job": "p10",
+  "edge_ids": [
+    "edge.tool.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p10_send_face",
+  "provenance": {
+    "revision": "1ac9a5f3b33e204e41bfb138fa5d444aba9713d5",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "18f299869d984fd50e4ce99c6855356a2ed7d5c1317b688ef4c2d2bbd54e4ddb",
+      "assets": [
+        "index-CRd8xHI_.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:61102",
+      "port": 61102,
+      "pid": 58038,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T21:33:38.228826+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase10.json",
+      "sha256": "e4be86992649e386ab352ab696f6adde5f6e7cd9e649211a1fe9124f6ae9134b",
+      "version": "phase10-send"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.create",
+      "args": {
+        "name": "Atlas send ledger"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "project.create",
+          "arguments": {
+            "name": "Atlas send ledger"
+          }
+        }
+      },
+      "response": {
+        "project": {
+          "changed_refs": [
+            "project:proj-886511417a4a"
+          ],
+          "context": {},
+          "created_at": "2026-09-29T15:33:39.776420",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-886511417a4a",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "Atlas send ledger",
+          "project_id": "proj-886511417a4a",
+          "project_revision": 1,
+          "result_kind": "created",
+          "team_members": [],
+          "updated_at": "2026-09-29T15:33:39.776420"
+        },
+        "success": true
+      },
+      "domain_response": {
+        "project": {
+          "changed_refs": [
+            "project:proj-886511417a4a"
+          ],
+          "context": {},
+          "created_at": "2026-09-29T15:33:39.776420",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-886511417a4a",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "Atlas send ledger",
+          "project_id": "proj-886511417a4a",
+          "project_revision": 1,
+          "result_kind": "created",
+          "team_members": [],
+          "updated_at": "2026-09-29T15:33:39.776420"
+        },
+        "success": true
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"project\": {\"changed_refs\": [\"project:proj-886511417a4a\"], \"context\": {}, \"created_at\": \"2026-09-29T15:33:39.776420\", \"description\": \"\", \"detection_threshold\": 0.4, \"id\": \"proj-886511417a4a\", \"is_archived\": false, \"keywords\": [], \"meeting_count\": 0, \"name\": \"Atlas send ledger\", \"project_id\": \"proj-886511417a4a\", \"project_revision\": 1, \"result_kind\": \"created\", \"team_members\": [], \"updated_at\": \"2026-09-29T15:33:39.776420\"}, \"success\": true}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.009,
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-886511417a4a"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.draft_update",
+      "args": {
+        "project_id": "proj-886511417a4a",
+        "generator": "deterministic"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "project.draft_update",
+          "arguments": {
+            "project_id": "proj-886511417a4a",
+            "generator": "deterministic"
+          }
+        }
+      },
+      "response": {
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "created_at": "2026-09-29T21:33:39+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+          "lifecycle": "draft",
+          "project_id": "proj-886511417a4a",
+          "project_revision": 1,
+          "published_at": null,
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-09-29T21:33:39+00:00"
+        }
+      },
+      "domain_response": {
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "created_at": "2026-09-29T21:33:39+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+          "lifecycle": "draft",
+          "project_id": "proj-886511417a4a",
+          "project_revision": 1,
+          "published_at": null,
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-09-29T21:33:39+00:00"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"success\": true, \"update\": {\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[]\", \"created_at\": \"2026-09-29T21:33:39+00:00\", \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_cd218285c43c42fb8a86e7fdd1cd2363\", \"lifecycle\": \"draft\", \"project_id\": \"proj-886511417a4a\", \"project_revision\": 1, \"published_at\": null, \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-09-29T21:33:39+00:00\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.004,
+      "captured": {
+        "name": "update_id",
+        "path": "update.id",
+        "value": "pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.publish_update",
+      "args": {
+        "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "project.publish_update",
+          "arguments": {
+            "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_02e878f7df15424580652e4a1b7d4e74",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.7844942,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_02e878f7df15424580652e4a1b7d4e74",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_8a1ee5b0d9a440bc93f59afd544560f7",
+          "result_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+          "state": "succeeded",
+          "target_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+        },
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "changed_refs": [
+            "project:proj-886511417a4a"
+          ],
+          "claims_json": "[]",
+          "created_at": "2026-09-29T21:33:39+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+          "lifecycle": "published",
+          "project_id": "proj-886511417a4a",
+          "project_revision": 2,
+          "published_at": "2026-09-29T21:33:39+00:00",
+          "result_kind": "updated",
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-09-29T21:33:39+00:00"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_02e878f7df15424580652e4a1b7d4e74",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.7844942,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_02e878f7df15424580652e4a1b7d4e74",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_8a1ee5b0d9a440bc93f59afd544560f7",
+          "result_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+          "state": "succeeded",
+          "target_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+        },
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "changed_refs": [
+            "project:proj-886511417a4a"
+          ],
+          "claims_json": "[]",
+          "created_at": "2026-09-29T21:33:39+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+          "lifecycle": "published",
+          "project_id": "proj-886511417a4a",
+          "project_revision": 2,
+          "published_at": "2026-09-29T21:33:39+00:00",
+          "result_kind": "updated",
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-09-29T21:33:39+00:00"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_02e878f7df15424580652e4a1b7d4e74\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717619.7844942, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_02e878f7df15424580652e4a1b7d4e74\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_8a1ee5b0d9a440bc93f59afd544560f7\", \"result_ref\": \"project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363\", \"state\": \"succeeded\", \"target_ref\": \"project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363\"}, \"success\": true, \"update\": {\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"changed_refs\": [\"project:proj-886511417a4a\"], \"claims_json\": \"[]\", \"created_at\": \"2026-09-29T21:33:39+00:00\", \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_cd218285c43c42fb8a86e7fdd1cd2363\", \"lifecycle\": \"published\", \"project_id\": \"proj-886511417a4a\", \"project_revision\": 2, \"published_at\": \"2026-09-29T21:33:39+00:00\", \"result_kind\": \"updated\", \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-09-29T21:33:39+00:00\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.save_destination",
+      "args": {
+        "name": "Payments",
+        "channel": "file",
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz",
+        "synced": false
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.save_destination",
+          "arguments": {
+            "name": "Payments",
+            "channel": "file",
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz",
+            "synced": false
+          }
+        }
+      },
+      "response": {
+        "destination": {
+          "account": {},
+          "badge": "local",
+          "channel": "file",
+          "connection": null,
+          "created_at": "2026-09-29T21:33:39+00:00",
+          "id": "chd_9359c6fa92467482ae35b151",
+          "name": "Payments",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz"
+          },
+          "target_digest": "936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b"
+        },
+        "operation_id": "op_00cfff6b9ba54c7d9ff24f5809819698",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.790247,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_00cfff6b9ba54c7d9ff24f5809819698",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_5057708cfd7847418220a32673d6581a",
+          "result_ref": "channel_destination:chd_9359c6fa92467482ae35b151",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "domain_response": {
+        "destination": {
+          "account": {},
+          "badge": "local",
+          "channel": "file",
+          "connection": null,
+          "created_at": "2026-09-29T21:33:39+00:00",
+          "id": "chd_9359c6fa92467482ae35b151",
+          "name": "Payments",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz"
+          },
+          "target_digest": "936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b"
+        },
+        "operation_id": "op_00cfff6b9ba54c7d9ff24f5809819698",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.790247,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_00cfff6b9ba54c7d9ff24f5809819698",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_5057708cfd7847418220a32673d6581a",
+          "result_ref": "channel_destination:chd_9359c6fa92467482ae35b151",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"destination\": {\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"connection\": null, \"created_at\": \"2026-09-29T21:33:39+00:00\", \"id\": \"chd_9359c6fa92467482ae35b151\", \"name\": \"Payments\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz\"}, \"target_digest\": \"936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b\"}, \"operation_id\": \"op_00cfff6b9ba54c7d9ff24f5809819698\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717619.790247, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_00cfff6b9ba54c7d9ff24f5809819698\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_5057708cfd7847418220a32673d6581a\", \"result_ref\": \"channel_destination:chd_9359c6fa92467482ae35b151\", \"state\": \"succeeded\", \"target_ref\": \"desk:channel.save_destination\"}, \"replaced\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.006,
+      "captured": {
+        "name": "dest_id",
+        "path": "destination.id",
+        "value": "chd_9359c6fa92467482ae35b151"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.prepare",
+      "args": {
+        "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+        "destination_id": "chd_9359c6fa92467482ae35b151"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.prepare",
+          "arguments": {
+            "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+            "destination_id": "chd_9359c6fa92467482ae35b151"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+        "outcome": "prepared",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.793306,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_6637bb10910e40e989c3085f8760362b",
+          "result_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+          "state": "succeeded",
+          "target_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+        },
+        "send": {
+          "account": {},
+          "badge": "local",
+          "channel": "file",
+          "created_at": "2026-09-29T21:33:39+00:00",
+          "destination_id": "chd_9359c6fa92467482ae35b151",
+          "destination_name": "Payments",
+          "dispatch_seq": null,
+          "dispatch_started_at": null,
+          "document_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+          "file_path": null,
+          "id": "chs_ac2220072d96dba784c1d145",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": null,
+          "reason": null,
+          "send_operation_id": null,
+          "settled_at": null,
+          "size": 286,
+          "state": "prepared",
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz"
+          },
+          "target_digest": "936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+        "outcome": "prepared",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.793306,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_6637bb10910e40e989c3085f8760362b",
+          "result_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+          "state": "succeeded",
+          "target_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+        },
+        "send": {
+          "account": {},
+          "badge": "local",
+          "channel": "file",
+          "created_at": "2026-09-29T21:33:39+00:00",
+          "destination_id": "chd_9359c6fa92467482ae35b151",
+          "destination_name": "Payments",
+          "dispatch_seq": null,
+          "dispatch_started_at": null,
+          "document_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+          "file_path": null,
+          "id": "chs_ac2220072d96dba784c1d145",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": null,
+          "reason": null,
+          "send_operation_id": null,
+          "settled_at": null,
+          "size": 286,
+          "state": "prepared",
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz"
+          },
+          "target_digest": "936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_b67c7ab1b71841a18653dc8675ba742b\", \"outcome\": \"prepared\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717619.793306, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_b67c7ab1b71841a18653dc8675ba742b\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_6637bb10910e40e989c3085f8760362b\", \"result_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\", \"state\": \"succeeded\", \"target_ref\": \"project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363\"}, \"send\": {\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"created_at\": \"2026-09-29T21:33:39+00:00\", \"destination_id\": \"chd_9359c6fa92467482ae35b151\", \"destination_name\": \"Payments\", \"dispatch_seq\": null, \"dispatch_started_at\": null, \"document_ref\": \"project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363\", \"file_path\": null, \"id\": \"chs_ac2220072d96dba784c1d145\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": \"op_b67c7ab1b71841a18653dc8675ba742b\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": null, \"reason\": null, \"send_operation_id\": null, \"settled_at\": null, \"size\": 286, \"state\": \"prepared\", \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz\"}, \"target_digest\": \"936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003,
+      "captured": {
+        "name": "send_id",
+        "path": "send.id",
+        "value": "chs_ac2220072d96dba784c1d145"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.send",
+      "args": {
+        "send_id": "chs_ac2220072d96dba784c1d145",
+        "command_id": "atlas-p10-05-wins"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.send",
+          "arguments": {
+            "send_id": "chs_ac2220072d96dba784c1d145",
+            "command_id": "atlas-p10-05-wins"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_93ae240b3eb44904bd1df20bf0a85781",
+        "outcome": "sent",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.796493,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_93ae240b3eb44904bd1df20bf0a85781",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_9b6d4b29dd894c40bc2c56769b9fe557",
+          "result_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+          "state": "succeeded",
+          "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+        },
+        "send": {
+          "account": {},
+          "badge": "local",
+          "channel": "file",
+          "created_at": "2026-09-29T21:33:39+00:00",
+          "destination_id": "chd_9359c6fa92467482ae35b151",
+          "destination_name": "Payments",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-29T21:33:39.796077+00:00",
+          "document_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+          "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+          "id": "chs_ac2220072d96dba784c1d145",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+            "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "size": 286
+          },
+          "reason": null,
+          "send_operation_id": "op_93ae240b3eb44904bd1df20bf0a85781",
+          "settled_at": "2026-09-29T21:33:39+00:00",
+          "size": 286,
+          "state": "sent",
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz"
+          },
+          "target_digest": "936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_93ae240b3eb44904bd1df20bf0a85781",
+        "outcome": "sent",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.796493,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_93ae240b3eb44904bd1df20bf0a85781",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_9b6d4b29dd894c40bc2c56769b9fe557",
+          "result_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+          "state": "succeeded",
+          "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+        },
+        "send": {
+          "account": {},
+          "badge": "local",
+          "channel": "file",
+          "created_at": "2026-09-29T21:33:39+00:00",
+          "destination_id": "chd_9359c6fa92467482ae35b151",
+          "destination_name": "Payments",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-29T21:33:39.796077+00:00",
+          "document_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+          "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+          "id": "chs_ac2220072d96dba784c1d145",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+            "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "size": 286
+          },
+          "reason": null,
+          "send_operation_id": "op_93ae240b3eb44904bd1df20bf0a85781",
+          "settled_at": "2026-09-29T21:33:39+00:00",
+          "size": 286,
+          "state": "sent",
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz"
+          },
+          "target_digest": "936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_93ae240b3eb44904bd1df20bf0a85781\", \"outcome\": \"sent\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717619.796493, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_93ae240b3eb44904bd1df20bf0a85781\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_9b6d4b29dd894c40bc2c56769b9fe557\", \"result_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\", \"state\": \"succeeded\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\"}, \"send\": {\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"created_at\": \"2026-09-29T21:33:39+00:00\", \"destination_id\": \"chd_9359c6fa92467482ae35b151\", \"destination_name\": \"Payments\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-29T21:33:39.796077+00:00\", \"document_ref\": \"project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363\", \"file_path\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md\", \"id\": \"chs_ac2220072d96dba784c1d145\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": \"op_b67c7ab1b71841a18653dc8675ba742b\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"path\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md\", \"sha256\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"size\": 286}, \"reason\": null, \"send_operation_id\": \"op_93ae240b3eb44904bd1df20bf0a85781\", \"settled_at\": \"2026-09-29T21:33:39+00:00\", \"size\": 286, \"state\": \"sent\", \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz\"}, \"target_digest\": \"936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003,
+      "captured": {
+        "name": "send_op",
+        "path": "operation_id",
+        "value": "op_93ae240b3eb44904bd1df20bf0a85781"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. Every id is captured from this run's own producer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz",
+    "project_id": "proj-886511417a4a",
+    "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+    "dest_id": "chd_9359c6fa92467482ae35b151",
+    "send_id": "chs_ac2220072d96dba784c1d145",
+    "send_op": "op_93ae240b3eb44904bd1df20bf0a85781",
+    "refused_op": "op_c83aa58e7f6b4f8f840724744ed0deba"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "channel.discard",
+    "args": {
+      "send_id": "chs_ac2220072d96dba784c1d145"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "method": "tools/call",
+      "params": {
+        "name": "channel.discard",
+        "arguments": {
+          "send_id": "chs_ac2220072d96dba784c1d145"
+        }
+      }
+    },
+    "response": null,
+    "domain_response": null,
+    "refusal": {
+      "code": "send_already_settled",
+      "error": "Send chs_ac2220072d96dba784c1d145 is no longer prepared",
+      "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790717619.801174,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+        "outcome": "send_already_settled",
+        "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+        "result_ref": "",
+        "state": "refused",
+        "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+      },
+      "status": 409
+    },
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"code\": \"send_already_settled\", \"error\": \"Send chs_ac2220072d96dba784c1d145 is no longer prepared\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717619.801174, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"outcome\": \"send_already_settled\", \"receipt_id\": \"rcpt_01562ae316cb424b8d9a8d899a7de408\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\"}, \"status\": 409}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "elapsed_s": 0.002,
+    "named_refusal": {
+      "code": "send_already_settled",
+      "error": "Send chs_ac2220072d96dba784c1d145 is no longer prepared",
+      "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790717619.801174,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+        "outcome": "send_already_settled",
+        "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+        "result_ref": "",
+        "state": "refused",
+        "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+      },
+      "status": 409
+    },
+    "captured": {
+      "name": "refused_op",
+      "path": "operation_id",
+      "value": "op_c83aa58e7f6b4f8f840724744ed0deba"
+    }
+  },
+  "diff": {
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": null,
+          "skipped": "unresolved placeholder; not sent"
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 12,
+            "method": "tools/call",
+            "params": {
+              "name": "kernel.receipt",
+              "arguments": {
+                "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba"
+              }
+            }
+          },
+          "response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-project-writer",
+                  "correlation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                  "created_at": 1790717619.800308,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca",
+                  "idempotency_key": "channel.discard:6230fafc-902e-451d-9b1c-7425ef5badd7",
+                  "name": "channel.discard",
+                  "native_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                  "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                  "revision": 5,
+                  "state": "refused",
+                  "target_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+                  "updated_at": 1790717619.801159,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca",
+                    "execution_expires_at": 1790721219.8007061,
+                    "expires_at": 1790717649.8007061,
+                    "issued_at": 1790717619.8007061,
+                    "native_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                    "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-project-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "9f1731bc9f6054956a1e43dcf6623cfb909647b80024770e7e9c5a2a3a5a4b6a",
+                    "target_binding": "channel_send:chs_ac2220072d96dba784c1d145",
+                    "target_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+                    "uses": 1,
+                    "warrant_id": "war_d9e525657c724b59868eca1fee66fe4a"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790717619.801174,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                  "outcome": "send_already_settled",
+                  "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+                  "result_ref": "",
+                  "state": "refused",
+                  "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+                },
+                "ref": "operation:op_c83aa58e7f6b4f8f840724744ed0deba"
+              }
+            ],
+            "view": "receipt"
+          },
+          "domain_response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-project-writer",
+                  "correlation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                  "created_at": 1790717619.800308,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca",
+                  "idempotency_key": "channel.discard:6230fafc-902e-451d-9b1c-7425ef5badd7",
+                  "name": "channel.discard",
+                  "native_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                  "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                  "revision": 5,
+                  "state": "refused",
+                  "target_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+                  "updated_at": 1790717619.801159,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca",
+                    "execution_expires_at": 1790721219.8007061,
+                    "expires_at": 1790717649.8007061,
+                    "issued_at": 1790717619.8007061,
+                    "native_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                    "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-project-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "9f1731bc9f6054956a1e43dcf6623cfb909647b80024770e7e9c5a2a3a5a4b6a",
+                    "target_binding": "channel_send:chs_ac2220072d96dba784c1d145",
+                    "target_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+                    "uses": 1,
+                    "warrant_id": "war_d9e525657c724b59868eca1fee66fe4a"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790717619.801174,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                  "outcome": "send_already_settled",
+                  "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+                  "result_ref": "",
+                  "state": "refused",
+                  "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+                },
+                "ref": "operation:op_c83aa58e7f6b4f8f840724744ed0deba"
+              }
+            ],
+            "view": "receipt"
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 12,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-project-writer\", \"correlation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"created_at\": 1790717619.800308, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca\", \"idempotency_key\": \"channel.discard:6230fafc-902e-451d-9b1c-7425ef5badd7\", \"name\": \"channel.discard\", \"native_id\": \"6230fafc-902e-451d-9b1c-7425ef5badd7\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"6230fafc-902e-451d-9b1c-7425ef5badd7\", \"revision\": 5, \"state\": \"refused\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\", \"updated_at\": 1790717619.801159, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca\", \"execution_expires_at\": 1790721219.8007061, \"expires_at\": 1790717649.8007061, \"issued_at\": 1790717619.8007061, \"native_id\": \"6230fafc-902e-451d-9b1c-7425ef5badd7\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"9f1731bc9f6054956a1e43dcf6623cfb909647b80024770e7e9c5a2a3a5a4b6a\", \"target_binding\": \"channel_send:chs_ac2220072d96dba784c1d145\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\", \"uses\": 1, \"warrant_id\": \"war_d9e525657c724b59868eca1fee66fe4a\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717619.801174, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"outcome\": \"send_already_settled\", \"receipt_id\": \"rcpt_01562ae316cb424b8d9a8d899a7de408\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\"}, \"ref\": \"operation:op_c83aa58e7f6b4f8f840724744ed0deba\"}], \"view\": \"receipt\"}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:61102",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "channel.sends",
+      "args": {
+        "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+      }
+    },
+    "op": {
+      "name": "channel.sends",
+      "args": {
+        "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.sends",
+          "arguments": {
+            "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+          }
+        }
+      },
+      "response": {
+        "sends": [
+          {
+            "account": {},
+            "badge": "local",
+            "channel": "file",
+            "created_at": "2026-09-29T21:33:39+00:00",
+            "destination_id": "chd_9359c6fa92467482ae35b151",
+            "destination_name": "Payments",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-29T21:33:39.796077+00:00",
+            "document_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+            "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+            "id": "chs_ac2220072d96dba784c1d145",
+            "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "prepare_operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+            },
+            "proof": {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+              "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "size": 286
+            },
+            "reason": null,
+            "send_operation_id": "op_93ae240b3eb44904bd1df20bf0a85781",
+            "settled_at": "2026-09-29T21:33:39+00:00",
+            "size": 286,
+            "state": "sent",
+            "target": {
+              "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz"
+            },
+            "target_digest": "936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b"
+          }
+        ]
+      },
+      "domain_response": {
+        "sends": [
+          {
+            "account": {},
+            "badge": "local",
+            "channel": "file",
+            "created_at": "2026-09-29T21:33:39+00:00",
+            "destination_id": "chd_9359c6fa92467482ae35b151",
+            "destination_name": "Payments",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-29T21:33:39.796077+00:00",
+            "document_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+            "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+            "id": "chs_ac2220072d96dba784c1d145",
+            "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "prepare_operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+            },
+            "proof": {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+              "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "size": 286
+            },
+            "reason": null,
+            "send_operation_id": "op_93ae240b3eb44904bd1df20bf0a85781",
+            "settled_at": "2026-09-29T21:33:39+00:00",
+            "size": 286,
+            "state": "sent",
+            "target": {
+              "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz"
+            },
+            "target_digest": "936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b"
+          }
+        ]
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"sends\": [{\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"created_at\": \"2026-09-29T21:33:39+00:00\", \"destination_id\": \"chd_9359c6fa92467482ae35b151\", \"destination_name\": \"Payments\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-29T21:33:39.796077+00:00\", \"document_ref\": \"project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363\", \"file_path\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md\", \"id\": \"chs_ac2220072d96dba784c1d145\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": \"op_b67c7ab1b71841a18653dc8675ba742b\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"path\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md\", \"sha256\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"size\": 286}, \"reason\": null, \"send_operation_id\": \"op_93ae240b3eb44904bd1df20bf0a85781\", \"settled_at\": \"2026-09-29T21:33:39+00:00\", \"size\": 286, \"state\": \"sent\", \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz\"}, \"target_digest\": \"936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b\"}]}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "9a6140493c7b1599eae07cecd0b531247aa0702213534aa73bbd8b20b0839b9a",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": null,
+        "skipped": "unresolved placeholder; not sent"
+      }
+    ],
+    "at_utc": "2026-09-29T21:33:39.799126+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:61102",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "channel.sends",
+      "args": {
+        "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+      }
+    },
+    "op": {
+      "name": "channel.sends",
+      "args": {
+        "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 11,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.sends",
+          "arguments": {
+            "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+          }
+        }
+      },
+      "response": {
+        "sends": [
+          {
+            "account": {},
+            "badge": "local",
+            "channel": "file",
+            "created_at": "2026-09-29T21:33:39+00:00",
+            "destination_id": "chd_9359c6fa92467482ae35b151",
+            "destination_name": "Payments",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-29T21:33:39.796077+00:00",
+            "document_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+            "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+            "id": "chs_ac2220072d96dba784c1d145",
+            "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "prepare_operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+            },
+            "proof": {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+              "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "size": 286
+            },
+            "reason": null,
+            "send_operation_id": "op_93ae240b3eb44904bd1df20bf0a85781",
+            "settled_at": "2026-09-29T21:33:39+00:00",
+            "size": 286,
+            "state": "sent",
+            "target": {
+              "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz"
+            },
+            "target_digest": "936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b"
+          }
+        ]
+      },
+      "domain_response": {
+        "sends": [
+          {
+            "account": {},
+            "badge": "local",
+            "channel": "file",
+            "created_at": "2026-09-29T21:33:39+00:00",
+            "destination_id": "chd_9359c6fa92467482ae35b151",
+            "destination_name": "Payments",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-29T21:33:39.796077+00:00",
+            "document_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+            "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+            "id": "chs_ac2220072d96dba784c1d145",
+            "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "prepare_operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+            },
+            "proof": {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+              "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "size": 286
+            },
+            "reason": null,
+            "send_operation_id": "op_93ae240b3eb44904bd1df20bf0a85781",
+            "settled_at": "2026-09-29T21:33:39+00:00",
+            "size": 286,
+            "state": "sent",
+            "target": {
+              "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz"
+            },
+            "target_digest": "936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b"
+          }
+        ]
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 11,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"sends\": [{\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"created_at\": \"2026-09-29T21:33:39+00:00\", \"destination_id\": \"chd_9359c6fa92467482ae35b151\", \"destination_name\": \"Payments\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-29T21:33:39.796077+00:00\", \"document_ref\": \"project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363\", \"file_path\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md\", \"id\": \"chs_ac2220072d96dba784c1d145\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": \"op_b67c7ab1b71841a18653dc8675ba742b\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"path\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md\", \"sha256\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"size\": 286}, \"reason\": null, \"send_operation_id\": \"op_93ae240b3eb44904bd1df20bf0a85781\", \"settled_at\": \"2026-09-29T21:33:39+00:00\", \"size\": 286, \"state\": \"sent\", \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz\"}, \"target_digest\": \"936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b\"}]}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "9a6140493c7b1599eae07cecd0b531247aa0702213534aa73bbd8b20b0839b9a",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 12,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                "created_at": 1790717619.800308,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca",
+                "idempotency_key": "channel.discard:6230fafc-902e-451d-9b1c-7425ef5badd7",
+                "name": "channel.discard",
+                "native_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                "revision": 5,
+                "state": "refused",
+                "target_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+                "updated_at": 1790717619.801159,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca",
+                  "execution_expires_at": 1790721219.8007061,
+                  "expires_at": 1790717649.8007061,
+                  "issued_at": 1790717619.8007061,
+                  "native_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                  "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "9f1731bc9f6054956a1e43dcf6623cfb909647b80024770e7e9c5a2a3a5a4b6a",
+                  "target_binding": "channel_send:chs_ac2220072d96dba784c1d145",
+                  "target_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+                  "uses": 1,
+                  "warrant_id": "war_d9e525657c724b59868eca1fee66fe4a"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790717619.801174,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                "outcome": "send_already_settled",
+                "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+                "result_ref": "",
+                "state": "refused",
+                "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+              },
+              "ref": "operation:op_c83aa58e7f6b4f8f840724744ed0deba"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                "created_at": 1790717619.800308,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca",
+                "idempotency_key": "channel.discard:6230fafc-902e-451d-9b1c-7425ef5badd7",
+                "name": "channel.discard",
+                "native_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                "revision": 5,
+                "state": "refused",
+                "target_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+                "updated_at": 1790717619.801159,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca",
+                  "execution_expires_at": 1790721219.8007061,
+                  "expires_at": 1790717649.8007061,
+                  "issued_at": 1790717619.8007061,
+                  "native_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                  "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "9f1731bc9f6054956a1e43dcf6623cfb909647b80024770e7e9c5a2a3a5a4b6a",
+                  "target_binding": "channel_send:chs_ac2220072d96dba784c1d145",
+                  "target_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+                  "uses": 1,
+                  "warrant_id": "war_d9e525657c724b59868eca1fee66fe4a"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790717619.801174,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                "outcome": "send_already_settled",
+                "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+                "result_ref": "",
+                "state": "refused",
+                "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+              },
+              "ref": "operation:op_c83aa58e7f6b4f8f840724744ed0deba"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 12,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-project-writer\", \"correlation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"created_at\": 1790717619.800308, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca\", \"idempotency_key\": \"channel.discard:6230fafc-902e-451d-9b1c-7425ef5badd7\", \"name\": \"channel.discard\", \"native_id\": \"6230fafc-902e-451d-9b1c-7425ef5badd7\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"6230fafc-902e-451d-9b1c-7425ef5badd7\", \"revision\": 5, \"state\": \"refused\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\", \"updated_at\": 1790717619.801159, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca\", \"execution_expires_at\": 1790721219.8007061, \"expires_at\": 1790717649.8007061, \"issued_at\": 1790717619.8007061, \"native_id\": \"6230fafc-902e-451d-9b1c-7425ef5badd7\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"9f1731bc9f6054956a1e43dcf6623cfb909647b80024770e7e9c5a2a3a5a4b6a\", \"target_binding\": \"channel_send:chs_ac2220072d96dba784c1d145\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\", \"uses\": 1, \"warrant_id\": \"war_d9e525657c724b59868eca1fee66fe4a\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717619.801174, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"outcome\": \"send_already_settled\", \"receipt_id\": \"rcpt_01562ae316cb424b8d9a8d899a7de408\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\"}, \"ref\": \"operation:op_c83aa58e7f6b4f8f840724744ed0deba\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-29T21:33:40.713550+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "channel.discard",
+      "body_sha256": "145f333a0853d7b91db0407a2a6283aba932d96c372ee162de1c13b86d54e54a",
+      "body": {
+        "code": "send_already_settled",
+        "error": "Send chs_ac2220072d96dba784c1d145 is no longer prepared",
+        "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.801174,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+          "outcome": "send_already_settled",
+          "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+        },
+        "status": 409
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"send_already_settled\", \"error\": \"Send chs_ac2220072d96dba784c1d145 is no longer prepared\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717619.801174, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"outcome\": \"send_already_settled\", \"receipt_id\": \"rcpt_01562ae316cb424b8d9a8d899a7de408\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\"}, \"status\": 409}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.discard",
+      "args": {
+        "send_id": "chs_ac2220072d96dba784c1d145"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.discard",
+          "arguments": {
+            "send_id": "chs_ac2220072d96dba784c1d145"
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "send_already_settled",
+        "error": "Send chs_ac2220072d96dba784c1d145 is no longer prepared",
+        "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.801174,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+          "outcome": "send_already_settled",
+          "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+        },
+        "status": 409
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"send_already_settled\", \"error\": \"Send chs_ac2220072d96dba784c1d145 is no longer prepared\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717619.801174, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"outcome\": \"send_already_settled\", \"receipt_id\": \"rcpt_01562ae316cb424b8d9a8d899a7de408\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\"}, \"status\": 409}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "code": "send_already_settled",
+        "error": "Send chs_ac2220072d96dba784c1d145 is no longer prepared",
+        "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.801174,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+          "outcome": "send_already_settled",
+          "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+        },
+        "status": 409
+      },
+      "captured": {
+        "name": "refused_op",
+        "path": "operation_id",
+        "value": "op_c83aa58e7f6b4f8f840724744ed0deba"
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:61102",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "channel.sends",
+      "args": {
+        "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+      }
+    },
+    "op": {
+      "name": "channel.sends",
+      "args": {
+        "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.sends",
+          "arguments": {
+            "update_id": "pupd_cd218285c43c42fb8a86e7fdd1cd2363"
+          }
+        }
+      },
+      "response": {
+        "sends": [
+          {
+            "account": {},
+            "badge": "local",
+            "channel": "file",
+            "created_at": "2026-09-29T21:33:39+00:00",
+            "destination_id": "chd_9359c6fa92467482ae35b151",
+            "destination_name": "Payments",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-29T21:33:39.796077+00:00",
+            "document_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+            "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+            "id": "chs_ac2220072d96dba784c1d145",
+            "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "prepare_operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+            },
+            "proof": {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+              "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "size": 286
+            },
+            "reason": null,
+            "send_operation_id": "op_93ae240b3eb44904bd1df20bf0a85781",
+            "settled_at": "2026-09-29T21:33:39+00:00",
+            "size": 286,
+            "state": "sent",
+            "target": {
+              "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz"
+            },
+            "target_digest": "936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b"
+          }
+        ]
+      },
+      "domain_response": {
+        "sends": [
+          {
+            "account": {},
+            "badge": "local",
+            "channel": "file",
+            "created_at": "2026-09-29T21:33:39+00:00",
+            "destination_id": "chd_9359c6fa92467482ae35b151",
+            "destination_name": "Payments",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-29T21:33:39.796077+00:00",
+            "document_ref": "project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363",
+            "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+            "id": "chs_ac2220072d96dba784c1d145",
+            "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "prepare_operation_id": "op_b67c7ab1b71841a18653dc8675ba742b",
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+            },
+            "proof": {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md",
+              "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "size": 286
+            },
+            "reason": null,
+            "send_operation_id": "op_93ae240b3eb44904bd1df20bf0a85781",
+            "settled_at": "2026-09-29T21:33:39+00:00",
+            "size": 286,
+            "state": "sent",
+            "target": {
+              "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz"
+            },
+            "target_digest": "936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b"
+          }
+        ]
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"sends\": [{\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"created_at\": \"2026-09-29T21:33:39+00:00\", \"destination_id\": \"chd_9359c6fa92467482ae35b151\", \"destination_name\": \"Payments\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-29T21:33:39.796077+00:00\", \"document_ref\": \"project_update:pupd_cd218285c43c42fb8a86e7fdd1cd2363\", \"file_path\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md\", \"id\": \"chs_ac2220072d96dba784c1d145\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": \"op_b67c7ab1b71841a18653dc8675ba742b\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"path\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/2026-09-29-atlas-send-ledger-r1-ac222007.md\", \"sha256\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"size\": 286}, \"reason\": null, \"send_operation_id\": \"op_93ae240b3eb44904bd1df20bf0a85781\", \"settled_at\": \"2026-09-29T21:33:39+00:00\", \"size\": 286, \"state\": \"sent\", \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz\"}, \"target_digest\": \"936672d908ff3611ca169881ac83ee44a90d4688cd99c89bbb47e670aec8111b\"}]}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "9a6140493c7b1599eae07cecd0b531247aa0702213534aa73bbd8b20b0839b9a",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                "created_at": 1790717619.800308,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca",
+                "idempotency_key": "channel.discard:6230fafc-902e-451d-9b1c-7425ef5badd7",
+                "name": "channel.discard",
+                "native_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                "revision": 5,
+                "state": "refused",
+                "target_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+                "updated_at": 1790717619.801159,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca",
+                  "execution_expires_at": 1790721219.8007061,
+                  "expires_at": 1790717649.8007061,
+                  "issued_at": 1790717619.8007061,
+                  "native_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                  "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "9f1731bc9f6054956a1e43dcf6623cfb909647b80024770e7e9c5a2a3a5a4b6a",
+                  "target_binding": "channel_send:chs_ac2220072d96dba784c1d145",
+                  "target_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+                  "uses": 1,
+                  "warrant_id": "war_d9e525657c724b59868eca1fee66fe4a"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790717619.801174,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                "outcome": "send_already_settled",
+                "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+                "result_ref": "",
+                "state": "refused",
+                "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+              },
+              "ref": "operation:op_c83aa58e7f6b4f8f840724744ed0deba"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                "created_at": 1790717619.800308,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca",
+                "idempotency_key": "channel.discard:6230fafc-902e-451d-9b1c-7425ef5badd7",
+                "name": "channel.discard",
+                "native_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                "revision": 5,
+                "state": "refused",
+                "target_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+                "updated_at": 1790717619.801159,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca",
+                  "execution_expires_at": 1790721219.8007061,
+                  "expires_at": 1790717649.8007061,
+                  "issued_at": 1790717619.8007061,
+                  "native_id": "6230fafc-902e-451d-9b1c-7425ef5badd7",
+                  "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "9f1731bc9f6054956a1e43dcf6623cfb909647b80024770e7e9c5a2a3a5a4b6a",
+                  "target_binding": "channel_send:chs_ac2220072d96dba784c1d145",
+                  "target_ref": "channel_send:chs_ac2220072d96dba784c1d145",
+                  "uses": 1,
+                  "warrant_id": "war_d9e525657c724b59868eca1fee66fe4a"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790717619.801174,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+                "outcome": "send_already_settled",
+                "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+                "result_ref": "",
+                "state": "refused",
+                "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+              },
+              "ref": "operation:op_c83aa58e7f6b4f8f840724744ed0deba"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-project-writer\", \"correlation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"created_at\": 1790717619.800308, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca\", \"idempotency_key\": \"channel.discard:6230fafc-902e-451d-9b1c-7425ef5badd7\", \"name\": \"channel.discard\", \"native_id\": \"6230fafc-902e-451d-9b1c-7425ef5badd7\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"6230fafc-902e-451d-9b1c-7425ef5badd7\", \"revision\": 5, \"state\": \"refused\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\", \"updated_at\": 1790717619.801159, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:5e1a651059a3eefeeefba558ca65e26fd8fc0e017bb8f040d1090b2a2e2f10ca\", \"execution_expires_at\": 1790721219.8007061, \"expires_at\": 1790717649.8007061, \"issued_at\": 1790717619.8007061, \"native_id\": \"6230fafc-902e-451d-9b1c-7425ef5badd7\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"9f1731bc9f6054956a1e43dcf6623cfb909647b80024770e7e9c5a2a3a5a4b6a\", \"target_binding\": \"channel_send:chs_ac2220072d96dba784c1d145\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\", \"uses\": 1, \"warrant_id\": \"war_d9e525657c724b59868eca1fee66fe4a\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717619.801174, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"outcome\": \"send_already_settled\", \"receipt_id\": \"rcpt_01562ae316cb424b8d9a8d899a7de408\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\"}, \"ref\": \"operation:op_c83aa58e7f6b4f8f840724744ed0deba\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "at_utc": "2026-09-29T21:33:40.710271+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "channel.discard",
+      "body_sha256": "145f333a0853d7b91db0407a2a6283aba932d96c372ee162de1c13b86d54e54a",
+      "body": {
+        "code": "send_already_settled",
+        "error": "Send chs_ac2220072d96dba784c1d145 is no longer prepared",
+        "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.801174,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+          "outcome": "send_already_settled",
+          "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+        },
+        "status": 409
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"send_already_settled\", \"error\": \"Send chs_ac2220072d96dba784c1d145 is no longer prepared\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717619.801174, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"outcome\": \"send_already_settled\", \"receipt_id\": \"rcpt_01562ae316cb424b8d9a8d899a7de408\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\"}, \"status\": 409}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.discard",
+      "args": {
+        "send_id": "chs_ac2220072d96dba784c1d145"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.discard",
+          "arguments": {
+            "send_id": "chs_ac2220072d96dba784c1d145"
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "send_already_settled",
+        "error": "Send chs_ac2220072d96dba784c1d145 is no longer prepared",
+        "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.801174,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+          "outcome": "send_already_settled",
+          "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+        },
+        "status": 409
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"send_already_settled\", \"error\": \"Send chs_ac2220072d96dba784c1d145 is no longer prepared\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717619.801174, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_c83aa58e7f6b4f8f840724744ed0deba\", \"outcome\": \"send_already_settled\", \"receipt_id\": \"rcpt_01562ae316cb424b8d9a8d899a7de408\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"channel_send:chs_ac2220072d96dba784c1d145\"}, \"status\": 409}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "code": "send_already_settled",
+        "error": "Send chs_ac2220072d96dba784c1d145 is no longer prepared",
+        "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717619.801174,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_c83aa58e7f6b4f8f840724744ed0deba",
+          "outcome": "send_already_settled",
+          "receipt_id": "rcpt_01562ae316cb424b8d9a8d899a7de408",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "channel_send:chs_ac2220072d96dba784c1d145"
+        },
+        "status": 409
+      },
+      "captured": {
+        "name": "refused_op",
+        "path": "operation_id",
+        "value": "op_c83aa58e7f6b4f8f840724744ed0deba"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "all 7 facts hold: the trigger code holds; observe_at sends.0.id holds; observe_at sends.0.state holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_kind holds",
+    "elapsed_s": 0.911
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all 7 facts hold: the trigger code holds; observe_at sends.0.id holds; observe_at sends.0.state holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_kind holds",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 0.914,
+    "first_satisfied_at_s": 0.911,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['refused_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: all 7 facts hold: the trigger code holds; observe_at sends.0.id holds; observe_at sends.0.state holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_kind holds"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "refused_op"
+  ],
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8ka9otlz/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:61102"
+  ],
+  "duration_s": 2.742
+}

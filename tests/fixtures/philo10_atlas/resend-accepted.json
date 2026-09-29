@@ -1,0 +1,9 @@
+{
+  "about": "PHILO-10-07: Resend accepts the email (200 + its id). The email channel's HTTPS edge inside the rig's hub answers; no request reaches the network, and the key lives in the hub's memory.",
+  "answers": [],
+  "https": [
+    {"host": "api.resend.com", "path": "/emails", "status": 200,
+     "headers": {"Content-Type": "application/json"},
+     "body": {"id": "re-atlas-4ef9-0001"}}
+  ]
+}

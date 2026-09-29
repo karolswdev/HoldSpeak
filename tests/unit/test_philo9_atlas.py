@@ -36,7 +36,7 @@ COUNTS = {
     "atlas-phase9.json": 13,
     "atlas-phase9-steward.json": 4,
     # PHILO-10-05: the Send's cases (the Phase 9 files unchanged).
-    "atlas-phase10.json": 27,
+    "atlas-phase10.json": 32,  # PHILO-10-07: five Resend face cases
 }
 
 # The census's proven gaps, authored here (story 05).
