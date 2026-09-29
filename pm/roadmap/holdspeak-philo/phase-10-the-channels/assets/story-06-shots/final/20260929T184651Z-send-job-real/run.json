@@ -1,0 +1,27 @@
+{
+  "claim": "cold context (an empty scratch dir, scratch HOME/CODEX_HOME with only the auth file, `--ignore-user-config --ignore-rules`, no preamble), ZERO repository reads in the retained log, discovery from the catalogue alone",
+  "client": "codex",
+  "engine_mode": "none",
+  "fixture_sha256": "4578452c78c45ef3a39fd7186b82019120637f8f78f6745806c5c85f8ae53434",
+  "folder": "/Users/karol/Documents/HoldSpeak",
+  "hub_home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo10-06-xt7k5_h6/hub-home",
+  "label": "REHEARSED; OWNER REVIEW PENDING",
+  "legs": [
+    "agent"
+  ],
+  "mode": "real",
+  "model": "gpt-6-astra",
+  "named_limits": {
+    "confluence": "the owner has no account yet, 2026-09-29; the channel's contract is proven by story 02's fences",
+    "email": "the owner has no account yet, 2026-09-29; the channel's contract is proven by story 03's fences",
+    "jira": "the owner has no account yet, 2026-09-29; the channel's contract is proven by story 02's fences"
+  },
+  "observed_sitting": false,
+  "press": "the owner's press, made by the driver AS THE OWNER through the Room's Send (POST /api/channels/send from the face), by the owner's word of 2026-09-29 for exactly these two targets; Codex never sends",
+  "reasoning_effort": "medium",
+  "sessions": [
+    "agent_prepare",
+    "agent_check"
+  ],
+  "temp_root": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo10-06-xt7k5_h6"
+}

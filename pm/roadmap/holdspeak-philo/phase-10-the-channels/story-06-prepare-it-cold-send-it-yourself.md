@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** PHILO-10-01 through PHILO-10-05; the owner's answer to Q6
 - **Unblocks:** the phase close
 - **Owner:** Astra (Luna) drives the cold session; Muad'Dib checks
@@ -21,9 +21,9 @@ The owner's job: an agent gets the update ready to go; he looks once and presses
 
 ## Acceptance criteria
 
-- [ ] The prepared send, the owner's press, the record and the receipt read back from the hub; the agent's own send refused with its receipt.
-- [ ] The face at both widths shows PREPARED, then SENT with the proof.
-- [ ] Leg B as Q6 rules, recorded apart from leg A, or each limit named.
+- [x] The prepared send, the owner's press, the record and the receipt read back from the hub; the agent's own send refused with its receipt.
+- [x] The face at both widths shows PREPARED, then SENT with the proof.
+- [x] Leg B as Q6 rules, recorded apart from leg A, or each limit named.
 - [ ] Rehearsed, owner-reviewed shots.
 
 ## Effort (not a promise)
@@ -35,6 +35,8 @@ PROVISIONAL: about 1 engineering day, plus the real-send legs.
 - **Closing use:** the Phase 9 story 06 driver pattern, retained sessions, the zero-read fence.
 
 ## Notes
+
+- 2026-09-29 — DONE on the lane (`feat/philo-10-06`): Codex (cold, AGENT, PROJECT credential) prepared both sends and was refused `owner_principal_required` on its two sends; the driver pressed Send AS THE OWNER on the face by his word; two REAL sends, each read back apart from the hub (file `/Users/karol/Documents/HoldSpeak/2026-09-29-harbor-cutover-r1-d4f01b83.md`; comment `https://github.com/karolswdev/HoldSpeak/issues/699#issuecomment-5896512251`). Jira, Confluence, email: named limits (no account yet). The shots wait for the owner's review (the fourth box stays open). Evidence: `evidence-story-06.md`.
 
 - 2026-09-28 — round two: amended on Codex Astra r1 DO-NOT-RATIFY (`checks/charter-astra-r1.md`); bound by `design/send-lifecycle.md`.
 - 2026-09-28 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

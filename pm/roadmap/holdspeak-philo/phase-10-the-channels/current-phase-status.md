@@ -144,7 +144,7 @@ The journal carries the destination's id (`destination:<id>`) and the payload di
 | PHILO-10-03 | The email channel — a provider interface | in-progress | [story-03-the-email-channel](./story-03-the-email-channel.md) | — |
 | PHILO-10-04 | The Send face and the destinations setup (canvas first) | done | [story-04-the-send-face-and-the-destinations](./story-04-the-send-face-and-the-destinations.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-10-05 | The atlas cases for Send | done | [story-05-the-atlas-cases-for-send](./story-05-the-atlas-cases-for-send.md) | [evidence-story-05](./evidence-story-05.md) |
-| PHILO-10-06 | Prepare it cold, send it yourself | backlog | [story-06-prepare-it-cold-send-it-yourself](./story-06-prepare-it-cold-send-it-yourself.md) | — |
+| PHILO-10-06 | Prepare it cold, send it yourself | done | [story-06-prepare-it-cold-send-it-yourself](./story-06-prepare-it-cold-send-it-yourself.md) | [evidence-story-06](./evidence-story-06.md) |
 
 The owner ratified the charter on 2026-09-28. The stories stay `backlog` until the orchestrator briefs each one against the design (`design/send-lifecycle.md`), the Codex Astra check of the email delta and, for the face, its ratified canvases.
 
@@ -160,6 +160,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 01 lands first: the operation table, the record columns and the destinations table have one shipping owner. 02 and 03 each add one channel module and its manifest; they touch the send service only through the channel registry 01 defines. The story 04 canvases can be drawn while 01 is built. A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call (`docs/internal/ORCHESTRATION.md:64-67`). CI does not gate a merge (the owner, 2026-09-28; `../phase-9-the-room-on-the-contract/final-summary.md:146`).
 
 ## Where we are
+
+2026-09-29, story 06 DONE on the lane (branch `feat/philo-10-06`): the closing use. A cold Codex session (AGENT, PROJECT credential, zero reads) prepared the published update for the folder and issue 699; its two sends were refused `owner_principal_required` with receipts; the owner's Send, pressed on the face by the driver AS THE OWNER by his word, made two REAL sends, each read back apart from the hub (the file's bytes; `gh api` on the comment). Exactly once: a ledger plus the folder and issue reads; a second real run is refused. Jira, Confluence and email are named limits (no account yet): exit 5 met with qualification for them. Shots at 1440 and 393 wait for the owner's review.
 
 2026-09-29, story 05 round three (PR #698): Codex Astra r1 RATIFY-WITH-CONDITIONS paid — an unsupported code expression fails the face-word fence (6/6 mutations red), a failed build stops both wrapper branches (proved over 16 combinations), the summaries corrected.
 
