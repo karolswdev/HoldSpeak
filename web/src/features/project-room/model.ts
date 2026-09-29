@@ -1027,7 +1027,10 @@ export type NudgeCardState =
   | { phase: "closed" }
   | { phase: "open"; text: string; busy: boolean; error?: string }
   | { phase: "sent"; displayName: string; prNumber: number; sentAt: string }
-  | { phase: "failed"; text: string; reason: string };
+  | { phase: "failed"; text: string; reason: string }
+  /* PHILO-10-02 (F4): the hub cannot know whether gh posted it. Never a
+   * failure, never offered for Send again: the owner checks the pull request. */
+  | { phase: "unknown"; prNumber: number };
 
 export type NudgeCardAction =
   | { type: "open"; defaultText: string }
@@ -1035,6 +1038,7 @@ export type NudgeCardAction =
   | { type: "sending" }
   | { type: "sent"; displayName: string; prNumber: number; sentAt: string }
   | { type: "failed"; reason: string }
+  | { type: "unknown"; prNumber: number }
   | { type: "dismiss" };
 
 export function nudgeCardReducer(
@@ -1060,6 +1064,8 @@ export function nudgeCardReducer(
     case "failed":
       if (state.phase !== "open") return state;
       return { phase: "failed", text: state.text, reason: action.reason };
+    case "unknown":
+      return { phase: "unknown", prNumber: action.prNumber };
     case "dismiss":
       return { phase: "closed" };
     default:

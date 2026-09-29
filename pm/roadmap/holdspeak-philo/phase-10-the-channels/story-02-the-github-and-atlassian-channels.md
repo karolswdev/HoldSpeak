@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** PHILO-10-01; the owner's answers to Q2, Q3 and Q6
 - **Unblocks:** PHILO-10-05, PHILO-10-06
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks
@@ -23,18 +23,18 @@
 
 **Gates from story 01 (Codex Astra r2 on #692, `checks/story-01-built-astra-r2.md`). The first CLI consumer implements both before any CLI channel sends:**
 
-- [ ] **GATE 1 — redaction cost bounded, diagnostics kept.** Story 01's `redact` scans every 10-character window of the error against the whole payload: Codex measured 8.68 s for a 2,000-character error against a 10 MiB payload, and 26.99 s for a repetitive payload; and `gh: permission denied` became `gh:[redacted]` when that phrase occurs in the document. Bound the work (for example hash-based shingling of the payload once, or a cap on the payload scanned) with a fence that times the worst case; and emit fixed, named error codes (`Outcome.reason`, the refusal code) that are never passed through the redactor, so the diagnosis survives when the text is redacted (a fence: a document that contains the CLI's error phrase still leaves its named code in the receipt).
-- [ ] **GATE 2 — the hub answers during a slow dispatch.** The channel routes are `async def` and call the service synchronously (`holdspeak/web/routes/channels.py:44-47`, `:113-116`): Codex measured a 1.5 s dispatch delay a concurrent read by 1.514 s (3 ms without it). Run the dispatch off the event loop (the threadpool), with a fence that measures a concurrent read during a slow send.
+- [x] **GATE 1 — redaction cost bounded, diagnostics kept.** Story 01's `redact` scans every 10-character window of the error against the whole payload: Codex measured 8.68 s for a 2,000-character error against a 10 MiB payload, and 26.99 s for a repetitive payload; and `gh: permission denied` became `gh:[redacted]` when that phrase occurs in the document. Bound the work (for example hash-based shingling of the payload once, or a cap on the payload scanned) with a fence that times the worst case; and emit fixed, named error codes (`Outcome.reason`, the refusal code) that are never passed through the redactor, so the diagnosis survives when the text is redacted (a fence: a document that contains the CLI's error phrase still leaves its named code in the receipt).
+- [x] **GATE 2 — the hub answers during a slow dispatch.** The channel routes are `async def` and call the service synchronously (`holdspeak/web/routes/channels.py:44-47`, `:113-116`): Codex measured a 1.5 s dispatch delay a concurrent read by 1.514 s (3 ms without it). Run the dispatch off the event loop (the threadpool), with a fence that measures a concurrent read during a slow send.
 
-- [ ] Each channel's send is one `channel.send` with its CLI children parented; red on main for the nudge's child (F5).
-- [ ] A nudge whose `gh` call times out is UNKNOWN in its record and its receipt and is not offered for Send again (red on main, F4).
-- [ ] The argv of each channel starts with its manifest prefix and carries no body; the payload file's bytes equal the preview's digest; a plan that would add `--jql`, `--filter`, `--edit-last` or a second key cannot be built.
-- [ ] An Atlassian send runs inside the acli lock; a second send waits for it (a fence with two concurrent sends).
-- [ ] A GitHub destination saved as login A, with `gh` now logged in as B, is refused `github_identity_changed` before any dispatch (a fence through the real provider with synthetic auth answers; the Phase 9 connection row rewritten from A to B does not change the verdict).
-- [ ] The Confluence title is inside the frozen payload digest and absent from argv and the subprocess receipt (a sentinel fence), or the named limit is recorded.
-- [ ] An unpinned nonzero exit, exit 0 without a valid URL or id, and a timeout are UNKNOWN; only a pinned error is FAILED.
-- [ ] (Moved from story 01.) No body in argv or a subprocess receipt (a sentinel fence); each CLI child runs under the authenticated owner principal with the send as its parent, through the broker.
-- [ ] (Moved from story 01; Q5.) The steward prepares a send as its run's child under its own identity; its attempt to send is refused `owner_principal_required` with a receipt.
+- [x] Each channel's send is one `channel.send` with its CLI children parented; red on main for the nudge's child (F5).
+- [x] A nudge whose `gh` call times out is UNKNOWN in its record and its receipt and is not offered for Send again (red on main, F4).
+- [x] The argv of each channel starts with its manifest prefix and carries no body; the payload file's bytes equal the preview's digest; a plan that would add `--jql`, `--filter`, `--edit-last` or a second key cannot be built.
+- [x] An Atlassian send runs inside the acli lock; a second send waits for it (a fence with two concurrent sends).
+- [x] A GitHub destination saved as login A, with `gh` now logged in as B, is refused `github_identity_changed` before any dispatch (a fence through the real provider with synthetic auth answers; the Phase 9 connection row rewritten from A to B does not change the verdict).
+- [x] The Confluence title is inside the frozen payload digest and absent from argv and the subprocess receipt (a sentinel fence), or the named limit is recorded.
+- [x] An unpinned nonzero exit, exit 0 without a valid URL or id, and a timeout are UNKNOWN; only a pinned error is FAILED.
+- [x] (Moved from story 01.) No body in argv or a subprocess receipt (a sentinel fence); each CLI child runs under the authenticated owner principal with the send as its parent, through the broker.
+- [x] (Moved from story 01; Q5.) The steward prepares a send as its run's child under its own identity; its attempt to send is refused `owner_principal_required` with a receipt.
 - [ ] The real-account leg (separate from the rehearsals; the owner authorizes each target, Q6): one real send per channel, its proof read back from the far side; or the limit named. `gh` and `acli` keep their logins in the macOS keychain (F15): the leg runs on his own session.
 
 ## Effort (not a promise)
@@ -48,6 +48,7 @@ PROVISIONAL: 2–3 engineering days.
 
 ## Notes
 
+- 2026-09-28 — BUILT by the Fedaykin lane (Opus 5.5), branch `feat/philo-10-02`: GATE 1 (the redactor cut to 240 characters before its scan and bounded to 1 MiB of payload, fail closed above it; fixed named codes never pass through it) and GATE 2 (the channel routes, the nudge route and the MCP `channel.send` / `nudge.send` calls run in the threadpool) first; then the CLI seam (principal, parent, broker through `build_gated_connector` -> `execute_subprocess` -> `run_subprocess_operation`), the GitHub, Jira and Confluence channels (`services/channel_cli.py`), the nudge on the GitHub channel's path (a durable `sending` boundary; UNKNOWN never offered again; the reaper and the restart end a `sending` nudge UNKNOWN), and the steward's `prepare_send` effect (a `channel.prepare` child of the run; a steward child `channel.send` is refused `owner_principal_required`). 22/22 mutations caught; F4 and F5 red on main. NOT MET: the real-account leg (story 06's, per target he authorizes). UNVERIFIED until that leg: the `--json` answer shapes of `acli`, the JSON field names `acli confluence blog create --from-json` reads (this build sends `{title, status, body: {representation: storage, value}}` with `--space-id` in argv), and the pinned error phrases. Proof: `assets/story-02-proof/captures.md` (the evidence file comes with the done flip).
 - 2026-09-28 — two gates added from Codex Astra r2 on story 01 (#692): the redactor's cost and named codes; the dispatch off the event loop.
 - 2026-09-28 — the CLI seam, its outcome clauses and the steward's prepare moved here from story 01 (round two of story 01, Codex Astra r1 finding 5).
 - 2026-09-28 — round three: Codex Astra r2 conditions 2 and 3 added.

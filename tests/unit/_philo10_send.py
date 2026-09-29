@@ -109,12 +109,12 @@ class DispatchSpy:
         self.release = threading.Event()
         real: Callable[..., Any] = FileChannel.dispatch
 
-        def dispatch(channel: Any, row: Any) -> Any:
+        def dispatch(channel: Any, row: Any, *rest: Any) -> Any:
             self.calls += 1
             if self.hold == "before":
                 self.entered.set()
                 assert self.release.wait(60)
-            outcome = real(channel, row)
+            outcome = real(channel, row, *rest)
             if self.hold == "after":
                 self.entered.set()
                 assert self.release.wait(60)

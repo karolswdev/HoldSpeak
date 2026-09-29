@@ -288,7 +288,7 @@ def test_r3_a_sent_nudge_answers_the_comment_receipt_and_the_kernel_receipt(
     from test_philo5_the_loop_r2 import _nudge_step
 
     def runner(argv: list[str], **_kwargs: Any) -> Any:
-        return subprocess.CompletedProcess(argv, 0, "https://github.com/example/payments/pull/7#c1\n", "")
+        return subprocess.CompletedProcess(argv, 0, "https://github.com/example/payments/pull/7#issuecomment-1\n", "")
 
     monkeypatch.setattr(hub.root.project_steward_service, "_subprocess_runner", runner)
     step_id = _nudge_step(hub)
@@ -301,7 +301,7 @@ def test_r3_a_sent_nudge_answers_the_comment_receipt_and_the_kernel_receipt(
         assert is_error is False, answer
     stored = json.loads(hub.db.steward_steps.get_step(step_id)["receipt_json"])
     comment = answer.get("comment_receipt") or {}
-    assert comment.get("comment_url") == stored["comment_url"] == "https://github.com/example/payments/pull/7#c1", \
+    assert comment.get("comment_url") == stored["comment_url"] == "https://github.com/example/payments/pull/7#issuecomment-1", \
         f"comment receipt is overwritten: {answer}"
     assert comment.get("reviewer_login") == stored["reviewer_login"] and comment.get("timestamp") == stored["timestamp"]
     kernel = answer["receipt"]

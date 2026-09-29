@@ -25,6 +25,11 @@ AGENT_PREPARE_OPERATIONS: frozenset[str] = frozenset({"channel.prepare"})
 #: The operation whose replay after a non-``succeeded`` end answers its settled
 #: row (design section 4a, seam 3); a refusal before the boundary still raises.
 SETTLED_ROW_REPLAY: frozenset[str] = frozenset({"channel.send"})
+#: PHILO-10-02 (Q5): a steward run's children for the Send. It PREPARES under
+#: its own identity; its send or discard reaches the codec only to be refused
+#: ``owner_principal_required`` with a receipt ("You, every time").
+STEWARD_SEND_CHILDREN: frozenset[str] = frozenset({"channel.prepare", "channel.send", "channel.discard"})
+OWNER_PRESS: frozenset[str] = frozenset({"channel.send", "channel.discard"})
 
 def channel_send_ended_effect(store: Any, operation: Mapping[str, Any], reason: str, *,
                               row_reason: str = "reaped", before: str = "reaped_before_dispatch") -> Any:
@@ -41,6 +46,8 @@ def channel_send_ended_effect(store: Any, operation: Mapping[str, Any], reason: 
     ``None`` for every other operation.
     The file is read BEFORE the transaction (the effect itself is local SQL).
     """
+    if str(operation.get("name") or "") == "nudge.send":
+        return _nudge_ended_effect(str(operation.get("operation_id") or ""), row_reason)
     if str(operation.get("name") or "") != "channel.send":
         return None
     operation_id = str(operation.get("operation_id") or "")
@@ -79,3 +86,15 @@ def _found_on_disk(path: str, digest: str) -> dict[str, Any]:
     if sha != digest:
         return {}
     return {"found_on_disk": {"path": os.path.abspath(path), "sha256": sha, "size": len(data)}}
+
+
+def _nudge_ended_effect(operation_id: str, reason: str) -> Any:
+    """PHILO-10-02 (F4): a nudge the kernel ends itself while ``sending`` is UNKNOWN, never offered again."""
+    def effect(conn: Any) -> None:
+        conn.execute(
+            "UPDATE steward_steps SET state='unknown', receipt_json=json_object('effect_kind','github_comment',"
+            "'outcome','unknown','reason',?), completed_at=datetime('now'), updated_at=datetime('now')"
+            " WHERE state='sending' AND json_extract(observed_state_json,'$.send_operation_id')=?",
+            (reason, operation_id))
+
+    return effect

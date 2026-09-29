@@ -43,6 +43,7 @@ EFFECT_KINDS: tuple[str, ...] = (
     "draft_update",
     "create_door_item",
     "github_comment",
+    "prepare_send",
 )
 
 # HS-173-04: the default nudge comment template (no personal name — C4).
@@ -1165,7 +1166,9 @@ class ProjectStewardService(StewardContract):
                     max_retries=max_retries,
                 )
 
-            if effect_kind == "apply_proposal_effects":
+            if effect_kind in ("apply_proposal_effects", "prepare_send"):
+                # Each acceptance, and each prepared send (PHILO-10-02, Q5), is
+                # its own child of the run: the slot has none of its own.
                 receipt = _slot()
             else:
                 receipt = self._effect_child(principal, run_id, project_id, effect_kind, _slot)
@@ -1353,6 +1356,8 @@ class ProjectStewardService(StewardContract):
             return self._effect_github_comment(
                 principal, run_id, project_id, phase_results,
             )
+        elif effect_kind == "prepare_send":
+            return self._effect_prepare_send(principal, run_id, project_id)
         else:
             return {"skipped": True, "reason": f"unknown effect {effect_kind}"}
 
@@ -1843,6 +1848,50 @@ class ProjectStewardService(StewardContract):
             "skipped": skipped_count,
         }
 
+    # ── PHILO-10-02 (Q5): the steward PREPARES a send; only the owner sends ──
+
+    def _effect_prepare_send(self, principal: Principal, run_id: str, project_id: str) -> dict[str, Any]:
+        """Prepare the project's latest published update for each destination the policy names.
+
+        The run's FROZEN ``bounds.send_destination_ids`` names the saved
+        destinations. Each prepare is one ``channel.prepare`` child of the run,
+        under the run's actor (the owner, the scheduler or the agent): a
+        ``prepared`` row with its preview, waiting for the owner's Send or
+        Discard. It never sends: a steward child ``channel.send`` is refused
+        ``owner_principal_required`` by the kernel. An update already prepared
+        or sent to a destination is not prepared again.
+        """
+        from holdspeak.kernel import project as rooms
+        from holdspeak.services.channel_service import ChannelService
+
+        if rooms.current_steward_context() is None:
+            return {"effect": "prepare_send", "skipped": True, "reason": "prepare_needs_an_admitted_run"}
+        frozen = self._frozen_terms(run_id)
+        bounds = (frozen or {}).get("bounds") if frozen is not None else json.loads(
+            self._load_policy(project_id).get("bounds_json") or "{}")
+        wanted = [str(d) for d in ((bounds or {}).get("send_destination_ids") or []) if str(d or "").strip()]
+        published = [u for u in self._db.project_updates.list_updates(project_id)
+                     if str(u.get("lifecycle") or "") == "published"]
+        if not wanted or not published:
+            return {"effect": "prepare_send", "skipped": True,
+                    "reason": "no_send_destinations" if not wanted else "no_published_update"}
+        update = max(published, key=lambda u: (str(u.get("published_at") or ""), int(u.get("draft_revision") or 0)))
+        document_ref = f"project_update:{update['id']}"
+        channels = ChannelService(self._db)
+        prepared: list[str] = []
+        for destination_id in wanted:
+            with self._db._connection() as conn:
+                seen = conn.execute("SELECT 1 FROM channel_sends WHERE document_ref=? AND destination_id=? AND"
+                                    " state!='discarded'", (document_ref, destination_id)).fetchone()
+            if seen is not None:
+                continue
+            answer = self._child(principal, "channel.prepare",
+                                 {"update_id": update["id"], "destination_id": destination_id},
+                                 lambda d=destination_id: channels.prepare(principal, update["id"], d))
+            prepared.append(str(((answer or {}).get("send") or {}).get("id") or ""))
+        return {"effect": "prepare_send", "outcome": "applied" if prepared else "reconciled",
+                "update_id": update["id"], "prepared": prepared}
+
     # ── HS-173-04: Nudge lifecycle methods ───────────────────────────
 
     def list_nudges(
@@ -1912,11 +1961,15 @@ class ProjectStewardService(StewardContract):
         """Send a nudge: re-check policy, execute via gh pr comment, receipt.
 
         H1: refuse if the kind is no longer eligible.
-        H5: gh failure -> outcome failed, step back to proposed.
+        H5 (PHILO-10-02, F4): only a KNOWN non-delivery is failed (step back to
+        proposed); an indeterminate answer is unknown and never offered again.
         """
         step = self._db.steward_steps.get_step(step_id)
         if step is None or step["effect_kind"] != "github_comment":
             return {"error": "nudge_not_found"}
+        recovered = self._recover_nudge(step)
+        if recovered is not None:
+            return recovered
         if step["state"] != "proposed":
             return {"error": "nudge_not_proposed", "state": step["state"]}
 
@@ -1980,110 +2033,111 @@ class ProjectStewardService(StewardContract):
         repo = payload.get("repo", "")
         pr_number = int(payload.get("pr_number") or 0)
         reviewer_login = payload.get("reviewer_login", "")
+        return self._send_nudge_on_channel(principal, step_id, project_id, payload, repo, pr_number,
+                                           reviewer_login, text.strip())
 
-        # Execute via build_github_pr_connector("comment").
-        from holdspeak.plugins.builtin.github_pr_actuator import (
-            build_github_pr_connector,
-        )
-        from types import SimpleNamespace
+    def _send_nudge_on_channel(self, principal: Principal, step_id: str, project_id: str,
+                               payload: dict[str, Any], repo: str, pr_number: int, reviewer_login: str,
+                               text: str) -> dict[str, Any]:
+        """PHILO-10-02 (F4, F5): the nudge on the GitHub channel's path and the Send's outcome rules.
 
-        connector = build_github_pr_connector("comment", runner=self._subprocess_runner)
-        proposal = SimpleNamespace(payload={
-            "repo": repo,
-            "number": pr_number,
-            "body": text.strip(),
-        })
+        The body goes through a private 0600 file (``--body-file``), never argv.
+        The ``gh`` command is a ``subprocess.exec`` CHILD of the admitted
+        ``nudge.send`` operation, under its principal, through its broker. The
+        step crosses a durable boundary (``proposed`` -> ``sending``, committed
+        BEFORE the command runs), so a take-over never posts twice. The
+        outcome: the comment URL -> ``sent``; a pinned known non-delivery ->
+        ``failed``, the step back to ``proposed`` (nothing was posted, so it may
+        be sent again); anything else (a timeout, an unpinned exit, no URL) ->
+        ``unknown``: the step and the kernel receipt say so, and it is NOT
+        offered for Send again.
+        """
+        from holdspeak.services import project_kernel
+        from holdspeak.services.channel_cli import CLI_CHANNELS, Seam
+        from holdspeak.services.channel_contract import Outcome
 
+        handle = project_kernel.current()
+        operation_id = handle.operation_id if handle is not None else ""
+        target = {"host": str(payload.get("host") or "github.com"), "repo": repo, "kind": "pr", "number": pr_number}
         now_iso = _now_iso()
+        base = {"effect_kind": "github_comment", "pr_number": pr_number, "reviewer_login": reviewer_login,
+                "timestamp": now_iso, "approval_principal": str(principal), "host": target["host"]}
+        # The durable boundary: committed before any effect (design section 4).
+        with self._db._connection() as conn:
+            moved = conn.execute(
+                "UPDATE steward_steps SET state='sending', observed_state_json=?, updated_at=datetime('now') "
+                "WHERE id=? AND state='proposed'",
+                (json.dumps({"send_operation_id": operation_id}), step_id)).rowcount
+        if moved != 1:
+            return {"error": "nudge_not_proposed", "state": (self._db.steward_steps.get_step(step_id) or {}).get("state")}
+        seam = Seam(principal=handle.principal if handle is not None else principal,
+                    parent_operation_id=operation_id, broker=handle.broker if handle is not None else None,
+                    runner=self._subprocess_runner)
         try:
-            result = connector(proposal)
-            # Parse comment URL from gh output.
-            output = result.get("output", "")
-            comment_url = ""
-            for line in output.splitlines():
-                line = line.strip()
-                if line.startswith("https://"):
-                    comment_url = line
-                    break
+            outcome = CLI_CHANNELS["github"].comment(target, text.encode("utf-8"), seam)
+        except Exception as exc:  # the effect's own error after the boundary: never FAILED
+            outcome = Outcome("unknown", f"dispatch_{type(exc).__name__.lower()}")
+        return self._settle_nudge(handle, principal, step_id, project_id, payload, reviewer_login, text, base,
+                                  outcome)
 
-            receipt = {
-                "effect_kind": "github_comment",
-                "outcome": "applied",
-                "comment_url": comment_url,
-                "pr_number": pr_number,
-                "reviewer": payload.get("display_name") or reviewer_login,
-                "reviewer_login": reviewer_login,
-                "timestamp": now_iso,
-                "approval_principal": str(principal),
-                "host": "github.com",
-                "text": text.strip(),
-            }
+    def _settle_nudge(self, handle: Any, principal: Principal, step_id: str, project_id: str,
+                      payload: dict[str, Any], reviewer_login: str, text: str, base: dict[str, Any],
+                      outcome: Any) -> dict[str, Any]:
+        """The step's end, its ledger row and the kernel's terminal receipt: ONE transaction."""
+        if outcome.state == "sent":
+            receipt = {**base, "outcome": "applied", "comment_url": str(outcome.proof.get("url") or ""),
+                       "reviewer": payload.get("display_name") or reviewer_login, "text": text}
+            step_state, answer = "sent", {"success": True, "receipt": receipt}
+        elif outcome.state == "failed":
+            receipt = {**base, "outcome": "failed", "reason": outcome.reason, "error": outcome.detail or outcome.reason}
+            step_state, answer = "proposed", {"error": "send_failed", "receipt": receipt}
+        else:
+            receipt = {**base, "outcome": "unknown", "reason": outcome.reason,
+                       "error": outcome.detail or outcome.reason}
+            step_state, answer = "unknown", {"success": False, "outcome": "unknown", "receipt": receipt}
 
-            self._db.steward_steps.update_step(
-                step_id,
-                state="sent",
-                observed_state_json=json.dumps(receipt, default=str),
-                receipt_json=json.dumps(receipt, default=str),
-            )
+        def effect(conn: Any) -> None:
+            moved = conn.execute(
+                "UPDATE steward_steps SET state=?, observed_state_json=?, receipt_json=?, updated_at=datetime('now'),"
+                " completed_at=CASE WHEN ?='proposed' THEN completed_at ELSE datetime('now') END"
+                " WHERE id=? AND state='sending'",
+                (step_state, json.dumps(receipt, default=str), json.dumps(receipt, default=str), step_state,
+                 step_id)).rowcount
+            if moved != 1:
+                raise RuntimeError("the nudge step is no longer sending")
+            self._ledger.append_in_transaction(
+                conn, principal, event_type="steward.effect.github_comment", producer="ProjectStewardService",
+                subject_ref=f"steward_step:{step_id}", source_revision="", facts=receipt,
+                refs=[f"project:{project_id}", f"steward_step:{step_id}"])
 
-            # Ledger receipt.
-            try:
-                with self._db._connection() as conn:
-                    self._ledger.append_in_transaction(
-                        conn, principal,
-                        event_type="steward.effect.github_comment",
-                        producer="ProjectStewardService",
-                        subject_ref=f"steward_step:{step_id}",
-                        source_revision="",
-                        facts=receipt,
-                        refs=[
-                            f"project:{project_id}",
-                            f"steward_step:{step_id}",
-                        ],
-                    )
-            except Exception:
-                pass
+        if handle is not None and not handle.closed:
+            state, kernel_outcome = outcome.kernel_end()
+            handle.terminal(state, kernel_outcome, f"steward_step:{step_id}", effect=effect)
+        else:
+            with self._db._connection() as conn:
+                effect(conn)
+        return answer
 
-            return {"success": True, "receipt": receipt}
+    def _recover_nudge(self, step: dict[str, Any]) -> Optional[dict[str, Any]]:
+        """A take-over that finds its step ``sending``: NEVER post again -- UNKNOWN (interrupted)."""
+        from holdspeak.services import project_kernel
+        from holdspeak.services.channel_contract import Outcome
 
-        except Exception as exc:
-            # H5: gh failure -> failed receipt, step back to proposed.
-            error_summary = str(exc)[:240]
-            receipt = {
-                "effect_kind": "github_comment",
-                "outcome": "failed",
-                "pr_number": pr_number,
-                "reviewer_login": reviewer_login,
-                "timestamp": now_iso,
-                "approval_principal": str(principal),
-                "host": "github.com",
-                "error": error_summary,
-            }
-
-            self._db.steward_steps.update_step(
-                step_id,
-                state="proposed",
-                receipt_json=json.dumps(receipt, default=str),
-            )
-
-            try:
-                with self._db._connection() as conn:
-                    self._ledger.append_in_transaction(
-                        conn, principal,
-                        event_type="steward.effect.github_comment",
-                        producer="ProjectStewardService",
-                        subject_ref=f"steward_step:{step_id}",
-                        source_revision="",
-                        facts=receipt,
-                        refs=[
-                            f"project:{project_id}",
-                            f"steward_step:{step_id}",
-                        ],
-                    )
-            except Exception:
-                pass
-
-            return {"error": "send_failed", "receipt": receipt}
+        handle = project_kernel.current()
+        try:
+            recorded = json.loads(step.get("observed_state_json") or "{}").get("send_operation_id")
+        except (TypeError, ValueError):
+            recorded = None
+        if handle is None or step.get("state") != "sending" or recorded != handle.operation_id:
+            return None
+        payload = json.loads(step.get("expected_state_json") or "{}")
+        project_id = (str(step.get("idempotency_key") or "").split(":", 2) + ["", ""])[1]
+        base = {"effect_kind": "github_comment", "pr_number": int(payload.get("pr_number") or 0),
+                "reviewer_login": payload.get("reviewer_login", ""), "timestamp": _now_iso(),
+                "approval_principal": str(handle.principal), "host": payload.get("host") or "github.com"}
+        return self._settle_nudge(handle, handle.principal, str(step["id"]), project_id, payload,
+                                  str(payload.get("reviewer_login") or ""), "", base,
+                                  Outcome("unknown", "interrupted"))
 
     def dismiss_nudge(
         self,
@@ -2289,6 +2343,8 @@ class ProjectStewardService(StewardContract):
             return {"effect": "create_door_item", "project_id": project_id}
         elif effect_kind == "github_comment":
             return {"effect": "github_comment", "project_id": project_id}
+        elif effect_kind == "prepare_send":
+            return {"effect": "prepare_send", "project_id": project_id}
         return {"effect": effect_kind}
 
 

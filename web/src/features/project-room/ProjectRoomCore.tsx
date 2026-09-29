@@ -458,6 +458,9 @@ function NudgeCard({
         });
         // The receipt row stays visible; notify parent for cooldown token.
         onSent?.();
+      } else if (result.outcome === "unknown") {
+        // PHILO-10-02 (F4): not known to be posted, not known to be lost.
+        dispatch({ type: "unknown", prNumber });
       } else {
         dispatch({ type: "failed", reason: String(result.message || "Send failed") });
       }
@@ -493,6 +496,29 @@ function NudgeCard({
               </span>
             ) : null}
             <span className="surface-token">{formatTimeShort(card.sentAt)}</span>
+            <EgressChip label="GITHUB.COM" scope="cloud" />
+          </>
+        }
+      />
+    );
+  }
+
+  // PHILO-10-02 (F4): the result is unknown -- no Send verb; check the pull request.
+  if (card.phase === "unknown") {
+    return (
+      <SurfaceLedgerRow
+        data-testid="nudge-unknown-row"
+        lead={<StateChip state="warning" label="" icon={"⚠"} />}
+        primary={<span className="surface-primary">RESULT UNKNOWN</span>}
+        wrap
+        cells={
+          <>
+            <span className="room-nudge-receipt-name">{displayName}</span>
+            <span className="surface-token">
+              {prUrl ? (
+                <a href={prUrl} target="_blank" rel="noopener noreferrer" className="room-nudge-pr-link">CHECK #{card.prNumber}</a>
+              ) : `CHECK #${card.prNumber}`}
+            </span>
             <EgressChip label="GITHUB.COM" scope="cloud" />
           </>
         }

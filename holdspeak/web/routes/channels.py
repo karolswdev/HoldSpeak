@@ -12,6 +12,10 @@ GET    /api/channels/sends                             channel.sends
 
 An admitted route answers with its ``operation_id`` and terminal ``receipt``; a
 refusal of an admitted operation carries them (``_room_kernel``).
+
+PHILO-10-02 GATE 2 (Codex Astra r2 on #692): the service runs OFF the event
+loop (the threadpool), so a slow dispatch -- a CLI command, a large file --
+never stalls the hub's other requests.
 """
 from __future__ import annotations
 
@@ -19,6 +23,7 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ... import operations
 from ...logging_config import get_logger
@@ -41,7 +46,10 @@ def build_channels_router(ctx: WebContext) -> APIRouter:
     def ops() -> Any:
         return operations.for_context(ctx)
 
-    def call(request: Request, name: str, args: dict[str, Any]) -> JSONResponse:
+    async def call(request: Request, name: str, args: dict[str, Any]) -> JSONResponse:
+        return await run_in_threadpool(call_sync, request, name, args)
+
+    def call_sync(request: Request, name: str, args: dict[str, Any]) -> JSONResponse:
         try:
             result, kernel = ops().invoke_receipted(principal(request), name, args)
             return JSONResponse({**result, **kernel_fields(kernel)})
@@ -71,12 +79,12 @@ def build_channels_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/api/channels/destinations")
     async def api_channel_destinations(request: Request, include_parked: bool = False) -> Any:
-        return call(request, "channel.destinations", {"include_parked": include_parked} if include_parked else {})
+        return await call(request, "channel.destinations", {"include_parked": include_parked} if include_parked else {})
 
     @router.post("/api/channels/destinations")
     async def api_channel_save_destination(request: Request) -> Any:
         data, refused = await body(request, "channel.save_destination")
-        return refused if refused is not None else call(request, "channel.save_destination", data)
+        return refused if refused is not None else await call(request, "channel.save_destination", data)
 
     @router.delete("/api/channels/destinations/{destination_id}")
     async def api_channel_remove_destination(destination_id: str, request: Request) -> Any:
@@ -85,21 +93,21 @@ def build_channels_router(ctx: WebContext) -> APIRouter:
             return refused
         if (bad := path_refusal(request, "channel.remove_destination", "destination_id", data)) is not None:
             return bad
-        return call(request, "channel.remove_destination", {**data, "destination_id": destination_id})
+        return await call(request, "channel.remove_destination", {**data, "destination_id": destination_id})
 
     @router.post("/api/channels/destinations/{destination_id}/check")
     async def api_channel_check_destination(destination_id: str, request: Request) -> Any:
-        return call(request, "channel.check_destination", {"destination_id": destination_id})
+        return await call(request, "channel.check_destination", {"destination_id": destination_id})
 
     @router.post("/api/channels/preview")
     async def api_channel_preview(request: Request) -> Any:
         data, refused = await body(request, "channel.preview")
-        return refused if refused is not None else call(request, "channel.preview", data)
+        return refused if refused is not None else await call(request, "channel.preview", data)
 
     @router.post("/api/channels/sends")
     async def api_channel_prepare(request: Request) -> Any:
         data, refused = await body(request, "channel.prepare")
-        return refused if refused is not None else call(request, "channel.prepare", data)
+        return refused if refused is not None else await call(request, "channel.prepare", data)
 
     @router.post("/api/channels/sends/{send_id}/discard")
     async def api_channel_discard(send_id: str, request: Request) -> Any:
@@ -108,17 +116,17 @@ def build_channels_router(ctx: WebContext) -> APIRouter:
             return refused
         if (bad := path_refusal(request, "channel.discard", "send_id", data)) is not None:
             return bad
-        return call(request, "channel.discard", {**data, "send_id": send_id})
+        return await call(request, "channel.discard", {**data, "send_id": send_id})
 
     @router.post("/api/channels/send")
     async def api_channel_send(request: Request) -> Any:
         data, refused = await body(request, "channel.send")
-        return refused if refused is not None else call(request, "channel.send", data)
+        return refused if refused is not None else await call(request, "channel.send", data)
 
     @router.get("/api/channels/sends")
     async def api_channel_sends(request: Request, update_id: Optional[str] = None,
                                 send_id: Optional[str] = None) -> Any:
         args = {k: v for k, v in (("update_id", update_id), ("send_id", send_id)) if v}
-        return call(request, "channel.sends", args)
+        return await call(request, "channel.sends", args)
 
     return router

@@ -95,6 +95,9 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         return bool(store.get("enabled", False))
 
     # ── POST /api/mcp ──────────────────────────────────────────────
+    #: The tools whose call waits on the outside (a CLI, a file): run off the loop.
+    _DISPATCHING_TOOLS = frozenset({"channel.send", "nudge.send"})
+
     @router.post("/api/mcp")
     async def mcp_http_endpoint(request: Request) -> JSONResponse:
         """Streamable HTTP transport for MCP JSON-RPC.
@@ -190,15 +193,26 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         origin_value = "remote" if is_remote else "local"
         identity_label = cred.principal.identity if cred else principal.identity
 
-        origin_token = _origin.set(origin_value)
-        caller_token = _caller.set(client_host)
-        identity_token = _caller_identity.set(identity_label)
-        try:
-            response = handle_message_for_principal(body, principal, palette=palette)
-        finally:
-            _origin.reset(origin_token)
-            _caller.reset(caller_token)
-            _caller_identity.reset(identity_token)
+        def handle() -> Any:
+            origin_token = _origin.set(origin_value)
+            caller_token = _caller.set(client_host)
+            identity_token = _caller_identity.set(identity_label)
+            try:
+                return handle_message_for_principal(body, principal, palette=palette)
+            finally:
+                _origin.reset(origin_token)
+                _caller.reset(caller_token)
+                _caller_identity.reset(identity_token)
+
+        # PHILO-10-02 GATE 2: a tool that dispatches to the outside (a Send, a
+        # nudge) runs off the event loop, so the hub answers during it.
+        params = body.get("params") if isinstance(body.get("params"), dict) else {}
+        if body.get("method") == "tools/call" and params.get("name") in _DISPATCHING_TOOLS:
+            from starlette.concurrency import run_in_threadpool
+
+            response = await run_in_threadpool(handle)
+        else:
+            response = handle()
 
         if response is None:
             # Notification (no response expected). A bare Response: a

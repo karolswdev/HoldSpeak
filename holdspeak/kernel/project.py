@@ -38,7 +38,7 @@ STEWARD_AND_CONNECTORS_ADMITTED: frozenset[str] = frozenset({
     "connection.recheck", "project.mark_update_delivered",
 })
 #: PHILO-10-01: the Send's rows live beside their settle (``kernel/channel_send.py``).
-from .channel_send import AGENT_PREPARE_OPERATIONS, CHANNEL_ADMITTED, SETTLED_ROW_REPLAY  # noqa: E402,F401
+from .channel_send import AGENT_PREPARE_OPERATIONS, CHANNEL_ADMITTED, OWNER_PRESS, SETTLED_ROW_REPLAY, STEWARD_SEND_CHILDREN  # noqa: E402,F401,E501
 #: The beat's section 5: one child per executed policy slot that has no
 #: admitted operation of its own. Internal: no transport, never grantable.
 STEWARD_EFFECT = "project.steward.effect"
@@ -140,7 +140,7 @@ def scheduler_may_submit(name: str, principal: Any) -> bool:
         return True
     context = _STEWARD_CONTEXT.get()
     return bool(context and context.get("actor_kind") == "scheduler"
-                and name in {STEWARD_EFFECT, "project.decide_proposal", "inference.invoke"})
+                and name in {STEWARD_EFFECT, "project.decide_proposal", "inference.invoke", *STEWARD_SEND_CHILDREN})
 
 
 def scheduler_approves(operation: Mapping[str, Any], principal: Any) -> bool:
@@ -160,7 +160,7 @@ def scheduler_approves(operation: Mapping[str, Any], principal: Any) -> bool:
     # 5): the broker's causality already bound it to a claimed parent of this
     # same actor.
     return bool(context and (
-        (name in {STEWARD_EFFECT, "project.decide_proposal"} and parent == str(context.get("operation_id") or ""))
+        (name in {STEWARD_EFFECT, "project.decide_proposal", "channel.prepare"} and parent == str(context.get("operation_id") or ""))
         or (name in _SCHEDULER_MODEL_CHILDREN and context.get("actor_kind") == "scheduler" and parent)))
 
 
@@ -180,7 +180,7 @@ PROJECT_BASIS_KIND = "project-delegation"
 GRANT_CODES: frozenset[str] = frozenset({REQUIRED, EXPIRED, REVOKED})
 OWNER_REQUIRED = "owner_principal_required"
 #: The children a steward run makes under the run's actor (the beat, section 5).
-STEWARD_CHILDREN: frozenset[str] = frozenset({STEWARD_EFFECT, "project.decide_proposal"})
+STEWARD_CHILDREN: frozenset[str] = frozenset({STEWARD_EFFECT, "project.decide_proposal", *STEWARD_SEND_CHILDREN})
 _TABLE = "kernel_project_delegations"
 
 

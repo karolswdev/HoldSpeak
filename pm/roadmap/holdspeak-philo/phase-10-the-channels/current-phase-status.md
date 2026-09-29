@@ -140,7 +140,7 @@ The journal carries the destination's id (`destination:<id>`) and the payload di
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | PHILO-10-01 | The Send contract, saved destinations and the file channel | done | [story-01-the-send-contract-and-the-file-channel](./story-01-the-send-contract-and-the-file-channel.md) | [evidence-story-01](./evidence-story-01.md) |
-| PHILO-10-02 | The GitHub and Atlassian channels (and the nudge) | backlog | [story-02-the-github-and-atlassian-channels](./story-02-the-github-and-atlassian-channels.md) | — |
+| PHILO-10-02 | The GitHub and Atlassian channels (and the nudge) | in-progress | [story-02-the-github-and-atlassian-channels](./story-02-the-github-and-atlassian-channels.md) | [proof captures](./assets/story-02-proof/captures.md) |
 | PHILO-10-03 | The email channel — a provider interface | backlog | [story-03-the-email-channel](./story-03-the-email-channel.md) | — |
 | PHILO-10-04 | The Send face and the destinations setup (canvas first) | backlog | [story-04-the-send-face-and-the-destinations](./story-04-the-send-face-and-the-destinations.md) | — |
 | PHILO-10-05 | The atlas cases for Send | backlog | [story-05-the-atlas-cases-for-send](./story-05-the-atlas-cases-for-send.md) | — |
@@ -160,6 +160,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 01 lands first: the operation table, the record columns and the destinations table have one shipping owner. 02 and 03 each add one channel module and its manifest; they touch the send service only through the channel registry 01 defines. The story 04 canvases can be drawn while 01 is built. A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call (`docs/internal/ORCHESTRATION.md:64-67`). CI does not gate a merge (the owner, 2026-09-28; `../phase-9-the-room-on-the-contract/final-summary.md:146`).
 
 ## Where we are
+
+2026-09-28, story 02 BUILT (branch `feat/philo-10-02`), in-progress: GATE 1 — the redactor cuts the error to 240 characters before its scan and reads at most 1 MiB of payload (every CLI limit is below it; above it the text is withheld), its worst case timed under 2 s (story 01's cost: 11.5 s on the same case); the codes (`Outcome.reason`, refusals) never pass through it. GATE 2 — the channel routes, the nudge route and the MCP `channel.send` / `nudge.send` calls run in the threadpool; a real socket hub answers a read in under 0.5 s during a 1.5 s send (1.38 s on the loop). Then the CLI seam, the GitHub, Jira and Confluence channels, the nudge on the GitHub channel's path (F4: UNKNOWN never offered again; F5: its `gh` child parented; both red on main), the steward's `prepare_send`. 22/22 mutations caught. Owed: the real-account leg (story 06, per target he authorizes), which pins the `acli --json` shapes, the Confluence `--from-json` field names and the pinned error phrases; the Codex Astra check; Muad'Dib's full suite.
 
 2026-09-28, story 01: Codex Astra r2 on #692 RATIFY-WITH-CONDITIONS (`checks/story-01-built-astra-r2.md`); its two conditions are story 02's GATES 1 (the redactor's cost and named codes) and 2 (the dispatch off the event loop). Owed: Muad'Dib's full suite, then merge.
 

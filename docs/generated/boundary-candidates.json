@@ -1990,7 +1990,7 @@
     },
     {
       "path": "holdspeak/connector_runtime.py",
-      "line": 149,
+      "line": 151,
       "kinds": [
         "process_or_shell"
       ],
@@ -2000,7 +2000,7 @@
     },
     {
       "path": "holdspeak/connector_runtime.py",
-      "line": 162,
+      "line": 168,
       "kinds": [
         "process_or_shell"
       ],
@@ -2010,7 +2010,7 @@
     },
     {
       "path": "holdspeak/connector_runtime.py",
-      "line": 182,
+      "line": 190,
       "kinds": [
         "process_or_shell"
       ],
@@ -2020,7 +2020,7 @@
     },
     {
       "path": "holdspeak/connector_runtime.py",
-      "line": 188,
+      "line": 196,
       "kinds": [
         "process_or_shell"
       ],
@@ -3631,7 +3631,7 @@
     },
     {
       "path": "holdspeak/kernel/subprocess_exec.py",
-      "line": 235,
+      "line": 236,
       "kinds": [
         "process_or_shell"
       ],
@@ -3641,37 +3641,37 @@
     },
     {
       "path": "holdspeak/kernel/subprocess_exec.py",
-      "line": 253,
+      "line": 250,
       "kinds": [
         "process_or_shell"
       ],
-      "excerpt": "\"idempotency_key\": f\"subprocess:{plan.native_id}\",",
-      "line_sha256": "f6bfd92dbce408b4ee8bec253f4ffc3fb5047909d5c23171d7d7ae663b651d12",
+      "excerpt": "\"request_schema\": 1, \"request_id\": str(uuid.uuid4()), \"idempotency_key\": f\"subprocess:{plan.native_id}\",",
+      "line_sha256": "3371e2b3ae1d394202feb8f19f5c65f12dd63af696967a6afe9910ffe87189cd",
       "review": "candidate_only"
     },
     {
       "path": "holdspeak/kernel/subprocess_exec.py",
-      "line": 254,
+      "line": 251,
       "kinds": [
         "process_or_shell"
       ],
-      "excerpt": "\"operation\": {\"name\": \"subprocess.exec\", \"version\": 1},",
-      "line_sha256": "ad8268b9598cdf0e197144fc7166b28ca850a402c6cf665e07650814d90119af",
+      "excerpt": "\"operation\": {\"name\": \"subprocess.exec\", \"version\": 1}, \"subject_refs\": [f\"connector:{plan.connector_id}\"],",
+      "line_sha256": "9a7af3ad0a7d8dbff8e747a31dd2131da72e28127257b6a5bd85c2f2e3ca89db",
       "review": "candidate_only"
     },
     {
       "path": "holdspeak/kernel/subprocess_exec.py",
-      "line": 256,
+      "line": 252,
       "kinds": [
         "process_or_shell"
       ],
-      "excerpt": "\"target\": {\"ref\": f\"subprocess:{plan.native_id}\"},",
-      "line_sha256": "f5f9186abc69779c814a8c7d9f1cab23308cfa265f2711655d844ed4a54e95b4",
+      "excerpt": "\"target\": {\"ref\": f\"subprocess:{plan.native_id}\"}, \"arguments\": {\"execution_id\": plan.native_id},",
+      "line_sha256": "6339a620474d7709c94db8f48cfc4b5c940d83b5150d44ab6f14d8d6a5d81191",
       "review": "candidate_only"
     },
     {
       "path": "holdspeak/kernel/subprocess_exec.py",
-      "line": 271,
+      "line": 267,
       "kinds": [
         "process_or_shell"
       ],
@@ -4581,7 +4581,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 209,
+      "line": 210,
       "kinds": [
         "process_or_shell"
       ],
@@ -4591,7 +4591,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 210,
+      "line": 211,
       "kinds": [
         "process_or_shell"
       ],
@@ -4601,7 +4601,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 245,
+      "line": 250,
       "kinds": [
         "process_or_shell"
       ],
@@ -4611,12 +4611,32 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 255,
+      "line": 260,
       "kinds": [
         "process_or_shell"
       ],
       "excerpt": "tests drive the full loop with **no** real subprocess or network call.",
       "line_sha256": "f513e1e19b7d826b3dedba626a6c56af69d833fd0c16a7870483c47f923f3138",
+      "review": "candidate_only"
+    },
+    {
+      "path": "holdspeak/plugins/gated_connector.py",
+      "line": 272,
+      "kinds": [
+        "process_or_shell"
+      ],
+      "excerpt": "``parent_operation_id`` and its ``broker``; each subprocess it runs is",
+      "line_sha256": "828b0912cb7165f0ae8908fd1947f2f816bc856cb2a6a49a24fbb095e224f92d",
+      "review": "candidate_only"
+    },
+    {
+      "path": "holdspeak/plugins/gated_connector.py",
+      "line": 273,
+      "kinds": [
+        "process_or_shell"
+      ],
+      "excerpt": "then a ``subprocess.exec`` CHILD of that operation, under that principal.",
+      "line_sha256": "fe005699aa44fbd31e2c5be0ce519a7a1dd088b05e70af086bef7d871ad85215",
       "review": "candidate_only"
     },
     {
@@ -5599,6 +5619,16 @@
       ],
       "excerpt": "last_seen = self._db.mesh_relay.worker_last_seen(profile.node)",
       "line_sha256": "fd245944b525511268e67822f494bc4232d58c2e7668bcaac70e700c4e64be7f",
+      "review": "candidate_only"
+    },
+    {
+      "path": "holdspeak/services/project_steward_service.py",
+      "line": 2045,
+      "kinds": [
+        "process_or_shell"
+      ],
+      "excerpt": "The ``gh`` command is a ``subprocess.exec`` CHILD of the admitted",
+      "line_sha256": "900613159843c68f264b7b754b5af33fd8f4abcb706476e92a6690e7838182d0",
       "review": "candidate_only"
     },
     {
