@@ -76,6 +76,10 @@ class GatedOperation:
         is forwarded to the runner (e.g. ``capture_output``/``text``/``timeout``).
       - ``"outbound"`` — `address` is the ``(host, port)`` socket to open;
         `request` carries whatever the connector's opener needs to send.
+        PHILO-10-03: an outbound op that sends frozen bytes names them for the
+        admission -- ``data_classes`` and ``payload_digest`` (their sha256) --
+        and its journal ``subject_refs``. Never a credential: the opener reads
+        one at dispatch.
     """
 
     kind: str
@@ -83,6 +87,9 @@ class GatedOperation:
     address: Optional[tuple[str, int]] = None
     request: Any = None
     subprocess_kwargs: Mapping[str, Any] = field(default_factory=dict)
+    data_classes: tuple[str, ...] = ()
+    payload_digest: str = ""
+    subject_refs: tuple[str, ...] = ()
 
     @classmethod
     def subprocess(cls, argv: "Any", **subprocess_kwargs: Any) -> "GatedOperation":
@@ -93,8 +100,11 @@ class GatedOperation:
         )
 
     @classmethod
-    def outbound(cls, host: str, port: int, *, request: Any = None) -> "GatedOperation":
-        return cls(kind="outbound", address=(str(host), int(port)), request=request)
+    def outbound(cls, host: str, port: int, *, request: Any = None, data_classes: "Any" = (),
+                 payload_digest: str = "", subject_refs: "Any" = ()) -> "GatedOperation":
+        return cls(kind="outbound", address=(str(host), int(port)), request=request,
+                   data_classes=tuple(str(c) for c in data_classes), payload_digest=str(payload_digest or ""),
+                   subject_refs=tuple(str(r) for r in subject_refs))
 
     @property
     def host(self) -> Optional[str]:
@@ -205,6 +215,7 @@ def _route(
     manifest: WriteConnectorManifest,
     runner: Optional[SubprocessRunner],
     opener: Optional[Callable[[GatedOperation], Any]],
+    seam: Optional[Mapping[str, Any]] = None,
 ) -> Any:
     """Dispatch an op; subprocess authority is resolved only by the kernel."""
     if op.kind == "subprocess":
@@ -212,6 +223,7 @@ def _route(
             op.argv,
             runner=runner,
             allowed_argv_prefixes=manifest.allowed_argv_prefixes,
+            **dict(seam or {}),
             **dict(op.subprocess_kwargs),
         )
     if op.kind == "outbound":
@@ -225,10 +237,18 @@ def _route(
             )
         # The kernel-bound sender receives only the address; close over the full
         # immutable plan so the connector opener can send ``op.request``.
+        bound: dict[str, Any] = dict(seam or {})
+        if op.data_classes:
+            bound["data_classes"] = op.data_classes
+        if op.payload_digest:
+            bound["payload_material"] = {"payload_digest": op.payload_digest}
+        if op.subject_refs:
+            bound["subject_refs"] = op.subject_refs
         return gate.open_outbound_socket(
             op.address,
             opener=lambda _addr: opener(op),
             allowed_hosts=manifest.allowed_hosts,
+            **bound,
         )
     raise ValueError(f"unknown GatedOperation.kind: {op.kind!r}")
 
@@ -241,6 +261,9 @@ def build_gated_connector(
     gate: Optional[PermissionGate] = None,
     runner: Optional[SubprocessRunner] = None,
     opener: Optional[Callable[[GatedOperation], Any]] = None,
+    principal: Any = None,
+    parent_operation_id: str = "",
+    broker: Any = None,
 ) -> Connector:
     """Wrap a side-effect plan in its typed subprocess or outbound authority path.
 
@@ -261,8 +284,20 @@ def build_gated_connector(
     spy with that same shape.
 
     Both operation families run **plan → kernel → interpret**.
+
+    PHILO-10-03 (design section 6): a connector used inside an admitted
+    operation passes the authenticated ``principal``, that operation as
+    ``parent_operation_id`` and its ``broker``; each op it runs is then a
+    CHILD of that operation, under that principal.
     """
     the_gate = gate if gate is not None else manifest.build_gate()
+    seam: dict[str, Any] = {}
+    if principal is not None:
+        seam["principal"] = principal
+    if parent_operation_id:
+        seam["parent_operation_id"] = str(parent_operation_id)
+    if broker is not None:
+        seam["broker"] = broker
 
     def _connector(proposal: Any) -> "dict[str, Any]":
         op = plan(proposal)
@@ -274,7 +309,7 @@ def build_gated_connector(
         # decision here in addition to kernel admission.
         try:
             raw = _route(
-                the_gate, op, manifest=manifest, runner=runner, opener=opener
+                the_gate, op, manifest=manifest, runner=runner, opener=opener, seam=seam
             )
         except (SubprocessOperationRefused, EgressOperationRefused) as exc:
             raise ConnectorOperationRefused(

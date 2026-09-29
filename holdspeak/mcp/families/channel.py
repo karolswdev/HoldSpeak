@@ -23,6 +23,8 @@ def _tools() -> list[dict[str, Any]]:
 
     tools = []
     for descriptor in CHANNEL_OPERATIONS:
+        if not any(str(e).startswith("mcp:") for e in descriptor.exposure):
+            continue  # PHILO-10-03: channel.save_email_key is HTTP only (the key is held, never an argument)
         schema = copy.deepcopy(dict(descriptor.args_schema))
         schema["$id"] = f"holdspeak://mcp/{descriptor.name}@{descriptor.version}"
         schema.setdefault("required", [])

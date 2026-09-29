@@ -197,12 +197,27 @@ class PermissionGate:
         *,
         opener: Optional[Callable[[tuple[str, int]], Any]] = None,
         allowed_hosts: Optional[Iterable[str]] = None,
+        data_classes: Iterable[str] = ("connector_request",),
+        payload_material: Any = None,
+        subject_refs: Iterable[str] = (),
+        principal: Principal = LOCAL_OWNER,
+        parent_operation_id: str = "",
+        broker: Any = None,
     ) -> Any:
         """Open one manifest-bound destination through kernel admission.
 
         The permission and optional host allow-list are codec prerequisites, not
         decisions made by this compatibility surface. Tests inject ``opener``;
         the real default socket callable executes only after a warrant is claimed.
+
+        PHILO-10-03 (design section 6, the network seam): a caller inside an
+        admitted operation passes what it sends -- its ``data_classes`` and its
+        ``payload_material`` (``{"payload_digest": <the frozen bytes' sha256>}``)
+        -- and its authority: the authenticated ``principal``, its operation as
+        ``parent_operation_id`` and its ``broker``. The egress is then a child of
+        that operation whose admission binds the bytes. Without them the older
+        callers keep today's admission (the destination only, ``connector_request``,
+        ``local-owner``).
         """
         host, port = str(address[0]).strip().lower(), int(address[1])
         destination = f"{host}:{port}"
@@ -215,12 +230,16 @@ class PermissionGate:
             return run_external_egress(
                 connector_id=self.manifest.id,
                 destination=destination,
-                data_classes=("connector_request",),
-                payload_material={"destination": destination},
+                data_classes=tuple(data_classes),
+                payload_material=({"destination": destination} if payload_material is None else payload_material),
                 declared_permissions=self.manifest.permissions,
                 allowed_destinations=allowed,
                 sender=actual,
                 args=(address,),
+                subject_refs=tuple(subject_refs),
+                principal=principal,
+                parent_operation_id=parent_operation_id,
+                broker=broker,
             )
         except EgressOperationRefused as exc:
             if exc.reason.startswith("external_egress_permission_required:"):

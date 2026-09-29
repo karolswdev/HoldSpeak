@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** PHILO-10-01; the Codex Astra check of the round-four email delta; the owner's Q1 ruling (2026-09-28) and Q6 ("Scratch targets you name")
 - **Unblocks:** PHILO-10-05, PHILO-10-06
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks

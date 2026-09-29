@@ -141,7 +141,7 @@ The journal carries the destination's id (`destination:<id>`) and the payload di
 |---|---|---|---|---|
 | PHILO-10-01 | The Send contract, saved destinations and the file channel | done | [story-01-the-send-contract-and-the-file-channel](./story-01-the-send-contract-and-the-file-channel.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-10-02 | The GitHub and Atlassian channels (and the nudge) | backlog | [story-02-the-github-and-atlassian-channels](./story-02-the-github-and-atlassian-channels.md) | — |
-| PHILO-10-03 | The email channel — a provider interface | backlog | [story-03-the-email-channel](./story-03-the-email-channel.md) | — |
+| PHILO-10-03 | The email channel — a provider interface | in-progress | [story-03-the-email-channel](./story-03-the-email-channel.md) | — |
 | PHILO-10-04 | The Send face and the destinations setup (canvas first) | backlog | [story-04-the-send-face-and-the-destinations](./story-04-the-send-face-and-the-destinations.md) | — |
 | PHILO-10-05 | The atlas cases for Send | backlog | [story-05-the-atlas-cases-for-send](./story-05-the-atlas-cases-for-send.md) | — |
 | PHILO-10-06 | Prepare it cold, send it yourself | backlog | [story-06-prepare-it-cold-send-it-yourself](./story-06-prepare-it-cold-send-it-yourself.md) | — |

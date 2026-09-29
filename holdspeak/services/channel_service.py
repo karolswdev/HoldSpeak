@@ -22,7 +22,10 @@ Built to ``pm/roadmap/holdspeak-philo/phase-10-the-channels/design/send-lifecycl
 * **Discard** moves ``prepared`` -> ``discarded`` by one conditional write in
   its receipt's transaction; Send and Discard at once: one wins.
 
-The file channel is the one direct writer (``services/channel_contract.py``).
+The file channel is the one direct writer (``services/channel_contract.py``);
+the email channel sends its frozen request body as an ``external.egress`` CHILD
+of the send, under the send's authenticated owner principal, through its
+broker (``services/channel_email.py``; PHILO-10-03).
 """
 from __future__ import annotations
 
@@ -34,6 +37,7 @@ from holdspeak.db.channels import now_iso, settle_in_transaction
 from holdspeak.logging_config import get_logger
 
 from . import channel_contract as contract
+from . import channel_email  # noqa: F401 -- registers the email channel (PHILO-10-03)
 from .channel_contract import ChannelRefused, Outcome
 from .errors import NotFound, ValidationError
 
@@ -82,7 +86,7 @@ class ChannelService:
             "badge": contract.channel(row["channel"]).badge(bool(destination.get("synced"))),
             "account": json.loads(row["account_json"] or "{}"), "target": json.loads(row["target_json"] or "{}"),
             "target_digest": row["target_digest"], "payload_digest": row["payload_digest"],
-            "size": len(payload), "preview": contract.channel(row["channel"]).preview(payload),
+            "size": len(payload), "preview": contract.preview_for(row["channel"], payload, row["account_json"]),
             "prepared_by": {"kind": row["prepared_by_kind"], "identity": row["prepared_by_identity"]},
             "prepare_operation_id": row["prepare_operation_id"], "send_operation_id": row["send_operation_id"],
             "state": row["state"], "reason": row["reason"],
@@ -127,17 +131,21 @@ class ChannelService:
             raise ChannelRefused("destination_parked", f"Destination {destination_id} is parked")
         document = contract.render_update(self._db, update_id)
         chan = contract.channel(destination["channel"])
-        payload = chan.serialize(document)
+        payload = contract.serialize_for(destination, document)
         self._size(destination["channel"], payload)
         return {"document_ref": document.ref, "title": document.title, "destination_id": destination["id"],
                 "channel": destination["channel"], "badge": chan.badge(bool(destination["synced"])),
-                "payload_digest": contract.sha256(payload), "size": len(payload), "preview": chan.preview(payload)}
+                "payload_digest": contract.sha256(payload), "size": len(payload),
+                "preview": contract.preview_for(destination["channel"], payload, destination["account_json"])}
 
     def check_destination(self, principal: Any, destination_id: str) -> dict[str, Any]:
         """A folder: a local check (it resolves to the saved folder, it is a folder, it is writable)."""
         import os
 
         row = self._destination(destination_id)
+        if row["channel"] == "email":
+            return {"destination": self._destination_view(row), "check": {"state": self._email_state(row),
+                                                                         "resolved": None}}
         target = json.loads(row["target_json"] or "{}")
         folder = str(target.get("folder") or "")
         resolved = os.path.realpath(folder) if folder else ""
@@ -148,12 +156,34 @@ class ChannelService:
                  else "not_writable")
         return {"destination": self._destination_view(row), "check": {"state": state, "resolved": resolved}}
 
+    @staticmethod
+    def _email_state(row: Mapping[str, Any]) -> str:
+        """An email destination, checked locally: its key is in a native keychain (no call to the provider)."""
+        if row["state"] != "active":
+            return "parked"
+        account = json.loads(row["account_json"] or "{}")
+        try:
+            channel_email.read_key(channel_email.valid_key_ref(account.get("key_ref")))
+        except channel_email.EmailKeyError as exc:
+            return exc.code
+        except ValidationError:
+            return "email_key_ref_invalid"
+        return "ready"
+
     # ── destinations (admitted, the owner's) ───────────────────────────────
 
     def save_destination(self, principal: Any, name: str, channel: str, folder: Optional[str] = None,
                          synced: bool = False, replaces: Optional[str] = None,
+                         provider: Optional[str] = None, from_email: Optional[str] = None,
+                         from_name: Optional[str] = None, key_ref: Optional[str] = None,
+                         to: Optional[list[str]] = None, cc: Optional[list[str]] = None,
                          command_id: Optional[str] = None) -> dict[str, Any]:
-        """Save one destination. ``replaces``: Edit -- the old row parks and this one is new."""
+        """Save one destination. ``replaces``: Edit -- the old row parks and this one is new.
+
+        Email (PHILO-10-03): the account freezes ``{provider, from_email,
+        from_name, key_ref}`` (the key's NAME, never the key); the target is
+        ``{to, cc}``.
+        """
         handle = _handle()
         destination_id = _derived_id("chd_", handle.operation_id)
         if handle.replay:
@@ -163,9 +193,14 @@ class ChannelService:
         if not label or len(label) > 120:
             raise ValidationError("A destination needs a name (120 characters at most)", code="destination_name_invalid")
         chan = contract.channel(channel)
-        if channel != "file":  # pragma: no cover - story 02/03 add their targets
+        if channel == "file":
+            account, target = {}, chan.target_at_save(folder)
+        elif channel == "email":
+            account, target = chan.target_at_save({"provider": provider, "from_email": from_email,
+                                                   "from_name": from_name, "key_ref": key_ref, "to": to, "cc": cc})
+            synced = False
+        else:  # pragma: no cover - story 02 adds its targets
             raise ValidationError(f"{channel} destinations arrive with their channel", code="channel_unknown")
-        target = chan.target_at_save(folder)
         if replaces:
             old = self._destination(replaces)
             if old["state"] != "active":
@@ -175,7 +210,7 @@ class ChannelService:
             if replaces and not self._db.channel_destinations.park_in_transaction(conn, replaces):
                 raise ChannelRefused("destination_parked", f"Destination {replaces} is already parked")
             self._db.channel_destinations.insert_in_transaction(
-                conn, destination_id=destination_id, name=label, channel=channel, account={},
+                conn, destination_id=destination_id, name=label, channel=channel, account=account,
                 target=target, synced=bool(synced))
 
         handle.terminal("succeeded", "succeeded", f"channel_destination:{destination_id}", effect=effect)
@@ -197,6 +232,31 @@ class ChannelService:
 
         handle.terminal("succeeded", "succeeded", f"channel_destination:{destination_id}", effect=effect)
         return {"destination": self._destination_view(self._stored(destination_id))}
+
+    def save_email_key(self, principal: Any, key_ref: str, api_key: Any, provider: Optional[str] = None,
+                       command_id: Optional[str] = None) -> dict[str, Any]:
+        """Save the email provider's key in the OS keychain under *key_ref* (config, the owner's).
+
+        ``api_key`` is HELD by the transport: never an argument, so it never
+        reaches the kernel's request, its envelope digest, a receipt or a log.
+        The answer and the receipt name the key's NAME only.
+        """
+        handle = _handle()
+        ref = channel_email.valid_key_ref(key_ref)
+        chosen = str(provider or "sendgrid")
+        channel_email.provider(chosen)
+        answer = {"key_ref": ref, "provider": chosen, "saved": True}
+        if handle.replay:
+            return answer
+        key = api_key if isinstance(api_key, str) else ""
+        if not key.strip() or len(key) > 512 or any(ch.isspace() for ch in key):
+            raise ValidationError("The key is one line of 1-512 characters with no spaces", code="email_key_invalid")
+        try:
+            channel_email.save_key(ref, key)
+        except channel_email.EmailKeyError as exc:
+            raise ChannelRefused(exc.code, f"The key could not be saved: {exc.code}", status=400) from None
+        handle.terminal("succeeded", "succeeded", f"email_key:{ref}")
+        return answer
 
     def _stored(self, destination_id: str) -> dict[str, Any]:
         row = self._db.channel_destinations.get(destination_id)
@@ -225,8 +285,7 @@ class ChannelService:
         if destination["state"] != "active":
             raise ChannelRefused("destination_parked", f"Destination {destination_id} is parked")
         document = contract.render_update(self._db, update_id)
-        chan = contract.channel(destination["channel"])
-        payload = chan.serialize(document)
+        payload = contract.serialize_for(destination, document)
         self._size(destination["channel"], payload)
         send_id = _derived_id("chs_", handle.operation_id)
         operation = handle.operation()
@@ -315,7 +374,7 @@ class ChannelService:
                                       code="invalid_arguments")
             destination = self._destination(destination_id)
             document = contract.render_update(self._db, update_id)
-            payload = contract.channel(destination["channel"]).serialize(document)
+            payload = contract.serialize_for(destination, document)
             if contract.sha256(payload) != str(preview_digest):
                 raise ChannelRefused("preview_changed", "The document changed since the preview you saw")
             frozen_target, frozen_digest = json.loads(destination["target_json"]), destination["target_digest"]
@@ -325,11 +384,15 @@ class ChannelService:
         # The destination's state and digest are read again inside the boundary transaction (below).
         channel_name = destination["channel"]
         chan = contract.channel(channel_name)
-        folder = chan.check_before_dispatch(frozen_target)
+        frozen_account = json.loads((row or destination)["account_json"] or "{}")
         if row is not None and contract.sha256(payload) != row["payload_digest"]:
             raise ChannelRefused("payload_changed", "The frozen payload does not match its digest")
         self._size(channel_name, payload)
-        path = chan.choose_path(folder, contract.naming(self._db, document_ref), send_id)
+        # Before the boundary: the file's folder resolves again; email's key store
+        # is native and holds the key (email_key_store_not_native / email_key_missing).
+        folder = chan.check_before_dispatch(frozen_target, account=frozen_account, principal=handle.principal)
+        path = (chan.choose_path(folder, contract.naming(self._db, document_ref), send_id)
+                if channel_name == "file" else None)
         started = now_iso()
         operation_id = handle.operation_id
         claimed = "EXISTS (SELECT 1 FROM kernel_operations WHERE operation_id=? AND state='claimed')"

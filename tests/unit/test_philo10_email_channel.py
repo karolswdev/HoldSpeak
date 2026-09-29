@@ -1,0 +1,772 @@
+"""PHILO-10-03: the email channel -- a provider interface (design sections 3, 4, 4a, 6 and 8).
+
+Every fence reaches the send through the REAL hub on an isolated HOME (the
+routes, the Room's kernel path, the real ``external.egress`` admission with
+the real allow-list) and stops at the HTTPS edge: ``channel_email.HTTPS_HANDLER``
+is a canned handler that records what reached the wire and answers. The REAL
+opener, its redirect refusal and its error processing run above it. No lane
+reaches the network, and the key store is the injected memory store: a guard
+makes ``keyring.get_keyring`` fail the test if anything reaches the real
+keychain (grounding F17: an isolated HOME still resolves to the macOS Keychain).
+
+| Criterion | Fences |
+|---|---|
+| 1 one egress child, the bytes, the digest | ``test_c1_*`` |
+| 2 the outcomes through the real producer | ``test_c2_*``, ``test_c2_r*`` (R1, R2, R4, R6); R3 by a real process: ``test_c2_r3_*`` |
+| 3 a transport exception leaves no key and no body | ``test_c3_*`` |
+| 4 the sentinel fence | ``test_c4_*`` |
+| 5 key custody | ``test_c5_*`` |
+| 6 a second provider: one class, one row | ``test_c6_*`` |
+"""
+from __future__ import annotations
+
+import http.client
+import io
+import json
+import socket
+import sys
+import threading
+import urllib.error
+import urllib.request
+import urllib.response
+from pathlib import Path
+from typing import Any, Callable, Optional
+
+import pytest
+
+from holdspeak.runtime import composition
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _philo10_send import (  # noqa: E402
+    SENTINEL, Hub, _boot, history, in_thread, op, ops, preview_digest, prepare, reap_past_deadline, room, send,
+    sends,
+)
+
+KEY = "SG.syntheticKEY7c1e0000abcd.neverLeavesTheOpener0000"
+KEY_MARK = "syntheticKEY7c1e"
+SENDER_403 = ("The from address does not match a verified Sender Identity. Mail cannot be sent until this error "
+              "is resolved.")
+FORMS = ["send_id", "inline"]
+
+
+# ── the HTTPS edge ──────────────────────────────────────────────────────────
+
+
+def response(status: int, headers: Optional[dict[str, str]] = None, body: bytes = b"") -> Callable[[Any], Any]:
+    def answer(req: Any) -> Any:
+        raw = "".join(f"{k}: {v}\r\n" for k, v in (headers or {}).items()) + "\r\n"
+        resp = urllib.response.addinfourl(io.BytesIO(body), http.client.parse_headers(io.BytesIO(raw.encode())),
+                                          req.full_url, status)
+        resp.msg = "canned"
+        return resp
+    return answer
+
+
+def errors(status: int, *messages: str, field: Optional[str] = None) -> Callable[[Any], Any]:
+    return response(status, {"Content-Type": "application/json"},
+                    json.dumps({"errors": [{"message": m, "field": field} for m in messages]}).encode())
+
+
+def raising(exc: BaseException) -> Callable[[Any], Any]:
+    def answer(req: Any) -> Any:
+        raise exc
+    return answer
+
+
+class Wire:
+    """The canned HTTPS edge: records each request that reached it, answers from the script."""
+
+    def __init__(self) -> None:
+        self.requests: list[dict[str, Any]] = []
+        self.script: list[Callable[[Any], Any]] = []
+        self.default: Callable[[Any], Any] = response(202, {"X-Message-Id": "sg-msg-0001"})
+        self.hold: str = ""
+        self.entered = threading.Event()
+        self.release = threading.Event()
+
+    def handler(self) -> urllib.request.BaseHandler:
+        wire = self
+
+        class Canned(urllib.request.BaseHandler):
+            def https_open(self, req: Any) -> Any:
+                if wire.hold == "before":
+                    wire.entered.set()
+                    assert wire.release.wait(60)
+                wire.requests.append({"host": req.host, "url": req.full_url, "headers": dict(req.header_items()),
+                                      "body": bytes(req.data or b"")})
+                if wire.hold == "after":
+                    wire.entered.set()
+                    assert wire.release.wait(60)
+                step = wire.script.pop(0) if wire.script else wire.default
+                return step(req)
+
+        return Canned()
+
+
+@pytest.fixture
+def store(monkeypatch: pytest.MonkeyPatch) -> Any:
+    import keyring
+
+    from holdspeak.services import channel_email
+
+    memory = channel_email.MemoryEmailKeyStore()
+    monkeypatch.setattr(channel_email, "KEY_STORE", lambda: memory)
+
+    def never(*_a: Any, **_k: Any) -> Any:
+        raise AssertionError("a lane reached the real keychain")
+
+    monkeypatch.setattr(keyring, "get_keyring", never)
+    return memory
+
+
+@pytest.fixture
+def wire(monkeypatch: pytest.MonkeyPatch) -> Wire:
+    from holdspeak.services import channel_email
+
+    canned = Wire()
+    monkeypatch.setattr(channel_email, "HTTPS_HANDLER", canned.handler)
+    return canned
+
+
+@pytest.fixture
+def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, store: Any, wire: Wire):
+    from holdspeak.db import reset_database
+    from holdspeak.kernel.external_egress import EGRESS_EXECUTIONS
+
+    EGRESS_EXECUTIONS._results.clear()
+    yield _boot(tmp_path, monkeypatch)
+    reset_database()
+    composition.install(composition.bare(label="pytest"))
+
+
+def save_key(hub: Hub, key: str = KEY, key_ref: str = "sendgrid") -> Any:
+    return hub.client.put(f"/api/channels/email-keys/{key_ref}", json={"api_key": key})
+
+
+def email_destination(hub: Hub, **extra: Any) -> str:
+    fields = {"name": "Priya by email", "channel": "email", "from_email": "karol@example.com",
+              "from_name": "Karol", "key_ref": "sendgrid", "to": ["Priya Raman <priya@example.com>"],
+              "cc": ["lead@example.com"], **extra}
+    resp = hub.client.post("/api/channels/destinations", json=fields)
+    assert resp.status_code == 200, resp.text
+    return resp.json()["destination"]["id"]
+
+
+def ready(hub: Hub, *, body: str = f"Cutover is green. {SENTINEL}", **extra: Any) -> tuple[str, str]:
+    assert save_key(hub).status_code == 200
+    _pid, update = room(hub, body=body)
+    return update, email_destination(hub, **extra)
+
+
+def press(hub: Hub, form: str, update: str, dest: str, key: str) -> dict[str, Any]:
+    if form == "send_id":
+        return {"send_id": prepare(hub, update, dest)["send"]["id"], "command_id": key}
+    return {"update_id": update, "destination_id": dest, "preview_digest": preview_digest(hub, update, dest),
+            "command_id": key}
+
+
+def egress_ops(hub: Hub) -> list[dict[str, Any]]:
+    with hub.db._connection() as conn:
+        return [dict(r) for r in conn.execute(
+            "SELECT o.*, r.state AS receipt_state, r.outcome AS outcome FROM kernel_operations o"
+            " LEFT JOIN kernel_receipts r ON r.operation_id=o.operation_id WHERE o.name='external.egress'"
+            " ORDER BY o.created_at, o.rowid")]
+
+
+def journal_refs(hub: Hub, operation_id: str) -> set[str]:
+    with hub.db._connection() as conn:
+        rows = conn.execute("SELECT refs_json FROM kernel_journal WHERE operation_id=?", (operation_id,)).fetchall()
+    return {ref for r in rows for ref in json.loads(r["refs_json"] or "[]")}
+
+
+def native(hub: Hub, operation_id: str) -> dict[str, Any]:
+    from holdspeak.kernel.external_egress import LOCAL_OWNER
+    from holdspeak.services import project_kernel
+
+    broker = project_kernel._broker(hub.db)
+    return broker.read([f"operation:{operation_id}"], "full", "committed", LOCAL_OWNER)["objects"][0]
+
+
+#: Where a body must never be: the kernel's tables, the send rows (their payload column aside: it IS the
+#: frozen request), the history and the destinations. The document's own tables hold it by design.
+BODY_FREE = ("kernel_operations", "kernel_receipts", "kernel_journal", "kernel_projection_stages",
+             "channel_sends", "project_update_deliveries", "channel_destinations")
+
+
+def dump(hub: Hub, *, skip: tuple[tuple[str, str], ...] = (), only: tuple[str, ...] = ()) -> str:
+    """Every value of every table (or of *only*), as text (bytes decoded), except the named (table, column) pairs."""
+    out: list[str] = []
+    with hub.db._connection() as conn:
+        tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+        for table in tables:
+            if only and table not in only:
+                continue
+            for row in conn.execute(f"SELECT * FROM '{table}'"):
+                for column in row.keys():
+                    if (table, column) in skip:
+                        continue
+                    value = row[column]
+                    out.append(value.decode("utf-8", "replace") if isinstance(value, bytes) else str(value))
+    return "\n".join(out)
+
+
+# ── 1: one send, one egress child, the frozen bytes on the wire, their digest admitted ──
+
+
+@pytest.mark.parametrize("form", FORMS)
+def test_c1_one_send_is_one_egress_child_whose_wire_bytes_and_digest_are_the_frozen_ones(
+    hub: Hub, wire: Wire, form: str,
+) -> None:
+    update, dest = ready(hub)
+    answer = send(hub, press(hub, form, update, dest, f"c1-{form}"))
+    assert answer.status_code == 200, answer.text
+    body = answer.json()
+    [row] = [r for r in sends(hub) if r["state"] != "prepared"]
+    frozen = bytes(row["payload"])
+    # The one byte contract: the bytes on the wire ARE the frozen payload; the preview is parsed from them.
+    [sent] = wire.requests
+    assert (sent["host"], sent["url"]) == ("api.sendgrid.com", "https://api.sendgrid.com/v3/mail/send")
+    assert sent["body"] == frozen and sent["headers"]["Authorization"] == f"Bearer {KEY}"
+    request = json.loads(frozen)
+    assert request["content"] == [{"type": "text/plain", "value": f"Cutover is green. {SENTINEL}"}]
+    assert body["send"]["preview"] == {"from": "Karol <karol@example.com>",
+                                       "to": ["Priya Raman <priya@example.com>"], "cc": ["lead@example.com"],
+                                       "subject": request["subject"], "text": f"Cutover is green. {SENTINEL}"}
+    # One external.egress CHILD of the send, under the send's authenticated principal.
+    send_op = op(hub, body["operation_id"])
+    [child] = egress_ops(hub)
+    assert child["parent_operation_id"] == body["operation_id"]
+    assert (child["principal_kind"], child["principal_identity"]) == (send_op["principal_kind"],
+                                                                      send_op["principal_identity"])
+    assert (child["state"], child["receipt_state"]) == ("succeeded", "succeeded")
+    full = native(hub, child["operation_id"])
+    assert full["canonical"]["destination"] == "api.sendgrid.com:443"
+    assert full["canonical"]["data_classes"] == ["email_message"]
+    # The admission binds the digest of the frozen bytes (not a digest of the destination).
+    assert full["canonical"]["payload_digest"] == "sha256:" + row["payload_digest"]
+    assert {f"destination:{dest}", "egress:api.sendgrid.com:443", "data-class:email_message",
+            f"payload:sha256:{row['payload_digest']}"} <= journal_refs(hub, child["operation_id"])
+
+
+def test_c1_two_different_bodies_are_two_different_admitted_digests(hub: Hub, wire: Wire) -> None:
+    """Red on main: ``connector_runtime.py:215`` hashed only the destination (one digest for both)."""
+    update, dest = ready(hub, body="First body.")
+    first = send(hub, press(hub, "inline", update, dest, "c1-two-a")).json()
+    _pid, other = room(hub, name="Second room", body="A different body.")
+    second = send(hub, press(hub, "inline", other, dest, "c1-two-b")).json()
+    digests = [native(hub, c["operation_id"])["canonical"]["payload_digest"] for c in egress_ops(hub)]
+    assert digests == ["sha256:" + first["send"]["payload_digest"], "sha256:" + second["send"]["payload_digest"]]
+    assert digests[0] != digests[1]
+    assert [r["body"] for r in wire.requests] == [bytes(r["payload"]) for r in sends(hub)]
+
+
+def test_c1_a_request_to_any_other_host_is_refused_by_the_kernel(
+    hub: Hub, wire: Wire, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from holdspeak.plugins.gated_connector import GatedOperation
+    from holdspeak.services import channel_email
+
+    real = channel_email.SendGridProvider.plan
+
+    def elsewhere(self: Any, body: bytes) -> Any:
+        planned = real(self, body)
+        return GatedOperation.outbound("evil.example", 443, request=channel_email.EmailRequest(
+            "https://evil.example/v3/mail/send", body), data_classes=planned.data_classes)
+
+    monkeypatch.setattr(channel_email.SendGridProvider, "plan", elsewhere)
+    update, dest = ready(hub)
+    answer = send(hub, press(hub, "inline", update, dest, "c1-host")).json()
+    assert (answer["outcome"], answer["send"]["reason"]) == ("failed", "egress_refused")
+    assert wire.requests == []
+    [child] = egress_ops(hub)
+    assert (child["receipt_state"], child["outcome"]) == (
+        "refused", "external_egress_destination_not_allowed:evil.example:443")
+
+
+# ── 2: the outcomes through the real producer ─────────────────────────────
+
+OUTCOMES = [
+    ("accepted", response(202, {"X-Message-Id": "sg-msg-0001"}), "sent", None),
+    ("accepted-no-id", response(202), "unknown", "accepted_without_message_id"),
+    ("400", errors(400, "The content value must be a string at least one character in length.", field="content"),
+     "failed", "invalid_request"),
+    ("401", errors(401, "The provided authorization grant is invalid, expired, or revoked"), "failed",
+     "api_key_invalid"),
+    ("403-sender", errors(403, SENDER_403, field="from"), "failed", "sender_not_verified"),
+    ("403-other", errors(403, "You are temporarily blocked from sending."), "failed", "sendgrid_forbidden"),
+    ("413", errors(413, "Payload too large"), "failed", "payload_too_large"),
+    ("429", errors(429, "too many requests"), "failed", "rate_limited"),
+    ("400-not-sendgrid", response(400, {"Content-Type": "text/html"}, b"<html>proxy</html>"), "unknown",
+     "unpinned_400"),
+    ("404", errors(404, "not found"), "unknown", "unpinned_404"),
+    ("500", response(500, {}, b"oops"), "unknown", "unpinned_500"),
+    ("503", errors(503, "unavailable"), "unknown", "unpinned_503"),
+    ("timeout", raising(socket.timeout("timed out")), "unknown", "timeout"),
+    ("timeout-url", raising(urllib.error.URLError(socket.timeout("timed out"))), "unknown", "timeout"),
+    ("reset", raising(urllib.error.URLError(ConnectionResetError("reset"))), "unknown", "transport_error"),
+    ("refused", raising(urllib.error.URLError(ConnectionRefusedError("refused"))), "failed", "connect_refused"),
+    ("dns", raising(urllib.error.URLError(socket.gaierror("no such host"))), "failed", "dns_failed"),
+    ("redirect", response(302, {"Location": "https://evil.example/steal"}), "unknown", "redirect_refused"),
+    ("redirect-307", response(307, {"Location": "https://api.sendgrid.com.evil.example/"}), "unknown",
+     "redirect_refused"),
+]
+KERNEL = {"sent": "succeeded", "failed": "failed", "unknown": "indeterminate"}
+
+
+@pytest.mark.parametrize("case,answer,state,reason", OUTCOMES, ids=[c[0] for c in OUTCOMES])
+def test_c2_each_answer_settles_by_the_pinned_list(
+    hub: Hub, wire: Wire, case: str, answer: Any, state: str, reason: Optional[str],
+) -> None:
+    update, dest = ready(hub)
+    wire.script = [answer]
+    reply = send(hub, press(hub, "inline", update, dest, f"c2-{case}"))
+    assert reply.status_code == 200, reply.text
+    result = reply.json()
+    assert (result["outcome"], result["send"]["reason"]) == (state, reason), result["send"]
+    assert result["receipt"]["state"] == KERNEL[state]
+    # The redirect is NOT followed: one request, and no Authorization reaches a second host.
+    assert len(wire.requests) == 1 and wire.requests[0]["host"] == "api.sendgrid.com"
+    assert [r for r in wire.requests if r["host"] != "api.sendgrid.com"] == []
+    rows = history(hub, update)
+    if state == "failed":
+        assert rows == []  # a known non-delivery is not a delivery
+    else:
+        assert [r["outcome"] for r in rows] == [state]
+    read_back = hub.client.get(f"/api/channels/sends?send_id={result['send']['id']}").json()["sends"][0]
+    if state == "sent":
+        proof = read_back["proof"]
+        assert proof == {"provider": "sendgrid", "message_id": "sg-msg-0001", "word": "ACCEPTED BY SENDGRID",
+                         "scope": "accepted for processing, not delivery"}
+        assert result["send"]["proof"] == proof
+    assert read_back["state"] == state and read_back["reason"] == reason
+
+
+def test_c2_the_two_403_discriminators_map_apart(hub: Hub, wire: Wire) -> None:
+    update, dest = ready(hub)
+    wire.script = [errors(403, SENDER_403, field="from"), errors(403, "Access forbidden")]
+    first = send(hub, press(hub, "inline", update, dest, "c2-403-a")).json()
+    second = send(hub, press(hub, "inline", update, dest, "c2-403-b")).json()
+    assert (first["send"]["reason"], second["send"]["reason"]) == ("sender_not_verified", "sendgrid_forbidden")
+    assert second["send"]["proof"] == {"error": "Access forbidden"}
+
+
+def _fail_the_settle_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak.services import channel_service
+
+    real = channel_service.settle_in_transaction
+    failed: list[int] = []
+
+    def settle(conn: Any, **kwargs: Any) -> Any:
+        settled = real(conn, **kwargs)
+        if not failed:
+            failed.append(1)
+            raise RuntimeError("injected: the settle write failed after the effect")
+        return settled
+
+    monkeypatch.setattr(channel_service, "settle_in_transaction", settle)
+
+
+def _send_op(hub: Hub) -> dict[str, Any]:
+    [operation] = ops(hub, "channel.send")
+    return operation
+
+
+@pytest.mark.parametrize("form", FORMS)
+def test_c2_r1_a_failed_settle_is_taken_over_as_unknown_and_never_sent_again(
+    hub: Hub, wire: Wire, monkeypatch: pytest.MonkeyPatch, form: str,
+) -> None:
+    update, dest = ready(hub)
+    body = press(hub, form, update, dest, f"r1-{form}")
+    _fail_the_settle_once(monkeypatch)
+    assert send(hub, body).status_code == 500
+    assert (_send_op(hub)["state"], _send_op(hub)["receipts"]) == ("claimed", 0)
+    [row] = [r for r in sends(hub) if r["send_operation_id"]]
+    assert row["state"] == "dispatching"
+    taken_over = send(hub, body).json()
+    assert (taken_over["outcome"], taken_over["send"]["reason"]) == ("unknown", "interrupted")
+    replayed = send(hub, body).json()
+    assert replayed["send"] == taken_over["send"]
+    assert replayed["receipt"]["receipt_id"] == taken_over["receipt"]["receipt_id"]
+    assert len(wire.requests) == 1  # never sent again
+    assert (_send_op(hub)["state"], _send_op(hub)["receipts"]) == ("indeterminate", 1)
+    assert [r["outcome"] for r in history(hub, update)] == ["unknown"]
+
+
+@pytest.mark.parametrize("form", FORMS)
+@pytest.mark.parametrize("hold", ["before", "after"], ids=["held-before-the-wire", "held-after-the-wire"])
+def test_c2_r2_the_reaper_settles_a_silent_email_unknown_and_the_replay_answers_it(
+    hub: Hub, wire: Wire, form: str, hold: str,
+) -> None:
+    update, dest = ready(hub)
+    body = press(hub, form, update, dest, f"r2-{form}-{hold}")
+    wire.hold = hold
+    thread, answer = in_thread(lambda: send(hub, body))
+    assert wire.entered.wait(30)
+    [row] = [r for r in sends(hub) if r["state"] == "dispatching"]
+    reaped = reap_past_deadline(hub)
+    assert {"operation_id": row["send_operation_id"], "state": "indeterminate",
+            "outcome": "execution_liveness_expired"} in reaped["reaped"], reaped
+    settled = hub.db.channel_sends.get(row["id"])
+    assert (settled["state"], settled["reason"]) == ("unknown", "reaped")
+    assert [r["outcome"] for r in history(hub, update)] == ["unknown"]
+    wire.release.set()
+    thread.join(60)
+    [late] = answer
+    assert late.status_code == 200 and late.json()["outcome"] == "unknown", late.text
+    replayed = send(hub, body).json()
+    assert (replayed["outcome"], replayed["send"]["reason"]) == ("unknown", "reaped")
+    assert len(wire.requests) == 1
+    assert (_send_op(hub)["state"], _send_op(hub)["receipts"]) == ("indeterminate", 1)
+    assert len(history(hub, update)) == 1
+
+
+def test_c2_r4_a_take_over_that_wins_leaves_the_reaper_nothing(
+    hub: Hub, wire: Wire, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    update, dest = ready(hub)
+    body = press(hub, "send_id", update, dest, "r4")
+    _fail_the_settle_once(monkeypatch)
+    assert send(hub, body).status_code == 500
+    assert send(hub, body).json()["outcome"] == "unknown"
+    assert reap_past_deadline(hub)["count"] == 0
+    assert (_send_op(hub)["state"], _send_op(hub)["receipts"]) == ("indeterminate", 1)
+    assert len(wire.requests) == 1 and len(history(hub, update)) == 1
+
+
+@pytest.mark.parametrize("form", FORMS)
+def test_c2_r6_reaped_before_the_boundary_sends_nothing(
+    hub: Hub, wire: Wire, monkeypatch: pytest.MonkeyPatch, form: str,
+) -> None:
+    from holdspeak.services.channel_email import EmailChannel
+
+    update, dest = ready(hub)
+    body = press(hub, form, update, dest, f"r6-{form}")
+    entered, release = threading.Event(), threading.Event()
+    real = EmailChannel.check_before_dispatch
+
+    def check(channel: Any, target: Any, **kw: Any) -> Any:
+        entered.set()
+        assert release.wait(60)
+        return real(channel, target, **kw)
+
+    monkeypatch.setattr(EmailChannel, "check_before_dispatch", check)
+    thread, answer = in_thread(lambda: send(hub, body))
+    assert entered.wait(30)
+    reap_past_deadline(hub)
+    release.set()
+    thread.join(60)
+    assert wire.requests == [] and history(hub, update) == []
+    assert all(r["state"] == "prepared" for r in sends(hub))
+    assert _send_op(hub)["outcome"] == "reaped_before_dispatch"
+
+
+# ── 3: a transport exception leaves neither the key nor the body ─────────────
+
+
+def test_c3_every_egress_caller_records_a_sanitized_exception(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Red on main: ``external_egress.py:290`` recorded ``f"{type(exc).__name__}: {exc}"``."""
+    import holdspeak.db.core as db_core
+    from holdspeak.db import Database
+    from holdspeak.kernel import runtime as kernel_runtime
+    from holdspeak.kernel.external_egress import EGRESS_EXECUTIONS, LOCAL_OWNER, run_external_egress
+
+    db = Database(tmp_path / "egress.db")
+    monkeypatch.setattr(db_core, "_db", db)
+    broker = kernel_runtime._configure(db)
+
+    def sender() -> None:
+        raise RuntimeError(f"POST failed; Authorization: Bearer {KEY}; body={SENTINEL}")
+
+    with pytest.raises(RuntimeError):
+        run_external_egress(connector_id="any-caller", destination="hooks.example:443", data_classes=("x",),
+                            payload_material={"digest": "only"}, sender=sender,
+                            allowed_destinations=("hooks.example:443",), broker=broker)
+    result = list(EGRESS_EXECUTIONS._results.values())[-1]
+    full = broker.read([f"operation:{result['operation_id']}"], "full", "committed", LOCAL_OWNER)["objects"][0]
+    assert result["error"] == "RuntimeError"
+    for text in (json.dumps(result, default=str), json.dumps(full, default=str)):
+        assert KEY_MARK not in text and SENTINEL not in text
+
+
+def test_c3_an_email_transport_exception_carrying_the_key_and_body_leaves_neither(
+    hub: Hub, wire: Wire, caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level("DEBUG")
+    update, dest = ready(hub)
+    wire.script = [raising(RuntimeError(f"socket said: Authorization: Bearer {KEY} {SENTINEL}"))]
+    result = send(hub, press(hub, "send_id", update, dest, "c3")).json()
+    assert (result["outcome"], result["send"]["reason"]) == ("unknown", "transport_error")
+    [child] = egress_ops(hub)
+    full = native(hub, child["operation_id"])
+    assert full["canonical"]["error"] == "EmailTransportError"
+    assert result["send"]["proof"] is None
+    places = {"native": json.dumps(full, default=str), "receipt": json.dumps(result["receipt"]),
+              "logs": caplog.text,
+              "database": dump(hub, skip=(("channel_sends", "payload"),), only=BODY_FREE)}
+    for where, text in places.items():
+        assert KEY_MARK not in text, where
+        assert SENTINEL not in text, where
+    assert KEY_MARK not in dump(hub) and KEY_MARK not in json.dumps(result)
+
+
+# ── 4: the sentinel fence ─────────────────────────────────────────────────
+
+
+def test_c4_no_key_and_no_body_in_the_journal_a_receipt_a_log_an_error_or_a_file(
+    hub: Hub, wire: Wire, tmp_path: Path, caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level("DEBUG")
+    update, dest = ready(hub)
+    # SendGrid's error echoes the body and the key: both are removed before a row, a receipt or the face.
+    wire.script = [response(202, {"X-Message-Id": "sg-msg-0001"}),
+                   errors(400, f"bad content near '{SENTINEL}' with {KEY}", field="content")]
+    sent = send(hub, press(hub, "send_id", update, dest, "c4-a")).json()
+    failed = send(hub, press(hub, "inline", update, dest, "c4-b")).json()
+    assert (sent["outcome"], failed["outcome"], failed["send"]["reason"]) == ("sent", "failed", "invalid_request")
+    assert "[redacted]" in failed["send"]["proof"]["error"]
+    body_free = dump(hub, skip=(("channel_sends", "payload"),), only=BODY_FREE)
+    errors_and_receipts = json.dumps([[a["receipt"], a["send"]["reason"], a["send"]["proof"]] for a in (sent, failed)])
+    for where, text in {"journal, receipts, rows": body_free, "logs": caplog.text,
+                        "errors and receipts": errors_and_receipts}.items():
+        assert KEY_MARK not in text, where
+        assert SENTINEL not in text, where
+    assert KEY_MARK not in dump(hub) and KEY_MARK not in json.dumps([sent, failed])
+    # The key is nowhere on disk (the payload rows hold the body, never the key).
+    for path in tmp_path.rglob("*"):
+        if path.is_file():
+            assert KEY_MARK.encode() not in path.read_bytes(), path
+    # The journal names the destination, the egress host, the data class and the digest.
+    refs = set().union(*(journal_refs(hub, c["operation_id"]) for c in egress_ops(hub)))
+    assert {f"destination:{dest}", "egress:api.sendgrid.com:443", "data-class:email_message"} <= refs
+    assert f"payload:sha256:{sent['send']['payload_digest']}" in refs
+
+
+def test_c4_the_key_is_never_planning_material(hub: Hub, wire: Wire, monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak.kernel import external_egress
+
+    seen: list[str] = []
+    real = external_egress.EgressExecutionStore.bind
+
+    def bind(self: Any, **kwargs: Any) -> Any:
+        sender = kwargs["sender"]
+        planned = sender.__closure__ or ()
+        seen.append(repr({k: v for k, v in kwargs.items() if k != "sender"}))
+        seen.extend(repr(getattr(cell, "cell_contents", None)) for cell in planned)
+        return real(self, **kwargs)
+
+    monkeypatch.setattr(external_egress.EgressExecutionStore, "bind", bind)
+    update, dest = ready(hub)
+    assert send(hub, press(hub, "inline", update, dest, "c4-plan")).json()["outcome"] == "sent"
+    assert seen and all(KEY_MARK not in text for text in seen)
+    assert wire.requests[0]["headers"]["Authorization"] == f"Bearer {KEY}"  # only the opener set it
+
+
+# ── 5: key custody ─────────────────────────────────────────────────────────
+
+
+def _backend(module: str, name: str, **attrs: Any) -> Any:
+    kind = type(name, (), {"__module__": module, "__qualname__": name})
+    backend = kind()
+    for key, value in attrs.items():
+        setattr(backend, key, value)
+    return backend
+
+
+class _Vault:
+    def __init__(self) -> None:
+        self.values: dict[tuple[str, str], str] = {}
+
+    def set_password(self, service: str, user: str, value: str) -> None:
+        self.values[(service, user)] = value
+
+    def get_password(self, service: str, user: str) -> Optional[str]:
+        return self.values.get((service, user))
+
+
+def _native_stub(module: str = "keyring.backends.macOS", name: str = "Keyring") -> Any:
+    vault = _Vault()
+    return _backend(module, name, set_password=vault.set_password, get_password=vault.get_password, vault=vault)
+
+
+@pytest.mark.parametrize("module,name", [("keyring.backends.macOS", "Keyring"),
+                                         ("keyring.backends.SecretService", "Keyring"),
+                                         ("keyring.backends.Windows", "WinVaultKeyring")])
+def test_c5_a_native_backend_stores_and_reads_the_key(store: Any, module: str, name: str) -> None:
+    from holdspeak.services.channel_email import NativeEmailKeyStore
+
+    backend = _native_stub(module, name)
+    native_store = NativeEmailKeyStore(backend=backend)
+    native_store.put("sendgrid", KEY)
+    assert native_store.get("sendgrid") == KEY
+    assert backend.vault.values == {("HoldSpeak Email", "sendgrid"): KEY}
+    chained = NativeEmailKeyStore(backend=_backend("keyring.backends.chainer", "ChainerBackend",
+                                                   backends=[_backend("keyring.backends.fail", "Keyring"), backend]))
+    assert chained.get("sendgrid") == KEY
+
+
+@pytest.mark.parametrize("backend", [
+    "fail", "chainer-without-native", "keyrings.alt-file", "keyrings.alt-encrypted", "null",
+])
+def test_c5_every_other_backend_is_refused_not_native(store: Any, backend: str) -> None:
+    import keyring.backends.fail
+
+    from holdspeak.services.channel_email import EmailKeyError, NativeEmailKeyStore
+
+    chosen = {
+        "fail": keyring.backends.fail.Keyring(),
+        "chainer-without-native": _backend("keyring.backends.chainer", "ChainerBackend",
+                                           backends=[keyring.backends.fail.Keyring()]),
+        "keyrings.alt-file": _backend("keyrings.alt.file", "PlaintextKeyring"),
+        "keyrings.alt-encrypted": _backend("keyrings.alt.file", "EncryptedKeyring"),
+        "null": _backend("keyring.backends.null", "Keyring"),
+    }[backend]
+    with pytest.raises(EmailKeyError) as refused:
+        NativeEmailKeyStore(backend=chosen)
+    assert refused.value.code == "email_key_store_not_native"
+
+
+@pytest.mark.parametrize("form", FORMS)
+def test_c5_a_store_that_is_not_native_refuses_the_save_and_the_send_before_anything_leaves(
+    hub: Hub, wire: Wire, store: Any, monkeypatch: pytest.MonkeyPatch, form: str,
+) -> None:
+    import keyring.backends.fail
+
+    from holdspeak.services import channel_email
+
+    update, dest = ready(hub)
+    body = press(hub, form, update, dest, f"c5-{form}")
+    monkeypatch.setattr(channel_email, "KEY_STORE",
+                        lambda: channel_email.NativeEmailKeyStore(backend=keyring.backends.fail.Keyring()))
+    saved = save_key(hub)
+    assert (saved.status_code, saved.json()["code"]) == (400, "email_key_store_not_native")
+    refused = send(hub, body)
+    assert refused.json()["code"] == "email_key_store_not_native", refused.text
+    assert wire.requests == [] and egress_ops(hub) == [] and history(hub, update) == []
+    assert all(r["state"] == "prepared" for r in sends(hub))
+    assert (_send_op(hub)["state"], _send_op(hub)["outcome"]) == ("refused", "email_key_store_not_native")
+
+
+def test_c5_a_missing_key_refuses_by_name_and_the_check_says_so(hub: Hub, wire: Wire, store: Any) -> None:
+    update, dest = ready(hub)
+    checked = hub.client.post(f"/api/channels/destinations/{dest}/check").json()
+    assert checked["check"]["state"] == "ready"
+    store.values.clear()
+    assert hub.client.post(f"/api/channels/destinations/{dest}/check").json()["check"]["state"] == "email_key_missing"
+    refused = send(hub, press(hub, "inline", update, dest, "c5-missing"))
+    assert refused.json()["code"] == "email_key_missing" and wire.requests == []
+
+
+def test_c5_the_key_is_held_never_an_argument_and_the_owner_alone_saves_it(hub: Hub, store: Any) -> None:
+    saved = save_key(hub)
+    assert saved.status_code == 200, saved.text
+    assert {k: saved.json()[k] for k in ("key_ref", "provider", "saved")} == {
+        "key_ref": "sendgrid", "provider": "sendgrid", "saved": True}
+    assert store.values == {"sendgrid": KEY}
+    assert KEY_MARK not in saved.text
+    assert KEY_MARK not in dump(hub)
+    [operation] = ops(hub, "channel.save_email_key")
+    assert (operation["state"], operation["principal_kind"]) == ("succeeded", "owner")
+    bad = hub.client.put("/api/channels/email-keys/sendgrid", json={"api_key": "two words"})
+    assert bad.json()["code"] == "email_key_invalid" and KEY_MARK not in bad.text
+    assert "channel.save_email_key" not in {t["name"] for t in hub.client.post("/api/mcp", json={
+        "jsonrpc": "2.0", "id": 1, "method": "tools/list"}).json()["result"]["tools"]}
+
+
+# ── the destination freezes the sender ─────────────────────────────────────
+
+
+def test_the_destination_freezes_the_sender_and_refuses_bad_addresses_by_name(hub: Hub, wire: Wire) -> None:
+    assert save_key(hub).status_code == 200
+    dest = email_destination(hub)
+    view = hub.client.get("/api/channels/destinations").json()["destinations"][0]
+    assert view["id"] == dest and view["badge"] == "cloud"
+    assert view["account"] == {"provider": "sendgrid", "from_email": "karol@example.com", "from_name": "Karol",
+                               "key_ref": "sendgrid"}
+    assert view["target"] == {"to": ["Priya Raman <priya@example.com>"], "cc": ["lead@example.com"]}
+    for extra, code in [({"provider": "postmark"}, "email_provider_unknown"),
+                        ({"to": ["not an address"]}, "email_address_invalid"),
+                        ({"to": []}, "email_recipients_missing"),
+                        ({"to": [f"p{i}@example.com" for i in range(15)], "cc": [f"c{i}@example.com" for i in range(6)]}, "email_recipients_too_many"),
+                        ({"cc": ["priya@example.com"]}, "email_recipient_duplicate"),
+                        ({"key_ref": "has space"}, "email_key_ref_invalid")]:
+        resp = hub.client.post("/api/channels/destinations", json={
+            "name": "x", "channel": "email", "from_email": "karol@example.com", "to": ["priya@example.com"],
+            **extra})
+        assert resp.json()["code"] == code, (extra, resp.text)
+
+
+def test_an_edited_sender_refuses_the_prepared_send_destination_changed(hub: Hub, wire: Wire) -> None:
+    update, dest = ready(hub)
+    prepared = prepare(hub, update, dest)["send"]
+    edited = hub.client.post("/api/channels/destinations", json={
+        "name": "Priya by email", "channel": "email", "from_email": "other@example.com", "to": ["priya@example.com"],
+        "replaces": dest})
+    assert edited.status_code == 200
+    refused = send(hub, {"send_id": prepared["id"]})
+    assert refused.json()["code"] == "destination_parked" and wire.requests == []
+
+
+def test_a_request_over_the_size_limit_is_refused_by_name(hub: Hub, wire: Wire) -> None:
+    update, dest = ready(hub, body="x" * 1_000_001)
+    refused = hub.client.post("/api/channels/sends", json={"update_id": update, "destination_id": dest})
+    assert refused.json()["code"] == "payload_too_large:email" and wire.requests == []
+
+
+# ── 6: a second provider is one class and one table row ────────────────────
+
+
+class RecordingProvider:
+    """A test provider: its own request shape and its own proof. One class and one row, no caller change."""
+
+    name = "recording"
+    host = "api.recording.test"
+    port = 443
+
+    def __init__(self) -> None:
+        from holdspeak.services.channel_email import EmailLimits
+
+        self.limits = EmailLimits(max_bytes=10_000, max_recipients=5)
+
+    def serialize(self, message: Any) -> bytes:
+        return json.dumps({"From": message.from_email, "To": ",".join(message.to), "Subject": message.subject,
+                           "TextBody": message.text}, separators=(",", ":")).encode()
+
+    def preview(self, body: bytes) -> dict[str, Any]:
+        data = json.loads(body)
+        return {"from": data["From"], "to": data["To"].split(","), "cc": [], "subject": data["Subject"],
+                "text": data["TextBody"]}
+
+    def plan(self, body: bytes) -> Any:
+        from holdspeak.plugins.gated_connector import GatedOperation
+        from holdspeak.services.channel_email import EmailRequest
+
+        return GatedOperation.outbound(self.host, self.port, request=EmailRequest(f"https://{self.host}/email", body))
+
+    def interpret(self, status: int, headers: Any, error_excerpt: Any) -> Any:
+        from holdspeak.services.channel_contract import Outcome
+
+        if status == 200 and headers.get("x-message-id"):
+            return Outcome("sent", None, {"provider": self.name, "message_id": headers["x-message-id"]})
+        return Outcome("unknown", f"unpinned_{status}")
+
+
+def test_c6_a_second_provider_plugs_in_with_one_class_and_one_row(
+    hub: Hub, wire: Wire, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from holdspeak.services import channel_email
+
+    monkeypatch.setitem(channel_email.EMAIL_PROVIDERS, "recording", RecordingProvider())
+    wire.default = response(200, {"X-Message-Id": "rec-42"})
+    assert save_key(hub, key_ref="recording").status_code == 200
+    _pid, update = room(hub, body="Through a second provider.")
+    dest = email_destination(hub, provider="recording", key_ref="recording", cc=[])
+    result = send(hub, press(hub, "send_id", update, dest, "c6")).json()
+    assert result["outcome"] == "sent" and result["send"]["proof"] == {"provider": "recording",
+                                                                       "message_id": "rec-42"}
+    assert result["send"]["preview"]["text"] == "Through a second provider."
+    [sent] = wire.requests
+    assert sent["host"] == "api.recording.test" and json.loads(sent["body"])["TextBody"] == "Through a second provider."
+    [child] = egress_ops(hub)
+    full = native(hub, child["operation_id"])["canonical"]
+    assert (full["destination"], full["data_classes"]) == ("api.recording.test:443", ["email_message"])
+    assert full["payload_digest"] == "sha256:" + result["send"]["payload_digest"]
