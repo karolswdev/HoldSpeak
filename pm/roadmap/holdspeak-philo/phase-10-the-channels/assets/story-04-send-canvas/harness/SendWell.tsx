@@ -25,7 +25,7 @@
  * - The well reads its destinations again on the Settings change signal and
  *   on window focus (F2): no reload after setup.
  */
-import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "@w/components/signal/Signal";
 import {
   ConfirmVerb,
@@ -84,6 +84,18 @@ export function useSends(updateId: string): Read<Send[]> {
   }, [updateId]);
   const tick = useStore();
   useEffect(() => { reload(); }, [reload, tick]);
+  // Round three (Codex Astra r2 F2): a send that is running stays on the
+  // face until it settles, through Back and return. While any row of this
+  // update is `dispatching`, the well reads again; when the last one
+  // settles, every read on the page runs once more (the history too). The
+  // build takes this from the desk's live bus; the canvas reads again.
+  const running = (data ?? []).some((s) => s.state === "dispatching");
+  const wasRunning = useRef(false);
+  useEffect(() => {
+    if (running) { wasRunning.current = true; const t = setTimeout(reload, 700); return () => clearTimeout(t); }
+    if (wasRunning.current) { wasRunning.current = false; bump(); }
+    return undefined;
+  }, [running, data, reload]);
   return { data, failed, reload };
 }
 
@@ -229,6 +241,7 @@ function LastChip({ s }: { s: Send | undefined }) {
   if (s.state === "sent") return <span data-testid="send-last-sent"><StateChip state="success" icon="✓" label={`${SENT_WORD[s.channel]} ${stamp(s.settled_at).slice(-5)}`} /></span>;
   if (s.state === "unknown") return <span data-testid="send-last-unknown"><StateChip state="warning" label={SEND_WORDS.lastUnknown} /></span>;
   if (s.state === "failed") return <span data-testid="send-last-failed" data-code={s.reason ?? ""}><StateChip state="failure" label={SEND_WORDS.lastFailed} /></span>;
+  if (s.state === "dispatching") return <span data-testid="send-last-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>;
   return null;
 }
 
@@ -256,7 +269,11 @@ async function press(updateId: string, target: string, fresh: () => Held["body"]
   if (!held) { held = { key: crypto.randomUUID(), body: fresh() }; store.holds.set(k, held); }
   store.busy.add(k); store.outcomes.set(k, { kind: "none" }); bump();
   try {
-    const send = await wire.send({ ...held.body, command_id: held.key });
+    const pending = wire.send({ ...held.body, command_id: held.key });
+    // Read again once the send has crossed its boundary, so a running send
+    // shows as SENDING while it runs (Codex Astra r2 F2).
+    const peek = setTimeout(reload, 250);
+    const send = await pending.finally(() => clearTimeout(peek));
     store.holds.delete(k);
     store.outcomes.set(k, { kind: "settled", send });
   } catch (e) {
@@ -291,11 +308,17 @@ export function SendWell({ update, sendsRead }: { update: ProjectUpdate; sendsRe
   const reload = sendsRead.reload;
   // Every send someone else prepared, in the order prepared: the open ones
   // and the ones that ended (their result stays here, F1).
-  const prepared = sends.filter((s) => s.prepared_by_kind !== "owner" && s.state !== "dispatching");
+  const prepared = sends.filter((s) => s.prepared_by_kind !== "owner");
   const waiting = prepared.filter((s) => s.state === "prepared");
   const openPrepared = store.preparedOpen.has(uid) ? store.preparedOpen.get(uid) : waiting[0]?.id ?? null;
-  const lastFor = (destId: string) =>
-    [...sends].reverse().find((s) => s.destination_id === destId && (s.state === "sent" || s.state === "unknown" || s.state === "failed"));
+  // Round three (Codex Astra r2 F1): the destination's latest result is the
+  // latest to LEAVE, by story 01's `dispatch_started_at`, never the latest
+  // prepared. A running send is the latest while it runs.
+  const lastFor = (destId: string) => sends
+    .filter((s) => s.destination_id === destId && !!s.dispatch_started_at
+      && (s.state === "sent" || s.state === "unknown" || s.state === "failed" || s.state === "dispatching"))
+    .sort((a, b) => String(a.dispatch_started_at).localeCompare(String(b.dispatch_started_at)))
+    .pop();
   const destinations = dests.data;
 
   return (
@@ -339,10 +362,11 @@ export function SendWell({ update, sendsRead }: { update: ProjectUpdate; sendsRe
                 const busy = store.busy.has(k);
                 const lost = o.kind === "lost";
                 const pv = preview && preview.id === d.id ? preview : null;
+                const running = last?.state === "dispatching";
                 const verbs = (
                   <div className="p10-verbs" data-testid="send-verbs">
-                    <Button dense variant="primary" loading={busy}
-                      disabled={!pv || "failed" in pv}
+                    <Button dense variant="primary" loading={busy || running}
+                      disabled={!pv || "failed" in pv || running}
                       data-testid={lost ? "send-retry" : "send-verb"}
                       onClick={() => void press(uid, d.id, () => ({
                         update_id: uid, destination_id: d.id,
@@ -434,8 +458,10 @@ function PreparedRow({ uid, s, reload, conns, dest, open, onToggle }: {
   const [discardOutcome, setDiscardOutcome] = useState<string | null>(null);
   const by = BY[s.prepared_by_kind] ?? `BY ${s.prepared_by_identity.toUpperCase()}`;
   const waiting = s.state === "prepared";
+  const running = s.state === "dispatching";
 
   const result = waiting ? null
+    : running ? <span data-testid="prepared-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>
     : s.state === "sent" ? <><StateChip state="success" icon="✓" label={SENT_WORD[s.channel]} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} /></>
     : s.state === "failed" ? <><StateChip state="failure" label="FAILED" /><span className="surface-token" data-chip>{failedWord(s.reason ?? "")}</span><span className="surface-token" data-chip>NOTHING SENT</span></>
     : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><span className="surface-token" data-chip>{unknownWord(s.reason ?? "no_answer")}</span></>
@@ -443,7 +469,7 @@ function PreparedRow({ uid, s, reload, conns, dest, open, onToggle }: {
 
   return (
     <SurfaceLedgerRow
-      data-testid={waiting ? "prepared-row" : "prepared-result"}
+      data-testid={waiting ? "prepared-row" : running ? "prepared-sending" : "prepared-result"}
       wrap
       open={open}
       expands={waiting}

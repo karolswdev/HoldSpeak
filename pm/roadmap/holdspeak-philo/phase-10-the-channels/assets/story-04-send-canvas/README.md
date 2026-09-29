@@ -1,6 +1,6 @@
 # PHILO-10-04 canvas A: the SEND well on a published update
 
-**Status: DRAFT, round two, for the owner's ratification** (UX-CANON §A.2: the canvas before the build). Round two pays Codex Astra r1 DO-NOT-RATIFY on #693 (`../../checks/canvases-astra-r1.md`, committed verbatim). Nothing here is built in product code. The review page is `index.html` in this folder: every board at 1440 × 900 and 393 × 852. Canvas B, the Destinations group, is `../story-04-destinations-canvas/`. The two canvases share one harness (`harness/`).
+**Status: DRAFT, round three, for the owner's ratification** (UX-CANON §A.2: the canvas before the build). Round two pays Codex Astra r1 DO-NOT-RATIFY on #693 (`../../checks/canvases-astra-r1.md`, committed verbatim). Round three pays Codex Astra r2 (`../../checks/canvases-astra-r2.md`, committed verbatim): r1 F1–F6 verified repaired; two bounded corrections and one qualification, below. Nothing here is built in product code. The review page is `index.html` in this folder: every board at 1440 × 900 and 393 × 852. Canvas B, the Destinations group, is `../story-04-destinations-canvas/`. The two canvases share one harness (`harness/`).
 
 Sources: story 04 (`../../story-04-the-send-face-and-the-destinations.md`), the charter's state/width matrix (`../../current-phase-status.md`), the design (`../../design/send-lifecycle.md`, rounds one to five), story 01 as built and merged (#692: the records, the one history table with `channel` and `outcome`, the UNKNOWN row on today's face), and the ratified Phase 9 update canvas it extends.
 
@@ -10,13 +10,21 @@ Sources: story 04 (`../../story-04-the-send-face-and-the-destinations.md`), the 
 2. **The record word:** story 01's face today (boards 0a, 0b) reads `DELIVERED ×N` and already keeps UNKNOWN apart (`RESULT UNKNOWN ×M`). Change the word to `DELIVERY ×N` (list chip) and `DELIVERY N` (history head), with the same counts? **Recommended: yes.** The record now mixes channels, and a provider's acceptance (`ACCEPTED BY SENDGRID`) is not a delivery. The counts do not change: only rows that `isDelivered` counts are counted.
 3. **Prepared sends:** first in SEND, with a `PREPARED ×K` chip on the update list; ONE preview open (the first), each other one a click away with its Send and Discard; a prepared send that ended stays in place as its result? **Recommended: yes.** (Codex Astra r1: first and chip yes; not all previews forced open.)
 
+## Round three: Codex Astra r2 (`../../checks/canvases-astra-r2.md`)
+
+| Codex Astra r2 | The canvas now |
+|---|---|
+| F1 the destination showed an older success after a newer failure | A destination's latest result is the latest send to LEAVE, by story 01's `dispatch_started_at`, never the latest prepared (`SendWell.tsx`, `lastFor`). Fence, board 28b, in Codex's order: prepare A (board 26) → inline B accepted → send A, which fails → the row shows LAST SEND FAILED (facts `latest_by_dispatch` = failed, `latest_by_preparation` = sent). |
+| F2 a running prepared send disappeared after Back → return | A `dispatching` send stays in the PREPARED group as `◆ SENDING`; its destination shows `◆ SENDING` and its Send is busy and not enabled; the well reads again while anything runs and the result lands with no reload. Fence, boards 26b, 26c, 27: hold the steward's send at the boundary, Back, return, the row is there (fact `stored_state` = dispatching; `send_enabled_while_running` = false), release, ✓ POSTED. |
+| F3 A3/A22 at 393 differed only by the clock | The byte fence now compares shots with the menu-bar clock masked (`.desk-clock`, `web/src/desk/components/DeskChrome.tsx:104`), and "update B stays clean" is a fact on board 24 (`update_b_clean`), like the return to A; board 22 is gone. |
+
 ## Round two: what changed, finding by finding
 
 | Codex Astra r1 | The canvas now |
 |---|---|
 | F1 a failed prepared send and a Discard leave no result | A prepared send that ended stays in the PREPARED group as a closed result row, from its stored record: ✓ POSTED + link, FAILED + reason + NOTHING SENT, RESULT UNKNOWN, DISCARDED (boards 27–29, 33). A destination row carries its last send's result: ✓ SAVED + time, LAST SEND UNKNOWN, LAST SEND FAILED (board 17). A refused prepared row shows its refusal as a chip on the closed row (boards 30, 31). |
 | F2 the first setup loop | The Room's `Add destination` asks Settings to arrive at the group: the group scrolls itself into view and opens the add form (canvas B board 1: no harness scroll). After Save and closing Settings, the Room shows the new destination at once (board 2: no reload); the well reads its destinations again on the Settings change signal and on window focus. |
-| F3 boards that did not show their state | Every board names the elements that make its state, and the run asserts each one is on screen: in the viewport, inside every clipping ancestor, and on top at its centre and two inner corners (`shoot.py` `VISIBLE`). The run also fails if two shots of one width share bytes; it caught one pair at 1440 (back on update A = board 21), now a fact on board 24. The preview puts Send between its fields and its body, so the verb and its result are in view at 393. |
+| F3 boards that did not show their state | Every board names the elements that make its state, and the run asserts each one is on screen: in the viewport, inside every clipping ancestor, and on top at its centre and two inner corners (`shoot.py` `VISIBLE`). The run also fails if two shots of one width share bytes once the menu-bar clock is masked (round three). The preview puts Send between its fields and its body, so the verb and its result are in view at 393. |
 | F4 the history bypassed story 01 | The history is story 01's one table: `update.deliveries`, read again after each settle, each row by its own `outcome` and `channel` (the real `isDelivered` and `decodeDelivery`). The shim writes each settled send as ONE row in story 01's shape. The UNKNOWN row reads as story 01 renders it. No second list, no double count. |
 | F5 missing states | COMMENTED (board 12), BLOG POSTED (15), the Confluence setup form (canvas B board 6); named read failures: `CANNOT READ DESTINATIONS` / `SENDS` / `HISTORY` + Retry (boards 37–39), a preview with no answer (40), a key save refused (canvas B board 7). Unreadable is never shown as empty. |
 | F6 false simulated claims | Email Check reports the SENDER's verification, not the key (canvas B board 11: SENDER NOT VERIFIED); a send from an unverified sender settles FAILED `sender_not_verified` from that state, not from a fault (board 17). The file name is minted once with the send id, as story 01 does (`choose_path`): a prepared preview names the file and the receipt names the same file (board 29, fact `same_file`); an inline preview names only the folder. Paths, message ids, addresses and repositories keep their exact case (`p10-literal`). |
@@ -36,7 +44,9 @@ Sources: story 04 (`../../story-04-the-send-face-and-the-destinations.md`), the 
 
 - A double-click on Send makes one dispatch (`9-posted-github-*`: `dispatches_after_double_click` = 1).
 - Retry after a lost answer reuses the key and does not dispatch again (`24-retried-one-dispatch-*`: `dispatches_with_lost_key` = 1).
-- The lost answer stays on update A and never shows on B (`22-update-b-clean-*`: `b_state`). Back on A, the lost line and Retry are on screen (`24-retried-one-dispatch-*`: `back_on_a_before_retry.named`). At 1440 that screen is board 21 byte for byte (`same_pixels_as_board_21` true), so the byte fence refused it as a separate board and it is recorded as a fact; at 393 the bytes differ (not investigated; the menu-bar clock is one candidate).
+- The lost answer stays on update A and never shows on B, and back on A the lost line and Retry are on screen (`24-retried-one-dispatch-*`: `update_b_clean`, `back_on_a_before_retry`). Both screens repeat boards 3 and 21 once the clock is masked, so they are facts, not boards (Codex Astra r2 F3: the 393 difference in round two was the clock).
+- A running prepared send stays on the face through Back and return, and its destination offers no second Send (`26b-*`: `stored_state`; `26c-*`: `send_enabled_while_running` = false).
+- A destination's latest result follows send order (`28b-*`: `latest_by_dispatch` = failed while `latest_by_preparation` = sent).
 - A restart after the boundary gives `unknown` / `interrupted` (`25-unknown-after-restart-*`: `rows`).
 - A prepared file send's preview and receipt name the same file (`29-prepared-file-sent-*`: `same_file`).
 - Every prepared send's end state is stored and shown (`33-discarded-*`: `prepared_rows`).
@@ -45,13 +55,13 @@ Sources: story 04 (`../../story-04-the-send-face-and-the-destinations.md`), the 
 
 ## Measurements
 
-84 renders (42 boards × 1440 × 900 and 393 × 852), `shots/facts.json`; both runs exit 0 with the fences on:
+88 renders (44 boards × 1440 × 900 and 393 × 852), `shots/facts.json`; both runs exit 0 with the fences on:
 
-- Named elements on screen (in the viewport, inside every clipping ancestor, on top at the centre and two inner corners): **162 of 162**. Byte-identical shots within a width: **none**.
+- Named elements on screen (in the viewport, inside every clipping ancestor, on top at the centre and two inner corners): **168 of 168**. Identical shots within a width, with the menu-bar clock masked: **none**.
 - Text under 12 px: **0** in the proposal, **0** inherited. Raw `<button>`: **0** in the proposal, **0** inherited.
 - Horizontal overflow: **0**.
-- Contrast, unrounded (Codex Astra r1 F7): lowest **4.50444771:1**: the PREPARED chip's colour on its fill, measured on its `◆` glyph (11 px) in the SEND well on boards 26–32 and on the `◆ PREPARED ×1` list chip (12 px) on board 35, Codex's "A27 PREPARED chip"; none under 4.5:1. No colour change.
-- Pointer (UX-CANON C): **1588** proposal controls × 9 points = **14292**, each by `elementFromPoint` AND a real pointer move: **all owned**. Of the untouched window chrome, **168** controls miss points (the ROOM tab's right edge; at 393 the traffic lights), as on the unchanged product (BACKLOG).
+- Contrast, unrounded (Codex Astra r1 F7): lowest **4.50444771:1**: the PREPARED chip's colour on its fill, measured on its `◆` glyph (11 px) in the SEND well on boards 26–32 and on the `◆ PREPARED ×1` list chip (12 px) on board 35, Codex's "A27 PREPARED chip"; also the SENDING chip on boards 26b and 26c; none under 4.5:1. No colour change.
+- Pointer (UX-CANON C): **1774** proposal controls × 9 points = **15966**, each by `elementFromPoint` AND a real pointer move: **all owned**. A control that changes size under the probe is measured again and probed once more, and both results are recorded (`retried`); among proposal controls only canvas B's armed `Remove?` needed it (its 3 s disarm). Of the untouched window chrome, **176** controls miss points (the ROOM tab's right edge; at 393 the traffic lights), as on the unchanged product (BACKLOG).
 - Modals **0**; raw JSON or XHTML in a preview **0**; DELIVERED on an email row **0**; browser errors **0**.
 
 ## Limits (what the boards are not)

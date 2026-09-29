@@ -52,6 +52,8 @@ export type Send = {
   reason: string | null;
   created_at: string;
   settled_at: string | null;
+  /** Story 01's boundary time: the order sends LEFT in (null until then). */
+  dispatch_started_at?: string | null;
 };
 
 /* ── words ─────────────────────────────────────────────────────────── */
@@ -70,6 +72,7 @@ export const SEND_WORDS = {
   unknownChip: "RESULT UNKNOWN",
   lastUnknown: "LAST SEND UNKNOWN",
   lastFailed: "LAST SEND FAILED",
+  sending: "SENDING",
   discarded: "DISCARDED",
   check: "Check",
   lost: "NO ANSWER · RESULT UNKNOWN",

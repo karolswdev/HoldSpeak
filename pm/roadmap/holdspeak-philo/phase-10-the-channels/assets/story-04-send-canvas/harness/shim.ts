@@ -81,7 +81,7 @@ type Dest = {
 type SendRow = {
   id: string; update_id: string; destination_id: string; destination_name: string; channel: string;
   target: Record<string, unknown>; account: Record<string, unknown>; target_digest: string; draft_revision: number;
-  payload: string; payload_digest: string; preview: unknown; file_name?: string; dispatched_at?: string;
+  payload: string; payload_digest: string; preview: unknown; file_name?: string; dispatch_started_at?: string;
   prepared_by_kind: string; prepared_by_identity: string; state: string; proof: Record<string, unknown> | null;
   reason: string | null; command_id: string | null; created_at: string; settled_at: string | null;
 };
@@ -360,7 +360,7 @@ async function doSend(args: Record<string, string>): Promise<Response> {
 
   // The durable dispatch boundary: its own commit, before any effect.
   s = load();
-  row.state = "dispatching"; row.command_id = cmd; row.dispatched_at = now();
+  row.state = "dispatching"; row.command_id = cmd; row.dispatch_started_at = now();
   if (row.channel === "file" && !row.file_name) {   // an inline send: the name is minted at the boundary, once
     const { meta, project } = await updateInfo(row.update_id);
     row.file_name = fileNameFor(project, meta.draft_revision, row.id);
@@ -497,7 +497,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         // 5. The one table: each settled send (sent | unknown) is ONE row, story 01's shape.
         const mine = st.sends.filter((r) => r.update_id === u.id && (r.state === "sent" || r.state === "unknown")).map((r) => ({
           id: `dlv_${r.id.slice(5)}`, update_id: u.id, project_id: u.project_id,
-          delivered_at: r.dispatched_at ?? r.settled_at, delivered_to: r.destination_name, operation_id: r.command_id,
+          delivered_at: r.dispatch_started_at ?? r.settled_at, delivered_to: r.destination_name, operation_id: r.command_id,
           channel: r.channel, send_id: r.id, outcome: r.state, proof_json: r.proof ? canon(r.proof) : null,
         }));
         u.deliveries = [...(u.deliveries ?? []), ...mine].sort((x: { delivered_at: string }, y: { delivered_at: string }) => String(x.delivered_at).localeCompare(String(y.delivered_at)));

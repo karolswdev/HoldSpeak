@@ -221,17 +221,28 @@ NAMES = ["centre", "top", "right", "bottom", "left", "top-left", "top-right", "b
 
 def pointer_pass(page, width: int, anchor: str) -> list[dict]:
     out = []
-    for c in page.evaluate(CONTROLS, anchor):
-        geo = page.evaluate(POINTS9, [c["i"], width])
+    def probe(i: int):
+        geo = page.evaluate(POINTS9, [i, width])
         pts = []
         for name, (x, y) in zip(NAMES, geo["points"]):
-            hit = page.evaluate(HIT, [c["i"], x, y])
+            hit = page.evaluate(HIT, [i, x, y])
             page.mouse.move(x, y)
-            pm = page.evaluate(PM_OWNED, [c["i"]])
+            pm = page.evaluate(PM_OWNED, [i])
             pts.append({"at": name, "efp": hit["efp"], "pointer": pm, "hit": hit["hit"]})
+        return geo, pts
+
+    for c in page.evaluate(CONTROLS, anchor):
+        geo, pts = probe(c["i"])
+        retried = None
+        if not all(p["efp"] and p["pointer"] for p in pts):
+            # A control can change size under the probe (ConfirmVerb disarms after
+            # 3 s: "Remove?" -> "Remove"). Measure it again and probe once more at
+            # its current size; both results are recorded.
+            retried = {"face_before": geo["face"], "failed_before": [p for p in pts if not (p["efp"] and p["pointer"])]}
+            geo, pts = probe(c["i"])
         out.append({**{k: c[k] for k in ("text", "in_foot", "in_menu", "kind", "touched")}, "face": geo["face"],
                     "target": geo["target"], "owned": all(p["efp"] and p["pointer"] for p in pts),
-                    "failed_points": [p for p in pts if not (p["efp"] and p["pointer"])]})
+                    "failed_points": [p for p in pts if not (p["efp"] and p["pointer"])], "retried": retried})
     page.mouse.move(1, 1)
     page.evaluate(RESTORE)
     page.wait_for_timeout(100)
@@ -249,6 +260,9 @@ def long_folder(root: Path) -> Path:
 
 
 def main() -> None:
+    # A TERM or an interrupt still runs the `finally` below: servers down, HOME removed.
+    import signal
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
     home = tempfile.mkdtemp(prefix="philo10-04-canvas-")
     hub_port, today_port = free_port(), free_port()
     canvas_port = int(os.environ.get("CANVAS_PORT", "4451"))
@@ -393,8 +407,10 @@ def main() -> None:
                 key = f"{board}-{width}"
                 vis = page.evaluate(VISIBLE, named)
                 page.screenshot(path=str(out / f"{key}.png"))
+                masked = masked_sha(page)
                 f = page.evaluate(FACTS, anchor)
                 f["named"] = vis
+                f["masked_sha"] = masked
                 f["pointer"] = pointer_pass(page, width, anchor)
                 if target:   # the pointer pass restores scroll; re-seat for the next step
                     seat(page, target)
@@ -416,6 +432,12 @@ def main() -> None:
             DD.mkdir(parents=True, exist_ok=True)
             today = f"http://127.0.0.1:{today_port}"
             canvas = f"http://127.0.0.1:{canvas_port}"
+
+            def masked_sha(page) -> str:
+                # The byte fence compares shots with the changing chrome masked: the
+                # menu-bar clock (DeskChrome.tsx:104, `.desk-clock`). Codex Astra r2 F3.
+                import hashlib
+                return hashlib.sha256(page.screenshot(mask=[page.locator(".desk-clock")], mask_color="#000000")).hexdigest()
 
             def confirm(loc, armed: str):
                 # ConfirmVerb disarms after 3 s; the pointer pass outlasts that.
@@ -440,7 +462,7 @@ def main() -> None:
                 return page.locator(f"{open_sel(name)} [data-testid=send-verbs] .btn").first
 
             def prep_li(name: str, state: str = "prepared") -> str:
-                tid = "prepared-row" if state == "prepared" else "prepared-result"
+                tid = "prepared-row" if state == "prepared" else "prepared-sending" if state == "dispatching" else "prepared-result"
                 return f"li.surface-ledger-row:has([data-testid={tid}] [data-destination='{name}'])"
 
             def dest_form_fill(page, channel: str, fields: dict[str, str], synced: bool = False):
@@ -721,8 +743,10 @@ def main() -> None:
                 b_state = page.evaluate("""() => ({lost: !!document.querySelector('[data-testid=send-lost]'),
                   retry: !!document.querySelector('[data-testid=send-retry]'), open: document.querySelectorAll('[data-testid=send-open]').length,
                   history: document.querySelectorAll('[data-testid=delivery-row]').length})""")
-                shoot(page, SS, facts_send, "22-update-b-clean", width, UP, [row_sel("Folder Updates")], seat_on="[data-testid=send-well]",
-                      extra={"b_state": b_state})
+                # Update B stays clean: a fact, not a board (Codex Astra r2 F3; its screen is
+                # board 3's list with the clock changed).
+                seat(page, "[data-testid=send-well]")
+                b_state["named"] = page.evaluate(VISIBLE, [row_sel("Folder Updates")])
                 go_back(page)
                 open_update(page, upd_a)
                 page.wait_for_timeout(600)
@@ -735,8 +759,7 @@ def main() -> None:
                 back_on_a = {
                     "named": page.evaluate(VISIBLE, [row_sel("Folder Updates"), f"{open_sel('Folder Updates')} [data-testid=send-lost]",
                                                      f"{open_sel('Folder Updates')} [data-testid=send-retry]"]),
-                    "same_pixels_as_board_21": hashlib.sha256(page.screenshot()).hexdigest()
-                        == hashlib.sha256((SS / f"21-lost-answer-a-{width}.png").read_bytes()).hexdigest(),
+                    "same_pixels_as_board_21_clock_masked": masked_sha(page) == facts_send[f"21-lost-answer-a-{width}"]["masked_sha"],
                 }
                 if not all(v["ok"] for v in back_on_a["named"]):
                     invisible.append(f"back-on-a-{width}: {back_on_a['named']}")
@@ -749,7 +772,7 @@ def main() -> None:
                       [row_sel("Folder Updates"), f"{open_sel('Folder Updates')} [data-testid=send-sent]"], seat_on=row_sel("Folder Updates"), extra={
                     "calls_with_lost_key": [c for c in calls if c["command_id"] == lost_key],
                     "dispatches_with_lost_key": sum(1 for c in calls if c["command_id"] == lost_key and c["dispatched"]),
-                    "back_on_a_before_retry": back_on_a})
+                    "back_on_a_before_retry": back_on_a, "update_b_clean": b_state})
                 # A restart during dispatching.
                 pick(page, "Jira PAY-121")
                 page.evaluate("window.__p10CrashNext = true")
@@ -773,11 +796,38 @@ def main() -> None:
                 gh = prep_li("karol/payments-ops #42")
                 shoot(page, SS, facts_send, "26-prepared", width, UP,
                       [f"{gh} [data-testid=prepared-row]", f"{gh} [data-testid=prepared-send]", f"{gh} [data-testid=prepared-discard]"], seat_on="[data-testid=prepared-list]")
+                # A prepared send that is RUNNING stays on the face through Back -> return,
+                # and its destination offers no second Send while it runs (Codex Astra r2 F2).
+                page.evaluate("window.__p10Hold = true")
                 page.locator(f"{gh} [data-testid=prepared-send]").click()
-                page.locator(prep_li("karol/payments-ops #42", "sent")).wait_for(timeout=10_000)
+                page.locator(prep_li("karol/payments-ops #42", "dispatching")).wait_for(timeout=10_000)
+                go_back(page)
+                open_update(page, upd_a)
+                page.locator(prep_li("karol/payments-ops #42", "dispatching")).wait_for(timeout=10_000)
+                page.wait_for_timeout(400)
+                shoot(page, SS, facts_send, "26b-prepared-running-after-return", width, UP,
+                      [f"{prep_li('karol/payments-ops #42', 'dispatching')} [data-testid=prepared-running]"], seat_on="[data-testid=prepared-list]",
+                      extra={"stored_state": page.evaluate("window.__p10Dump().sends.filter(s => s.prepared_by_kind === 'steward').map(s => s.state)")})
+                pick(page, "karol/payments-ops #42")
+                ghv = f"{open_sel('karol/payments-ops #42')} [data-testid=send-verbs] .btn >> nth=0"
+                shoot(page, SS, facts_send, "26c-destination-running", width, UP,
+                      [f"{row_sel('karol/payments-ops #42')} [data-testid=send-last-running]", f"{open_sel('karol/payments-ops #42')} [data-testid=send-verbs] .btn"],
+                      seat_on=row_sel("karol/payments-ops #42"),
+                      extra={"send_enabled_while_running": page.locator(ghv).is_enabled()})
+                page.locator(row_sel("karol/payments-ops #42")).first.click()   # close the pick
+                page.evaluate("window.__p10Release && window.__p10Release()")
+                page.locator(prep_li("karol/payments-ops #42", "sent")).wait_for(timeout=10_000)   # settles on the face, no reload
                 page.wait_for_timeout(500)
                 shoot(page, SS, facts_send, "27-prepared-sent", width, UP,
                       [f"{prep_li('karol/payments-ops #42', 'sent')} [data-testid=prepared-result-word]"], seat_on="[data-testid=prepared-list]")
+                # The latest result follows SEND order (Codex Astra r2 F1): lena's send was
+                # prepared at board 26; an inline send to lena goes first and is accepted;
+                # then the older preparation is sent and fails. The destination shows FAILED.
+                pick(page, "Email lena@acme.io")
+                send_verb(page, "Email lena@acme.io").click()
+                page.locator(f"{open_sel('Email lena@acme.io')} [data-testid=send-sent]").wait_for(timeout=10_000)
+                page.locator(row_sel("Email lena@acme.io")).first.click()   # close the pick
+                page.wait_for_timeout(300)
                 em = prep_li("Email lena@acme.io")
                 page.locator(f"{em} [data-testid=prepared-row]").click()
                 page.locator(f"{em} [data-testid=prepared-send]").wait_for(timeout=10_000)
@@ -787,6 +837,13 @@ def main() -> None:
                 page.wait_for_timeout(500)
                 shoot(page, SS, facts_send, "28-prepared-failed", width, UP,
                       [f"{prep_li('Email lena@acme.io', 'failed')} [data-testid=prepared-result-word]"], seat_on="[data-testid=prepared-list]")
+                order = page.evaluate("""() => window.__p10Dump().sends.filter(s => s.destination_name === 'Email lena@acme.io' && s.dispatch_started_at)
+                  .map(s => ({state: s.state, by: s.prepared_by_kind, created_at: s.created_at, dispatch_started_at: s.dispatch_started_at}))""")
+                shoot(page, SS, facts_send, "28b-destination-latest-failed", width, UP,
+                      [f"{row_sel('Email lena@acme.io')} [data-testid=send-last-failed]"], seat_on=row_sel("Email lena@acme.io"),
+                      extra={"lena_sends": order,
+                             "latest_by_dispatch": max(order, key=lambda r: r["dispatch_started_at"])["state"],
+                             "latest_by_preparation": max(order, key=lambda r: r["created_at"])["state"]})
                 # A prepared file send: its preview names the file; the receipt names the SAME file (F6).
                 fu = prep_li("Folder Updates")
                 page.locator(f"{fu} [data-testid=prepared-row]").click()
@@ -915,16 +972,18 @@ def main() -> None:
     if invisible:
         failed = True
         print("NAMED ELEMENTS NOT ON SCREEN:", *invisible, sep="\n  ", file=sys.stderr)
-    import hashlib
-    for folder in (SEND / "shots", DEST / "shots"):
+    # Two boards of one width may not share bytes once the clock is masked.
+    for facts in (facts_send, facts_dest):
         for w, _ in WIDTHS:
             seen: dict[str, str] = {}
-            for png in sorted(folder.glob(f"*-{w}.png")):
-                h = hashlib.sha256(png.read_bytes()).hexdigest()
+            for key, f in sorted(facts.items()):
+                if key.startswith("_") or not key.endswith(f"-{w}"):
+                    continue
+                h = f["masked_sha"]
                 if h in seen:
                     failed = True
-                    print(f"BYTE-IDENTICAL SHOTS: {seen[h]} == {png.name}", file=sys.stderr)
-                seen[h] = png.name
+                    print(f"IDENTICAL SHOTS (clock masked): {seen[h]} == {key}", file=sys.stderr)
+                seen[h] = key
     if failed:
         sys.exit(2)
 
