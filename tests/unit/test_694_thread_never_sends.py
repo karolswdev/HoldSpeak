@@ -322,3 +322,109 @@ def test_a_yolo_thread_drafts_a_setup_but_never_commits_it(hub: Any) -> None:
     assert all("project.setup.finalize" not in palette for palette in model.palettes), model.palettes
     assert h.client.get("/api/projects").json()["projects"] == projects, "the model committed a setup as the owner"
     assert ops(h, "project.setup.finalize") == []
+
+
+def _schedules(h: Any) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    with h.db._connection() as conn:
+        recordings = [dict(r) for r in conn.execute(
+            "SELECT id, enabled, cron_expr, delegation_receipt_id FROM scheduled_recordings ORDER BY rowid")]
+        delegations = [dict(r) for r in conn.execute(
+            "SELECT id, workbench_id, state FROM kernel_schedule_delegations ORDER BY rowid")]
+    return recordings, delegations
+
+
+def _one_call(h: Any, tool: str, arguments: dict[str, Any], *, assign: bool) -> _ModelThatSends:
+    from holdspeak.kernel.runtime import _service
+
+    mode = h.client.post("/api/recipes", json={"name": f"Mode {tool}", "kind": "mode", "tools": [tool]})
+    assert mode.status_code == 201, mode.text
+    thread = h.client.post("/api/threads", json={"title": tool, "recipe_id": mode.json()["recipe"]["id"]})
+    assert thread.status_code == 201, thread.text
+    model = _ModelThatSends(tool=tool, arguments=arguments)
+    if assign:
+        _assign_model(h, model)
+    else:
+        _service().inference_runner._engine_factory = lambda _rev, **_kw: model
+    _run_turn(h, thread.json()["id"])
+    assert any(tool in palette for palette in model.palettes), model.palettes  # offered: a mixed tool
+    return model
+
+
+def _yolo(hub: Any) -> Any:
+    from holdspeak.config import Config
+
+    cfg = Config.load()
+    cfg.control_mode = "yolo"
+    cfg.save()
+    return hub()
+
+
+def test_a_yolo_thread_cannot_arm_a_recording(hub: Any) -> None:
+    """Codex Astra counsel r4 on #694 (P1): scheduled_recording.create and
+    .update enabled a recurring recording from a yolo thread. The real
+    producer (ScheduledRecordingService) mints a delegation receipt for an
+    enabled schedule; that call is authority. A disabled draft is work."""
+    from holdspeak.mcp.tools import dispatch
+
+    h = _yolo(hub)
+    _one_call(h, "scheduled_recording.create",
+              {"title": "Weekly capture", "cron_expr": "0 9 * * 2", "duration_minutes": 5, "enabled": True},
+              assign=True)
+    assert _schedules(h)[0] == [], "the model armed a recording as the owner"
+
+    draft = dispatch("scheduled_recording.create", {"title": "Draft", "cron_expr": "0 9 * * 2",
+                                                   "duration_minutes": 5, "enabled": False}, OWNER)
+    before = _schedules(h)[0]
+    _one_call(h, "scheduled_recording.update", {"schedule_id": draft["id"], "enabled": True}, assign=False)
+    assert _schedules(h)[0] == before, "the model enabled a recording as the owner"
+
+    # Ordinary content stays work: a title edit and a disabled draft.
+    _one_call(h, "scheduled_recording.update", {"schedule_id": draft["id"], "title": "Renamed"}, assign=False)
+    _one_call(h, "scheduled_recording.create", {"title": "Another draft", "cron_expr": "0 9 * * 3",
+                                               "duration_minutes": 5}, assign=False)
+    recordings = _schedules(h)[0]
+    assert len(recordings) == 2 and all(not r["enabled"] and not r["delegation_receipt_id"] for r in recordings)
+    with h.db._connection() as conn:
+        assert conn.execute("SELECT title FROM scheduled_recordings WHERE id=?", (draft["id"],)).fetchone()[0] == "Renamed"
+
+
+def test_a_yolo_thread_cannot_mint_a_workbench_delegation(hub: Any) -> None:
+    """Codex Astra counsel r4 on #694 (P1): workbench.create and .update
+    minted LIVE schedule delegations (delegator owner-session). The real
+    producer (ScheduleDelegationService) mints on schedule_enabled; a schedule
+    field in the payload is authority. Name and item order are work."""
+    from holdspeak.mcp.tools import dispatch
+
+    h = _yolo(hub)
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+    recipe = h.client.post("/api/recipes", json={"name": "Weekly review", "kind": "",
+                                                 "system_prompt": "Summarize the input."})
+    assert recipe.status_code == 201, recipe.text
+    recipe_id = recipe.json()["recipe"]["id"]
+    # A schedule binds a route for its items (the producer refuses without one).
+    _profile(h.db, "p694-bench", claims=("language", _result_claim("workbench.item")))
+    InferenceAssignmentService(h.db).set_assignment(OWNER, {
+        "command_id": "p694-bench-assign", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "workbench.item"},
+        "entries": [{"profile_id": "p694-bench", "profile_revision": 1}],
+    })
+    _one_call(h, "workbench.create", {"name": "Scheduled bench", "fields": {
+        "recipe_id": recipe_id, "schedule": "0 9 * * 2", "schedule_enabled": True}}, assign=True)
+    assert _schedules(h)[1] == [], "the model minted a schedule delegation as the owner"
+    assert not [w for w in dispatch("workbench.list", {}, OWNER) if w["name"] == "Scheduled bench"]
+
+    bench = dispatch("workbench.create", {"name": "Plain bench", "fields": {
+        "recipe_id": recipe_id, "schedule": "0 9 * * 2"}}, OWNER)
+    _one_call(h, "workbench.update", {"workbench_id": bench["id"], "fields": {"schedule_enabled": True}}, assign=False)
+    assert _schedules(h)[1] == [], "the model enabled a workbench schedule as the owner"
+
+    # Ordinary content stays work.
+    _one_call(h, "workbench.update", {"workbench_id": bench["id"], "fields": {"name": "Renamed bench"}}, assign=False)
+    _one_call(h, "workbench.create", {"name": "Content bench"}, assign=False)
+    names = {w["name"] for w in dispatch("workbench.list", {}, OWNER)}
+    assert {"Renamed bench", "Content bench"} <= names, names
+    assert _schedules(h)[1] == []
+    # The producer is real: the owner's own press mints the LIVE delegation.
+    dispatch("workbench.update", {"workbench_id": bench["id"], "fields": {"schedule_enabled": True}}, OWNER)
+    assert [d["state"] for d in _schedules(h)[1]] == ["LIVE"]

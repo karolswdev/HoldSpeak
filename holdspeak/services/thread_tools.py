@@ -597,6 +597,16 @@ class ThreadToolExecutor:
             except (json.JSONDecodeError, TypeError):
                 args = {}
 
+        # #694 (Codex Astra counsel r4): a mixed-purpose tool's class is its
+        # call's -- a schedule or a delegation in the payload is authority.
+        from ..mcp.tool_authority import WORK, call_class
+
+        if name in _TOOL_CLASSES and isinstance(args, dict) and call_class(name, args) != WORK:
+            raise ValueError(
+                f"{name} with these arguments creates or changes a schedule or a delegation: "
+                "authority, the owner's press, never a model's"
+            )
+
         # Fail closed on unclassified tool
         cls = tool_class(name)
         sensitive = tool_sensitive(name)

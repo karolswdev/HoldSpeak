@@ -27,6 +27,8 @@ family): ``services/thread_tools`` offers a thread only the ``work`` rows, and
 """
 from __future__ import annotations
 
+from typing import Any, Callable, Mapping
+
 WORK = "work"
 EGRESS = "egress"
 AUTHORITY = "authority"
@@ -46,8 +48,8 @@ TOOL_AUTHORITY: dict[str, str] = {
     "meeting.get": WORK,
     "workbench.list": WORK,
     "workbench.get": WORK,
-    "workbench.create": WORK,
-    "workbench.update": WORK,
+    "workbench.create": WORK,  # argument-aware: ARGUMENT_AUTHORITY below
+    "workbench.update": WORK,  # argument-aware: ARGUMENT_AUTHORITY below
     "workbench.delete": WORK,
     "workbench.update_item": WORK,
     "workbench.delete_item": WORK,
@@ -95,8 +97,8 @@ TOOL_AUTHORITY: dict[str, str] = {
     "monday_brief.shelf": WORK,
     "monday_brief.shelf_read": WORK,
     "scheduled_recording.list": WORK,
-    "scheduled_recording.create": WORK,
-    "scheduled_recording.update": WORK,
+    "scheduled_recording.create": WORK,  # argument-aware: ARGUMENT_AUTHORITY below
+    "scheduled_recording.update": WORK,  # argument-aware: ARGUMENT_AUTHORITY below
     "scheduled_recording.delete": WORK,
     "scheduled_recording.cancel_armed": WORK,
     "ask.resolve_grounding": WORK,
@@ -284,3 +286,59 @@ TOOL_AUTHORITY: dict[str, str] = {
 
 #: What a thread never offers or admits, in any mode.
 THREAD_EXCLUDED: frozenset[str] = frozenset(name for name, cls in TOOL_AUTHORITY.items() if cls != WORK)
+
+
+# ── Mixed-purpose tools: the class depends on the call's arguments ─────────
+#
+# Codex Astra counsel r4 on #694 (P1) and Muad'Dib's ruling: a WORK tool can
+# carry authority in its payload. Each predicate names exactly the arguments
+# that create or change a delegation or a schedule (read from the writer that
+# mints it); anything else is ordinary content work.
+
+_SCHEDULE_FIELDS = frozenset({"schedule", "schedule_enabled", "schedule_revision"})
+
+
+def _workbench_create(args: Mapping[str, Any]) -> str:
+    # WorkbenchService.create_workbench mints a LIVE schedule delegation when
+    # schedule_enabled is true (ScheduleDelegationService.enable_from_owner_in_transaction).
+    fields = args.get("fields") or {}
+    return AUTHORITY if any(fields.get(key) not in (None, False, "") for key in _SCHEDULE_FIELDS) else WORK
+
+
+def _workbench_update(args: Mapping[str, Any]) -> str:
+    # update_workbench re-fences or re-mints the delegation when a schedule
+    # field changes; name, recipe and item order are content.
+    fields = args.get("fields") or {}
+    return AUTHORITY if _SCHEDULE_FIELDS & set(fields) else WORK
+
+
+def _recording_create(args: Mapping[str, Any]) -> str:
+    # create_schedule writes a delegation receipt for an event-linked arm or
+    # an enabled schedule; a disabled draft (the default) mints nothing.
+    return AUTHORITY if args.get("calendar_event_id") or args.get("enabled") is True else WORK
+
+
+def _recording_update(args: Mapping[str, Any]) -> str:
+    # update_schedule writes a delegation receipt when it enables or changes
+    # the terms of an enabled schedule; a title is content.
+    return AUTHORITY if {"enabled", "cron_expr", "tz", "one_shot", "duration_minutes"} & set(args) else WORK
+
+
+#: The tools whose class is decided per call. Their TOOL_AUTHORITY row is
+#: WORK (they are offered); the gate evaluates the predicate on the actual
+#: arguments and refuses a non-work call by name.
+ARGUMENT_AUTHORITY: dict[str, Callable[[Mapping[str, Any]], str]] = {
+    "workbench.create": _workbench_create,
+    "workbench.update": _workbench_update,
+    "scheduled_recording.create": _recording_create,
+    "scheduled_recording.update": _recording_update,
+}
+
+
+def call_class(name: str, args: Mapping[str, Any] | None) -> str:
+    """The class of one call: its predicate when the tool is mixed, else its row."""
+    predicate = ARGUMENT_AUTHORITY.get(name)
+    if predicate is not None:
+        return predicate(args or {})
+    return TOOL_AUTHORITY[name]
+

@@ -45207,6 +45207,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_placement_resolver.py",
         "tests/unit/test_thought_workbench_backend.py",
+        "tests/unit/test_thread_tool_gate.py",
         "tests/unit/test_web_routes_thoughts.py",
         "tests/unit/test_workbench_runner_migration.py"
       ],

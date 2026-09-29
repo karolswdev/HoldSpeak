@@ -367,6 +367,85 @@ class TestClassificationCensus:
                  "project.setup.start", "project.setup.answer"},  # a setup's drafting (prepare-then-press)
     }
 
+    #: #694 (Codex Astra counsel r4, law 9): every function that WRITES a
+    #: delegation or a schedule's authority, found by its writer (not by a tool
+    #: name), and the MCP tools that reach it. A new writer fails the census
+    #: until it is pinned here with its tools.
+    MINTERS: dict[tuple[str, str], frozenset[str]] = {
+        # the workbench schedule delegation (ScheduleDelegationService)
+        ("holdspeak/services/schedule_delegation.py", "enable_from_owner"): frozenset(),  # no caller today
+        ("holdspeak/services/schedule_delegation.py", "enable_from_owner_in_transaction"):
+            frozenset({"workbench.create", "workbench.update"}),
+        ("holdspeak/services/workbench_service.py", "create_workbench"): frozenset({"workbench.create"}),
+        ("holdspeak/services/workbench_service.py", "update_workbench"): frozenset({"workbench.update"}),
+        # the recording delegation receipt
+        ("holdspeak/services/scheduled_recording_service.py", "create_schedule"):
+            frozenset({"scheduled_recording.create"}),
+        ("holdspeak/services/scheduled_recording_service.py", "update_schedule"):
+            frozenset({"scheduled_recording.update"}),
+        # the steward's unattended runs (its policy)
+        ("holdspeak/services/steward_contract.py", "configure_policy"): frozenset({"project.configure_steward"}),
+        ("holdspeak/services/steward_contract.py", "effect"): frozenset({"project.configure_steward"}),
+        ("holdspeak/db/steward.py", "insert_policy"): frozenset({"project.configure_steward"}),
+        ("holdspeak/db/steward.py", "insert_policy_in_transaction"): frozenset({"project.configure_steward"}),
+        ("holdspeak/db/steward.py", "update_policy"): frozenset({"project.configure_steward"}),
+        ("holdspeak/db/steward.py", "update_policy_in_transaction"): frozenset({"project.configure_steward"}),
+        # the agent grants: HTTP only (/api/mcp/delegations), no MCP tool
+        ("holdspeak/kernel/desk.py", "grant_effect"): frozenset(),
+        ("holdspeak/kernel/desk.py", "effect"): frozenset(),
+        ("holdspeak/kernel/project_grant.py", "grant_effect"): frozenset(),
+        ("holdspeak/kernel/project_grant.py", "effect"): frozenset(),
+    }
+
+    def test_every_delegation_or_schedule_writer_is_authority_for_a_thread(self) -> None:
+        import ast
+        from pathlib import Path
+
+        from holdspeak.mcp.tool_authority import ARGUMENT_AUTHORITY, TOOL_AUTHORITY
+
+        repo = Path(__file__).resolve().parents[2]
+        found: set[tuple[str, str]] = set()
+        for path in sorted((repo / "holdspeak").rglob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            for fn in ast.walk(tree):
+                if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                for node in ast.walk(fn):
+                    minted = False
+                    if isinstance(node, ast.Call):
+                        callee = getattr(node.func, "attr", getattr(node.func, "id", ""))
+                        minted = callee == "enable_from_owner_in_transaction" or any(
+                            kw.arg == "unattended_enabled"
+                            and not (isinstance(kw.value, ast.Constant) and not kw.value.value)
+                            for kw in node.keywords)
+                    elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+                        minted = node.value == "delegation_enabled" or (
+                            "INSERT INTO kernel_" in node.value and "delegations" in node.value)
+                    elif isinstance(node, ast.JoinedStr):
+                        text = "".join(v.value for v in node.values if isinstance(v, ast.Constant))
+                        minted = "INSERT INTO " in text and "agent_identity" in text and "delegator" in text
+                    if minted:
+                        found.add((path.relative_to(repo).as_posix(), fn.name))
+                        break
+        assert found == set(self.MINTERS), (
+            f"new writers={sorted(found - set(self.MINTERS))} gone={sorted(set(self.MINTERS) - found)}")
+        for site, tools in self.MINTERS.items():
+            for tool in tools:
+                assert TOOL_AUTHORITY[tool] != "work" or tool in ARGUMENT_AUTHORITY, (site, tool)
+
+    def test_the_mixed_tools_decide_by_their_arguments(self) -> None:
+        from holdspeak.mcp.tool_authority import call_class
+
+        assert call_class("workbench.create", {"name": "x", "fields": {"schedule_enabled": True}}) == "authority"
+        assert call_class("workbench.create", {"name": "x", "fields": {"recipe_id": "r"}}) == "work"
+        assert call_class("workbench.update", {"workbench_id": "w", "fields": {"schedule": "0 9 * * 1"}}) == "authority"
+        assert call_class("workbench.update", {"workbench_id": "w", "fields": {"name": "y"}}) == "work"
+        assert call_class("scheduled_recording.create", {"cron_expr": "0 9 * * 1", "enabled": True}) == "authority"
+        assert call_class("scheduled_recording.create", {"calendar_event_id": "e"}) == "authority"
+        assert call_class("scheduled_recording.create", {"cron_expr": "0 9 * * 1"}) == "work"
+        assert call_class("scheduled_recording.update", {"schedule_id": "s", "enabled": True}) == "authority"
+        assert call_class("scheduled_recording.update", {"schedule_id": "s", "title": "t"}) == "work"
+
     def test_the_rulings_examples_are_in_their_class(self) -> None:
         from holdspeak.mcp.tool_authority import TOOL_AUTHORITY
 
