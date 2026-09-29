@@ -55,7 +55,7 @@ import {
 
 type Outcome =
   | { kind: "none" }
-  | { kind: "refused"; code: string }
+  | { kind: "refused"; code: string; at?: number }
   | { kind: "failed"; code: string }
   | { kind: "lost" }
   | { kind: "settled"; send: Send };
@@ -245,6 +245,37 @@ function LastChip({ s }: { s: Send | undefined }) {
   return null;
 }
 
+/** The destination's latest send, from its stored record: the one receipt
+ *  the open row shows (it always agrees with the row's LastChip). */
+function LatestReceipt({ s }: { s: Send | undefined }) {
+  if (!s) return null;
+  if (s.state === "sent") return (
+    <span className="p10-outcome" data-testid="send-sent" data-receipt="latest" data-state="sent">
+      <StateChip state="success" icon="✓" label={SENT_WORD[s.channel]} />
+      <ProofCell channel={s.channel} proof={s.proof} target={s.target} />
+    </span>
+  );
+  if (s.state === "failed") return (
+    <span className="p10-outcome" data-testid="send-failed" data-receipt="latest" data-state="failed" data-code={s.reason ?? ""}>
+      <StateChip state="failure" label="FAILED" />
+      <span className="surface-token" data-chip>{failedWord(s.reason ?? "")}</span>
+      <span className="surface-token" data-chip>NOTHING SENT</span>
+    </span>
+  );
+  if (s.state === "unknown") return (
+    <span className="p10-outcome" data-testid="send-unknown" data-receipt="latest" data-state="unknown">
+      <StateChip state="warning" label={SEND_WORDS.unknownChip} />
+      <span className="surface-token" data-chip>{unknownWord(s.reason ?? "no_answer")}</span>
+    </span>
+  );
+  if (s.state === "dispatching") return (
+    <span className="p10-outcome" data-testid="send-running" data-receipt="latest" data-state="dispatching">
+      <StateChip state="active" icon="◆" label={SEND_WORDS.sending} />
+    </span>
+  );
+  return null;
+}
+
 function openFar(url: string | null) { if (url) window.open(url, "_blank", "noopener"); }
 
 /** The proof of a SENT row, exact as the channel gave it (no uppercasing). */
@@ -277,7 +308,7 @@ async function press(updateId: string, target: string, fresh: () => Held["body"]
     store.holds.delete(k);
     store.outcomes.set(k, { kind: "settled", send });
   } catch (e) {
-    if (e instanceof Refusal) { store.holds.delete(k); store.outcomes.set(k, { kind: e.kind, code: e.code }); }
+    if (e instanceof Refusal) { store.holds.delete(k); store.outcomes.set(k, { kind: e.kind, code: e.code, at: Date.now() } as Outcome); }
     else store.outcomes.set(k, { kind: "lost" });  // keep the update, the key and the body for Retry
   } finally {
     store.busy.delete(k); bump(); reload();
@@ -379,18 +410,14 @@ export function SendWell({ update, sendsRead }: { update: ProjectUpdate; sendsRe
                       <Button dense variant="ghost" data-testid="send-check"
                         onClick={() => openFar(farSide(d.channel, d.target, d.account))}>{`${SEND_WORDS.check} ${targetToken(d.channel, d.target)}`}</Button>
                     ) : null}
-                    <OutcomeLine o={o} />
-                    {o.kind === "settled" && o.send.state === "sent" ? (
-                      <span className="p10-outcome" data-testid="send-sent">
-                        <StateChip state="success" icon="✓" label={SENT_WORD[o.send.channel]} />
-                        <ProofCell channel={o.send.channel} proof={o.send.proof} target={o.send.target} />
-                      </span>
-                    ) : o.kind === "settled" && o.send.state === "unknown" ? (
-                      <span className="p10-outcome" data-testid="send-unknown">
-                        <StateChip state="warning" label={SEND_WORDS.unknownChip} />
-                        <span className="surface-token" data-chip>{unknownWord(o.send.reason ?? "no_answer")}</span>
-                      </span>
-                    ) : null}
+                    {/* Round four (Codex Astra r3 F1): the open row's receipt and the row's
+                        header come from ONE source, the latest send by dispatch_started_at.
+                        The press cache keeps only what no record holds: a lost answer (with
+                        its Retry), and a refusal newer than the latest send. */}
+                    {lost ? <OutcomeLine o={o} />
+                      : o.kind === "refused" && (!last?.dispatch_started_at || (o.at ?? 0) > Date.parse(last.dispatch_started_at))
+                        ? <OutcomeLine o={o} />
+                        : <LatestReceipt s={last} />}
                   </div>
                 );
                 return (

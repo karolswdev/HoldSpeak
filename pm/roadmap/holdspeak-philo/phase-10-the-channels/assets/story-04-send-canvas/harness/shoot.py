@@ -14,7 +14,7 @@ Usage (from the worktree root):
 
 Shots: ../shots/ (Send) and ../../story-04-destinations-canvas/shots/
 (Destinations), <board>-<width>.png at 1440x900 and 393x852 (device scale 2);
-facts.json beside them. ONLY_WIDTH=393 limits the run to one width.
+facts.json beside them. Each width runs on its own hub and HOME; ONLY_WIDTH=393 limits the run to one width.
 """
 from __future__ import annotations
 
@@ -259,10 +259,9 @@ def long_folder(root: Path) -> Path:
     return folder
 
 
-def main() -> None:
-    # A TERM or an interrupt still runs the `finally` below: servers down, HOME removed.
-    import signal
-    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
+def run(widths: list[tuple[int, int]]) -> list[str]:
+    """One width, its own hub, HOME and fixtures (Codex Astra r3 F4: a shared hub
+    carried the desktop run's history into the phone run)."""
     home = tempfile.mkdtemp(prefix="philo10-04-canvas-")
     hub_port, today_port = free_port(), free_port()
     canvas_port = int(os.environ.get("CANVAS_PORT", "4451"))
@@ -452,6 +451,17 @@ def main() -> None:
             def open_sel(name: str) -> str:
                 return f"[data-testid=send-open][data-destination='{name}']"
 
+            def idle(page, name: str):
+                # The press has ended: the verb is no longer busy (a busy row ignores a toggle).
+                page.wait_for_function("""(sel) => { const b = document.querySelector(sel); return !b || b.getAttribute('aria-busy') !== 'true'; }""",
+                                       arg=f"{open_sel(name)} [data-testid=send-verbs] .btn", timeout=10_000)
+
+            def close(page, name: str):
+                idle(page, name)
+                if page.locator(open_sel(name)).count():
+                    page.locator(row_sel(name)).first.click()
+                    page.locator(open_sel(name)).wait_for(state="detached", timeout=10_000)
+
             def pick(page, name: str):
                 if not page.locator(open_sel(name)).count():
                     page.locator(row_sel(name)).first.click()
@@ -494,7 +504,7 @@ def main() -> None:
                 form.locator("[data-testid=dest-key-row] input[type=password]").press("Enter")
                 page.wait_for_timeout(500)
 
-            for width, height in WIDTHS:
+            for width, height in widths:
                 # ── TODAY: story 01's face on its real records (update C) ──
                 ctx, page = open_page(today, width, height)
                 open_room(page)
@@ -814,7 +824,8 @@ def main() -> None:
                       [f"{row_sel('karol/payments-ops #42')} [data-testid=send-last-running]", f"{open_sel('karol/payments-ops #42')} [data-testid=send-verbs] .btn"],
                       seat_on=row_sel("karol/payments-ops #42"),
                       extra={"send_enabled_while_running": page.locator(ghv).is_enabled()})
-                page.locator(row_sel("karol/payments-ops #42")).first.click()   # close the pick
+                page.locator(row_sel("karol/payments-ops #42")).first.click()   # close the pick (no press is running on it)
+                page.locator(open_sel("karol/payments-ops #42")).wait_for(state="detached", timeout=10_000)
                 page.evaluate("window.__p10Release && window.__p10Release()")
                 page.locator(prep_li("karol/payments-ops #42", "sent")).wait_for(timeout=10_000)   # settles on the face, no reload
                 page.wait_for_timeout(500)
@@ -826,8 +837,7 @@ def main() -> None:
                 pick(page, "Email lena@acme.io")
                 send_verb(page, "Email lena@acme.io").click()
                 page.locator(f"{open_sel('Email lena@acme.io')} [data-testid=send-sent]").wait_for(timeout=10_000)
-                page.locator(row_sel("Email lena@acme.io")).first.click()   # close the pick
-                page.wait_for_timeout(300)
+                close(page, "Email lena@acme.io")
                 em = prep_li("Email lena@acme.io")
                 page.locator(f"{em} [data-testid=prepared-row]").click()
                 page.locator(f"{em} [data-testid=prepared-send]").wait_for(timeout=10_000)
@@ -844,6 +854,22 @@ def main() -> None:
                       extra={"lena_sends": order,
                              "latest_by_dispatch": max(order, key=lambda r: r["dispatch_started_at"])["state"],
                              "latest_by_preparation": max(order, key=lambda r: r["created_at"])["state"]})
+                # Round four (Codex Astra r3 F1): reopen the destination. The expanded
+                # receipt says what the header says: the latest send FAILED; the earlier
+                # acceptance is not shown as the current result.
+                pick(page, "Email lena@acme.io")
+                reopened = page.evaluate("""(sel) => { const o = document.querySelector(sel); return {
+                  receipts: o ? [...o.querySelectorAll('[data-receipt=latest]')].map((e) => e.dataset.state) : null,
+                  success_shown: o ? !!o.querySelector('[data-testid=send-sent]') : null,
+                  header: (document.querySelector("[data-testid=destination-row]:has([data-destination='Email lena@acme.io']) [data-testid^=send-last-]") || {}).dataset?.testid || null}; }""",
+                  open_sel("Email lena@acme.io"))
+                if reopened["receipts"] != ["failed"] or reopened["success_shown"] or reopened["header"] != "send-last-failed":
+                    invisible.append(f"28c-{width}: the reopened receipt disagrees with the header: {reopened}")
+                shoot(page, SS, facts_send, "28c-destination-reopened", width, UP,
+                      [f"{row_sel('Email lena@acme.io')} [data-testid=send-last-failed]", f"{open_sel('Email lena@acme.io')} [data-testid=send-failed][data-receipt=latest]",
+                       f"{open_sel('Email lena@acme.io')} [data-testid=send-verb]"],
+                      seat_on=row_sel("Email lena@acme.io"), extra={"reopened": reopened})
+                close(page, "Email lena@acme.io")
                 # A prepared file send: its preview names the file; the receipt names the SAME file (F6).
                 fu = prep_li("Folder Updates")
                 page.locator(f"{fu} [data-testid=prepared-row]").click()
@@ -960,20 +986,31 @@ def main() -> None:
         # Law (2026-09-28): a run removes its own scratch HOME.
         shutil.rmtree(home, ignore_errors=True)
         # Merge with an earlier ONLY_WIDTH run's facts; this run's keys win.
-        tag = "_browser_errors_" + "_".join(str(w) for w, _ in WIDTHS)
+        tag = "_browser_errors_" + "_".join(str(w) for w, _ in widths)
         for path, facts in ((SEND / "shots" / "facts.json", facts_send), (DEST / "shots" / "facts.json", facts_dest)):
             path.parent.mkdir(parents=True, exist_ok=True)
             prior = json.loads(path.read_text()) if path.exists() else {}
             path.write_text(json.dumps({**prior, **facts, tag: errors}, indent=1, ensure_ascii=False) + "\n")
         print("errors:", len(errors), file=sys.stderr)
 
-    # ── The fences (Codex Astra r1 F3) ──
+    return invisible
+
+
+def main() -> None:
+    # A TERM or an interrupt still runs each run's `finally`: servers down, HOME removed.
+    import signal
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
+    invisible: list[str] = []
+    for w in WIDTHS:
+        invisible += run([w])
+    # ── The fences (Codex Astra r1 F3, r2 F3, r3 F1) ──
     failed = False
     if invisible:
         failed = True
-        print("NAMED ELEMENTS NOT ON SCREEN:", *invisible, sep="\n  ", file=sys.stderr)
+        print("FENCE FAILURES (named elements off screen, or a failed assertion):", *invisible, sep="\n  ", file=sys.stderr)
     # Two boards of one width may not share bytes once the clock is masked.
-    for facts in (facts_send, facts_dest):
+    for folder in (SEND / "shots", DEST / "shots"):
+        facts = json.loads((folder / "facts.json").read_text())
         for w, _ in WIDTHS:
             seen: dict[str, str] = {}
             for key, f in sorted(facts.items()):

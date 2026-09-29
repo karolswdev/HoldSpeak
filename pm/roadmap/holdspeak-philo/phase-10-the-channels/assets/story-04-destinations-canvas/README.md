@@ -1,6 +1,6 @@
 # PHILO-10-04 canvas B: the Destinations group in Settings → Connections
 
-**Status: DRAFT, round three, for the owner's ratification** (round three changes canvas A only; this canvas is recaptured with it) (UX-CANON §A.2: the canvas before the build). Round two pays Codex Astra r1 on #693 (`../../checks/canvases-astra-r1.md`). Round three pays Codex Astra r2 (`../../checks/canvases-astra-r2.md`) on canvas A; this canvas is recaptured with it, and the pointer probe now re-measures a control that changes size under it. Nothing here is built in product code. The review page is `index.html` in this folder: every board at 1440 × 900 and 393 × 852. Canvas A, the SEND well, is `../story-04-send-canvas/`; its README states the shared harness, the hub and the stated wire in full.
+**Status: DRAFT, round four, for the owner's ratification** (rounds three and four change canvas A only; this canvas is recaptured with it) (UX-CANON §A.2: the canvas before the build). Round two pays Codex Astra r1 on #693 (`../../checks/canvases-astra-r1.md`). Round three pays Codex Astra r2 (`../../checks/canvases-astra-r2.md`) on canvas A; this canvas is recaptured with it, and the pointer probe now re-measures a control that changes size under it. Nothing here is built in product code. The review page is `index.html` in this folder: every board at 1440 × 900 and 393 × 852. Canvas A, the SEND well, is `../story-04-send-canvas/`; its README states the shared harness, the hub and the stated wire in full.
 
 Sources: story 04 (`../../story-04-the-send-face-and-the-destinations.md`), the design (`../../design/send-lifecycle.md` sections 1, 5 and 8), story 01 as built (#692: the destination record, Remove = park, `DELETE /api/channels/destinations/{id}`), and the Connections pane it joins (`web/src/pages/cores/connections/ConnectionsPane.tsx`).
 
@@ -50,14 +50,14 @@ Sources: story 04 (`../../story-04-the-send-face-and-the-destinations.md`), the 
 
 ## Measurements
 
-32 renders (16 boards × 1440 × 900 and 393 × 852), `shots/facts.json`; both runs exit 0 with the fences on:
+32 renders (16 boards × 1440 × 900 and 393 × 852), `shots/facts.json`; the default run (both widths, each on its own hub) exits 0 with the fences on:
 
 - Named elements on screen: **70 of 70**, board 1 with NO harness scroll. Identical shots within a width, with the menu-bar clock masked: **none**.
 - Text under 12 px: **0** in the proposal, **0** inherited (with the 12 px repairs in `../story-04-send-canvas/harness/canvas.css`).
 - Raw `<button>`: **0** in the proposal; **1** inherited on every render (`C COPY`, the library TransportKey; see Limits).
 - Horizontal overflow: **0**.
 - Contrast, unrounded: lowest **4.50444771:1**, the `SET` token of the SendGrid key (board 8; Codex's "B6 SET token"); none under 4.5:1.
-- Pointer: **348** proposal controls × 9 points = **3132**, **all owned** at both widths (board 14's armed `Remove?` owned on its re-measured second probe at 1440: it disarms to `Remove` after 3 s, during the probe; recorded as `retried`). Of the untouched chrome, **128** controls miss points (the SETTINGS tab's right edge; at 393 the traffic lights, the Settings footer and the Dock).
+- Pointer: **348** proposal controls × 9 points = **3132**, **all owned** at both widths. The probe re-measures a control that changes size under it (board 14's armed `Remove?` disarms to `Remove` after 3 s) and records it as `retried`; in this run none needed it. Of the untouched chrome, **128** controls miss points (the SETTINGS tab's right edge; at 393 the traffic lights, the Settings footer and the Dock).
 - Modals **0**; the SendGrid key on the face **never** (`key_text_on_face` = false on boards 7 and 8); browser errors **0**.
 
 ## Limits (what the boards are not)

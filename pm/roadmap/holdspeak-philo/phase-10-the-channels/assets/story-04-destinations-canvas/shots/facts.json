@@ -1,27 +1,27 @@
 {
  "_seed": {
-  "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo10-04-canvas-lzidzqmr",
+  "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo10-04-canvas-0492dwt7",
   "project": [
    200,
-   "proj-1237c8bc160d"
+   "proj-b5f56176cd04"
   ],
   "updates": [
    {
     "draft": 200,
     "publish": 200,
-    "id": "pupd_0d5d48c0de8e4da48648eca16675c357",
+    "id": "pupd_bb6bd54d2eba45f8b9e5b68ff73b323d",
     "lifecycle": "published"
    },
    {
     "draft": 200,
     "publish": 200,
-    "id": "pupd_ce5b8649f3e544f4bfd17eb9ac42ea00",
+    "id": "pupd_e7f406b98e8740f5a350584e48e68e80",
     "lifecycle": "published"
    },
    {
     "draft": 200,
     "publish": 200,
-    "id": "pupd_0e333b6fe24a43be90d7276f26579d9f",
+    "id": "pupd_d40b2a3aceb741cab79b1b4d0716f628",
     "lifecycle": "published"
    }
   ],
@@ -124,7 +124,7 @@
     "text": "Folder GitHub comment Jira comment Confluence blog post Emai"
    }
   ],
-  "masked_sha": "404950ca8528dd9d3440f26d482ab787ccaa467d9ff1f65fdd4c4d02cc9ed393",
+  "masked_sha": "4b2eeca08ba976990c36f79a5453eda7b79d22cef1de82494e2a7f2e7a7234a6",
   "pointer": [
    {
     "text": "Close Settings",
@@ -998,7 +998,7 @@
     "text": "Save"
    }
   ],
-  "masked_sha": "2a67caff1779c21e76bb3c1a745f1cba169865e4dda9e0e1ebb5f2cf0132bc6c",
+  "masked_sha": "771f6b2307da8889b178fdc2e28720ce2b9d1a771ab08231e3737835d0cc5369",
   "pointer": [
    {
     "text": "Close Settings",
@@ -1732,7 +1732,7 @@
       "at": "bottom-right",
       "efp": false,
       "pointer": false,
-      "hit": "btn--chrome"
+      "hit": "desk-dock"
      }
     ],
     "retried": {
@@ -1865,7 +1865,7 @@
     "text": "SYNCED FOLDER"
    }
   ],
-  "masked_sha": "d3c39c1422ccb33aa76975825ea1e1c992b599d74fa9fe983a6c0b2097762319",
+  "masked_sha": "9ad9def3c6c6d7ee5cf03b9ee955c30f0e8d2b23b6d4d861b5a9218001fdcb48",
   "pointer": [
    {
     "text": "Close Settings",
@@ -2780,7 +2780,7 @@
     "text": "Save"
    }
   ],
-  "masked_sha": "44fe72020552102a3969d810e3907e56e3285af1c4fd89da3ba00955e26873df",
+  "masked_sha": "636848c58e99c63969a03d718b255e5d7978f3fcd22c6190ee25f391a4f5ea2b",
   "pointer": [
    {
     "text": "Close Settings",
@@ -3665,7 +3665,7 @@
        "at": "bottom-right",
        "efp": false,
        "pointer": false,
-       "hit": "desk-dock"
+       "hit": "btn--chrome"
       }
      ]
     }
@@ -3746,7 +3746,7 @@
     "text": "✗ REFUSED ONE KEY ONLY"
    }
   ],
-  "masked_sha": "31628224334732a08bd27ae4053841306ca49815ffc307f4368c039838422f34",
+  "masked_sha": "99c457617ce0054929327175c78d417cb3301d1cc9f615c64fda522e274b8c04",
   "pointer": [
    {
     "text": "Close Settings",
@@ -4552,7 +4552,7 @@
       "at": "bottom-right",
       "efp": false,
       "pointer": false,
-      "hit": "btn--chrome"
+      "hit": "desk-dock"
      }
     ],
     "retried": {
@@ -4701,7 +4701,7 @@
     "text": "Save"
    }
   ],
-  "masked_sha": "59f1686b0e4a5a1b74e71527886a1aa948fa739342fb0152cd3b7512ebada278",
+  "masked_sha": "8a515dd73dce4594a4354598aeecc76607e44c2735264d5877ec1d228019f04c",
   "pointer": [
    {
     "text": "Close Settings",
@@ -5666,7 +5666,7 @@
     "text": "✗ KEY NOT SAVED NO SAFE KEY STORE"
    }
   ],
-  "masked_sha": "72ae41cd9a0a146263dadf93c42348bb95dd6ba56ec01cac705bf60a9e3c9e0d",
+  "masked_sha": "577be50baf898092dfd299ee6f2772d681f721aa1a2920dfdfa9f16f5c7798e2",
   "pointer": [
    {
     "text": "Close Settings",
@@ -6695,7 +6695,7 @@
        "at": "bottom-right",
        "efp": false,
        "pointer": false,
-       "hit": "btn--chrome"
+       "hit": "svg"
       }
      ]
     }
@@ -6786,7 +6786,7 @@
     "text": "lena@acme.io, tomas@acme.io"
    }
   ],
-  "masked_sha": "c961e8f30a5ede0cc112ead4bac6f57c286e1a9fef09380f296bebf87b73aa27",
+  "masked_sha": "b6c05c4d389766955639fb82d3db3275ee6c02c7b412dffa7d878165689b211a",
   "pointer": [
    {
     "text": "Close Settings",
@@ -7909,7 +7909,7 @@
     "text": "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CON"
    }
   ],
-  "masked_sha": "d6e748d92fb6d80ee5062e43bd03c77cffc5ba3ee2a44caaa6c551a794468509",
+  "masked_sha": "f65eb2b7da630cc47ef921c52b1ef050c77a25ff0ee3ee34ef5573b9992089b3",
   "pointer": [
    {
     "text": "Close Settings",
@@ -8806,7 +8806,7 @@
     "text": "✓ CHECKED"
    }
   ],
-  "masked_sha": "ac8ad9bf807e282c0305db2a874c7ddc5167d4098e210a1252459b2c3d5a2800",
+  "masked_sha": "04e2c7d5c47e4ee2d40cbd171f3a79778233eec24f26872eed46df30f01a1fa4",
   "pointer": [
    {
     "text": "Close Settings",
@@ -9673,7 +9673,7 @@
        "at": "bottom-right",
        "efp": false,
        "pointer": false,
-       "hit": "desk-dock-chip"
+       "hit": "btn--chrome"
       }
      ]
     }
@@ -9757,7 +9757,7 @@
     "text": "✗ SENDER NOT VERIFIED"
    }
   ],
-  "masked_sha": "e72ccd764cd1c74b57ae896bd47abbc21338ad48d5bec3b5218b65c2b1b063cb",
+  "masked_sha": "90f90fb13fe895f0f2333d35770f3678e5d875a5313c37e425c90452a74d462c",
   "pointer": [
    {
     "text": "Close Settings",
@@ -10708,7 +10708,7 @@
     "text": "Save"
    }
   ],
-  "masked_sha": "2d53eea1f02c1341e1adbf2bf7b4bf97db3a59fe05dbfa6d185ef02fdd7362ff",
+  "masked_sha": "6d7706ff2c5cfa3fcff13869cf4caa29a2378f8cebeefdc69e3cb71fc81a480e",
   "pointer": [
    {
     "text": "Close Settings",
@@ -11677,7 +11677,7 @@
   "list_chips": [],
   "dest_head": "DESTINATIONS 7",
   "dest_parked": [
-   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 20:23"
+   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 21:41"
   ],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -11719,7 +11719,7 @@
      585,
      611
     ],
-    "text": "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 20:23"
+    "text": "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 21:41"
    },
    {
     "sel": "[data-testid=dest-row]:has([data-destination='Jira PAY-121'])",
@@ -11732,7 +11732,7 @@
     "text": "▸ Jira PAY-121 JIRA PAY-121 ○ NEVER CHECKED ACME.ATLASSIAN.N"
    }
   ],
-  "masked_sha": "d3704b4bf5a45bfb3d072488cba77c61575729f4be396ba14c0fe5247b7aa7a2",
+  "masked_sha": "e4ae561ced9e3db1153451f0724daa0bf41ef93ceaae128f2c6258bb5d5a6e19",
   "pointer": [
    {
     "text": "Close Settings",
@@ -12593,7 +12593,7 @@
   "list_chips": [],
   "dest_head": "DESTINATIONS 7",
   "dest_parked": [
-   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 20:23"
+   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 21:41"
   ],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -12649,7 +12649,7 @@
     "text": "Remove?"
    }
   ],
-  "masked_sha": "3be26170fdd6fad1760f90f5a09fda3b839195b474ef7db851c07f6b762a477c",
+  "masked_sha": "ac8d571d843cbefd4e5a012de71f9e84a5a12d63f694f75ab891d3a9172c9802",
   "pointer": [
    {
     "text": "Close Settings",
@@ -13035,20 +13035,7 @@
     },
     "owned": true,
     "failed_points": [],
-    "retried": {
-     "face_before": {
-      "w": 68.4,
-      "h": 24
-     },
-     "failed_before": [
-      {
-       "at": "bottom-right",
-       "efp": true,
-       "pointer": false,
-       "hit": "btn"
-      }
-     ]
-    }
+    "retried": null
    },
    {
     "text": "▸\nJira PAY-121\nJIRA\nPAY-121\n○\n",
@@ -13576,8 +13563,8 @@
   "list_chips": [],
   "dest_head": "DESTINATIONS 6",
   "dest_parked": [
-   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 20:23",
-   "Email board@acme.io EMAIL board@acme.io PARKED SEP 28 20:24"
+   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 21:41",
+   "Email board@acme.io EMAIL board@acme.io PARKED SEP 28 21:41"
   ],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -13618,10 +13605,10 @@
      585,
      611
     ],
-    "text": "Email board@acme.io EMAIL board@acme.io PARKED SEP 28 20:24"
+    "text": "Email board@acme.io EMAIL board@acme.io PARKED SEP 28 21:41"
    }
   ],
-  "masked_sha": "aafdd37f8d794519948e376b9d5093efa27fc5850e04bb95e08b7ab2178acfef",
+  "masked_sha": "293eb15e582c21e431ede79ec59f7fe72739e46065c01f869fee92f7bc607e78",
   "pointer": [
    {
     "text": "Close Settings",
@@ -14509,7 +14496,7 @@
     "text": "✗ CANNOT READ DESTINATIONS Retry"
    }
   ],
-  "masked_sha": "f0b860a50e35839e6060b0722d0586a5e377de6b116dfa8f19b1c440a927f40f",
+  "masked_sha": "4ef2a222a4bb7fa5767038f0090016733f6062aef45621b0372da2387dd0639e",
   "pointer": [
    {
     "text": "Close Settings",
@@ -15135,7 +15122,7 @@
       "at": "bottom-right",
       "efp": false,
       "pointer": false,
-      "hit": "btn--chrome"
+      "hit": "svg"
      }
     ],
     "retried": {
@@ -15196,7 +15183,7 @@
        "at": "bottom-right",
        "efp": false,
        "pointer": false,
-       "hit": "desk-dock-chip"
+       "hit": "btn--chrome"
       }
      ]
     }
@@ -15266,7 +15253,7 @@
     "text": "Folder GitHub comment Jira comment Confluence blog post Emai"
    }
   ],
-  "masked_sha": "315593a034d69822800482a2bb161eb43ce20b2761eb17d4918105f6e4d773c2",
+  "masked_sha": "8fd59a867ccc8e9d4a6d60d4a7ed295c320a475a4bbcb32ba09b423126769b83",
   "pointer": [
    {
     "text": "Close Settings",
@@ -16330,7 +16317,7 @@
     "text": "Save"
    }
   ],
-  "masked_sha": "b59a0d8905419db5298522d72a21ce5cf83910bb0bd127db0298a9161d7e218c",
+  "masked_sha": "96e0989e0b7703eec5c6e84d23ee0b0e54637bbdcb3ca7e492821fbb62fec6b0",
   "pointer": [
    {
     "text": "Close Settings",
@@ -17387,7 +17374,7 @@
     "text": "SYNCED FOLDER"
    }
   ],
-  "masked_sha": "1eb5b82d724cc27fd6ceed05551ddddc39b5775b7aec6d7a94819b3a23288b00",
+  "masked_sha": "fa2399939f2fe3e2950788848bef6688d5367c67d2a2d332e9dab59742178901",
   "pointer": [
    {
     "text": "Close Settings",
@@ -18492,7 +18479,7 @@
     "text": "Save"
    }
   ],
-  "masked_sha": "1ab994498517fabcbe740d3e1e091c099984681cbff11329d21dad1eae6327b8",
+  "masked_sha": "5feced3154603d78ae52682f4147d5d75cded70a325879ce23bde5718e811cc6",
   "pointer": [
    {
     "text": "Close Settings",
@@ -19648,7 +19635,7 @@
     "text": "✗ REFUSED ONE KEY ONLY"
    }
   ],
-  "masked_sha": "7321fa339f2d3dada6765d3226e418e1b6197de27653e302b8fc16520e8a3e37",
+  "masked_sha": "e629b163867e530130d30b51110ed59ad6d5a54b6a89c8cc7de86c2ef82d9e87",
   "pointer": [
    {
     "text": "Close Settings",
@@ -20793,7 +20780,7 @@
     "text": "Save"
    }
   ],
-  "masked_sha": "4611cdc01219bcc062ef0e3c2320a388c5bcb6f7bce751ab969faaf1b47e3a69",
+  "masked_sha": "8050a8459c427f151600b2753f05c3be439d321bfca39052177222f507f76fa6",
   "pointer": [
    {
     "text": "Close Settings",
@@ -21948,7 +21935,7 @@
     "text": "✗ KEY NOT SAVED NO SAFE KEY STORE"
    }
   ],
-  "masked_sha": "fb58c2a5b51b4d6a40b118780d505b5ef5386e5be2a64beb156a2dfb07958939",
+  "masked_sha": "ca3537514e429e6c850c014ff1b6dc8ed8aae23ab34caf7b3de2ed97c9ea9b4d",
   "pointer": [
    {
     "text": "Close Settings",
@@ -23258,7 +23245,7 @@
     "text": "lena@acme.io, tomas@acme.io"
    }
   ],
-  "masked_sha": "0accf220ace2888cd8ea499d1eb05647805aa4de00dbeb41420ef8edfc3f9b31",
+  "masked_sha": "5aea8df68dfbcaa0e4e47464783323f4e499370ef65fb2928348d3ad064fe10d",
   "pointer": [
    {
     "text": "Close Settings",
@@ -24571,7 +24558,7 @@
     "text": "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CON"
    }
   ],
-  "masked_sha": "468944d71de99e94a7f4104da47e65c4e45326f9cf82563caf650ca282b02213",
+  "masked_sha": "beb6c4783fe8e6bc012c6b1d3bc6682a92cb70ea18b9ff4d22d0bdec0bd6dc35",
   "pointer": [
    {
     "text": "Close Settings",
@@ -25658,7 +25645,7 @@
     "text": "✓ CHECKED"
    }
   ],
-  "masked_sha": "774937f4e42a001f6503b2921971155d68bd806463a58907746c2fe72f1bc15e",
+  "masked_sha": "d21939bb7b17f0fbbe8f2d7d39da7c4ea680b11930d2aff6dc926f99b147bd75",
   "pointer": [
    {
     "text": "Close Settings",
@@ -26799,7 +26786,7 @@
     "text": "✗ SENDER NOT VERIFIED"
    }
   ],
-  "masked_sha": "1b079a28b4723d81b64ab87ba602d651dab35129785a5e2c72de13f21cbca654",
+  "masked_sha": "0fe29416596631719c47261f7fa42df9c6da5dd42ca799b9b13d533d4aecb8a3",
   "pointer": [
    {
     "text": "Close Settings",
@@ -27940,7 +27927,7 @@
     "text": "Save"
    }
   ],
-  "masked_sha": "f99a5ca5f262cd99d419c72e372d2909c6ccf77486ac46fe1cf3c4accdb969cc",
+  "masked_sha": "d3434d0c68538eccab9ff6032c9db942547e2aad44c077f19a74518ceb234958",
   "pointer": [
    {
     "text": "Close Settings",
@@ -29099,7 +29086,7 @@
   "list_chips": [],
   "dest_head": "DESTINATIONS 7",
   "dest_parked": [
-   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 20:30"
+   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 21:48"
   ],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -29141,7 +29128,7 @@
      416,
      465
     ],
-    "text": "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 20:30"
+    "text": "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 21:48"
    },
    {
     "sel": "[data-testid=dest-row]:has([data-destination='Jira PAY-121'])",
@@ -29154,7 +29141,7 @@
     "text": "▸ Jira PAY-121 JIRA PAY-121 ○ NEVER CHECKED ACME.ATLASSIAN.N"
    }
   ],
-  "masked_sha": "095ddfe53df2ed99a5fbd31aa2cd029c39ddcf547d5f4d7cf75033497aa89b8a",
+  "masked_sha": "7add7658ecb542dd68e4a3375336513f72257fe7697975eed2d86b614541076c",
   "pointer": [
    {
     "text": "Close Settings",
@@ -30205,7 +30192,7 @@
   "list_chips": [],
   "dest_head": "DESTINATIONS 7",
   "dest_parked": [
-   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 20:30"
+   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 21:48"
   ],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -30261,7 +30248,7 @@
     "text": "Remove?"
    }
   ],
-  "masked_sha": "6fbcb010aa866afecce1f02e7aaa629bd991777bfdf74bf4468534833eec6bbc",
+  "masked_sha": "366a5e7a3c54cc0fb1e54e55e5d36e8104dd7fa9a8d8df07e62cd066cb42115c",
   "pointer": [
    {
     "text": "Close Settings",
@@ -31365,8 +31352,8 @@
   "list_chips": [],
   "dest_head": "DESTINATIONS 6",
   "dest_parked": [
-   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 20:30",
-   "Email board@acme.io EMAIL board@acme.io PARKED SEP 28 20:31"
+   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 21:48",
+   "Email board@acme.io EMAIL board@acme.io PARKED SEP 28 21:48"
   ],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -31407,10 +31394,10 @@
      312,
      385
     ],
-    "text": "Email board@acme.io EMAIL board@acme.io PARKED SEP 28 20:31"
+    "text": "Email board@acme.io EMAIL board@acme.io PARKED SEP 28 21:48"
    }
   ],
-  "masked_sha": "6e58e185c3b980addba035a50028cd7570c054ff19a93113816e30aed8ec1894",
+  "masked_sha": "347ee559d141b74dad5b8634c22b97c4b9ccab4066543257b8ef618631b217d5",
   "pointer": [
    {
     "text": "Close Settings",
@@ -32488,7 +32475,7 @@
     "text": "✗ CANNOT READ DESTINATIONS Retry"
    }
   ],
-  "masked_sha": "d65cea771c5fb69dec646db38d3704dba9edee7bead5b6bd06f8e43ffc61d468",
+  "masked_sha": "ac8939beb2a1b77c1380628cdbbb7b2336ba3186d6a9bed5f08356b0e5214b06",
   "pointer": [
    {
     "text": "Close Settings",

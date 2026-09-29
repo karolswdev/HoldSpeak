@@ -1,6 +1,6 @@
 # PHILO-10-04 canvas A: the SEND well on a published update
 
-**Status: DRAFT, round three, for the owner's ratification** (UX-CANON §A.2: the canvas before the build). Round two pays Codex Astra r1 DO-NOT-RATIFY on #693 (`../../checks/canvases-astra-r1.md`, committed verbatim). Round three pays Codex Astra r2 (`../../checks/canvases-astra-r2.md`, committed verbatim): r1 F1–F6 verified repaired; two bounded corrections and one qualification, below. Nothing here is built in product code. The review page is `index.html` in this folder: every board at 1440 × 900 and 393 × 852. Canvas B, the Destinations group, is `../story-04-destinations-canvas/`. The two canvases share one harness (`harness/`).
+**Status: DRAFT, round four, for the owner's ratification** (UX-CANON §A.2: the canvas before the build). Round two pays Codex Astra r1 DO-NOT-RATIFY on #693 (`../../checks/canvases-astra-r1.md`, committed verbatim). Round three pays Codex Astra r2 (`../../checks/canvases-astra-r2.md`, committed verbatim): r1 F1–F6 verified repaired; two bounded corrections and one qualification, below. Round four pays Codex Astra r3 (`../../checks/canvases-astra-r3.md`, committed verbatim): one narrow blocker and one harness debt. Nothing here is built in product code. The review page is `index.html` in this folder: every board at 1440 × 900 and 393 × 852. Canvas B, the Destinations group, is `../story-04-destinations-canvas/`. The two canvases share one harness (`harness/`).
 
 Sources: story 04 (`../../story-04-the-send-face-and-the-destinations.md`), the charter's state/width matrix (`../../current-phase-status.md`), the design (`../../design/send-lifecycle.md`, rounds one to five), story 01 as built and merged (#692: the records, the one history table with `channel` and `outcome`, the UNKNOWN row on today's face), and the ratified Phase 9 update canvas it extends.
 
@@ -9,6 +9,13 @@ Sources: story 04 (`../../story-04-the-send-face-and-the-destinations.md`), the 
 1. **The pick:** picking a destination opens its preview and Send in place, under that row (no popover, no modal)? **Recommended: yes.** (Codex Astra r1: yes; placement is the fork.)
 2. **The record word:** story 01's face today (boards 0a, 0b) reads `DELIVERED ×N` and already keeps UNKNOWN apart (`RESULT UNKNOWN ×M`). Change the word to `DELIVERY ×N` (list chip) and `DELIVERY N` (history head), with the same counts? **Recommended: yes.** The record now mixes channels, and a provider's acceptance (`ACCEPTED BY SENDGRID`) is not a delivery. The counts do not change: only rows that `isDelivered` counts are counted.
 3. **Prepared sends:** first in SEND, with a `PREPARED ×K` chip on the update list; ONE preview open (the first), each other one a click away with its Send and Discard; a prepared send that ended stays in place as its result? **Recommended: yes.** (Codex Astra r1: first and chip yes; not all previews forced open.)
+
+## Round four: Codex Astra r3 (`../../checks/canvases-astra-r3.md`)
+
+| Codex Astra r3 | The canvas now |
+|---|---|
+| F1 reopened, the expanded receipt still showed B's ACCEPTED beside Send again while the header said LAST SEND FAILED | The open row's receipt and the row's header come from ONE source, the latest send by `dispatch_started_at` (`SendWell.tsx`, `LatestReceipt`). The press cache keeps only what no record holds: a lost answer with its Retry, and a refusal newer than the latest send. An earlier result is not shown as the current one. Fence, board 28c, in Codex's exact sequence through reopening: the run asserts the open row's receipts are exactly `[failed]`, no success receipt, and the header `send-last-failed`, and fails otherwise (fact `reopened`, both widths). |
+| F4 the default combined run shared the hub's history across widths | Each width runs on its own hub, HOME and fixtures (`shoot.py`, `run()` per width); the default run (both widths, no `ONLY_WIDTH`) is the proof. |
 
 ## Round three: Codex Astra r2 (`../../checks/canvases-astra-r2.md`)
 
@@ -46,7 +53,7 @@ Sources: story 04 (`../../story-04-the-send-face-and-the-destinations.md`), the 
 - Retry after a lost answer reuses the key and does not dispatch again (`24-retried-one-dispatch-*`: `dispatches_with_lost_key` = 1).
 - The lost answer stays on update A and never shows on B, and back on A the lost line and Retry are on screen (`24-retried-one-dispatch-*`: `update_b_clean`, `back_on_a_before_retry`). Both screens repeat boards 3 and 21 once the clock is masked, so they are facts, not boards (Codex Astra r2 F3: the 393 difference in round two was the clock).
 - A running prepared send stays on the face through Back and return, and its destination offers no second Send (`26b-*`: `stored_state`; `26c-*`: `send_enabled_while_running` = false).
-- A destination's latest result follows send order (`28b-*`: `latest_by_dispatch` = failed while `latest_by_preparation` = sent).
+- A destination's latest result follows send order (`28b-*`: `latest_by_dispatch` = failed while `latest_by_preparation` = sent), and reopened, its receipt says the same (`28c-*`: `reopened`).
 - A restart after the boundary gives `unknown` / `interrupted` (`25-unknown-after-restart-*`: `rows`).
 - A prepared file send's preview and receipt name the same file (`29-prepared-file-sent-*`: `same_file`).
 - Every prepared send's end state is stored and shown (`33-discarded-*`: `prepared_rows`).
@@ -55,13 +62,13 @@ Sources: story 04 (`../../story-04-the-send-face-and-the-destinations.md`), the 
 
 ## Measurements
 
-88 renders (44 boards × 1440 × 900 and 393 × 852), `shots/facts.json`; both runs exit 0 with the fences on:
+90 renders (45 boards × 1440 × 900 and 393 × 852), `shots/facts.json`; the default run (both widths, each on its own hub) exits 0 with the fences on:
 
-- Named elements on screen (in the viewport, inside every clipping ancestor, on top at the centre and two inner corners): **168 of 168**. Identical shots within a width, with the menu-bar clock masked: **none**.
+- Named elements on screen (in the viewport, inside every clipping ancestor, on top at the centre and two inner corners): **174 of 174**. Identical shots within a width, with the menu-bar clock masked: **none**.
 - Text under 12 px: **0** in the proposal, **0** inherited. Raw `<button>`: **0** in the proposal, **0** inherited.
 - Horizontal overflow: **0**.
-- Contrast, unrounded (Codex Astra r1 F7): lowest **4.50444771:1**: the PREPARED chip's colour on its fill, measured on its `◆` glyph (11 px) in the SEND well on boards 26–32 and on the `◆ PREPARED ×1` list chip (12 px) on board 35, Codex's "A27 PREPARED chip"; also the SENDING chip on boards 26b and 26c; none under 4.5:1. No colour change.
-- Pointer (UX-CANON C): **1774** proposal controls × 9 points = **15966**, each by `elementFromPoint` AND a real pointer move: **all owned**. A control that changes size under the probe is measured again and probed once more, and both results are recorded (`retried`); among proposal controls only canvas B's armed `Remove?` needed it (its 3 s disarm). Of the untouched window chrome, **176** controls miss points (the ROOM tab's right edge; at 393 the traffic lights), as on the unchanged product (BACKLOG).
+- Contrast, unrounded (Codex Astra r1 F7): lowest **4.50444771:1**: the PREPARED chip's colour on its fill, measured on its `◆` glyph (11 px) in the SEND well on boards 26–32 and on the `◆ PREPARED ×1` list chip (12 px) on board 35, Codex's "A27 PREPARED chip"; also the SENDING chip on boards 26b and 26c and the rows on 28b and 28c; none under 4.5:1. No colour change.
+- Pointer (UX-CANON C): **1838** proposal controls × 9 points = **16542**, each by `elementFromPoint` AND a real pointer move: **all owned**. A control that changes size under the probe is measured again and probed once more, and both results are recorded (`retried`); in this run no proposal control needed it. Of the untouched window chrome, **180** controls miss points (the ROOM tab's right edge; at 393 the traffic lights), as on the unchanged product (BACKLOG).
 - Modals **0**; raw JSON or XHTML in a preview **0**; DELIVERED on an email row **0**; browser errors **0**.
 
 ## Limits (what the boards are not)
@@ -77,10 +84,10 @@ Sources: story 04 (`../../story-04-the-send-face-and-the-destinations.md`), the 
 ## Reproduce
 
 ```bash
-# from the worktree root; each run removes its own HOME and exits 2 on a hidden named element or byte-identical shots
-ONLY_WIDTH=1440 PLAYWRIGHT_BROWSERS_PATH=$HOME/Library/Caches/ms-playwright \
-  .venv/bin/python pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-04-send-canvas/harness/shoot.py
-ONLY_WIDTH=393 PLAYWRIGHT_BROWSERS_PATH=$HOME/Library/Caches/ms-playwright \
+# from the worktree root. Both widths, each on its own hub and HOME (removed when it ends);
+# exit 2 on a named element off screen, a failed assertion, or identical shots (clock masked).
+# ONLY_WIDTH=1440 or ONLY_WIDTH=393 runs one width.
+PLAYWRIGHT_BROWSERS_PATH=$HOME/Library/Caches/ms-playwright \
   .venv/bin/python pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-04-send-canvas/harness/shoot.py
 python3 pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-04-send-canvas/harness/build_review.py
 ```
