@@ -462,30 +462,28 @@ def _patch_resolve_review_people(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _stub_gh_connector(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Stub build_github_pr_connector so Send never calls gh.
-    Returns a fake connector that records the call and returns a comment URL."""
+    """Stub the gh process edge so Send never calls the real gh.
+
+    PHILO-10-02: the nudge posts through the GitHub channel's path (a
+    ``subprocess.exec`` child of ``nudge.send``, the body in a private file);
+    its runner is the service's ``_subprocess_runner`` or, when none is set,
+    ``channel_cli.CLI_RUNNER``. Both are canned here; the answer is gh's real
+    shape (the comment URL)."""
+    import subprocess
+
+    import holdspeak.services.channel_cli as channel_cli
     import holdspeak.services.project_steward_service as pss
 
+    def _fake_gh(argv: Any, **_kwargs: Any) -> Any:
+        return subprocess.CompletedProcess(
+            list(argv), 0, "https://github.com/org/repo/pull/612#issuecomment-123456\n", "")
+
+    monkeypatch.setattr(channel_cli, "CLI_RUNNER", _fake_gh)
     _orig_send = pss.ProjectStewardService.send_nudge
 
     def _patched_send(self: Any, principal: Any, step_id: str, text: str) -> dict:
-        """Intercept send_nudge to stub the gh pr comment call."""
-        import holdspeak.plugins.builtin.github_pr_actuator as gpa
-
-        orig_build = gpa.build_github_pr_connector
-
-        def _fake_build(action: str, runner: Any = None) -> Any:
-            def _fake_connector(proposal: Any) -> dict:
-                return {
-                    "output": "https://github.com/org/repo/pull/612#issuecomment-123456",
-                    "exit_code": 0,
-                }
-            return _fake_connector
-
-        monkeypatch.setattr(gpa, "build_github_pr_connector", _fake_build)
-        result = _orig_send(self, principal, step_id, text)
-        monkeypatch.setattr(gpa, "build_github_pr_connector", orig_build)
-        return result
+        self._subprocess_runner = _fake_gh
+        return _orig_send(self, principal, step_id, text)
 
     monkeypatch.setattr(pss.ProjectStewardService, "send_nudge", _patched_send)
 

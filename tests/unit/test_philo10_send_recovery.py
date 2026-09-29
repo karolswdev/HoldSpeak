@@ -261,10 +261,10 @@ def test_r6_a_send_reaped_before_its_boundary_dispatches_nothing_and_writes_no_h
     entered, release = threading.Event(), threading.Event()
     real_check = FileChannel.check_before_dispatch
 
-    def check(channel: Any, target: Any) -> Any:
+    def check(channel: Any, target: Any, **kw: Any) -> Any:
         entered.set()
         assert release.wait(60)
-        return real_check(channel, target)
+        return real_check(channel, target, **kw)
 
     monkeypatch.setattr(FileChannel, "check_before_dispatch", check)
     thread, answer = in_thread(lambda: send(hub, body))

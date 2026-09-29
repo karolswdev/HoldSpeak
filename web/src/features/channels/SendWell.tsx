@@ -236,7 +236,7 @@ function LatestReceipt({ s }: { s: Send | undefined }) {
   if (s.state === "sent") return (
     <span className="send-line" data-testid="send-sent" data-receipt="latest" data-state="sent">
       <StateChip state="success" icon="✓" label={sentWord(s.channel)} />
-      <ProofCell channel={s.channel} proof={s.proof} target={s.target} />
+      <ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} />
     </span>
   );
   if (s.state === "failed") return (
@@ -262,15 +262,29 @@ function LatestReceipt({ s }: { s: Send | undefined }) {
 
 function openFar(url: string | null) { if (url) window.open(url, "_blank", "noopener"); }
 
+/** Where a SENT row's proof opens: the comment, the work item, the post. */
+export function proofLink(channel: string, proof: Record<string, unknown>, target?: Record<string, string | number>,
+  account?: Record<string, string | boolean>): string {
+  const url = String(proof.url ?? "");
+  const site = String(account?.site ?? "");
+  if (channel === "jira" && site) return `https://${site}/browse/${String(proof.key ?? target?.key ?? "")}`;
+  if (channel === "confluence" && url.startsWith("/") && site) return `https://${site}/wiki${url}`;
+  return url;
+}
+
 /** The proof of a SENT row, exact as the channel gave it (no uppercasing). */
-function ProofCell({ channel, proof, target }: { channel: string; proof: Record<string, unknown> | null; target?: Record<string, string | number> }) {
+function ProofCell({ channel, proof, target, account }: {
+  channel: string; proof: Record<string, unknown> | null; target?: Record<string, string | number>;
+  account?: Record<string, string | boolean>;
+}) {
   const p = proof ?? {};
   if (channel === "file") return <span className="surface-token send-literal send-wrap" data-chip data-testid="proof">{String(p.path ?? "")}</span>;
   if (channel === "email") return <span className="surface-token send-literal" data-chip data-testid="proof">{`ID ${String(p.message_id ?? "")}`}</span>;
-  const url = String(p.url ?? "");
+  const url = proofLink(channel, p, target, account);
   const label = target ? targetToken(channel as Channel, target) : url.replace(/^https:\/\//, "");
   return url ? (
-    <Button dense variant="ghost" className="desk-chip quiet send-literal" data-testid="proof" title={url} onClick={() => openFar(url)}>
+    <Button dense variant="ghost" className="desk-chip quiet send-literal" data-testid="proof" data-href={url} title={url}
+      onClick={() => openFar(url)}>
       {label}
     </Button>
   ) : <span className="surface-token send-literal" data-chip data-testid="proof">{label}</span>;
@@ -507,7 +521,7 @@ function PreparedRow({ uid, revision, s, reload, conns, dest, open, onToggle, on
 
   const result = waiting ? null
     : running ? <span data-testid="prepared-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>
-    : s.state === "sent" ? <><StateChip state="success" icon="✓" label={sentWord(s.channel)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} /></>
+    : s.state === "sent" ? <><StateChip state="success" icon="✓" label={sentWord(s.channel)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} /></>
     : s.state === "failed" ? <><StateChip state="failure" label="FAILED" /><span className="surface-token" data-chip>{failedWord(s.reason ?? "")}</span><span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span></>
     : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><span className="surface-token" data-chip>{unknownWord(s.reason ?? "no_answer")}</span></>
     : <StateChip state="idle" label={SEND_WORDS.discarded} />;
@@ -634,7 +648,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                       </span>
                       {manual
                         ? <span className="surface-token" data-chip>MANUAL</span>
-                        : <ProofCell channel={r.channel} proof={r.proof ?? null} target={send?.target} />}
+                        : <ProofCell channel={r.channel} proof={r.proof ?? null} target={send?.target} account={send?.account} />}
                       <span className="surface-token" data-chip>{stamp(r.deliveredAt)}</span>
                     </>} />
                 );

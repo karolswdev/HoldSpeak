@@ -200,11 +200,11 @@ STEWARD_TRIGGER = OperationDescriptor(
 NUDGE_LIST = OperationDescriptor(
     name="steward.nudges",
     version=1,
-    description="List the steward's reviewer nudges for a project (proposed, sent or dismissed).",
+    description="List the steward's reviewer nudges for a project (proposed, sent, unknown or dismissed).",
     args_schema={
         "type": "object",
         "properties": {"project_id": _PROJECT_ID,
-                       "state": {"type": ["string", "null"], "enum": ["proposed", "sent", "dismissed", None],
+                       "state": {"type": ["string", "null"], "enum": ["proposed", "sent", "dismissed", "unknown", None],
                                  "description": "Optional filter."}},
         "required": ["project_id"],
         "additionalProperties": False,
@@ -233,13 +233,17 @@ NUDGE_SEND = OperationDescriptor(
     },
     principal=_ROOM_PRINCIPAL,
     effect="write",
-    result="{success: true, comment_receipt: the comment's own receipt (comment_url, pr_number, reviewer, timestamp ...), operation_id, receipt: the kernel receipt}",
-    refusals=_CONTRACT_REFUSALS + ("nudge_not_found", "nudge_not_proposed", "empty_text", "the policy or gh refusals",
+    result="{success, outcome: sent | unknown, comment_receipt: the comment's own receipt (comment_url, pr_number, "
+           "reviewer, timestamp ...; outcome unknown with its reason when HoldSpeak cannot know), operation_id, "
+           "receipt: the kernel receipt (indeterminate for unknown)}",
+    refusals=_CONTRACT_REFUSALS + ("nudge_not_found", "nudge_not_proposed", "empty_text", "the policy refusals",
+                                   "send_failed (a known non-delivery; the nudge stays proposed)",
                                    "owner_principal_required"),
-    completion="synchronous; steward.nudges shows it sent",
+    completion="synchronous; steward.nudges shows it sent, or unknown (never offered again)",
     exposure=("http:POST /api/nudges/{step_id}/send", "mcp:nudge.send"),
     service="project_steward_service",
     method="send_nudge_command",
+    blocking_io=True,  # gh pr comment
     owner_press=True,  # a GitHub comment posted as the owner: his press (Muad'Dib ruling on #694)
     admission=Admission("admitted", "A GitHub comment: egress (Q1)."),
 )
@@ -453,6 +457,7 @@ CONNECTION_RECHECK = OperationDescriptor(
     exposure=("http:POST /api/connections/{provider}/recheck", "mcp:connection.recheck"),
     service="connections_service",
     method="recheck",
+    blocking_io=True,  # gh auth status / acli auth switch+status
     admission=Admission(
         "admitted_if",
         "github, jira, confluence: asks the provider and stores its state (egress, Q1; B1). calendar, models: "

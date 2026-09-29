@@ -361,8 +361,10 @@ export type RoomHealthPR = {
 /** HS-173: nudge state for a health person. */
 export type RoomHealthNudge = {
   stepId: string;
-  state: "proposed" | "sent" | "dismissed" | "failed";
+  /* PHILO-10-02: "sending" (crossed its boundary) and "unknown" (the hub cannot know) are persisted states. */
+  state: "proposed" | "sent" | "dismissed" | "failed" | "sending" | "unknown";
   sentAt?: string | null;
+  prNumber?: number | null;
   text?: string;
 };
 
@@ -696,8 +698,9 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             })) : undefined,
             nudge: nudgeRaw ? {
               stepId: String(nudgeRaw.step_id ?? ""),
-              state: String(nudgeRaw.state ?? "proposed") as "proposed" | "sent" | "dismissed" | "failed",
+              state: String(nudgeRaw.state ?? "proposed") as RoomHealthNudge["state"],
               sentAt: nudgeRaw.sent_at != null ? String(nudgeRaw.sent_at) : null,
+              prNumber: typeof nudgeRaw.pr_number === "number" ? nudgeRaw.pr_number : null,
               text: nudgeRaw.text != null ? String(nudgeRaw.text) : undefined,
             } : null,
           };
@@ -1027,7 +1030,10 @@ export type NudgeCardState =
   | { phase: "closed" }
   | { phase: "open"; text: string; busy: boolean; error?: string }
   | { phase: "sent"; displayName: string; prNumber: number; sentAt: string }
-  | { phase: "failed"; text: string; reason: string };
+  | { phase: "failed"; text: string; reason: string }
+  /* PHILO-10-02 (F4): the hub cannot know whether gh posted it. Never a
+   * failure, never offered for Send again: the owner checks the pull request. */
+  | { phase: "unknown"; prNumber: number };
 
 export type NudgeCardAction =
   | { type: "open"; defaultText: string }
@@ -1035,7 +1041,29 @@ export type NudgeCardAction =
   | { type: "sending" }
   | { type: "sent"; displayName: string; prNumber: number; sentAt: string }
   | { type: "failed"; reason: string }
+  | { type: "unknown"; prNumber: number }
   | { type: "dismiss" };
+
+/** PHILO-10-02 (F4, Codex Astra r1 finding 1): the card starts from the step's PERSISTED state.
+ * A step that is `sending` or `unknown` is never offered for Send again, after a
+ * remount or a reload as much as after the press. */
+export function initialNudgeCard(persistedState: string | null | undefined, defaultText: string,
+  prNumber: number, more: { displayName?: string; sentAt?: string; reason?: string; text?: string } = {}): NudgeCardState {
+  // Round four (Codex Astra r3): the text the owner submitted survives the remount, never the default.
+  const text = more.text ?? defaultText;
+  if (persistedState === "unknown" || persistedState === "sending") return { phase: "unknown", prNumber };
+  // Round three (Codex Astra r2 finding 2): a Send still in flight in this Room stays busy on a remount.
+  if (persistedState === "pending") return { phase: "open", text, busy: true };
+  if (persistedState === "failed") return { phase: "failed", text, reason: more.reason || "Send failed" };
+  if (persistedState === "sent" && more.sentAt)
+    return { phase: "sent", displayName: more.displayName || "", prNumber, sentAt: more.sentAt };
+  return { phase: "open", text, busy: false };
+}
+
+/** The Room's own knowledge of a nudge it pressed, kept above the card (a card can be closed mid-send). */
+export type NudgeLocal = { state: "pending" | "unknown" | "failed" | "sent"; reason?: string; sentAt?: string;
+  /** The comment text as submitted (an edited comment is retried as edited). */
+  text?: string };
 
 export function nudgeCardReducer(
   state: NudgeCardState,
@@ -1060,6 +1088,8 @@ export function nudgeCardReducer(
     case "failed":
       if (state.phase !== "open") return state;
       return { phase: "failed", text: state.text, reason: action.reason };
+    case "unknown":
+      return { phase: "unknown", prNumber: action.prNumber };
     case "dismiss":
       return { phase: "closed" };
     default:

@@ -406,7 +406,7 @@ def _p_nudge_send(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     import subprocess
 
     def gh(argv: list[str], **_kwargs: Any) -> Any:
-        return subprocess.CompletedProcess(argv, 0, "https://github.com/example/payments/pull/7#c1\n", "")
+        return subprocess.CompletedProcess(argv, 0, "https://github.com/example/payments/pull/7#issuecomment-1\n", "")
 
     monkeypatch.setattr(hub.root.project_steward_service, "_subprocess_runner", gh)
     # The TRANSPORTED answer (Codex Astra r3): the comment's receipt and the kernel's, both.

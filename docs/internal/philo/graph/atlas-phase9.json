@@ -2167,7 +2167,7 @@
         {
           "path": "web/src/features/project-room/ProjectRoomCore.tsx",
           "symbol": "function ItemsSection",
-          "line": 992,
+          "line": 1045,
           "claim": "the ITEMS section, after NEEDS YOU, omitted when empty, UNAVAILABLE + Retry on a failed read"
         },
         {
@@ -2233,7 +2233,7 @@
         {
           "path": "holdspeak/web/routes/mcp_http.py",
           "symbol": "@router.put(\"/api/settings/remote/delegations/{identity}/projects/{project_id}\")",
-          "line": 438,
+          "line": 458,
           "claim": "the owner's project grant: admitted, owner-only, HTTP only"
         }
       ],

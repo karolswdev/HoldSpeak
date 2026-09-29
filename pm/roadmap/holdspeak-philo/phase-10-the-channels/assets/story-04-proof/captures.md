@@ -29,10 +29,14 @@ Built to the owner's ratified canvases (`../story-04-send-canvas/`, `../story-04
 | 34 several; 34b manual (DELIVERED · MANUAL kept); 35 DELIVERY ×N (A2) + RESULT UNKNOWN ×M | story 01's one table | built + fenced |
 | 36 a draft has no Send | — | built + fenced |
 | 37 CANNOT READ DESTINATIONS; 38 SENDS; 39 HISTORY; 40 NO PREVIEW (Send not offered) | fetch seam (no answer) | built + fenced |
-| B4 GitHub, B6 Confluence, B8 email forms (the name from the target; the key only present or absent) | the forms as drawn | built + shot; SAVE owed: story 02 (GitHub/Jira/Confluence), story 03 (email, the key route) |
+| B4 GitHub, B6 Confluence forms SAVE (the concrete gh login read at save; the Jira/Confluence account from Connections); B5 REFUSED (one key only); B9 the remote rows; B10 a Jira row checked (the hub's state) | story 02 wire, canned process edge | built + fenced (`b04`, `b05-jira-one-key`, `b06`, `b09b-list-remote`, `b10b-jira-checked`) |
+| B8 email form | the form as drawn | built + shot; SAVE owed: story 03 (#696) |
 | B9 list; B10 CHECKED; B12 Edit; B13 old row parked; B14 Remove armed; B15 parked; B16 CANNOT READ DESTINATIONS | real routes | built + fenced |
-| 7–10, 12–16, 18–20 (GitHub POSTED, Jira COMMENTED, Confluence BLOG POSTED, email ACCEPTED BY SENDGRID, sign-in / account refusals), B5 ONE KEY ONLY, B7 KEY NOT SAVED, B11 SENDER NOT VERIFIED | stories 02 / 03 channels | face built (words, proof cells, account chips); NOT fenced: owed when 02 (#695) and 03 merge |
-| 8 SENDING, 26b running prepared across Back → return, 26c its destination Send disabled | a held dispatch | face built (polls while `dispatching`; Send disabled while running); NOT fenced: on main the send route runs on the event loop, so a held dispatch blocks every read; story 02's GATE 2 moves it to the threadpool |
+| 7 GitHub picked; 9 POSTED + the comment link (a double click = one create); 20 REFUSED GITHUB ACCOUNT CHANGED (no create) | story 02 GitHub channel, canned `gh` at `channel_cli.CLI_RUNNER` | built + fenced |
+| 10 Jira picked; 11 UNKNOWN TIMED OUT + Check PAY-121, no automatic re-send; 12 Send again → COMMENTED + the work item link | story 02 Jira channel, canned `acli` | built + fenced |
+| 13 Confluence picked (SPACE, TITLE, ACCOUNT); 14 the account signed out; 15 BLOG POSTED + the post link; the remote history rows | story 02 Confluence channel, canned `acli` | built + fenced. Board 14 reads **FAILED · NOT SIGNED IN · NOTHING SENT**, not the canvas's REFUSED: story 02 settles a signed-out switch as a known non-delivery after the boundary (`atlassian_not_logged_in`); the face shows what the hub recorded |
+| 16–19 email (ACCEPTED BY SENDGRID, SENDER NOT VERIFIED), B7 KEY NOT SAVED, B11 SENDER NOT VERIFIED | story 03 | face built; NOT fenced: owed when #696 merges |
+| 8 SENDING (a create held at the process edge; Send busy and disabled, one create for a double click); 26b a prepared send running survives Back → return (stored `dispatching`); 26c its destination: SENDING, Send disabled; 27 released → POSTED stays as its result | story 02 off-loop dispatch, canned `gh` held on an Event | built + fenced |
 | 25 UNKNOWN after a restart | story 01 recovery | face renders any UNKNOWN row (fenced by `11`); the restart itself is story 01's unit fence, not re-shot here |
 
 ## Limits
@@ -40,6 +44,10 @@ Built to the owner's ratified canvases (`../story-04-send-canvas/`, `../story-04
 - Board 29's prepared preview names the FOLDER, not the file: story 01 mints the file name at the dispatch boundary (`choose_path` in `ChannelService._boundary`), so no file name exists while a send is prepared. The receipt names the file.
 - The destination row clamps a very long target path to two lines (its title and the open preview carry it whole): story 01's ENAMETOOLONG recipe path (~1000 characters) otherwise made a row taller than the 393 viewport.
 - The steward policy face lists `prepare_send` (unit-fenced); choosing the run's `send_destination_ids` is not on the face (story 02's bound).
+
+## Round two, part two: story 02 merged (main 3965c5e1)
+
+The channel boards above run on story 02's real channels with only the process edge canned (its own rig, `tests/unit/_philo10_cli.py`). Glass 16/16 at both widths, every board measured (on-screen, clock-masked byte fence, nine-point pointer pass), the SENDING boards included.
 
 ## Captured runs
 
@@ -234,4 +242,73 @@ E               AssertionError: [{'code': None, 'state': 'sent', 'text': '✓ SA
 69 passed in 158.62s (0:02:38)
  Test Files  24 passed (24)
       Tests  459 passed (459)
+```
+
+### Captured run — 2026-09-29T06:36:30Z
+
+- **Command:** `bash -c set -o pipefail; H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOLDSPEAK_EVIDENCE_WRITE=1 HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm .venv/bin/python -m pytest -q -n 4 --basetemp=$H/pt tests/e2e/test_philo10_04_send_face_glass.py -rA 2>&1 | grep -E "^(PASSED|FAILED|ERROR)|passed|failed"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 95a5f0ee43fb62d5861495afc000c0ecfebf9a32
+
+```text
+__ TestSendFaceGlass.test_a_known_failure_outlives_a_failed_sends_read[1440] ___
+___ TestSendFaceGlass.test_a_known_failure_outlives_a_failed_sends_read[393] ___
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_a_known_failure_outlives_a_failed_sends_read[1440]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_a_lost_answer_and_every_unreadable_read_are_named[1440]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_a_known_failure_outlives_a_failed_sends_read[393]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_prepared_sends_and_the_latest_result[1440]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the_first_setup_loop_and_every_file_state[1440]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_a_lost_answer_and_every_unreadable_read_are_named[393]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the_destinations_group[1440]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the_first_setup_loop_and_every_file_state[393]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_prepared_sends_and_the_latest_result[393]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_github_sending_posted_and_a_running_prepared_send[1440]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the_destinations_group[393]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_the_remote_destination_forms_save[1440]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_github_sending_posted_and_a_running_prepared_send[393]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_jira_and_confluence[1440]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_jira_and_confluence[393]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_the_remote_destination_forms_save[393]
+16 passed in 183.97s (0:03:03)
+```
+
+### Captured run — 2026-09-29T06:39:46Z
+
+- **Command:** `bash -c set -o pipefail; H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm .venv/bin/python -m pytest -q -n 4 --basetemp=$H/pt tests/e2e/test_philo10_01_unknown_send_face.py tests/e2e/test_philo9_03_room_face_glass.py tests/e2e/test_philo10_02_nudge_unknown_glass.py tests/e2e/test_hs173_policy_glass.py tests/e2e/test_hs173_health_glass.py tests/e2e/test_philo9_b1_connections_glass.py tests/e2e/test_hs170_settings_hub_glass.py tests/unit/test_philo10_send_contract.py tests/unit/test_philo10_send_recovery.py tests/unit/test_philo10_send_restart.py tests/unit/test_philo10_rig_op.py tests/unit/test_philo10_cli_channels.py tests/unit/test_philo10_settings_atomic.py tests/unit/test_694_thread_never_sends.py "tests/unit/test_db.py::TestDatabaseShape" 2>&1 | tail -3`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 95a5f0ee43fb62d5861495afc000c0ecfebf9a32
+
+```text
+........................................................................ [ 82%]
+...............................                                          [100%]
+175 passed in 160.63s (0:02:40)
+```
+
+### Captured run — 2026-09-29T06:42:32Z (one vitest test failed under load; the script did not name it here; the next two runs, one below, are 2966/2966 with zero branch-new — the load flake noted in round one)
+
+- **Command:** `bash -c H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOME=$H npm_config_cache=/Users/karol/.npm .venv/bin/python scripts/check_web_baseline.py --run 2>&1 | tail -4`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 95a5f0ee43fb62d5861495afc000c0ecfebf9a32
+
+```text
+
+Suite totals: 2965 passed, 1 failed, 0 skipped
+
+VERDICT: BRANCH-NEW FAILURES: 1
+```
+
+### Captured run — 2026-09-29T06:43:59Z
+
+- **Command:** `bash -c H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOME=$H npm_config_cache=/Users/karol/.npm .venv/bin/python scripts/check_web_baseline.py --run 2>&1 | grep -A3 "BRANCH-NEW\|Suite totals"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 95a5f0ee43fb62d5861495afc000c0ecfebf9a32
+
+```text
+Suite totals: 2966 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
 ```

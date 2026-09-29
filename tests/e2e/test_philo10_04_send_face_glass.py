@@ -111,7 +111,9 @@ def _long_folder(root: Path) -> Path:
     return folder
 
 
-class TestSendFaceGlass:
+class _Rig:
+    """The hub, the browser and the Room/Settings navigation shared by the Send face fences."""
+
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         _ensure_build()
@@ -254,6 +256,8 @@ class TestSendFaceGlass:
         agent.headers.update({"Authorization": f"Bearer {issued.json()['token']}"})
         return agent
 
+
+class TestSendFaceGlass(_Rig):
     # ── 1: the first setup loop and the file channel's states ─────────────
 
     @pytest.mark.e2e
@@ -851,6 +855,364 @@ class TestSendFaceGlass:
                 shots.shoot(page, "b16-destinations-unreadable", ["[data-testid=dest-unreadable]"])
                 assert page.locator("[data-testid=dest-form]").count() == 0
                 shots.write("destinations-group", {"hub": hub})
+                shots.assert_clean()
+                assert not errors, errors
+            finally:
+                browser.close()
+
+
+# ── The GitHub, Jira and Confluence boards (story 02's channels) ─────────
+#
+# The hub, its routes, its kernel and each channel's REAL plan run as they
+# ship; only the process edge is canned (story 02's seam,
+# `channel_cli.CLI_RUNNER`, with its test rig `tests/unit/_philo10_cli.py`).
+# No real gh or acli runs; no account is touched. The Connections reads get
+# a canned gh / acli runner the same way (`_boot(gh_runner=, acli_runner=)`).
+
+import subprocess  # noqa: E402
+import sys  # noqa: E402
+import threading  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "unit"))
+from _philo10_cli import EMAIL as ACLI_EMAIL, SITE as ACLI_SITE, Canned  # noqa: E402
+
+GH_LOGIN = "octo-owner"
+
+
+class _ProviderRunner:
+    """The Connections reads' process edge: gh signed in as GH_LOGIN, acli on SITE/EMAIL."""
+
+    def __call__(self, argv: Any, **_: Any) -> subprocess.CompletedProcess[str]:
+        argv = [str(a) for a in argv]
+        if argv[:3] == ["gh", "auth", "status"]:
+            return subprocess.CompletedProcess(argv, 0, f"Logged in to github.com account {GH_LOGIN} (keyring)\n", "")
+        if argv[:3] == ["gh", "api", "user"]:
+            return subprocess.CompletedProcess(argv, 0, json.dumps({"login": GH_LOGIN, "id": 7}), "")
+        if argv[:1] == ["acli"] and argv[2:4] == ["auth", "switch"]:
+            return subprocess.CompletedProcess(argv, 0, "switched\n", "")
+        if argv[:1] == ["acli"] and argv[2:4] == ["auth", "status"]:
+            return subprocess.CompletedProcess(
+                argv, 0, f"✓ Authenticated\n  Site: {ACLI_SITE}\n  Email: {ACLI_EMAIL}\n", "")
+        return subprocess.CompletedProcess(argv, 1, "", "unexpected")
+
+
+def _seed_atlassian() -> None:
+    """One Jira and one Confluence account on SITE/EMAIL, checked (the Connections rows)."""
+    from holdspeak.db import get_database
+
+    ref = f"{ACLI_SITE}|{ACLI_EMAIL}"
+    with get_database()._connection() as conn:
+        for provider in ("jira", "confluence"):
+            conn.execute(
+                "INSERT OR IGNORE INTO watch_provider_connections (id, provider_id, external_connection_ref, state,"
+                " last_connected_at, last_checked_at, created_at, updated_at) VALUES (?, ?, ?, 'connected',"
+                " datetime('now'), datetime('now'), datetime('now'), datetime('now'))",
+                (f"wpc-{provider}-{ref}", provider, ref))
+
+
+class TestSendChannelsGlass(_Rig):
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        from holdspeak.services import channel_cli
+
+        _ensure_build()
+        self.tmp = tmp_path
+        self.monkeypatch = monkeypatch
+        self.locked: list[Path] = []
+        self.canned = Canned(login=GH_LOGIN)
+        self.gate: threading.Event | None = None
+        self.canned.on_create = self._hold
+        monkeypatch.setattr(channel_cli, "CLI_RUNNER", self.canned)
+        runner = _ProviderRunner()
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=runner, acli_runner=runner)
+        self.server, self.base = server, base
+        _seed_atlassian()
+        try:
+            yield
+        finally:
+            if self.gate is not None:
+                self.gate.set()
+            server.stop()
+
+    def _hold(self, _argv: list[str]) -> None:
+        """A create held at the process edge (after the boundary) until released."""
+        if self.gate is not None:
+            assert self.gate.wait(60), "the held create was never released"
+
+    def _remote(self, page: Any, name: str, channel: str, **fields: Any) -> str:
+        body = {"name": name, "channel": channel, **fields}
+        status, answer = _api_allow_error(page, "POST", "/api/channels/destinations", body, token=TOKEN)
+        assert status == 200, answer
+        return answer["destination"]["id"]
+
+    def _wait_receipt(self, page: Any, name: str, state: str) -> None:
+        page.locator(f"{self._open_sel(name)} [data-receipt=latest][data-state={state}]").wait_for(timeout=T)
+        page.wait_for_timeout(500)
+
+    def _press(self, page: Any, name: str, *, double: bool = False) -> None:
+        verb = page.locator(f"{self._open_sel(name)} [data-testid=send-verb]")
+        page.wait_for_function("(sel) => { const b = document.querySelector(sel); return b && !b.disabled; }",
+                               arg=f"{self._open_sel(name)} [data-testid=send-verb]", timeout=T)
+        verb.dblclick() if double else verb.click()
+
+    # ── GitHub: picked, SENDING (held), POSTED, account changed; a prepared send running ──
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(1200)
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_github_sending_posted_and_a_running_prepared_send(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        shots = Boards(SHOTS, width, UP)
+        gh = "acme/Payments #42"
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                pid = _api(page, "POST", "/api/projects", {"name": NAME}, token=TOKEN)["project"]["id"]
+                uid = self._published(page, pid)
+                dest = self._remote(page, gh, "github", repo="acme/Payments", kind="issue", number=42)
+                self._room(page, pid)
+                self._updates(page)
+                self._open_update(page, uid)
+
+                # Board 7: the preview's fields and the host.
+                self._pick(page, gh)
+                picked = shots.shoot(page, "07-picked-github", [self._row(gh),
+                                     f"{self._open_sel(gh)} [data-testid=send-verb]"])
+                assert picked["preview_fields"] == ["REPOSITORY acme/Payments", "ISSUE #42",
+                                                    f"ACCOUNT {GH_LOGIN} · github.com"], picked["preview_fields"]
+                assert "GITHUB.COM:cloud" in picked["egress_chips"], picked["egress_chips"]
+
+                # Board 8: SENDING -- the create held after the boundary; a double click.
+                self.gate = threading.Event()
+                self._press(page, gh, double=True)
+                self._wait_receipt(page, gh, "dispatching")
+                sending = shots.shoot(page, "08-sending", [self._row(gh), f"{self._open_sel(gh)} [data-testid=send-verb]"])
+                assert sending["send_verbs"][0]["disabled"] and sending["send_verbs"][0]["busy"], sending["send_verbs"]
+                assert any("SENDING" in c for c in sending["last_chips"]), sending["last_chips"]
+
+                # Board 9: released: POSTED + the comment; ONE create for the double click.
+                self.gate.set()
+                self.gate = None
+                self._wait_receipt(page, gh, "sent")
+                posted = shots.shoot(page, "09-posted-github", [f"{self._open_sel(gh)} [data-testid=send-sent]"], seat="CENTER:" + f"{self._open_sel(gh)} [data-testid=send-sent]")
+                hub = self._sends(page, uid)
+                assert len(self.canned.creates()) == 1 and [s["state"] for s in hub] == ["sent"], hub
+                href = page.locator(f"{self._open_sel(gh)} [data-testid=send-sent] [data-testid=proof]").get_attribute("data-href")
+                assert href == hub[0]["proof"]["url"] and href.startswith("https://github.com/acme/Payments/issues/42#"), href
+                assert posted["receipts"][0]["text"] == f"✓ POSTED {gh}", posted["receipts"]
+
+                # Board 20: gh now signed in as someone else: REFUSED, nothing ran.
+                self.canned.login = "someone-else"
+                self._press(page, gh)
+                page.locator(f"{self._open_sel(gh)} [data-testid=send-refused]").wait_for(timeout=T)
+                page.wait_for_timeout(400)
+                refused = shots.shoot(page, "20-refused-github-account", [f"{self._open_sel(gh)} [data-testid=send-refused]"], seat="CENTER:" + f"{self._open_sel(gh)} [data-testid=send-refused]")
+                assert refused["receipts"][0]["code"] == "github_identity_changed", refused["receipts"]
+                assert refused["receipts"][0]["text"] == "✗ REFUSED GITHUB ACCOUNT CHANGED NOTHING SENT", refused["receipts"]
+                assert len(self.canned.creates()) == 1
+                self.canned.login = GH_LOGIN
+                self._unpick(page, gh)
+
+                # Boards 26b, 26c, 27: a prepared send running survives Back and return.
+                sid = _api(page, "POST", "/api/channels/sends", {"update_id": uid, "destination_id": dest},
+                           token=TOKEN)["send"]["id"]
+                self._focus(page)
+                self._back(page)
+                self._open_update(page, uid)
+                row = "li.surface-ledger-row:has(> [data-testid=prepared-row])"
+                page.locator(f"{row} [data-testid=prepared-send]").wait_for(timeout=T)
+                self.gate = threading.Event()
+                page.locator(f"{row} [data-testid=prepared-send]").click()
+                page.locator("[data-testid=prepared-sending]").wait_for(timeout=T)
+                self._back(page)
+                self._open_update(page, uid)
+                page.locator("[data-testid=prepared-sending]").wait_for(timeout=T)
+                stored = {s["id"]: s for s in self._sends(page, uid)}[sid]["state"]
+                running = shots.shoot(page, "26b-prepared-running-after-return", ["[data-testid=prepared-sending]"])
+                assert stored == "dispatching", stored
+                self._pick(page, gh)
+                dest_running = shots.shoot(page, "26c-destination-running",
+                                           [f"{self._row(gh)} [data-testid=send-last-running]",
+                                            f"{self._open_sel(gh)} [data-testid=send-verb]"])
+                assert dest_running["send_verbs"][0]["disabled"], dest_running["send_verbs"]
+                self.gate.set()
+                self.gate = None
+                page.wait_for_function("""() => [...document.querySelectorAll('[data-testid=prepared-result] [data-state]')]
+                    .some((e) => e.dataset.state === 'sent')""", timeout=T)
+                page.wait_for_timeout(900)
+                self._unpick(page, gh)
+                done = shots.shoot(page, "27-prepared-sent", ["[data-testid=prepared-result]"])
+                assert done["prepared_results"][0].startswith(f"· {gh} ✓ POSTED {gh}"), done["prepared_results"]
+                assert len(self.canned.creates()) == 2
+                shots.write("send-face-github", {"hub_sends": self._sends(page, uid), "running_stored": stored})
+                shots.assert_clean()
+                assert not errors, errors
+            finally:
+                if self.gate is not None:
+                    self.gate.set()
+                browser.close()
+
+    # ── Jira and Confluence: picked, UNKNOWN, COMMENTED, not signed in, BLOG POSTED ──
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(1200)
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_jira_and_confluence(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        shots = Boards(SHOTS, width, UP)
+        jira, conf = "Jira PAY-121", "Confluence space 98304"
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                pid = _api(page, "POST", "/api/projects", {"name": NAME}, token=TOKEN)["project"]["id"]
+                uid = self._published(page, pid)
+                self._remote(page, jira, "jira", site=ACLI_SITE, email=ACLI_EMAIL, key="PAY-121")
+                self._remote(page, conf, "confluence", site=ACLI_SITE, email=ACLI_EMAIL, space_id="98304")
+                self._room(page, pid)
+                self._updates(page)
+                self._open_update(page, uid)
+
+                self._pick(page, jira)
+                picked = shots.shoot(page, "10-picked-jira", [self._row(jira), f"{self._open_sel(jira)} [data-testid=send-verb]"])
+                assert picked["preview_fields"] == ["WORK ITEM PAY-121", f"ACCOUNT {ACLI_EMAIL} · {ACLI_SITE}"], picked["preview_fields"]
+
+                # Board 11: no answer from the create: UNKNOWN; Check opens the work item; never re-sent.
+                create = ("acli", "jira", "workitem", "comment", "create")
+
+                def _timeout(argv: list[str]) -> Any:
+                    raise subprocess.TimeoutExpired(argv, 60)
+
+                self.canned.answers[create] = _timeout
+                self._press(page, jira)
+                self._wait_receipt(page, jira, "unknown")
+                unknown = shots.shoot(page, "11-unknown-jira", [f"{self._open_sel(jira)} [data-testid=send-unknown]",
+                                                                f"{self._open_sel(jira)} [data-testid=send-check]"],
+                                      seat=f"CENTER:{self._open_sel(jira)} [data-testid=send-unknown]")
+                assert unknown["receipts"][0]["text"] == "⚠ RESULT UNKNOWN TIMED OUT", unknown["receipts"]
+                assert page.locator(f"{self._open_sel(jira)} [data-testid=send-check]").inner_text().strip() == "Check PAY-121"
+                creates_after_unknown = len(self.canned.creates())
+                page.wait_for_timeout(1500)
+                assert len(self.canned.creates()) == creates_after_unknown  # no automatic re-send
+
+                # Board 12: Send again (a new send, a new key): COMMENTED + the work item.
+                del self.canned.answers[create]
+                assert page.locator(f"{self._open_sel(jira)} [data-testid=send-verb]").inner_text().strip() == "Send again"
+                self._press(page, jira)
+                self._wait_receipt(page, jira, "sent")
+                commented = shots.shoot(page, "12-commented-jira", [f"{self._open_sel(jira)} [data-testid=send-sent]"], seat="CENTER:" + f"{self._open_sel(jira)} [data-testid=send-sent]")
+                assert commented["receipts"][0]["text"] == "✓ COMMENTED PAY-121", commented["receipts"]
+                href = page.locator(f"{self._open_sel(jira)} [data-testid=send-sent] [data-testid=proof]").get_attribute("data-href")
+                assert href == f"https://{ACLI_SITE}/browse/PAY-121", href
+                self._unpick(page, jira)
+
+                # Boards 13-15: Confluence picked; the account signed out; signed in again.
+                self._pick(page, conf)
+                cpick = shots.shoot(page, "13-picked-confluence", [self._row(conf), f"{self._open_sel(conf)} [data-testid=send-verb]"])
+                assert cpick["preview_fields"][0] == "SPACE 98304" and cpick["preview_fields"][1].startswith("TITLE "), cpick["preview_fields"]
+                assert cpick["preview_fields"][2] == f"ACCOUNT {ACLI_EMAIL} · {ACLI_SITE}", cpick["preview_fields"]
+                switch = ("acli", "confluence", "auth", "switch")
+                self.canned.answers[switch] = lambda argv: (1, "", "✗ Error: unauthorized: use 'acli jira auth login' to authenticate")
+                self._press(page, conf)
+                self._wait_receipt(page, conf, "failed")
+                signed_out = shots.shoot(page, "14-failed-confluence-sign-in", [f"{self._open_sel(conf)} [data-testid=send-failed]"], seat="CENTER:" + f"{self._open_sel(conf)} [data-testid=send-failed]")
+                assert signed_out["receipts"][0] == {"text": "✗ FAILED NOT SIGNED IN NOTHING SENT", "state": "failed",
+                                                     "code": "atlassian_not_logged_in"}, signed_out["receipts"]
+                del self.canned.answers[switch]
+                self._focus(page)
+                self._press(page, conf)
+                self._wait_receipt(page, conf, "sent")
+                blog = shots.shoot(page, "15-blog-posted-confluence", [f"{self._open_sel(conf)} [data-testid=send-sent]"], seat="CENTER:" + f"{self._open_sel(conf)} [data-testid=send-sent]")
+                href = page.locator(f"{self._open_sel(conf)} [data-testid=send-sent] [data-testid=proof]").get_attribute("data-href")
+                assert href == f"https://{ACLI_SITE}/wiki/spaces/OPS/blog/5550001", href
+                assert blog["receipts"][0]["text"] == "✓ BLOG POSTED SPACE 98304", blog["receipts"]
+                self._unpick(page, conf)
+
+                dl = self._deliveries(page, pid, uid)
+                page.locator("[data-testid=delivery-row]").first.wait_for(timeout=T)
+                hist = shots.shoot(page, "34c-history-remote", ["[data-testid=delivery-history] > li:first-child > [data-testid=delivery-row]"])
+                assert [(d["channel"], d["outcome"]) for d in dl] == [("jira", "unknown"), ("jira", "sent"), ("confluence", "sent")], dl
+                assert hist["history_head"] == "DELIVERY 2", hist["history_head"]
+                assert [h.split(" ")[0] for h in hist["history"]] == ["⚠", "✓", "✓"], hist["history"]
+                assert "COMMENTED" in hist["history"][1] and "BLOG POSTED" in hist["history"][2], hist["history"]
+                shots.write("send-face-atlassian", {"hub_deliveries": dl, "hub_sends": self._sends(page, uid)})
+                shots.assert_clean()
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    # ── The forms save through story 02's wire (B4-B6) ────────────────────
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(1200)
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_the_remote_destination_forms_save(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        shots = Boards(SHOTS, width, DS)
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                self._stage(page, "configure-settings", "integrations")
+                page.locator("[data-testid=dest-form]").wait_for(timeout=T)
+                page.wait_for_timeout(900)
+                select = page.locator("[data-testid=dest-form] select").first
+
+                # B4: GitHub: the concrete login is read at save.
+                select.select_option("github")
+                page.locator("[data-testid=dest-repo]").fill("acme/Payments")
+                page.locator("[data-testid=dest-number]").fill("42")
+                page.locator("[data-testid=dest-save]").click()
+                page.locator("[data-testid=dest-row]").first.wait_for(timeout=T)
+
+                # B5: Jira: ONE key only, refused by name; then one key saves.
+                page.locator("[data-testid=dest-add]").click()
+                select = page.locator("[data-testid=dest-form] select").first
+                select.select_option("jira")
+                page.wait_for_timeout(200)
+                page.locator("[data-testid=dest-key]").fill("PAY-118 PAY-119")
+                page.locator("[data-testid=dest-save]").click()
+                page.locator("[data-testid=dest-refused]").wait_for(timeout=T)
+                page.wait_for_timeout(300)
+                one_key = shots.shoot(page, "b05-jira-one-key", ["[data-testid=dest-refused]"], seat="CENTER:[data-testid=dest-refused]")
+                code = page.locator("[data-testid=dest-refused]").get_attribute("data-code")
+                assert code in {"jira_key_not_single", "jira_key_invalid"}, code
+                assert "REFUSED" in page.locator("[data-testid=dest-refused]").inner_text()
+                page.locator("[data-testid=dest-key]").fill("PAY-118")
+                page.locator("[data-testid=dest-save]").click()
+                page.wait_for_function("document.querySelectorAll('[data-testid=dest-row]').length === 2", timeout=T)
+
+                # B6: Confluence space.
+                page.locator("[data-testid=dest-add]").click()
+                page.locator("[data-testid=dest-form] select").first.select_option("confluence")
+                page.wait_for_timeout(200)
+                page.locator("[data-testid=dest-space]").fill("98304")
+                page.locator("[data-testid=dest-save]").click()
+                page.wait_for_function("document.querySelectorAll('[data-testid=dest-row]').length === 3", timeout=T)
+                page.wait_for_timeout(400)
+                hub = _api(page, "GET", "/api/channels/destinations", token=TOKEN)["destinations"]
+                listed = shots.shoot(page, "b09b-list-remote", ["[data-testid=dest-row]"])
+                assert sorted((d["channel"], d["name"]) for d in hub) == [
+                    ("confluence", "Confluence space 98304"), ("github", "acme/Payments #42"), ("jira", "Jira PAY-118")], hub
+                gh_row = next(d for d in hub if d["channel"] == "github")
+                assert gh_row["account"] == {"host": "github.com", "login": GH_LOGIN}, gh_row
+                jira_row = next(d for d in hub if d["channel"] == "jira")
+                assert jira_row["account"] == {"site": ACLI_SITE, "email": ACLI_EMAIL}, jira_row
+                assert listed["dest_head"] == "DESTINATIONS 3"
+                assert {"GITHUB.COM:cloud", f"{ACLI_SITE.upper()}:cloud"} <= set(listed["egress_chips"]), listed["egress_chips"]
+
+                # B10: the Jira row checked: the account's state, as the hub keeps it.
+                row = self._drow("Jira PAY-118")
+                page.locator(f"{row} > .surface-ledger-line").click()
+                page.locator(f"{row} [data-testid=dest-check]").click()
+                page.locator(f"{row} [data-testid=dest-check-result]").wait_for(timeout=T)
+                page.wait_for_timeout(300)
+                shots.shoot(page, "b10b-jira-checked", [f"{row} [data-testid=dest-check-result]"])
+                answered = page.locator(f"{row} [data-testid=dest-check-result]").get_attribute("data-code")
+                check = _api(page, "POST", f"/api/channels/destinations/{jira_row['id']}/check", {}, token=TOKEN)["check"]
+                assert answered == check["state"], (answered, check)
+                shots.write("destinations-remote", {"hub": hub, "check": check, "one_key": one_key["receipts"]})
                 shots.assert_clean()
                 assert not errors, errors
             finally:
