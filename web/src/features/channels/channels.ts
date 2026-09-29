@@ -146,6 +146,7 @@ const REFUSED: Record<string, string> = {
   send_already_settled: "ALREADY DONE",
   path_outside_folder: "PATH NOT IN FOLDER",
   no_answer: "NO ANSWER",
+  lock_timeout: "LOCK TIMEOUT",
 };
 /** Failures (a KNOWN non-delivery). */
 const FAILED: Record<string, string> = {
@@ -322,10 +323,13 @@ async function call<T>(path: string, init: RequestInit & { json?: unknown } = {}
   try {
     return await apiFetch<T>(path, init);
   } catch (e) {
-    if (e instanceof ApiError && e.status >= 400 && e.status < 500) {
+    if (e instanceof ApiError) {
+      // The named refusal wins over the HTTP class (Codex Astra r2 on #697): an answer that carries a
+      // terminal REFUSED receipt is a known refusal whatever its status; a 4xx that names its code is one.
       const p = (e.payload ?? {}) as Record<string, unknown>;
       const code = p.error_code ?? p.code;
-      if (code) throw new Refusal(String(code));
+      const receipt = (p.receipt ?? null) as Record<string, unknown> | null;
+      if (code && (receipt?.state === "refused" || (e.status >= 400 && e.status < 500))) throw new Refusal(String(code));
     }
     throw e;
   }
@@ -374,7 +378,7 @@ export const wire = {
       method: "DELETE", json: { command_id: commandId() },
     }).then((r) => { destChanged(); return r.destination; }),
   check: (id: string) =>
-    call<{ destination: Destination; check: { state: string } }>(
+    call<{ destination: Destination; check: { state: string; answered_at?: string | null } }>(
       `/api/channels/destinations/${encodeURIComponent(id)}/check`, { method: "POST", json: {} }),
   /** Story 03: the SendGrid key, typed once, into the OS keychain (the key is the body, never shown again). */
   saveKey: (keyRef: string, value: string) =>

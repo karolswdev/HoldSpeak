@@ -158,7 +158,8 @@ CHANNEL_CHECK_DESTINATION = OperationDescriptor(
     effect="read",
     result="{destination, check: {state: ready | changed | missing | not_writable | parked | connected | "
            "never_checked | owner_action_required | unavailable | degraded | email_key_missing | "
-           "email_key_store_not_native | email_key_store_locked | sender_verified | sender_not_verified, resolved}}",
+           "email_key_store_not_native | email_key_store_locked | sender_accepted | sender_not_verified | "
+           "key_changed, resolved, answered_at (email: when the provider gave that answer)}}",
     refusals=_CONTRACT_REFUSALS + ("destination_not_saved",),
     completion="synchronous",
     exposure=("http:POST /api/channels/destinations/{destination_id}/check", "mcp:channel.check_destination"),
@@ -274,7 +275,7 @@ CHANNEL_SEND = OperationDescriptor(
                                    "payload_too_large:<channel>", "send_already_settled", "update_not_published",
                                    "path_outside_folder", "github_identity_changed", "github_not_logged_in",
                                    "github_identity_unverified", "atlassian_not_signed_in",
-                                   "atlassian_switch_failed", "atlassian_identity_unverified",
+                                   "atlassian_switch_failed", "atlassian_identity_unverified", "lock_timeout",
                                    "email_provider_unknown", "email_key_missing",
                                    "email_key_store_not_native", "email_key_store_locked",
                                    "email_recipients_too_many", "idempotency_conflict"),

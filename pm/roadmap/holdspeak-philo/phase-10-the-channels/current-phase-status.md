@@ -161,6 +161,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-29, story 04 round three (PR #697): Codex Astra r2 paid (B11 wording and time, the lock refusal on the first answer, the real connection producer in the glass); glass 24/24 at both widths.
+
 2026-09-29, story 04 DONE on the lane (PR #697): story 03 merged in; the email boards fenced (B11: Check reports the sender's verification from the provider's last answer); every ratified board at 1440 and 393, glass 22/22; web baseline zero branch-new. Owed: Muad'Dib's full suite and the Codex Astra counsel on the whole face.
 
 2026-09-29, story 04: board 14 as ratified — the Jira and Confluence channels refuse a signed-out account before the boundary (a follow-up to story 02, carried by #697). Board 25 fenced (a real hub kill mid-send). Owed: the email boards with story 03 (#696).

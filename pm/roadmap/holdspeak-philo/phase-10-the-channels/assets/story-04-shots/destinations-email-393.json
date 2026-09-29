@@ -382,13 +382,263 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "021a8ee38c0980860dfe10c278f24ad91cb2030cb4ade8a8bb41fb42f4de84dc",
+      "masked_sha": "7086711c04345c403312ac51e1185d5ad69b2a606d5e2ae266e501da8188dee4",
       "modal": false,
       "named": [
         {
           "ok": true,
           "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Email lena@acme.io']) [data-testid=dest-check-result]",
-          "text": "✗ SENDER NOT VERIFIED",
+          "text": "✗ SENDER NOT VERIFIED LAST SEND SEP 29 02:20",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            68
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            68
+          ],
+          "text": "▾\nEmail lena@acme.io\nEMAIL\nlen"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Check"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Edit"
+        },
+        {
+          "face": [
+            61.2,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            61.2,
+            44
+          ],
+          "text": "Remove"
+        },
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            44
+          ],
+          "text": "Add destination"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b11b-email-check-key-changed-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 1",
+      "dest_parked": [],
+      "destinations": [
+        "▾ Email lena@acme.io EMAIL lena@acme.io +1 API.SENDGRID.COM"
+      ],
+      "egress_chips": [
+        "API.SENDGRID.COM:cloud",
+        "API.SENDGRID.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "026b45293d4079d39717db2ed6251a9b19fab7094d8a49820248111cb4d7f1fb",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Email lena@acme.io']) [data-testid=dest-check-result]",
+          "text": "⚠ NOT CHECKED SINCE KEY CHANGE",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            68
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            68
+          ],
+          "text": "▾\nEmail lena@acme.io\nEMAIL\nlen"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Check"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Edit"
+        },
+        {
+          "face": [
+            61.2,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            61.2,
+            44
+          ],
+          "text": "Remove"
+        },
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            44
+          ],
+          "text": "Add destination"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b11c-email-check-accepted-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 1",
+      "dest_parked": [],
+      "destinations": [
+        "▾ Email lena@acme.io EMAIL lena@acme.io +1 API.SENDGRID.COM"
+      ],
+      "egress_chips": [
+        "API.SENDGRID.COM:cloud",
+        "API.SENDGRID.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "32d8581f8853a94ce49e51bbe078e8b1b2c074fd78670262275f38891df6afb9",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Email lena@acme.io']) [data-testid=dest-check-result]",
+          "text": "✓ SENDER ACCEPTED LAST SEND SEP 29 02:20",
           "why": ""
         }
       ],
@@ -491,6 +741,7 @@
     }
   },
   "check": {
+    "answered_at": "2026-09-29T08:20:18.453111+00:00",
     "resolved": null,
     "state": "sender_not_verified"
   },
@@ -498,7 +749,7 @@
     {
       "ok": true,
       "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Email lena@acme.io']) [data-testid=dest-check-result]",
-      "text": "✗ SENDER NOT VERIFIED",
+      "text": "✗ SENDER NOT VERIFIED LAST SEND SEP 29 02:20",
       "why": ""
     }
   ],
@@ -513,8 +764,8 @@
       "badge": "cloud",
       "channel": "email",
       "connection": null,
-      "created_at": "2026-09-29T07:43:42+00:00",
-      "id": "chd_c5833468ddedae544687ab5c",
+      "created_at": "2026-09-29T08:20:13+00:00",
+      "id": "chd_73f03e1193348303d3e7cb44",
       "name": "Email lena@acme.io",
       "parked_at": null,
       "state": "active",

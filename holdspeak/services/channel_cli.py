@@ -48,7 +48,7 @@ from ..plugins.gated_connector import (
     build_gated_connector,
 )
 from .channel_contract import ChannelRefused, Document, Outcome, private_payload_file, redact, sha256
-from .errors import ValidationError
+from .errors import ServiceError, ValidationError
 
 #: The process edge every CLI channel command goes through (tests can it).
 CLI_RUNNER: Any = subprocess.run
@@ -319,6 +319,19 @@ class GitHubChannel(CliChannel):
 # ── Atlassian (Jira and Confluence) ────────────────────────────────────────
 
 
+class _Held:
+    """Releases a lock this code already entered (``with`` for an explicit ``__enter__``)."""
+
+    def __init__(self, lock: Any) -> None:
+        self._lock = lock
+
+    def __enter__(self) -> Any:
+        return self._lock
+
+    def __exit__(self, *exc: Any) -> None:
+        self._lock.__exit__(*exc)
+
+
 class _Atlassian(CliChannel):
     product = ""
 
@@ -342,7 +355,15 @@ class _Atlassian(CliChannel):
         self.valid(target)
         account = account or {}
         site, email = str(account.get("site") or ""), str(account.get("email") or "")
-        with _ACLI_LOCK:
+        # A lock that stays held is a KNOWN refusal before the boundary (nothing ran): 409, like every
+        # refusal of this send, never the provider read's 503 (Codex Astra r2 on #697, finding 2).
+        try:
+            _ACLI_LOCK.__enter__()
+        except ServiceError as exc:
+            if exc.code != "lock_timeout":
+                raise
+            raise ChannelRefused("lock_timeout", "Another HoldSpeak process holds the acli lock") from None
+        with _Held(_ACLI_LOCK):
             code, out, err = self._read(["acli", self.product, "auth", "switch", "--site", site, "--email", email],
                                         principal)
             text = out + "\n" + err

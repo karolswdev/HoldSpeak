@@ -174,8 +174,9 @@ class ChannelService:
 
         row = self._destination(destination_id)
         if row["channel"] == "email":
-            return {"destination": self._destination_view(row), "check": {"state": self._email_state(row),
-                                                                         "resolved": None}}
+            state, answered_at = self._email_state(row)
+            return {"destination": self._destination_view(row),
+                    "check": {"state": state, "resolved": None, "answered_at": answered_at}}
         if row["channel"] != "file":
             view = self._destination_view(row)
             state = "parked" if row["state"] != "active" else str((view["connection"] or {}).get("state") or "")
@@ -190,30 +191,45 @@ class ChannelService:
                  else "not_writable")
         return {"destination": self._destination_view(row), "check": {"state": state, "resolved": resolved}}
 
-    def _email_state(self, row: Mapping[str, Any]) -> str:
+    def _email_state(self, row: Mapping[str, Any]) -> tuple[str, Optional[str]]:
         """An email destination, checked locally (no call to the provider): the key in a native keychain, then
-        the SENDER's verification as the provider last answered it for this from address (PHILO-10-04, board
-        B11: Check reports the sender, not the key alone). ``sender_verified``: the provider accepted a send
-        from it; ``sender_not_verified``: its latest answer was the pinned 403; ``ready``: the key is there and
-        no send from this sender has an answer yet."""
+        what the provider LAST answered for a send from this from address, and when (PHILO-10-04, B11; Codex
+        Astra r2 on #697: say what is known, never a fresh verification).
+
+        ``sender_accepted``: the provider accepted the latest answered send (at ``answered_at``);
+        ``sender_not_verified``: its latest answer was the pinned 403; ``key_changed``: the key was saved
+        again after that answer, so the answer no longer speaks for it; ``ready``: the key is there and no
+        send from this sender has an answer yet."""
         if row["state"] != "active":
-            return "parked"
+            return "parked", None
         account = json.loads(row["account_json"] or "{}")
         try:
-            channel_email.read_key(channel_email.valid_key_ref(account.get("key_ref")))
+            key_ref = channel_email.valid_key_ref(account.get("key_ref"))
+            channel_email.read_key(key_ref)
         except channel_email.EmailKeyError as exc:
-            return exc.code
+            return exc.code, None
         except ValidationError:
-            return "email_key_ref_invalid"
+            return "email_key_ref_invalid", None
         with self._db._connection() as conn:
             latest = conn.execute(
-                "SELECT state, reason FROM channel_sends WHERE channel='email'"
+                "SELECT state, reason, dispatch_started_at FROM channel_sends WHERE channel='email'"
                 " AND json_extract(account_json, '$.from_email')=? AND dispatch_seq IS NOT NULL"
                 " AND (state='sent' OR (state='failed' AND reason='sender_not_verified'))"
                 " ORDER BY dispatch_seq DESC LIMIT 1", (str(account.get("from_email") or ""),)).fetchone()
+            key_saved = conn.execute(
+                "SELECT MAX(r.created_at) AS at FROM kernel_receipts r JOIN kernel_operations o"
+                " ON o.operation_id=r.operation_id WHERE o.name='channel.save_email_key' AND r.state='succeeded'"
+                " AND r.result_ref=?", (f"email_key:{key_ref}",)).fetchone()
         if latest is None:
-            return "ready"
-        return "sender_verified" if latest["state"] == "sent" else "sender_not_verified"
+            return "ready", None
+        answered_at = str(latest["dispatch_started_at"] or "")
+        try:
+            answered = datetime.fromisoformat(answered_at).timestamp()
+        except ValueError:
+            answered = 0.0
+        if key_saved is not None and key_saved["at"] is not None and float(key_saved["at"]) > answered:
+            return "key_changed", answered_at
+        return ("sender_accepted" if latest["state"] == "sent" else "sender_not_verified"), answered_at
 
     # ── destinations (admitted, the owner's) ───────────────────────────────
 

@@ -146,7 +146,7 @@
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "50eec1d90ebd027f2ab3ecbdce27d5ec53ab95be7d3a38700eb9b461fca78377",
+      "masked_sha": "a63d63635959261cce0ffb65d37a7e267521ba33fe655ef8f6c4460564cc124b",
       "modal": false,
       "named": [
         {
@@ -265,7 +265,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● acme/Payments #42 GITHUB acme/Payments #42 ○ NEVER CHECKED ✓ POSTED 01:42 GITHUB.COM"
+        "● acme/Payments #42 GITHUB acme/Payments #42 ○ NEVER CHECKED ✓ POSTED 02:23 GITHUB.COM"
       ],
       "egress_chips": [
         "GITHUB.COM:cloud",
@@ -273,14 +273,14 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ acme/Payments #42 POSTED acme/Payments #42 SEP 29 01:42"
+        "✓ acme/Payments #42 POSTED acme/Payments #42 SEP 29 02:23"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ POSTED 01:42"
+        "✓ POSTED 02:23"
       ],
       "list_chips": [],
       "list_rows": [],
@@ -427,7 +427,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● acme/Payments #42 GITHUB acme/Payments #42 ○ NEVER CHECKED ✓ POSTED 01:42 GITHUB.COM"
+        "● acme/Payments #42 GITHUB acme/Payments #42 ○ NEVER CHECKED ✓ POSTED 02:23 GITHUB.COM"
       ],
       "egress_chips": [
         "GITHUB.COM:cloud",
@@ -435,14 +435,14 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ acme/Payments #42 POSTED acme/Payments #42 SEP 29 01:42"
+        "✓ acme/Payments #42 POSTED acme/Payments #42 SEP 29 02:23"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ POSTED 01:42"
+        "✓ POSTED 02:23"
       ],
       "list_chips": [],
       "list_rows": [],
@@ -581,7 +581,7 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ acme/Payments #42 POSTED acme/Payments #42 SEP 29 01:42"
+        "✓ acme/Payments #42 POSTED acme/Payments #42 SEP 29 02:23"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
@@ -592,13 +592,13 @@
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "cd182314188280ed0f5d452d619bd41fd0db1e124891e4e446689b55ab48f48d",
+      "masked_sha": "1168793c1d470d39568f257ce288613bf1b3ea36669c085f24f0e4fea3167a50",
       "modal": false,
       "named": [
         {
           "ok": true,
           "sel": "[data-testid=prepared-sending]",
-          "text": "· acme/Payments #42 ◆ SENDING BY YOU REV 1 SEP 29 01:43",
+          "text": "· acme/Payments #42 ◆ SENDING BY YOU REV 1 SEP 29 02:23",
           "why": ""
         }
       ],
@@ -697,7 +697,7 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ acme/Payments #42 POSTED acme/Payments #42 SEP 29 01:42"
+        "✓ acme/Payments #42 POSTED acme/Payments #42 SEP 29 02:23"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
@@ -708,7 +708,7 @@
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "9db7a29c366be03dadd116018a0060341df0493ffbccc33c998301a3e9134da9",
+      "masked_sha": "7eb5d0866741a8685388bcc72e4946864f6ffb9ecab1bfbd70689ae26a7083da",
       "modal": false,
       "named": [
         {
@@ -842,15 +842,15 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ acme/Payments #42 GITHUB acme/Payments #42 ○ NEVER CHECKED ✓ POSTED 01:43 GITHUB.COM"
+        "○ acme/Payments #42 GITHUB acme/Payments #42 ○ NEVER CHECKED ✓ POSTED 02:23 GITHUB.COM"
       ],
       "egress_chips": [
         "GITHUB.COM:cloud"
       ],
       "h_overflow": false,
       "history": [
-        "✓ acme/Payments #42 POSTED acme/Payments #42 SEP 29 01:42",
-        "✓ acme/Payments #42 POSTED acme/Payments #42 SEP 29 01:43"
+        "✓ acme/Payments #42 POSTED acme/Payments #42 SEP 29 02:23",
+        "✓ acme/Payments #42 POSTED acme/Payments #42 SEP 29 02:23"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -858,11 +858,11 @@
         "sent"
       ],
       "last_chips": [
-        "✓ POSTED 01:43"
+        "✓ POSTED 02:23"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "26195fe0bc538cc2caa8bef3dd73c230f36d621f588d96fef70bf34b9d662675",
+      "masked_sha": "5060275588b57008cfa16681ba8496a31bd70038b57f4d191012f845cdc245b9",
       "modal": false,
       "named": [
         {
@@ -967,7 +967,7 @@
       "prepared": [],
       "prepared_open": 0,
       "prepared_results": [
-        "· acme/Payments #42 ✓ POSTED acme/Payments #42 BY YOU REV 1 SEP 29 01:43"
+        "· acme/Payments #42 ✓ POSTED acme/Payments #42 BY YOU REV 1 SEP 29 02:23"
       ],
       "preview_fields": [],
       "preview_has_raw": false,
@@ -995,14 +995,14 @@
       },
       "badge": "cloud",
       "channel": "github",
-      "created_at": "2026-09-29T07:42:54.608589+00:00",
-      "destination_id": "chd_530040580eeaeb702ae67844",
+      "created_at": "2026-09-29T08:23:13.152116+00:00",
+      "destination_id": "chd_e83adf841ef5de8285b3908a",
       "destination_name": "acme/Payments #42",
       "dispatch_seq": 1,
-      "dispatch_started_at": "2026-09-29T07:42:54.608589+00:00",
-      "document_ref": "project_update:pupd_923240e4cace4ca8a21bca2178d69f3d",
+      "dispatch_started_at": "2026-09-29T08:23:13.152116+00:00",
+      "document_ref": "project_update:pupd_22bc7976edb84f79b4756217d8998be0",
       "file_path": null,
-      "id": "chs_4fea1b564823daf6d362efb5",
+      "id": "chs_0115e667f8ca6656cf6daed2",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -1016,8 +1016,8 @@
         "url": "https://github.com/acme/Payments/issues/42#issuecomment-99001"
       },
       "reason": null,
-      "send_operation_id": "op_35d0e4c0df18437ca20528d142d2c878",
-      "settled_at": "2026-09-29T07:42:56+00:00",
+      "send_operation_id": "op_0fcc16fd709042cf8b26f5c4f0b19ad0",
+      "settled_at": "2026-09-29T08:23:15+00:00",
       "size": 286,
       "state": "sent",
       "target": {
@@ -1035,16 +1035,16 @@
       },
       "badge": "cloud",
       "channel": "github",
-      "created_at": "2026-09-29T07:43:01+00:00",
-      "destination_id": "chd_530040580eeaeb702ae67844",
+      "created_at": "2026-09-29T08:23:20+00:00",
+      "destination_id": "chd_e83adf841ef5de8285b3908a",
       "destination_name": "acme/Payments #42",
       "dispatch_seq": 2,
-      "dispatch_started_at": "2026-09-29T07:43:03.457025+00:00",
-      "document_ref": "project_update:pupd_923240e4cace4ca8a21bca2178d69f3d",
+      "dispatch_started_at": "2026-09-29T08:23:21.980466+00:00",
+      "document_ref": "project_update:pupd_22bc7976edb84f79b4756217d8998be0",
       "file_path": null,
-      "id": "chs_483917af5ab236550b432540",
+      "id": "chs_19f8230d61d040b517c02d9a",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
-      "prepare_operation_id": "op_8e6c8a38864e4ebfb571b651f1f3cd35",
+      "prepare_operation_id": "op_1163c1969fae458cafffa0c4bd841d9f",
       "prepared_by": {
         "identity": "owner-session",
         "kind": "owner"
@@ -1056,8 +1056,8 @@
         "url": "https://github.com/acme/Payments/issues/42#issuecomment-99001"
       },
       "reason": null,
-      "send_operation_id": "op_b50369cc440840e6a7566b07d62ac4db",
-      "settled_at": "2026-09-29T07:43:08+00:00",
+      "send_operation_id": "op_4013ca77acea441ba649dbc24c58fb46",
+      "settled_at": "2026-09-29T08:23:27+00:00",
       "size": 286,
       "state": "sent",
       "target": {

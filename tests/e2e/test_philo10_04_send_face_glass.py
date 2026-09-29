@@ -343,9 +343,11 @@ class TestSendFaceGlass(_Rig):
                 # Board 5: a DOUBLE click is one send; SAVED + the exact path.
                 self._send(page, "Folder Payments", double=True)
                 hub = self._sends(page, uid)
-                saved = shots.shoot(page, "05-saved-folder",
-                                    [f"{self._row('Folder Payments')} [data-testid=send-last-sent]",
-                                     f"{self._open_sel('Folder Payments')} [data-testid=send-sent]"])
+                # Codex Astra r2 on #697: the long receipt itself is brought into view (centred), so the
+                # on-screen fence cannot pass on a clipped receipt; the row's chip is read from the facts.
+                receipt = f"{self._open_sel('Folder Payments')} [data-testid=send-sent]"
+                saved = shots.shoot(page, "05-saved-folder", [receipt], seat=f"CENTER:{receipt}")
+                assert any("SAVED" in c for c in saved["last_chips"]), saved["last_chips"]
                 assert [s["state"] for s in hub] == ["sent"], hub  # one dispatch for the double click
                 path = hub[0]["proof"]["path"]
                 assert Path(path).is_file() and Path(path).parent == payments.resolve()
@@ -896,18 +898,15 @@ class _ProviderRunner:
         return subprocess.CompletedProcess(argv, 1, "", "unexpected")
 
 
-def _seed_atlassian() -> None:
-    """One Jira and one Confluence account on SITE/EMAIL, checked (the Connections rows)."""
-    from holdspeak.db import get_database
-
+def _connect_atlassian(page: Any) -> None:
+    """One Jira and one Confluence account on SITE/EMAIL, through the REAL connection-check producer
+    (`POST /api/connections/{provider}/recheck`, its acli reads answered at the process edge). Codex Astra r2
+    on #697: the earlier direct INSERT used an id production never reads (a lying fixture) -- removed."""
     ref = f"{ACLI_SITE}|{ACLI_EMAIL}"
-    with get_database()._connection() as conn:
-        for provider in ("jira", "confluence"):
-            conn.execute(
-                "INSERT OR IGNORE INTO watch_provider_connections (id, provider_id, external_connection_ref, state,"
-                " last_connected_at, last_checked_at, created_at, updated_at) VALUES (?, ?, ?, 'connected',"
-                " datetime('now'), datetime('now'), datetime('now'), datetime('now'))",
-                (f"wpc-{provider}-{ref}", provider, ref))
+    for provider in ("jira", "confluence"):
+        answer = _api(page, "POST", f"/api/connections/{provider}/recheck", {"ref": ref}, token=TOKEN)
+        states = json.dumps(answer)
+        assert '"connected"' in states, answer
 
 
 class TestSendChannelsGlass(_Rig):
@@ -926,7 +925,6 @@ class TestSendChannelsGlass(_Rig):
         runner = _ProviderRunner()
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=runner, acli_runner=runner)
         self.server, self.base = server, base
-        _seed_atlassian()
         try:
             yield
         finally:
@@ -1066,6 +1064,7 @@ class TestSendChannelsGlass(_Rig):
         with sync_playwright() as pw:
             browser, page, errors = self._open(pw, width)
             try:
+                _connect_atlassian(page)
                 pid = _api(page, "POST", "/api/projects", {"name": NAME}, token=TOKEN)["project"]["id"]
                 uid = self._published(page, pid)
                 self._remote(page, jira, "jira", site=ACLI_SITE, email=ACLI_EMAIL, key="PAY-121")
@@ -1148,6 +1147,63 @@ class TestSendChannelsGlass(_Rig):
             finally:
                 browser.close()
 
+    # ── A lock held by another process: REFUSED on the FIRST answer (Codex Astra r2 on #697) ──
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_a_held_acli_lock_is_refused_on_the_first_answer(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        from holdspeak.services import jira_provider
+
+        self.monkeypatch.setattr(jira_provider._ACLI_LOCK, "_timeout", 0.2)
+        shots = Boards(SHOTS, width, UP)
+        jira = "Jira PAY-121"
+        holder = None
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                _connect_atlassian(page)
+                pid = _api(page, "POST", "/api/projects", {"name": NAME}, token=TOKEN)["project"]["id"]
+                uid = self._published(page, pid)
+                self._remote(page, jira, "jira", site=ACLI_SITE, email=ACLI_EMAIL, key="PAY-121")
+                self._room(page, pid)
+                self._updates(page)
+                self._open_update(page, uid)
+                self._pick(page, jira)
+                # A REAL competing lock: another process holds the acli lock file.
+                lock = jira_provider._acli_lockfile_path()
+                lock.parent.mkdir(parents=True, exist_ok=True)
+                code = ('import fcntl,sys; f=open(sys.argv[1],"a"); fcntl.flock(f,fcntl.LOCK_EX); '
+                        'print("locked",flush=True); sys.stdin.read()')
+                holder = subprocess.Popen([sys.executable, "-c", code, str(lock)], stdin=subprocess.PIPE,
+                                          stdout=subprocess.PIPE, text=True)
+                assert holder.stdout.readline().strip() == "locked"
+                creates = len(self.canned.creates())
+                with page.expect_response(lambda r: r.url.endswith("/api/channels/send") and r.request.method == "POST") as resp:
+                    self._press(page, jira)
+                first = resp.value
+                body = first.json()
+                page.locator(f"{self._open_sel(jira)} [data-testid=send-refused]").wait_for(timeout=T)
+                page.wait_for_timeout(400)
+                f = shots.shoot(page, "r2-lock-timeout-refused", [f"{self._open_sel(jira)} [data-testid=send-refused]"],
+                                seat=f"CENTER:{self._open_sel(jira)} [data-testid=send-refused]")
+                assert first.status == 409 and body["code"] == "lock_timeout", (first.status, body)
+                assert body["receipt"]["state"] == "refused" and body["receipt"]["outcome"] == "lock_timeout", body
+                assert f["receipts"][0] == {"text": "✗ REFUSED LOCK TIMEOUT NOTHING SENT", "state": "send-refused",
+                                            "code": "lock_timeout"}, f["receipts"]
+                assert page.locator("[data-testid=send-lost]").count() == 0
+                assert len(self.canned.creates()) == creates and self._sends(page, uid) == []
+                shots.write("send-face-lock-timeout", {"first": {"status": first.status, **body}})
+                shots.assert_clean()
+                assert not errors, errors
+            finally:
+                if holder is not None:
+                    holder.stdin.close()
+                    holder.wait(timeout=5)
+                browser.close()
+
     # ── The forms save through story 02's wire (B4-B6) ────────────────────
 
     @pytest.mark.e2e
@@ -1160,6 +1216,7 @@ class TestSendChannelsGlass(_Rig):
         with sync_playwright() as pw:
             browser, page, errors = self._open(pw, width)
             try:
+                _connect_atlassian(page)
                 self._stage(page, "configure-settings", "integrations")
                 page.locator("[data-testid=dest-form]").wait_for(timeout=T)
                 page.wait_for_timeout(900)
@@ -1217,7 +1274,9 @@ class TestSendChannelsGlass(_Rig):
                 shots.shoot(page, "b10b-jira-checked", [f"{row} [data-testid=dest-check-result]"])
                 answered = page.locator(f"{row} [data-testid=dest-check-result]").get_attribute("data-code")
                 check = _api(page, "POST", f"/api/channels/destinations/{jira_row['id']}/check", {}, token=TOKEN)["check"]
-                assert answered == check["state"], (answered, check)
+                assert answered == check["state"] == "connected", (answered, check)
+                assert page.locator(f"{row} [data-testid=dest-check-result]").inner_text().split() == ["✓", "CHECKED"]
+                assert jira_row["connection"]["state"] == "connected", jira_row
                 shots.write("destinations-remote", {"hub": hub, "check": check, "one_key": one_key["receipts"]})
                 shots.assert_clean()
                 assert not errors, errors
@@ -1314,6 +1373,14 @@ from test_philo10_email_channel import SENDER_403, Wire, errors as sg_errors, re
 
 KEY = "SG.glassKEY04e1f0000abcd.neverOnTheFace0000"
 FROM, TO, CC = "karol@acme.io", ["lena@acme.io", "tomas@acme.io"], ["priya@acme.io"]
+
+
+class _August(datetime):
+    """The boundary clock pinned to an old day: a send answered long ago."""
+
+    @classmethod
+    def now(cls, tz=None):  # type: ignore[override]
+        return datetime(2026, 8, 1, 9, 0, 0, tzinfo=tz)
 
 
 class TestSendEmailGlass(_Rig):
@@ -1438,12 +1505,12 @@ class TestSendEmailGlass(_Rig):
 
         from holdspeak.services import channel_email
 
-        class _NoNativeStore:
-            def get(self, key_ref: str) -> str:
-                raise channel_email.EmailKeyError("email_key_store_not_native")
+        import keyring.backends.fail
 
-            def put(self, key_ref: str, key: str) -> None:
-                raise channel_email.EmailKeyError("email_key_store_not_native")
+        def _no_native_store() -> Any:
+            # The REAL classifier on a real non-native backend (keyring's `fail` backend): it raises
+            # email_key_store_not_native itself.
+            return channel_email.NativeEmailKeyStore(backend=keyring.backends.fail.Keyring())
 
         shots = Boards(SHOTS, width, DS)
         with sync_playwright() as pw:
@@ -1466,7 +1533,7 @@ class TestSendEmailGlass(_Rig):
                     field.press("Enter")
 
                 # B7: no safe key store: KEY NOT SAVED + why; nothing kept.
-                self.store = _NoNativeStore()
+                self.monkeypatch.setattr(channel_email, "KEY_STORE", _no_native_store)
                 type_key()
                 page.locator("[data-testid=dest-key-refused]").wait_for(timeout=T)
                 page.wait_for_timeout(300)
@@ -1478,7 +1545,7 @@ class TestSendEmailGlass(_Rig):
                 assert self.memory.values == {}
 
                 # B8: the key saved into the (in-memory) keychain: SET, never the key; then the destination.
-                self.store = self.memory
+                self.monkeypatch.setattr(channel_email, "KEY_STORE", lambda: self.store)
                 type_key()
                 page.wait_for_function("(sel) => document.querySelector(sel)?.innerText.includes('SET')", arg=key_row, timeout=T)
                 page.wait_for_timeout(300)
@@ -1502,22 +1569,54 @@ class TestSendEmailGlass(_Rig):
                 assert page.locator(f"{row} [data-testid=dest-check-result]").get_attribute("data-code") == "ready"
                 assert "SENDER NOT CHECKED" in page.locator(f"{row} [data-testid=dest-check-result]").inner_text()
                 dest = hub[0]["id"]
-                digest = _api(page, "POST", "/api/channels/preview", {"update_id": uid, "destination_id": dest},
-                              token=TOKEN)["payload_digest"]
-                self.wire.script = [sg_errors(403, SENDER_403, field="from")]
-                answer = _api(page, "POST", "/api/channels/send", {"update_id": uid, "destination_id": dest,
-                                                                    "preview_digest": digest}, token=TOKEN)
+                result = f"{row} [data-testid=dest-check-result]"
+
+                def api_send(script: Any = None) -> dict[str, Any]:
+                    digest = _api(page, "POST", "/api/channels/preview", {"update_id": uid, "destination_id": dest},
+                                  token=TOKEN)["payload_digest"]
+                    if script is not None:
+                        self.wire.script = [script]
+                    return _api(page, "POST", "/api/channels/send", {"update_id": uid, "destination_id": dest,
+                                                                     "preview_digest": digest}, token=TOKEN)
+
+                def check(code: str) -> str:
+                    page.locator(f"{row} [data-testid=dest-check]").click()
+                    page.wait_for_function("([sel, code]) => document.querySelector(sel)?.dataset.code === code",
+                                           arg=[result, code], timeout=T)
+                    page.wait_for_timeout(300)
+                    return page.locator(result).inner_text().replace("\n", " ")
+
+                # Codex Astra r2's sequence: an OLD acceptance (the boundary clock pinned to Aug 1), then the
+                # key replaced through the real producer: the old answer no longer speaks for the key.
+                from holdspeak.services import channel_service as _cs
+
+                self.monkeypatch.setattr(_cs, "datetime", _August)
+                self.wire.default = sg_response(202, {"X-Message-Id": "sg-Old-0801"})
+                assert api_send()["outcome"] == "sent"
+                self.monkeypatch.setattr(_cs, "datetime", datetime)
+                assert _api_allow_error(page, "PUT", f"/api/channels/email-keys/{self._key_ref()}",
+                                        {"api_key": KEY + "B"}, token=TOKEN)[0] == 200
+                changed = check("key_changed")
+                shots.shoot(page, "b11b-email-check-key-changed", [result], seat=f"CENTER:{result}")
+                assert changed == "⚠ NOT CHECKED SINCE KEY CHANGE", changed
+                # An acceptance after the key: SENDER ACCEPTED with the date of THAT answer (never "verified").
+                self.wire.default = sg_response(202, {"X-Message-Id": "sg-New-0929"})
+                accepted_send = api_send()["send"]
+                accepted = check("sender_accepted")
+                shots.shoot(page, "b11c-email-check-accepted", [result], seat=f"CENTER:{result}")
+                answered = _api(page, "POST", f"/api/channels/destinations/{dest}/check", {}, token=TOKEN)["check"]
+                assert answered["answered_at"] == accepted_send["dispatch_started_at"], (answered, accepted_send)
+                assert accepted.startswith("✓ SENDER ACCEPTED LAST SEND ") and "VERIFIED" not in accepted, accepted
+                # SendGrid's pinned 403 for this sender, now: SENDER NOT VERIFIED with today's date.
+                answer = api_send(sg_errors(403, SENDER_403, field="from"))
                 assert (answer["outcome"], answer["send"]["reason"]) == ("failed", "sender_not_verified"), answer
-                page.locator(f"{row} [data-testid=dest-check]").click()
-                page.wait_for_function("(sel) => document.querySelector(sel)?.dataset.code === 'sender_not_verified'",
-                                       arg=f"{row} [data-testid=dest-check-result]", timeout=T)
-                page.wait_for_timeout(300)
-                checked = shots.shoot(page, "b11-email-check-not-verified", [f"{row} [data-testid=dest-check-result]"],
-                                      seat=f"CENTER:{row} [data-testid=dest-check-result]")
-                check = _api(page, "POST", f"/api/channels/destinations/{dest}/check", {}, token=TOKEN)["check"]
-                assert check["state"] == "sender_not_verified", check
-                assert "SENDER NOT VERIFIED" in page.locator(f"{row} [data-testid=dest-check-result]").inner_text()
+                not_verified = check("sender_not_verified")
+                checked = shots.shoot(page, "b11-email-check-not-verified", [result], seat=f"CENTER:{result}")
+                check_answer = _api(page, "POST", f"/api/channels/destinations/{dest}/check", {}, token=TOKEN)["check"]
+                assert check_answer["state"] == "sender_not_verified" and check_answer["answered_at"], check_answer
+                assert not_verified.startswith("✗ SENDER NOT VERIFIED LAST SEND "), not_verified
                 assert "SET" in page.locator(f"{row} [data-testid=dest-open] dl").inner_text()  # the key: present only
+                check = check_answer
                 shots.write("destinations-email", {"hub": hub, "check": check, "refused": refused["named"],
                                                    "checked": checked["named"]})
                 shots.assert_clean()

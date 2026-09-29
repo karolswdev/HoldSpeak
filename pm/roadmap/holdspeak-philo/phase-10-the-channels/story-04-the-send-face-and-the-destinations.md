@@ -36,6 +36,7 @@ PROVISIONAL: 2–3 engineering days (canvases included).
 
 ## Notes
 
+- 2026-09-29 — round three: Codex Astra r2 on #697 DO-NOT-RATIFY (`checks/story-04-built-astra-r2.md`) paid — B11 says what was answered and when (and NOT CHECKED SINCE KEY CHANGE); a held acli lock is a 409 refusal with its receipt and the client honours any refused receipt; the lying Atlassian seed replaced by the real connection-check producer; board 05's receipt centred. Glass 24/24, red first.
 - 2026-09-29 — DONE: story 03 merged in (main e22b1b95); the email boards (16–19, B7, B8, B11) fenced on story 03's canned HTTPS edge and in-memory key store; B11's Check reports the sender's verification from the provider's last answer. Every ratified board built and fenced at 1440 and 393 (glass 22/22), each through the real hub with the hub's record in the same fence; web baseline zero branch-new. Evidence: `evidence-story-04.md`; proof table: `assets/story-04-proof/captures.md`. The real-account legs are story 06's.
 - 2026-09-29 — board 25 fenced: a real hub process killed mid-send, a second hub on the same HOME, the Room shows UNKNOWN · INTERRUPTED and never sends again (both widths).
 - 2026-09-29 — board 14 as ratified (Muad'Dib's ruling): the Atlassian channels check sign-in before the boundary → REFUSED NOT SIGNED IN, nothing sent; a follow-up fix to story 02 carried here (noted in `assets/story-02-proof/captures.md`); red on the story 02 wire, green now.

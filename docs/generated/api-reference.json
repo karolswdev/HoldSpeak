@@ -8163,6 +8163,7 @@
       "test_candidates": [
         "tests/e2e/test_hs168_connections_glass.py",
         "tests/e2e/test_hs169_door_glass.py",
+        "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo9_b1_connections_glass.py",
         "tests/mcp/test_hs168_connection_tools.py",
         "tests/unit/test_philo10_cli_channels.py",
@@ -8248,6 +8249,7 @@
       "test_candidates": [
         "tests/e2e/test_hs168_connections_glass.py",
         "tests/e2e/test_hs169_door_glass.py",
+        "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo9_b1_connections_glass.py",
         "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo9_b1_connections.py",

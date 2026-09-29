@@ -18,7 +18,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "0a823e2021423b1ec3a5361f903080abbfa0f866170049c3518a1502f983763a",
+      "masked_sha": "4eb067d971d87d33eb1802b1957feaae9402d2a46a7b468a340e60646d78b6e3",
       "modal": false,
       "named": [
         {
@@ -161,8 +161,8 @@
       "dest_parked": [],
       "destinations": [
         "▸ acme/Payments #42 GITHUB acme/Payments #42 ○ NEVER CHECKED GITHUB.COM",
-        "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
-        "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ○ NEVER CHECKED ACME.ATLASSIAN.NET"
+        "▸ Jira PAY-118 JIRA PAY-118 ✓ CONNECTED ACME.ATLASSIAN.NET",
+        "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ACME.ATLASSIAN.NET"
       ],
       "egress_chips": [
         "GITHUB.COM:cloud",
@@ -176,7 +176,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "7d3a35d12d780cce38e34e096b02f30663c4d6f672ed7042edf22a981177387a",
+      "masked_sha": "063aa016b8facccd7dbb6d0966cb017db7076d866af80d5b65eb19e6d90a99e5",
       "modal": false,
       "named": [
         {
@@ -215,7 +215,7 @@
             1362,
             26
           ],
-          "text": "▸\nJira PAY-118\nJIRA\nPAY-118\n○\n"
+          "text": "▸\nJira PAY-118\nJIRA\nPAY-118\n✓\n"
         },
         {
           "face": [
@@ -274,8 +274,8 @@
       "dest_parked": [],
       "destinations": [
         "▸ acme/Payments #42 GITHUB acme/Payments #42 ○ NEVER CHECKED GITHUB.COM",
-        "▾ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
-        "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ○ NEVER CHECKED ACME.ATLASSIAN.NET"
+        "▾ Jira PAY-118 JIRA PAY-118 ✓ CONNECTED ACME.ATLASSIAN.NET",
+        "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ACME.ATLASSIAN.NET"
       ],
       "egress_chips": [
         "GITHUB.COM:cloud",
@@ -290,13 +290,13 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "7b820c57f2bea3279b38348b4fe5c9fb1d524e9ab42b451db1a6d5adc925db4a",
+      "masked_sha": "ab661267904157b135f61ab3b2c5f5b77899f1d13425a82c560716b424b800b7",
       "modal": false,
       "named": [
         {
           "ok": true,
           "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Jira PAY-118']) [data-testid=dest-check-result]",
-          "text": "⚠ NEVER CHECKED",
+          "text": "✓ CHECKED",
           "why": ""
         }
       ],
@@ -329,7 +329,7 @@
             1362,
             26
           ],
-          "text": "▾\nJira PAY-118\nJIRA\nPAY-118\n○\n"
+          "text": "▾\nJira PAY-118\nJIRA\nPAY-118\n✓\n"
         },
         {
           "face": [
@@ -430,7 +430,7 @@
   },
   "check": {
     "resolved": null,
-    "state": "never_checked"
+    "state": "connected"
   },
   "hub": [
     {
@@ -445,8 +445,8 @@
         "last_checked_at": null,
         "state": "never_checked"
       },
-      "created_at": "2026-09-29T07:43:12+00:00",
-      "id": "chd_955008f5808992fdf1b110de",
+      "created_at": "2026-09-29T08:18:12+00:00",
+      "id": "chd_d69c9c5283fbdc03c3308f2d",
       "name": "acme/Payments #42",
       "parked_at": null,
       "state": "active",
@@ -468,11 +468,11 @@
       "channel": "jira",
       "connection": {
         "id": "wpc_jira_acme.atlassian.net|owner@acme.example",
-        "last_checked_at": null,
-        "state": "never_checked"
+        "last_checked_at": "2026-09-29T08:18:09.325771+00:00",
+        "state": "connected"
       },
-      "created_at": "2026-09-29T07:43:15+00:00",
-      "id": "chd_4dbcdb5bac9068b81c2664ad",
+      "created_at": "2026-09-29T08:18:15+00:00",
+      "id": "chd_4d35110aff48f23f667fdc28",
       "name": "Jira PAY-118",
       "parked_at": null,
       "state": "active",
@@ -491,11 +491,11 @@
       "channel": "confluence",
       "connection": {
         "id": "wpc_confluence_acme.atlassian.net|owner@acme.example",
-        "last_checked_at": null,
-        "state": "never_checked"
+        "last_checked_at": "2026-09-29T08:18:09.335373+00:00",
+        "state": "connected"
       },
-      "created_at": "2026-09-29T07:43:15+00:00",
-      "id": "chd_9059f1b0c853d024466322a4",
+      "created_at": "2026-09-29T08:18:15+00:00",
+      "id": "chd_00534b7f5de5036d15d5d6c2",
       "name": "Confluence space 98304",
       "parked_at": null,
       "state": "active",

@@ -261,7 +261,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Email lena@acme.io EMAIL lena@acme.io +1 ✓ ACCEPTED BY SENDGRID 01:43 API.SENDGRID.COM"
+        "● Email lena@acme.io EMAIL lena@acme.io +1 ✓ ACCEPTED BY SENDGRID 02:19 API.SENDGRID.COM"
       ],
       "egress_chips": [
         "API.SENDGRID.COM:cloud",
@@ -269,14 +269,14 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Email lena@acme.io ACCEPTED BY SENDGRID ID sg-Msg-04AbCd SEP 29 01:43"
+        "✓ Email lena@acme.io ACCEPTED BY SENDGRID ID sg-Msg-04AbCd SEP 29 02:19"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ ACCEPTED BY SENDGRID 01:43"
+        "✓ ACCEPTED BY SENDGRID 02:19"
       ],
       "list_chips": [],
       "list_rows": [],
@@ -394,25 +394,25 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Email lena@acme.io EMAIL lena@acme.io +1 ✓ ACCEPTED BY SENDGRID 01:43 API.SENDGRID.COM"
+        "○ Email lena@acme.io EMAIL lena@acme.io +1 ✓ ACCEPTED BY SENDGRID 02:19 API.SENDGRID.COM"
       ],
       "egress_chips": [
         "API.SENDGRID.COM:cloud"
       ],
       "h_overflow": false,
       "history": [
-        "✓ Email lena@acme.io ACCEPTED BY SENDGRID ID sg-Msg-04AbCd SEP 29 01:43"
+        "✓ Email lena@acme.io ACCEPTED BY SENDGRID ID sg-Msg-04AbCd SEP 29 02:19"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ ACCEPTED BY SENDGRID 01:43"
+        "✓ ACCEPTED BY SENDGRID 02:19"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "48311fc111988271f1d0eadc4815a7534605785f3d92336bd58b47889ba28ef5",
+      "masked_sha": "ec474b53c1ebf9200ac6fe30d34a24a04e242d81e150e07a76a8a16f2a743c69",
       "modal": false,
       "named": [
         {
@@ -493,15 +493,15 @@
   "hub_deliveries": [
     {
       "channel": "email",
-      "delivered_at": "2026-09-29T07:43:32.852046+00:00",
+      "delivered_at": "2026-09-29T08:19:39.198686+00:00",
       "delivered_to": "Email lena@acme.io",
-      "id": "pdel_c278bd0c60bd918e",
-      "operation_id": "op_c64cebbf416340358902b732aac23576",
+      "id": "pdel_5b19b3ae48a1522a",
+      "operation_id": "op_4f581e8eb11f4624b348a662aa130409",
       "outcome": "sent",
-      "project_id": "proj-4141b1e2fa86",
+      "project_id": "proj-e00e0f2e31c9",
       "proof_json": "{\"message_id\":\"sg-Msg-04AbCd\",\"provider\":\"sendgrid\",\"scope\":\"accepted for processing, not delivery\",\"word\":\"ACCEPTED BY SENDGRID\"}",
-      "send_id": "chs_c278bd0c60bd918e7dc120e2",
-      "update_id": "pupd_097a89bac6d94331890fbfc9ab1fbfee"
+      "send_id": "chs_5b19b3ae48a1522a04dd00fb",
+      "update_id": "pupd_b697e8dbd4804d05a01dc864fa713d6d"
     }
   ],
   "hub_sends": [
@@ -514,14 +514,14 @@
       },
       "badge": "cloud",
       "channel": "email",
-      "created_at": "2026-09-29T07:43:30.821916+00:00",
-      "destination_id": "chd_8751f402911f350c7ae3604d",
+      "created_at": "2026-09-29T08:19:36.831328+00:00",
+      "destination_id": "chd_1d833d14161e2f836c02798b",
       "destination_name": "Email lena@acme.io",
       "dispatch_seq": 1,
-      "dispatch_started_at": "2026-09-29T07:43:30.821916+00:00",
-      "document_ref": "project_update:pupd_097a89bac6d94331890fbfc9ab1fbfee",
+      "dispatch_started_at": "2026-09-29T08:19:36.831328+00:00",
+      "document_ref": "project_update:pupd_b697e8dbd4804d05a01dc864fa713d6d",
       "file_path": null,
-      "id": "chs_288993c74cbf6787bdd37149",
+      "id": "chs_b66a562d440da5774dd1263d",
       "payload_digest": "8303a89f212756e6766c6e39043f8a446801eee0cb448c7e8a27fbf524a71ca1",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -544,8 +544,8 @@
         "error": "The from address does not match a verified Sender Identity. Mail cannot be sent until this error is resolved."
       },
       "reason": "sender_not_verified",
-      "send_operation_id": "op_21e7b67ad5d74130b99c74a7f7066b9e",
-      "settled_at": "2026-09-29T07:43:30+00:00",
+      "send_operation_id": "op_f2905165fb61459b98f957e140699a73",
+      "settled_at": "2026-09-29T08:19:36+00:00",
       "size": 580,
       "state": "failed",
       "target": {
@@ -568,14 +568,14 @@
       },
       "badge": "cloud",
       "channel": "email",
-      "created_at": "2026-09-29T07:43:32.852046+00:00",
-      "destination_id": "chd_8751f402911f350c7ae3604d",
+      "created_at": "2026-09-29T08:19:39.198686+00:00",
+      "destination_id": "chd_1d833d14161e2f836c02798b",
       "destination_name": "Email lena@acme.io",
       "dispatch_seq": 2,
-      "dispatch_started_at": "2026-09-29T07:43:32.852046+00:00",
-      "document_ref": "project_update:pupd_097a89bac6d94331890fbfc9ab1fbfee",
+      "dispatch_started_at": "2026-09-29T08:19:39.198686+00:00",
+      "document_ref": "project_update:pupd_b697e8dbd4804d05a01dc864fa713d6d",
       "file_path": null,
-      "id": "chs_c278bd0c60bd918e7dc120e2",
+      "id": "chs_5b19b3ae48a1522a04dd00fb",
       "payload_digest": "8303a89f212756e6766c6e39043f8a446801eee0cb448c7e8a27fbf524a71ca1",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -601,8 +601,8 @@
         "word": "ACCEPTED BY SENDGRID"
       },
       "reason": null,
-      "send_operation_id": "op_c64cebbf416340358902b732aac23576",
-      "settled_at": "2026-09-29T07:43:32+00:00",
+      "send_operation_id": "op_4f581e8eb11f4624b348a662aa130409",
+      "settled_at": "2026-09-29T08:19:39+00:00",
       "size": 580,
       "state": "sent",
       "target": {

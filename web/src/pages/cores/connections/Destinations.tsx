@@ -37,7 +37,7 @@ import {
 import type { ConnectionsResponse } from "./api";
 import { accountChip, useConnections } from "../../../features/channels/SendWell";
 import {
-  CHANNEL_WORD, DEST_FOCUS, SEND_WORDS, egressOf, failedWord, refusedWord, stamp, takeDestinationsFocus,
+  CHANNEL_WORD, DEST_FOCUS, SEND_WORDS, egressOf, refusedWord, stamp, takeDestinationsFocus,
   targetToken, wire, Refusal, type Channel, type Destination, type SaveBody,
 } from "../../../features/channels/channels";
 import "../../../features/channels/channels.css";
@@ -236,12 +236,17 @@ function detailFields(d: Destination): [string, string][] {
 }
 
 /** The Check result, by the hub's check state. */
-function CheckChip({ state, channel }: { state: string; channel: Channel }) {
-  // Email (B11): Check reports the SENDER's verification, never the key alone.
-  if (channel === "email" && state === "ready") return <StateChip state="idle" label="SENDER NOT CHECKED" />;
+function CheckChip({ state, channel, answeredAt }: { state: string; channel: Channel; answeredAt?: string | null }) {
+  // Email (B11): Check reports what the provider last answered for this sender, and when -- never a fresh
+  // verification (Codex Astra r2 on #697), never the key alone.
+  if (channel === "email") {
+    const when = answeredAt ? <span className="surface-token" data-chip>{`LAST SEND ${stamp(answeredAt)}`}</span> : null;
+    if (state === "ready") return <StateChip state="idle" label="SENDER NOT CHECKED" />;
+    if (state === "sender_accepted") return <><StateChip state="success" label="SENDER ACCEPTED" />{when}</>;
+    if (state === "sender_not_verified") return <><StateChip state="failure" label="SENDER NOT VERIFIED" />{when}</>;
+    if (state === "key_changed") return <StateChip state="warning" label="NOT CHECKED SINCE KEY CHANGE" />;
+  }
   if (state === "ready" || state === "connected") return <StateChip state="success" label="CHECKED" />;
-  if (state === "sender_verified") return <StateChip state="success" label="SENDER VERIFIED" />;
-  if (state === "sender_not_verified") return <StateChip state="failure" label={failedWord(state)} />;
   const words: Record<string, string> = {
     changed: "DESTINATION CHANGED", missing: "NO FOLDER", not_writable: "NOT WRITABLE", parked: "DESTINATION PARKED",
     owner_action_required: "NOT SIGNED IN", never_checked: "NEVER CHECKED", unavailable: "UNAVAILABLE",
@@ -260,7 +265,7 @@ export function Destinations() {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [keys, setKeys] = useState<Record<string, boolean>>({});
-  const [checks, setChecks] = useState<Record<string, { busy: boolean; state?: string; at?: string }>>({});
+  const [checks, setChecks] = useState<Record<string, { busy: boolean; state?: string; at?: string; answeredAt?: string | null }>>({});
   const [removeBusy, setRemoveBusy] = useState<string | null>(null);
   // A Remove the hub did not confirm: the row stays open, named, with Retry
   // (Codex Astra r1 F2 on #697). Never closed as if it were parked.
@@ -359,7 +364,7 @@ export function Destinations() {
                               onClick={() => {
                                 setChecks((m) => ({ ...m, [d.id]: { busy: true } }));
                                 void wire.check(d.id)
-                                  .then((r) => setChecks((m) => ({ ...m, [d.id]: { busy: false, state: r.check.state, at: new Date().toISOString() } })))
+                                  .then((r) => setChecks((m) => ({ ...m, [d.id]: { busy: false, state: r.check.state, at: new Date().toISOString(), answeredAt: r.check.answered_at ?? null } })))
                                   .catch((e) => setChecks((m) => ({ ...m, [d.id]: { busy: false, state: e instanceof Refusal ? e.code : "no_answer" } })));
                               }}>Check</Button>
                             <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
@@ -375,7 +380,7 @@ export function Destinations() {
                             ) : null}
                             {c?.state ? (
                               <span className="send-line" data-testid="dest-check-result" data-code={c.state}>
-                                <CheckChip state={c.state} channel={d.channel} />
+                                <CheckChip state={c.state} channel={d.channel} answeredAt={c.answeredAt} />
                               </span>
                             ) : null}
                           </div>

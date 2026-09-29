@@ -5,14 +5,14 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.a8UQNbQG54/pt/popen-gw0/test_board_25_unknown_after_a_0/Payments ⚠ LAST SEND UNKNOWN THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw2/test_board_25_unknown_after_a_1/Payments ⚠ LAST SEND UNKNOWN THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local"
       ],
       "h_overflow": false,
       "history": [
-        "⚠ RESULT UNKNOWN · CHECK Folder Payments INTERRUPTED SEP 29 01:43"
+        "⚠ RESULT UNKNOWN · CHECK Folder Payments INTERRUPTED SEP 29 02:19"
       ],
       "history_head": "DELIVERY",
       "history_outcomes": [
@@ -23,7 +23,7 @@
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "0a34ab1acfeb67144f220d5b6b87e60b54742296e3fac94b786488d60684eb8d",
+      "masked_sha": "9203edaf8b75efba921442579329aac67248687948fabb47a7bbe52b04819684",
       "modal": false,
       "named": [
         {
@@ -108,7 +108,7 @@
     }
   },
   "settled": {
-    "proof_json": "{\"found_on_disk\":{\"path\":\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.a8UQNbQG54/pt/popen-gw0/test_board_25_unknown_after_a_0/Payments/2026-09-29-payments-ledger-cutover-r1-0f469288.md\",\"sha256\":\"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\",\"size\":286}}",
+    "proof_json": "{\"found_on_disk\":{\"path\":\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw2/test_board_25_unknown_after_a_1/Payments/2026-09-29-payments-ledger-cutover-r1-52b1c391.md\",\"sha256\":\"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\",\"size\":286}}",
     "reason": "interrupted",
     "state": "unknown"
   }
