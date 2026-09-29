@@ -1,0 +1,540 @@
+{
+  "boards": {
+    "b07-key-not-saved-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS",
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [
+        "API.SENDGRID.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "6a4527c742ee83c9e305ea8168ac3ed4e421c44c191ddfc343d9121cc6aa1e07",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-key-refused]",
+          "text": "✗ KEY NOT SAVED NO SAFE KEY STORE",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            188,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            188,
+            44
+          ],
+          "text": "Folder\nGitHub comment\nJira com"
+        },
+        {
+          "face": [
+            96,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            96,
+            44
+          ],
+          "text": "SendGrid"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "From"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "From name"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            44
+          ],
+          "text": "Replace"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Cc"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Save"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b08-add-email-key-set-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS",
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [
+        "API.SENDGRID.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "af5f548fed5fcbd202236e2ba94d8365a82299032419465d087608d3b9b94a66",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-key-row]",
+          "text": "SendGrid key SET Replace",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            188,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            188,
+            44
+          ],
+          "text": "Folder\nGitHub comment\nJira com"
+        },
+        {
+          "face": [
+            96,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            96,
+            44
+          ],
+          "text": "SendGrid"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "From"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "From name"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            44
+          ],
+          "text": "Replace"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Cc"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Save"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b11-email-check-not-verified-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 1",
+      "dest_parked": [],
+      "destinations": [
+        "▾ Email lena@acme.io EMAIL lena@acme.io +1 API.SENDGRID.COM"
+      ],
+      "egress_chips": [
+        "API.SENDGRID.COM:cloud",
+        "API.SENDGRID.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "021a8ee38c0980860dfe10c278f24ad91cb2030cb4ade8a8bb41fb42f4de84dc",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Email lena@acme.io']) [data-testid=dest-check-result]",
+          "text": "✗ SENDER NOT VERIFIED",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            68
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            68
+          ],
+          "text": "▾\nEmail lena@acme.io\nEMAIL\nlen"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Check"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Edit"
+        },
+        {
+          "face": [
+            61.2,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            61.2,
+            44
+          ],
+          "text": "Remove"
+        },
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            44
+          ],
+          "text": "Add destination"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    }
+  },
+  "check": {
+    "resolved": null,
+    "state": "sender_not_verified"
+  },
+  "checked": [
+    {
+      "ok": true,
+      "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Email lena@acme.io']) [data-testid=dest-check-result]",
+      "text": "✗ SENDER NOT VERIFIED",
+      "why": ""
+    }
+  ],
+  "hub": [
+    {
+      "account": {
+        "from_email": "karol@acme.io",
+        "from_name": "",
+        "key_ref": "sendgrid-karol@acme.io",
+        "provider": "sendgrid"
+      },
+      "badge": "cloud",
+      "channel": "email",
+      "connection": null,
+      "created_at": "2026-09-29T07:43:42+00:00",
+      "id": "chd_c5833468ddedae544687ab5c",
+      "name": "Email lena@acme.io",
+      "parked_at": null,
+      "state": "active",
+      "synced": false,
+      "target": {
+        "cc": [],
+        "to": [
+          "lena@acme.io",
+          "tomas@acme.io"
+        ]
+      },
+      "target_digest": "0a615c0eafafa59f1424abd895dcb6294406961f87b55abc20235c812a98d6a6"
+    }
+  ],
+  "refused": [
+    {
+      "ok": true,
+      "sel": "[data-testid=dest-key-refused]",
+      "text": "✗ KEY NOT SAVED NO SAFE KEY STORE",
+      "why": ""
+    }
+  ]
+}

@@ -1060,7 +1060,9 @@
         "DELETE"
       ],
       "module": "web.routes.channels",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/channels/destinations/{destination_id}/check",
@@ -1068,7 +1070,19 @@
         "POST"
       ],
       "module": "web.routes.channels",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/channels/email-keys/{key_ref}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/channels/preview",
@@ -1116,7 +1130,9 @@
         "POST"
       ],
       "module": "web.routes.channels",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/coders/clear-stale",

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 10
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** the owner's ratification; the two canvases ratified by the owner; PHILO-10-01 for the build
 - **Unblocks:** PHILO-10-05, PHILO-10-06
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks canvases and build
@@ -21,9 +21,9 @@ The update's only outbound verbs are Copy and Mark delivered (`web/src/features/
 ## Acceptance criteria
 
 - [x] Both canvases ratified by the owner (verbatim word recorded) before the build commit. (2026-09-29: "Ratify as drawn (Recommended)".)
-- [ ] Every state of the matrix shot and fenced through the real hub at 1440 and 393; the face's outcome equals the hub's record and receipt in the same fence.
-- [ ] Every verb is the library Button; the host chip is on each row that leaves the machine; no modal; nothing covers the Send verb at 393.
-- [ ] The web baseline has zero branch-new failures.
+- [x] Every state of the matrix shot and fenced through the real hub at 1440 and 393; the face's outcome equals the hub's record and receipt in the same fence.
+- [x] Every verb is the library Button; the host chip is on each row that leaves the machine; no modal; nothing covers the Send verb at 393.
+- [x] The web baseline has zero branch-new failures.
 
 ## Effort (not a promise)
 
@@ -36,6 +36,7 @@ PROVISIONAL: 2–3 engineering days (canvases included).
 
 ## Notes
 
+- 2026-09-29 — DONE: story 03 merged in (main e22b1b95); the email boards (16–19, B7, B8, B11) fenced on story 03's canned HTTPS edge and in-memory key store; B11's Check reports the sender's verification from the provider's last answer. Every ratified board built and fenced at 1440 and 393 (glass 22/22), each through the real hub with the hub's record in the same fence; web baseline zero branch-new. Evidence: `evidence-story-04.md`; proof table: `assets/story-04-proof/captures.md`. The real-account legs are story 06's.
 - 2026-09-29 — board 25 fenced: a real hub process killed mid-send, a second hub on the same HOME, the Room shows UNKNOWN · INTERRUPTED and never sends again (both widths).
 - 2026-09-29 — board 14 as ratified (Muad'Dib's ruling): the Atlassian channels check sign-in before the boundary → REFUSED NOT SIGNED IN, nothing sent; a follow-up fix to story 02 carried here (noted in `assets/story-02-proof/captures.md`); red on the story 02 wire, green now.
 - 2026-09-29 — story 02 merged in (main 3965c5e1): the GitHub, Jira and Confluence boards (7, 9–15, 20, B4–B6, B9, B10) and SENDING (8, 26b, 26c, 27) fenced on story 02's real channels with the process edge canned; glass 16/16 at both widths, every board measured. Board 14 reads FAILED · NOT SIGNED IN (story 02 records a signed-out switch as a known non-delivery). Owed: the email boards (16–19, B7, B8 save, B11) with story 03 (#696).

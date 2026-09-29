@@ -30,12 +30,10 @@ Built to the owner's ratified canvases (`../story-04-send-canvas/`, `../story-04
 | 36 a draft has no Send | — | built + fenced |
 | 37 CANNOT READ DESTINATIONS; 38 SENDS; 39 HISTORY; 40 NO PREVIEW (Send not offered) | fetch seam (no answer) | built + fenced |
 | B4 GitHub, B6 Confluence forms SAVE (the concrete gh login read at save; the Jira/Confluence account from Connections); B5 REFUSED (one key only); B9 the remote rows; B10 a Jira row checked (the hub's state) | story 02 wire, canned process edge | built + fenced (`b04`, `b05-jira-one-key`, `b06`, `b09b-list-remote`, `b10b-jira-checked`) |
-| B8 email form | the form as drawn | built + shot; SAVE owed: story 03 (#696) |
 | B9 list; B10 CHECKED; B12 Edit; B13 old row parked; B14 Remove armed; B15 parked; B16 CANNOT READ DESTINATIONS | real routes | built + fenced |
 | 7 GitHub picked; 9 POSTED + the comment link (a double click = one create); 20 REFUSED GITHUB ACCOUNT CHANGED (no create) | story 02 GitHub channel, canned `gh` at `channel_cli.CLI_RUNNER` | built + fenced |
 | 10 Jira picked; 11 UNKNOWN TIMED OUT + Check PAY-121, no automatic re-send; 12 Send again → COMMENTED + the work item link | story 02 Jira channel, canned `acli` | built + fenced |
 | 13 Confluence picked (SPACE, TITLE, ACCOUNT); 14 the account signed out: **REFUSED · NOT SIGNED IN · NOTHING SENT** as ratified (the wire now checks sign-in before the boundary: no row crosses it, no create); 15 BLOG POSTED + the post link; the remote history rows | story 02 Confluence channel + the pre-boundary sign-in check, canned `acli` | built + fenced (`14-refused-confluence-sign-in`); red on the story 02 wire first |
-| 16–19 email (ACCEPTED BY SENDGRID, SENDER NOT VERIFIED), B7 KEY NOT SAVED, B11 SENDER NOT VERIFIED | story 03 | face built; NOT fenced: owed when #696 merges |
 | 8 SENDING (a create held at the process edge; Send busy and disabled, one create for a double click); 26b a prepared send running survives Back → return (stored `dispatching`); 26c its destination: SENDING, Send disabled; 27 released → POSTED stays as its result | story 02 off-loop dispatch, canned `gh` held on an Event | built + fenced |
 | 25 UNKNOWN after a restart: a REAL hub process killed with SIGKILL mid-send (the file written, the dispatch held), a second hub on the same HOME: LAST SEND UNKNOWN, ⚠ RESULT UNKNOWN · CHECK Folder Payments · INTERRUPTED, one file, never sent again | story 01's restart rig (`HubProcess`), the Room's own Send | built + fenced (`25-unknown-after-restart`) |
 
@@ -52,6 +50,20 @@ The channel boards above run on story 02's real channels with only the process e
 ## Board 14 as ratified (Muad'Dib's ruling on #697)
 
 The wire, not the face: the Jira and Confluence channels check the saved account's sign-in BEFORE the dispatch boundary (switch-and-verify as classified reads under the acli lock) → REFUSED `atlassian_not_signed_in` / `atlassian_switch_failed` / `atlassian_identity_unverified`, with the receipt, nothing sent. A sign-out after the check stays the post-boundary known failure. Fences: `tests/unit/test_philo10_04_atlassian_sign_in.py` (both products refused before the boundary, zero creates, the row still `prepared`; the race case FAILED after it) and glass board 14 at both widths — red on the story 02 wire, green now. Story 02's proof notes the follow-up (`../story-02-proof/captures.md`).
+
+## Story 03 merged (main e22b1b95): the email boards
+
+| Board | Real producer | State |
+|---|---|---|
+| 16 email picked: FROM, TO, CC, SUBJECT parsed back from the frozen SendGrid request; API.SENDGRID.COM | story 03's email channel | built + fenced |
+| 17 FAILED · SENDER NOT VERIFIED · NOTHING SENT (SendGrid's pinned 403), LAST SEND FAILED | story 03's canned HTTPS edge (`channel_email.HTTPS_HANDLER`) under the real opener, admission and allow-list | built + fenced |
+| 18 Send again → ✓ ACCEPTED BY SENDGRID · ID sg-Msg-04AbCd (exact case; never DELIVERED) | same | built + fenced |
+| 19 the history row ACCEPTED BY SENDGRID + the id; DELIVERY 1 | story 01's table | built + fenced |
+| B7 KEY NOT SAVED · NO SAFE KEY STORE (nothing kept) | a key store with no native backend | built + fenced |
+| B8 the email form, the key saved through `PUT /api/channels/email-keys/{key_ref}` into the in-memory store: SET, never the key on the face; the destination saved with its `key_ref`, To, Cc | the in-memory store (a guard fails the test if the real keychain is reached) | built + fenced |
+| B11 Check reports the SENDER: SENDER NOT CHECKED before any answer; SENDER NOT VERIFIED after SendGrid's pinned 403 for that from address | `channel.check_destination` | built + fenced — see the note |
+
+**B11, the wire change:** story 03's email Check answered key presence only. The ratified canvas asks for the sender's verification. `ChannelService._email_state` now reads the key (as before), then the provider's LAST answer for a send from that from address (by `dispatch_seq`): `sender_verified` (accepted), `sender_not_verified` (the pinned 403), or `ready` (no answer yet: SENDER NOT CHECKED). No call to SendGrid: a live verified-senders probe would be admitted egress, which the check (an exempt read) does not carry; that probe is not built.
 
 ## Captured runs
 

@@ -26,6 +26,7 @@ export type Destination = {
    *  {site, email}; email {provider, from_email, from_name, key_ref}; empty
    *  for a folder. Never a key. */
   account: Record<string, string | boolean>;
+  /** Email's To and Cc arrive as arrays (read with `list`). */
   target: Record<string, string | number>;
   synced: boolean;
   state: "active" | "parked";
@@ -204,7 +205,8 @@ export function targetToken(channel: Channel, t: Record<string, string | number>
     case "jira": return String(t.key ?? "");
     case "confluence": return `SPACE ${t.space_id ?? ""}`;
     case "email": {
-      const to = String(t.to ?? "").split(",").map((a) => a.trim()).filter(Boolean);
+      const raw = t.to as unknown;
+      const to = (Array.isArray(raw) ? raw.map(String) : String(raw ?? "").split(",")).map((a) => a.trim()).filter(Boolean);
       return (to[0] ?? "") + (to.length > 1 ? ` +${to.length - 1}` : "");
     }
     default: return "";
@@ -287,13 +289,16 @@ export function previewOf(
         body_kind: "text", body,
       };
     case "email": {
+      // Parsed back from the frozen provider request (story 03): From, To, Cc, Subject, the text.
+      const list = (v: unknown) => (Array.isArray(v) ? v.map(String).join(", ") : String(v ?? ""));
       const f: PreviewField[] = [
-        { label: "From", value: `${a.from_name ?? ""} <${a.from_email ?? ""}>` },
-        { label: "To", value: String(t.to ?? "") },
+        { label: "From", value: String(wire.from ?? `${a.from_name ?? ""} <${a.from_email ?? ""}>`) },
+        { label: "To", value: list(wire.to ?? t.to) },
       ];
-      if (t.cc) f.push({ label: "Cc", value: String(t.cc) });
+      const cc = list(wire.cc ?? t.cc);
+      if (cc) f.push({ label: "Cc", value: cc });
       if (wire.subject) f.push({ label: "Subject", value: String(wire.subject) });
-      return { fields: f, body_kind: "text", body };
+      return { fields: f, body_kind: "text", body: String(wire.text ?? body) };
     }
     default:
       return { fields: [], body_kind: "text", body };
@@ -349,7 +354,7 @@ export type SaveBody = {
   folder?: string; synced?: boolean;
   host?: string; repo?: string; kind?: "issue" | "pr"; number?: number;
   site?: string; email?: string; key?: string; space_id?: string;
-  provider?: string; from_email?: string; from_name?: string; to?: string; cc?: string;
+  provider?: string; from_email?: string; from_name?: string; key_ref?: string; to?: string[]; cc?: string[];
 };
 
 const commandId = () =>
@@ -371,9 +376,11 @@ export const wire = {
   check: (id: string) =>
     call<{ destination: Destination; check: { state: string } }>(
       `/api/channels/destinations/${encodeURIComponent(id)}/check`, { method: "POST", json: {} }),
-  /** Story 03: the SendGrid key, typed once, into the OS keychain. */
+  /** Story 03: the SendGrid key, typed once, into the OS keychain (the key is the body, never shown again). */
   saveKey: (keyRef: string, value: string) =>
-    call<{ key_present: boolean }>("/api/channels/keys", { method: "POST", json: { key_ref: keyRef, value } }),
+    call<{ key_ref: string; saved?: boolean }>(`/api/channels/email-keys/${encodeURIComponent(keyRef)}`, {
+      method: "PUT", json: { api_key: value, command_id: commandId() },
+    }),
   sends: (updateId: string) =>
     call<unknown>(`/api/channels/sends?update_id=${encodeURIComponent(updateId)}`).then((r) => listOf<Send>(r, "sends")),
   preview: (updateId: string, destinationId: string) =>

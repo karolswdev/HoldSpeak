@@ -142,6 +142,8 @@ export function accountChip(
 ): { state: "success" | "warning" | "idle" | "failure"; label: string; code: string } | null {
   if (d.channel === "file") return null;
   if (d.channel === "email") {
+    // Present or absent only, and only when known (the list read does not open the keychain).
+    if (typeof d.account.key_present !== "boolean") return null;
     return d.account.key_present
       ? { state: "success", label: "KEY SET", code: "key_present" }
       : { state: "warning", label: "NO KEY", code: "email_key_missing" };
@@ -509,7 +511,7 @@ function PreparedRow({ uid, revision, s, reload, conns, dest, open, onToggle, on
   const busy = store.busy.has(k);
   const eg = egressOf({ channel: s.channel, account: s.account, synced: dest?.synced });
   const acc = accountChip({ channel: s.channel, connection: dest?.connection,
-    account: { ...s.account, key_present: dest?.account.key_present ?? s.account.key_present ?? false } }, conns);
+    account: { ...s.account, ...(typeof dest?.account.key_present === "boolean" ? { key_present: dest.account.key_present } : {}) } }, conns);
   // A named destination refusal is final for this row: Send would only
   // refuse again, so only Discard stays.
   const dead = o.kind === "refused" && (o.code === "destination_changed" || o.code === "destination_parked");

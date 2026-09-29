@@ -25,7 +25,10 @@ Built to ``pm/roadmap/holdspeak-philo/phase-10-the-channels/design/send-lifecycl
 The file channel is the one direct writer (``services/channel_contract.py``);
 the GitHub, Jira and Confluence channels dispatch each command as a
 ``subprocess.exec`` child of the send, under the send's authenticated owner
-principal, through its broker (``services/channel_cli.py``; PHILO-10-02).
+principal, through its broker (``services/channel_cli.py``; PHILO-10-02);
+the email channel sends its frozen request body as an ``external.egress`` CHILD
+of the send, under the send's authenticated owner principal, through its
+broker (``services/channel_email.py``; PHILO-10-03).
 """
 from __future__ import annotations
 
@@ -38,6 +41,7 @@ from holdspeak.db.channels import now_iso, settle_in_transaction
 from holdspeak.logging_config import get_logger
 
 from . import channel_contract as contract
+from . import channel_email  # noqa: F401 -- registers the email channel (PHILO-10-03)
 from .channel_contract import ChannelRefused, Outcome
 from .errors import NotFound, ValidationError
 
@@ -107,7 +111,7 @@ class ChannelService:
             "badge": contract.channel(row["channel"]).badge(bool(destination.get("synced"))),
             "account": json.loads(row["account_json"] or "{}"), "target": json.loads(row["target_json"] or "{}"),
             "target_digest": row["target_digest"], "payload_digest": row["payload_digest"],
-            "size": len(payload), "preview": contract.channel(row["channel"]).preview(payload),
+            "size": len(payload), "preview": contract.preview_for(row["channel"], payload, row["account_json"]),
             "prepared_by": {"kind": row["prepared_by_kind"], "identity": row["prepared_by_identity"]},
             "prepare_operation_id": row["prepare_operation_id"], "send_operation_id": row["send_operation_id"],
             "state": row["state"], "reason": row["reason"],
@@ -153,11 +157,12 @@ class ChannelService:
             raise ChannelRefused("destination_parked", f"Destination {destination_id} is parked")
         document = contract.render_update(self._db, update_id)
         chan = contract.channel(destination["channel"])
-        payload = chan.serialize(document)
+        payload = contract.serialize_for(destination, document)
         self._size(destination["channel"], payload)
         return {"document_ref": document.ref, "title": document.title, "destination_id": destination["id"],
                 "channel": destination["channel"], "badge": chan.badge(bool(destination["synced"])),
-                "payload_digest": contract.sha256(payload), "size": len(payload), "preview": chan.preview(payload)}
+                "payload_digest": contract.sha256(payload), "size": len(payload),
+                "preview": contract.preview_for(destination["channel"], payload, destination["account_json"])}
 
     def check_destination(self, principal: Any, destination_id: str) -> dict[str, Any]:
         """A folder: a local check (it resolves to the saved folder, it is a folder, it is writable).
@@ -168,6 +173,9 @@ class ChannelService:
         import os
 
         row = self._destination(destination_id)
+        if row["channel"] == "email":
+            return {"destination": self._destination_view(row), "check": {"state": self._email_state(row),
+                                                                         "resolved": None}}
         if row["channel"] != "file":
             view = self._destination_view(row)
             state = "parked" if row["state"] != "active" else str((view["connection"] or {}).get("state") or "")
@@ -182,17 +190,48 @@ class ChannelService:
                  else "not_writable")
         return {"destination": self._destination_view(row), "check": {"state": state, "resolved": resolved}}
 
+    def _email_state(self, row: Mapping[str, Any]) -> str:
+        """An email destination, checked locally (no call to the provider): the key in a native keychain, then
+        the SENDER's verification as the provider last answered it for this from address (PHILO-10-04, board
+        B11: Check reports the sender, not the key alone). ``sender_verified``: the provider accepted a send
+        from it; ``sender_not_verified``: its latest answer was the pinned 403; ``ready``: the key is there and
+        no send from this sender has an answer yet."""
+        if row["state"] != "active":
+            return "parked"
+        account = json.loads(row["account_json"] or "{}")
+        try:
+            channel_email.read_key(channel_email.valid_key_ref(account.get("key_ref")))
+        except channel_email.EmailKeyError as exc:
+            return exc.code
+        except ValidationError:
+            return "email_key_ref_invalid"
+        with self._db._connection() as conn:
+            latest = conn.execute(
+                "SELECT state, reason FROM channel_sends WHERE channel='email'"
+                " AND json_extract(account_json, '$.from_email')=? AND dispatch_seq IS NOT NULL"
+                " AND (state='sent' OR (state='failed' AND reason='sender_not_verified'))"
+                " ORDER BY dispatch_seq DESC LIMIT 1", (str(account.get("from_email") or ""),)).fetchone()
+        if latest is None:
+            return "ready"
+        return "sender_verified" if latest["state"] == "sent" else "sender_not_verified"
+
     # ── destinations (admitted, the owner's) ───────────────────────────────
 
     def save_destination(self, principal: Any, name: str, channel: str, folder: Optional[str] = None,
                          synced: bool = False, replaces: Optional[str] = None, host: Optional[str] = None,
                          repo: Optional[str] = None, kind: Optional[str] = None, number: Optional[int] = None,
                          site: Optional[str] = None, email: Optional[str] = None, key: Optional[str] = None,
-                         space_id: Optional[str] = None, command_id: Optional[str] = None) -> dict[str, Any]:
+                         space_id: Optional[str] = None, provider: Optional[str] = None,
+                         from_email: Optional[str] = None, from_name: Optional[str] = None,
+                         key_ref: Optional[str] = None, to: Optional[list[str]] = None,
+                         cc: Optional[list[str]] = None, command_id: Optional[str] = None) -> dict[str, Any]:
         """Save one destination. ``replaces``: Edit -- the old row parks and this one is new.
 
         The account is CONCRETE (design section 1): GitHub freezes ``{host, login}``
         read now from ``gh api user --hostname``; Jira and Confluence ``{site, email}``.
+        Email (PHILO-10-03): the account freezes ``{provider, from_email,
+        from_name, key_ref}`` (the key's NAME, never the key); the target is
+        ``{to, cc}``.
         """
         handle = _handle()
         destination_id = _derived_id("chd_", handle.operation_id)
@@ -209,6 +248,10 @@ class ChannelService:
             account, target = chan.target_at_save(
                 {"host": host, "repo": repo, "kind": kind, "number": number, "site": site, "email": email,
                  "key": key, "space_id": space_id}, handle.principal)
+            synced = False
+        elif channel == "email":
+            account, target = chan.target_at_save({"provider": provider, "from_email": from_email,
+                                                   "from_name": from_name, "key_ref": key_ref, "to": to, "cc": cc})
             synced = False
         else:
             raise ValidationError(f"{channel} destinations arrive with their channel", code="channel_unknown")
@@ -244,6 +287,31 @@ class ChannelService:
         handle.terminal("succeeded", "succeeded", f"channel_destination:{destination_id}", effect=effect)
         return {"destination": self._destination_view(self._stored(destination_id))}
 
+    def save_email_key(self, principal: Any, key_ref: str, api_key: Any, provider: Optional[str] = None,
+                       command_id: Optional[str] = None) -> dict[str, Any]:
+        """Save the email provider's key in the OS keychain under *key_ref* (config, the owner's).
+
+        ``api_key`` is HELD by the transport: never an argument, so it never
+        reaches the kernel's request, its envelope digest, a receipt or a log.
+        The answer and the receipt name the key's NAME only.
+        """
+        handle = _handle()
+        ref = channel_email.valid_key_ref(key_ref)
+        chosen = str(provider or "sendgrid")
+        channel_email.provider(chosen)
+        answer = {"key_ref": ref, "provider": chosen, "saved": True}
+        if handle.replay:
+            return answer
+        key = api_key if isinstance(api_key, str) else ""
+        if not key.strip() or len(key) > 512 or any(ch.isspace() for ch in key):
+            raise ValidationError("The key is one line of 1-512 characters with no spaces", code="email_key_invalid")
+        try:
+            channel_email.save_key(ref, key)
+        except channel_email.EmailKeyError as exc:
+            raise ChannelRefused(exc.code, f"The key could not be saved: {exc.code}", status=400) from None
+        handle.terminal("succeeded", "succeeded", f"email_key:{ref}")
+        return answer
+
     def _stored(self, destination_id: str) -> dict[str, Any]:
         row = self._db.channel_destinations.get(destination_id)
         if row is None:
@@ -271,8 +339,7 @@ class ChannelService:
         if destination["state"] != "active":
             raise ChannelRefused("destination_parked", f"Destination {destination_id} is parked")
         document = contract.render_update(self._db, update_id)
-        chan = contract.channel(destination["channel"])
-        payload = chan.serialize(document)
+        payload = contract.serialize_for(destination, document)
         self._size(destination["channel"], payload)
         send_id = _derived_id("chs_", handle.operation_id)
         operation = handle.operation()
@@ -365,7 +432,7 @@ class ChannelService:
                                       code="invalid_arguments")
             destination = self._destination(destination_id)
             document = contract.render_update(self._db, update_id)
-            payload = contract.channel(destination["channel"]).serialize(document)
+            payload = contract.serialize_for(destination, document)
             if contract.sha256(payload) != str(preview_digest):
                 raise ChannelRefused("preview_changed", "The document changed since the preview you saw")
             frozen_target, frozen_digest = json.loads(destination["target_json"]), destination["target_digest"]
@@ -380,7 +447,8 @@ class ChannelService:
             raise ChannelRefused("payload_changed", "The frozen payload does not match its digest")
         self._size(channel_name, payload)
         # Before the boundary: the file's folder resolves again; GitHub reads its
-        # login again (github_identity_changed / github_not_logged_in by name).
+        # login again (github_identity_changed / github_not_logged_in by name);
+        # email's key store is native and holds the key (email_key_store_not_native / email_key_missing).
         folder = chan.check_before_dispatch(frozen_target, account=frozen_account, principal=handle.principal)
         path = (chan.choose_path(folder, contract.naming(self._db, document_ref), send_id)
                 if channel_name == "file" else None)

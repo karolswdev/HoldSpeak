@@ -216,7 +216,8 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
             registry.invoke(principal, "meeting.import", {"nope": 1})
         assert exc.value.code == "owner_required"
     assert operations.MEETING_IMPORT.owner_only is True
-    assert [d.name for d in operations.DESCRIPTORS if d.owner_only] == ["meeting.import"]
+    # PHILO-10-03: channel.save_email_key is owner only too (the key is a held input, HTTP only).
+    assert [d.name for d in operations.DESCRIPTORS if d.owner_only] == ["meeting.import", "channel.save_email_key"]
     assert "owner_required" in operations.MEETING_IMPORT.export()["refusals"]
 
 
@@ -524,6 +525,16 @@ def _p_channel_send(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return hub.root.operations.invoke(OWNER, "channel.send", {"send_id": prepared["send"]["id"]})
 
 
+def _p_channel_save_email_key(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    """PHILO-10-03: the key HELD by the transport, the memory store (never the real keychain)."""
+    from holdspeak.services import channel_email
+
+    memory = channel_email.MemoryEmailKeyStore()
+    monkeypatch.setattr(channel_email, "KEY_STORE", lambda: memory)
+    return hub.root.operations.invoke(OWNER, "channel.save_email_key", {"key_ref": "sendgrid"},
+                                      held={"api_key": "SG.shape-fence-synthetic"})
+
+
 def _p_channel_sends(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     _p_channel_send(hub, monkeypatch, tmp_path)
     return hub.root.operations.invoke(OWNER, "channel.sends", {})
@@ -563,6 +574,7 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "channel.discard": _p_channel_discard,
     "channel.send": _p_channel_send,
     "channel.sends": _p_channel_sends,
+    "channel.save_email_key": _p_channel_save_email_key,
 }
 
 

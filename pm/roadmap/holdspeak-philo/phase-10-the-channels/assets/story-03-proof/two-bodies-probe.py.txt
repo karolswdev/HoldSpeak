@@ -1,0 +1,44 @@
+"""PHILO-10-03 main-red probe: the network seam's admitted digest for two different request bodies.
+
+Runs against whatever tree is on sys.path (an export of origin/main, or this branch). It drives the
+REAL seam (build_gated_connector -> _route -> PermissionGate.open_outbound_socket -> run_external_egress)
+with two outbound ops whose request bodies differ and records the digest each admission bound.
+On main the seam hashes the destination only: ONE digest for both. On this branch an op that names its
+frozen bytes' digest (GatedOperation.outbound(..., payload_digest=)) binds THAT digest: two digests.
+"""
+import hashlib
+import inspect
+import tempfile
+from pathlib import Path
+
+import holdspeak.db.core as db_core
+from holdspeak.db import Database
+from holdspeak.kernel import external_egress, runtime
+from holdspeak.plugins.gated_connector import GatedOperation, WriteConnectorManifest, build_gated_connector
+
+base = Path(tempfile.mkdtemp())
+db = Database(base / "probe.db")
+db_core._db = db
+runtime._configure(db)
+bound: list[str] = []
+real = external_egress.EgressExecutionStore.bind
+
+
+def bind(self, **kwargs):
+    plan = real(self, **kwargs)
+    bound.append(plan.payload_digest)
+    return plan
+
+
+external_egress.EgressExecutionStore.bind = bind
+manifest = WriteConnectorManifest(connector_id="probe", permission="network:outbound", allowed_hosts=("api.sendgrid.com",))
+takes_digest = "payload_digest" in inspect.signature(GatedOperation.outbound).parameters
+for body in (b'{"text":"first body"}', b'{"text":"a different body"}'):
+    extra = {"payload_digest": hashlib.sha256(body).hexdigest(), "data_classes": ("email_message",)} if takes_digest else {}
+    op = GatedOperation.outbound("api.sendgrid.com", 443, request=body, **extra)
+    connector = build_gated_connector(manifest, plan=lambda _p, op=op: op, interpret=lambda raw, _op: raw,
+                                      opener=lambda planned: {"status": 202})
+    connector(None)
+print("seam takes the frozen digest:", takes_digest)
+print("admitted digests:", bound)
+print("TWO BODIES ->", "ONE DIGEST (red)" if len(set(bound)) == 1 else "TWO DIGESTS (green)")

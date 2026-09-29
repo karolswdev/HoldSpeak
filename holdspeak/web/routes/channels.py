@@ -9,6 +9,7 @@ POST   /api/channels/sends                             channel.prepare
 POST   /api/channels/sends/{send_id}/discard           channel.discard
 POST   /api/channels/send                              channel.send
 GET    /api/channels/sends                             channel.sends
+PUT    /api/channels/email-keys/{key_ref}              channel.save_email_key (the key HELD, never an argument)
 
 An admitted route answers with its ``operation_id`` and terminal ``receipt``; a
 refusal of an admitted operation carries them (``_room_kernel``).
@@ -47,15 +48,19 @@ def build_channels_router(ctx: WebContext) -> APIRouter:
     def ops() -> Any:
         return operations.for_context(ctx)
 
-    async def call(request: Request, name: str, args: dict[str, Any]) -> JSONResponse:
-        # Off the loop exactly when the operation declares blocking I/O (a CLI send, an identity read).
+    async def call(request: Request, name: str, args: dict[str, Any],
+                   held: Optional[dict[str, Any]] = None) -> JSONResponse:
+        # Off the loop exactly when the operation declares blocking I/O (a CLI or email send, an identity
+        # read, the keychain).
         if ops().descriptor(name).blocking_io:
-            return await run_in_threadpool(call_sync, request, name, args)
-        return call_sync(request, name, args)
+            return await run_in_threadpool(call_sync, request, name, args, held)
+        return call_sync(request, name, args, held)
 
-    def call_sync(request: Request, name: str, args: dict[str, Any]) -> JSONResponse:
+    def call_sync(request: Request, name: str, args: dict[str, Any],
+                  held: Optional[dict[str, Any]] = None) -> JSONResponse:
         try:
-            result, kernel = ops().invoke_receipted(principal(request), name, args)
+            result, kernel = (ops().invoke_receipted(principal(request), name, args) if held is None
+                              else ops().invoke_receipted(principal(request), name, args, held=held))
             return JSONResponse({**result, **kernel_fields(kernel)})
         except OperationRefused as exc:
             return JSONResponse({"success": False, "code": exc.code, "error_code": exc.code, "message": exc.detail,
@@ -132,5 +137,17 @@ def build_channels_router(ctx: WebContext) -> APIRouter:
                                 send_id: Optional[str] = None) -> Any:
         args = {k: v for k, v in (("update_id", update_id), ("send_id", send_id)) if v}
         return await call(request, "channel.sends", args)
+
+    @router.put("/api/channels/email-keys/{key_ref}")
+    async def api_channel_save_email_key(key_ref: str, request: Request) -> Any:
+        # The key is HELD: taken out of the body before anything validates or
+        # journals the arguments (PHILO-10-03 key custody).
+        data, refused = await body(request, "channel.save_email_key")
+        if refused is not None:
+            return refused
+        key = data.pop("api_key", None)
+        if (bad := path_refusal(request, "channel.save_email_key", "key_ref", data)) is not None:
+            return bad
+        return await call(request, "channel.save_email_key", {**data, "key_ref": key_ref}, held={"api_key": key})
 
     return router

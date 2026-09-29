@@ -4531,7 +4531,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 88,
+      "line": 95,
       "kinds": [
         "process_or_shell"
       ],
@@ -4541,7 +4541,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 90,
+      "line": 97,
       "kinds": [
         "process_or_shell"
       ],
@@ -4551,7 +4551,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 105,
+      "line": 115,
       "kinds": [
         "process_or_shell"
       ],
@@ -4561,7 +4561,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 106,
+      "line": 116,
       "kinds": [
         "process_or_shell"
       ],
@@ -4571,7 +4571,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 166,
+      "line": 176,
       "kinds": [
         "process_or_shell"
       ],
@@ -4581,7 +4581,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 210,
+      "line": 220,
       "kinds": [
         "process_or_shell"
       ],
@@ -4591,7 +4591,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 211,
+      "line": 221,
       "kinds": [
         "process_or_shell"
       ],
@@ -4601,7 +4601,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 250,
+      "line": 268,
       "kinds": [
         "process_or_shell"
       ],
@@ -4611,7 +4611,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 260,
+      "line": 278,
       "kinds": [
         "process_or_shell"
       ],
@@ -4621,22 +4621,22 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 272,
+      "line": 290,
       "kinds": [
         "process_or_shell"
       ],
-      "excerpt": "``parent_operation_id`` and its ``broker``; each subprocess it runs is",
-      "line_sha256": "828b0912cb7165f0ae8908fd1947f2f816bc856cb2a6a49a24fbb095e224f92d",
+      "excerpt": "``parent_operation_id`` and its ``broker``; each subprocess or outbound op",
+      "line_sha256": "00d02b2a3fea5c503ae36cf4c27cbe6b4abb9e3c54da84f9b9fda11745f5af85",
       "review": "candidate_only"
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 273,
+      "line": 291,
       "kinds": [
         "process_or_shell"
       ],
-      "excerpt": "then a ``subprocess.exec`` CHILD of that operation, under that principal.",
-      "line_sha256": "fe005699aa44fbd31e2c5be0ce519a7a1dd088b05e70af086bef7d871ad85215",
+      "excerpt": "it runs is then a CHILD of that operation (``subprocess.exec`` or",
+      "line_sha256": "ba603db0f9661d55bd5e3c0ac7da0cd18a4c8c4a0a471875aa64145a734fd352",
       "review": "candidate_only"
     },
     {

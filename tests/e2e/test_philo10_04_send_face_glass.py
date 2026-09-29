@@ -1300,3 +1300,227 @@ def test_board_25_unknown_after_a_real_restart(tmp_path: Path, width: int) -> No
             second.kill()
         if first.proc.poll() is None:
             first.kill()
+
+
+# ── The email boards (story 03's channel) ────────────────────────────────
+#
+# Story 03's own seams: the HTTPS edge is its canned handler
+# (`channel_email.HTTPS_HANDLER`, the rig `Wire` of tests/unit/
+# test_philo10_email_channel.py) under the REAL opener, admission and
+# allow-list; the key store is the injected in-memory store, and a guard
+# fails the test if anything reaches the real keychain.
+
+from test_philo10_email_channel import SENDER_403, Wire, errors as sg_errors, response as sg_response  # noqa: E402
+
+KEY = "SG.glassKEY04e1f0000abcd.neverOnTheFace0000"
+FROM, TO, CC = "karol@acme.io", ["lena@acme.io", "tomas@acme.io"], ["priya@acme.io"]
+
+
+class TestSendEmailGlass(_Rig):
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        import keyring
+
+        from holdspeak.kernel.external_egress import EGRESS_EXECUTIONS
+        from holdspeak.services import channel_email
+
+        _ensure_build()
+        self.tmp = tmp_path
+        self.monkeypatch = monkeypatch
+        self.locked: list[Path] = []
+        self.memory = channel_email.MemoryEmailKeyStore()
+        self.store: Any = self.memory
+        monkeypatch.setattr(channel_email, "KEY_STORE", lambda: self.store)
+
+        def never(*_a: Any, **_k: Any) -> Any:
+            raise AssertionError("the glass reached the real keychain")
+
+        monkeypatch.setattr(keyring, "get_keyring", never)
+        self.wire = Wire()
+        monkeypatch.setattr(channel_email, "HTTPS_HANDLER", self.wire.handler)
+        EGRESS_EXECUTIONS._results.clear()
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        self.server, self.base = server, base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    @staticmethod
+    def _key_ref() -> str:
+        return f"sendgrid-{FROM}"
+
+    def _email_dest(self, page: Any, name: str = "Email lena@acme.io") -> str:
+        status, saved = _api_allow_error(page, "PUT", f"/api/channels/email-keys/{self._key_ref()}",
+                                         {"api_key": KEY}, token=TOKEN)
+        assert status == 200, saved
+        status, dest = _api_allow_error(page, "POST", "/api/channels/destinations", {
+            "name": name, "channel": "email", "from_email": FROM, "from_name": "Karol", "key_ref": self._key_ref(),
+            "to": TO, "cc": CC}, token=TOKEN)
+        assert status == 200, dest
+        return dest["destination"]["id"]
+
+    def _wait_receipt(self, page: Any, name: str, state: str) -> None:
+        page.locator(f"{self._open_sel(name)} [data-receipt=latest][data-state={state}]").wait_for(timeout=T)
+        page.wait_for_timeout(500)
+
+    # ── 16-19: picked, FAILED sender not verified, ACCEPTED BY SENDGRID, the history ──
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(1200)
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_the_email_boards(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        shots = Boards(SHOTS, width, UP)
+        em = "Email lena@acme.io"
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                pid = _api(page, "POST", "/api/projects", {"name": NAME}, token=TOKEN)["project"]["id"]
+                uid = self._published(page, pid)
+                self._email_dest(page)
+                self._room(page, pid)
+                self._updates(page)
+                self._open_update(page, uid)
+
+                # Board 16: the preview parsed back from the frozen SendGrid request.
+                self._pick(page, em)
+                picked = shots.shoot(page, "16-picked-email", [self._row(em), f"{self._open_sel(em)} [data-testid=send-verb]"])
+                fields = picked["preview_fields"]
+                assert fields[:3] == ["FROM Karol <karol@acme.io>", "TO lena@acme.io, tomas@acme.io", "CC priya@acme.io"], fields
+                assert fields[3].startswith("SUBJECT " + NAME), fields
+                assert "API.SENDGRID.COM:cloud" in picked["egress_chips"], picked["egress_chips"]
+
+                # Board 17: SendGrid's pinned 403 for an unverified sender: FAILED, nothing sent.
+                self.wire.script = [sg_errors(403, SENDER_403, field="from")]
+                page.locator(f"{self._open_sel(em)} [data-testid=send-verb]").click()
+                self._wait_receipt(page, em, "failed")
+                failed = shots.shoot(page, "17-failed-email-sender", [f"{self._open_sel(em)} [data-testid=send-failed]"],
+                                     seat=f"CENTER:{self._open_sel(em)} [data-testid=send-failed]")
+                assert failed["receipts"][0] == {"text": "✗ FAILED SENDER NOT VERIFIED NOTHING SENT", "state": "failed",
+                                                 "code": "sender_not_verified"}, failed["receipts"]
+                assert any("LAST SEND FAILED" in c for c in failed["last_chips"]), failed["last_chips"]
+
+                # Board 18: he verifies the sender in SendGrid; Send again: ACCEPTED BY SENDGRID + the id, exact case.
+                self.wire.default = sg_response(202, {"X-Message-Id": "sg-Msg-04AbCd"})
+                page.locator(f"{self._open_sel(em)} [data-testid=send-verb]").click()
+                self._wait_receipt(page, em, "sent")
+                accepted = shots.shoot(page, "18-accepted-by-sendgrid", [f"{self._open_sel(em)} [data-testid=send-sent]"],
+                                       seat=f"CENTER:{self._open_sel(em)} [data-testid=send-sent]")
+                assert accepted["receipts"][0]["text"] == "✓ ACCEPTED BY SENDGRID ID sg-Msg-04AbCd", accepted["receipts"]
+                assert len(self.wire.requests) == 2 and all(r["host"] == "api.sendgrid.com" for r in self.wire.requests)
+                self._unpick(page, em)
+
+                # Board 19: the history row; never DELIVERED on an email row.
+                dl = self._deliveries(page, pid, uid)
+                page.locator("[data-testid=delivery-row]").first.wait_for(timeout=T)
+                hist = shots.shoot(page, "19-accepted-history", ["[data-testid=delivery-history] > li:first-child > [data-testid=delivery-row]"])
+                assert [(d["channel"], d["outcome"]) for d in dl] == [("email", "sent")], dl
+                assert hist["history_head"] == "DELIVERY 1" and len(hist["history"]) == 1, hist
+                assert hist["history"][0].startswith(f"✓ {em} ACCEPTED BY SENDGRID ID sg-Msg-04AbCd"), hist["history"]
+                assert "DELIVERED" not in hist["history"][0]
+                assert KEY not in page.content() and "glassKEY" not in page.content()
+                shots.write("send-face-email", {"hub_deliveries": dl, "hub_sends": self._sends(page, uid),
+                                                "wire_hosts": [r["host"] for r in self.wire.requests]})
+                shots.assert_clean()
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    # ── B7, B8, B11: the email form, the key, the sender check ──────────
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(1200)
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_the_email_destination_setup(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        from holdspeak.services import channel_email
+
+        class _NoNativeStore:
+            def get(self, key_ref: str) -> str:
+                raise channel_email.EmailKeyError("email_key_store_not_native")
+
+            def put(self, key_ref: str, key: str) -> None:
+                raise channel_email.EmailKeyError("email_key_store_not_native")
+
+        shots = Boards(SHOTS, width, DS)
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                pid = _api(page, "POST", "/api/projects", {"name": NAME}, token=TOKEN)["project"]["id"]
+                uid = self._published(page, pid)
+                self._stage(page, "configure-settings", "integrations")
+                page.locator("[data-testid=dest-form]").wait_for(timeout=T)
+                page.wait_for_timeout(900)
+                page.locator("[data-testid=dest-form] select").first.select_option("email")
+                page.locator("[data-testid=dest-from]").fill(FROM)
+                page.locator("[data-testid=dest-to]").fill(", ".join(TO))
+                key_row = "[data-testid=dest-key-row]"
+
+                def type_key() -> None:
+                    page.locator(f"{key_row} .btn", has_text="Replace").click()
+                    field = page.locator(f"{key_row} input[type=password]")
+                    field.fill(KEY)
+                    field.press("Enter")
+
+                # B7: no safe key store: KEY NOT SAVED + why; nothing kept.
+                self.store = _NoNativeStore()
+                type_key()
+                page.locator("[data-testid=dest-key-refused]").wait_for(timeout=T)
+                page.wait_for_timeout(300)
+                refused = shots.shoot(page, "b07-key-not-saved", ["[data-testid=dest-key-refused]"],
+                                      seat="CENTER:[data-testid=dest-key-refused]")
+                assert page.locator("[data-testid=dest-key-refused]").get_attribute("data-code") == "email_key_store_not_native"
+                assert page.locator("[data-testid=dest-key-refused]").inner_text().split("\n")[1:] == [
+                    "KEY NOT SAVED", "NO SAFE KEY STORE"], page.locator("[data-testid=dest-key-refused]").inner_text()
+                assert self.memory.values == {}
+
+                # B8: the key saved into the (in-memory) keychain: SET, never the key; then the destination.
+                self.store = self.memory
+                type_key()
+                page.wait_for_function("(sel) => document.querySelector(sel)?.innerText.includes('SET')", arg=key_row, timeout=T)
+                page.wait_for_timeout(300)
+                keyed = shots.shoot(page, "b08-add-email-key-set", [key_row],
+                                    seat=f"CENTER:{key_row}")
+                assert self.memory.values == {self._key_ref(): KEY}
+                assert KEY not in page.content() and "glassKEY" not in page.content()
+                page.locator("[data-testid=dest-save]").click()
+                page.locator("[data-testid=dest-row]").first.wait_for(timeout=T)
+                hub = _api(page, "GET", "/api/channels/destinations", token=TOKEN)["destinations"]
+                assert [(d["channel"], d["name"], d["account"]["key_ref"], d["target"]["to"]) for d in hub] == [
+                    ("email", "Email lena@acme.io", self._key_ref(), TO)], hub
+                assert "API.SENDGRID.COM:cloud" in keyed["egress_chips"], keyed["egress_chips"]
+
+                # B11: Check reports the SENDER, never the key alone. Before any answer: SENDER NOT CHECKED;
+                # after SendGrid's pinned 403 for this sender: SENDER NOT VERIFIED.
+                row = self._drow("Email lena@acme.io")
+                page.locator(f"{row} > .surface-ledger-line").click()
+                page.locator(f"{row} [data-testid=dest-check]").click()
+                page.locator(f"{row} [data-testid=dest-check-result]").wait_for(timeout=T)
+                assert page.locator(f"{row} [data-testid=dest-check-result]").get_attribute("data-code") == "ready"
+                assert "SENDER NOT CHECKED" in page.locator(f"{row} [data-testid=dest-check-result]").inner_text()
+                dest = hub[0]["id"]
+                digest = _api(page, "POST", "/api/channels/preview", {"update_id": uid, "destination_id": dest},
+                              token=TOKEN)["payload_digest"]
+                self.wire.script = [sg_errors(403, SENDER_403, field="from")]
+                answer = _api(page, "POST", "/api/channels/send", {"update_id": uid, "destination_id": dest,
+                                                                    "preview_digest": digest}, token=TOKEN)
+                assert (answer["outcome"], answer["send"]["reason"]) == ("failed", "sender_not_verified"), answer
+                page.locator(f"{row} [data-testid=dest-check]").click()
+                page.wait_for_function("(sel) => document.querySelector(sel)?.dataset.code === 'sender_not_verified'",
+                                       arg=f"{row} [data-testid=dest-check-result]", timeout=T)
+                page.wait_for_timeout(300)
+                checked = shots.shoot(page, "b11-email-check-not-verified", [f"{row} [data-testid=dest-check-result]"],
+                                      seat=f"CENTER:{row} [data-testid=dest-check-result]")
+                check = _api(page, "POST", f"/api/channels/destinations/{dest}/check", {}, token=TOKEN)["check"]
+                assert check["state"] == "sender_not_verified", check
+                assert "SENDER NOT VERIFIED" in page.locator(f"{row} [data-testid=dest-check-result]").inner_text()
+                assert "SET" in page.locator(f"{row} [data-testid=dest-open] dl").inner_text()  # the key: present only
+                shots.write("destinations-email", {"hub": hub, "check": check, "refused": refused["named"],
+                                                   "checked": checked["named"]})
+                shots.assert_clean()
+                assert not errors, errors
+            finally:
+                browser.close()

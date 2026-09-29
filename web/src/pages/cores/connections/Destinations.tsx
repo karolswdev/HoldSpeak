@@ -71,7 +71,8 @@ function fromDestination(d: Destination): Draft {
     repo: String(t.repo ?? ""), kind: t.kind === "pr" ? "pr" : "issue", number: t.number != null ? String(t.number) : "",
     jiraAccount: d.channel === "jira" ? `${a.site}|${a.email}` : "", key: String(t.key ?? ""),
     confAccount: d.channel === "confluence" ? `${a.site}|${a.email}` : "", space: String(t.space_id ?? ""),
-    fromEmail: String(a.from_email ?? ""), fromName: String(a.from_name ?? ""), to: String(t.to ?? ""), cc: String(t.cc ?? ""),
+    fromEmail: String(a.from_email ?? ""), fromName: String(a.from_name ?? ""),
+    to: [t.to as unknown].flat().filter(Boolean).join(", "), cc: [t.cc as unknown].flat().filter(Boolean).join(", "),
   };
 }
 
@@ -86,7 +87,10 @@ export function autoName(d: Pick<Draft, "channel" | "folder" | "repo" | "kind" |
     default: return "";
   }
 }
-const keyRef = (fromEmail: string) => `holdspeak.email.sendgrid:${fromEmail.trim().toLowerCase()}`;
+/** The keychain item's name for a sender (story 03's key_ref: letters, digits, `_ . @ -`). */
+export const keyRef = (fromEmail: string) =>
+  `sendgrid-${fromEmail.trim().toLowerCase().replace(/[^a-z0-9_.@-]/g, "-")}`.slice(0, 100);
+const addresses = (text: string) => text.split(",").map((a) => a.trim()).filter(Boolean);
 
 function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
   conns: ConnectionsResponse | null; initial: Draft; replaces?: string; keys: Record<string, boolean>;
@@ -120,7 +124,8 @@ function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
       : d.channel === "github" ? { ...base, host: "github.com", repo: d.repo.trim(), kind: d.kind, number: Number(d.number) || 0 }
       : d.channel === "jira" ? { ...base, ...pick(jiraAcc), key: d.key.trim() }
       : d.channel === "confluence" ? { ...base, ...pick(confAcc), space_id: d.space.trim() }
-      : { ...base, provider: "sendgrid", from_email: d.fromEmail.trim(), from_name: d.fromName.trim(), to: d.to, cc: d.cc };
+      : { ...base, provider: "sendgrid", from_email: d.fromEmail.trim(), from_name: d.fromName.trim(),
+          key_ref: keyRef(d.fromEmail), to: addresses(d.to), cc: addresses(d.cc) };
     try {
       await wire.save(body);
       onDone();
@@ -224,13 +229,16 @@ function detailFields(d: Destination): [string, string][] {
     case "github": return [...base, ["Account", `@${a.login} · ${a.host}`], ["Repository", String(t.repo)], [t.kind === "pr" ? "Pull request" : "Issue", `#${t.number}`]];
     case "jira": return [...base, ["Account", `${a.email} · ${a.site}`], ["Work item", String(t.key)]];
     case "confluence": return [...base, ["Account", `${a.email} · ${a.site}`], ["Space id", String(t.space_id)]];
-    case "email": return [...base, ["Provider", "SendGrid"], ["From", `${a.from_name} <${a.from_email}>`], ["Key", a.key_present ? "SET" : "NOT SET"], ["To", String(t.to)], ["Cc", String(t.cc || "—")]];
+    case "email": return [...base, ["Provider", "SendGrid"], ["From", a.from_name ? `${a.from_name} <${a.from_email}>` : String(a.from_email)],
+      ["To", [t.to as unknown].flat().join(", ")], ["Cc", [t.cc as unknown].flat().join(", ") || "—"]];
     default: return base;
   }
 }
 
 /** The Check result, by the hub's check state. */
-function CheckChip({ state }: { state: string }) {
+function CheckChip({ state, channel }: { state: string; channel: Channel }) {
+  // Email (B11): Check reports the SENDER's verification, never the key alone.
+  if (channel === "email" && state === "ready") return <StateChip state="idle" label="SENDER NOT CHECKED" />;
   if (state === "ready" || state === "connected") return <StateChip state="success" label="CHECKED" />;
   if (state === "sender_verified") return <StateChip state="success" label="SENDER VERIFIED" />;
   if (state === "sender_not_verified") return <StateChip state="failure" label={failedWord(state)} />;
@@ -269,7 +277,8 @@ export function Destinations() {
     setRows(r); setReadFailed(false);
     setKeys((k) => ({
       ...k,
-      ...Object.fromEntries(r.filter((d) => d.channel === "email").map((d) => [String(d.account.key_ref), !!d.account.key_present])),
+      ...Object.fromEntries(r.filter((d) => d.channel === "email" && typeof d.account.key_present === "boolean")
+        .map((d) => [String(d.account.key_ref), !!d.account.key_present])),
     }));
   }).catch(() => setReadFailed(true)), []);
   useEffect(() => {
@@ -287,7 +296,7 @@ export function Destinations() {
     requestAnimationFrame(() => groupRef.current?.scrollIntoView({ block: "start" }));
   }, [arrive, rows, readFailed]);
   const onKey = (ref: string, v: string): Promise<string | null> => wire.saveKey(ref, v)
-    .then((r) => { setKeys((k) => ({ ...k, [ref]: r.key_present })); return null; })
+    .then(() => { setKeys((k) => ({ ...k, [ref]: true })); return null; })
     .catch((e) => (e instanceof Refusal ? e.code : "no_answer"));
   if (readFailed) {
     return (
@@ -341,6 +350,9 @@ export function Destinations() {
                             {detailFields(d).map(([l, v]) => <Field key={l} label={l} value={v} />)}
                             <Field label="Saved" value={stamp(d.created_at)} />
                             {c?.at ? <Field label="Checked" value={stamp(c.at)} /> : null}
+                            {d.channel === "email" && c?.state ? (
+                              <Field label="Key" value={c.state === "email_key_missing" ? "NOT SET" : c.state.startsWith("email_key") ? refusedWord(c.state) : "SET"} />
+                            ) : null}
                           </dl>
                           <div className="send-verbs" data-testid="dest-verbs">
                             <Button dense variant="ghost" loading={c?.busy} data-testid="dest-check"
@@ -363,7 +375,7 @@ export function Destinations() {
                             ) : null}
                             {c?.state ? (
                               <span className="send-line" data-testid="dest-check-result" data-code={c.state}>
-                                <CheckChip state={c.state} />
+                                <CheckChip state={c.state} channel={d.channel} />
                               </span>
                             ) : null}
                           </div>
