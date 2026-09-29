@@ -1,0 +1,1586 @@
+{
+  "id": "obs-20260929T152604Z-case.a1.decision_face_create.opens_and_reopens.op-muaddib-1440",
+  "run_id": "20260929T152604Z-case.a1.decision_face_create.opens_and_reopens.op-muaddib-1440",
+  "case_id": "case.a1.decision_face_create.opens_and_reopens.op",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "a1",
+  "edge_ids": [
+    "edge.route.decisions_create"
+  ],
+  "state_id": "state.decisions.desk.recorded",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:63373",
+      "port": 63373,
+      "pid": 5399,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qb835xc2",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qb835xc2/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:26:05.037191+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "65f0da5833e79fa1a23f7332599aac3941729313c1c6e99f1df82c64029609d6",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.create",
+      "args": {
+        "title": "Adopt the one desk bus",
+        "status": "proposed"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "decisions",
+            "data": {
+              "title": "Adopt the one desk bus",
+              "status": "proposed"
+            }
+          }
+        }
+      },
+      "response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "",
+        "created_at": "2026-09-29T15:26:06Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "",
+        "deleted": false,
+        "id": "decision_11b57546196a",
+        "operation_id": "op_8e480af83fa54ef9ba146e710d90c615",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.596492,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_8e480af83fa54ef9ba146e710d90c615",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_eaf8631be39f46a5a986303bdd92a42f",
+          "result_ref": "decision:decision_11b57546196a",
+          "state": "succeeded",
+          "target_ref": "decision:decision_11b57546196a"
+        },
+        "status": "proposed",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Adopt the one desk bus",
+        "updated_at": "2026-09-29T15:26:06Z"
+      },
+      "domain_response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "",
+        "created_at": "2026-09-29T15:26:06Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "",
+        "deleted": false,
+        "id": "decision_11b57546196a",
+        "operation_id": "op_8e480af83fa54ef9ba146e710d90c615",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.596492,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_8e480af83fa54ef9ba146e710d90c615",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_eaf8631be39f46a5a986303bdd92a42f",
+          "result_ref": "decision:decision_11b57546196a",
+          "state": "succeeded",
+          "target_ref": "decision:decision_11b57546196a"
+        },
+        "status": "proposed",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Adopt the one desk bus",
+        "updated_at": "2026-09-29T15:26:06Z"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"operation_id\": \"op_8e480af83fa54ef9ba146e710d90c615\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790695566.596492, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_8e480af83fa54ef9ba146e710d90c615\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_eaf8631be39f46a5a986303bdd92a42f\", \"result_ref\": \"decision:decision_11b57546196a\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_11b57546196a\"}, \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.01,
+      "captured": {
+        "name": "decision_id",
+        "path": "id",
+        "value": "decision_11b57546196a"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.update",
+      "args": {
+        "decision_id": "decision_11b57546196a",
+        "context_markdown": "Source: meeting review 2026-09-22",
+        "decision_markdown": "Adopt the one desk bus\nfor every frame"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.update",
+          "arguments": {
+            "kind": "decisions",
+            "id": "decision_11b57546196a",
+            "data": {
+              "context_markdown": "Source: meeting review 2026-09-22",
+              "decision_markdown": "Adopt the one desk bus\nfor every frame"
+            }
+          }
+        }
+      },
+      "response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "Source: meeting review 2026-09-22",
+        "created_at": "2026-09-29T15:26:06Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "Adopt the one desk bus\nfor every frame",
+        "deleted": false,
+        "id": "decision_11b57546196a",
+        "operation_id": "op_511ef4a9d06b4039ad59b8d3f6a61057",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.599947,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_511ef4a9d06b4039ad59b8d3f6a61057",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_3fa7e06f70d748fa8072410ed18a9b0b",
+          "result_ref": "decision:decision_11b57546196a",
+          "state": "succeeded",
+          "target_ref": "decision:decision_11b57546196a"
+        },
+        "status": "proposed",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Adopt the one desk bus",
+        "updated_at": "2026-09-29T15:26:06Z"
+      },
+      "domain_response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "Source: meeting review 2026-09-22",
+        "created_at": "2026-09-29T15:26:06Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "Adopt the one desk bus\nfor every frame",
+        "deleted": false,
+        "id": "decision_11b57546196a",
+        "operation_id": "op_511ef4a9d06b4039ad59b8d3f6a61057",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.599947,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_511ef4a9d06b4039ad59b8d3f6a61057",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_3fa7e06f70d748fa8072410ed18a9b0b",
+          "result_ref": "decision:decision_11b57546196a",
+          "state": "succeeded",
+          "target_ref": "decision:decision_11b57546196a"
+        },
+        "status": "proposed",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Adopt the one desk bus",
+        "updated_at": "2026-09-29T15:26:06Z"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"Source: meeting review 2026-09-22\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"Adopt the one desk bus\\nfor every frame\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"operation_id\": \"op_511ef4a9d06b4039ad59b8d3f6a61057\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790695566.599947, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_511ef4a9d06b4039ad59b8d3f6a61057\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_3fa7e06f70d748fa8072410ed18a9b0b\", \"result_ref\": \"decision:decision_11b57546196a\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_11b57546196a\"}, \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.read",
+      "args": {
+        "decision_id": "decision_11b57546196a"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "decisions",
+            "id": "decision_11b57546196a"
+          }
+        }
+      },
+      "response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "Source: meeting review 2026-09-22",
+        "created_at": "2026-09-29T15:26:06Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "Adopt the one desk bus\nfor every frame",
+        "deleted": false,
+        "id": "decision_11b57546196a",
+        "status": "proposed",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Adopt the one desk bus",
+        "updated_at": "2026-09-29T15:26:06Z"
+      },
+      "domain_response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "Source: meeting review 2026-09-22",
+        "created_at": "2026-09-29T15:26:06Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "Adopt the one desk bus\nfor every frame",
+        "deleted": false,
+        "id": "decision_11b57546196a",
+        "status": "proposed",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Adopt the one desk bus",
+        "updated_at": "2026-09-29T15:26:06Z"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"Source: meeting review 2026-09-22\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"Adopt the one desk bus\\nfor every frame\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    }
+  ],
+  "preconditions": [],
+  "variables": {
+    "decision_id": "decision_11b57546196a"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "decision.create",
+    "args": {
+      "title": "Refused decision",
+      "status": "bogus"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "method": "tools/call",
+      "params": {
+        "name": "desk.create",
+        "arguments": {
+          "kind": "decisions",
+          "data": {
+            "title": "Refused decision",
+            "status": "bogus"
+          }
+        }
+      }
+    },
+    "response": null,
+    "domain_response": null,
+    "refusal": {
+      "error": "invalid decision status: bogus",
+      "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790695566.6077492,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+        "outcome": "invalid_value",
+        "receipt_id": "rcpt_721e1d6973a54d9f9bfd2e374e40c811",
+        "result_ref": "",
+        "state": "refused",
+        "target_ref": "decision:decision_793965b32b0b"
+      },
+      "code": "mcp_refused"
+    },
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\": \"invalid decision status: bogus\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790695566.6077492, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_721e1d6973a54d9f9bfd2e374e40c811\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"decision:decision_793965b32b0b\"}}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "elapsed_s": 0.002,
+    "named_refusal": {
+      "error": "invalid decision status: bogus",
+      "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790695566.6077492,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+        "outcome": "invalid_value",
+        "receipt_id": "rcpt_721e1d6973a54d9f9bfd2e374e40c811",
+        "result_ref": "",
+        "state": "refused",
+        "target_ref": "decision:decision_793965b32b0b"
+      },
+      "code": "mcp_refused"
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": null,
+      "after": "ab4ac447016cb792acd5718858daba5cc560e2c4fb14270aa22446f479aea37d"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "decision.list",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "tools/call",
+            "params": {
+              "name": "desk.list",
+              "arguments": {
+                "kind": "decisions"
+              }
+            }
+          },
+          "response": [
+            {
+              "alternatives": [],
+              "consequences_markdown": "",
+              "context_markdown": "Source: meeting review 2026-09-22",
+              "created_at": "2026-09-29T15:26:06Z",
+              "decided_at": null,
+              "deciders": [],
+              "decision_markdown": "Adopt the one desk bus\nfor every frame",
+              "deleted": false,
+              "id": "decision_11b57546196a",
+              "status": "proposed",
+              "superseded_by": null,
+              "tags": [],
+              "title": "Adopt the one desk bus",
+              "updated_at": "2026-09-29T15:26:06Z"
+            }
+          ],
+          "domain_response": [
+            {
+              "alternatives": [],
+              "consequences_markdown": "",
+              "context_markdown": "Source: meeting review 2026-09-22",
+              "created_at": "2026-09-29T15:26:06Z",
+              "decided_at": null,
+              "deciders": [],
+              "decision_markdown": "Adopt the one desk bus\nfor every frame",
+              "deleted": false,
+              "id": "decision_11b57546196a",
+              "status": "proposed",
+              "superseded_by": null,
+              "tags": [],
+              "title": "Adopt the one desk bus",
+              "updated_at": "2026-09-29T15:26:06Z"
+            }
+          ],
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 4,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"Source: meeting review 2026-09-22\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"Adopt the one desk bus\\nfor every frame\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}]"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        },
+        {
+          "kind": "op",
+          "name": "decision.read",
+          "args": {
+            "decision_id": "decision_11b57546196a"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "tools/call",
+            "params": {
+              "name": "desk.get",
+              "arguments": {
+                "kind": "decisions",
+                "id": "decision_11b57546196a"
+              }
+            }
+          },
+          "response": {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "Source: meeting review 2026-09-22",
+            "created_at": "2026-09-29T15:26:06Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "Adopt the one desk bus\nfor every frame",
+            "deleted": false,
+            "id": "decision_11b57546196a",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Adopt the one desk bus",
+            "updated_at": "2026-09-29T15:26:06Z"
+          },
+          "domain_response": {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "Source: meeting review 2026-09-22",
+            "created_at": "2026-09-29T15:26:06Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "Adopt the one desk bus\nfor every frame",
+            "deleted": false,
+            "id": "decision_11b57546196a",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Adopt the one desk bus",
+            "updated_at": "2026-09-29T15:26:06Z"
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"Source: meeting review 2026-09-22\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"Adopt the one desk bus\\nfor every frame\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "decision.list",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "method": "tools/call",
+            "params": {
+              "name": "desk.list",
+              "arguments": {
+                "kind": "decisions"
+              }
+            }
+          },
+          "response": [
+            {
+              "alternatives": [],
+              "consequences_markdown": "",
+              "context_markdown": "Source: meeting review 2026-09-22",
+              "created_at": "2026-09-29T15:26:06Z",
+              "decided_at": null,
+              "deciders": [],
+              "decision_markdown": "Adopt the one desk bus\nfor every frame",
+              "deleted": false,
+              "id": "decision_11b57546196a",
+              "status": "proposed",
+              "superseded_by": null,
+              "tags": [],
+              "title": "Adopt the one desk bus",
+              "updated_at": "2026-09-29T15:26:06Z"
+            }
+          ],
+          "domain_response": [
+            {
+              "alternatives": [],
+              "consequences_markdown": "",
+              "context_markdown": "Source: meeting review 2026-09-22",
+              "created_at": "2026-09-29T15:26:06Z",
+              "decided_at": null,
+              "deciders": [],
+              "decision_markdown": "Adopt the one desk bus\nfor every frame",
+              "deleted": false,
+              "id": "decision_11b57546196a",
+              "status": "proposed",
+              "superseded_by": null,
+              "tags": [],
+              "title": "Adopt the one desk bus",
+              "updated_at": "2026-09-29T15:26:06Z"
+            }
+          ],
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"Source: meeting review 2026-09-22\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"Adopt the one desk bus\\nfor every frame\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}]"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        },
+        {
+          "kind": "op",
+          "name": "decision.read",
+          "args": {
+            "decision_id": "decision_11b57546196a"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "tools/call",
+            "params": {
+              "name": "desk.get",
+              "arguments": {
+                "kind": "decisions",
+                "id": "decision_11b57546196a"
+              }
+            }
+          },
+          "response": {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "Source: meeting review 2026-09-22",
+            "created_at": "2026-09-29T15:26:06Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "Adopt the one desk bus\nfor every frame",
+            "deleted": false,
+            "id": "decision_11b57546196a",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Adopt the one desk bus",
+            "updated_at": "2026-09-29T15:26:06Z"
+          },
+          "domain_response": {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "Source: meeting review 2026-09-22",
+            "created_at": "2026-09-29T15:26:06Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "Adopt the one desk bus\nfor every frame",
+            "deleted": false,
+            "id": "decision_11b57546196a",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Adopt the one desk bus",
+            "updated_at": "2026-09-29T15:26:06Z"
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 10,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"Source: meeting review 2026-09-22\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"Adopt the one desk bus\\nfor every frame\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:63373",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "decision.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 4,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.list",
+            "arguments": {
+              "kind": "decisions"
+            }
+          }
+        },
+        "response": [
+          {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "Source: meeting review 2026-09-22",
+            "created_at": "2026-09-29T15:26:06Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "Adopt the one desk bus\nfor every frame",
+            "deleted": false,
+            "id": "decision_11b57546196a",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Adopt the one desk bus",
+            "updated_at": "2026-09-29T15:26:06Z"
+          }
+        ],
+        "domain_response": [
+          {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "Source: meeting review 2026-09-22",
+            "created_at": "2026-09-29T15:26:06Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "Adopt the one desk bus\nfor every frame",
+            "deleted": false,
+            "id": "decision_11b57546196a",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Adopt the one desk bus",
+            "updated_at": "2026-09-29T15:26:06Z"
+          }
+        ],
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 4,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "[{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"Source: meeting review 2026-09-22\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"Adopt the one desk bus\\nfor every frame\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}]"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      },
+      {
+        "kind": "op",
+        "name": "decision.read",
+        "args": {
+          "decision_id": "decision_11b57546196a"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 5,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.get",
+            "arguments": {
+              "kind": "decisions",
+              "id": "decision_11b57546196a"
+            }
+          }
+        },
+        "response": {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "Source: meeting review 2026-09-22",
+          "created_at": "2026-09-29T15:26:06Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "Adopt the one desk bus\nfor every frame",
+          "deleted": false,
+          "id": "decision_11b57546196a",
+          "status": "proposed",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Adopt the one desk bus",
+          "updated_at": "2026-09-29T15:26:06Z"
+        },
+        "domain_response": {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "Source: meeting review 2026-09-22",
+          "created_at": "2026-09-29T15:26:06Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "Adopt the one desk bus\nfor every frame",
+          "deleted": false,
+          "id": "decision_11b57546196a",
+          "status": "proposed",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Adopt the one desk bus",
+          "updated_at": "2026-09-29T15:26:06Z"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 5,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"Source: meeting review 2026-09-22\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"Adopt the one desk bus\\nfor every frame\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-29T15:26:06.605486+00:00"
+  },
+  "after": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:63373",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "decision.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.list",
+            "arguments": {
+              "kind": "decisions"
+            }
+          }
+        },
+        "response": [
+          {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "Source: meeting review 2026-09-22",
+            "created_at": "2026-09-29T15:26:06Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "Adopt the one desk bus\nfor every frame",
+            "deleted": false,
+            "id": "decision_11b57546196a",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Adopt the one desk bus",
+            "updated_at": "2026-09-29T15:26:06Z"
+          }
+        ],
+        "domain_response": [
+          {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "Source: meeting review 2026-09-22",
+            "created_at": "2026-09-29T15:26:06Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "Adopt the one desk bus\nfor every frame",
+            "deleted": false,
+            "id": "decision_11b57546196a",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Adopt the one desk bus",
+            "updated_at": "2026-09-29T15:26:06Z"
+          }
+        ],
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "[{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"Source: meeting review 2026-09-22\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"Adopt the one desk bus\\nfor every frame\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}]"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      },
+      {
+        "kind": "op",
+        "name": "decision.read",
+        "args": {
+          "decision_id": "decision_11b57546196a"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.get",
+            "arguments": {
+              "kind": "decisions",
+              "id": "decision_11b57546196a"
+            }
+          }
+        },
+        "response": {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "Source: meeting review 2026-09-22",
+          "created_at": "2026-09-29T15:26:06Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "Adopt the one desk bus\nfor every frame",
+          "deleted": false,
+          "id": "decision_11b57546196a",
+          "status": "proposed",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Adopt the one desk bus",
+          "updated_at": "2026-09-29T15:26:06Z"
+        },
+        "domain_response": {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "Source: meeting review 2026-09-22",
+          "created_at": "2026-09-29T15:26:06Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "Adopt the one desk bus\nfor every frame",
+          "deleted": false,
+          "id": "decision_11b57546196a",
+          "status": "proposed",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Adopt the one desk bus",
+          "updated_at": "2026-09-29T15:26:06Z"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"Source: meeting review 2026-09-22\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"Adopt the one desk bus\\nfor every frame\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-29T15:26:07.523824+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "decision.create",
+      "body_sha256": "f25102f649081f35b55346c6df02e816cd346b81552662e9690142fe659d4da4",
+      "body": {
+        "error": "invalid decision status: bogus",
+        "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.6077492,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_721e1d6973a54d9f9bfd2e374e40c811",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "decision:decision_793965b32b0b"
+        },
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"invalid decision status: bogus\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790695566.6077492, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_721e1d6973a54d9f9bfd2e374e40c811\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"decision:decision_793965b32b0b\"}}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.create",
+      "args": {
+        "title": "Refused decision",
+        "status": "bogus"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "decisions",
+            "data": {
+              "title": "Refused decision",
+              "status": "bogus"
+            }
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "error": "invalid decision status: bogus",
+        "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.6077492,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_721e1d6973a54d9f9bfd2e374e40c811",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "decision:decision_793965b32b0b"
+        },
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"invalid decision status: bogus\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790695566.6077492, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_721e1d6973a54d9f9bfd2e374e40c811\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"decision:decision_793965b32b0b\"}}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "error": "invalid decision status: bogus",
+        "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.6077492,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_721e1d6973a54d9f9bfd2e374e40c811",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "decision:decision_793965b32b0b"
+        },
+        "code": "mcp_refused"
+      }
+    },
+    "op": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.create",
+      "args": {
+        "title": "Refused decision",
+        "status": "bogus"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "decisions",
+            "data": {
+              "title": "Refused decision",
+              "status": "bogus"
+            }
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "error": "invalid decision status: bogus",
+        "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.6077492,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_721e1d6973a54d9f9bfd2e374e40c811",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "decision:decision_793965b32b0b"
+        },
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"invalid decision status: bogus\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790695566.6077492, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_721e1d6973a54d9f9bfd2e374e40c811\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"decision:decision_793965b32b0b\"}}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "error": "invalid decision status: bogus",
+        "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.6077492,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_721e1d6973a54d9f9bfd2e374e40c811",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "decision:decision_793965b32b0b"
+        },
+        "code": "mcp_refused"
+      }
+    },
+    "op_digest": "ab4ac447016cb792acd5718858daba5cc560e2c4fb14270aa22446f479aea37d"
+  },
+  "initial_feedback": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:63373",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "decision.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.list",
+            "arguments": {
+              "kind": "decisions"
+            }
+          }
+        },
+        "response": [
+          {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "Source: meeting review 2026-09-22",
+            "created_at": "2026-09-29T15:26:06Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "Adopt the one desk bus\nfor every frame",
+            "deleted": false,
+            "id": "decision_11b57546196a",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Adopt the one desk bus",
+            "updated_at": "2026-09-29T15:26:06Z"
+          }
+        ],
+        "domain_response": [
+          {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "Source: meeting review 2026-09-22",
+            "created_at": "2026-09-29T15:26:06Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "Adopt the one desk bus\nfor every frame",
+            "deleted": false,
+            "id": "decision_11b57546196a",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Adopt the one desk bus",
+            "updated_at": "2026-09-29T15:26:06Z"
+          }
+        ],
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "[{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"Source: meeting review 2026-09-22\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"Adopt the one desk bus\\nfor every frame\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}]"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      },
+      {
+        "kind": "op",
+        "name": "decision.read",
+        "args": {
+          "decision_id": "decision_11b57546196a"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 8,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.get",
+            "arguments": {
+              "kind": "decisions",
+              "id": "decision_11b57546196a"
+            }
+          }
+        },
+        "response": {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "Source: meeting review 2026-09-22",
+          "created_at": "2026-09-29T15:26:06Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "Adopt the one desk bus\nfor every frame",
+          "deleted": false,
+          "id": "decision_11b57546196a",
+          "status": "proposed",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Adopt the one desk bus",
+          "updated_at": "2026-09-29T15:26:06Z"
+        },
+        "domain_response": {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "Source: meeting review 2026-09-22",
+          "created_at": "2026-09-29T15:26:06Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "Adopt the one desk bus\nfor every frame",
+          "deleted": false,
+          "id": "decision_11b57546196a",
+          "status": "proposed",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Adopt the one desk bus",
+          "updated_at": "2026-09-29T15:26:06Z"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 8,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"Source: meeting review 2026-09-22\", \"created_at\": \"2026-09-29T15:26:06Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"Adopt the one desk bus\\nfor every frame\", \"deleted\": false, \"id\": \"decision_11b57546196a\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Adopt the one desk bus\", \"updated_at\": \"2026-09-29T15:26:06Z\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-29T15:26:07.521173+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "decision.create",
+      "body_sha256": "f25102f649081f35b55346c6df02e816cd346b81552662e9690142fe659d4da4",
+      "body": {
+        "error": "invalid decision status: bogus",
+        "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.6077492,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_721e1d6973a54d9f9bfd2e374e40c811",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "decision:decision_793965b32b0b"
+        },
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"invalid decision status: bogus\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790695566.6077492, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_721e1d6973a54d9f9bfd2e374e40c811\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"decision:decision_793965b32b0b\"}}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.create",
+      "args": {
+        "title": "Refused decision",
+        "status": "bogus"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "decisions",
+            "data": {
+              "title": "Refused decision",
+              "status": "bogus"
+            }
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "error": "invalid decision status: bogus",
+        "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.6077492,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_721e1d6973a54d9f9bfd2e374e40c811",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "decision:decision_793965b32b0b"
+        },
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"invalid decision status: bogus\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790695566.6077492, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_721e1d6973a54d9f9bfd2e374e40c811\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"decision:decision_793965b32b0b\"}}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "error": "invalid decision status: bogus",
+        "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.6077492,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_721e1d6973a54d9f9bfd2e374e40c811",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "decision:decision_793965b32b0b"
+        },
+        "code": "mcp_refused"
+      }
+    },
+    "op": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.create",
+      "args": {
+        "title": "Refused decision",
+        "status": "bogus"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "decisions",
+            "data": {
+              "title": "Refused decision",
+              "status": "bogus"
+            }
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "error": "invalid decision status: bogus",
+        "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.6077492,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_721e1d6973a54d9f9bfd2e374e40c811",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "decision:decision_793965b32b0b"
+        },
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"invalid decision status: bogus\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790695566.6077492, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_39bd3a660e63415c99fb71e595fad36f\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_721e1d6973a54d9f9bfd2e374e40c811\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"decision:decision_793965b32b0b\"}}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "error": "invalid decision status: bogus",
+        "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695566.6077492,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_39bd3a660e63415c99fb71e595fad36f",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_721e1d6973a54d9f9bfd2e374e40c811",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "decision:decision_793965b32b0b"
+        },
+        "code": "mcp_refused"
+      }
+    },
+    "op_digest": "ab4ac447016cb792acd5718858daba5cc560e2c4fb14270aa22446f479aea37d",
+    "predicate_satisfied": true,
+    "reading": "operation refused by name 'mcp_refused': invalid decision status: bogus",
+    "elapsed_s": 0.915
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "operation refused by name 'mcp_refused': invalid decision status: bogus",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 0.918,
+    "first_satisfied_at_s": 0.915,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: operation refused by name 'mcp_refused': invalid decision status: bogus"
+  ],
+  "complete": true,
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qb835xc2/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qb835xc2/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:63373"
+  ],
+  "duration_s": 2.665
+}

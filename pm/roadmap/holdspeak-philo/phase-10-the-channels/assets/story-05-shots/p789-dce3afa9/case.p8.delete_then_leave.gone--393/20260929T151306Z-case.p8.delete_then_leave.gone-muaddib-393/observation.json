@@ -1,0 +1,922 @@
+{
+  "id": "obs-20260929T151306Z-case.p8.delete_then_leave.gone-muaddib-393",
+  "run_id": "20260929T151306Z-case.p8.delete_then_leave.gone-muaddib-393",
+  "case_id": "case.p8.delete_then_leave.gone",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.decision_delete"
+  ],
+  "state_id": "state.desk_presentation.p8_one_delete",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:56906",
+      "port": 56906,
+      "pid": 87534,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bjp6u_gs",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bjp6u_gs/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:13:06.961412+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "3c5dac699f65c90e36d995d1b43e064a2a0646e92d0b694600c66e702858f4ad",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.61,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_ae73c378867f",
+          "title": "Atlas leave",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-29T15:13:16Z",
+          "updated_at": "2026-09-29T15:13:16Z",
+          "deleted": false
+        },
+        "operation_id": "op_59828666fb884a07923d34ba45955197",
+        "receipt": {
+          "receipt_id": "rcpt_ad6901aa33f84f92b839dd79c427d9f8",
+          "operation_id": "op_59828666fb884a07923d34ba45955197",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_ae73c378867f",
+          "created_at": 1790694796.118697,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_ae73c378867f"
+        }
+      },
+      "response_sha256": "7d552b299b5e0e6c857f355902fac57ae1a5b83f376555cd662f0750f44b240c",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_ae73c378867f"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 393,
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "at_width": 393,
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 393,
+      "selector": "[id='desk-palette-option-desk.toggle-view']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-world-a11y",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-obj-id='decision:decision_ae73c378867f']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "focus",
+      "adapter": "ui-keyboard",
+      "selector": "[data-obj-id='decision:decision_ae73c378867f']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "press",
+      "adapter": "ui-keyboard",
+      "key": "Shift+Enter",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-floor-toggle]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "aria-pressed",
+        "value": "true"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "aria-pressed='true', wanted 'true'"
+    }
+  ],
+  "variables": {
+    "decision_id": "decision_ae73c378867f"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "press",
+    "adapter": "ui-keyboard",
+    "key": "Delete",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-pointer",
+        "selector": ".undo-receipt.is-pending",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "requires": {
+          "visible": ".undo-receipt.is-pending",
+          "text": "Undo",
+          "seconds_left": {
+            "selector": ".undo-receipt-time",
+            "min": 2
+          }
+        },
+        "guard": {
+          "holds": true,
+          "seen": {
+            "text": "Removed Atlas leave\nUndo\n06s",
+            "seconds": 6,
+            "secondsText": "06s",
+            "actionable": true,
+            "at": 17291.299999952316
+          },
+          "reading": "held at delivery",
+          "atomic": true
+        },
+        "selector": "[data-testid=chair-floor-toggle]",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "focus": {
+      "before": "div#desk-next > div.desk-world > div.desk-world-a11y > button",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "Atlas leave",
+      "after": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n09:13 AM\n1 need you\nNO CAL"
+    },
+    "document_text_sha256": {
+      "before": "504d93c02891d383a1767a78701af53aa6abf5131afbebe5c72d3c27eb845a15",
+      "after": "8d1937f710d271a1b5d39366b76d3ac3e7755b45e08c4c755ec4e44dc839840d"
+    },
+    "document_text_len": {
+      "before": 265,
+      "after": 248
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/decisions/decision_ae73c378867f",
+          "status": 200,
+          "payload": {
+            "decision": {
+              "id": "decision_ae73c378867f",
+              "title": "Atlas leave",
+              "status": "accepted",
+              "deciders": [],
+              "decided_at": null,
+              "context_markdown": "",
+              "decision_markdown": "",
+              "alternatives": [],
+              "consequences_markdown": "",
+              "superseded_by": null,
+              "tags": [],
+              "created_at": "2026-09-29T15:13:16Z",
+              "updated_at": "2026-09-29T15:13:16Z",
+              "deleted": false
+            }
+          },
+          "body_sha256": "9920f01497c39ae76e326046f910ff4b8d6d0b2de8d2ff5e5d0c8e186bed738e"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/decisions/decision_ae73c378867f",
+          "status": 404,
+          "payload": "{\"error\":\"decision_not_found\"}",
+          "body_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+        }
+      ]
+    },
+    "protocol_digest": {
+      "before": {
+        "status": 200,
+        "row_count": 0,
+        "payload_sha256": "9920f01497c39ae76e326046f910ff4b8d6d0b2de8d2ff5e5d0c8e186bed738e"
+      },
+      "after": {
+        "status": 404,
+        "row_count": 0,
+        "payload_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+      }
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/decisions/decision_ae73c378867f",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-world > div.desk-world-a11y > button",
+    "focus_label": "Atlas leave",
+    "url": "http://127.0.0.1:56906/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/decisions/decision_ae73c378867f",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "9920f01497c39ae76e326046f910ff4b8d6d0b2de8d2ff5e5d0c8e186bed738e",
+      "rows": [],
+      "payload": {
+        "decision": {
+          "id": "decision_ae73c378867f",
+          "title": "Atlas leave",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-29T15:13:16Z",
+          "updated_at": "2026-09-29T15:13:16Z",
+          "deleted": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "9920f01497c39ae76e326046f910ff4b8d6d0b2de8d2ff5e5d0c8e186bed738e"
+    },
+    "document_text_sha256": "504d93c02891d383a1767a78701af53aa6abf5131afbebe5c72d3c27eb845a15",
+    "document_text_len": 265,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_ae73c378867f",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_ae73c378867f",
+            "title": "Atlas leave",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-29T15:13:16Z",
+            "updated_at": "2026-09-29T15:13:16Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "9920f01497c39ae76e326046f910ff4b8d6d0b2de8d2ff5e5d0c8e186bed738e"
+      }
+    ],
+    "at_utc": "2026-09-29T15:13:28.713727+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/decisions/decision_ae73c378867f",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n09:13 AM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:56906/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/decisions/decision_ae73c378867f",
+      "status": 404,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9",
+      "rows": [],
+      "payload": "{\"error\":\"decision_not_found\"}"
+    },
+    "protocol_digest": {
+      "status": 404,
+      "row_count": 0,
+      "payload_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+    },
+    "document_text_sha256": "8d1937f710d271a1b5d39366b76d3ac3e7755b45e08c4c755ec4e44dc839840d",
+    "document_text_len": 248,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_ae73c378867f",
+        "status": 404,
+        "payload": "{\"error\":\"decision_not_found\"}",
+        "body_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+      }
+    ],
+    "at_utc": "2026-09-29T15:13:34.475540+00:00",
+    "trigger_response": {
+      "method": "DELETE",
+      "path": "/api/decisions/decision_ae73c378867f",
+      "status": 200,
+      "body_sha256": "d383932b7be4d5f5238b5689b550a020d981234703f40141ead55858520776f4",
+      "body": {
+        "success": true,
+        "operation_id": "op_28cd3a78b7994ab9805f79b55cb24526",
+        "receipt": {
+          "receipt_id": "rcpt_1ad15af4c0f943818f19677cf0808598",
+          "operation_id": "op_28cd3a78b7994ab9805f79b55cb24526",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_ae73c378867f",
+          "created_at": 1790694813.4357572,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_ae73c378867f"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route DELETE /api/decisions/decision_ae73c378867f"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/decisions/decision_ae73c378867f",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n09:13 AM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:56906/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/decisions/decision_ae73c378867f",
+      "status": 404,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9",
+      "rows": [],
+      "payload": "{\"error\":\"decision_not_found\"}"
+    },
+    "protocol_digest": {
+      "status": 404,
+      "row_count": 0,
+      "payload_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+    },
+    "document_text_sha256": "8d1937f710d271a1b5d39366b76d3ac3e7755b45e08c4c755ec4e44dc839840d",
+    "document_text_len": 248,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_ae73c378867f",
+        "status": 404,
+        "payload": "{\"error\":\"decision_not_found\"}",
+        "body_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+      }
+    ],
+    "at_utc": "2026-09-29T15:13:34.343971+00:00",
+    "trigger_response": {
+      "method": "DELETE",
+      "path": "/api/decisions/decision_ae73c378867f",
+      "status": 200,
+      "body_sha256": "d383932b7be4d5f5238b5689b550a020d981234703f40141ead55858520776f4",
+      "body": {
+        "success": true,
+        "operation_id": "op_28cd3a78b7994ab9805f79b55cb24526",
+        "receipt": {
+          "receipt_id": "rcpt_1ad15af4c0f943818f19677cf0808598",
+          "operation_id": "op_28cd3a78b7994ab9805f79b55cb24526",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_ae73c378867f",
+          "created_at": 1790694813.4357572,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_ae73c378867f"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route DELETE /api/decisions/decision_ae73c378867f"
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: DELETE /api/decisions/decision_ae73c378867f answered 200, wanted 200 (body sha256 d383932b7be4) | protocol_reads: GET /api/decisions/decision_ae73c378867f answered 404",
+    "elapsed_s": 3.937
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: DELETE /api/decisions/decision_ae73c378867f answered 200, wanted 200 (body sha256 d383932b7be4) | protocol_reads: GET /api/decisions/decision_ae73c378867f answered 404",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 4.067,
+    "first_satisfied_at_s": 3.937,
+    "completion_bound_s": 25.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_status: DELETE /api/decisions/decision_ae73c378867f answered 200, wanted 200 (body sha256 d383932b7be4) | protocol_reads: GET /api/decisions/decision_ae73c378867f answered 404"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route DELETE /api/decisions/decision_ae73c378867f",
+    "chosen": {
+      "method": "DELETE",
+      "path": "/api/decisions/decision_ae73c378867f",
+      "status": 200,
+      "body_sha256": "d383932b7be4d5f5238b5689b550a020d981234703f40141ead55858520776f4",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route DELETE /api/decisions/decision_ae73c378867f"
+    },
+    "why": "chosen by the declared trigger_route DELETE /api/decisions/decision_ae73c378867f",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/decisions/decision_ae73c378867f",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/p789-dce3afa9/case.p8.delete_then_leave.gone--393/20260929T151306Z-case.p8.delete_then_leave.gone-muaddib-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/p789-dce3afa9/case.p8.delete_then_leave.gone--393/20260929T151306Z-case.p8.delete_then_leave.gone-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bjp6u_gs/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bjp6u_gs/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:56906"
+  ],
+  "duration_s": 27.811
+}

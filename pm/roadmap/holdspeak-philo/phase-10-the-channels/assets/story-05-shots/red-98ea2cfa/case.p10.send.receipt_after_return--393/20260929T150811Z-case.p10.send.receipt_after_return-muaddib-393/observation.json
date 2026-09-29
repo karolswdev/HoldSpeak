@@ -1,0 +1,285 @@
+{
+  "id": "obs-20260929T150811Z-case.p10.send.receipt_after_return-muaddib-393",
+  "run_id": "20260929T150811Z-case.p10.send.receipt_after_return-muaddib-393",
+  "case_id": "case.p10.send.receipt_after_return",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase10.json",
+  "job": "p10",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p10_send_face",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "da4cbc85330c60176e3987fac44e9e14f8d7e764f6142e84b26164837010b84a",
+      "assets": [
+        "index-BUmrnq_E.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55207",
+      "port": 55207,
+      "pid": 81558,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n3kue37h",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n3kue37h/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:08:11.560058+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase10.json",
+      "sha256": "1bad9277919f1d8f30f20b167929f881ef69c2958940561f12356a1f63926e0f",
+      "version": "phase10-send"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-29T09:08:16.921897"
+        }
+      },
+      "response_sha256": "1c01463c96b024e88e01ae4023d052c2c4d17562206a7a5a7d87d4d91e646b5b"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-d577e1916380",
+          "name": "Atlas send ledger",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-09-29T09:08:16.950450",
+          "updated_at": "2026-09-29T09:08:16.950450",
+          "result_kind": "created",
+          "project_id": "proj-d577e1916380",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-d577e1916380"
+          ]
+        }
+      },
+      "response_sha256": "246ac5b543360d3b1a12b5908967f6787ccb6b6e13250ff3e370ff297c67b713",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-d577e1916380"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects/proj-d577e1916380/updates/draft",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_0c1b83c5d7964aea8cc66855050f5d3d",
+          "project_id": "proj-d577e1916380",
+          "project_revision": 1,
+          "review_id": null,
+          "lifecycle": "draft",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-09-29T15:08:16+00:00",
+          "updated_at": "2026-09-29T15:08:16+00:00",
+          "published_at": null,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generatorHost": null,
+          "generatorModel": null
+        }
+      },
+      "response_sha256": "b26ac67579ef7fb0d29cb7b6af1efebc98394be9fbe2075cb0633e310294f8c1",
+      "captured": {
+        "name": "update_id",
+        "path": "update.id",
+        "value": "pupd_0c1b83c5d7964aea8cc66855050f5d3d"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/updates/pupd_0c1b83c5d7964aea8cc66855050f5d3d/publish",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_0c1b83c5d7964aea8cc66855050f5d3d",
+          "project_id": "proj-d577e1916380",
+          "project_revision": 2,
+          "review_id": null,
+          "lifecycle": "published",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-09-29T15:08:16+00:00",
+          "updated_at": "2026-09-29T15:08:16+00:00",
+          "published_at": "2026-09-29T15:08:16+00:00",
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "result_kind": "updated",
+          "changed_refs": [
+            "project:proj-d577e1916380"
+          ],
+          "generatorHost": null,
+          "generatorModel": null
+        },
+        "operation_id": "op_f6e700ff1b2d42409704db63fc81a6f6",
+        "receipt": {
+          "receipt_id": "rcpt_d874a86d1629446fbb9e7d8ff6ea3460",
+          "operation_id": "op_f6e700ff1b2d42409704db63fc81a6f6",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project_update:pupd_0c1b83c5d7964aea8cc66855050f5d3d",
+          "created_at": 1790694496.959457,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project_update:pupd_0c1b83c5d7964aea8cc66855050f5d3d"
+        }
+      },
+      "response_sha256": "63552aa267d80eadae81e403a19d476b98bac042ec4d5a8a3bd8e6befc62d9ab"
+    }
+  ],
+  "preconditions": [],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n3kue37h",
+    "project_id": "proj-d577e1916380",
+    "update_id": "pupd_0c1b83c5d7964aea8cc66855050f5d3d"
+  },
+  "trigger": null,
+  "diff": {},
+  "before": null,
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "blocked",
+  "notes": [
+    "BLOCKED: POST /api/channels/destinations answered 404, wanted 200: {\"detail\":\"Not Found\"}"
+  ],
+  "complete": true,
+  "setup_error": {
+    "step": {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/destinations",
+      "adapter": "http-route",
+      "body": {
+        "name": "Payments",
+        "channel": "file",
+        "folder": "{hub_home}",
+        "synced": false
+      },
+      "expect_status": 200,
+      "why": "a saved folder on the run's isolated HOME (this device)",
+      "capture_as": "dest_id",
+      "capture_path": "destination.id"
+    },
+    "error": "POST /api/channels/destinations answered 404, wanted 200: {\"detail\":\"Not Found\"}"
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/red-98ea2cfa/case.p10.send.receipt_after_return--393/20260929T150811Z-case.p10.send.receipt_after_return-muaddib-393/blocked.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n3kue37h/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n3kue37h/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55207"
+  ],
+  "duration_s": 5.7
+}

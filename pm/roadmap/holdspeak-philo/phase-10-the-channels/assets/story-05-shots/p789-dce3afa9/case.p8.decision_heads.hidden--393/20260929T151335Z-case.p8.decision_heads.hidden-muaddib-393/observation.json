@@ -1,0 +1,621 @@
+{
+  "id": "obs-20260929T151335Z-case.p8.decision_heads.hidden-muaddib-393",
+  "run_id": "20260929T151335Z-case.p8.decision_heads.hidden-muaddib-393",
+  "case_id": "case.p8.decision_heads.hidden",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.decision_open"
+  ],
+  "state_id": "state.desk_presentation.p8_decision_heads",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:57085",
+      "port": 57085,
+      "pid": 88087,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yx5zyjd9",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yx5zyjd9/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:13:35.680673+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "3c5dac699f65c90e36d995d1b43e064a2a0646e92d0b694600c66e702858f4ad",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.63,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_9f7984dfd0f5",
+          "title": "Atlas context only",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "Our own runners are full every night.",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-29T15:13:43Z",
+          "updated_at": "2026-09-29T15:13:43Z",
+          "deleted": false
+        },
+        "operation_id": "op_4db6ae5cfa8b4f36b9766a0a3d3b05ed",
+        "receipt": {
+          "receipt_id": "rcpt_15b141b8a49e4dba9995fde8f7fc5172",
+          "operation_id": "op_4db6ae5cfa8b4f36b9766a0a3d3b05ed",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_9f7984dfd0f5",
+          "created_at": 1790694823.23936,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_9f7984dfd0f5"
+        }
+      },
+      "response_sha256": "838cd9c2147aa1ef28637150f071ecd6a50de7098e216bc5c42b3b83eb0585dc",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_9f7984dfd0f5"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "decision_id": "decision_9f7984dfd0f5"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[id='desk-palette-option-decision:decision_9f7984dfd0f5']",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "proposed \u21bb\nDECISION CONTEXT\n\nOur own runners are full every night."
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "desk-decision-card"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 15,
+        "y": 439,
+        "w": 363,
+        "h": 122
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+      "after": "div#pullout:decision_9f7984dfd0f5"
+    },
+    "focus_label": {
+      "before": "Search tools and Desk items",
+      "after": "Atlas context only"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Atlas context only",
+          "rect": {
+            "x": 0,
+            "y": 386,
+            "w": 393,
+            "h": 291
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "f44109e608ef3a18628964cd23725925c83cd846704b88e052cff3fd43067131",
+      "after": "c48f0a05e5076bb2ae7a0e8c3c07ea185f30b1aba9731db094b12961e0bdaa73"
+    },
+    "document_text_len": {
+      "before": 314,
+      "after": 403
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+          "value": "Atlas context only"
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": ".desk-decision-card",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [
+      {
+        "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+        "value": "Atlas context only"
+      }
+    ],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:57085/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "f44109e608ef3a18628964cd23725925c83cd846704b88e052cff3fd43067131",
+    "document_text_len": 314,
+    "replay_identity": null,
+    "at_utc": "2026-09-29T15:13:46.014550+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-decision-card",
+    "target_present": true,
+    "text": "proposed \u21bb\nDECISION CONTEXT\n\nOur own runners are full every night.",
+    "attrs": {
+      "class": "desk-decision-card"
+    },
+    "rect": {
+      "x": 15,
+      "y": 439,
+      "w": 363,
+      "h": 122
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 439,
+        "w": 363,
+        "h": 122
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 441,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 17,
+          "y": 500,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section"
+        },
+        {
+          "x": 17,
+          "y": 559,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section > div.surface-material > p"
+        },
+        {
+          "x": 197,
+          "y": 441,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 197,
+          "y": 500,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section"
+        },
+        {
+          "x": 197,
+          "y": 559,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section > div.surface-material > p"
+        },
+        {
+          "x": 376,
+          "y": 441,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 376,
+          "y": 500,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section"
+        },
+        {
+          "x": 376,
+          "y": 559,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section > div.surface-material > p"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:decision_9f7984dfd0f5",
+    "focus_label": "Atlas context only",
+    "url": "http://127.0.0.1:57085/",
+    "windows": [
+      {
+        "title": "Atlas context only",
+        "rect": {
+          "x": 0,
+          "y": 386,
+          "w": 393,
+          "h": 291
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "c48f0a05e5076bb2ae7a0e8c3c07ea185f30b1aba9731db094b12961e0bdaa73",
+    "document_text_len": 403,
+    "replay_identity": null,
+    "at_utc": "2026-09-29T15:13:47.129900+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-decision-card",
+    "target_present": true,
+    "text": "proposed \u21bb\nDECISION CONTEXT\n\nOur own runners are full every night.",
+    "attrs": {
+      "class": "desk-decision-card"
+    },
+    "rect": {
+      "x": 15,
+      "y": 439,
+      "w": 363,
+      "h": 122
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 439,
+        "w": 363,
+        "h": 122
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 441,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 17,
+          "y": 500,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section"
+        },
+        {
+          "x": 17,
+          "y": 559,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section > div.surface-material > p"
+        },
+        {
+          "x": 197,
+          "y": 441,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 197,
+          "y": 500,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section"
+        },
+        {
+          "x": 197,
+          "y": 559,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section > div.surface-material > p"
+        },
+        {
+          "x": 376,
+          "y": 441,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 376,
+          "y": 500,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section"
+        },
+        {
+          "x": 376,
+          "y": 559,
+          "owned": true,
+          "owner": "div#pullout:decision_9f7984dfd0f5 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section > div.surface-material > p"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:decision_9f7984dfd0f5",
+    "focus_label": "Atlas context only",
+    "url": "http://127.0.0.1:57085/",
+    "windows": [
+      {
+        "title": "Atlas context only",
+        "rect": {
+          "x": 0,
+          "y": 386,
+          "w": 393,
+          "h": 291
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "c48f0a05e5076bb2ae7a0e8c3c07ea185f30b1aba9731db094b12961e0bdaa73",
+    "document_text_len": 403,
+    "replay_identity": null,
+    "at_utc": "2026-09-29T15:13:47.003647+00:00",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'DECISION CONTEXT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 439, 'w': 363, 'h': 122} | text_absent: 'CONSEQUENCES' absent at observe_at",
+    "elapsed_s": 0.945
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'DECISION CONTEXT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 439, 'w': 363, 'h': 122} | text_absent: 'CONSEQUENCES' absent at observe_at",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.072,
+    "first_satisfied_at_s": 0.945,
+    "completion_bound_s": 20.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: readable_text: 'DECISION CONTEXT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 439, 'w': 363, 'h': 122} | text_absent: 'CONSEQUENCES' absent at observe_at"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:57085) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:57085) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note11.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/relationships/decision%3Adecision_9f7984dfd0f5",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/p789-dce3afa9/case.p8.decision_heads.hidden--393/20260929T151335Z-case.p8.decision_heads.hidden-muaddib-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/p789-dce3afa9/case.p8.decision_heads.hidden--393/20260929T151335Z-case.p8.decision_heads.hidden-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yx5zyjd9/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yx5zyjd9/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:57085"
+  ],
+  "duration_s": 11.744
+}

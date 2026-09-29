@@ -1,0 +1,27 @@
+{
+  "about": "PHILO-10-05: an unpinned nonzero exit (HTTP 502 is on no pinned list): HoldSpeak cannot know.",
+  "answers": [
+    {
+      "argv_prefix": [
+        "gh",
+        "api",
+        "user"
+      ],
+      "code": 0,
+      "stdout": "{\"login\": \"octo-owner\", \"id\": 7}",
+      "stderr": "",
+      "why": "gh api user --hostname github.com: signed in as octo-owner (the save and the check before dispatch)"
+    },
+    {
+      "argv_prefix": [
+        "gh",
+        "issue",
+        "comment"
+      ],
+      "code": 1,
+      "stdout": "",
+      "stderr": "HTTP 502: Bad Gateway (https://api.github.com/graphql)\n",
+      "why": "an answer on no pinned list: UNKNOWN"
+    }
+  ]
+}

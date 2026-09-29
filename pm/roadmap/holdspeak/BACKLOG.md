@@ -1376,6 +1376,13 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 | The real-pointer passes in `tests/e2e/test_philo9_04_desk_debts_glass.py` run about 15× slower with motion on: 5.65 s against 0.38 s per nine-point sample under reduced motion (Codex Astra's measure). Run the rig's pointer passes with reduced motion (`reduced_motion="reduce"` on the browser context) wherever motion is not what the test proves, then lower the `timeout(900)` on the Launch-submenu fence and the `timeout(600)` on the sort-Button and row-menu fences. | test speed (Tenet 3) | `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/checks/story-04-built-astra-r2.md` | UNASSIGNED |
 | At 393 the open row menu covers the dock (the keep-in-view rule keeps it inside the viewport, not above the dock). Stated as a limit on the ratified canvas (`assets/story-04-list-canvas/README.md` "Limits"). | face | the ratified canvas | recorded; no action |
 
+## PHILO-10-05 follow-ups — 2026-09-29 (the Fedaykin lane, `pm/roadmap/holdspeak-philo/phase-10-the-channels/evidence-story-05.md`)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| The Send face's FAILED words miss the service's codes. `web/src/features/channels/channels.ts` (`FAILED`) keys `github_issue_not_found`, `github_no_permission`, `jira_cannot_edit`; the service emits `github_target_not_found`, `github_repository_not_found`, `github_permission_denied`, `github_not_authenticated`, `jira_cannot_be_edited`, `atlassian_unauthorized`, `confluence_permission_denied` (`holdspeak/services/channel_cli.py`, the `PINNED` tables). A code with no entry falls back to the code in capitals: `case.p10.send.failed` shows "GITHUB TARGET NOT FOUND", not the charter's "ISSUE NOT FOUND". Readable, not wrong; the words are not the ratified ones. The file and email codes match. | face words (ASD-STE100) | PHILO-10-05 census (story 02 codes against story 04's table) | the next PHILO-10 face repair, or story 06 |
+| The DELIVERY history of an open update is read when the update opens and after the owner's own press, not after another hand's send (seen in `case.p10.send.discard_after_send`: the send made on the hub shows as SAVED on the prepared row, while DELIVERY stays without its row until the update opens again). Not a lost record: the hub holds the row. | face freshness (low) | PHILO-10-05 atlas run | unassigned |
+
 ## PHILO-9-05 follow-ups — 2026-09-28 (the Fedaykin lane, `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/evidence-story-05.md`; Codex Astra r1 finding 4)
 
 | Item | Kind | Source | Home |

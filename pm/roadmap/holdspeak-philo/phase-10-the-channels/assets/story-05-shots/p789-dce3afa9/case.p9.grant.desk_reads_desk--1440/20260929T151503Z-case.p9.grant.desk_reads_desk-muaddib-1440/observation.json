@@ -1,0 +1,783 @@
+{
+  "id": "obs-20260929T151503Z-case.p9.grant.desk_reads_desk-muaddib-1440",
+  "run_id": "20260929T151503Z-case.p9.grant.desk_reads_desk-muaddib-1440",
+  "case_id": "case.p9.grant.desk_reads_desk",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase9.json",
+  "job": "p9",
+  "edge_ids": [
+    "edge.face.project_grant"
+  ],
+  "state_id": "state.desk_presentation.p9_grant_face",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:57751",
+      "port": 57751,
+      "pid": 90094,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-s84t8vd6",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-s84t8vd6/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:15:03.336281+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase9.json",
+      "sha256": "e7a1d3d4fd89f315d1de648fad8a08fb057fe0a07c10555c58e16763f8ef1606",
+      "version": "phase9-room"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-29T09:15:08.671879"
+        }
+      },
+      "response_sha256": "57154428ff7544b1ebf7ca13ee2330779cedff55b33e341489fd2f922ea79356"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/settings/remote",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "enabled": true
+      },
+      "response_sha256": "5b1e3cf20eb79591a38a63d8d23b664b3498c02b5f47d6dca5df7bfdb6a66bef"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/settings/remote/credentials",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "token": "6We5XeJ0xDQ-74mrzkPOolSQYlPF2I2iKBzkGd10abg",
+        "id": "fda9a141bfa046e7",
+        "identity": "desk-agent",
+        "palette": "DESK",
+        "expires_at": 701624.817476666
+      },
+      "response_sha256": "7191e6ec583d1622e746ef8e8d457e1c589220e54b5aef56a17639124473285a",
+      "captured": {
+        "name": "desk_cred",
+        "path": "id",
+        "value": "fda9a141bfa046e7"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-settings:system']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid='credential-row-fda9a141bfa046e7']",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "desk_cred": "fda9a141bfa046e7"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "focus",
+    "adapter": "ui-keyboard",
+    "selector": "[data-testid='credential-row-fda9a141bfa046e7'] [data-testid=credential-revoke]",
+    "done": true
+  },
+  "diff": {
+    "rect": {
+      "before": {
+        "x": 770,
+        "y": 605,
+        "w": 46,
+        "h": 18
+      },
+      "after": {
+        "x": 770,
+        "y": 590,
+        "w": 46,
+        "h": 18
+      }
+    },
+    "focus": {
+      "before": "div#surface-settings",
+      "after": "div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-trailing > button.btn.btn--ghost"
+    },
+    "focus_label": {
+      "before": "Settings",
+      "after": "Revoke credential"
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/settings/remote",
+          "status": 200,
+          "payload": {
+            "enabled": true,
+            "bind_host": null,
+            "port": null,
+            "credentials": [
+              {
+                "id": "fda9a141bfa046e7",
+                "identity": "desk-agent",
+                "palette": "DESK",
+                "expires_at": 1790738108.7198505,
+                "last_used_at": null,
+                "active": true,
+                "delegation": null,
+                "project_delegations": []
+              }
+            ],
+            "delegations": [],
+            "project_delegations": [],
+            "active_count": 1,
+            "total_count": 1
+          },
+          "body_sha256": "f631e9a18bdc4c7704e171d76fc48d0863936f28e5203faf468839e07445ab32"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/settings/remote",
+          "status": 200,
+          "payload": {
+            "enabled": true,
+            "bind_host": null,
+            "port": null,
+            "credentials": [
+              {
+                "id": "fda9a141bfa046e7",
+                "identity": "desk-agent",
+                "palette": "DESK",
+                "expires_at": 1790738108.7198515,
+                "last_used_at": null,
+                "active": true,
+                "delegation": null,
+                "project_delegations": []
+              }
+            ],
+            "delegations": [],
+            "project_delegations": [],
+            "active_count": 1,
+            "total_count": 1
+          },
+          "body_sha256": "720441dc417a7b0d4ae7c1b766952f2febd2743eb9accd47496981429e113bed"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid='credential-row-fda9a141bfa046e7'] .surface-token",
+    "target_present": true,
+    "text": "DESK",
+    "attrs": {
+      "class": "surface-token",
+      "data-chip": "true",
+      "data-testid": "palette-token"
+    },
+    "rect": {
+      "x": 770,
+      "y": 605,
+      "w": 46,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 770,
+        "y": 605,
+        "w": 46,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 772,
+          "y": 607,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 772,
+          "y": 614,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 772,
+          "y": 621,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 793,
+          "y": 607,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 793,
+          "y": 614,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 793,
+          "y": 621,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 814,
+          "y": 607,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 814,
+          "y": 614,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 814,
+          "y": 621,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#surface-settings",
+    "focus_label": "Settings",
+    "url": "http://127.0.0.1:57751/",
+    "windows": [
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 1392,
+          "h": 600
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "d46cacf7900cc958d90e557236f9491bc021f5ffb6a09d856d5f786f6d4caa83",
+    "document_text_len": 938,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/settings/remote",
+        "status": 200,
+        "payload": {
+          "enabled": true,
+          "bind_host": null,
+          "port": null,
+          "credentials": [
+            {
+              "id": "fda9a141bfa046e7",
+              "identity": "desk-agent",
+              "palette": "DESK",
+              "expires_at": 1790738108.7198505,
+              "last_used_at": null,
+              "active": true,
+              "delegation": null,
+              "project_delegations": []
+            }
+          ],
+          "delegations": [],
+          "project_delegations": [],
+          "active_count": 1,
+          "total_count": 1
+        },
+        "body_sha256": "f631e9a18bdc4c7704e171d76fc48d0863936f28e5203faf468839e07445ab32"
+      }
+    ],
+    "at_utc": "2026-09-29T15:15:11.681998+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid='credential-row-fda9a141bfa046e7'] .surface-token",
+    "target_present": true,
+    "text": "DESK",
+    "attrs": {
+      "class": "surface-token",
+      "data-chip": "true",
+      "data-testid": "palette-token"
+    },
+    "rect": {
+      "x": 770,
+      "y": 590,
+      "w": 46,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 770,
+        "y": 590,
+        "w": 46,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 772,
+          "y": 592,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 772,
+          "y": 599,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 772,
+          "y": 606,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 793,
+          "y": 592,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 793,
+          "y": 599,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 793,
+          "y": 606,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 814,
+          "y": 592,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 814,
+          "y": 599,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 814,
+          "y": 606,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-trailing > button.btn.btn--ghost",
+    "focus_label": "Revoke credential",
+    "url": "http://127.0.0.1:57751/",
+    "windows": [
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 1392,
+          "h": 600
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "d46cacf7900cc958d90e557236f9491bc021f5ffb6a09d856d5f786f6d4caa83",
+    "document_text_len": 938,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/settings/remote",
+        "status": 200,
+        "payload": {
+          "enabled": true,
+          "bind_host": null,
+          "port": null,
+          "credentials": [
+            {
+              "id": "fda9a141bfa046e7",
+              "identity": "desk-agent",
+              "palette": "DESK",
+              "expires_at": 1790738108.7198515,
+              "last_used_at": null,
+              "active": true,
+              "delegation": null,
+              "project_delegations": []
+            }
+          ],
+          "delegations": [],
+          "project_delegations": [],
+          "active_count": 1,
+          "total_count": 1
+        },
+        "body_sha256": "720441dc417a7b0d4ae7c1b766952f2febd2743eb9accd47496981429e113bed"
+      }
+    ],
+    "at_utc": "2026-09-29T15:15:12.843490+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid='credential-row-fda9a141bfa046e7'] .surface-token",
+    "target_present": true,
+    "text": "DESK",
+    "attrs": {
+      "class": "surface-token",
+      "data-chip": "true",
+      "data-testid": "palette-token"
+    },
+    "rect": {
+      "x": 770,
+      "y": 590,
+      "w": 46,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 770,
+        "y": 590,
+        "w": 46,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 772,
+          "y": 592,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 772,
+          "y": 599,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 772,
+          "y": 606,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 793,
+          "y": 592,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 793,
+          "y": 599,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 793,
+          "y": 606,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 814,
+          "y": 592,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 814,
+          "y": 599,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 814,
+          "y": 606,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div.gadget-sheet > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-trailing > button.btn.btn--ghost",
+    "focus_label": "Revoke credential",
+    "url": "http://127.0.0.1:57751/",
+    "windows": [
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 1392,
+          "h": 600
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "d46cacf7900cc958d90e557236f9491bc021f5ffb6a09d856d5f786f6d4caa83",
+    "document_text_len": 938,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/settings/remote",
+        "status": 200,
+        "payload": {
+          "enabled": true,
+          "bind_host": null,
+          "port": null,
+          "credentials": [
+            {
+              "id": "fda9a141bfa046e7",
+              "identity": "desk-agent",
+              "palette": "DESK",
+              "expires_at": 1790738108.719852,
+              "last_used_at": null,
+              "active": true,
+              "delegation": null,
+              "project_delegations": []
+            }
+          ],
+          "delegations": [],
+          "project_delegations": [],
+          "active_count": 1,
+          "total_count": 1
+        },
+        "body_sha256": "7b26dc99bb4a59702a1c3716b769f6b62789c24d53ba90d25540a510057c42d0"
+      }
+    ],
+    "at_utc": "2026-09-29T15:15:12.714979+00:00",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_reads: GET /api/settings/remote answered 200 with one row {'identity': 'desk-agent', 'palette': 'DESK'} | readable_text: 'DESK' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 770, 'y': 590, 'w': 46, 'h': 18}",
+    "elapsed_s": 0.911
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_reads: GET /api/settings/remote answered 200 with one row {'identity': 'desk-agent', 'palette': 'DESK'} | readable_text: 'DESK' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 770, 'y': 590, 'w': 46, 'h': 18}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.039,
+    "first_satisfied_at_s": 0.911,
+    "completion_bound_s": 25.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_reads: GET /api/settings/remote answered 200 with one row {'identity': 'desk-agent', 'palette': 'DESK'} | readable_text: 'DESK' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 770, 'y': 590, 'w': 46, 'h': 18}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:57751) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:57751) non-GET response after the click; the click fired none",
+    "seen": []
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/p789-dce3afa9/case.p9.grant.desk_reads_desk--1440/20260929T151503Z-case.p9.grant.desk_reads_desk-muaddib-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/p789-dce3afa9/case.p9.grant.desk_reads_desk--1440/20260929T151503Z-case.p9.grant.desk_reads_desk-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-s84t8vd6/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-s84t8vd6/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:57751"
+  ],
+  "duration_s": 9.848
+}

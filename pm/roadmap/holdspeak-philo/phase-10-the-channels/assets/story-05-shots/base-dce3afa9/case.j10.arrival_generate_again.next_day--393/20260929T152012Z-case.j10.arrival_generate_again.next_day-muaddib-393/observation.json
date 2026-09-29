@@ -1,0 +1,969 @@
+{
+  "id": "obs-20260929T152012Z-case.j10.arrival_generate_again.next_day-muaddib-393",
+  "run_id": "20260929T152012Z-case.j10.arrival_generate_again.next_day-muaddib-393",
+  "case_id": "case.j10.arrival_generate_again.next_day",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.face.arrival_brief_generate_again"
+  ],
+  "state_id": "state.briefs.next_day_window",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:59751",
+      "port": 59751,
+      "pid": 96948,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bzje3har",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bzje3har/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:20:13.134452+00:00",
+      "mechanism": "the rig's own hub runs MeetingWebServer(brief_clock=) with the wall clock plus an offset read from a file in the run's HOME (scripts/graph_walk.py _producer_clock); this step writes advance_days=1. The machine clock is not moved; the hub prints what the producer read (PRODUCER_CLOCK_READ) into provenance",
+      "scheduler_thread": false,
+      "clock": "clock.python_wall",
+      "adapter": "producer-clock",
+      "producer_clock_file": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bzje3har/graph-walk-producer-clock.json",
+      "advance_days": 1,
+      "machine_clock_moved": false,
+      "producer_clock_reads": [
+        "advance_days=0 now=2026-09-29T09:20:21",
+        "advance_days=1 now=2026-09-30T09:20:21"
+      ]
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "5f52df14226b6f0fa338f6a8fd3f8dfe7b55276567321ad09f69177c357f08ba",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the brief producer clock seam (wall clock + the run's offset file)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.29,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-generate]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-receipt]",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-aabf497af04d4160b90f2aef5703fcea",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:20:21.063539",
+        "headline": "No changes",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-29T09:20:21.063539",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 28 \u2013 29",
+        "generated_label": "GENERATED SEP 29 09:20",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "4f28def09c3418b077490315fc2c3e04649a4c5c27993e05e0da21038767b480",
+      "captured": {
+        "name": "first_brief_id",
+        "path": "id",
+        "value": "brief-aabf497af04d4160b90f2aef5703fcea"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_6e5f04bd4732",
+          "title": "Graph walk next-day decision J10",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-29T15:20:21Z",
+          "updated_at": "2026-09-29T15:20:21Z",
+          "deleted": false
+        },
+        "operation_id": "op_fc1a21e3271f4af1ac6a5f4991b28682",
+        "receipt": {
+          "receipt_id": "rcpt_b95988ded67e48bf91c3aac6740be72d",
+          "operation_id": "op_fc1a21e3271f4af1ac6a5f4991b28682",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_6e5f04bd4732",
+          "created_at": 1790695221.149333,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_6e5f04bd4732"
+        }
+      },
+      "response_sha256": "7f603d2d25be989034440eedbda7977384c74535c3f85748dee6571f9e6ecb8c"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-aabf497af04d4160b90f2aef5703fcea",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:20:21.063539",
+        "headline": "No changes",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-29T09:20:21.063539",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 28 \u2013 29",
+        "generated_label": "GENERATED SEP 29 09:20",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "4f28def09c3418b077490315fc2c3e04649a4c5c27993e05e0da21038767b480"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/brief/latest",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/sections/decisions",
+        "value": []
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/sections/decisions equals the declared value"
+    },
+    {
+      "kind": "clock",
+      "adapter": "producer-clock",
+      "clock": "clock.python_wall",
+      "advance_days": 1,
+      "advance_days_total": 1,
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "case.j10.arrival_generate_brief.generated_empty reached in this run's setup (the Chair's Generate on a fresh HOME makes the empty brief)",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "the hub started WITH the brief producer clock seam (the case carries a producer-clock step); the machine clock is never moved",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "first_brief_id": "brief-aabf497af04d4160b90f2aef5703fcea"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-brief-generate]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Review decision: Graph walk next-day decision J10\nAck\nDefer"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "surface-ledger",
+        "data-cols": "room"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 12,
+        "y": 383,
+        "w": 369,
+        "h": 124
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "fba75ef72f6724692651605a551c2a49a8ce21820270bb5b7f21ab0e2e81cae3",
+      "after": "1f5ad0689c20f374fd9d79ee931457ba44876dec03fd18875ab5d53ee960f469"
+    },
+    "document_text_len": {
+      "before": 310,
+      "after": 386
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "payload": {
+            "id": "brief-aabf497af04d4160b90f2aef5703fcea",
+            "period_start": "2026-09-28T17:00:00",
+            "period_end": "2026-09-29T09:20:21.063539",
+            "headline": "No changes",
+            "sections": {
+              "this_week": [],
+              "changed": [],
+              "broke": [],
+              "waiting": [],
+              "decisions": []
+            },
+            "generated_at": "2026-09-29T09:20:21.063539",
+            "is_empty": true,
+            "shelf": {},
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_label": "SEP 28 \u2013 29",
+            "generated_label": "GENERATED SEP 29 09:20",
+            "person_sections_state": "unavailable"
+          },
+          "body_sha256": "4f28def09c3418b077490315fc2c3e04649a4c5c27993e05e0da21038767b480"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "payload": {
+            "id": "brief-5f3b098623624c328745adfff3b2c910",
+            "period_start": "2026-09-29T17:00:00",
+            "period_end": "2026-09-30T09:20:21.546471",
+            "headline": "1 decision waiting.",
+            "sections": {
+              "this_week": [],
+              "changed": [],
+              "broke": [],
+              "waiting": [],
+              "decisions": [
+                {
+                  "id": "brief-item-db9ea1511052470fa07503815ccc4096",
+                  "section": "decisions",
+                  "text": "Review decision: Graph walk next-day decision J10",
+                  "detail": null,
+                  "source_ref": "decision:decision_6e5f04bd4732",
+                  "priority": 200,
+                  "created_at": "2026-09-29T15:20:21Z"
+                }
+              ]
+            },
+            "generated_at": "2026-09-30T09:20:21.546471",
+            "is_empty": false,
+            "shelf": {},
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_label": "SEP 28 \u2013 30",
+            "generated_label": "GENERATED SEP 30 09:20",
+            "person_sections_state": "unavailable"
+          },
+          "body_sha256": "fcf46ffac4830fac43bbfcd1bc489ab511c265195aae779fe9420f314218c363"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n09:20 AM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:59751/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "fba75ef72f6724692651605a551c2a49a8ce21820270bb5b7f21ab0e2e81cae3",
+    "document_text_len": 310,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-aabf497af04d4160b90f2aef5703fcea",
+          "period_start": "2026-09-28T17:00:00",
+          "period_end": "2026-09-29T09:20:21.063539",
+          "headline": "No changes",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": []
+          },
+          "generated_at": "2026-09-29T09:20:21.063539",
+          "is_empty": true,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 28 \u2013 29",
+          "generated_label": "GENERATED SEP 29 09:20",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "4f28def09c3418b077490315fc2c3e04649a4c5c27993e05e0da21038767b480"
+      }
+    ],
+    "at_utc": "2026-09-29T15:20:21.486028+00:00",
+    "brief_db": {
+      "brief": {
+        "id": "brief-aabf497af04d4160b90f2aef5703fcea",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:20:21.063539",
+        "headline": "No changes",
+        "generated_at": "2026-09-29T09:20:21.063539",
+        "spoken": 0,
+        "disposition": null
+      },
+      "items": [],
+      "shelf": []
+    }
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+    "target_present": true,
+    "text": "Review decision: Graph walk next-day decision J10\nAck\nDefer",
+    "attrs": {
+      "class": "surface-ledger",
+      "data-cols": "room"
+    },
+    "rect": {
+      "x": 12,
+      "y": 383,
+      "w": 369,
+      "h": 124
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 383,
+        "w": 369,
+        "h": 124
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 385,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 14,
+          "y": 445,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 505,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 385,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 197,
+          "y": 445,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 505,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 385,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 379,
+          "y": 445,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 505,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n09:20 AM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:59751/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "1f5ad0689c20f374fd9d79ee931457ba44876dec03fd18875ab5d53ee960f469",
+    "document_text_len": 386,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-5f3b098623624c328745adfff3b2c910",
+          "period_start": "2026-09-29T17:00:00",
+          "period_end": "2026-09-30T09:20:21.546471",
+          "headline": "1 decision waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-db9ea1511052470fa07503815ccc4096",
+                "section": "decisions",
+                "text": "Review decision: Graph walk next-day decision J10",
+                "detail": null,
+                "source_ref": "decision:decision_6e5f04bd4732",
+                "priority": 200,
+                "created_at": "2026-09-29T15:20:21Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-30T09:20:21.546471",
+          "is_empty": false,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 28 \u2013 30",
+          "generated_label": "GENERATED SEP 30 09:20",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "fcf46ffac4830fac43bbfcd1bc489ab511c265195aae779fe9420f314218c363"
+      }
+    ],
+    "at_utc": "2026-09-29T15:20:22.592992+00:00",
+    "brief_db": {
+      "brief": {
+        "id": "brief-aabf497af04d4160b90f2aef5703fcea",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:20:21.063539",
+        "headline": "No changes",
+        "generated_at": "2026-09-29T09:20:21.063539",
+        "spoken": 0,
+        "disposition": null
+      },
+      "items": [],
+      "shelf": []
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "fcf46ffac4830fac43bbfcd1bc489ab511c265195aae779fe9420f314218c363",
+      "body": {
+        "id": "brief-5f3b098623624c328745adfff3b2c910",
+        "period_start": "2026-09-29T17:00:00",
+        "period_end": "2026-09-30T09:20:21.546471",
+        "headline": "1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-db9ea1511052470fa07503815ccc4096",
+              "section": "decisions",
+              "text": "Review decision: Graph walk next-day decision J10",
+              "detail": null,
+              "source_ref": "decision:decision_6e5f04bd4732",
+              "priority": 200,
+              "created_at": "2026-09-29T15:20:21Z"
+            }
+          ]
+        },
+        "generated_at": "2026-09-30T09:20:21.546471",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 28 \u2013 30",
+        "generated_label": "GENERATED SEP 30 09:20",
+        "person_sections_state": "unavailable"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/generate"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+    "target_present": true,
+    "text": "Review decision: Graph walk next-day decision J10\nAck\nDefer",
+    "attrs": {
+      "class": "surface-ledger",
+      "data-cols": "room"
+    },
+    "rect": {
+      "x": 12,
+      "y": 383,
+      "w": 369,
+      "h": 124
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 383,
+        "w": 369,
+        "h": 124
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 385,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 14,
+          "y": 445,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 505,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 385,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 197,
+          "y": 445,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 505,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 385,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 379,
+          "y": 445,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 505,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n09:20 AM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:59751/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "1f5ad0689c20f374fd9d79ee931457ba44876dec03fd18875ab5d53ee960f469",
+    "document_text_len": 386,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-5f3b098623624c328745adfff3b2c910",
+          "period_start": "2026-09-29T17:00:00",
+          "period_end": "2026-09-30T09:20:21.546471",
+          "headline": "1 decision waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-db9ea1511052470fa07503815ccc4096",
+                "section": "decisions",
+                "text": "Review decision: Graph walk next-day decision J10",
+                "detail": null,
+                "source_ref": "decision:decision_6e5f04bd4732",
+                "priority": 200,
+                "created_at": "2026-09-29T15:20:21Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-30T09:20:21.546471",
+          "is_empty": false,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 28 \u2013 30",
+          "generated_label": "GENERATED SEP 30 09:20",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "fcf46ffac4830fac43bbfcd1bc489ab511c265195aae779fe9420f314218c363"
+      }
+    ],
+    "at_utc": "2026-09-29T15:20:22.460771+00:00",
+    "brief_db": {
+      "brief": {
+        "id": "brief-aabf497af04d4160b90f2aef5703fcea",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:20:21.063539",
+        "headline": "No changes",
+        "generated_at": "2026-09-29T09:20:21.063539",
+        "spoken": 0,
+        "disposition": null
+      },
+      "items": [],
+      "shelf": []
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "fcf46ffac4830fac43bbfcd1bc489ab511c265195aae779fe9420f314218c363",
+      "body": {
+        "id": "brief-5f3b098623624c328745adfff3b2c910",
+        "period_start": "2026-09-29T17:00:00",
+        "period_end": "2026-09-30T09:20:21.546471",
+        "headline": "1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-db9ea1511052470fa07503815ccc4096",
+              "section": "decisions",
+              "text": "Review decision: Graph walk next-day decision J10",
+              "detail": null,
+              "source_ref": "decision:decision_6e5f04bd4732",
+              "priority": 200,
+              "created_at": "2026-09-29T15:20:21Z"
+            }
+          ]
+        },
+        "generated_at": "2026-09-30T09:20:21.546471",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 28 \u2013 30",
+        "generated_label": "GENERATED SEP 30 09:20",
+        "person_sections_state": "unavailable"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/generate"
+    },
+    "predicate_satisfied": true,
+    "reading": "'Review decision: Graph walk next-day decision J10' in observe_at text",
+    "elapsed_s": 0.938
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'Review decision: Graph walk next-day decision J10' in observe_at text",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.068,
+    "first_satisfied_at_s": 0.938,
+    "completion_bound_s": 120.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'Review decision: Graph walk next-day decision J10' in observe_at text"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/brief/generate",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "fcf46ffac4830fac43bbfcd1bc489ab511c265195aae779fe9420f314218c363",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/generate"
+    },
+    "why": "chosen by the declared trigger_route POST /api/brief/generate",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/brief/generate",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/base-dce3afa9/case.j10.arrival_generate_again.next_day--393/20260929T152012Z-case.j10.arrival_generate_again.next_day-muaddib-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/base-dce3afa9/case.j10.arrival_generate_again.next_day--393/20260929T152012Z-case.j10.arrival_generate_again.next_day-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bzje3har/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bzje3har/.config/holdspeak/config.json",
+    "PRODUCER_CLOCK /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bzje3har/graph-walk-producer-clock.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the brief producer clock seam (wall clock + the run's offset file)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:59751",
+    "PRODUCER_CLOCK_READ advance_days=0 now=2026-09-29T09:20:21",
+    "PRODUCER_CLOCK_READ advance_days=1 now=2026-09-30T09:20:21"
+  ],
+  "duration_s": 9.768
+}

@@ -1,0 +1,710 @@
+{
+  "id": "obs-20260929T151839Z-case.j9.shade_receipt_open.rhythm_face-muaddib-1440",
+  "run_id": "20260929T151839Z-case.j9.shade_receipt_open.rhythm_face-muaddib-1440",
+  "case_id": "case.j9.shade_receipt_open.rhythm_face",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j9",
+  "edge_ids": [
+    "edge.face.shade_receipt_open"
+  ],
+  "state_id": "state.projections.door.present",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:59122",
+      "port": 59122,
+      "pid": 94619,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kyu5b33c",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kyu5b33c/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:18:39.905532+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "5f52df14226b6f0fa338f6a8fd3f8dfe7b55276567321ad09f69177c357f08ba",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/settings/heartbeat/run-now",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "kind": "heartbeat.sweep",
+        "at": "2026-09-29T15:18:45+00:00",
+        "rooms": 0,
+        "watches": 0,
+        "watches_baselined": 0,
+        "watches_deferred": 0,
+        "quiet_overridden": false,
+        "duration_ms": 0.8,
+        "held": false,
+        "errors": 0,
+        "outcomes": {
+          "counts": {},
+          "total": 0,
+          "failed_watch_ids": []
+        },
+        "notify": {
+          "kind": "heartbeat.notify",
+          "outcome": "held_no_edge",
+          "count": 0,
+          "projectCount": 0,
+          "fired": false,
+          "newItems": 0,
+          "escalatedItems": 0,
+          "complete": true,
+          "lastNotifiedCount": 0
+        }
+      },
+      "response_sha256": "04c59dbdc703e79a4a45a26ff4ea58b03c7c5608122c9f3d575c1ece209f035a"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[title='Desk memory']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-shade",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "case.j9.shade_open.door_present reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": ".desk-shade",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "aria-label",
+        "value": "Missed"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "aria-label='Missed', wanted 'Missed'"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "protocol: GET /api/desk/projections",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/projections/0/source_kind",
+        "value": "pipeline_event"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/projections/0/source_kind equals the declared value"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "section[aria-label=\"Finished\"] .desk-shade-item:has-text(\"SWEEP\") .desk-shade-do button",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Rhythm\nEvery 15 min\nSweep\n\u21bb\nEVERY 5 MIN\nEVERY 15 MIN\nEVERY 30 MIN\nEVERY 1 HR\nRun now\nQUIET 22:00\u201308:00\n\u00b7\nNEXT 15:33\n\u00b7\nLAST 15:18\nRuns on\n\u21bb\nTHIS DEVICE\nMonday brief\nDAILY 08:00\n\u25cb\nNEVER\nGenerate\nNotify\n\u21bb\nOFF\nON THE EDGE\nEVERY SWEEP\n\u21bb\nCOUNT ONLY\nROOM NAMES\nNOT SET\nWRITTEN 15:18"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "id": "surface-cadence",
+        "tabindex": "-1",
+        "class": "desk-surface-window desk-window desk-window-shell is-floating is-front",
+        "role": "region",
+        "aria-label": "Rhythm",
+        "style": "z-index: 42; opacity: 1; transform: none; inset: 72px auto auto 24px; width: 640px; height: 520px; max-height: none;"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 24,
+        "y": 72,
+        "w": 640,
+        "h": 520
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div#desk-next > div.desk-menubar > div.desk-chrome.desk-chrome-tr > button.btn--chrome.desk-bell",
+      "after": "div#surface-cadence"
+    },
+    "focus_label": {
+      "before": "Desk memory",
+      "after": "Rhythm"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Rhythm",
+          "rect": {
+            "x": 24,
+            "y": 72,
+            "w": 640,
+            "h": 520
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "309f595c48fc3ddeaef5899ec7909509515ef4f1b0b7e11b32f0f465835a703e",
+      "after": "ad43ab26116ea2932b3e0574fa6377d132e5f67e0a5c75f15ae6a43249413681"
+    },
+    "document_text_len": {
+      "before": 425,
+      "after": 644
+    },
+    "values": {
+      "before": [],
+      "after": [
+        {
+          "selector": "div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.gadget-cycle > select",
+          "value": "15"
+        },
+        {
+          "selector": "div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.gadget-cycle > select",
+          "value": "local"
+        },
+        {
+          "selector": "div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.gadget-cycle > select",
+          "value": "edge"
+        },
+        {
+          "selector": "div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.gadget-cycle > select",
+          "value": "count_only"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "#surface-cadence",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-menubar > div.desk-chrome.desk-chrome-tr > button.btn--chrome.desk-bell",
+    "focus_label": "Desk memory",
+    "url": "http://127.0.0.1:59122/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "309f595c48fc3ddeaef5899ec7909509515ef4f1b0b7e11b32f0f465835a703e",
+    "document_text_len": 425,
+    "replay_identity": null,
+    "at_utc": "2026-09-29T15:18:48.553892+00:00"
+  },
+  "after": {
+    "observe_at": "#surface-cadence",
+    "target_present": true,
+    "text": "Rhythm\nEvery 15 min\nSweep\n\u21bb\nEVERY 5 MIN\nEVERY 15 MIN\nEVERY 30 MIN\nEVERY 1 HR\nRun now\nQUIET 22:00\u201308:00\n\u00b7\nNEXT 15:33\n\u00b7\nLAST 15:18\nRuns on\n\u21bb\nTHIS DEVICE\nMonday brief\nDAILY 08:00\n\u25cb\nNEVER\nGenerate\nNotify\n\u21bb\nOFF\nON THE EDGE\nEVERY SWEEP\n\u21bb\nCOUNT ONLY\nROOM NAMES\nNOT SET\nWRITTEN 15:18",
+    "attrs": {
+      "id": "surface-cadence",
+      "tabindex": "-1",
+      "class": "desk-surface-window desk-window desk-window-shell is-floating is-front",
+      "role": "region",
+      "aria-label": "Rhythm",
+      "style": "z-index: 42; opacity: 1; transform: none; inset: 72px auto auto 24px; width: 640px; height: 520px; max-height: none;"
+    },
+    "rect": {
+      "x": 24,
+      "y": 72,
+      "w": 640,
+      "h": 520
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 24,
+        "y": 72,
+        "w": 640,
+        "h": 520
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 26,
+          "y": 74,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-edge.desk-window-edge-l"
+        },
+        {
+          "x": 26,
+          "y": 332,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-edge.desk-window-edge-l"
+        },
+        {
+          "x": 26,
+          "y": 590,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-corner.desk-window-corner-bl"
+        },
+        {
+          "x": 344,
+          "y": 74,
+          "owned": true,
+          "owner": "div#surface-cadence > header.desk-pullout-head.desk-window-handle"
+        },
+        {
+          "x": 344,
+          "y": 332,
+          "owned": true,
+          "owner": "div#surface-cadence > div.desk-surface-body > div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 344,
+          "y": 590,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-edge.desk-window-edge-b"
+        },
+        {
+          "x": 662,
+          "y": 74,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-edge.desk-window-edge-r"
+        },
+        {
+          "x": 662,
+          "y": 332,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-edge.desk-window-edge-r"
+        },
+        {
+          "x": 662,
+          "y": 590,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-edge.desk-window-edge-r"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.gadget-cycle > select",
+        "value": "15"
+      },
+      {
+        "selector": "div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.gadget-cycle > select",
+        "value": "local"
+      },
+      {
+        "selector": "div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.gadget-cycle > select",
+        "value": "edge"
+      },
+      {
+        "selector": "div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.gadget-cycle > select",
+        "value": "count_only"
+      }
+    ],
+    "field_value": null,
+    "focus": "div#surface-cadence",
+    "focus_label": "Rhythm",
+    "url": "http://127.0.0.1:59122/",
+    "windows": [
+      {
+        "title": "Rhythm",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 640,
+          "h": 520
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "ad43ab26116ea2932b3e0574fa6377d132e5f67e0a5c75f15ae6a43249413681",
+    "document_text_len": 644,
+    "replay_identity": null,
+    "at_utc": "2026-09-29T15:18:49.722097+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "#surface-cadence",
+    "target_present": true,
+    "text": "Rhythm\nEvery 15 min\nSweep\n\u21bb\nEVERY 5 MIN\nEVERY 15 MIN\nEVERY 30 MIN\nEVERY 1 HR\nRun now\nQUIET 22:00\u201308:00\n\u00b7\nNEXT 15:33\n\u00b7\nLAST 15:18\nRuns on\n\u21bb\nTHIS DEVICE\nMonday brief\nDAILY 08:00\n\u25cb\nNEVER\nGenerate\nNotify\n\u21bb\nOFF\nON THE EDGE\nEVERY SWEEP\n\u21bb\nCOUNT ONLY\nROOM NAMES\nNOT SET\nWRITTEN 15:18",
+    "attrs": {
+      "id": "surface-cadence",
+      "tabindex": "-1",
+      "class": "desk-surface-window desk-window desk-window-shell is-floating is-front",
+      "role": "region",
+      "aria-label": "Rhythm",
+      "style": "z-index: 42; opacity: 1; transform: none; inset: 72px auto auto 24px; width: 640px; height: 520px; max-height: none;"
+    },
+    "rect": {
+      "x": 24,
+      "y": 72,
+      "w": 640,
+      "h": 520
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 24,
+        "y": 72,
+        "w": 640,
+        "h": 520
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 26,
+          "y": 74,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-edge.desk-window-edge-l"
+        },
+        {
+          "x": 26,
+          "y": 332,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-edge.desk-window-edge-l"
+        },
+        {
+          "x": 26,
+          "y": 590,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-corner.desk-window-corner-bl"
+        },
+        {
+          "x": 344,
+          "y": 74,
+          "owned": true,
+          "owner": "div#surface-cadence > header.desk-pullout-head.desk-window-handle"
+        },
+        {
+          "x": 344,
+          "y": 332,
+          "owned": true,
+          "owner": "div#surface-cadence > div.desk-surface-body > div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 344,
+          "y": 590,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-edge.desk-window-edge-b"
+        },
+        {
+          "x": 662,
+          "y": 74,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-edge.desk-window-edge-r"
+        },
+        {
+          "x": 662,
+          "y": 332,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-edge.desk-window-edge-r"
+        },
+        {
+          "x": 662,
+          "y": 590,
+          "owned": true,
+          "owner": "div#surface-cadence > span.desk-window-edge.desk-window-edge-r"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.gadget-cycle > select",
+        "value": "15"
+      },
+      {
+        "selector": "div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.gadget-cycle > select",
+        "value": "local"
+      },
+      {
+        "selector": "div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.gadget-cycle > select",
+        "value": "edge"
+      },
+      {
+        "selector": "div.rhythm-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.gadget-cycle > select",
+        "value": "count_only"
+      }
+    ],
+    "field_value": null,
+    "focus": "div#surface-cadence",
+    "focus_label": "Rhythm",
+    "url": "http://127.0.0.1:59122/",
+    "windows": [
+      {
+        "title": "Rhythm",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 640,
+          "h": 520
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "ad43ab26116ea2932b3e0574fa6377d132e5f67e0a5c75f15ae6a43249413681",
+    "document_text_len": 644,
+    "replay_identity": null,
+    "at_utc": "2026-09-29T15:18:49.594835+00:00",
+    "predicate_satisfied": true,
+    "reading": "windows after: ['Rhythm']",
+    "elapsed_s": 0.941
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "windows after: ['Rhythm']",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.068,
+    "first_satisfied_at_s": 0.941,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: windows after: ['Rhythm']"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:59122) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:59122) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/_built/assets/CadenceCore-BcDWJsh4.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/CadenceCore-DCn4lS8T.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/core-layout-Dke0FUJG.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/core-hooks-yghjusoE.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings/heartbeat",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cadence/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cadence/loops",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cadence/history",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/base-dce3afa9/case.j9.shade_receipt_open.rhythm_face--1440/20260929T151839Z-case.j9.shade_receipt_open.rhythm_face-muaddib-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/base-dce3afa9/case.j9.shade_receipt_open.rhythm_face--1440/20260929T151839Z-case.j9.shade_receipt_open.rhythm_face-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kyu5b33c/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kyu5b33c/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:59122"
+  ],
+  "duration_s": 10.159
+}

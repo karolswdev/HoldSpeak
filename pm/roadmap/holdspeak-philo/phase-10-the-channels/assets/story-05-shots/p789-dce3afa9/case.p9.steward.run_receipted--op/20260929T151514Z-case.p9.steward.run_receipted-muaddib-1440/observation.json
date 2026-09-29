@@ -1,0 +1,3259 @@
+{
+  "id": "obs-20260929T151514Z-case.p9.steward.run_receipted-muaddib-1440",
+  "run_id": "20260929T151514Z-case.p9.steward.run_receipted-muaddib-1440",
+  "case_id": "case.p9.steward.run_receipted",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase9-steward.json",
+  "job": "p9",
+  "edge_ids": [
+    "edge.tool.project_run_steward"
+  ],
+  "state_id": "state.desk_presentation.p9_steward_contract",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:57849",
+      "port": 57849,
+      "pid": 90418,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur94636l",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur94636l/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:15:14.725598+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase9-steward.json",
+      "sha256": "35c1dcb77fe2dea00827286fa75d2b45db187ccafddc4d3f53f30a3002664fad",
+      "version": "phase9-steward"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.create",
+      "args": {
+        "name": "Payments ledger cutover"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "project.create",
+          "arguments": {
+            "name": "Payments ledger cutover"
+          }
+        }
+      },
+      "response": {
+        "project": {
+          "changed_refs": [
+            "project:proj-f52ad794025c"
+          ],
+          "context": {},
+          "created_at": "2026-09-29T09:15:16.275119",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-f52ad794025c",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "Payments ledger cutover",
+          "project_id": "proj-f52ad794025c",
+          "project_revision": 1,
+          "result_kind": "created",
+          "team_members": [],
+          "updated_at": "2026-09-29T09:15:16.275119"
+        },
+        "success": true
+      },
+      "domain_response": {
+        "project": {
+          "changed_refs": [
+            "project:proj-f52ad794025c"
+          ],
+          "context": {},
+          "created_at": "2026-09-29T09:15:16.275119",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-f52ad794025c",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "Payments ledger cutover",
+          "project_id": "proj-f52ad794025c",
+          "project_revision": 1,
+          "result_kind": "created",
+          "team_members": [],
+          "updated_at": "2026-09-29T09:15:16.275119"
+        },
+        "success": true
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"project\": {\"changed_refs\": [\"project:proj-f52ad794025c\"], \"context\": {}, \"created_at\": \"2026-09-29T09:15:16.275119\", \"description\": \"\", \"detection_threshold\": 0.4, \"id\": \"proj-f52ad794025c\", \"is_archived\": false, \"keywords\": [], \"meeting_count\": 0, \"name\": \"Payments ledger cutover\", \"project_id\": \"proj-f52ad794025c\", \"project_revision\": 1, \"result_kind\": \"created\", \"team_members\": [], \"updated_at\": \"2026-09-29T09:15:16.275119\"}, \"success\": true}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.009,
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-f52ad794025c"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.configure_steward",
+      "args": {
+        "project_id": "proj-f52ad794025c",
+        "eligible_effect_kinds": [
+          "draft_update"
+        ]
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "project.configure_steward",
+          "arguments": {
+            "project_id": "proj-f52ad794025c",
+            "eligible_effect_kinds": [
+              "draft_update"
+            ]
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_5527a031578d4e0086e74ef2e7874aa9",
+        "policy": {
+          "bounds": {},
+          "cooldown_seconds": 0,
+          "created_at": "2026-09-29T15:15:16+00:00",
+          "eligible_effect_kinds": [
+            "draft_update"
+          ],
+          "enabled": true,
+          "id": "pstpol_8ebdc89dbed7483192c313c33423c0ee",
+          "max_actions_per_run": 10,
+          "max_retries": 3,
+          "project_id": "proj-f52ad794025c",
+          "unattended_enabled": false,
+          "updated_at": "2026-09-29T15:15:16+00:00",
+          "yolo_flags": {}
+        },
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790694916.279583,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_5527a031578d4e0086e74ef2e7874aa9",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_c161517134054619b2fc050c714cd1bc",
+          "result_ref": "project:proj-f52ad794025c",
+          "state": "succeeded",
+          "target_ref": "project:proj-f52ad794025c"
+        },
+        "success": true
+      },
+      "domain_response": {
+        "operation_id": "op_5527a031578d4e0086e74ef2e7874aa9",
+        "policy": {
+          "bounds": {},
+          "cooldown_seconds": 0,
+          "created_at": "2026-09-29T15:15:16+00:00",
+          "eligible_effect_kinds": [
+            "draft_update"
+          ],
+          "enabled": true,
+          "id": "pstpol_8ebdc89dbed7483192c313c33423c0ee",
+          "max_actions_per_run": 10,
+          "max_retries": 3,
+          "project_id": "proj-f52ad794025c",
+          "unattended_enabled": false,
+          "updated_at": "2026-09-29T15:15:16+00:00",
+          "yolo_flags": {}
+        },
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790694916.279583,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_5527a031578d4e0086e74ef2e7874aa9",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_c161517134054619b2fc050c714cd1bc",
+          "result_ref": "project:proj-f52ad794025c",
+          "state": "succeeded",
+          "target_ref": "project:proj-f52ad794025c"
+        },
+        "success": true
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_5527a031578d4e0086e74ef2e7874aa9\", \"policy\": {\"bounds\": {}, \"cooldown_seconds\": 0, \"created_at\": \"2026-09-29T15:15:16+00:00\", \"eligible_effect_kinds\": [\"draft_update\"], \"enabled\": true, \"id\": \"pstpol_8ebdc89dbed7483192c313c33423c0ee\", \"max_actions_per_run\": 10, \"max_retries\": 3, \"project_id\": \"proj-f52ad794025c\", \"unattended_enabled\": false, \"updated_at\": \"2026-09-29T15:15:16+00:00\", \"yolo_flags\": {}}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790694916.279583, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_5527a031578d4e0086e74ef2e7874aa9\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_c161517134054619b2fc050c714cd1bc\", \"result_ref\": \"project:proj-f52ad794025c\", \"state\": \"succeeded\", \"target_ref\": \"project:proj-f52ad794025c\"}, \"success\": true}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003,
+      "captured": {
+        "name": "policy_op",
+        "path": "operation_id",
+        "value": "op_5527a031578d4e0086e74ef2e7874aa9"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. Every id is captured from this run's own producer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "project_id": "proj-f52ad794025c",
+    "policy_op": "op_5527a031578d4e0086e74ef2e7874aa9",
+    "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+    "run_op": "op_f1637e502cc845919c035d67e8db7892"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "project.run_steward",
+    "args": {
+      "project_id": "proj-f52ad794025c"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "method": "tools/call",
+      "params": {
+        "name": "project.run_steward",
+        "arguments": {
+          "project_id": "proj-f52ad794025c"
+        }
+      }
+    },
+    "response": {
+      "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+      "receipt": null,
+      "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+      "state": "claimed",
+      "success": true
+    },
+    "domain_response": {
+      "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+      "receipt": null,
+      "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+      "state": "claimed",
+      "success": true
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"receipt\": null, \"run_id\": \"pstrun_74cfc03c4b825b26abb4da522e53d544\", \"state\": \"claimed\", \"success\": true}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.005,
+    "captured": {
+      "name": "run_id",
+      "path": "run_id",
+      "value": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+    },
+    "captured_more": [
+      {
+        "name": "run_op",
+        "path": "operation_id",
+        "value": "op_f1637e502cc845919c035d67e8db7892"
+      }
+    ]
+  },
+  "diff": {
+    "op_digest": {
+      "before": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+      "after": "089ce46d8063f97c13b0dd6b69fc54d6f937e90c612455fb8dc0b0a4f766b906"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": null,
+          "skipped": "unresolved placeholder; not sent"
+        },
+        {
+          "kind": "op",
+          "name": "project.list_updates",
+          "args": {
+            "project_id": "proj-f52ad794025c"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {
+              "name": "project.list_updates",
+              "arguments": {
+                "project_id": "proj-f52ad794025c"
+              }
+            }
+          },
+          "response": {
+            "updates": []
+          },
+          "domain_response": {
+            "updates": []
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 3,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"updates\": []}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "op_f1637e502cc845919c035d67e8db7892"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "method": "tools/call",
+            "params": {
+              "name": "kernel.receipt",
+              "arguments": {
+                "operation_id": "op_f1637e502cc845919c035d67e8db7892"
+              }
+            }
+          },
+          "response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [
+                  {
+                    "actor_kind": "owner",
+                    "authority_sha256": "sha256:21c0c3575c35cb1ddf3a5c892866e724d94b546ed1154e72cd418da8c76a076a",
+                    "configure_operation_id": "op_5527a031578d4e0086e74ef2e7874aa9",
+                    "delegator_identity": "owner-session",
+                    "delegator_kind": "owner",
+                    "grant_id": null,
+                    "grant_sha256": null,
+                    "kind": "authority_details",
+                    "policy_id": "pstpol_8ebdc89dbed7483192c313c33423c0ee",
+                    "policy_sha256": "sha256:5b210edf240d904ddbcff76db6e9b2d7db168dd923ccc63ac03a0c5f9fd342e3",
+                    "project_id": "proj-f52ad794025c",
+                    "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+                  }
+                ],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-project-writer",
+                  "correlation_id": "op_f1637e502cc845919c035d67e8db7892",
+                  "created_at": 1790694916.283055,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e",
+                  "idempotency_key": "project.run_steward:ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                  "name": "project.run_steward",
+                  "native_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                  "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                  "revision": 5,
+                  "state": "succeeded",
+                  "target_ref": "project:proj-f52ad794025c",
+                  "updated_at": 1790694916.295286,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e",
+                    "execution_expires_at": 1790698516.283372,
+                    "expires_at": 1790694946.283372,
+                    "issued_at": 1790694916.283372,
+                    "native_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                    "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-project-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "f0c821e8778779a136a64b4296eb652ba5905ab505a2a8e8f90cdfd767fa4bc1",
+                    "target_binding": "project:proj-f52ad794025c",
+                    "target_ref": "project:proj-f52ad794025c",
+                    "uses": 1,
+                    "warrant_id": "war_746cb87b8b274e609ca6478a9f8023c2"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790694916.2953029,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                  "outcome": "completed",
+                  "receipt_id": "rcpt_87c1983d043848b28fb695a165568812",
+                  "result_ref": "steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544",
+                  "state": "succeeded",
+                  "target_ref": "project:proj-f52ad794025c"
+                },
+                "ref": "operation:op_f1637e502cc845919c035d67e8db7892"
+              }
+            ],
+            "view": "receipt"
+          },
+          "domain_response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [
+                  {
+                    "actor_kind": "owner",
+                    "authority_sha256": "sha256:21c0c3575c35cb1ddf3a5c892866e724d94b546ed1154e72cd418da8c76a076a",
+                    "configure_operation_id": "op_5527a031578d4e0086e74ef2e7874aa9",
+                    "delegator_identity": "owner-session",
+                    "delegator_kind": "owner",
+                    "grant_id": null,
+                    "grant_sha256": null,
+                    "kind": "authority_details",
+                    "policy_id": "pstpol_8ebdc89dbed7483192c313c33423c0ee",
+                    "policy_sha256": "sha256:5b210edf240d904ddbcff76db6e9b2d7db168dd923ccc63ac03a0c5f9fd342e3",
+                    "project_id": "proj-f52ad794025c",
+                    "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+                  }
+                ],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-project-writer",
+                  "correlation_id": "op_f1637e502cc845919c035d67e8db7892",
+                  "created_at": 1790694916.283055,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e",
+                  "idempotency_key": "project.run_steward:ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                  "name": "project.run_steward",
+                  "native_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                  "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                  "revision": 5,
+                  "state": "succeeded",
+                  "target_ref": "project:proj-f52ad794025c",
+                  "updated_at": 1790694916.295286,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e",
+                    "execution_expires_at": 1790698516.283372,
+                    "expires_at": 1790694946.283372,
+                    "issued_at": 1790694916.283372,
+                    "native_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                    "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-project-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "f0c821e8778779a136a64b4296eb652ba5905ab505a2a8e8f90cdfd767fa4bc1",
+                    "target_binding": "project:proj-f52ad794025c",
+                    "target_ref": "project:proj-f52ad794025c",
+                    "uses": 1,
+                    "warrant_id": "war_746cb87b8b274e609ca6478a9f8023c2"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790694916.2953029,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                  "outcome": "completed",
+                  "receipt_id": "rcpt_87c1983d043848b28fb695a165568812",
+                  "result_ref": "steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544",
+                  "state": "succeeded",
+                  "target_ref": "project:proj-f52ad794025c"
+                },
+                "ref": "operation:op_f1637e502cc845919c035d67e8db7892"
+              }
+            ],
+            "view": "receipt"
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [{\"actor_kind\": \"owner\", \"authority_sha256\": \"sha256:21c0c3575c35cb1ddf3a5c892866e724d94b546ed1154e72cd418da8c76a076a\", \"configure_operation_id\": \"op_5527a031578d4e0086e74ef2e7874aa9\", \"delegator_identity\": \"owner-session\", \"delegator_kind\": \"owner\", \"grant_id\": null, \"grant_sha256\": null, \"kind\": \"authority_details\", \"policy_id\": \"pstpol_8ebdc89dbed7483192c313c33423c0ee\", \"policy_sha256\": \"sha256:5b210edf240d904ddbcff76db6e9b2d7db168dd923ccc63ac03a0c5f9fd342e3\", \"project_id\": \"proj-f52ad794025c\", \"run_id\": \"pstrun_74cfc03c4b825b26abb4da522e53d544\"}], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-project-writer\", \"correlation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"created_at\": 1790694916.283055, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e\", \"idempotency_key\": \"project.run_steward:ad5ed1dc-661a-41a0-8c00-d557461294cc\", \"name\": \"project.run_steward\", \"native_id\": \"ad5ed1dc-661a-41a0-8c00-d557461294cc\", \"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"ad5ed1dc-661a-41a0-8c00-d557461294cc\", \"revision\": 5, \"state\": \"succeeded\", \"target_ref\": \"project:proj-f52ad794025c\", \"updated_at\": 1790694916.295286, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e\", \"execution_expires_at\": 1790698516.283372, \"expires_at\": 1790694946.283372, \"issued_at\": 1790694916.283372, \"native_id\": \"ad5ed1dc-661a-41a0-8c00-d557461294cc\", \"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"f0c821e8778779a136a64b4296eb652ba5905ab505a2a8e8f90cdfd767fa4bc1\", \"target_binding\": \"project:proj-f52ad794025c\", \"target_ref\": \"project:proj-f52ad794025c\", \"uses\": 1, \"warrant_id\": \"war_746cb87b8b274e609ca6478a9f8023c2\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790694916.2953029, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"outcome\": \"completed\", \"receipt_id\": \"rcpt_87c1983d043848b28fb695a165568812\", \"result_ref\": \"steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544\", \"state\": \"succeeded\", \"target_ref\": \"project:proj-f52ad794025c\"}, \"ref\": \"operation:op_f1637e502cc845919c035d67e8db7892\"}], \"view\": \"receipt\"}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        },
+        {
+          "kind": "op",
+          "name": "project.list_updates",
+          "args": {
+            "project_id": "proj-f52ad794025c"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "tools/call",
+            "params": {
+              "name": "project.list_updates",
+              "arguments": {
+                "project_id": "proj-f52ad794025c"
+              }
+            }
+          },
+          "response": {
+            "updates": [
+              {
+                "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+                "claims_json": "[]",
+                "created_at": "2026-09-29T15:15:16+00:00",
+                "deliveries": [],
+                "draft_revision": 1,
+                "fallback_reason": null,
+                "fallback_receipt": null,
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf",
+                "lifecycle": "draft",
+                "project_id": "proj-f52ad794025c",
+                "project_revision": 1,
+                "published_at": null,
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+                "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"review_id\":\"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}",
+                "updated_at": "2026-09-29T15:15:16+00:00"
+              }
+            ]
+          },
+          "domain_response": {
+            "updates": [
+              {
+                "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+                "claims_json": "[]",
+                "created_at": "2026-09-29T15:15:16+00:00",
+                "deliveries": [],
+                "draft_revision": 1,
+                "fallback_reason": null,
+                "fallback_receipt": null,
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf",
+                "lifecycle": "draft",
+                "project_id": "proj-f52ad794025c",
+                "project_revision": 1,
+                "published_at": null,
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+                "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"review_id\":\"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}",
+                "updated_at": "2026-09-29T15:15:16+00:00"
+              }
+            ]
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 10,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"updates\": [{\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[]\", \"created_at\": \"2026-09-29T15:15:16+00:00\", \"deliveries\": [], \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\", \"lifecycle\": \"draft\", \"project_id\": \"proj-f52ad794025c\", \"project_revision\": 1, \"published_at\": null, \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\", \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1,\\\"review_id\\\":\\\"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\\\"}\", \"updated_at\": \"2026-09-29T15:15:16+00:00\"}]}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:57849",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "project.get_steward_run",
+      "args": null
+    },
+    "op": {
+      "name": "project.get_steward_run",
+      "args": {},
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "unresolved_arguments",
+        "error": "op observation has unresolved arguments"
+      },
+      "envelope": null,
+      "elapsed_s": 0.0
+    },
+    "op_digest": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": null,
+        "skipped": "unresolved placeholder; not sent"
+      },
+      {
+        "kind": "op",
+        "name": "project.list_updates",
+        "args": {
+          "project_id": "proj-f52ad794025c"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 3,
+          "method": "tools/call",
+          "params": {
+            "name": "project.list_updates",
+            "arguments": {
+              "project_id": "proj-f52ad794025c"
+            }
+          }
+        },
+        "response": {
+          "updates": []
+        },
+        "domain_response": {
+          "updates": []
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 3,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"updates\": []}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-29T15:15:16.282105+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:57849",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "project.get_steward_run",
+      "args": {
+        "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+      }
+    },
+    "op": {
+      "name": "project.get_steward_run",
+      "args": {
+        "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "project.get_steward_run",
+          "arguments": {
+            "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790694916.2953029,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+          "outcome": "completed",
+          "receipt_id": "rcpt_87c1983d043848b28fb695a165568812",
+          "result_ref": "steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544",
+          "state": "succeeded",
+          "target_ref": "project:proj-f52ad794025c"
+        },
+        "run": {
+          "completed_at": "2026-09-29T15:15:16+00:00",
+          "created_at": "2026-09-29T15:15:16+00:00",
+          "id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+          "phase": "record",
+          "policy_id": "pstpol_8ebdc89dbed7483192c313c33423c0ee",
+          "project_id": "proj-f52ad794025c",
+          "requested_by": "principal:owner-session",
+          "started_at": "2026-09-29T15:15:16+00:00",
+          "state": "completed",
+          "stop_requested_at": null,
+          "summary": {
+            "outcome": "completed",
+            "phase_results": {
+              "act": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                    },
+                    "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "prepare_send",
+                    "reason": "not_in_eligible_effect_kinds"
+                  }
+                ]
+              },
+              "compare": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+              },
+              "observe": {
+                "coverage": {
+                  "native:decisions": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:followthrough": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:meetings": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:resources": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  }
+                }
+              },
+              "propose": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+              },
+              "record": {
+                "event_recorded": true
+              },
+              "verify": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                    },
+                    "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "prepare_send",
+                    "reason": "not_in_eligible_effect_kinds"
+                  }
+                ],
+                "has_real_effects": true,
+                "proposal_count": 0,
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+                "source_count": 4,
+                "verified_effects": 1
+              }
+            },
+            "phases_completed": [
+              "observe",
+              "compare",
+              "propose",
+              "act",
+              "verify",
+              "record"
+            ]
+          },
+          "updated_at": "2026-09-29T15:15:16+00:00",
+          "watermark": ""
+        },
+        "steps": [
+          {
+            "effect_kind": "phase:observe",
+            "error": null,
+            "expected": {},
+            "id": "pststep_a984c473374a4738b4398dc968b0e679",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:observe",
+            "observed": {
+              "coverage": {
+                "native:decisions": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:followthrough": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:meetings": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:resources": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                }
+              }
+            },
+            "phase": "observe",
+            "receipt": {},
+            "seq": 0,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:compare",
+            "error": null,
+            "expected": {},
+            "id": "pststep_9c09e1e2d7ab47589dcc47cb3311c75c",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:compare",
+            "observed": {
+              "proposal_count": 0,
+              "proposals": [],
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+            },
+            "phase": "compare",
+            "receipt": {},
+            "seq": 1,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:propose",
+            "error": null,
+            "expected": {},
+            "id": "pststep_d5809416866e4f1cb359b186c52af757",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:propose",
+            "observed": {
+              "proposal_count": 0,
+              "proposals": [],
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+            },
+            "phase": "propose",
+            "receipt": {},
+            "seq": 2,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:act",
+            "error": null,
+            "expected": {},
+            "id": "pststep_3312bff69f954823a2770ed2030af45f",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:act",
+            "observed": {
+              "actions_taken": 1,
+              "effect_receipts": [
+                {
+                  "attempt": 1,
+                  "effect_kind": "draft_update",
+                  "outcome": "applied",
+                  "result": {
+                    "effect": "draft_update",
+                    "generator": "deterministic",
+                    "generator_host": null,
+                    "generator_model": null,
+                    "lifecycle": "draft",
+                    "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                  },
+                  "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                }
+              ],
+              "effects_skipped": [
+                {
+                  "effect_kind": "refresh_sources",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_proposals",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "apply_proposal_effects",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_door_item",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "github_comment",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "prepare_send",
+                  "reason": "not_in_eligible_effect_kinds"
+                }
+              ]
+            },
+            "phase": "act",
+            "receipt": {},
+            "seq": 3,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "draft_update",
+            "error": null,
+            "expected": {
+              "effect": "draft_update",
+              "project_id": "proj-f52ad794025c"
+            },
+            "id": "pststep_401a94fc67cc4be0b837499f59dae830",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:draft_update",
+            "observed": {
+              "effect": "draft_update",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "lifecycle": "draft",
+              "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+            },
+            "phase": "act",
+            "receipt": {
+              "attempt": 1,
+              "effect_kind": "draft_update",
+              "outcome": "applied"
+            },
+            "seq": 4,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:verify",
+            "error": null,
+            "expected": {},
+            "id": "pststep_747374b8bae347f4b6070c0b8eefa496",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:verify",
+            "observed": {
+              "actions_taken": 1,
+              "effect_receipts": [
+                {
+                  "attempt": 1,
+                  "effect_kind": "draft_update",
+                  "outcome": "applied",
+                  "result": {
+                    "effect": "draft_update",
+                    "generator": "deterministic",
+                    "generator_host": null,
+                    "generator_model": null,
+                    "lifecycle": "draft",
+                    "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                  },
+                  "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                }
+              ],
+              "effects_skipped": [
+                {
+                  "effect_kind": "refresh_sources",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_proposals",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "apply_proposal_effects",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_door_item",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "github_comment",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "prepare_send",
+                  "reason": "not_in_eligible_effect_kinds"
+                }
+              ],
+              "has_real_effects": true,
+              "proposal_count": 0,
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+              "source_count": 4,
+              "verified_effects": 1
+            },
+            "phase": "verify",
+            "receipt": {},
+            "seq": 5,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:record",
+            "error": null,
+            "expected": {},
+            "id": "pststep_583da93568aa43e0bd9ddae824c974fb",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:record",
+            "observed": {
+              "event_recorded": true
+            },
+            "phase": "record",
+            "receipt": {},
+            "seq": 6,
+            "state": "completed"
+          }
+        ]
+      },
+      "domain_response": {
+        "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790694916.2953029,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+          "outcome": "completed",
+          "receipt_id": "rcpt_87c1983d043848b28fb695a165568812",
+          "result_ref": "steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544",
+          "state": "succeeded",
+          "target_ref": "project:proj-f52ad794025c"
+        },
+        "run": {
+          "completed_at": "2026-09-29T15:15:16+00:00",
+          "created_at": "2026-09-29T15:15:16+00:00",
+          "id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+          "phase": "record",
+          "policy_id": "pstpol_8ebdc89dbed7483192c313c33423c0ee",
+          "project_id": "proj-f52ad794025c",
+          "requested_by": "principal:owner-session",
+          "started_at": "2026-09-29T15:15:16+00:00",
+          "state": "completed",
+          "stop_requested_at": null,
+          "summary": {
+            "outcome": "completed",
+            "phase_results": {
+              "act": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                    },
+                    "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "prepare_send",
+                    "reason": "not_in_eligible_effect_kinds"
+                  }
+                ]
+              },
+              "compare": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+              },
+              "observe": {
+                "coverage": {
+                  "native:decisions": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:followthrough": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:meetings": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:resources": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  }
+                }
+              },
+              "propose": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+              },
+              "record": {
+                "event_recorded": true
+              },
+              "verify": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                    },
+                    "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "prepare_send",
+                    "reason": "not_in_eligible_effect_kinds"
+                  }
+                ],
+                "has_real_effects": true,
+                "proposal_count": 0,
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+                "source_count": 4,
+                "verified_effects": 1
+              }
+            },
+            "phases_completed": [
+              "observe",
+              "compare",
+              "propose",
+              "act",
+              "verify",
+              "record"
+            ]
+          },
+          "updated_at": "2026-09-29T15:15:16+00:00",
+          "watermark": ""
+        },
+        "steps": [
+          {
+            "effect_kind": "phase:observe",
+            "error": null,
+            "expected": {},
+            "id": "pststep_a984c473374a4738b4398dc968b0e679",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:observe",
+            "observed": {
+              "coverage": {
+                "native:decisions": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:followthrough": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:meetings": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:resources": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                }
+              }
+            },
+            "phase": "observe",
+            "receipt": {},
+            "seq": 0,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:compare",
+            "error": null,
+            "expected": {},
+            "id": "pststep_9c09e1e2d7ab47589dcc47cb3311c75c",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:compare",
+            "observed": {
+              "proposal_count": 0,
+              "proposals": [],
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+            },
+            "phase": "compare",
+            "receipt": {},
+            "seq": 1,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:propose",
+            "error": null,
+            "expected": {},
+            "id": "pststep_d5809416866e4f1cb359b186c52af757",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:propose",
+            "observed": {
+              "proposal_count": 0,
+              "proposals": [],
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+            },
+            "phase": "propose",
+            "receipt": {},
+            "seq": 2,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:act",
+            "error": null,
+            "expected": {},
+            "id": "pststep_3312bff69f954823a2770ed2030af45f",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:act",
+            "observed": {
+              "actions_taken": 1,
+              "effect_receipts": [
+                {
+                  "attempt": 1,
+                  "effect_kind": "draft_update",
+                  "outcome": "applied",
+                  "result": {
+                    "effect": "draft_update",
+                    "generator": "deterministic",
+                    "generator_host": null,
+                    "generator_model": null,
+                    "lifecycle": "draft",
+                    "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                  },
+                  "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                }
+              ],
+              "effects_skipped": [
+                {
+                  "effect_kind": "refresh_sources",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_proposals",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "apply_proposal_effects",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_door_item",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "github_comment",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "prepare_send",
+                  "reason": "not_in_eligible_effect_kinds"
+                }
+              ]
+            },
+            "phase": "act",
+            "receipt": {},
+            "seq": 3,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "draft_update",
+            "error": null,
+            "expected": {
+              "effect": "draft_update",
+              "project_id": "proj-f52ad794025c"
+            },
+            "id": "pststep_401a94fc67cc4be0b837499f59dae830",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:draft_update",
+            "observed": {
+              "effect": "draft_update",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "lifecycle": "draft",
+              "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+            },
+            "phase": "act",
+            "receipt": {
+              "attempt": 1,
+              "effect_kind": "draft_update",
+              "outcome": "applied"
+            },
+            "seq": 4,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:verify",
+            "error": null,
+            "expected": {},
+            "id": "pststep_747374b8bae347f4b6070c0b8eefa496",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:verify",
+            "observed": {
+              "actions_taken": 1,
+              "effect_receipts": [
+                {
+                  "attempt": 1,
+                  "effect_kind": "draft_update",
+                  "outcome": "applied",
+                  "result": {
+                    "effect": "draft_update",
+                    "generator": "deterministic",
+                    "generator_host": null,
+                    "generator_model": null,
+                    "lifecycle": "draft",
+                    "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                  },
+                  "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                }
+              ],
+              "effects_skipped": [
+                {
+                  "effect_kind": "refresh_sources",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_proposals",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "apply_proposal_effects",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_door_item",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "github_comment",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "prepare_send",
+                  "reason": "not_in_eligible_effect_kinds"
+                }
+              ],
+              "has_real_effects": true,
+              "proposal_count": 0,
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+              "source_count": 4,
+              "verified_effects": 1
+            },
+            "phase": "verify",
+            "receipt": {},
+            "seq": 5,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:record",
+            "error": null,
+            "expected": {},
+            "id": "pststep_583da93568aa43e0bd9ddae824c974fb",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:record",
+            "observed": {
+              "event_recorded": true
+            },
+            "phase": "record",
+            "receipt": {},
+            "seq": 6,
+            "state": "completed"
+          }
+        ]
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790694916.2953029, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"outcome\": \"completed\", \"receipt_id\": \"rcpt_87c1983d043848b28fb695a165568812\", \"result_ref\": \"steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544\", \"state\": \"succeeded\", \"target_ref\": \"project:proj-f52ad794025c\"}, \"run\": {\"completed_at\": \"2026-09-29T15:15:16+00:00\", \"created_at\": \"2026-09-29T15:15:16+00:00\", \"id\": \"pstrun_74cfc03c4b825b26abb4da522e53d544\", \"phase\": \"record\", \"policy_id\": \"pstpol_8ebdc89dbed7483192c313c33423c0ee\", \"project_id\": \"proj-f52ad794025c\", \"requested_by\": \"principal:owner-session\", \"started_at\": \"2026-09-29T15:15:16+00:00\", \"state\": \"completed\", \"stop_requested_at\": null, \"summary\": {\"outcome\": \"completed\", \"phase_results\": {\"act\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\"}, \"step_id\": \"pststep_401a94fc67cc4be0b837499f59dae830\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"github_comment\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"prepare_send\", \"reason\": \"not_in_eligible_effect_kinds\"}]}, \"compare\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}, \"observe\": {\"coverage\": {\"native:decisions\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:followthrough\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:meetings\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:resources\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}}}, \"propose\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}, \"record\": {\"event_recorded\": true}, \"verify\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\"}, \"step_id\": \"pststep_401a94fc67cc4be0b837499f59dae830\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"github_comment\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"prepare_send\", \"reason\": \"not_in_eligible_effect_kinds\"}], \"has_real_effects\": true, \"proposal_count\": 0, \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\", \"source_count\": 4, \"verified_effects\": 1}}, \"phases_completed\": [\"observe\", \"compare\", \"propose\", \"act\", \"verify\", \"record\"]}, \"updated_at\": \"2026-09-29T15:15:16+00:00\", \"watermark\": \"\"}, \"steps\": [{\"effect_kind\": \"phase:observe\", \"error\": null, \"expected\": {}, \"id\": \"pststep_a984c473374a4738b4398dc968b0e679\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:observe\", \"observed\": {\"coverage\": {\"native:decisions\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:followthrough\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:meetings\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:resources\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}}}, \"phase\": \"observe\", \"receipt\": {}, \"seq\": 0, \"state\": \"completed\"}, {\"effect_kind\": \"phase:compare\", \"error\": null, \"expected\": {}, \"id\": \"pststep_9c09e1e2d7ab47589dcc47cb3311c75c\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:compare\", \"observed\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}, \"phase\": \"compare\", \"receipt\": {}, \"seq\": 1, \"state\": \"completed\"}, {\"effect_kind\": \"phase:propose\", \"error\": null, \"expected\": {}, \"id\": \"pststep_d5809416866e4f1cb359b186c52af757\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:propose\", \"observed\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}, \"phase\": \"propose\", \"receipt\": {}, \"seq\": 2, \"state\": \"completed\"}, {\"effect_kind\": \"phase:act\", \"error\": null, \"expected\": {}, \"id\": \"pststep_3312bff69f954823a2770ed2030af45f\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:act\", \"observed\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\"}, \"step_id\": \"pststep_401a94fc67cc4be0b837499f59dae830\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"github_comment\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"prepare_send\", \"reason\": \"not_in_eligible_effect_kinds\"}]}, \"phase\": \"act\", \"receipt\": {}, \"seq\": 3, \"state\": \"completed\"}, {\"effect_kind\": \"draft_update\", \"error\": null, \"expected\": {\"effect\": \"draft_update\", \"project_id\": \"proj-f52ad794025c\"}, \"id\": \"pststep_401a94fc67cc4be0b837499f59dae830\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:draft_update\", \"observed\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\"}, \"phase\": \"act\", \"receipt\": {\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\"}, \"seq\": 4, \"state\": \"completed\"}, {\"effect_kind\": \"phase:verify\", \"error\": null, \"expected\": {}, \"id\": \"pststep_747374b8bae347f4b6070c0b8eefa496\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:verify\", \"observed\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\"}, \"step_id\": \"pststep_401a94fc67cc4be0b837499f59dae830\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"github_comment\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"prepare_send\", \"reason\": \"not_in_eligible_effect_kinds\"}], \"has_real_effects\": true, \"proposal_count\": 0, \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\", \"source_count\": 4, \"verified_effects\": 1}, \"phase\": \"verify\", \"receipt\": {}, \"seq\": 5, \"state\": \"completed\"}, {\"effect_kind\": \"phase:record\", \"error\": null, \"expected\": {}, \"id\": \"pststep_583da93568aa43e0bd9ddae824c974fb\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:record\", \"observed\": {\"event_recorded\": true}, \"phase\": \"record\", \"receipt\": {}, \"seq\": 6, \"state\": \"completed\"}]}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "089ce46d8063f97c13b0dd6b69fc54d6f937e90c612455fb8dc0b0a4f766b906",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_f1637e502cc845919c035d67e8db7892"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_f1637e502cc845919c035d67e8db7892"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [
+                {
+                  "actor_kind": "owner",
+                  "authority_sha256": "sha256:21c0c3575c35cb1ddf3a5c892866e724d94b546ed1154e72cd418da8c76a076a",
+                  "configure_operation_id": "op_5527a031578d4e0086e74ef2e7874aa9",
+                  "delegator_identity": "owner-session",
+                  "delegator_kind": "owner",
+                  "grant_id": null,
+                  "grant_sha256": null,
+                  "kind": "authority_details",
+                  "policy_id": "pstpol_8ebdc89dbed7483192c313c33423c0ee",
+                  "policy_sha256": "sha256:5b210edf240d904ddbcff76db6e9b2d7db168dd923ccc63ac03a0c5f9fd342e3",
+                  "project_id": "proj-f52ad794025c",
+                  "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+                }
+              ],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_f1637e502cc845919c035d67e8db7892",
+                "created_at": 1790694916.283055,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e",
+                "idempotency_key": "project.run_steward:ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                "name": "project.run_steward",
+                "native_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "project:proj-f52ad794025c",
+                "updated_at": 1790694916.295286,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e",
+                  "execution_expires_at": 1790698516.283372,
+                  "expires_at": 1790694946.283372,
+                  "issued_at": 1790694916.283372,
+                  "native_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                  "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "f0c821e8778779a136a64b4296eb652ba5905ab505a2a8e8f90cdfd767fa4bc1",
+                  "target_binding": "project:proj-f52ad794025c",
+                  "target_ref": "project:proj-f52ad794025c",
+                  "uses": 1,
+                  "warrant_id": "war_746cb87b8b274e609ca6478a9f8023c2"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790694916.2953029,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                "outcome": "completed",
+                "receipt_id": "rcpt_87c1983d043848b28fb695a165568812",
+                "result_ref": "steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544",
+                "state": "succeeded",
+                "target_ref": "project:proj-f52ad794025c"
+              },
+              "ref": "operation:op_f1637e502cc845919c035d67e8db7892"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [
+                {
+                  "actor_kind": "owner",
+                  "authority_sha256": "sha256:21c0c3575c35cb1ddf3a5c892866e724d94b546ed1154e72cd418da8c76a076a",
+                  "configure_operation_id": "op_5527a031578d4e0086e74ef2e7874aa9",
+                  "delegator_identity": "owner-session",
+                  "delegator_kind": "owner",
+                  "grant_id": null,
+                  "grant_sha256": null,
+                  "kind": "authority_details",
+                  "policy_id": "pstpol_8ebdc89dbed7483192c313c33423c0ee",
+                  "policy_sha256": "sha256:5b210edf240d904ddbcff76db6e9b2d7db168dd923ccc63ac03a0c5f9fd342e3",
+                  "project_id": "proj-f52ad794025c",
+                  "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+                }
+              ],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_f1637e502cc845919c035d67e8db7892",
+                "created_at": 1790694916.283055,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e",
+                "idempotency_key": "project.run_steward:ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                "name": "project.run_steward",
+                "native_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "project:proj-f52ad794025c",
+                "updated_at": 1790694916.295286,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e",
+                  "execution_expires_at": 1790698516.283372,
+                  "expires_at": 1790694946.283372,
+                  "issued_at": 1790694916.283372,
+                  "native_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                  "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "f0c821e8778779a136a64b4296eb652ba5905ab505a2a8e8f90cdfd767fa4bc1",
+                  "target_binding": "project:proj-f52ad794025c",
+                  "target_ref": "project:proj-f52ad794025c",
+                  "uses": 1,
+                  "warrant_id": "war_746cb87b8b274e609ca6478a9f8023c2"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790694916.2953029,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                "outcome": "completed",
+                "receipt_id": "rcpt_87c1983d043848b28fb695a165568812",
+                "result_ref": "steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544",
+                "state": "succeeded",
+                "target_ref": "project:proj-f52ad794025c"
+              },
+              "ref": "operation:op_f1637e502cc845919c035d67e8db7892"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [{\"actor_kind\": \"owner\", \"authority_sha256\": \"sha256:21c0c3575c35cb1ddf3a5c892866e724d94b546ed1154e72cd418da8c76a076a\", \"configure_operation_id\": \"op_5527a031578d4e0086e74ef2e7874aa9\", \"delegator_identity\": \"owner-session\", \"delegator_kind\": \"owner\", \"grant_id\": null, \"grant_sha256\": null, \"kind\": \"authority_details\", \"policy_id\": \"pstpol_8ebdc89dbed7483192c313c33423c0ee\", \"policy_sha256\": \"sha256:5b210edf240d904ddbcff76db6e9b2d7db168dd923ccc63ac03a0c5f9fd342e3\", \"project_id\": \"proj-f52ad794025c\", \"run_id\": \"pstrun_74cfc03c4b825b26abb4da522e53d544\"}], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-project-writer\", \"correlation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"created_at\": 1790694916.283055, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e\", \"idempotency_key\": \"project.run_steward:ad5ed1dc-661a-41a0-8c00-d557461294cc\", \"name\": \"project.run_steward\", \"native_id\": \"ad5ed1dc-661a-41a0-8c00-d557461294cc\", \"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"ad5ed1dc-661a-41a0-8c00-d557461294cc\", \"revision\": 5, \"state\": \"succeeded\", \"target_ref\": \"project:proj-f52ad794025c\", \"updated_at\": 1790694916.295286, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e\", \"execution_expires_at\": 1790698516.283372, \"expires_at\": 1790694946.283372, \"issued_at\": 1790694916.283372, \"native_id\": \"ad5ed1dc-661a-41a0-8c00-d557461294cc\", \"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"f0c821e8778779a136a64b4296eb652ba5905ab505a2a8e8f90cdfd767fa4bc1\", \"target_binding\": \"project:proj-f52ad794025c\", \"target_ref\": \"project:proj-f52ad794025c\", \"uses\": 1, \"warrant_id\": \"war_746cb87b8b274e609ca6478a9f8023c2\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790694916.2953029, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"outcome\": \"completed\", \"receipt_id\": \"rcpt_87c1983d043848b28fb695a165568812\", \"result_ref\": \"steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544\", \"state\": \"succeeded\", \"target_ref\": \"project:proj-f52ad794025c\"}, \"ref\": \"operation:op_f1637e502cc845919c035d67e8db7892\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      },
+      {
+        "kind": "op",
+        "name": "project.list_updates",
+        "args": {
+          "project_id": "proj-f52ad794025c"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "method": "tools/call",
+          "params": {
+            "name": "project.list_updates",
+            "arguments": {
+              "project_id": "proj-f52ad794025c"
+            }
+          }
+        },
+        "response": {
+          "updates": [
+            {
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "created_at": "2026-09-29T15:15:16+00:00",
+              "deliveries": [],
+              "draft_revision": 1,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf",
+              "lifecycle": "draft",
+              "project_id": "proj-f52ad794025c",
+              "project_revision": 1,
+              "published_at": null,
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"review_id\":\"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}",
+              "updated_at": "2026-09-29T15:15:16+00:00"
+            }
+          ]
+        },
+        "domain_response": {
+          "updates": [
+            {
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "created_at": "2026-09-29T15:15:16+00:00",
+              "deliveries": [],
+              "draft_revision": 1,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf",
+              "lifecycle": "draft",
+              "project_id": "proj-f52ad794025c",
+              "project_revision": 1,
+              "published_at": null,
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"review_id\":\"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}",
+              "updated_at": "2026-09-29T15:15:16+00:00"
+            }
+          ]
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"updates\": [{\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[]\", \"created_at\": \"2026-09-29T15:15:16+00:00\", \"deliveries\": [], \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\", \"lifecycle\": \"draft\", \"project_id\": \"proj-f52ad794025c\", \"project_revision\": 1, \"published_at\": null, \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\", \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1,\\\"review_id\\\":\\\"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\\\"}\", \"updated_at\": \"2026-09-29T15:15:16+00:00\"}]}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-29T15:15:17.197614+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "project.run_steward",
+      "body_sha256": "0acc7c73fba5b14f1f3712abea6b3bc8d354c4d669a7a33a4922d6bac55749a3",
+      "body": {
+        "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+        "receipt": null,
+        "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+        "state": "claimed",
+        "success": true
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"receipt\": null, \"run_id\": \"pstrun_74cfc03c4b825b26abb4da522e53d544\", \"state\": \"claimed\", \"success\": true}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.run_steward",
+      "args": {
+        "project_id": "proj-f52ad794025c"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "project.run_steward",
+          "arguments": {
+            "project_id": "proj-f52ad794025c"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+        "receipt": null,
+        "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+        "state": "claimed",
+        "success": true
+      },
+      "domain_response": {
+        "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+        "receipt": null,
+        "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+        "state": "claimed",
+        "success": true
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"receipt\": null, \"run_id\": \"pstrun_74cfc03c4b825b26abb4da522e53d544\", \"state\": \"claimed\", \"success\": true}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.005,
+      "captured": {
+        "name": "run_id",
+        "path": "run_id",
+        "value": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+      },
+      "captured_more": [
+        {
+          "name": "run_op",
+          "path": "operation_id",
+          "value": "op_f1637e502cc845919c035d67e8db7892"
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:57849",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "project.get_steward_run",
+      "args": {
+        "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+      }
+    },
+    "op": {
+      "name": "project.get_steward_run",
+      "args": {
+        "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "project.get_steward_run",
+          "arguments": {
+            "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790694916.2953029,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+          "outcome": "completed",
+          "receipt_id": "rcpt_87c1983d043848b28fb695a165568812",
+          "result_ref": "steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544",
+          "state": "succeeded",
+          "target_ref": "project:proj-f52ad794025c"
+        },
+        "run": {
+          "completed_at": "2026-09-29T15:15:16+00:00",
+          "created_at": "2026-09-29T15:15:16+00:00",
+          "id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+          "phase": "record",
+          "policy_id": "pstpol_8ebdc89dbed7483192c313c33423c0ee",
+          "project_id": "proj-f52ad794025c",
+          "requested_by": "principal:owner-session",
+          "started_at": "2026-09-29T15:15:16+00:00",
+          "state": "completed",
+          "stop_requested_at": null,
+          "summary": {
+            "outcome": "completed",
+            "phase_results": {
+              "act": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                    },
+                    "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "prepare_send",
+                    "reason": "not_in_eligible_effect_kinds"
+                  }
+                ]
+              },
+              "compare": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+              },
+              "observe": {
+                "coverage": {
+                  "native:decisions": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:followthrough": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:meetings": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:resources": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  }
+                }
+              },
+              "propose": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+              },
+              "record": {
+                "event_recorded": true
+              },
+              "verify": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                    },
+                    "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "prepare_send",
+                    "reason": "not_in_eligible_effect_kinds"
+                  }
+                ],
+                "has_real_effects": true,
+                "proposal_count": 0,
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+                "source_count": 4,
+                "verified_effects": 1
+              }
+            },
+            "phases_completed": [
+              "observe",
+              "compare",
+              "propose",
+              "act",
+              "verify",
+              "record"
+            ]
+          },
+          "updated_at": "2026-09-29T15:15:16+00:00",
+          "watermark": ""
+        },
+        "steps": [
+          {
+            "effect_kind": "phase:observe",
+            "error": null,
+            "expected": {},
+            "id": "pststep_a984c473374a4738b4398dc968b0e679",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:observe",
+            "observed": {
+              "coverage": {
+                "native:decisions": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:followthrough": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:meetings": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:resources": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                }
+              }
+            },
+            "phase": "observe",
+            "receipt": {},
+            "seq": 0,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:compare",
+            "error": null,
+            "expected": {},
+            "id": "pststep_9c09e1e2d7ab47589dcc47cb3311c75c",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:compare",
+            "observed": {
+              "proposal_count": 0,
+              "proposals": [],
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+            },
+            "phase": "compare",
+            "receipt": {},
+            "seq": 1,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:propose",
+            "error": null,
+            "expected": {},
+            "id": "pststep_d5809416866e4f1cb359b186c52af757",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:propose",
+            "observed": {
+              "proposal_count": 0,
+              "proposals": [],
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+            },
+            "phase": "propose",
+            "receipt": {},
+            "seq": 2,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:act",
+            "error": null,
+            "expected": {},
+            "id": "pststep_3312bff69f954823a2770ed2030af45f",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:act",
+            "observed": {
+              "actions_taken": 1,
+              "effect_receipts": [
+                {
+                  "attempt": 1,
+                  "effect_kind": "draft_update",
+                  "outcome": "applied",
+                  "result": {
+                    "effect": "draft_update",
+                    "generator": "deterministic",
+                    "generator_host": null,
+                    "generator_model": null,
+                    "lifecycle": "draft",
+                    "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                  },
+                  "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                }
+              ],
+              "effects_skipped": [
+                {
+                  "effect_kind": "refresh_sources",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_proposals",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "apply_proposal_effects",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_door_item",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "github_comment",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "prepare_send",
+                  "reason": "not_in_eligible_effect_kinds"
+                }
+              ]
+            },
+            "phase": "act",
+            "receipt": {},
+            "seq": 3,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "draft_update",
+            "error": null,
+            "expected": {
+              "effect": "draft_update",
+              "project_id": "proj-f52ad794025c"
+            },
+            "id": "pststep_401a94fc67cc4be0b837499f59dae830",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:draft_update",
+            "observed": {
+              "effect": "draft_update",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "lifecycle": "draft",
+              "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+            },
+            "phase": "act",
+            "receipt": {
+              "attempt": 1,
+              "effect_kind": "draft_update",
+              "outcome": "applied"
+            },
+            "seq": 4,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:verify",
+            "error": null,
+            "expected": {},
+            "id": "pststep_747374b8bae347f4b6070c0b8eefa496",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:verify",
+            "observed": {
+              "actions_taken": 1,
+              "effect_receipts": [
+                {
+                  "attempt": 1,
+                  "effect_kind": "draft_update",
+                  "outcome": "applied",
+                  "result": {
+                    "effect": "draft_update",
+                    "generator": "deterministic",
+                    "generator_host": null,
+                    "generator_model": null,
+                    "lifecycle": "draft",
+                    "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                  },
+                  "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                }
+              ],
+              "effects_skipped": [
+                {
+                  "effect_kind": "refresh_sources",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_proposals",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "apply_proposal_effects",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_door_item",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "github_comment",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "prepare_send",
+                  "reason": "not_in_eligible_effect_kinds"
+                }
+              ],
+              "has_real_effects": true,
+              "proposal_count": 0,
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+              "source_count": 4,
+              "verified_effects": 1
+            },
+            "phase": "verify",
+            "receipt": {},
+            "seq": 5,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:record",
+            "error": null,
+            "expected": {},
+            "id": "pststep_583da93568aa43e0bd9ddae824c974fb",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:record",
+            "observed": {
+              "event_recorded": true
+            },
+            "phase": "record",
+            "receipt": {},
+            "seq": 6,
+            "state": "completed"
+          }
+        ]
+      },
+      "domain_response": {
+        "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790694916.2953029,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+          "outcome": "completed",
+          "receipt_id": "rcpt_87c1983d043848b28fb695a165568812",
+          "result_ref": "steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544",
+          "state": "succeeded",
+          "target_ref": "project:proj-f52ad794025c"
+        },
+        "run": {
+          "completed_at": "2026-09-29T15:15:16+00:00",
+          "created_at": "2026-09-29T15:15:16+00:00",
+          "id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+          "phase": "record",
+          "policy_id": "pstpol_8ebdc89dbed7483192c313c33423c0ee",
+          "project_id": "proj-f52ad794025c",
+          "requested_by": "principal:owner-session",
+          "started_at": "2026-09-29T15:15:16+00:00",
+          "state": "completed",
+          "stop_requested_at": null,
+          "summary": {
+            "outcome": "completed",
+            "phase_results": {
+              "act": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                    },
+                    "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "prepare_send",
+                    "reason": "not_in_eligible_effect_kinds"
+                  }
+                ]
+              },
+              "compare": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+              },
+              "observe": {
+                "coverage": {
+                  "native:decisions": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:followthrough": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:meetings": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:resources": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  }
+                }
+              },
+              "propose": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+              },
+              "record": {
+                "event_recorded": true
+              },
+              "verify": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                    },
+                    "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "prepare_send",
+                    "reason": "not_in_eligible_effect_kinds"
+                  }
+                ],
+                "has_real_effects": true,
+                "proposal_count": 0,
+                "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+                "source_count": 4,
+                "verified_effects": 1
+              }
+            },
+            "phases_completed": [
+              "observe",
+              "compare",
+              "propose",
+              "act",
+              "verify",
+              "record"
+            ]
+          },
+          "updated_at": "2026-09-29T15:15:16+00:00",
+          "watermark": ""
+        },
+        "steps": [
+          {
+            "effect_kind": "phase:observe",
+            "error": null,
+            "expected": {},
+            "id": "pststep_a984c473374a4738b4398dc968b0e679",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:observe",
+            "observed": {
+              "coverage": {
+                "native:decisions": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:followthrough": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:meetings": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:resources": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                }
+              }
+            },
+            "phase": "observe",
+            "receipt": {},
+            "seq": 0,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:compare",
+            "error": null,
+            "expected": {},
+            "id": "pststep_9c09e1e2d7ab47589dcc47cb3311c75c",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:compare",
+            "observed": {
+              "proposal_count": 0,
+              "proposals": [],
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+            },
+            "phase": "compare",
+            "receipt": {},
+            "seq": 1,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:propose",
+            "error": null,
+            "expected": {},
+            "id": "pststep_d5809416866e4f1cb359b186c52af757",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:propose",
+            "observed": {
+              "proposal_count": 0,
+              "proposals": [],
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc"
+            },
+            "phase": "propose",
+            "receipt": {},
+            "seq": 2,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:act",
+            "error": null,
+            "expected": {},
+            "id": "pststep_3312bff69f954823a2770ed2030af45f",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:act",
+            "observed": {
+              "actions_taken": 1,
+              "effect_receipts": [
+                {
+                  "attempt": 1,
+                  "effect_kind": "draft_update",
+                  "outcome": "applied",
+                  "result": {
+                    "effect": "draft_update",
+                    "generator": "deterministic",
+                    "generator_host": null,
+                    "generator_model": null,
+                    "lifecycle": "draft",
+                    "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                  },
+                  "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                }
+              ],
+              "effects_skipped": [
+                {
+                  "effect_kind": "refresh_sources",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_proposals",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "apply_proposal_effects",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_door_item",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "github_comment",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "prepare_send",
+                  "reason": "not_in_eligible_effect_kinds"
+                }
+              ]
+            },
+            "phase": "act",
+            "receipt": {},
+            "seq": 3,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "draft_update",
+            "error": null,
+            "expected": {
+              "effect": "draft_update",
+              "project_id": "proj-f52ad794025c"
+            },
+            "id": "pststep_401a94fc67cc4be0b837499f59dae830",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:draft_update",
+            "observed": {
+              "effect": "draft_update",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "lifecycle": "draft",
+              "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+            },
+            "phase": "act",
+            "receipt": {
+              "attempt": 1,
+              "effect_kind": "draft_update",
+              "outcome": "applied"
+            },
+            "seq": 4,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:verify",
+            "error": null,
+            "expected": {},
+            "id": "pststep_747374b8bae347f4b6070c0b8eefa496",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:verify",
+            "observed": {
+              "actions_taken": 1,
+              "effect_receipts": [
+                {
+                  "attempt": 1,
+                  "effect_kind": "draft_update",
+                  "outcome": "applied",
+                  "result": {
+                    "effect": "draft_update",
+                    "generator": "deterministic",
+                    "generator_host": null,
+                    "generator_model": null,
+                    "lifecycle": "draft",
+                    "update_id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf"
+                  },
+                  "step_id": "pststep_401a94fc67cc4be0b837499f59dae830"
+                }
+              ],
+              "effects_skipped": [
+                {
+                  "effect_kind": "refresh_sources",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_proposals",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "apply_proposal_effects",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_door_item",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "github_comment",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "prepare_send",
+                  "reason": "not_in_eligible_effect_kinds"
+                }
+              ],
+              "has_real_effects": true,
+              "proposal_count": 0,
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+              "source_count": 4,
+              "verified_effects": 1
+            },
+            "phase": "verify",
+            "receipt": {},
+            "seq": 5,
+            "state": "completed"
+          },
+          {
+            "effect_kind": "phase:record",
+            "error": null,
+            "expected": {},
+            "id": "pststep_583da93568aa43e0bd9ddae824c974fb",
+            "idempotency_key": "pstrun_74cfc03c4b825b26abb4da522e53d544:record",
+            "observed": {
+              "event_recorded": true
+            },
+            "phase": "record",
+            "receipt": {},
+            "seq": 6,
+            "state": "completed"
+          }
+        ]
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790694916.2953029, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"outcome\": \"completed\", \"receipt_id\": \"rcpt_87c1983d043848b28fb695a165568812\", \"result_ref\": \"steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544\", \"state\": \"succeeded\", \"target_ref\": \"project:proj-f52ad794025c\"}, \"run\": {\"completed_at\": \"2026-09-29T15:15:16+00:00\", \"created_at\": \"2026-09-29T15:15:16+00:00\", \"id\": \"pstrun_74cfc03c4b825b26abb4da522e53d544\", \"phase\": \"record\", \"policy_id\": \"pstpol_8ebdc89dbed7483192c313c33423c0ee\", \"project_id\": \"proj-f52ad794025c\", \"requested_by\": \"principal:owner-session\", \"started_at\": \"2026-09-29T15:15:16+00:00\", \"state\": \"completed\", \"stop_requested_at\": null, \"summary\": {\"outcome\": \"completed\", \"phase_results\": {\"act\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\"}, \"step_id\": \"pststep_401a94fc67cc4be0b837499f59dae830\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"github_comment\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"prepare_send\", \"reason\": \"not_in_eligible_effect_kinds\"}]}, \"compare\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}, \"observe\": {\"coverage\": {\"native:decisions\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:followthrough\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:meetings\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:resources\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}}}, \"propose\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}, \"record\": {\"event_recorded\": true}, \"verify\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\"}, \"step_id\": \"pststep_401a94fc67cc4be0b837499f59dae830\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"github_comment\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"prepare_send\", \"reason\": \"not_in_eligible_effect_kinds\"}], \"has_real_effects\": true, \"proposal_count\": 0, \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\", \"source_count\": 4, \"verified_effects\": 1}}, \"phases_completed\": [\"observe\", \"compare\", \"propose\", \"act\", \"verify\", \"record\"]}, \"updated_at\": \"2026-09-29T15:15:16+00:00\", \"watermark\": \"\"}, \"steps\": [{\"effect_kind\": \"phase:observe\", \"error\": null, \"expected\": {}, \"id\": \"pststep_a984c473374a4738b4398dc968b0e679\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:observe\", \"observed\": {\"coverage\": {\"native:decisions\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:followthrough\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:meetings\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:resources\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}}}, \"phase\": \"observe\", \"receipt\": {}, \"seq\": 0, \"state\": \"completed\"}, {\"effect_kind\": \"phase:compare\", \"error\": null, \"expected\": {}, \"id\": \"pststep_9c09e1e2d7ab47589dcc47cb3311c75c\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:compare\", \"observed\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}, \"phase\": \"compare\", \"receipt\": {}, \"seq\": 1, \"state\": \"completed\"}, {\"effect_kind\": \"phase:propose\", \"error\": null, \"expected\": {}, \"id\": \"pststep_d5809416866e4f1cb359b186c52af757\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:propose\", \"observed\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}, \"phase\": \"propose\", \"receipt\": {}, \"seq\": 2, \"state\": \"completed\"}, {\"effect_kind\": \"phase:act\", \"error\": null, \"expected\": {}, \"id\": \"pststep_3312bff69f954823a2770ed2030af45f\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:act\", \"observed\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\"}, \"step_id\": \"pststep_401a94fc67cc4be0b837499f59dae830\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"github_comment\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"prepare_send\", \"reason\": \"not_in_eligible_effect_kinds\"}]}, \"phase\": \"act\", \"receipt\": {}, \"seq\": 3, \"state\": \"completed\"}, {\"effect_kind\": \"draft_update\", \"error\": null, \"expected\": {\"effect\": \"draft_update\", \"project_id\": \"proj-f52ad794025c\"}, \"id\": \"pststep_401a94fc67cc4be0b837499f59dae830\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:draft_update\", \"observed\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\"}, \"phase\": \"act\", \"receipt\": {\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\"}, \"seq\": 4, \"state\": \"completed\"}, {\"effect_kind\": \"phase:verify\", \"error\": null, \"expected\": {}, \"id\": \"pststep_747374b8bae347f4b6070c0b8eefa496\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:verify\", \"observed\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\"}, \"step_id\": \"pststep_401a94fc67cc4be0b837499f59dae830\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"github_comment\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"prepare_send\", \"reason\": \"not_in_eligible_effect_kinds\"}], \"has_real_effects\": true, \"proposal_count\": 0, \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\", \"source_count\": 4, \"verified_effects\": 1}, \"phase\": \"verify\", \"receipt\": {}, \"seq\": 5, \"state\": \"completed\"}, {\"effect_kind\": \"phase:record\", \"error\": null, \"expected\": {}, \"id\": \"pststep_583da93568aa43e0bd9ddae824c974fb\", \"idempotency_key\": \"pstrun_74cfc03c4b825b26abb4da522e53d544:record\", \"observed\": {\"event_recorded\": true}, \"phase\": \"record\", \"receipt\": {}, \"seq\": 6, \"state\": \"completed\"}]}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "089ce46d8063f97c13b0dd6b69fc54d6f937e90c612455fb8dc0b0a4f766b906",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_f1637e502cc845919c035d67e8db7892"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_f1637e502cc845919c035d67e8db7892"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [
+                {
+                  "actor_kind": "owner",
+                  "authority_sha256": "sha256:21c0c3575c35cb1ddf3a5c892866e724d94b546ed1154e72cd418da8c76a076a",
+                  "configure_operation_id": "op_5527a031578d4e0086e74ef2e7874aa9",
+                  "delegator_identity": "owner-session",
+                  "delegator_kind": "owner",
+                  "grant_id": null,
+                  "grant_sha256": null,
+                  "kind": "authority_details",
+                  "policy_id": "pstpol_8ebdc89dbed7483192c313c33423c0ee",
+                  "policy_sha256": "sha256:5b210edf240d904ddbcff76db6e9b2d7db168dd923ccc63ac03a0c5f9fd342e3",
+                  "project_id": "proj-f52ad794025c",
+                  "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+                }
+              ],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_f1637e502cc845919c035d67e8db7892",
+                "created_at": 1790694916.283055,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e",
+                "idempotency_key": "project.run_steward:ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                "name": "project.run_steward",
+                "native_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "project:proj-f52ad794025c",
+                "updated_at": 1790694916.295286,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e",
+                  "execution_expires_at": 1790698516.283372,
+                  "expires_at": 1790694946.283372,
+                  "issued_at": 1790694916.283372,
+                  "native_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                  "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "f0c821e8778779a136a64b4296eb652ba5905ab505a2a8e8f90cdfd767fa4bc1",
+                  "target_binding": "project:proj-f52ad794025c",
+                  "target_ref": "project:proj-f52ad794025c",
+                  "uses": 1,
+                  "warrant_id": "war_746cb87b8b274e609ca6478a9f8023c2"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790694916.2953029,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                "outcome": "completed",
+                "receipt_id": "rcpt_87c1983d043848b28fb695a165568812",
+                "result_ref": "steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544",
+                "state": "succeeded",
+                "target_ref": "project:proj-f52ad794025c"
+              },
+              "ref": "operation:op_f1637e502cc845919c035d67e8db7892"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [
+                {
+                  "actor_kind": "owner",
+                  "authority_sha256": "sha256:21c0c3575c35cb1ddf3a5c892866e724d94b546ed1154e72cd418da8c76a076a",
+                  "configure_operation_id": "op_5527a031578d4e0086e74ef2e7874aa9",
+                  "delegator_identity": "owner-session",
+                  "delegator_kind": "owner",
+                  "grant_id": null,
+                  "grant_sha256": null,
+                  "kind": "authority_details",
+                  "policy_id": "pstpol_8ebdc89dbed7483192c313c33423c0ee",
+                  "policy_sha256": "sha256:5b210edf240d904ddbcff76db6e9b2d7db168dd923ccc63ac03a0c5f9fd342e3",
+                  "project_id": "proj-f52ad794025c",
+                  "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+                }
+              ],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_f1637e502cc845919c035d67e8db7892",
+                "created_at": 1790694916.283055,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e",
+                "idempotency_key": "project.run_steward:ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                "name": "project.run_steward",
+                "native_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "project:proj-f52ad794025c",
+                "updated_at": 1790694916.295286,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e",
+                  "execution_expires_at": 1790698516.283372,
+                  "expires_at": 1790694946.283372,
+                  "issued_at": 1790694916.283372,
+                  "native_id": "ad5ed1dc-661a-41a0-8c00-d557461294cc",
+                  "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "f0c821e8778779a136a64b4296eb652ba5905ab505a2a8e8f90cdfd767fa4bc1",
+                  "target_binding": "project:proj-f52ad794025c",
+                  "target_ref": "project:proj-f52ad794025c",
+                  "uses": 1,
+                  "warrant_id": "war_746cb87b8b274e609ca6478a9f8023c2"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790694916.2953029,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+                "outcome": "completed",
+                "receipt_id": "rcpt_87c1983d043848b28fb695a165568812",
+                "result_ref": "steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544",
+                "state": "succeeded",
+                "target_ref": "project:proj-f52ad794025c"
+              },
+              "ref": "operation:op_f1637e502cc845919c035d67e8db7892"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [{\"actor_kind\": \"owner\", \"authority_sha256\": \"sha256:21c0c3575c35cb1ddf3a5c892866e724d94b546ed1154e72cd418da8c76a076a\", \"configure_operation_id\": \"op_5527a031578d4e0086e74ef2e7874aa9\", \"delegator_identity\": \"owner-session\", \"delegator_kind\": \"owner\", \"grant_id\": null, \"grant_sha256\": null, \"kind\": \"authority_details\", \"policy_id\": \"pstpol_8ebdc89dbed7483192c313c33423c0ee\", \"policy_sha256\": \"sha256:5b210edf240d904ddbcff76db6e9b2d7db168dd923ccc63ac03a0c5f9fd342e3\", \"project_id\": \"proj-f52ad794025c\", \"run_id\": \"pstrun_74cfc03c4b825b26abb4da522e53d544\"}], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-project-writer\", \"correlation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"created_at\": 1790694916.283055, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e\", \"idempotency_key\": \"project.run_steward:ad5ed1dc-661a-41a0-8c00-d557461294cc\", \"name\": \"project.run_steward\", \"native_id\": \"ad5ed1dc-661a-41a0-8c00-d557461294cc\", \"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"ad5ed1dc-661a-41a0-8c00-d557461294cc\", \"revision\": 5, \"state\": \"succeeded\", \"target_ref\": \"project:proj-f52ad794025c\", \"updated_at\": 1790694916.295286, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:457373c3040d906f5211bf6013a68c25fcd7e3022be51f2b3e955bf6545ae23e\", \"execution_expires_at\": 1790698516.283372, \"expires_at\": 1790694946.283372, \"issued_at\": 1790694916.283372, \"native_id\": \"ad5ed1dc-661a-41a0-8c00-d557461294cc\", \"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"f0c821e8778779a136a64b4296eb652ba5905ab505a2a8e8f90cdfd767fa4bc1\", \"target_binding\": \"project:proj-f52ad794025c\", \"target_ref\": \"project:proj-f52ad794025c\", \"uses\": 1, \"warrant_id\": \"war_746cb87b8b274e609ca6478a9f8023c2\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790694916.2953029, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"outcome\": \"completed\", \"receipt_id\": \"rcpt_87c1983d043848b28fb695a165568812\", \"result_ref\": \"steward_run:pstrun_74cfc03c4b825b26abb4da522e53d544\", \"state\": \"succeeded\", \"target_ref\": \"project:proj-f52ad794025c\"}, \"ref\": \"operation:op_f1637e502cc845919c035d67e8db7892\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      },
+      {
+        "kind": "op",
+        "name": "project.list_updates",
+        "args": {
+          "project_id": "proj-f52ad794025c"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "project.list_updates",
+            "arguments": {
+              "project_id": "proj-f52ad794025c"
+            }
+          }
+        },
+        "response": {
+          "updates": [
+            {
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "created_at": "2026-09-29T15:15:16+00:00",
+              "deliveries": [],
+              "draft_revision": 1,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf",
+              "lifecycle": "draft",
+              "project_id": "proj-f52ad794025c",
+              "project_revision": 1,
+              "published_at": null,
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"review_id\":\"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}",
+              "updated_at": "2026-09-29T15:15:16+00:00"
+            }
+          ]
+        },
+        "domain_response": {
+          "updates": [
+            {
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "created_at": "2026-09-29T15:15:16+00:00",
+              "deliveries": [],
+              "draft_revision": 1,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "id": "pupd_b233b72ca3f044c1b5627f94f37d1ecf",
+              "lifecycle": "draft",
+              "project_id": "proj-f52ad794025c",
+              "project_revision": 1,
+              "published_at": null,
+              "review_id": "prev_8f0b6bd63cc6456f9f0e2e45ee5050dc",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"review_id\":\"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\"}",
+              "updated_at": "2026-09-29T15:15:16+00:00"
+            }
+          ]
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"updates\": [{\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[]\", \"created_at\": \"2026-09-29T15:15:16+00:00\", \"deliveries\": [], \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_b233b72ca3f044c1b5627f94f37d1ecf\", \"lifecycle\": \"draft\", \"project_id\": \"proj-f52ad794025c\", \"project_revision\": 1, \"published_at\": null, \"review_id\": \"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\", \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1,\\\"review_id\\\":\\\"prev_8f0b6bd63cc6456f9f0e2e45ee5050dc\\\"}\", \"updated_at\": \"2026-09-29T15:15:16+00:00\"}]}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-29T15:15:17.193864+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "project.run_steward",
+      "body_sha256": "0acc7c73fba5b14f1f3712abea6b3bc8d354c4d669a7a33a4922d6bac55749a3",
+      "body": {
+        "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+        "receipt": null,
+        "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+        "state": "claimed",
+        "success": true
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"receipt\": null, \"run_id\": \"pstrun_74cfc03c4b825b26abb4da522e53d544\", \"state\": \"claimed\", \"success\": true}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.run_steward",
+      "args": {
+        "project_id": "proj-f52ad794025c"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "project.run_steward",
+          "arguments": {
+            "project_id": "proj-f52ad794025c"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+        "receipt": null,
+        "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+        "state": "claimed",
+        "success": true
+      },
+      "domain_response": {
+        "operation_id": "op_f1637e502cc845919c035d67e8db7892",
+        "receipt": null,
+        "run_id": "pstrun_74cfc03c4b825b26abb4da522e53d544",
+        "state": "claimed",
+        "success": true
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_f1637e502cc845919c035d67e8db7892\", \"receipt\": null, \"run_id\": \"pstrun_74cfc03c4b825b26abb4da522e53d544\", \"state\": \"claimed\", \"success\": true}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.005,
+      "captured": {
+        "name": "run_id",
+        "path": "run_id",
+        "value": "pstrun_74cfc03c4b825b26abb4da522e53d544"
+      },
+      "captured_more": [
+        {
+          "name": "run_op",
+          "path": "operation_id",
+          "value": "op_f1637e502cc845919c035d67e8db7892"
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "all 9 facts hold: observe_at run.state holds; observe_at operation_id holds; observe_at receipt.outcome holds; the trigger receipt holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; op read #0 (kernel.receipt.read) objects.0.native_receipts.0.kind holds; op read #0 (kernel.receipt.read) objects.0.native_receipts.0.configure_operation_id holds; op read #1 (project.list_updates) updates holds",
+    "elapsed_s": 0.912
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all 9 facts hold: observe_at run.state holds; observe_at operation_id holds; observe_at receipt.outcome holds; the trigger receipt holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; op read #0 (kernel.receipt.read) objects.0.native_receipts.0.kind holds; op read #0 (kernel.receipt.read) objects.0.native_receipts.0.configure_operation_id holds; op read #1 (project.list_updates) updates holds",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 0.915,
+    "first_satisfied_at_s": 0.912,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['run_id', 'run_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: all 9 facts hold: observe_at run.state holds; observe_at operation_id holds; observe_at receipt.outcome holds; the trigger receipt holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; op read #0 (kernel.receipt.read) objects.0.native_receipts.0.kind holds; op read #0 (kernel.receipt.read) objects.0.native_receipts.0.configure_operation_id holds; op read #1 (project.list_updates) updates holds"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "run_id",
+    "run_op"
+  ],
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur94636l/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur94636l/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:57849"
+  ],
+  "duration_s": 2.648
+}

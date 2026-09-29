@@ -1,0 +1,721 @@
+{
+  "id": "obs-20260929T144844Z-case.p7.kb_create.visible-muaddib-393",
+  "run_id": "20260929T144844Z-case.p7.kb_create.visible-muaddib-393",
+  "case_id": "case.p7.kb_create.visible",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase7.json",
+  "job": "p7",
+  "edge_ids": [
+    "edge.face.kb_create"
+  ],
+  "state_id": "state.desk_presentation.p7_knowledge_membership",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:62188",
+      "port": 62188,
+      "pid": 56368,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7qwo_t93",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7qwo_t93/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T14:48:44.224043+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase7.json",
+      "sha256": "7047ec54c1e9feb47aecc23287aaf0115519f95ddb31677dad80faeb79441f5a",
+      "version": "phase7-desk"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.29,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-desk.new-knowledge']",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/kbs",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "kbs": [
+          {
+            "id": "hs-seed-everyday-context",
+            "name": "Everyday context",
+            "member_ids": [
+              "note:hs-seed-about-me",
+              "note:hs-seed-current-priorities",
+              "note:hs-seed-how-i-like-help",
+              "note:hs-seed-people-vocabulary",
+              "note:hs-seed-meeting-preferences"
+            ],
+            "created_at": "2026-09-29T14:48:50Z",
+            "last_modified": "2026-09-29T14:48:50Z",
+            "deleted": false
+          },
+          {
+            "id": "kb_893fc07e6260",
+            "name": "New Knowledge",
+            "member_ids": [],
+            "created_at": "2026-09-29T14:48:52Z",
+            "last_modified": "2026-09-29T14:48:52Z",
+            "deleted": false
+          }
+        ]
+      },
+      "response_sha256": "3f899fdd330be3edbabc23268655cf02f33dcc8c3be1f5901746b64a99d87b59",
+      "captured": {
+        "name": "kb_id",
+        "path": "kbs",
+        "value": "kb_893fc07e6260",
+        "match": {
+          "name": "New Knowledge"
+        }
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7qwo_t93",
+    "kb_id": "kb_893fc07e6260"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "fill",
+    "adapter": "ui-keyboard",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "\u25cb\nNew Knowledge\nKNOWLEDGE"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "type": "button",
+        "class": "btn--chrome desk-deck-row",
+        "id": "desk-palette-option-kb:kb_893fc07e6260",
+        "role": "option",
+        "aria-selected": "false"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 15,
+        "y": 123,
+        "w": 363,
+        "h": 26
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "8455ee83d3d8f1b64968faf3c2af93b8d5cdd446ad26fd12675fa7bd55cda9f5",
+      "after": "01e2adc968ea0d52050a198fcd3ff61833ca0016629515a4e8e12f37fd94d803"
+    },
+    "document_text_len": {
+      "before": 920,
+      "after": 337
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+          "value": ""
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[id='desk-palette-option-kb:kb_893fc07e6260']",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [
+      {
+        "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:62188/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "8455ee83d3d8f1b64968faf3c2af93b8d5cdd446ad26fd12675fa7bd55cda9f5",
+    "document_text_len": 920,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/kbs/kb_893fc07e6260",
+        "status": 200,
+        "payload": {
+          "kb": {
+            "id": "kb_893fc07e6260",
+            "name": "New Knowledge",
+            "member_ids": [],
+            "created_at": "2026-09-29T14:48:52Z",
+            "last_modified": "2026-09-29T14:48:52Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "552f66b2e37f41e03e3a5786eb52693e20771b15421816e4e86d62e6f07a54a4"
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "payload": {
+          "kbs": [
+            {
+              "id": "hs-seed-everyday-context",
+              "name": "Everyday context",
+              "member_ids": [
+                "note:hs-seed-about-me",
+                "note:hs-seed-current-priorities",
+                "note:hs-seed-how-i-like-help",
+                "note:hs-seed-people-vocabulary",
+                "note:hs-seed-meeting-preferences"
+              ],
+              "created_at": "2026-09-29T14:48:50Z",
+              "last_modified": "2026-09-29T14:48:50Z",
+              "deleted": false
+            },
+            {
+              "id": "kb_893fc07e6260",
+              "name": "New Knowledge",
+              "member_ids": [],
+              "created_at": "2026-09-29T14:48:52Z",
+              "last_modified": "2026-09-29T14:48:52Z",
+              "deleted": false
+            }
+          ]
+        },
+        "body_sha256": "3f899fdd330be3edbabc23268655cf02f33dcc8c3be1f5901746b64a99d87b59"
+      }
+    ],
+    "at_utc": "2026-09-29T14:48:54.942909+00:00"
+  },
+  "after": {
+    "observe_at": "[id='desk-palette-option-kb:kb_893fc07e6260']",
+    "target_present": true,
+    "text": "\u25cb\nNew Knowledge\nKNOWLEDGE",
+    "attrs": {
+      "type": "button",
+      "class": "btn--chrome desk-deck-row",
+      "id": "desk-palette-option-kb:kb_893fc07e6260",
+      "role": "option",
+      "aria-selected": "false"
+    },
+    "rect": {
+      "x": 15,
+      "y": 123,
+      "w": 363,
+      "h": 26
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 123,
+        "w": 363,
+        "h": 26
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 125,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 17,
+          "y": 136,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 17,
+          "y": 147,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 197,
+          "y": 125,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 197,
+          "y": 136,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260 > span.desk-deck-label"
+        },
+        {
+          "x": 197,
+          "y": 147,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 376,
+          "y": 125,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 376,
+          "y": 136,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 376,
+          "y": 147,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:62188/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "01e2adc968ea0d52050a198fcd3ff61833ca0016629515a4e8e12f37fd94d803",
+    "document_text_len": 337,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/kbs/kb_893fc07e6260",
+        "status": 200,
+        "payload": {
+          "kb": {
+            "id": "kb_893fc07e6260",
+            "name": "New Knowledge",
+            "member_ids": [],
+            "created_at": "2026-09-29T14:48:52Z",
+            "last_modified": "2026-09-29T14:48:52Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "552f66b2e37f41e03e3a5786eb52693e20771b15421816e4e86d62e6f07a54a4"
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "payload": {
+          "kbs": [
+            {
+              "id": "hs-seed-everyday-context",
+              "name": "Everyday context",
+              "member_ids": [
+                "note:hs-seed-about-me",
+                "note:hs-seed-current-priorities",
+                "note:hs-seed-how-i-like-help",
+                "note:hs-seed-people-vocabulary",
+                "note:hs-seed-meeting-preferences"
+              ],
+              "created_at": "2026-09-29T14:48:50Z",
+              "last_modified": "2026-09-29T14:48:50Z",
+              "deleted": false
+            },
+            {
+              "id": "kb_893fc07e6260",
+              "name": "New Knowledge",
+              "member_ids": [],
+              "created_at": "2026-09-29T14:48:52Z",
+              "last_modified": "2026-09-29T14:48:52Z",
+              "deleted": false
+            }
+          ]
+        },
+        "body_sha256": "3f899fdd330be3edbabc23268655cf02f33dcc8c3be1f5901746b64a99d87b59"
+      }
+    ],
+    "at_utc": "2026-09-29T14:48:56.042438+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "[id='desk-palette-option-kb:kb_893fc07e6260']",
+    "target_present": true,
+    "text": "\u25cb\nNew Knowledge\nKNOWLEDGE",
+    "attrs": {
+      "type": "button",
+      "class": "btn--chrome desk-deck-row",
+      "id": "desk-palette-option-kb:kb_893fc07e6260",
+      "role": "option",
+      "aria-selected": "false"
+    },
+    "rect": {
+      "x": 15,
+      "y": 123,
+      "w": 363,
+      "h": 26
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 123,
+        "w": 363,
+        "h": 26
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 125,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 17,
+          "y": 136,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 17,
+          "y": 147,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 197,
+          "y": 125,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 197,
+          "y": 136,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260 > span.desk-deck-label"
+        },
+        {
+          "x": 197,
+          "y": 147,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 376,
+          "y": 125,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 376,
+          "y": 136,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        },
+        {
+          "x": 376,
+          "y": 147,
+          "owned": true,
+          "owner": "button#desk-palette-option-kb:kb_893fc07e6260"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:62188/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "01e2adc968ea0d52050a198fcd3ff61833ca0016629515a4e8e12f37fd94d803",
+    "document_text_len": 337,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/kbs/kb_893fc07e6260",
+        "status": 200,
+        "payload": {
+          "kb": {
+            "id": "kb_893fc07e6260",
+            "name": "New Knowledge",
+            "member_ids": [],
+            "created_at": "2026-09-29T14:48:52Z",
+            "last_modified": "2026-09-29T14:48:52Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "552f66b2e37f41e03e3a5786eb52693e20771b15421816e4e86d62e6f07a54a4"
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "payload": {
+          "kbs": [
+            {
+              "id": "hs-seed-everyday-context",
+              "name": "Everyday context",
+              "member_ids": [
+                "note:hs-seed-about-me",
+                "note:hs-seed-current-priorities",
+                "note:hs-seed-how-i-like-help",
+                "note:hs-seed-people-vocabulary",
+                "note:hs-seed-meeting-preferences"
+              ],
+              "created_at": "2026-09-29T14:48:50Z",
+              "last_modified": "2026-09-29T14:48:50Z",
+              "deleted": false
+            },
+            {
+              "id": "kb_893fc07e6260",
+              "name": "New Knowledge",
+              "member_ids": [],
+              "created_at": "2026-09-29T14:48:52Z",
+              "last_modified": "2026-09-29T14:48:52Z",
+              "deleted": false
+            }
+          ]
+        },
+        "body_sha256": "3f899fdd330be3edbabc23268655cf02f33dcc8c3be1f5901746b64a99d87b59"
+      }
+    ],
+    "at_utc": "2026-09-29T14:48:55.912484+00:00",
+    "predicate_satisfied": true,
+    "reading": "'New Knowledge' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 123, 'w': 363, 'h': 26}",
+    "elapsed_s": 0.917
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'New Knowledge' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 123, 'w': 363, 'h': 26}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.047,
+    "first_satisfied_at_s": 0.917,
+    "completion_bound_s": 45.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'New Knowledge' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 123, 'w': 363, 'h': 26}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:62188) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:62188) non-GET response after the click; the click fired none",
+    "seen": []
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/p789-merged/case.p7.kb_create.visible--393/20260929T144844Z-case.p7.kb_create.visible-muaddib-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/p789-merged/case.p7.kb_create.visible--393/20260929T144844Z-case.p7.kb_create.visible-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7qwo_t93/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7qwo_t93/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:62188"
+  ],
+  "duration_s": 12.123
+}

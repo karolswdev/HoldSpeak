@@ -1,0 +1,53 @@
+{
+  "id": "obs-20260929T152221Z-case.j6.run_summary.retrying-muaddib-393",
+  "run_id": "20260929T152221Z-case.j6.run_summary.retrying-muaddib-393",
+  "case_id": "case.j6.run_summary.retrying",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.face.arrival_run_intel"
+  ],
+  "state_id": "state.meetings.intel.retry_after_failure",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": null,
+    "hub": null,
+    "db_path": null,
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:22:21.741141+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance"
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "5f52df14226b6f0fa338f6a8fd3f8dfe7b55276567321ad09f69177c357f08ba",
+      "version": null
+    }
+  },
+  "setup": [],
+  "preconditions": [],
+  "variables": {},
+  "trigger": null,
+  "diff": {},
+  "before": null,
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "blocked",
+  "notes": [
+    "the case declares a provider replay at 'tests/fixtures/philo3_summary_failure_reply.json', but this run was requested with --engine 'none'; replay is installed only for an explicit replayed run"
+  ],
+  "complete": true,
+  "duration_s": 0.155
+}

@@ -59,7 +59,7 @@ when that is not the identity itself.
 A step is `{"kind": <one of STEP_KINDS>, ...}`:
 
   api       {method, path, body?, expect_status?}   HTTP against the hub
-  ui        {action: goto|click|click_role|fill|press|wait_for|focus, ...}
+  ui        {action: goto|click|click_role|fill|press|wait_for|focus|scroll_into_view, ...}
             Any ui step may carry `requires: {visible, text?, seconds_left?:
             {selector, min}}` (PHILO-8-03): the guard and the event are ONE
             page task (click: resolve the target, then check guard +
@@ -97,6 +97,7 @@ A step is `{"kind": <one of STEP_KINDS>, ...}`:
   boundary  {label, substitute: "engine_reply", reply, api?}
             | {label, substitute: "http_fault", method, path, status, body?, times?}
             | {label, substitute: "http_fault_lift"}
+            | {label, substitute: "cli_runner", reply}
             A substitution must be PERFORMED, never merely labelled:
             `engine_reply` installs a recorded provider reply at the product's
             own seam INSIDE the hub process, and the step blocks if the hub
@@ -105,6 +106,18 @@ A step is `{"kind": <one of STEP_KINDS>, ...}`:
             matching same-origin requests with `status` in the BROWSER
             (Playwright page.route); the hub never sees them. Only the
             hub's own origin matches. `http_fault_lift` removes them.
+            `cli_runner` (PHILO-10-05) installs a RECORDING runner at the CLI
+            channels' process edge (`channel_cli.CLI_RUNNER`) INSIDE the hub
+            process, answering `gh` / `acli` by argv prefix from the case's
+            retained script (`reply`, under tests/fixtures/); an answer with
+            `hold: true` records the call and never returns (a send held
+            after its dispatch boundary). Each call is appended to
+            `graph-walk-cli-calls.jsonl` in the run's HOME, which survives a
+            `restart_hub`; every observation carries it (`cli_calls`). No real
+            `gh` or `acli` runs; no account is touched.
+
+VARIABLE `hub_home` (PHILO-10-05) is bound before setup to the run's isolated
+HOME, so a file destination's folder is a real folder on that HOME.
 
 Every step carries an `adapter` string naming the real entry point it drives
 (`ui-pointer`, `http-route`, `scheduler-entry`, …); it is recorded, never
@@ -175,6 +188,13 @@ PREDICATES (`expected.predicate.kind`):
                                  {path, match} also asks for exactly one row
                                  at `path` in that read whose fields equal
                                  `match`. A read that was not sent FAILS.
+  cli_calls {argv_prefix, count} PHILO-10-05: exactly `count` calls at the
+                                 recording runner (boundary `cli_runner`) whose
+                                 argv starts with `argv_prefix`, across every
+                                 hub process of the run (one dispatch, never a
+                                 second). Decidable headless.
+  protocol_reads row `count`     PHILO-10-05: {path, match, count} asks for
+                                 exactly `count` rows (0 included) instead of one.
   all_of {predicates: [...]}     PHILO-8-03: every listed predicate holds on
                                  the SAME observation (a face half and a hub
                                  half of one outcome). Two or more; no nesting.
@@ -1274,6 +1294,9 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
         raw["api_reads"] = collected
         if op_collected:
             raw["op_reads"] = op_collected
+    calls = read_cli_calls(hub)
+    if calls is not None:
+        raw["cli_calls"] = calls
     raw["at_utc"] = datetime.now(timezone.utc).isoformat()
     return raw
 
@@ -1427,7 +1450,10 @@ def check_predicate(
     # become a pass because the page was absent; protocol and operation
     # predicates remain fully decidable from their named response.
     if after.get("headless") and not (isinstance(kind, str) and
-                                       (kind.startswith("protocol_") or kind.startswith("op_"))):
+                                       (kind.startswith("protocol_") or kind.startswith("op_")
+                                        or kind == "cli_calls"
+                                        # PHILO-10-05: each all_of part meets this guard itself.
+                                        or kind == "all_of")):
         return False, "BLOCKED: headless mode refuses face/UI predicate evaluation"
 
     if kind == "op_field":
@@ -1511,6 +1537,20 @@ def check_predicate(
             readings.append(f"{part.get('kind')}: {why}")
         return True, "all_of: " + " | ".join(readings)
 
+    if kind == "cli_calls":
+        # PHILO-10-05: the recording runner's log (every hub process of the run).
+        calls = after.get("cli_calls")
+        if calls is None:
+            return False, "BLOCKED: no recording runner in this run (boundary `cli_runner`)"
+        prefix = [str(p) for p in predicate.get("argv_prefix") or []]
+        if not prefix or "count" not in predicate:
+            return False, "BLOCKED: cli_calls needs `argv_prefix` and `count`"
+        matched = [c for c in calls if list(c.get("argv") or [])[:len(prefix)] == prefix]
+        pids = sorted({c.get("pid") for c in matched})
+        reading = (f"{len(matched)} call(s) starting {prefix} at the recording runner "
+                   f"(pids {pids}; {len(calls)} call(s) in all), wanted {predicate['count']}")
+        return len(matched) == int(predicate["count"]), reading
+
     if kind == "protocol_reads":
         # PHILO-8-03: the hub's answer to each declared read, by position.
         # The FINDING's "HTTP-status predicate": 404 after a delete commits.
@@ -1532,13 +1572,16 @@ def check_predicate(
             row = want.get("row")
             if row:
                 found, rows = _json_path(read.get("payload"), row.get("path", ""))
-                matched = ([r for r in rows if _op_row_matches(r, row.get("match") or {})]
-                           if found and isinstance(rows, list) else [])
-                if len(matched) != 1:
+                if not found or not isinstance(rows, list):
+                    return False, f"{where}: no list at {row.get('path')!r}"
+                matched = [r for r in rows if _op_row_matches(r, row.get("match") or {})]
+                # PHILO-10-05: `count` names how many rows (0 included); the default is one.
+                want_rows = int(row.get("count", 1))
+                if len(matched) != want_rows:
                     return False, (f"{where}: {len(matched)} row(s) at {row.get('path')!r} "
-                                   f"match {row.get('match')!r}; exactly one is required")
+                                   f"match {row.get('match')!r}; exactly {want_rows} required")
             readings.append(f"{where} answered {read['status']}"
-                            + (f" with one row {row.get('match')!r}" if row else ""))
+                            + (f" with {int(row.get('count', 1))} row(s) {row.get('match')!r}" if row else ""))
         return True, "; ".join(readings)
 
     if kind == "protocol_status":
@@ -2276,8 +2319,12 @@ class Hub:
                  engine_replay: Path | None = None,
                  producer_clock: bool = False,
                  record_rehearsal: bool = False,
-                 transcript_path: Path | None = None) -> None:
+                 transcript_path: Path | None = None,
+                 cli_runner: Path | None = None) -> None:
         self.home = guard_home(home)
+        # PHILO-10-05: the recording runner's script, and what the hub installed.
+        self.cli_runner_path = cli_runner
+        self.cli_runner: str | None = None
         self.token = token
         self.scheduler = scheduler
         self.record_rehearsal = record_rehearsal
@@ -2313,6 +2360,8 @@ class Hub:
                 self.config_path = line.split(" ", 1)[1].strip()
             elif line.startswith("ENGINE_REPLAY "):
                 self.engine_replay = line.split(" ", 1)[1].strip()
+            elif line.startswith("CLI_RUNNER "):
+                self.cli_runner = line.split(" ", 1)[1].strip()
             elif line.startswith("WIRING "):
                 self.wiring = json.loads(line.split(" ", 1)[1])
             elif line.startswith("PRODUCER_CLOCK_READ "):
@@ -2330,6 +2379,7 @@ class Hub:
         self.db_path = None
         self.config_path = None
         self.engine_replay = None
+        self.cli_runner = None
         self.producer_clock = None
         self.wiring = {}
         env = dict(os.environ)
@@ -2342,6 +2392,8 @@ class Hub:
             command.append("--scheduler")
         if self.engine_replay_path:
             command += ["--engine-replay", str(self.engine_replay_path)]
+        if self.cli_runner_path:
+            command += ["--cli-runner", str(self.cli_runner_path)]
         if self.producer_clock_path is not None:
             command += ["--producer-clock", str(self.producer_clock_path)]
         if self.record_rehearsal:
@@ -2685,6 +2737,76 @@ def _install_engine_replay(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+#: PHILO-10-05: the recording runner's call log, in the run's HOME.
+CLI_CALLS_FILE = "graph-walk-cli-calls.jsonl"
+
+
+def _install_cli_runner(path: Path) -> str:
+    """PHILO-10-05: a RECORDING runner at the CLI channels' process edge.
+
+    The seam is `holdspeak.services.channel_cli.CLI_RUNNER` (read at call
+    time by the channels' `plan` + `interpret` path and by the GitHub login
+    read), the same module attribute the story 02 and 04 fences replace
+    (tests/unit/_philo10_cli.py) -- assigned here inside the hub's OWN
+    process. The channel's real `plan` builds the argv; the kernel's
+    `subprocess.exec` admits the child; only the process is canned. Each call
+    is appended to the run HOME's call log BEFORE it answers, with the
+    sha256 of the body file the CLI would read; `hold: true` then blocks
+    forever (the dispatch stays after its boundary until the process ends).
+    """
+    import subprocess as _subprocess
+    import threading as _threading
+
+    import holdspeak.services.channel_cli as channel_cli
+
+    script = json.loads(path.read_text())
+    answers = script.get("answers")
+    if not isinstance(answers, list) or not answers:
+        raise Refused(f"the recording runner script {path} names no answers")
+    log_path = Path(os.environ["HOME"]).resolve() / CLI_CALLS_FILE
+    lock = _threading.Lock()
+
+    def runner(argv: Any, **_kwargs: Any) -> Any:
+        argv = [str(a) for a in argv]
+        body_sha256 = None
+        for flag in ("--body-file", "--from-json"):
+            if flag in argv and argv.index(flag) + 1 < len(argv):
+                try:
+                    body_sha256 = hashlib.sha256(Path(argv[argv.index(flag) + 1]).read_bytes()).hexdigest()
+                except OSError:
+                    body_sha256 = "unreadable"
+        index = next((i for i, a in enumerate(answers)
+                      if argv[:len(a["argv_prefix"])] == list(a["argv_prefix"])), None)
+        answer = answers[index] if index is not None else None
+        entry = {"argv": argv, "body_sha256": body_sha256, "pid": os.getpid(),
+                 "at": datetime.now(timezone.utc).isoformat(), "answer": index,
+                 "hold": bool(answer and answer.get("hold"))}
+        with lock, log_path.open("a") as handle:
+            handle.write(json.dumps(entry) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        print("CLI_CALL " + json.dumps(argv[:4]), flush=True)
+        if answer is None:
+            return _subprocess.CompletedProcess(argv, 1, "", f"recording runner: no answer for {argv[:4]}")
+        if answer.get("hold"):
+            _threading.Event().wait()  # held after the boundary until this process ends
+        return _subprocess.CompletedProcess(argv, int(answer.get("code", 0)),
+                                            str(answer.get("stdout", "")), str(answer.get("stderr", "")))
+
+    channel_cli.CLI_RUNNER = runner
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def read_cli_calls(hub: Any) -> list[dict[str, Any]] | None:
+    """The recording runner's call log (every process of this run), or None without one."""
+    if hub is None or not getattr(hub, "cli_runner_path", None):
+        return None
+    log_path = Path(hub.home) / CLI_CALLS_FILE
+    if not log_path.exists():
+        return []
+    return [json.loads(line) for line in log_path.read_text().splitlines() if line.strip()]
+
+
 def _producer_clock(path: Path) -> Any:
     """PHILO-3-03: the brief producer's clock inside the rig's OWN hub.
 
@@ -2715,7 +2837,8 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
            scheduler: bool = False, engine_replay: str | None = None,
            producer_clock: str | None = None,
            record_rehearsal: bool = False,
-           transcript_path: str | None = None) -> None:
+           transcript_path: str | None = None,
+           cli_runner: str | None = None) -> None:
     """The rig's hub subprocess: a real MeetingWebServer on a fresh HOME.
 
     It takes the product's OWN database owner lock and runs the product's own
@@ -2764,6 +2887,13 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
         digest = _install_engine_replay(Path(engine_replay))
         has.append("a RECORDED provider reply at the real provider seam")
         print(f"ENGINE_REPLAY {digest}", flush=True)
+
+    if cli_runner:
+        digest = _install_cli_runner(Path(cli_runner))
+        has.append("a RECORDING runner at the CLI channels' process edge (no real gh or acli)")
+        print(f"CLI_RUNNER {digest}", flush=True)
+    else:
+        lacks.append("a CLI process edge (no recording runner requested; gh and acli are never run)")
 
     brief_clock = None
     if producer_clock:
@@ -3899,6 +4029,9 @@ UI_ACTIONS = frozenset({
     # PHILO-7-03: keyboard travel to a control (the owner's Tab), e.g. the
     # Floor's world chip, which only surfaces when focused (desk.css:171).
     "focus",
+    # PHILO-10-05: the owner scrolls a control or a section into view (block
+    # start|center|end) before he presses or reads it; nothing is clicked.
+    "scroll_into_view",
 })
 
 
@@ -4107,6 +4240,14 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         elif action == "focus":
             page.locator(step["selector"]).first.focus(timeout=timeout)
             record["selector"] = step["selector"]
+        elif action == "scroll_into_view":
+            target = page.locator(step["selector"]).first
+            target.wait_for(state="visible", timeout=timeout)
+            target.evaluate("(el, block) => el.scrollIntoView({block, inline: 'nearest'})",
+                            step.get("block", "center"))
+            page.wait_for_timeout(250)
+            record["selector"] = step["selector"]
+            record["block"] = step.get("block", "center")
         elif action == "wait_for":
             page.locator(step["selector"]).first.wait_for(
                 state=step.get("state", "visible"), timeout=timeout)
@@ -4648,11 +4789,30 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
             return _http_fault(step, page, record, provenance, hub)
         if substitution == "http_fault_lift":
             return _http_fault_lift(page, record, provenance)
+        if substitution == "cli_runner":
+            # PHILO-10-05: performed at boot (the hub process installs it);
+            # this step verifies the INSTALLED script is the case's.
+            if hub is None or getattr(hub, "cli_runner", None) is None:
+                raise Blocked(
+                    "the recording runner is NOT installed in the hub process. "
+                    "Declare `reply` on the boundary step so the hub is booted with it.")
+            declared = step.get("reply")
+            digest = _sha256(_repo_path(declared)) if declared else None
+            if digest != hub.cli_runner:
+                raise Blocked(f"the hub installed runner {hub.cli_runner[:12]}, not the case's "
+                              f"{(digest or 'undeclared')[:12]}")
+            provenance["fixture_hashes"][declared] = digest
+            record["installed_sha256"] = hub.cli_runner
+            record["seam"] = "holdspeak.services.channel_cli.CLI_RUNNER"
+            provenance["boundary_substitutions"].append(
+                {"label": label, "substitute": substitution, "installed_sha256": hub.cli_runner})
+            return record
         if substitution != "engine_reply":
             raise Blocked(
                 f"boundary substitution {substitution!r} (label {label!r}) is not "
                 "implemented; a label alone substitutes nothing. The implemented "
-                "substitutions are 'engine_reply', 'http_fault' and 'http_fault_lift'.")
+                "substitutions are 'engine_reply', 'http_fault', 'http_fault_lift' "
+                "and 'cli_runner'.")
         if hub is None or getattr(hub, "engine_replay", None) is None:
             raise Blocked(
                 "the recorded provider reply is NOT installed in the hub "
@@ -4864,6 +5024,14 @@ def case_engine_replay(case: dict[str, Any]) -> str | None:
     """The recorded provider reply a boundary step declares, if any."""
     for step in case_steps(case):
         if step.get("kind") == "boundary" and step.get("substitute") == "engine_reply":
+            return step.get("reply")
+    return None
+
+
+def case_cli_runner(case: dict[str, Any]) -> str | None:
+    """PHILO-10-05: the recording runner script a boundary step declares, if any."""
+    for step in case_steps(case):
+        if step.get("kind") == "boundary" and step.get("substitute") == "cli_runner":
             return step.get("reply")
     return None
 
@@ -5113,6 +5281,9 @@ def exercise(
     #: Values captured by setup steps (`capture_as`), filled into every later
     #: step and into the case's own `expected`. An unresolved one is blocked.
     variables: dict[str, Any] = {}
+    if hub is not None and getattr(hub, "home", None):
+        # PHILO-10-05: a file destination's folder is a real folder on the run's HOME.
+        variables["hub_home"] = str(Path(hub.home).resolve())
     steps: list[dict[str, Any]] = []
     for step in case.get("setup", []):
         try:
@@ -5824,9 +5995,11 @@ def run_case(
     hub: Hub | None = None
     try:
         scheduler = case_needs_scheduler(case)
+        cli_script = case_cli_runner(case)
         hub = Hub(home, token=token, scheduler=scheduler,
                   engine_replay=_repo_path(replay) if replay else None,
-                  producer_clock=case_needs_producer_clock(case)).start()
+                  producer_clock=case_needs_producer_clock(case),
+                  cli_runner=_repo_path(cli_script) if cli_script else None).start()
         provenance["hub"] = {"url": hub.url, "port": hub.port,
                              "pid": hub.proc.pid if hub.proc else None,
                              "home": str(home),
@@ -5840,6 +6013,7 @@ def run_case(
         # observation is read as if it came from the whole product.
         provenance["product_wiring"] = hub.wiring
         provenance["engine_replay_sha256"] = hub.engine_replay
+        provenance["cli_runner_sha256"] = hub.cli_runner
         if engine == "real":
             provenance["engine_identity"] = _engine_identity()
         recorder.set(provenance=provenance)
@@ -5974,6 +6148,8 @@ def main(argv: list[str] | None = None) -> int:
                          help="record bounded HTTP exchanges to JSONL under HOME")
     p_serve.add_argument("--transcript-path", default=None,
                          help="opt-in rehearsal JSONL path (must be under HOME)")
+    p_serve.add_argument("--cli-runner", default=None,
+                         help="a recording runner script for the CLI channels' process edge")
 
     p_cal_serve = sub.add_parser("serve-calibration",
                                  help="(internal) the calibration fixture server")
@@ -5992,7 +6168,8 @@ def main(argv: list[str] | None = None) -> int:
                engine_replay=getattr(args, "engine_replay", None),
                producer_clock=getattr(args, "producer_clock", None),
                record_rehearsal=bool(getattr(args, "record_rehearsal", False)),
-               transcript_path=getattr(args, "transcript_path", None))
+               transcript_path=getattr(args, "transcript_path", None),
+               cli_runner=getattr(args, "cli_runner", None))
         return 0
 
     if args.mode == "calibrate":
