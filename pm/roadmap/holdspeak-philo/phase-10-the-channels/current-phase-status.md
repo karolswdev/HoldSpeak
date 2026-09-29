@@ -161,6 +161,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-28, story 02 ROUND FOUR (PR #695): Codex Astra r3 — settings, UNKNOWN and responsiveness paid; its one P2 paid (a retry after a known failure sends the edited comment, fenced at the request body); the settings lock stated process-local, the two-process gap in the BACKLOG. Owed as below.
+
 2026-09-28, story 02 ROUND THREE (PR #695): Codex Astra r2 DO-NOT-RATIFY paid — the blanket MCP threadpool reverted for a declared `blocking_io` property; the settings write made one transaction with an atomic file (a latent race Codex's probe exposed); a late UNKNOWN reaches a nudge card reopened mid-send. Owed: merge main after #694 (fold `OWNER_PRESS` into its one owner-only table); Codex Astra r3; Muad'Dib's full suite on the merge candidate; the real-account leg (story 06).
 
 2026-09-28, story 02 ROUND TWO (PR #695): Codex Astra r1 DO-NOT-RATIFY paid — the UNKNOWN nudge stays UNKNOWN after a remount and a reload (rendered fences, real-hub glass at 1440 and 393); every MCP tool call and the HTTP rechecks run off the event loop (a slow `gh` fence); the inherited nudge producer defect ledgered in the BACKLOG. The recovery and redaction gates held in Codex's probes. Owed: Codex Astra r2; merge main after #694; Muad'Dib's full suite on the merge candidate; the real-account leg (story 06).

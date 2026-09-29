@@ -1045,3 +1045,189 @@ CAUGHT M18 the file mode not private: rc=1 1 failed in 1.46s
     first assertion: E       assert 420 == 384
 29/29 mutations caught
 ```
+
+
+## Round four (Codex Astra r3 DO-NOT-RATIFY on one P2, `checks/story-02-built-astra-r3.md`)
+
+Codex found the settings work, the UNKNOWN work and the responsiveness work paid (in-process, the normal one-hub topology, the proxy forwards).
+
+| Finding | Paid by | Fence (red first) |
+|---|---|---|
+| P2: re-keying the card discarded the owner's edited comment (Edit, Send, known failure, Send again submitted the DEFAULT text) | `NudgeLocal.text`: the Room's per-Send state keeps the text as submitted; `initialNudgeCard` restores it on every remount (pending, failed, open) | `nudgeUnknown10.test.tsx` "a known failed Send keeps the edited comment for retry" and "retry sends the edited comment after the real API reports a known failure" (Codex's probes; the second reads the retry's REQUEST BODY through the real `apiFetch`); red without the text (mutation W3); the three UNKNOWN fences stay green |
+| The settings scope, stated honestly | the lock is PROCESS-LOCAL: it covers one hub, the stdio proxy forwarding to it, and a second hub on one database (refused by the database-owner lock). Two processes writing ONE config file with DIFFERENT databases can still lose an update (Codex's two-process probe). No reader sees a torn file. | BACKLOG row "Two processes writing one settings file can lose an update"; no cross-process lock now (Tenet 1) |
+| #694's single tool-authority table | owed at the merge of main: fold `blocking_io` and `OWNER_PRESS` into it and check that `channel.send` and `nudge.send` are EGRESS there | — |
+
+### Round four captures
+
+The four glass shots were re-shot by this run.
+
+### Captured run — 2026-09-29T03:44:22Z
+
+- **Command:** `zsh -c cd web && npx vitest run src/features/project-room/__tests__/nudgeUnknown10.test.tsx src/features/project-room/health.test.ts && npx tsc --noEmit -p . && echo TSC-OK`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 54c1e69b995c94bc50cb4595e27ac43409a67808
+
+```text
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-10-02/web
+
+
+ Test Files  2 passed (2)
+      Tests  30 passed (30)
+   Start at  21:44:23
+   Duration  2.00s (transform 1.67s, setup 215ms, import 2.44s, tests 255ms, environment 659ms)
+
+TSC-OK
+```
+
+### Captured run — 2026-09-29T03:44:44Z
+
+- **Command:** `env PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm HOLDSPEAK_EVIDENCE_WRITE=1 .tmp/iso.sh .venv/bin/python -m pytest -q -p no:cacheprovider tests/e2e/test_philo10_02_nudge_unknown_glass.py tests/unit/test_philo_graph_atlas.py tests/unit/test_philo10_settings_atomic.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 54c1e69b995c94bc50cb4595e27ac43409a67808
+
+```text
+........................................................................ [ 76%]
+......................                                                   [100%]
+94 passed in 63.18s (0:01:03)
+```
+
+### Captured run — 2026-09-29T03:45:59Z
+
+- **Command:** `zsh .tmp/docs_checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 54c1e69b995c94bc50cb4595e27ac43409a67808
+
+```text
+== scripts/gen_operations_json.py --check
+OK docs/generated/operations.json
+== scripts/gen_mcp_sidecar_doc.py --check
+wrote docs/MCP_SIDECAR.md
+  246 tools across 43 families
+== scripts/check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+== scripts/philo_repository_census.py --check
+Repository census: 5 outputs verified.
+== scripts/philo_api_reference.py --check
+API reference checked
+== scripts/philo_openapi_reference.py --check
+OpenAPI: 579 paths
+== scripts/philo_boundary_census.py --check
+Boundary candidate census checked
+== scripts/philo_doctor_reference.py --check
+Doctor reference: 41 check functions
+== scripts/philo_config_reference.py --check
+Configuration declaration reference is current
+== scripts/philo_graph_reference.py --check
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+== scripts/validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+== scripts/generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
+== scripts/check_doc_coverage.py --check
+Documentation coverage checked.
+== scripts/residual_census.py --check
+RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-10-02
+DOCS RC=0
+```
+
+### Captured run — 2026-09-29T03:46:44Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-02-proof/mutations.py.txt`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 54c1e69b995c94bc50cb4595e27ac43409a67808
+
+```text
+CAUGHT G1a the redactor scans the uncut error and any payload (story 01's cost): rc=1 1 failed in 11.39s
+    first assertion: E           AssertionError: 2000-char error x 10 MiB: 10.11 s
+CAUGHT G1b the named code passes through the redactor: rc=1 1 failed in 2.54s
+    first assertion: E       AssertionError: assert ('failed', 'g...cted]_denied') == ('failed', 'g...ssion_denied')
+CAUGHT G2a the HTTP routes run the service on the event loop: rc=1 1 failed in 5.33s
+    first assertion: E           AssertionError: the read waited 1.399 s during the send (baseline 0.003 s)
+CAUGHT G2b the MCP transport runs channel.send on the event loop: rc=1 1 failed in 5.00s
+    first assertion: E           AssertionError: the read waited 1.402 s during the send (baseline 0.004 s)
+CAUGHT G2c (round three) MCP tool calls on the event loop again (setup's identity read): rc=1 1 failed in 7.73s
+    first assertion: E           AssertionError: mcp-save-destination: the read waited 1.495 s during the slow gh call
+CAUGHT G2d (round two) the HTTP recheck on the event loop: rc=1 1 failed in 4.82s
+    first assertion: E           AssertionError: http-recheck: the read waited 1.301 s during the slow gh call
+CAUGHT G2e (round three) channel.save_destination does not declare its blocking I/O: rc=1 1 failed in 5.10s
+    first assertion: E           AssertionError: mcp-save-destination: the read waited 1.355 s during the slow gh call
+CAUGHT S1 (round three) the settings write without its lock: rc=1 1 failed in 3.42s
+    first assertion: E       AssertionError: ['accepted', 'accepted']
+CAUGHT S2 (round three) the settings file written in place (not atomic), as before this round: rc=1 1 failed in 0.57s
+    first assertion: E       assert ('{\n  "config...oss_meeting_r' == '{\n  "config...": []\n  }\n}'
+CAUGHT W2 (round three) the nudge card not keyed by the Room's live state: rc=1    Duration  5.26s (transform 1.33s, setup 808ms, import 2.37s, tests 242ms, environment 1.63s)
+    first assertion: × UNKNOWN survives a close and reopen while Send is still in flight 38ms
+CAUGHT W3 (round four) the Room's per-Send state forgets the submitted text (a remount restores the default): rc=1    Duration  4.51s (transform 1.35s, setup 433ms, import 2.15s, tests 296ms, environment 1.43s)
+    first assertion: × a known failed Send keeps the edited comment for retry 50ms
+CAUGHT W1 (round two) the nudge card starts open whatever its step's persisted state: rc=1    Duration  6.46s (transform 1.13s, setup 439ms, import 1.88s, tests 3.23s, environment 756ms)
+    first assertion: × UNKNOWN survives closing and reopening the card 1085ms
+CAUGHT M1 the CLI children unparented: rc=1 1 failed in 3.89s
+    first assertion: E           AssertionError: {'name': 'subprocess.exec', 'operation_id': 'op_5176a2c424754bda8794b30f5414a7b0', 'outcome': 'succeeded', 'parent_operation_id': ''
+CAUGHT M2 the CLI children under the default local-owner (the seam's principal not threaded): rc=1 1 failed in 2.73s
+    first assertion: E       AssertionError: {"send":{"id":"chs_98c76971e9428fec447d6053","document_ref":"project_update:pupd_6a4b5428ce5e41d69e4f6e39afa91671","destination_id":"chd
+CAUGHT M3 a nudge's UNKNOWN treated as a known failure (F4, main's mapping): rc=1 1 failed in 2.73s
+    first assertion: E       AssertionError: {"success":false,"error":"send_failed","code":"send_failed","message":"send failed","operation_id":"op_2b0cd31c276e4cfc9733d9004ed7642d"
+CAUGHT M4 an unpinned nonzero exit is FAILED: rc=1 1 failed in 2.42s
+    first assertion: E           AssertionError: {'operation_id': 'op_582f131977ca4b648b446c56018ac5b4', 'outcome': 'failed', 'receipt': {'actor_identity': 'owner-sess...b.com', 'lo
+CAUGHT M5 exit 0 without a proof is SENT: rc=1 1 failed in 4.29s
+    first assertion: E           AssertionError: {'operation_id': 'op_49433c48c01d4fb594297f2797829bea', 'outcome': 'sent', 'receipt': {'actor_identity': 'owner-sessio...', 'site': 
+CAUGHT M6 the GitHub login not compared before the boundary: rc=1 1 failed in 6.30s
+    first assertion: E       AssertionError: {"send":{"id":"chs_07dae641e92076bb4b39e4c1","document_ref":"project_update:pupd_df226fe6a7b84f36bee08efb62dc2f41","destination_id":"chd
+CAUGHT M7 the Atlassian create outside the acli lock: rc=1 1 failed in 3.07s
+    first assertion: E       AssertionError: [['acli', 'jira', 'auth', 'switch'], ['acli', 'jira', 'auth', 'status'], ['acli', 'jira', 'workitem', 'comment'], ['acli', 'confluence',
+CAUGHT M8 a plan may carry --jql, --filter or --edit-last: rc=1 1 failed in 2.61s
+    first assertion: E           Failed: DID NOT RAISE <class 'ValueError'>
+CAUGHT M9 a second Jira key accepted: rc=1 1 failed in 2.61s
+    first assertion: E           holdspeak.services.errors.ValidationError: A Jira destination needs one work item key, like ABC-123
+CAUGHT M10 the body in argv, not in the private file: rc=1 1 failed in 2.73s
+    first assertion: E       AssertionError: assert 'failed' == 'sent'
+CAUGHT M11 the Confluence title in argv: rc=1 1 failed in 2.93s
+    first assertion: E           assert (False)
+CAUGHT M12 the steward's child send admitted (no owner-press rule): rc=1 1 failed in 3.57s
+    first assertion: E       AssertionError: assert ('sent', 'op_...b97bdc21cf96') == ('prepared', ...b97bdc21cf96')
+CAUGHT M13 the scheduler may not submit the steward's prepare: rc=1 1 failed in 3.58s
+    first assertion: E       ValueError: too many values to unpack (expected 1)
+CAUGHT M14 the nudge without its durable boundary (it stays proposed while gh runs): rc=1 1 failed in 2.87s
+    first assertion: E       AssertionError: assert 'proposed' == 'sending'
+CAUGHT M15 the reaper leaves a sending nudge as it is: rc=1 1 failed in 2.96s
+    first assertion: E       KeyError: 'outcome'
+CAUGHT M16 a CLI take-over dispatches from a dispatching row as from a prepared one: rc=1 1 failed in 2.79s
+    first assertion: E       AssertionError: assert ('sent', None) == ('unknown', 'interrupted')
+CAUGHT M17 the per-channel size limit dropped: rc=1 1 failed in 2.97s
+    first assertion: E       AssertionError: {"send":{"id":"chs_678b2fe6408a38661e87c7a4","document_ref":"project_update:pupd_4084f76b198845adbb0c1d5d4ab92f70","destination_id":"chd
+CAUGHT M18 the file mode not private: rc=1 1 failed in 2.36s
+    first assertion: E       assert 420 == 384
+30/30 mutations caught
+```
+
+### Captured run — 2026-09-29T03:49:30Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python scripts/check_web_baseline.py --run`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 54c1e69b995c94bc50cb4595e27ac43409a67808
+
+```text
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (5):
+  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+Suite totals: 2949 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```

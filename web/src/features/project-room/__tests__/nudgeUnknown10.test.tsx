@@ -203,3 +203,39 @@ it('UNKNOWN survives a close and reopen while Send is still in flight', async ()
   expect(screen.queryByTestId('nudge-send')).toBeNull();
   expect(screen.queryByTestId('nudge-unknown-row')).not.toBeNull();
 });
+
+// Round four (Codex Astra r3, its probe): a known failure keeps the owner's edited comment, and the retry's
+// REQUEST BODY (through the real apiFetch) carries the edit, not the default text.
+it('a known failed Send keeps the edited comment for retry', async () => {
+  installNudgeWire();
+  const previous = apiFetch.getMockImplementation()!;
+  const failure = {"success": false, "error": "send_failed", "code": "send_failed", "message": "send failed", "operation_id": "op_327d743f2ae44115a84f61be0385e6e3", "receipt": {"receipt_id": "rcpt_fef15332582b464eac48954234fda0c3", "operation_id": "op_327d743f2ae44115a84f61be0385e6e3", "state": "failed", "outcome": "github_not_authenticated", "result_ref": "steward_step:pststep_53a0fde0497548c8b4911d03e8068901", "created_at": 1790652993.0891871, "actor_kind": "owner", "actor_identity": "owner-session", "delegator_kind": "", "delegator_identity": "", "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy", "target_ref": "steward_step:pststep_53a0fde0497548c8b4911d03e8068901"}};
+  apiFetch.mockImplementation((url: string) => url.includes('/nudges/') && url.endsWith('/send') ? Promise.reject(new Error(failure.message)) : previous(url));
+  render(<WindowHarness scope="project:p1" />);
+  fireEvent.click(await screen.findByTestId('nudge-verb'));
+  fireEvent.change(screen.getByLabelText('Comment'), {target: {value: 'Please review the rollback plan before 15:00.'}});
+  fireEvent.click(screen.getByTestId('nudge-send'));
+  await screen.findByText('FAILED');
+  expect(screen.getByLabelText('Comment')).toHaveValue('Please review the rollback plan before 15:00.');
+});
+
+it('retry sends the edited comment after the real API reports a known failure', async () => {
+  installNudgeWire();
+  const previous = apiFetch.getMockImplementation()!;
+  const realApi = await vi.importActual<typeof import('../../../lib/api')>('../../../lib/api');
+  const failure = {"success": false, "error": "send_failed", "code": "send_failed", "message": "send failed", "operation_id": "op_327d743f2ae44115a84f61be0385e6e3", "receipt": {"receipt_id": "rcpt_fef15332582b464eac48954234fda0c3", "operation_id": "op_327d743f2ae44115a84f61be0385e6e3", "state": "failed", "outcome": "github_not_authenticated", "result_ref": "steward_step:pststep_53a0fde0497548c8b4911d03e8068901", "created_at": 1790652993.0891871, "actor_kind": "owner", "actor_identity": "owner-session", "delegator_kind": "", "delegator_identity": "", "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy", "target_ref": "steward_step:pststep_53a0fde0497548c8b4911d03e8068901"}};
+  const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify(failure), {status:409,headers:{'content-type':'application/json'}}));
+  apiFetch.mockImplementation((url: string, options: any) => url.includes('/nudges/') && url.endsWith('/send') ? realApi.apiFetch(url, options) : previous(url));
+  try {
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId('nudge-verb'));
+    fireEvent.change(screen.getByLabelText('Comment'), {target: {value: 'Please review the rollback plan before 15:00.'}});
+    fireEvent.click(screen.getByTestId('nudge-send'));
+    await screen.findByText('FAILED');
+    expect(JSON.parse(String(fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/send'))[0][1]?.body)).text).toBe('Please review the rollback plan before 15:00.');
+    fireEvent.click(screen.getByTestId('nudge-send'));
+    await screen.findByText('FAILED');
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/send'))).toHaveLength(2);
+    expect(JSON.parse(String(fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/send'))[1][1]?.body)).text).toBe('Please review the rollback plan before 15:00.');
+  } finally { fetchMock.mockRestore(); }
+});

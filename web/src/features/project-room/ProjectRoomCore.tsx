@@ -451,14 +451,15 @@ function NudgeCard({
   // The parent keys this card by the live state, so a late answer re-seeds the CURRENT card.
   const [card, dispatch] = useReducer(nudgeCardReducer, initialNudgeCard(
     local?.state ?? persistedState, defaultText, prNumber,
-    { displayName, sentAt: local?.sentAt, reason: local?.reason }));
+    { displayName, sentAt: local?.sentAt, reason: local?.reason, text: local?.text }));
 
   const handleSend = async () => {
     if (card.phase !== "open" && card.phase !== "failed") return;
     if (card.phase === "open" && card.busy) return;
     if (!stepId) return;
     dispatch({ type: "sending" });
-    onLocal?.({ state: "pending" });
+    const submitted = card.text;
+    onLocal?.({ state: "pending", text: submitted });
     try {
       const result = await api.sendNudge(stepId, card.text);
       if (result.success) {
@@ -480,11 +481,11 @@ function NudgeCard({
       } else {
         const reason = String(result.message || "Send failed");
         dispatch({ type: "failed", reason });
-        onLocal?.({ state: "failed", reason });
+        onLocal?.({ state: "failed", reason, text: submitted });
       }
     } catch (err) {
       dispatch({ type: "failed", reason: String(err) });
-      onLocal?.({ state: "failed", reason: String(err) });
+      onLocal?.({ state: "failed", reason: String(err), text: submitted });
     }
   };
 

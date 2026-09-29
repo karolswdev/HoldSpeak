@@ -86,6 +86,13 @@ fall back to the still atmosphere when frames are slow) is not scheduled.
 - **Owner:** Muad'Dib's lane (a PHILO story: keep `number` and `createdAt` in the normalized gh entity, and fence the producer through the real Door → watch → steward path, not a seeded step).
 - **Home:** the next PHILO phase that touches the steward's nudges, or a repair story in PHILO-10 if the owner wants the nudge usable before the channels close. Muad'Dib rules which.
 
+## Two processes writing one settings file can lose an update
+
+**2026-09-28, found by Codex Astra (counsel r3 on PR #695, `pm/roadmap/holdspeak-philo/phase-10-the-channels/checks/story-02-built-astra-r3.md`).** PHILO-10-02 made a settings write one transaction: a lock around the revision check and the read/merge/write (`holdspeak/services/settings_service.py`, `_SETTINGS_WRITE`), and an atomic file write (`holdspeak/config/core.py`, `Config.save`: temporary file, fsync, `os.replace`). The lock is PROCESS-LOCAL. It covers the normal topology: one hub, the stdio MCP proxy forwarding to it, and a second hub on the same database refused by the database-owner lock. Two processes that write ONE config file with DIFFERENT databases can still both pass the revision check and lose one edit (Codex's two-process probe). No reader ever sees a torn file. No cross-process lock is built now (Tenet 1): this topology is not a supported way to run HoldSpeak.
+
+- **Owner:** Muad'Dib's lane, if a supported topology ever puts two writers on one config (a file lock around the same transaction).
+- **Home:** parked until then.
+
 ## Earlier backlog record
 
 The parking lot so good ideas do not get lost between phases. Each entry is a
