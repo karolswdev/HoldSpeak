@@ -20,7 +20,7 @@ The update's only outbound verbs are Copy and Mark delivered (`web/src/features/
 
 ## Acceptance criteria
 
-- [ ] Both canvases ratified by the owner (verbatim word recorded) before the build commit.
+- [x] Both canvases ratified by the owner (verbatim word recorded) before the build commit. (2026-09-29: "Ratify as drawn (Recommended)".)
 - [ ] Every state of the matrix shot and fenced through the real hub at 1440 and 393; the face's outcome equals the hub's record and receipt in the same fence.
 - [ ] Every verb is the library Button; the host chip is on each row that leaves the machine; no modal; nothing covers the Send verb at 393.
 - [ ] The web baseline has zero branch-new failures.
@@ -36,6 +36,7 @@ PROVISIONAL: 2–3 engineering days (canvases included).
 
 ## Notes
 
+- 2026-09-29 — both canvases RATIFIED by the owner ('Ratify as drawn', AskUserQuestion; all six recommendations A1–A3, B1–B3), after Codex Astra r1 DNR → r2 DNR → r3 DNR → r4 RATIFY (`checks/canvases-astra-r1.md` … `r4.md`); the two built face changes (story 01's RESULT UNKNOWN row, story 02's nudge card) accepted with them. The build follows `assets/story-04-send-canvas/` and `assets/story-04-destinations-canvas/`.
 - 2026-09-28 — the two canvases drawn (`assets/story-04-send-canvas/`, `assets/story-04-destinations-canvas/`); unratified.
 - 2026-09-28 — round four: the email fields follow the owner's Q1 ruling (a provider interface; SendGrid first).
 - 2026-09-28 — round three: the readable preview (Codex Astra r2, MISSED).

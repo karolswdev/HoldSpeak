@@ -161,6 +161,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-29, the story 04 canvases RATIFIED by the owner ("Ratify as drawn (Recommended)", AskUserQuestion; all six recommendations: A1 the pick opens preview and Send in place; A2 DELIVERY ×N / DELIVERY N replace DELIVERED, same counts; A3 prepared first with PREPARED ×K, one preview open; B1 Settings → Connections under Tools; B2 Add destination opens Settings at the form, the Room updates without a reload; B3 names fill from the target, editable), with the two built face changes (story 01's RESULT UNKNOWN row; story 02's nudge card), after Codex Astra r4 RATIFY (`checks/canvases-astra-r4.md`). The story 04 face build is unblocked.
+
 2026-09-28, the story 04 canvases, ROUND FOUR (PR #693): Codex Astra r3 DO-NOT-RATIFY, one narrow blocker (`checks/canvases-astra-r3.md`; r2 F2 and the clock fence verified paid), paid — the open row's receipt and the row's header come from one source, the latest send by `dispatch_started_at` (fenced through reopening, board 28c, both widths); each width runs on its own hub. Owed: the Codex Astra r4 check; the owner's ratification. Nothing is built.
 
 2026-09-28, the story 04 canvases, ROUND THREE (PR #693): Codex Astra r2 DO-NOT-RATIFY, narrowed (`checks/canvases-astra-r2.md`; r1 F1–F6 verified repaired), paid — a destination's latest result follows send order (story 01's `dispatch_started_at`; fenced in Codex's order, board 28b); a running prepared send stays on the face through Back and return with no second Send (boards 26b, 26c); the byte fence masks the menu clock and update B's cleanliness is a fact. Owed: the Codex Astra r3 check; the owner's ratification. Nothing is built.
