@@ -19,7 +19,7 @@ import pytest
 from holdspeak.db import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.thread_tools import (
-    OWNER_ONLY_TOOLS,
+    EXCLUDED_TOOLS,
     TOOL_NAMES,
     ThreadToolExecutor,
     ToolCallHandle,
@@ -324,9 +324,9 @@ class TestClassificationCensus:
         from holdspeak.mcp.tools import TOOLS as MCP_TOOLS
 
         mcp_names = {t["name"] for t in MCP_TOOLS}
-        # #694: an owner-only operation is classified too -- as never a
-        # thread tool (OWNER_ONLY_TOOLS, derived from the runtime's authority).
-        unclassified = mcp_names - TOOL_NAMES - OWNER_ONLY_TOOLS
+        # #694: an excluded tool is classified too -- as egress, authority or
+        # config in the owner's table (mcp/tool_authority.py).
+        unclassified = mcp_names - TOOL_NAMES - EXCLUDED_TOOLS
         assert unclassified == set(), (
             f"Unclassified MCP tools (add them to thread_tools._TOOL_CLASSES): "
             f"{sorted(unclassified)}"
@@ -343,46 +343,65 @@ class TestClassificationCensus:
             f"{sorted(phantom)}"
         )
 
-    #: #694 (Codex Astra counsels r1 and r2): every MCP tool only the owner
-    #: may be admitted to, classified by name. The derivation must produce
-    #: exactly this; a change is a decision someone makes here.
-    OWNER_ONLY = {
-        # the owner's presses (owner_press; r1, and the nudge ruling)
-        "channel.send", "channel.discard", "channel.save_destination", "channel.remove_destination",
-        "project.mark_update_delivered", "nudge.send",
-        # the Room's kernel owner-only set (kernel/project.OWNER_ONLY_OPERATIONS; r2)
-        "project.archive", "project.configure_steward", "project.decide_proposal", "project.accept_review",
-        "project.link", "project.unlink", "project.resource.add", "project.resource.remove",
-        "project.steward.trigger", "project.add_suggested_source", "connection.recheck",
-        "project.watch.test", "project.watch.evaluate", "project.watch.set_rules",
-        "project.watch.pause", "project.watch.resume", "project.watch.retire",
-        # the registry's owner_only (the hub's file custody, PHILO-5-02)
-        "meeting.import",
+    def test_every_dispatched_tool_has_an_authority_row(self) -> None:
+        """#694, the owner's ruling (2026-09-29): ONE table classes EVERY tool
+        the MCP dispatch serves (the public list and every family) as work,
+        egress, authority or config. A tool with no row fails here."""
+        from holdspeak.mcp.tool_authority import TOOL_AUTHORITY
+        from holdspeak.mcp.tools import FAMILIES, TOOLS as MCP_TOOLS
+
+        dispatched = {t["name"] for t in MCP_TOOLS} | {t["name"] for f in FAMILIES for t in f.TOOLS}
+        assert dispatched == set(TOOL_AUTHORITY), (
+            f"unclassified={sorted(dispatched - set(TOOL_AUTHORITY))} "
+            f"phantom={sorted(set(TOOL_AUTHORITY) - dispatched)}")
+        assert set(TOOL_AUTHORITY.values()) <= {"work", "egress", "authority", "config"}
+
+    #: The owner's named examples, each in its class (the ruling's words).
+    RULED = {
+        "egress": {"channel.send", "nudge.send"},
+        "authority": {"project.archive", "project.configure_steward"},
+        "config": {"model_library.define_endpoint", "inference_assignment.set", "inference_assignment.clear",
+                   "project.setup.start", "thought.replace_default_context", "settings.update",
+                   "provider.jira_add_connection"},
+        "work": {"people.note.create", "desk.create", "project.draft_update", "zone.file", "channel.prepare"},
     }
 
-    def test_an_owner_only_tool_is_never_a_thread_tool(self) -> None:
-        """A thread runs its tools as the owner, so an owner-only operation in
-        the table lets a model act for him (r1: a Send; r2: an archive and an
-        unattended steward policy). Never in the table, never in a palette,
-        refused by name."""
+    def test_the_rulings_examples_are_in_their_class(self) -> None:
+        from holdspeak.mcp.tool_authority import TOOL_AUTHORITY
+
+        for cls, names in self.RULED.items():
+            for name in names:
+                assert TOOL_AUTHORITY[name] == cls, (name, TOOL_AUTHORITY[name], cls)
+
+    def test_an_excluded_tool_is_never_a_thread_tool(self) -> None:
+        """A thread runs its tools as the owner: egress, authority and config
+        are never in the table, never in a palette, refused by name."""
+        from holdspeak.mcp.tool_authority import TOOL_AUTHORITY
         from holdspeak.services.thread_tools import CHAT_PALETTE
         from holdspeak.services.thread_modes import MODE_SEEDS
 
-        assert OWNER_ONLY_TOOLS == self.OWNER_ONLY, (
-            f"added={sorted(OWNER_ONLY_TOOLS - self.OWNER_ONLY)} gone={sorted(self.OWNER_ONLY - OWNER_ONLY_TOOLS)}")
-        assert "channel.prepare" in TOOL_NAMES  # a model may prepare
-        assert not (OWNER_ONLY_TOOLS & TOOL_NAMES)
-        assert not (OWNER_ONLY_TOOLS & CHAT_PALETTE)
+        assert EXCLUDED_TOOLS == {n for n, c in TOOL_AUTHORITY.items() if c != "work"}
+        assert TOOL_NAMES == {n for n, c in TOOL_AUTHORITY.items() if c == "work"}
+        assert not (EXCLUDED_TOOLS & CHAT_PALETTE)
         for mode in MODE_SEEDS:
-            assert not (OWNER_ONLY_TOOLS & mode.tools), mode.id
-        for name in OWNER_ONLY_TOOLS:
-            with pytest.raises(ValueError, match="owner's alone"):
+            assert not (EXCLUDED_TOOLS & mode.tools), mode.id
+        for name in EXCLUDED_TOOLS:
+            with pytest.raises(ValueError, match="the owner's press"):
                 tool_class(name)
 
-    def test_the_kernel_refuses_by_the_same_set(self) -> None:
-        """One source of truth: the codec's non-owner refusal reads the set
-        the thread table is derived from, and that set covers every Room
-        operation outside the agent's grant and its prepare."""
+    def test_every_owner_press_descriptor_is_excluded(self) -> None:
+        """A declared owner press (a Send, a nudge, the destinations, the
+        delivery mark) is never classed work."""
+        import holdspeak.operations as operations
+
+        for descriptor in operations.DESCRIPTORS:
+            if descriptor.owner_press:
+                for exposure in descriptor.exposure:
+                    if exposure.startswith("mcp:"):
+                        assert exposure[len("mcp:"):] in EXCLUDED_TOOLS, descriptor.name
+
+    def test_the_kernel_refuses_an_agent_by_one_set(self) -> None:
+        """The codec's non-owner refusal reads one declared set (#694 r2)."""
         import inspect
 
         from holdspeak.kernel import project as rooms
@@ -391,32 +410,6 @@ class TestClassificationCensus:
         assert "rooms.OWNER_ONLY_OPERATIONS" in inspect.getsource(ProjectCodec.authorize)
         assert rooms.OWNER_ONLY_OPERATIONS == (
             rooms.PROJECT_KERNEL_OPERATIONS - rooms.PROJECT_GRANT_OPERATIONS - rooms.AGENT_PREPARE_OPERATIONS)
-
-    def test_owner_principal_operations_are_decided_for_the_thread(self) -> None:
-        """Close the class (#694): every MCP-exposed operation the runtime
-        refuses to a non-owner (the kernel set, the registry's owner_only, the
-        declared press, or an owner_principal_required refusal) is either
-        owner-only (never a thread tool) or named here as offered."""
-        import holdspeak.operations as operations
-        from holdspeak.kernel.project import OWNER_ONLY_OPERATIONS
-
-        # Declares owner_principal_required but is a read outside the kernel
-        # owner-only set: a thread may offer it.
-        offered = {"project.watch.inspect"}
-        undecided = []
-        for descriptor in operations.DESCRIPTORS:
-            mcp = [e[len("mcp:"):] for e in descriptor.exposure if e.startswith("mcp:")]
-            kernel_owner = descriptor.name in OWNER_ONLY_OPERATIONS
-            owner_principal = kernel_owner or descriptor.owner_only or descriptor.owner_press or any(
-                "owner_principal_required" in str(r) for r in descriptor.refusals)
-            if not owner_principal or not mcp:
-                continue
-            for name in mcp:
-                if kernel_owner or descriptor.owner_only or descriptor.owner_press:
-                    assert name in OWNER_ONLY_TOOLS and name not in TOOL_NAMES, name
-                elif name not in offered:
-                    undecided.append(name)
-        assert not undecided, f"owner-principal operations with no thread decision: {sorted(undecided)}"
 
     def test_unclassified_tool_raises(self) -> None:
         with pytest.raises(ValueError, match="Unclassified tool"):

@@ -3582,7 +3582,7 @@
         {
           "path": "holdspeak/operations.py",
           "symbol": "name=\"zone.file\"",
-          "line": 1063,
+          "line": 1061,
           "claim": "filing is one declared, ADMITTED operation; filing again moves the object"
         },
         {
@@ -3617,7 +3617,7 @@
         {
           "path": "holdspeak/operations.py",
           "symbol": "name=\"kb.member.add\"",
-          "line": 1138,
+          "line": 1136,
           "claim": "adding a reference is one declared, ADMITTED operation"
         },
         {
@@ -3650,7 +3650,7 @@
         {
           "path": "holdspeak/operations.py",
           "symbol": "name=\"decision.status\"",
-          "line": 1228,
+          "line": 1226,
           "claim": "the status change is ADMITTED; HTTP only (over MCP it is decision.update)"
         },
         {

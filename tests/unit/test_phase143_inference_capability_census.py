@@ -248,8 +248,8 @@ OPERATION_CONTRACT_VARIABLE_SITES: dict[str, str] = {
     "holdspeak/mcp/tools.py:662|_primitive_list|call": "ops().invoke(principal, _desk_operation(kind, 'list'), {})",
     "holdspeak/mcp/tools.py:668|_primitive_get|call": "ops().invoke(principal, _desk_operation(kind, 'get'), ...)",
     # PHILO-7-02: invoke_receipted calls the registry's own invoke with its name.
-    "holdspeak/operations.py:2158|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args)",
-    "holdspeak/operations.py:2159|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args, held=held)",
+    "holdspeak/operations.py:2156|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args)",
+    "holdspeak/operations.py:2157|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args, held=held)",
 }
 
 

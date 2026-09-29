@@ -63,9 +63,9 @@ PROJECT_KERNEL_OPERATIONS: frozenset[str] = (ROOM_ADMITTED | STEWARD_AND_CONNECT
                                              | PROJECT_DELEGATION_OPERATIONS | CHANNEL_ADMITTED)
 #: #694 (Codex Astra counsel r2): the Room operations an AGENT can never be
 #: admitted to outside its own steward run -- no grant covers them and they
-#: are not the agent's prepare. ``KernelProjectCodec.authorize`` refuses a
-#: non-owner by this set, and the thread tool table excludes every one of
-#: them (``services/thread_tools.OWNER_ONLY_TOOLS``): one source of truth.
+#: are not the agent's prepare. ``ProjectCodec.authorize`` refuses a non-owner
+#: by this set. (What a THREAD acting as the owner may do is the owner's
+#: separate ruling: ``holdspeak/mcp/tool_authority.py``.)
 OWNER_ONLY_OPERATIONS: frozenset[str] = (PROJECT_KERNEL_OPERATIONS - PROJECT_GRANT_OPERATIONS
                                          - AGENT_PREPARE_OPERATIONS)
 #: The operations whose terminal receipt a daemon writes later (the beat, section 2).

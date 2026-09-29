@@ -164,11 +164,9 @@ class OperationDescriptor:
     #: read. A transport that touches the filesystem for the operation calls
     #: ``authorize`` first.
     owner_only: bool = False
-    #: The owner's own press decides it (#694, Codex Astra counsel r1): no model
-    #: and no agent acts it, in any thread mode (yolo, a remembered allow,
-    #: confirm). The thread tool table derives from this flag
-    #: (``services/thread_tools.OWNER_ONLY_TOOLS``): such a tool is never
-    #: offered to a model and never admitted from one. A model may PREPARE.
+    #: The owner's own press decides it (#694, Codex Astra counsel r1): an agent
+    #: is refused, and the MCP authority table (``mcp/tool_authority.py``)
+    #: classes its tool egress, authority or config, so no thread offers it.
     owner_press: bool = False
     #: Article XI admission (PHILO-7-01 declares it for the desk slice; story
     #: 02 enforces it). ``None``: not yet declared for this operation.

@@ -218,3 +218,70 @@ def test_a_yolo_thread_cannot_change_the_room_for_the_owner(hub: Any, tool: str)
     assert after_policy == before_policy, f"the model changed the steward policy as the owner: {after_policy}"
     assert ops(h, tool) == [], ops(h, tool)
     assert all(tool not in palette for palette in model.palettes), model.palettes
+
+
+def _counts(h: Any) -> dict[str, int]:
+    with h.db._connection() as conn:
+        names = [r["name"] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+        return {n: conn.execute(f'SELECT COUNT(*) FROM "{n}"').fetchone()[0] for n in names}
+
+
+def _heads(h: Any) -> list[dict[str, Any]]:
+    with h.db._connection() as conn:
+        return [dict(r) for r in conn.execute("SELECT * FROM inference_assignment_heads ORDER BY rowid")]
+
+
+_CONFIG_ARGS: dict[str, dict[str, Any]] = {
+    "model_library.define_endpoint": {"draft": {
+        "request_id": "p694-endpoint", "profile_id": "p694-endpoint", "expected_profile_revision": 0,
+        "label": "Model endpoint", "provider_family": "private_endpoint", "model": "fixture-model",
+        "endpoint": "http://127.0.0.1:9/v1", "requires_key": False}, "secret": None},
+    "inference_assignment.set": {"command_id": "p694-set", "expected_revision": 1,
+                                 "scope": {"kind": "capability", "capability_id": "chat.turn"},
+                                 "entries": [{"profile_id": "p694-local", "profile_revision": 1}]},
+    "inference_assignment.clear": {"command_id": "p694-clear", "expected_revision": 1,
+                                   "scope": {"kind": "capability", "capability_id": "chat.turn"},
+                                   "capability_id": "chat.turn"},
+    "project.setup.start": {},
+    "thought.replace_default_context": {"request_id": "p694-default-context", "expected_revision": 0, "refs": []},
+}
+
+
+@pytest.mark.parametrize("tool", sorted(_CONFIG_ARGS))
+def test_a_yolo_thread_cannot_change_the_system(hub: Any, monkeypatch: pytest.MonkeyPatch, tool: str) -> None:
+    """Codex Astra counsel r3 on #694 and the owner's ruling (2026-09-29):
+    CONFIG -- models, endpoints, assignments, setup, the default context --
+    is never a thread's without his press. A yolo thread whose mode names the
+    tool: it is not offered, and no product table changes (the thread's own
+    rows and the turn's kernel and inference records aside)."""
+    from holdspeak.config import Config
+
+    cfg = Config.load()
+    cfg.control_mode = "yolo"
+    cfg.save()
+    h = hub()
+    monkeypatch.setattr("holdspeak.setup_runtime.discover_endpoint_models",
+                        lambda *a, **k: {"ok": True, "models": ["fixture-model"]})
+    mode = h.client.post("/api/recipes", json={"name": "Config mode", "kind": "mode", "tools": [tool]})
+    assert mode.status_code == 201, mode.text
+    thread = h.client.post("/api/threads", json={"title": "Config", "recipe_id": mode.json()["recipe"]["id"]})
+    assert thread.status_code == 201, thread.text
+    model = _ModelThatSends(tool=tool, arguments=_CONFIG_ARGS[tool])
+    _assign_model(h, model)
+    before, heads = _counts(h), _heads(h)
+    _run_turn(h, thread.json()["id"])
+    after = _counts(h)
+
+    assert model.calls >= 1
+    # The turn itself writes its thread rows, its kernel operations and its
+    # model call's inference records; a model ASSIGNMENT is not one of them.
+    def turn_row(table: str) -> bool:
+        if table.startswith("inference_assignment"):
+            return False
+        return table.startswith(("thread", "kernel_", "inference_", "pipeline_", "sqlite_sequence"))
+
+    changed = {k: (before.get(k), v) for k, v in after.items() if before.get(k) != v and not turn_row(k)}
+    assert changed == {}, f"the model changed the system as the owner: {changed}"
+    assert _heads(h) == heads, "the model changed a model assignment as the owner"
+    assert ops(h, tool) == [], ops(h, tool)
+    assert all(tool not in palette for palette in model.palettes), model.palettes
