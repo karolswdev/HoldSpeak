@@ -1048,10 +1048,18 @@ export type NudgeCardAction =
  * A step that is `sending` or `unknown` is never offered for Send again, after a
  * remount or a reload as much as after the press. */
 export function initialNudgeCard(persistedState: string | null | undefined, defaultText: string,
-  prNumber: number): NudgeCardState {
+  prNumber: number, more: { displayName?: string; sentAt?: string; reason?: string } = {}): NudgeCardState {
   if (persistedState === "unknown" || persistedState === "sending") return { phase: "unknown", prNumber };
+  // Round three (Codex Astra r2 finding 2): a Send still in flight in this Room stays busy on a remount.
+  if (persistedState === "pending") return { phase: "open", text: defaultText, busy: true };
+  if (persistedState === "failed") return { phase: "failed", text: defaultText, reason: more.reason || "Send failed" };
+  if (persistedState === "sent" && more.sentAt)
+    return { phase: "sent", displayName: more.displayName || "", prNumber, sentAt: more.sentAt };
   return { phase: "open", text: defaultText, busy: false };
 }
+
+/** The Room's own knowledge of a nudge it pressed, kept above the card (a card can be closed mid-send). */
+export type NudgeLocal = { state: "pending" | "unknown" | "failed" | "sent"; reason?: string; sentAt?: string };
 
 export function nudgeCardReducer(
   state: NudgeCardState,

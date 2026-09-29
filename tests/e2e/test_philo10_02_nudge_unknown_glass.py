@@ -10,6 +10,7 @@ review in story 04 (a change on the ratified nudge card, forced by correctness).
 from __future__ import annotations
 
 import subprocess
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -34,7 +35,7 @@ SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/st
 SHOTS.mkdir(parents=True, exist_ok=True)
 
 
-def _timeout_gh(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
+def _timeout_gh(monkeypatch: pytest.MonkeyPatch, release: threading.Event) -> list[list[str]]:
     import holdspeak.services.channel_cli as channel_cli
     import holdspeak.services.project_steward_service as pss
 
@@ -42,6 +43,7 @@ def _timeout_gh(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
 
     def gh(argv: Any, **_kwargs: Any) -> Any:
         calls.append(list(argv))
+        assert release.wait(60)  # the answer stays in flight until the page has closed and reopened the card
         raise subprocess.TimeoutExpired(list(argv), 30)
 
     monkeypatch.setattr(channel_cli, "CLI_RUNNER", gh)
@@ -70,7 +72,8 @@ def _open_card(page: Any) -> None:
 
 
 def _run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
-    calls = _timeout_gh(monkeypatch)
+    release = threading.Event()
+    calls = _timeout_gh(monkeypatch, release)
     _patch_resolve_review_people(monkeypatch)
     keyfile = tmp_path / "people.key"
     keyfile.write_text("{}")
@@ -92,9 +95,14 @@ def _run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
             _settle(page)
             _open_card(page)
             page.locator('[data-testid="nudge-send"]').click()
+            # Round three (Codex Astra r2 finding 2): close and reopen WHILE the answer is in flight.
+            page.wait_for_timeout(300)
+            _open_card(page)  # close
+            _open_card(page)  # reopen: busy, no second post
+            release.set()
             page.locator('[data-testid="nudge-unknown-row"]').wait_for(timeout=15000)
             _settle(page)
-            _unknown_and_no_send(page, "after the press")
+            _unknown_and_no_send(page, "after the press, closed and reopened while in flight")
             _assert_no_raw_button(page)
             _shot(page, f"nudge-unknown-1-after-send-{width}", width, SHOTS)
             _open_card(page)  # close

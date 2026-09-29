@@ -164,6 +164,11 @@ class OperationDescriptor:
     #: read. A transport that touches the filesystem for the operation calls
     #: ``authorize`` first.
     owner_only: bool = False
+    #: PHILO-10-02: the operation may run a subprocess or reach the network (a
+    #: CLI send, an identity read, a probe). A transport runs it OFF the event
+    #: loop (the threadpool), so the hub answers during it; every other
+    #: operation keeps the loop's one-at-a-time order (the settings writes).
+    blocking_io: bool = False
     #: Article XI admission (PHILO-7-01 declares it for the desk slice; story
     #: 02 enforces it). ``None``: not yet declared for this operation.
     admission: Optional[Admission] = None
@@ -191,6 +196,7 @@ class OperationDescriptor:
             "exposure": list(self.exposure),
             "held": list(self.held),
             "owner_only": self.owner_only,
+            "blocking_io": self.blocking_io,
             "admission": self.admission.export() if self.admission is not None else None,
         }
 

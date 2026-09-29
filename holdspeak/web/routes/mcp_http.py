@@ -95,6 +95,12 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         return bool(store.get("enabled", False))
 
     # ── POST /api/mcp ──────────────────────────────────────────────
+    def _blocking_io_tools() -> frozenset[str]:
+        """The operations that declare blocking I/O (derived from the one declared contract)."""
+        from ... import operations as _operations
+
+        return frozenset(d.name for d in _operations.DESCRIPTORS if d.blocking_io)
+
     @router.post("/api/mcp")
     async def mcp_http_endpoint(request: Request) -> JSONResponse:
         """Streamable HTTP transport for MCP JSON-RPC.
@@ -201,12 +207,13 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 _caller.reset(caller_token)
                 _caller_identity.reset(identity_token)
 
-        # PHILO-10-02 GATE 2 (round two, Codex Astra r1 finding 2): every tool
-        # call runs OFF the event loop. Any tool may reach a CLI or the network
-        # (a Send, a destination's identity read, a recheck), and none needs the
-        # loop (the async tools refuse to run inside one: mcp/tools.py `_run`),
-        # so the rule is derived, not a hand list. Protocol messages stay inline.
-        if body.get("method") == "tools/call":
+        # PHILO-10-02 GATE 2 (round three, Muad'Dib's ruling on Codex Astra r2
+        # finding 1): a tool runs OFF the event loop exactly when its operation
+        # DECLARES blocking I/O (``OperationDescriptor.blocking_io``: it may run
+        # a subprocess or reach the network). Every other tool keeps the loop's
+        # one-at-a-time order, as before this story.
+        params = body.get("params") if isinstance(body.get("params"), dict) else {}
+        if body.get("method") == "tools/call" and params.get("name") in _blocking_io_tools():
             from starlette.concurrency import run_in_threadpool
 
             response = await run_in_threadpool(handle)

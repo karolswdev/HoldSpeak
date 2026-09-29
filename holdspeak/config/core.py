@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
+import tempfile
 from dataclasses import dataclass, field, asdict, fields
 from pathlib import Path
 from typing import Optional
@@ -386,9 +388,27 @@ class Config:
         """Save configuration to file."""
         config_path = path or _active_config_file()
         config_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(config_path, "w") as f:
-            json.dump(asdict(self), f, indent=2)
+        # PHILO-10-02 round three: atomic -- a temporary file beside it, fsync,
+        # then os.replace, so no reader ever sees a partial file.
+        fd, temp = tempfile.mkstemp(prefix=".config-", suffix=".json", dir=str(config_path.parent))
+        try:
+            with os.fdopen(fd, "w") as f:
+                json.dump(asdict(self), f, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+            if config_path.exists():
+                os.chmod(temp, config_path.stat().st_mode & 0o777)
+            else:  # a new file gets the mode open() would give it
+                umask = os.umask(0)
+                os.umask(umask)
+                os.chmod(temp, 0o666 & ~umask)
+            os.replace(temp, config_path)
+        except BaseException:
+            try:
+                os.unlink(temp)
+            except OSError:
+                pass
+            raise
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""

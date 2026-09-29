@@ -243,6 +243,7 @@ NUDGE_SEND = OperationDescriptor(
     exposure=("http:POST /api/nudges/{step_id}/send", "mcp:nudge.send"),
     service="project_steward_service",
     method="send_nudge_command",
+    blocking_io=True,  # gh pr comment
     admission=Admission("admitted", "A GitHub comment: egress (Q1)."),
 )
 
@@ -455,6 +456,7 @@ CONNECTION_RECHECK = OperationDescriptor(
     exposure=("http:POST /api/connections/{provider}/recheck", "mcp:connection.recheck"),
     service="connections_service",
     method="recheck",
+    blocking_io=True,  # gh auth status / acli auth switch+status
     admission=Admission(
         "admitted_if",
         "github, jira, confluence: asks the provider and stores its state (egress, Q1; B1). calendar, models: "

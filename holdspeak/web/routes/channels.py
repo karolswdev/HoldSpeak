@@ -13,9 +13,10 @@ GET    /api/channels/sends                             channel.sends
 An admitted route answers with its ``operation_id`` and terminal ``receipt``; a
 refusal of an admitted operation carries them (``_room_kernel``).
 
-PHILO-10-02 GATE 2 (Codex Astra r2 on #692): the service runs OFF the event
-loop (the threadpool), so a slow dispatch -- a CLI command, a large file --
-never stalls the hub's other requests.
+PHILO-10-02 GATE 2 (Codex Astra r2 on #692): an operation that declares
+blocking I/O (``OperationDescriptor.blocking_io``: a CLI send, an identity
+read) runs OFF the event loop (the threadpool), so it never stalls the hub's
+other requests.
 """
 from __future__ import annotations
 
@@ -47,7 +48,10 @@ def build_channels_router(ctx: WebContext) -> APIRouter:
         return operations.for_context(ctx)
 
     async def call(request: Request, name: str, args: dict[str, Any]) -> JSONResponse:
-        return await run_in_threadpool(call_sync, request, name, args)
+        # Off the loop exactly when the operation declares blocking I/O (a CLI send, an identity read).
+        if ops().descriptor(name).blocking_io:
+            return await run_in_threadpool(call_sync, request, name, args)
+        return call_sync(request, name, args)
 
     def call_sync(request: Request, name: str, args: dict[str, Any]) -> JSONResponse:
         try:

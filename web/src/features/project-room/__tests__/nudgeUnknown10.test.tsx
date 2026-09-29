@@ -12,7 +12,7 @@
 //   - counters (Meetings 0 · Resources 0 · …) → removed (D1 cut)
 //   - identity dedup → the name is said once (title bar); no orientation band
 
-import { render, screen, waitFor, fireEvent, cleanup } from "@testing-library/react";
+import { act, render, screen, waitFor, fireEvent, cleanup } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../../desk/api";
@@ -179,6 +179,27 @@ it('UNKNOWN survives closing and reopening the card', async () => {
 it('UNKNOWN survives a Room reload using its persisted wire state', async () => {
   installNudgeWire(true);render(<WindowHarness scope="project:p1" />);
   fireEvent.click(await screen.findByTestId('nudge-verb'));
+  expect(screen.queryByTestId('nudge-send')).toBeNull();
+  expect(screen.queryByTestId('nudge-unknown-row')).not.toBeNull();
+});
+
+// Round three (Codex Astra r2 finding 2, its probe): Send -> close and reopen while the answer is still
+// in flight -> UNKNOWN arrives. The late answer must reach the CURRENT card.
+it('UNKNOWN survives a close and reopen while Send is still in flight', async () => {
+  installNudgeWire();
+  const previous = apiFetch.getMockImplementation()!;
+  let settle!: (value: unknown) => void;
+  const pending = new Promise((resolve) => { settle = resolve; });
+  apiFetch.mockImplementation((url: string) => url.includes('/nudges/') && url.endsWith('/send') ? pending : previous(url));
+  render(<WindowHarness scope="project:p1" />);
+  fireEvent.click(await screen.findByTestId('nudge-verb'));
+  fireEvent.click(await screen.findByTestId('nudge-send'));
+  fireEvent.click(screen.getByTestId('nudge-verb'));
+  fireEvent.click(screen.getByTestId('nudge-verb'));
+  // While in flight the reopened card is busy: pressing Send again posts nothing.
+  fireEvent.click(screen.getByTestId('nudge-send'));
+  expect(apiFetch.mock.calls.filter(([url]) => String(url).endsWith('/send')).length).toBe(1);
+  await act(async () => { settle(wire.send); await pending; });
   expect(screen.queryByTestId('nudge-send')).toBeNull();
   expect(screen.queryByTestId('nudge-unknown-row')).not.toBeNull();
 });

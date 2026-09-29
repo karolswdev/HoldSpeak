@@ -5644,7 +5644,7 @@
             "GET"
           ],
           "symbol": "api_channel_destinations",
-          "line": 81,
+          "line": 85,
           "parameters": [
             {
               "name": "request",
@@ -5704,7 +5704,7 @@
             "POST"
           ],
           "symbol": "api_channel_save_destination",
-          "line": 85,
+          "line": 89,
           "parameters": [
             {
               "name": "request",
@@ -5759,7 +5759,7 @@
             "DELETE"
           ],
           "symbol": "api_channel_remove_destination",
-          "line": 90,
+          "line": 94,
           "parameters": [
             {
               "name": "destination_id",
@@ -5816,7 +5816,7 @@
             "POST"
           ],
           "symbol": "api_channel_check_destination",
-          "line": 99,
+          "line": 103,
           "parameters": [
             {
               "name": "destination_id",
@@ -5873,7 +5873,7 @@
             "POST"
           ],
           "symbol": "api_channel_preview",
-          "line": 103,
+          "line": 107,
           "parameters": [
             {
               "name": "request",
@@ -5928,7 +5928,7 @@
             "POST"
           ],
           "symbol": "api_channel_send",
-          "line": 122,
+          "line": 126,
           "parameters": [
             {
               "name": "request",
@@ -5985,7 +5985,7 @@
             "GET"
           ],
           "symbol": "api_channel_sends",
-          "line": 127,
+          "line": 131,
           "parameters": [
             {
               "name": "request",
@@ -6049,7 +6049,7 @@
             "POST"
           ],
           "symbol": "api_channel_prepare",
-          "line": 108,
+          "line": 112,
           "parameters": [
             {
               "name": "request",
@@ -6104,7 +6104,7 @@
             "POST"
           ],
           "symbol": "api_channel_discard",
-          "line": 113,
+          "line": 117,
           "parameters": [
             {
               "name": "send_id",
@@ -19924,7 +19924,7 @@
             "POST"
           ],
           "symbol": "mcp_http_endpoint",
-          "line": 99,
+          "line": 105,
           "parameters": [
             {
               "name": "request",
@@ -19942,6 +19942,7 @@
           "calls": [
             "JSONResponse",
             "Response",
+            "_blocking_io_tools",
             "_caller.reset",
             "_caller.set",
             "_caller_identity.reset",
@@ -19958,6 +19959,7 @@
             "handle_message_for_principal",
             "is_loopback_host",
             "isinstance",
+            "params.get",
             "request.headers.get",
             "request.json",
             "request.query_params.get",
@@ -19965,7 +19967,8 @@
             "run_in_threadpool"
           ],
           "body_access_keys": [
-            "method"
+            "method",
+            "params"
           ],
           "raw_request": true,
           "docstring": "Streamable HTTP transport for MCP JSON-RPC.\n\nLong-running contract (MCP-003): project.run_steward returns\nrun_id promptly; the client polls project.get_steward_run(run_id).\nTerminal states: completed, failed, cancelled.  A credential\nexpiring mid-run returns 403 on the poll; the run continues on\nthe hub."
@@ -36108,7 +36111,7 @@
             "GET"
           ],
           "symbol": "get_remote_settings",
-          "line": 226,
+          "line": 233,
           "parameters": [
             {
               "name": "request",
@@ -36196,7 +36199,7 @@
             "PUT"
           ],
           "symbol": "update_remote_settings",
-          "line": 290,
+          "line": 297,
           "parameters": [
             {
               "name": "request",
@@ -36276,7 +36279,7 @@
             "POST"
           ],
           "symbol": "issue_credential",
-          "line": 312,
+          "line": 319,
           "parameters": [
             {
               "name": "request",
@@ -36362,7 +36365,7 @@
             "DELETE"
           ],
           "symbol": "revoke_credential",
-          "line": 358,
+          "line": 365,
           "parameters": [
             {
               "name": "request",
@@ -36432,7 +36435,7 @@
             "DELETE"
           ],
           "symbol": "revoke_delegation",
-          "line": 429,
+          "line": 436,
           "parameters": [
             {
               "name": "request",
@@ -36503,7 +36506,7 @@
             "PUT"
           ],
           "symbol": "grant_delegation",
-          "line": 416,
+          "line": 423,
           "parameters": [
             {
               "name": "request",
@@ -36574,7 +36577,7 @@
             "DELETE"
           ],
           "symbol": "revoke_project_delegation",
-          "line": 464,
+          "line": 471,
           "parameters": [
             {
               "name": "request",
@@ -36647,7 +36650,7 @@
             "PUT"
           ],
           "symbol": "grant_project_delegation",
-          "line": 452,
+          "line": 459,
           "parameters": [
             {
               "name": "request",

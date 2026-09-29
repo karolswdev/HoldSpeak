@@ -721,3 +721,327 @@ Suite totals: 2946 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
 ```
+
+
+## Round three (Codex Astra r2 DO-NOT-RATIFY, `checks/story-02-built-astra-r2.md`)
+
+| Finding | Paid by | Fence (red first) |
+|---|---|---|
+| 1. P1 the blanket MCP threadpool exposed a settings race | (a) reverted: `OperationDescriptor.blocking_io` (declared on `channel.send`, `channel.save_destination`, `nudge.send`, `connection.recheck`; exported in `docs/generated/operations.json`) decides the threadpool on MCP (`mcp_http.py` `_blocking_io_tools`) and on the channel routes; (b) `settings_service._SETTINGS_WRITE` around the revision check + read/merge/write; `Config.save` writes a temporary file, fsyncs it, then `os.replace` | `tests/unit/test_philo10_settings_atomic.py` (3 fences; all three red on b52bfcdb, captured below; mutations S1, S2); the slow-gh fence still green (mutations G2c, G2e) |
+| 2. P1 a late UNKNOWN missed a card reopened mid-send | the Room holds `NudgeLocal` per bottleneck (pending, unknown, failed, sent) and keys the card by it; a pending card is busy (no second post) | `nudgeUnknown10.test.tsx` "UNKNOWN survives a close and reopen while Send is still in flight" (Codex's probe; red without the key, mutation W2); the real-hub glass now closes and reopens the card while the answer is held in flight, at 1440 and 393 |
+| 3. #694's one owner-only table | owed at the merge of main | — |
+
+Not in this round: other operations that run a CLI on the loop today (for example `project.watch.test`) do not declare `blocking_io` yet; they are inherited, and #694's per-tool classification table is the home for the flag.
+
+### Round three captures
+
+The scoped run is red on the inherited kernel line budget only (432 on main and here). The first mutation capture below exits 1 on a script fault, not a missed mutation: row W1's source text had moved in this round (the card's initializer now reads the Room's live state). S2 was also red for the wrong reason: its mutation broke the first save instead of tearing a write. Both rows are corrected, and the second mutation capture is the verdict: 29/29 caught, with S2 red on the torn file. The four shots in `assets/story-02-shots/` are re-shot: the glass now closes and reopens the card while the answer is held in flight.
+
+### Captured run — 2026-09-29T03:16:52Z
+
+- **Command:** `zsh .tmp/b52_red.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cc0fa5b3a1e794426d2161fb9730e605e674ec84
+
+```text
+E               AssertionError: (0, [(False, {'settings': {'_calendar_sources': [], '_calendar_subscription': {'egress': False, 'host': '', 'kind': 'd..., 'refresh_seconds': 900}, '_placement': {'meeting': {...}}, '_revi
+E               assert (2 == 1)
+E                +  where 2 = len([(False, {'settings': {'_calendar_sources': [], '_calendar_subscription': {'egress': False, 'host': '', 'kind': 'disab...cal', 'model': 'Qwen3.5-9B-Instruct-Q6_K', 'node': '', ...}}, '_r
+E       AssertionError: ['accepted', 'accepted']
+E       assert ['accepted', 'accepted'] == ['accepted', 'settings_stale']
+E         
+E         At index 1 diff: 'accepted' != 'settings_stale'
+E         Use -v to get more diff
+E       assert ('{\n  "config...oss_meeting_r' == '{\n  "config...": []\n  }\n}'
+E         
+E         Skipping 347 identical leading characters in diff, use -v to show
+E         - _sounds": true
+E         ?           ^^^
+E         + _sounds": false
+E         ?           ^^^^
+E             },...
+E         
+E         ...Full output truncated (137 lines hidden), use '-vv' to show)
+FAILED tests/unit/test_philo10_settings_atomic.py::test_concurrent_mcp_settings_updates_with_one_revision_let_exactly_one_win
+FAILED tests/unit/test_philo10_settings_atomic.py::test_the_settings_service_itself_lets_exactly_one_same_revision_write_win
+FAILED tests/unit/test_philo10_settings_atomic.py::test_a_settings_write_that_fails_midway_leaves_the_previous_file_whole
+3 failed in 9.01s
+```
+
+### Captured run — 2026-09-29T03:17:36Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/test_philo10_settings_atomic.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cc0fa5b3a1e794426d2161fb9730e605e674ec84
+
+```text
+...                                                                      [100%]
+3 passed in 6.40s
+```
+
+### Captured run — 2026-09-29T03:18:17Z
+
+- **Command:** `zsh -c cd web && npx vitest run src/features/project-room/__tests__/nudgeUnknown10.test.tsx src/features/project-room/health.test.ts && npx tsc --noEmit -p . && echo TSC-OK`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cc0fa5b3a1e794426d2161fb9730e605e674ec84
+
+```text
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-10-02/web
+
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  21:18:20
+   Duration  11.33s (transform 10.59s, setup 9.90s, import 3.06s, tests 188ms, environment 8.87s)
+
+TSC-OK
+```
+
+### Captured run — 2026-09-29T03:18:53Z
+
+- **Command:** `env PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm HOLDSPEAK_EVIDENCE_WRITE=1 .tmp/iso.sh .venv/bin/python -m pytest -q -p no:cacheprovider tests/e2e/test_philo10_02_nudge_unknown_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cc0fa5b3a1e794426d2161fb9730e605e674ec84
+
+```text
+..                                                                       [100%]
+2 passed in 44.95s
+```
+
+### Captured run — 2026-09-29T03:19:42Z
+
+- **Command:** `bash .tmp/r2-scoped.sh`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** cc0fa5b3a1e794426d2161fb9730e605e674ec84
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  6%]
+........................................................................ [ 13%]
+........................................................................ [ 20%]
+........................................................................ [ 27%]
+........................................................................ [ 34%]
+........................................................................ [ 41%]
+................................................................F....... [ 48%]
+........................................................................ [ 55%]
+........................................................................ [ 61%]
+........................................................................ [ 68%]
+........................................................................ [ 75%]
+........................................................................ [ 82%]
+........................................................................ [ 89%]
+........................................................................ [ 96%]
+......................................                                   [100%]
+=================================== FAILURES ===================================
+______________ test_kernel_broker_modules_stay_within_line_budget ______________
+[gw5] darwin -- Python 3.13.14 /Users/karol/dev/tools/wt-philo-10-02/.venv/bin/python
+
+    def test_kernel_broker_modules_stay_within_line_budget() -> None:
+        offenders: list[str] = []
+        for path in _broker_modules():
+            budget = (
+                _BROKER_INIT_BUDGET if path.name == "__init__.py" else _BROKER_MODULE_BUDGET
+            )
+            relative = path.relative_to(_REPO).as_posix()
+            allowed = max(budget, _BROKER_BUDGET_DEBT.get(relative, 0))
+            lines = _line_count(path)
+            if lines > allowed:
+                recorded = _BROKER_BUDGET_DEBT.get(relative)
+                ceiling = (
+                    f"recorded debt of {recorded}" if recorded else f"{budget}-line budget"
+                )
+                offenders.append(
+                    f"kernel broker module over its {ceiling}: "
+                    f"{path.relative_to(_REPO)}: {lines} lines"
+                )
+>       assert not offenders, (
+            "broker density guard failed — carve a typed concern module; don't bump "
+            "the budget:\n  " + "\n  ".join(offenders)
+        )
+E       AssertionError: broker density guard failed — carve a typed concern module; don't bump the budget:
+E           kernel broker module over its 300-line budget: holdspeak/kernel/project.py: 432 lines
+E       assert not ['kernel broker module over its 300-line budget: holdspeak/kernel/project.py: 432 lines']
+
+tests/unit/test_kernel_effect_fence.py:1281: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_kernel_effect_fence.py::test_kernel_broker_modules_stay_within_line_budget
+1 failed, 1045 passed in 201.38s (0:03:21)
+```
+
+### Captured run — 2026-09-29T03:23:04Z
+
+- **Command:** `zsh .tmp/docs_checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cc0fa5b3a1e794426d2161fb9730e605e674ec84
+
+```text
+== scripts/gen_operations_json.py --check
+OK docs/generated/operations.json
+== scripts/gen_mcp_sidecar_doc.py --check
+wrote docs/MCP_SIDECAR.md
+  246 tools across 43 families
+== scripts/check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+== scripts/philo_repository_census.py --check
+Repository census: 5 outputs verified.
+== scripts/philo_api_reference.py --check
+API reference checked
+== scripts/philo_openapi_reference.py --check
+OpenAPI: 579 paths
+== scripts/philo_boundary_census.py --check
+Boundary candidate census checked
+== scripts/philo_doctor_reference.py --check
+Doctor reference: 41 check functions
+== scripts/philo_config_reference.py --check
+Configuration declaration reference is current
+== scripts/philo_graph_reference.py --check
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+== scripts/validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+== scripts/generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
+== scripts/check_doc_coverage.py --check
+Documentation coverage checked.
+== scripts/residual_census.py --check
+RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-10-02
+DOCS RC=0
+```
+
+### Captured run — 2026-09-29T03:23:46Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-02-proof/mutations.py.txt`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** cc0fa5b3a1e794426d2161fb9730e605e674ec84
+
+```text
+CAUGHT G1a the redactor scans the uncut error and any payload (story 01's cost): rc=1 1 failed in 12.07s
+    first assertion: E           AssertionError: 2000-char error x 10 MiB: 10.74 s
+CAUGHT G1b the named code passes through the redactor: rc=1 1 failed in 2.33s
+    first assertion: E       AssertionError: assert ('failed', 'g...cted]_denied') == ('failed', 'g...ssion_denied')
+CAUGHT G2a the HTTP routes run the service on the event loop: rc=1 1 failed in 4.62s
+    first assertion: E           AssertionError: the read waited 1.415 s during the send (baseline 0.002 s)
+CAUGHT G2b the MCP transport runs channel.send on the event loop: rc=1 1 failed in 4.71s
+    first assertion: E           AssertionError: the read waited 1.389 s during the send (baseline 0.002 s)
+CAUGHT G2c (round three) MCP tool calls on the event loop again (setup's identity read): rc=1 1 failed in 5.57s
+    first assertion: E           AssertionError: mcp-save-destination: the read waited 1.455 s during the slow gh call
+CAUGHT G2d (round two) the HTTP recheck on the event loop: rc=1 1 failed in 5.51s
+    first assertion: E           AssertionError: http-recheck: the read waited 1.338 s during the slow gh call
+CAUGHT G2e (round three) channel.save_destination does not declare its blocking I/O: rc=1 1 failed in 4.94s
+    first assertion: E           AssertionError: mcp-save-destination: the read waited 1.404 s during the slow gh call
+CAUGHT S1 (round three) the settings write without its lock: rc=1 1 failed in 2.95s
+    first assertion: E       AssertionError: ['accepted', 'accepted']
+CAUGHT S2 (round three) the settings file written in place (not atomic): rc=1 1 failed in 0.57s
+    first assertion: E               FileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-2737/te
+CAUGHT W2 (round three) the nudge card not keyed by the Room's live state: rc=1    Duration  4.86s (transform 1.30s, setup 564ms, import 2.26s, tests 186ms, environment 1.63s)
+    first assertion: × UNKNOWN survives a close and reopen while Send is still in flight 50ms
+Traceback (most recent call last):
+  File "/Users/karol/dev/tools/wt-philo-10-02/pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-02-proof/mutations.py.txt", line 151, in <module>
+    assert mutated.count(before) == 1, (name, "the original text is not unique", before[:60])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ("W1 (round two) the nudge card starts open whatever its step's persisted state", 'the original text is not unique', 'useReducer(nudgeCardReducer, initialNudgeCard(persistedState')
+```
+
+### Captured run — 2026-09-29T03:24:46Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python scripts/check_web_baseline.py --run`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cc0fa5b3a1e794426d2161fb9730e605e674ec84
+
+```text
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (5):
+  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+Suite totals: 2947 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```
+
+### Captured run — 2026-09-29T03:26:33Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-02-proof/mutations.py.txt`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cc0fa5b3a1e794426d2161fb9730e605e674ec84
+
+```text
+CAUGHT G1a the redactor scans the uncut error and any payload (story 01's cost): rc=1 1 failed in 12.07s
+    first assertion: E           AssertionError: 2000-char error x 10 MiB: 9.24 s
+CAUGHT G1b the named code passes through the redactor: rc=1 1 failed in 4.05s
+    first assertion: E       AssertionError: assert ('failed', 'g...cted]_denied') == ('failed', 'g...ssion_denied')
+CAUGHT G2a the HTTP routes run the service on the event loop: rc=1 1 failed in 4.60s
+    first assertion: E           AssertionError: the read waited 1.400 s during the send (baseline 0.005 s)
+CAUGHT G2b the MCP transport runs channel.send on the event loop: rc=1 1 failed in 4.93s
+    first assertion: E           AssertionError: the read waited 1.408 s during the send (baseline 0.003 s)
+CAUGHT G2c (round three) MCP tool calls on the event loop again (setup's identity read): rc=1 1 failed in 5.69s
+    first assertion: E           AssertionError: mcp-save-destination: the read waited 1.482 s during the slow gh call
+CAUGHT G2d (round two) the HTTP recheck on the event loop: rc=1 1 failed in 4.81s
+    first assertion: E           AssertionError: http-recheck: the read waited 1.299 s during the slow gh call
+CAUGHT G2e (round three) channel.save_destination does not declare its blocking I/O: rc=1 1 failed in 6.23s
+    first assertion: E           AssertionError: mcp-save-destination: the read waited 1.688 s during the slow gh call
+CAUGHT S1 (round three) the settings write without its lock: rc=1 1 failed in 4.26s
+    first assertion: E       AssertionError: ['accepted', 'accepted']
+CAUGHT S2 (round three) the settings file written in place (not atomic), as before this round: rc=1 1 failed in 0.73s
+    first assertion: E       assert ('{\n  "config...oss_meeting_r' == '{\n  "config...": []\n  }\n}'
+CAUGHT W2 (round three) the nudge card not keyed by the Room's live state: rc=1    Duration  4.13s (transform 1.13s, setup 497ms, import 1.86s, tests 118ms, environment 1.43s)
+    first assertion: × UNKNOWN survives a close and reopen while Send is still in flight 33ms
+CAUGHT W1 (round two) the nudge card starts open whatever its step's persisted state: rc=1    Duration  2.91s (transform 1.01s, setup 91ms, import 1.34s, tests 1.13s, environment 243ms)
+    first assertion: × UNKNOWN survives closing and reopening the card 1073ms
+CAUGHT M1 the CLI children unparented: rc=1 1 failed in 4.24s
+    first assertion: E           AssertionError: {'name': 'subprocess.exec', 'operation_id': 'op_250dd6aca0844d229fd5d80fb9640834', 'outcome': 'succeeded', 'parent_operation_id': ''
+CAUGHT M2 the CLI children under the default local-owner (the seam's principal not threaded): rc=1 1 failed in 7.02s
+    first assertion: E       AssertionError: {"send":{"id":"chs_c5039d83ecf66b703ddf4e69","document_ref":"project_update:pupd_2e8002e272e74a6faf4911e7b7e43bd1","destination_id":"chd
+CAUGHT M3 a nudge's UNKNOWN treated as a known failure (F4, main's mapping): rc=1 1 failed in 2.54s
+    first assertion: E       AssertionError: {"success":false,"error":"send_failed","code":"send_failed","message":"send failed","operation_id":"op_18cdc560d87f4f15beaab604449f3d98"
+CAUGHT M4 an unpinned nonzero exit is FAILED: rc=1 1 failed in 1.89s
+    first assertion: E           AssertionError: {'operation_id': 'op_2237e21fac854cafb0ac443bd2686bca', 'outcome': 'failed', 'receipt': {'actor_identity': 'owner-sess...b.com', 'lo
+CAUGHT M5 exit 0 without a proof is SENT: rc=1 1 failed in 1.55s
+    first assertion: E           AssertionError: {'operation_id': 'op_6c2ad3d3a6a64953ab521210c4c2e932', 'outcome': 'sent', 'receipt': {'actor_identity': 'owner-sessio...', 'site': 
+CAUGHT M6 the GitHub login not compared before the boundary: rc=1 1 failed in 1.37s
+    first assertion: E       AssertionError: {"send":{"id":"chs_cd71f9405fc54e23b1676f3c","document_ref":"project_update:pupd_fbdf22989107471b8710b341735b4b4a","destination_id":"chd
+CAUGHT M7 the Atlassian create outside the acli lock: rc=1 1 failed in 31.47s
+    first assertion: E       AssertionError: condition never held
+CAUGHT M8 a plan may carry --jql, --filter or --edit-last: rc=1 1 failed in 1.55s
+    first assertion: E           Failed: DID NOT RAISE <class 'ValueError'>
+CAUGHT M9 a second Jira key accepted: rc=1 1 failed in 1.43s
+    first assertion: E           holdspeak.services.errors.ValidationError: A Jira destination needs one work item key, like ABC-123
+CAUGHT M10 the body in argv, not in the private file: rc=1 1 failed in 1.49s
+    first assertion: E       AssertionError: assert 'failed' == 'sent'
+CAUGHT M11 the Confluence title in argv: rc=1 1 failed in 1.43s
+    first assertion: E           assert (False)
+CAUGHT M12 the steward's child send admitted (no owner-press rule): rc=1 1 failed in 1.49s
+    first assertion: E       AssertionError: assert ('sent', 'op_...c52a5295e78d') == ('prepared', ...c52a5295e78d')
+CAUGHT M13 the scheduler may not submit the steward's prepare: rc=1 1 failed in 1.48s
+    first assertion: E       ValueError: too many values to unpack (expected 1)
+CAUGHT M14 the nudge without its durable boundary (it stays proposed while gh runs): rc=1 1 failed in 1.41s
+    first assertion: E       AssertionError: assert 'proposed' == 'sending'
+CAUGHT M15 the reaper leaves a sending nudge as it is: rc=1 1 failed in 1.49s
+    first assertion: E       KeyError: 'outcome'
+CAUGHT M16 a CLI take-over dispatches from a dispatching row as from a prepared one: rc=1 1 failed in 1.44s
+    first assertion: E       AssertionError: assert ('sent', None) == ('unknown', 'interrupted')
+CAUGHT M17 the per-channel size limit dropped: rc=1 1 failed in 1.54s
+    first assertion: E       AssertionError: {"send":{"id":"chs_40303661327b3ec94cb2eb9b","document_ref":"project_update:pupd_33b3386e547e4c3e94badb246ada6631","destination_id":"chd
+CAUGHT M18 the file mode not private: rc=1 1 failed in 1.46s
+    first assertion: E       assert 420 == 384
+29/29 mutations caught
+```

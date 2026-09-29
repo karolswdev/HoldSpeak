@@ -6152,6 +6152,16 @@
       "review": "candidate_only"
     },
     {
+      "path": "holdspeak/web/routes/mcp_http.py",
+      "line": 213,
+      "kinds": [
+        "process_or_shell"
+      ],
+      "excerpt": "# a subprocess or reach the network). Every other tool keeps the loop's",
+      "line_sha256": "55d6b1044a5e2e8e07f35f58ed6a9c3f62ce642b3796d7cc5e213a785eac807d",
+      "review": "candidate_only"
+    },
+    {
       "path": "holdspeak/web/routes/missioncontrol.py",
       "line": 35,
       "kinds": [

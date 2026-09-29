@@ -97,6 +97,7 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
     exposure=("http:POST /api/channels/destinations", "mcp:channel.save_destination"),
     service="channel_service",
     method="save_destination",
+    blocking_io=True,  # GitHub: gh api user --hostname (the concrete login)
     admission=Admission("admitted", "Changes where the owner's documents may go: the allow-list (XI.1). "
                                     "The owner's; Edit parks the old row."),
 )
@@ -254,6 +255,7 @@ CHANNEL_SEND = OperationDescriptor(
     exposure=("http:POST /api/channels/send", "mcp:channel.send"),
     service="channel_service",
     method="send",
+    blocking_io=True,  # gh / acli children
     admission=Admission("admitted", "Crosses egress or files (XI.1): one terminal receipt -- succeeded (sent), "
                                     "failed, indeterminate (unknown), or refused before the dispatch boundary. "
                                     "The owner's press ('You, every time')."),
