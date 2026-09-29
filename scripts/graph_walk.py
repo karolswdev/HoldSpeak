@@ -840,6 +840,12 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
         "project.suggested_sources", "project.add_suggested_source", "project.dismiss_suggested_source",
         "connection.list", "connection.recheck", "project.mark_update_delivered",
     )},
+    # PHILO-10-01: the Send (each tool IS its declared operation, same name).
+    **{name: {"kind": "tool", "name": name} for name in (
+        "channel.destinations", "channel.save_destination", "channel.remove_destination",
+        "channel.check_destination", "channel.preview", "channel.prepare", "channel.discard",
+        "channel.send", "channel.sends",
+    )},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
@@ -870,6 +876,8 @@ OP_READ_OBSERVATIONS = frozenset({
     # PHILO-9-02: the steward's and the connectors' reads.
     "project.get_steward_run", "steward.nudges", "project.watch.inspect", "project.suggested_sources",
     "connection.list",
+    # PHILO-10-01: the Send's reads.
+    "channel.destinations", "channel.check_destination", "channel.preview", "channel.sends",
 })
 
 

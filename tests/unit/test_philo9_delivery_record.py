@@ -85,7 +85,9 @@ def test_the_reconcile_creates_the_table_on_an_existing_database(tmp_path: Path)
     foreign = {(row[2], row[3]) for row in conn.execute("PRAGMA foreign_key_list(project_update_deliveries)")}
     indexes = {row[1] for row in conn.execute("PRAGMA index_list(project_update_deliveries)")}
     conn.close()
-    assert columns == ["id", "update_id", "project_id", "delivered_at", "delivered_to", "operation_id"]
+    # PHILO-10-01: four additive columns (how it left, its send, its outcome, its proof).
+    assert columns == ["id", "update_id", "project_id", "delivered_at", "delivered_to", "operation_id",
+                       "channel", "send_id", "outcome", "proof_json"]
     assert foreign == {("project_updates", "update_id"), ("kernel_operations", "operation_id")}
     assert "idx_project_update_deliveries_update" in indexes
 

@@ -45,6 +45,7 @@ _FAMILY_MODULE_NAMES: list[str] = [
     "door",
     "thread",
     "project",
+    "channel",
     "heartbeat",
     "interview",
     "practice_recipe",

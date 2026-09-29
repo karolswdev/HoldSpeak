@@ -9,7 +9,8 @@ order, on ONE connection:
    existing receipt is returned and nothing runs again; ``strict``: an existing
    receipt raises ``operation_already_terminal`` and a moved revision
    ``operation_revision_conflict``, before anything is written;
-3. ``effect(conn)`` when given (local SQL on THIS connection only);
+3. ``effect(conn)`` when given (local SQL on THIS connection only); a string
+   it returns names the receipt's outcome (PHILO-10-01);
 4. UPDATE the state, ``revision+1`` (and ``decision`` / ``warrant_revoked``);
 5. INSERT the receipt (and the caller's in-transaction attestation);
 6. commit. Any exception in 3-5 rolls all of it back.
@@ -139,7 +140,12 @@ def transition_and_receipt_in(
         if current is None or int(current["revision"]) != int(expected_revision):
             raise KernelRefused("operation_revision_conflict", operation_id=operation_id)
     if effect is not None:
-        effect(conn)
+        # PHILO-10-01: an effect may name the receipt's outcome from what it
+        # read INSIDE this transaction (the reaper's ``reaped_before_dispatch``
+        # for a send that never crossed its dispatch boundary).
+        named = effect(conn)
+        if isinstance(named, str) and named:
+            outcome = named
     assignments, values = ["state=?", "revision=revision+1", "updated_at=?"], [state, store._clock()]
     for column, value in (("decision", decision), ("warrant_revoked", warrant_revoked)):
         if value is not None:

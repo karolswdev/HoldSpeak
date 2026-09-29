@@ -37,6 +37,8 @@ STEWARD_AND_CONNECTORS_ADMITTED: frozenset[str] = frozenset({
     "project.watch.update", "project.watch.baseline", "project.add_suggested_source",
     "connection.recheck", "project.mark_update_delivered",
 })
+#: PHILO-10-01: the Send's rows live beside their settle (``kernel/channel_send.py``).
+from .channel_send import AGENT_PREPARE_OPERATIONS, CHANNEL_ADMITTED, SETTLED_ROW_REPLAY  # noqa: E402,F401
 #: The beat's section 5: one child per executed policy slot that has no
 #: admitted operation of its own. Internal: no transport, never grantable.
 STEWARD_EFFECT = "project.steward.effect"
@@ -52,7 +54,7 @@ PROJECT_DELEGATION_OPERATIONS: frozenset[str] = frozenset({
 })
 #: Scopes the atomic terminal writes, the claim and the recovery ONLY; never an authority set.
 PROJECT_KERNEL_OPERATIONS: frozenset[str] = (ROOM_ADMITTED | STEWARD_AND_CONNECTORS_ADMITTED | {STEWARD_EFFECT}
-                                             | PROJECT_DELEGATION_OPERATIONS)
+                                             | PROJECT_DELEGATION_OPERATIONS | CHANNEL_ADMITTED)
 #: The owner's ruled bound for the project grant ("Run, stop, publish"):
 #: without a LIVE grant naming it for that project, every agent call is refused.
 PROJECT_GRANT_OPERATIONS: frozenset[str] = frozenset({
@@ -379,6 +381,9 @@ def project_approval_code(broker: Any, operation: Mapping[str, Any], principal: 
     name = str(operation.get("name") or "")
     if not _PROJECT_PATH.get():
         return None
+    if name in AGENT_PREPARE_OPERATIONS:
+        # PHILO-10-01 (Q5): the agent's own prepare, under its own identity.
+        return ""
     if agent_steward_child(name, principal, str(operation.get("parent_operation_id") or "")):
         with broker.store._connection() as conn:
             return agent_child_code(conn, principal, broker._clock())
@@ -424,3 +429,4 @@ def steward_run_ended_effect(operation: Mapping[str, Any], reason: str) -> Any:
         )
 
     return effect
+

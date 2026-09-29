@@ -1035,6 +1035,90 @@
       ]
     },
     {
+      "path": "/api/channels/destinations",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/channels/destinations",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/channels/destinations/{destination_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.channels",
+      "consumers": []
+    },
+    {
+      "path": "/api/channels/destinations/{destination_id}/check",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": []
+    },
+    {
+      "path": "/api/channels/preview",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/channels/send",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/channels/sends",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/channels/sends",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/channels/sends/{send_id}/discard",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": []
+    },
+    {
       "path": "/api/coders/clear-stale",
       "methods": [
         "POST"

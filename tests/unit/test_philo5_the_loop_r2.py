@@ -470,6 +470,65 @@ def _p_mark_update_delivered(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
         "update_id": uid, "delivered_to": "the team"})
 
 
+def _channel(hub: Hub, tmp_path: Path) -> tuple[str, str]:
+    """PHILO-10-01: a published update and a saved folder destination, through the real registry."""
+    pid = _project(hub, "Send shape")
+    uid = hub.client.post(f"/api/projects/{pid}/updates/draft", json={}).json()["update"]["id"]
+    hub.client.post(f"/api/updates/{uid}/publish", json={})
+    folder = tmp_path / "send-shape"
+    folder.mkdir(exist_ok=True)
+    saved = hub.root.operations.invoke(OWNER, "channel.save_destination", {
+        "name": "Shape folder", "channel": "file", "folder": str(folder)})
+    return uid, saved["destination"]["id"]
+
+
+def _p_channel_save_destination(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    folder = tmp_path / "save-shape"
+    folder.mkdir()
+    return hub.root.operations.invoke(OWNER, "channel.save_destination", {
+        "name": "Save shape", "channel": "file", "folder": str(folder)})
+
+
+def _p_channel_destinations(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    _channel(hub, tmp_path)
+    return hub.root.operations.invoke(OWNER, "channel.destinations", {})
+
+
+def _p_channel_remove_destination(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    _uid, dest = _channel(hub, tmp_path)
+    return hub.root.operations.invoke(OWNER, "channel.remove_destination", {"destination_id": dest})
+
+
+def _p_channel_check_destination(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    _uid, dest = _channel(hub, tmp_path)
+    return hub.root.operations.invoke(OWNER, "channel.check_destination", {"destination_id": dest})
+
+
+def _p_channel_preview(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    uid, dest = _channel(hub, tmp_path)
+    return hub.root.operations.invoke(OWNER, "channel.preview", {"update_id": uid, "destination_id": dest})
+
+
+def _p_channel_prepare(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    uid, dest = _channel(hub, tmp_path)
+    return hub.root.operations.invoke(OWNER, "channel.prepare", {"update_id": uid, "destination_id": dest})
+
+
+def _p_channel_discard(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    prepared = _p_channel_prepare(hub, monkeypatch, tmp_path)
+    return hub.root.operations.invoke(OWNER, "channel.discard", {"send_id": prepared["send"]["id"]})
+
+
+def _p_channel_send(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    prepared = _p_channel_prepare(hub, monkeypatch, tmp_path)
+    return hub.root.operations.invoke(OWNER, "channel.send", {"send_id": prepared["send"]["id"]})
+
+
+def _p_channel_sends(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    _p_channel_send(hub, monkeypatch, tmp_path)
+    return hub.root.operations.invoke(OWNER, "channel.sends", {})
+
+
 PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "meeting.list": _p_meeting_list,
     "meeting.import": _p_meeting_import,
@@ -494,6 +553,16 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "project.dismiss_suggested_source": _p_dismiss_suggested_source,
     "connection.list": _p_connection_list,
     "project.mark_update_delivered": _p_mark_update_delivered,
+    # PHILO-10-01: the Send.
+    "channel.destinations": _p_channel_destinations,
+    "channel.save_destination": _p_channel_save_destination,
+    "channel.remove_destination": _p_channel_remove_destination,
+    "channel.check_destination": _p_channel_check_destination,
+    "channel.preview": _p_channel_preview,
+    "channel.prepare": _p_channel_prepare,
+    "channel.discard": _p_channel_discard,
+    "channel.send": _p_channel_send,
+    "channel.sends": _p_channel_sends,
 }
 
 

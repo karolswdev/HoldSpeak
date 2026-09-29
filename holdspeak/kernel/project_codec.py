@@ -81,6 +81,11 @@ class ProjectCodec:
         if principal.kind is not PrincipalKind.AGENT:
             raise KernelRefused("declared_capability_required", provenance=target)
         # An AGENT.
+        if self.name in rooms.AGENT_PREPARE_OPERATIONS:
+            # PHILO-10-01 (Q5, "You, every time"): an agent he connected may
+            # PREPARE a send; it completes under the agent's own identity and
+            # nothing leaves the machine. Only the owner sends.
+            return admission
         if self.name in rooms.PROJECT_DELEGATION_OPERATIONS:
             # XI.4: only the owner delegates; an agent can never grant itself.
             raise KernelRefused(rooms.OWNER_REQUIRED, provenance=target)

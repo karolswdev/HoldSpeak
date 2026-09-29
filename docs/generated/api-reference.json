@@ -5628,6 +5628,520 @@
       }
     },
     {
+      "path": "/api/channels/destinations",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/channels.py",
+      "handler_evidence": [
+        {
+          "path": "/api/channels/destinations",
+          "methods": [
+            "GET"
+          ],
+          "symbol": "api_channel_destinations",
+          "line": 73,
+          "parameters": [
+            {
+              "name": "request",
+              "annotation": "Request"
+            },
+            {
+              "name": "include_parked",
+              "annotation": "bool"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [],
+          "calls": [
+            "call",
+            "router.get"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/channels/destinations",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/channels.py",
+      "handler_evidence": [
+        {
+          "path": "/api/channels/destinations",
+          "methods": [
+            "POST"
+          ],
+          "symbol": "api_channel_save_destination",
+          "line": 77,
+          "parameters": [
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [],
+          "calls": [
+            "body",
+            "call",
+            "router.post"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/channels/destinations/{destination_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [],
+      "source": "holdspeak/web/routes/channels.py",
+      "handler_evidence": [
+        {
+          "path": "/api/channels/destinations/{destination_id}",
+          "methods": [
+            "DELETE"
+          ],
+          "symbol": "api_channel_remove_destination",
+          "line": 82,
+          "parameters": [
+            {
+              "name": "destination_id",
+              "annotation": "str"
+            },
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [],
+          "calls": [
+            "body",
+            "call",
+            "path_refusal",
+            "router.delete"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/unit/test_philo10_send_contract.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/channels/destinations/{destination_id}/check",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [],
+      "source": "holdspeak/web/routes/channels.py",
+      "handler_evidence": [
+        {
+          "path": "/api/channels/destinations/{destination_id}/check",
+          "methods": [
+            "POST"
+          ],
+          "symbol": "api_channel_check_destination",
+          "line": 91,
+          "parameters": [
+            {
+              "name": "destination_id",
+              "annotation": "str"
+            },
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [],
+          "calls": [
+            "call",
+            "router.post"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/unit/test_philo10_send_contract.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/channels/preview",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/channels.py",
+      "handler_evidence": [
+        {
+          "path": "/api/channels/preview",
+          "methods": [
+            "POST"
+          ],
+          "symbol": "api_channel_preview",
+          "line": 95,
+          "parameters": [
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [],
+          "calls": [
+            "body",
+            "call",
+            "router.post"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/channels/send",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/channels.py",
+      "handler_evidence": [
+        {
+          "path": "/api/channels/send",
+          "methods": [
+            "POST"
+          ],
+          "symbol": "api_channel_send",
+          "line": 114,
+          "parameters": [
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [],
+          "calls": [
+            "body",
+            "call",
+            "router.post"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/channels/sends",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/channels.py",
+      "handler_evidence": [
+        {
+          "path": "/api/channels/sends",
+          "methods": [
+            "GET"
+          ],
+          "symbol": "api_channel_sends",
+          "line": 119,
+          "parameters": [
+            {
+              "name": "request",
+              "annotation": "Request"
+            },
+            {
+              "name": "update_id",
+              "annotation": "Optional[str]"
+            },
+            {
+              "name": "send_id",
+              "annotation": "Optional[str]"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [],
+          "calls": [
+            "call",
+            "router.get"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/channels/sends",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/channels.py",
+      "handler_evidence": [
+        {
+          "path": "/api/channels/sends",
+          "methods": [
+            "POST"
+          ],
+          "symbol": "api_channel_prepare",
+          "line": 100,
+          "parameters": [
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [],
+          "calls": [
+            "body",
+            "call",
+            "router.post"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/channels/sends/{send_id}/discard",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [],
+      "source": "holdspeak/web/routes/channels.py",
+      "handler_evidence": [
+        {
+          "path": "/api/channels/sends/{send_id}/discard",
+          "methods": [
+            "POST"
+          ],
+          "symbol": "api_channel_discard",
+          "line": 105,
+          "parameters": [
+            {
+              "name": "send_id",
+              "annotation": "str"
+            },
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [],
+          "calls": [
+            "body",
+            "call",
+            "path_refusal",
+            "router.post"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/unit/test_philo10_send_contract.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
       "path": "/api/coders/clear-stale",
       "methods": [
         "POST"
@@ -26565,6 +27079,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -26580,6 +27095,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -26687,6 +27204,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -26702,6 +27220,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -26861,6 +27381,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -26876,6 +27397,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -26973,6 +27496,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -26988,6 +27512,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -27095,6 +27621,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27110,6 +27637,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -27204,6 +27733,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27219,6 +27749,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -27315,6 +27847,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27330,6 +27863,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -27432,6 +27967,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27447,6 +27983,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -27546,6 +28084,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27561,6 +28100,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -27664,6 +28205,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27679,6 +28221,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -27774,6 +28318,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27789,6 +28334,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -27902,6 +28449,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27917,6 +28465,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -28012,6 +28562,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28027,6 +28578,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -28129,6 +28682,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28144,6 +28698,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -28206,6 +28762,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28221,6 +28778,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -28332,6 +28891,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28347,6 +28907,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -28454,6 +29016,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28469,6 +29032,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -28578,6 +29143,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28593,6 +29159,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -28704,6 +29272,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28719,6 +29288,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -28823,6 +29394,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28838,6 +29410,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -28945,6 +29519,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28960,6 +29535,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -29067,6 +29644,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29082,6 +29660,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -29184,6 +29764,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29199,6 +29780,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -29295,6 +29878,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29310,6 +29894,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -29409,6 +29995,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29424,6 +30011,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -29522,6 +30111,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29537,6 +30127,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -29646,6 +30238,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29661,6 +30254,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -29770,6 +30365,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29785,6 +30381,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -29893,6 +30491,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29908,6 +30507,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -29970,6 +30571,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29985,6 +30587,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -30047,6 +30651,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30062,6 +30667,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -30124,6 +30731,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30139,6 +30747,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -30201,6 +30811,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30216,6 +30827,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -30313,6 +30926,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30328,6 +30942,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -30424,6 +31040,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30439,6 +31056,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -30535,6 +31154,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30550,6 +31170,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -30646,6 +31268,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30661,6 +31284,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -30766,6 +31391,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30781,6 +31407,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -30884,6 +31512,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30899,6 +31528,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -31004,6 +31635,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31019,6 +31651,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -31116,6 +31750,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31131,6 +31766,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -31241,6 +31878,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31256,6 +31894,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -31359,6 +31999,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31374,6 +32015,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -31468,6 +32111,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31483,6 +32127,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -31586,6 +32232,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31601,6 +32248,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -31711,6 +32360,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31726,6 +32376,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -31825,6 +32477,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31840,6 +32493,8 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -34949,6 +35604,7 @@
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_intel_profile_resolution.py",
         "tests/unit/test_phase200_watch_arming.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_file_and_find.py",
@@ -35072,6 +35728,7 @@
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_intel_profile_resolution.py",
         "tests/unit/test_phase200_watch_arming.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_file_and_find.py",
@@ -35435,6 +36092,7 @@
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_file_and_find.py",
@@ -35514,6 +36172,7 @@
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_file_and_find.py",
@@ -35601,6 +36260,7 @@
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_file_and_find.py",
@@ -36608,6 +37268,7 @@
         "tests/e2e/test_hs202_03_species_glass.py",
         "tests/e2e/test_hs526_desk_memory_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_setup_first_value_journey.py",
         "tests/integration/test_web_welcome_wizard.py"
@@ -40927,9 +41588,12 @@
       "test_candidates": [
         "tests/e2e/test_hs162_update_glass.py",
         "tests/e2e/test_hs200_claim_support_glass.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_phase200_claim_support.py",
         "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -41014,9 +41678,12 @@
       "test_candidates": [
         "tests/e2e/test_hs162_update_glass.py",
         "tests/e2e/test_hs200_claim_support_glass.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_phase200_claim_support.py",
         "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -41095,9 +41762,12 @@
       "test_candidates": [
         "tests/e2e/test_hs162_update_glass.py",
         "tests/e2e/test_hs200_claim_support_glass.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_phase200_claim_support.py",
         "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -41188,9 +41858,12 @@
       "test_candidates": [
         "tests/e2e/test_hs162_update_glass.py",
         "tests/e2e/test_hs200_claim_support_glass.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_phase200_claim_support.py",
         "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
@@ -41280,9 +41953,12 @@
       "test_candidates": [
         "tests/e2e/test_hs162_update_glass.py",
         "tests/e2e/test_hs200_claim_support_glass.py",
+        "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_phase200_claim_support.py",
         "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo10_send_contract.py",
+        "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_02_round_two.py",
