@@ -518,6 +518,7 @@ UPDATE_MARK_DELIVERED = OperationDescriptor(
     service="project_update_service",
     method="mark_update_delivered",
     owner_only=False,
+    owner_press=True,
     admission=Admission("admitted", "Each mark is final: its receipt proves he recorded that confirmation, not "
                                     "that anyone received anything. Owner-only: never in the grant (Q0; R4-2)."),
 )

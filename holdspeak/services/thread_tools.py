@@ -290,18 +290,14 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "heartbeat.run_now": ("effect_proposal", False),
     "heartbeat.set": ("effect_proposal", False),
     "heartbeat.notify_test": ("effect_proposal", False),
-    # PHILO-10-01: the channel family and the Room's delivery mark; the class
-    # follows each operation's declared effect (read -> evidence_read).
+    # PHILO-10-01: the channel family. A model may read and PREPARE; the
+    # owner's presses (send, discard, the destinations, the delivery mark) are
+    # OWNER_PRESS_TOOLS below, never in this table.
     "channel.destinations": ("evidence_read", False),
     "channel.check_destination": ("evidence_read", False),
     "channel.preview": ("evidence_read", False),
     "channel.sends": ("evidence_read", False),
-    "channel.save_destination": ("effect_proposal", False),
-    "channel.remove_destination": ("effect_proposal", False),
     "channel.prepare": ("effect_proposal", False),
-    "channel.discard": ("effect_proposal", False),
-    "channel.send": ("effect_proposal", False),
-    "project.mark_update_delivered": ("effect_proposal", False),
     "project.setup.select_proposal": ("effect_proposal", False),
     "project.setup.deselect_proposal": ("effect_proposal", False),
     "project.setup.test_proposal": ("effect_proposal", False),
@@ -320,6 +316,29 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
 }
 
 # Public accessors
+def _owner_press_tools() -> frozenset[str]:
+    """The MCP names of every operation the owner's own press decides.
+
+    Derived from the operation's declared authority
+    (``OperationDescriptor.owner_press``), not from its effect: a declared
+    effect sets a tool's class; it does not say who authorized the call
+    (#694, Codex Astra counsel r1). A thread runs its tools with the owner's
+    principal, so a model holding one of these would press for him.
+    """
+    from ..operations import DESCRIPTORS
+
+    return frozenset(
+        exposure[len("mcp:"):]
+        for descriptor in DESCRIPTORS if descriptor.owner_press
+        for exposure in descriptor.exposure if exposure.startswith("mcp:")
+    )
+
+
+#: Classified for the gate, and never a thread tool in any mode: no palette
+#: offers one and :func:`tool_class` refuses one by name.
+OWNER_PRESS_TOOLS: frozenset[str] = _owner_press_tools()
+assert not (OWNER_PRESS_TOOLS & set(_TOOL_CLASSES)), sorted(OWNER_PRESS_TOOLS & set(_TOOL_CLASSES))
+
 TOOL_NAMES: frozenset[str] = frozenset(_TOOL_CLASSES)
 
 # HS-152-03: the palette a chat turn OFFERS the model.  ``TOOL_NAMES`` stays
@@ -352,6 +371,8 @@ assert CHAT_PALETTE <= TOOL_NAMES, sorted(CHAT_PALETTE - TOOL_NAMES)
 
 def tool_class(name: str) -> str:
     """Return the tool's class or raise ValueError (fail-closed)."""
+    if name in OWNER_PRESS_TOOLS:
+        raise ValueError(f"{name} is the owner's own press; a model never calls it")
     entry = _TOOL_CLASSES.get(name)
     if entry is None:
         raise ValueError(f"Unclassified tool: {name}")
@@ -832,6 +853,7 @@ class ThreadToolExecutor:
 
 
 __all__ = [
+    "OWNER_PRESS_TOOLS",
     "TOOL_NAMES",
     "TOOL_RESULT_BYTE_CAP",
     "ThreadToolExecutor",

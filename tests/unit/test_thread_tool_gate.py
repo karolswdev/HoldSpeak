@@ -19,6 +19,7 @@ import pytest
 from holdspeak.db import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.thread_tools import (
+    OWNER_PRESS_TOOLS,
     TOOL_NAMES,
     ThreadToolExecutor,
     ToolCallHandle,
@@ -323,7 +324,9 @@ class TestClassificationCensus:
         from holdspeak.mcp.tools import TOOLS as MCP_TOOLS
 
         mcp_names = {t["name"] for t in MCP_TOOLS}
-        unclassified = mcp_names - TOOL_NAMES
+        # #694: an owner-press operation is classified too -- as never a
+        # thread tool (OWNER_PRESS_TOOLS, derived from its descriptor).
+        unclassified = mcp_names - TOOL_NAMES - OWNER_PRESS_TOOLS
         assert unclassified == set(), (
             f"Unclassified MCP tools (add them to thread_tools._TOOL_CLASSES): "
             f"{sorted(unclassified)}"
@@ -339,6 +342,55 @@ class TestClassificationCensus:
             f"Phantom tool classifications (remove from thread_tools._TOOL_CLASSES): "
             f"{sorted(phantom)}"
         )
+
+    def test_an_owner_press_tool_is_never_a_thread_tool(self) -> None:
+        """#694 (Codex Astra counsel r1, P1): a thread runs its tools as the
+        owner, so an owner-press operation in the table lets a model press for
+        him. Never in the table, never in a palette, refused by name."""
+        from holdspeak.services.thread_tools import CHAT_PALETTE
+        from holdspeak.services.thread_modes import MODE_SEEDS
+
+        assert {"channel.send", "channel.discard", "project.mark_update_delivered",
+                "channel.save_destination", "channel.remove_destination"} <= OWNER_PRESS_TOOLS
+        assert "channel.prepare" in TOOL_NAMES  # a model may prepare
+        assert not (OWNER_PRESS_TOOLS & TOOL_NAMES)
+        assert not (OWNER_PRESS_TOOLS & CHAT_PALETTE)
+        for mode in MODE_SEEDS:
+            assert not (OWNER_PRESS_TOOLS & mode.tools), mode.id
+        for name in OWNER_PRESS_TOOLS:
+            with pytest.raises(ValueError, match="owner's own press"):
+                tool_class(name)
+
+    def test_owner_principal_operations_are_decided_for_the_thread(self) -> None:
+        """Close the class (#694): every MCP-exposed operation that refuses a
+        non-owner principal is either an owner PRESS (never a thread tool) or
+        named here as an owner-principal tool a thread may offer. A new one
+        fails until someone decides which it is."""
+        import holdspeak.operations as operations
+
+        # Owner-principal (an agent is refused) but not the owner's press; they
+        # were thread tools before #694 and a thread acts as the owner.
+        # nudge.send is egress (a GitHub comment) -- flagged for a ruling.
+        offered = {
+            "project.steward.trigger", "nudge.send", "project.watch.inspect",
+            "project.watch.test", "project.watch.evaluate", "project.watch.set_rules",
+            "project.watch.pause", "project.watch.resume", "project.watch.retire",
+            "project.add_suggested_source", "connection.recheck",
+            "meeting.import",  # owner_only: the hub's file custody (PHILO-5-02)
+        }
+        undecided = []
+        for descriptor in operations.DESCRIPTORS:
+            owner_principal = descriptor.owner_only or any(
+                "owner_principal_required" in str(r) for r in descriptor.refusals)
+            mcp = [e[len("mcp:"):] for e in descriptor.exposure if e.startswith("mcp:")]
+            if not owner_principal or not mcp:
+                continue
+            for name in mcp:
+                if descriptor.owner_press:
+                    assert name in OWNER_PRESS_TOOLS and name not in TOOL_NAMES, name
+                elif name not in offered:
+                    undecided.append(name)
+        assert not undecided, f"owner-principal operations with no thread decision: {sorted(undecided)}"
 
     def test_unclassified_tool_raises(self) -> None:
         with pytest.raises(ValueError, match="Unclassified tool"):
