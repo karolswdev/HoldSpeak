@@ -46,6 +46,8 @@ An asset, not `evidence-story-02.md`: the story stays in-progress until the real
 
 ## Unknown / not verified
 
+- **The nudge job end to end is NOT claimed.** Every nudge fence seeds its `proposed` step directly (`tests/unit/test_philo5_the_loop_r2.py` `_nudge_step`). Codex found that the real Door → watch → steward path makes NO nudge today: snapshot normalization drops `createdAt`, so `_effect_github_comment` skips every PR. That defect is inherited from main and not repaired here. This story proves only the send of a nudge that exists: its path, its parent, its outcome.
+- **One owner-only rule in this branch** is `kernel/channel_send.OWNER_PRESS` (`channel.send`, `channel.discard`), read ONLY by `kernel/project_codec.py` `authorize` to refuse a steward run's child send. It lives in the codec, not in a separate thread-tool list. When #694 merges, its one source (the codec's owner-only set) must cover `channel.send` and `nudge.send`; this is checked at that merge.
 - The real-account leg (criterion 11): no real `gh` or `acli` call ran; the `acli --json` answer shapes (proof: `id` / `commentId`, `self` / `_links.webui`), the JSON field names `acli confluence blog create --from-json` reads (this build writes `{title, status: current, body: {representation: storage, value}}`, `--space-id` in argv), and the pinned error phrases are UNVERIFIED until it runs. If `--from-json` cannot carry the title, the design's named fallback (`--from-file` + `--title`, the title then in argv) is Muad'Dib's ruling.
 - The kernel line budget stays red at 432 (`holdspeak/kernel/project.py`, main 432; this story adds zero lines there).
 - The e2e glass rigs, the full suite, and a rendered shot of the nudge card's UNKNOWN row at 1440 and 393 were not run in this lane.
