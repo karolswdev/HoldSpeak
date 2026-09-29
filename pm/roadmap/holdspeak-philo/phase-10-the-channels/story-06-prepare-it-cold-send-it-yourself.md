@@ -24,7 +24,7 @@ The owner's job: an agent gets the update ready to go; he looks once and presses
 - [x] The prepared send, the owner's press, the record and the receipt read back from the hub; the agent's own send refused with its receipt.
 - [x] The face at both widths shows PREPARED, then SENT with the proof.
 - [x] Leg B as Q6 rules, recorded apart from leg A, or each limit named.
-- [ ] Rehearsed, owner-reviewed shots.
+- [x] Rehearsed, owner-reviewed shots (2026-09-29: "Reviewed — with changes"; the file preview "Folder is fine"; his change, a Resend email provider beside SendGrid, is pending in a separate lane).
 
 ## Effort (not a promise)
 

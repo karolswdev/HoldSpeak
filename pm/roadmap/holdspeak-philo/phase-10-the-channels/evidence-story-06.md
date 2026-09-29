@@ -6,6 +6,12 @@
 - **Branch:** `feat/philo-10-06` from main `05d01ffb` (stories 01–05 merged). No product file changed: a driver, its fixture, its fences, one parameter on the Phase 9 driver's isolation fence.
 - **Label:** REHEARSED; OWNER REVIEW PENDING. Never a sitting.
 
+## The owner's review — 2026-09-29
+
+- **His words:** "Reviewed — with changes." Box 4 (owner-reviewed shots): **reviewed, with one change pending**.
+- **The file-preview deviation:** "Folder is fine." This is an ACCEPTED CANVAS CHANGE by the owner's word (2026-09-29). The prepared file preview shows FOLDER, and the file name shows in the receipt after Send. There is no repair.
+- **His change, pending:** a RESEND email provider joins SendGrid before the phase closes. That work is a separate lane and is not part of this story's diff.
+
 ## Round two — Codex Astra r1 on #700 @ `60630c31` (RATIFY-WITH-CONDITIONS), paid
 
 `checks/story-06-built-astra-r1.md` (verbatim). There was no new real send: the folder still holds one file, and issue 699 still has one comment.

@@ -161,6 +161,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-29, story 06: the owner reviewed the closing shots — "Reviewed — with changes". The FOLDER-not-FILE prepared preview is ruled "Folder is fine" (an accepted canvas change). His change, a RESEND email provider beside SendGrid before the close, is a separate lane.
+
 2026-09-29, story 06 round two (PR #700): Codex Astra r1 RATIFY-WITH-CONDITIONS paid — exact-byte read-back only (an extra newline is red), the prepared rows re-shot on screen at 393 from a copy of the retained DB (no send), the inherited FOLDER-not-FILE preview deviation on the BACKLOG for the owner. No new real send.
 
 2026-09-29, story 06 DONE on the lane (branch `feat/philo-10-06`): the closing use. A cold Codex session (AGENT, PROJECT credential, zero reads) prepared the published update for the folder and issue 699; its two sends were refused `owner_principal_required` with receipts; the owner's Send, pressed on the face by the driver AS THE OWNER by his word, made two REAL sends, each read back apart from the hub (the file's bytes; `gh api` on the comment). Exactly once: a ledger plus the folder and issue reads; a second real run is refused. Jira, Confluence and email are named limits (no account yet): exit 5 met with qualification for them. Shots at 1440 and 393 wait for the owner's review.
