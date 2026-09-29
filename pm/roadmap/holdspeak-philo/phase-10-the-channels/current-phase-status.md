@@ -161,6 +161,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-29, story 04: Codex Astra r3 on #697 RATIFY-WITH-CONDITIONS; the docs conditions paid. Owed: Muad'Dib's full suite (running on effd25f8), then merge.
+
 2026-09-29, story 04 round three (PR #697): Codex Astra r2 paid (B11 wording and time, the lock refusal on the first answer, the real connection producer in the glass); glass 24/24 at both widths.
 
 2026-09-29, story 04 DONE on the lane (PR #697): story 03 merged in; the email boards fenced (B11: Check reports the sender's verification from the provider's last answer); every ratified board at 1440 and 393, glass 22/22; web baseline zero branch-new. Owed: Muad'Dib's full suite and the Codex Astra counsel on the whole face.
