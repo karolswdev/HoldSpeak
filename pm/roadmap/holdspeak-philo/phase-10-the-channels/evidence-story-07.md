@@ -12,7 +12,7 @@
 - `holdspeak/services/channel_service.py`: the key save writes its provider's slot and names it in the receipt; the email Check reads the latest answer of its own provider and the key-saved receipt of its own slot.
 - `holdspeak/channel_operations.py` + `docs/generated/operations.json`: the descriptions name SendGrid and Resend.
 - The face: `web/src/features/channels/channels.ts` (one `EMAIL_PROVIDERS` face table: label, word, host, activity page; `sentWord` names the provider; the Resend codes' words; `email_key_missing` reads NO KEY), `SendWell.tsx` (the SENT word from the proof's provider), `web/src/pages/cores/connections/Destinations.tsx` (the Provider cycle with SendGrid and Resend, the key row and the key name per provider).
-- Fences: `tests/unit/test_philo10_email_channel.py` `test_c7_*` (38 cases); `tests/unit/_philo10_codes.py` follows `self.PINNED[status, name]`; `tests/unit/test_philo10_face_words.py` sees two Resend codes; `web/src/features/channels/__tests__/resendProvider.test.tsx` (4). The story 03 fences and the story 04 glass assertion move to the `<provider>:<key_ref>` slot.
+- Fences: `tests/unit/test_philo10_email_channel.py` `test_c7_*` (30 collected); `tests/unit/_philo10_codes.py` follows `self.PINNED[status, name]`; `tests/unit/test_philo10_face_words.py` sees two Resend codes; `web/src/features/channels/__tests__/resendProvider.test.tsx` (4). The story 03 fences and the story 04 glass assertion move to the `<provider>:<key_ref>` slot.
 
 ## The Resend contract (read from resend.com/docs/api-reference on 2026-09-29)
 
