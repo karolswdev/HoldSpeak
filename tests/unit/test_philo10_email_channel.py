@@ -16,7 +16,8 @@ keychain (grounding F17: an isolated HOME still resolves to the macOS Keychain).
 | 3 a transport exception leaves no key and no body | ``test_c3_*`` |
 | 4 the sentinel fence | ``test_c4_*`` |
 | 5 key custody | ``test_c5_*`` |
-| 6 a second provider: one class, one row | ``test_c6_*`` |
+| 6 a second provider: one class, one row | ``test_c6_*`` (a Postmark-like TEST provider: its own auth header, its id in the JSON body) |
+| r2 (Codex Astra r1 on #696) | ``test_r2_*``: the REAL edge over an offline socket -- wire debug, the write transition |
 """
 from __future__ import annotations
 
@@ -723,11 +724,13 @@ def test_a_request_over_the_size_limit_is_refused_by_name(hub: Hub, wire: Wire) 
 # ── 6: a second provider is one class and one table row ────────────────────
 
 
-class RecordingProvider:
-    """A test provider: its own request shape and its own proof. One class and one row, no caller change."""
+class PostmarkLikeProvider:
+    """A TEST provider modelled on Postmark's contract, materially different from SendGrid's:
+    its own request shape, its own auth header (``X-Postmark-Server-Token``, no Bearer), and its
+    acceptance id in the JSON BODY (``MessageID``), not in a header. One class and one row."""
 
-    name = "recording"
-    host = "api.recording.test"
+    name = "postmarklike"
+    host = "api.postmark.test"
     port = 443
 
     def __init__(self) -> None:
@@ -750,34 +753,134 @@ class RecordingProvider:
 
         return GatedOperation.outbound(self.host, self.port, request=EmailRequest(f"https://{self.host}/email", body))
 
-    def interpret(self, status: int, headers: Any, error_excerpt: Any) -> Any:
+    @staticmethod
+    def auth_headers(key: str) -> dict[str, str]:
+        return {"X-Postmark-Server-Token": key, "Accept": "application/json"}
+
+    def interpret(self, status: int, headers: Any, body: bytes) -> Any:
         from holdspeak.services.channel_contract import Outcome
 
-        if status == 200 and headers.get("x-message-id"):
-            return Outcome("sent", None, {"provider": self.name, "message_id": headers["x-message-id"]})
+        try:
+            data = json.loads(body or b"{}")
+        except ValueError:
+            data = {}
+        if status == 200 and data.get("ErrorCode") == 0 and data.get("MessageID"):
+            return Outcome("sent", None, {"provider": self.name, "message_id": data["MessageID"]})
         return Outcome("unknown", f"unpinned_{status}")
 
 
-def test_c6_a_second_provider_plugs_in_with_one_class_and_one_row(
+def test_c6_a_materially_different_provider_plugs_in_with_one_class_and_one_row(
     hub: Hub, wire: Wire, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from holdspeak.services import channel_email
 
-    monkeypatch.setitem(channel_email.EMAIL_PROVIDERS, "recording", RecordingProvider())
-    wire.default = response(200, {"X-Message-Id": "rec-42"})
-    assert save_key(hub, key_ref="recording").status_code == 200
+    monkeypatch.setitem(channel_email.EMAIL_PROVIDERS, "postmarklike", PostmarkLikeProvider())
+    wire.default = response(200, {"Content-Type": "application/json"},
+                            json.dumps({"ErrorCode": 0, "Message": "OK", "MessageID": "pm-0a1b"}).encode())
+    assert save_key(hub, key_ref="postmarklike").status_code == 200
     _pid, update = room(hub, body="Through a second provider.")
-    dest = email_destination(hub, provider="recording", key_ref="recording", cc=[])
+    dest = email_destination(hub, provider="postmarklike", key_ref="postmarklike", cc=[])
     result = send(hub, press(hub, "send_id", update, dest, "c6")).json()
-    assert result["outcome"] == "sent" and result["send"]["proof"] == {"provider": "recording",
-                                                                       "message_id": "rec-42"}
+    assert result["outcome"] == "sent" and result["send"]["proof"] == {"provider": "postmarklike",
+                                                                       "message_id": "pm-0a1b"}
     assert result["send"]["preview"]["text"] == "Through a second provider."
     [sent] = wire.requests
-    assert sent["host"] == "api.recording.test" and json.loads(sent["body"])["TextBody"] == "Through a second provider."
+    assert sent["host"] == "api.postmark.test" and json.loads(sent["body"])["TextBody"] == "Through a second provider."
+    # Its OWN authentication: the token header, and no Bearer Authorization at all.
+    assert sent["headers"]["X-postmark-server-token"] == KEY and "Authorization" not in sent["headers"]
     [child] = egress_ops(hub)
     full = native(hub, child["operation_id"])["canonical"]
-    assert (full["destination"], full["data_classes"]) == ("api.recording.test:443", ["email_message"])
+    assert (full["destination"], full["data_classes"]) == ("api.postmark.test:443", ["email_message"])
     assert full["payload_digest"] == "sha256:" + result["send"]["payload_digest"]
+
+
+# ── r2 (Codex Astra r1 on #696): the REAL HTTPS edge over an offline socket ──
+
+
+class OfflineSocket:
+    """A connected socket with no network: records every write; can fail on the Nth write."""
+
+    def __init__(self, fail_on_write: int = 0, reply: bytes = b"") -> None:
+        self.writes: list[bytes] = []
+        self.fail_on_write = fail_on_write
+        self.reply = reply or (b"HTTP/1.1 202 Accepted\r\nX-Message-Id: sg-offline-1\r\n"
+                               b"Content-Length: 0\r\nConnection: close\r\n\r\n")
+
+    def sendall(self, data: Any) -> None:
+        self.writes.append(bytes(data))
+        if self.fail_on_write and len(self.writes) == self.fail_on_write:
+            import ssl
+
+            raise ssl.SSLEOFError(8, f"TLS failed during the write; Bearer {KEY} {SENTINEL}")
+
+    def makefile(self, mode: str) -> Any:
+        return io.BytesIO(self.reply)
+
+    def close(self) -> None:
+        pass
+
+
+@pytest.fixture
+def real_edge(monkeypatch: pytest.MonkeyPatch) -> Callable[..., Any]:
+    """The production edge (``QuietHTTPSHandler``) with ``connect`` replaced: no DNS, no TCP, no TLS."""
+    from holdspeak.services import channel_email
+
+    # (At 0a965dbf, before r2, the production edge was urllib's own HTTPSHandler: the red run uses it.)
+    monkeypatch.setattr(channel_email, "HTTPS_HANDLER",
+                        getattr(channel_email, "QuietHTTPSHandler", urllib.request.HTTPSHandler))
+    made: list[OfflineSocket] = []
+
+    def use(connect_error: Optional[BaseException] = None, **socket_kw: Any) -> list[OfflineSocket]:
+        def connect(connection: Any) -> None:
+            if connect_error is not None:
+                raise connect_error
+            made.append(OfflineSocket(**socket_kw))
+            connection.sock = made[-1]
+
+        monkeypatch.setattr(http.client.HTTPSConnection, "connect", connect)
+        return made
+
+    return use
+
+
+def test_r2_global_http_debug_on_prints_no_key_and_no_body(
+    hub: Hub, real_edge: Any, monkeypatch: pytest.MonkeyPatch, capfd: pytest.CaptureFixture[str],
+) -> None:
+    """Red at 0a965dbf: ``_opener()`` inherited ``HTTPConnection.debuglevel`` and printed the header."""
+    made = real_edge()
+    monkeypatch.setattr(http.client.HTTPConnection, "debuglevel", 1)
+    update, dest = ready(hub)
+    result = send(hub, press(hub, "inline", update, dest, "r2-debug")).json()
+    printed = capfd.readouterr()
+    assert result["outcome"] == "sent" and result["send"]["proof"]["message_id"] == "sg-offline-1"
+    wire_bytes = b"".join(made[0].writes)
+    assert f"Authorization: Bearer {KEY}".encode() in wire_bytes and SENTINEL.encode() in wire_bytes
+    for stream in (printed.out, printed.err):
+        assert KEY_MARK not in stream and SENTINEL not in stream
+    assert http.client.HTTPConnection.debuglevel == 1  # the global is never changed
+
+
+@pytest.mark.parametrize("case,connect_error,fail_on_write,state,reason", [
+    ("tls-during-the-body-write", None, 2, "unknown", "tls_failed"),
+    ("tls-during-the-header-write", None, 1, "unknown", "tls_failed"),
+    ("tls-handshake", "ssl", 0, "failed", "tls_failed"),
+    ("connection-refused", "refused", 0, "failed", "connect_refused"),
+    ("dns", "dns", 0, "failed", "dns_failed"),
+], ids=lambda v: v if isinstance(v, str) else None)
+def test_r2_a_failure_is_failed_only_when_no_byte_was_written(
+    hub: Hub, real_edge: Any, case: str, connect_error: Optional[str], fail_on_write: int, state: str, reason: str,
+) -> None:
+    """Red at 0a965dbf: a TLS failure during ``sendall(body)`` settled ``failed / tls_failed``."""
+    import ssl
+
+    error = {"ssl": ssl.SSLError(1, "handshake failed"), "refused": ConnectionRefusedError(61, "refused"),
+             "dns": socket.gaierror(8, "no such host"), None: None}[connect_error]
+    made = real_edge(connect_error=error, fail_on_write=fail_on_write)
+    update, dest = ready(hub)
+    result = send(hub, press(hub, "send_id", update, dest, f"r2-{case}")).json()
+    assert (result["outcome"], result["send"]["reason"]) == (state, reason), result["send"]
+    assert (len(made[0].writes) if made else 0) == fail_on_write
+    assert [r["outcome"] for r in history(hub, update)] == ([] if state == "failed" else ["unknown"])
 
 
 # ── R3: a REAL hub restart during an email send (a process killed with SIGKILL) ──

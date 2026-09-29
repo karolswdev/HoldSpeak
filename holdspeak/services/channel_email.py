@@ -6,7 +6,9 @@ into major providers like sendgrid and so on."
 
 * :class:`EmailProvider` -- ONE Protocol: ``name``, ``host``, ``limits``,
   ``serialize(message)``, ``preview(body)``, ``plan(body)``,
-  ``interpret(status, headers, error_excerpt)``. :data:`EMAIL_PROVIDERS` -- ONE
+  ``auth_headers(key)`` (its own authentication, called only by the dispatch
+  opener) and ``interpret(status, headers, body)`` (bounded response material:
+  the status, the headers and a size-capped body, the key removed). :data:`EMAIL_PROVIDERS` -- ONE
   registry table. No discovery, no entry points. A second provider is one class
   and one row; no caller changes (Postmark, Mailgun, SES, SMTP: the BACKLOG).
 * **One byte contract** (Codex Astra r3 condition 1): at prepare the message is
@@ -35,6 +37,7 @@ Tests replace :data:`KEY_STORE` (a memory store: never the real keychain) and
 """
 from __future__ import annotations
 
+import http.client
 import json
 import re
 import socket
@@ -92,12 +95,13 @@ class EmailRequest:
 
 @dataclass(frozen=True)
 class HttpAnswer:
-    """The response contract kept for interpretation (the key already removed from it)."""
+    """The bounded response material a provider interprets (the key already removed from it)."""
 
     status: int
+    #: Lower-cased names; at most ``_HEADER_COUNT`` headers of ``_HEADER_CHARS`` characters.
     headers: Mapping[str, str]
-    #: ``(field, message)`` of the provider's own error answer, bounded; empty when it gave none.
-    errors: tuple[tuple[str, str], ...] = ()
+    #: The response body, at most ``_BODY_READ`` bytes.
+    body: bytes = b""
 
 
 class EmailProvider(Protocol):
@@ -116,8 +120,10 @@ class EmailProvider(Protocol):
     def plan(self, body: bytes) -> GatedOperation:
         """The outbound op: the frozen bytes unchanged, NO key."""
 
-    def interpret(self, status: int, headers: Mapping[str, str],
-                  error_excerpt: tuple[tuple[str, str], ...]) -> Outcome:
+    def auth_headers(self, key: str) -> Mapping[str, str]:
+        """The provider's own authentication headers; called ONLY by the dispatch opener."""
+
+    def interpret(self, status: int, headers: Mapping[str, str], body: bytes) -> Outcome:
         """SENT with the provider's id, FAILED on a pinned whole-request rejection, else UNKNOWN."""
 
 
@@ -192,8 +198,12 @@ class SendGridProvider:
         return GatedOperation.outbound(self.host, self.port, request=EmailRequest(self.url, bytes(body)),
                                        data_classes=(DATA_CLASS,), payload_digest=sha256(bytes(body)))
 
-    def interpret(self, status: int, headers: Mapping[str, str],
-                  error_excerpt: tuple[tuple[str, str], ...]) -> Outcome:
+    @staticmethod
+    def auth_headers(key: str) -> dict[str, str]:
+        return {"Authorization": "Bearer " + key}
+
+    def interpret(self, status: int, headers: Mapping[str, str], body: bytes) -> Outcome:
+        error_excerpt = sendgrid_errors(body) if status >= 400 else ()
         message_id = str(headers.get("x-message-id") or "").strip()
         excerpt = "; ".join(m for _f, m in error_excerpt if m)
         detail = {"error": excerpt} if excerpt else {}
@@ -211,6 +221,19 @@ class SendGridProvider:
         if error_excerpt and status in self.PINNED:
             return Outcome("failed", self.PINNED[status], detail)
         return Outcome("unknown", f"unpinned_{status}", detail)
+
+
+def sendgrid_errors(raw: bytes) -> tuple[tuple[str, str], ...]:
+    """SendGrid's own error answer: ``errors[].field`` / ``errors[].message``, bounded; () when absent."""
+    try:
+        data = json.loads(bytes(raw).decode("utf-8", errors="replace"))
+    except ValueError:
+        return ()
+    found = data.get("errors") if isinstance(data, dict) else None
+    if not isinstance(found, list):
+        return ()
+    return tuple((str(item.get("field") or "")[:80], str(item.get("message") or "")[:500])
+                 for item in found[:10] if isinstance(item, dict))
 
 
 #: THE registry table: provider name -> its implementation. One row per provider.
@@ -332,13 +355,47 @@ def valid_key_ref(value: Any) -> str:
 
 # ── the dispatch opener: the one place the key is read ──────────────────────
 
+class QuietHTTPSHandler(urllib.request.HTTPSHandler):
+    """The credential-bearing HTTPS edge (Codex Astra r1 on #696, findings 1 and 2).
+
+    * Wire debug is forced OFF for THIS transport only: ``http.client``'s
+      ``debuglevel`` prints every header (the key) and the body; the global
+      ``HTTPConnection.debuglevel`` is never read or changed here.
+    * ``sent_any`` says whether a byte of the request may have left: it turns
+      True just before the first write to a connected socket. A failure while
+      it is False (DNS, a refused connection, the TLS handshake) proves nothing
+      was sent; any failure after it is UNKNOWN.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(debuglevel=0)
+        self.sent_any = False
+
+    def https_open(self, req: Any) -> Any:
+        edge = self
+
+        class TrackedConnection(http.client.HTTPSConnection):
+            debuglevel = 0
+
+            def set_debuglevel(self, level: int) -> None:
+                self.debuglevel = 0
+
+            def send(self, data: Any) -> None:
+                if self.sock is None and self.auto_open:
+                    self.connect()
+                edge.sent_any = True
+                super().send(data)
+
+        return self.do_open(TrackedConnection, req, context=self._context)
+
+
 #: The HTTPS edge (tests: a canned handler, so no lane reaches the network).
-HTTPS_HANDLER: Callable[[], urllib.request.BaseHandler] = urllib.request.HTTPSHandler
+HTTPS_HANDLER: Callable[[], urllib.request.BaseHandler] = QuietHTTPSHandler
 #: Seconds for the whole exchange; past it the answer is UNKNOWN (``timeout``).
 TIMEOUT = 30.0
-_ERROR_READ = 64 * 1024
-_ERROR_COUNT = 10
-_ERROR_CHARS = 500
+_BODY_READ = 64 * 1024
+_HEADER_COUNT = 50
+_HEADER_CHARS = 500
 
 
 class EmailTransportError(Exception):
@@ -361,12 +418,13 @@ class _RefuseRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-def _opener() -> urllib.request.OpenerDirector:
+def _opener() -> tuple[urllib.request.OpenerDirector, Any]:
     opener = urllib.request.OpenerDirector()
-    for handler in (HTTPS_HANDLER(), _RefuseRedirect(), urllib.request.HTTPDefaultErrorHandler(),
+    edge = HTTPS_HANDLER()
+    for handler in (edge, _RefuseRedirect(), urllib.request.HTTPDefaultErrorHandler(),
                     urllib.request.HTTPErrorProcessor()):
         opener.add_handler(handler)
-    return opener
+    return opener, edge
 
 
 def _classify(reason: Any) -> tuple[str, bool]:
@@ -375,42 +433,35 @@ def _classify(reason: Any) -> tuple[str, bool]:
     if isinstance(reason, socket.gaierror):
         return "dns_failed", False
     if isinstance(reason, ssl.SSLError):
-        return "tls_failed", False
+        # A TLS failure can come after body bytes were written: UNKNOWN unless
+        # the edge proves nothing was sent (``sent_any`` False, in transmit).
+        return "tls_failed", True
     if isinstance(reason, (TimeoutError, socket.timeout)):
         return "timeout", True
     return "transport_error", True
 
 
-def _errors(raw: bytes, key: str) -> tuple[tuple[str, str], ...]:
-    """SendGrid's ``errors[].field`` / ``errors[].message``, bounded, the key removed; () when absent."""
-    try:
-        data = json.loads(raw.decode("utf-8", errors="replace"))
-    except ValueError:
-        return ()
-    found = data.get("errors") if isinstance(data, dict) else None
-    if not isinstance(found, list):
-        return ()
-    out: list[tuple[str, str]] = []
-    for item in found[:_ERROR_COUNT]:
-        if isinstance(item, dict):
-            field = str(item.get("field") or "")[:80]
-            message = str(item.get("message") or "")[:_ERROR_CHARS]
-            out.append((field.replace(key, REDACTED), message.replace(key, REDACTED)))
-    return tuple(out)
+def _scrub(text: str, key: str) -> str:
+    return text.replace(key, REDACTED) if key else text
 
 
 def _answer(status: int, headers: Any, raw: bytes, key: str) -> HttpAnswer:
-    message_id = str((headers.get("X-Message-Id") if headers is not None else "") or "")
-    return HttpAnswer(status=int(status), headers={"x-message-id": message_id.replace(key, REDACTED)},
-                      errors=_errors(raw, key) if raw else ())
+    """The bounded response material: the key removed from every header and from the body."""
+    kept: dict[str, str] = {}
+    for name, value in list(headers.items() if headers is not None else ())[:_HEADER_COUNT]:
+        kept[str(name).lower()] = _scrub(str(value)[:_HEADER_CHARS], key)
+    body = bytes(raw[:_BODY_READ]).replace(key.encode(), REDACTED.encode()) if key else bytes(raw[:_BODY_READ])
+    return HttpAnswer(status=int(status), headers=kept, body=body)
 
 
-def transmit(op: GatedOperation, key_ref: str) -> HttpAnswer:
-    """The dispatch opener: the key read HERE, the frozen bytes POSTed once, no redirect followed.
+def transmit(op: GatedOperation, key_ref: str, chosen: Any) -> HttpAnswer:
+    """The dispatch opener: the key read HERE, the provider's own auth headers set HERE, the frozen
+    bytes POSTed once, no redirect followed.
 
     Every failure leaves as :class:`EmailTransportError` with a fixed code,
     raised AFTER its handler so no exception text (a header, the key, the
-    body) travels with it.
+    body) travels with it. A failure is FAILED (``left`` False) only when the
+    edge proves no byte was written.
     """
     request: EmailRequest = op.request
     parsed = urlparse(request.url)
@@ -428,13 +479,15 @@ def transmit(op: GatedOperation, key_ref: str) -> HttpAnswer:
         raise EmailTransportError(code, left=False)
     wire = urllib.request.Request(request.url, data=bytes(request.body), method="POST",
                                   headers={"Content-Type": request.content_type})
-    wire.add_header("Authorization", "Bearer " + key)
+    for name, value in dict(chosen.auth_headers(key)).items():
+        wire.add_header(str(name), str(value))
+    opener, edge = _opener()
     try:
-        with _opener().open(wire, timeout=TIMEOUT) as response:
-            return _answer(response.status, response.headers, b"", key)
+        with opener.open(wire, timeout=TIMEOUT) as response:
+            return _answer(response.status, response.headers, response.read(_BODY_READ), key)
     except urllib.error.HTTPError as exc:
         try:
-            raw = exc.read(_ERROR_READ) if exc.code >= 400 else b""
+            raw = exc.read(_BODY_READ)
         except Exception:
             raw = b""
         status, headers = exc.code, exc.headers
@@ -445,6 +498,9 @@ def transmit(op: GatedOperation, key_ref: str) -> HttpAnswer:
     except Exception:
         code, left = "transport_error", True
     if code:
+        sent_any = getattr(edge, "sent_any", None)
+        if sent_any is not None:  # the real edge knows whether a byte was written
+            left = bool(sent_any)
         raise EmailTransportError(code, left=left)
     return _answer(status, headers, raw, key)
 
@@ -569,7 +625,7 @@ class EmailChannel:
         key_ref = str(account.get("key_ref") or "")
         connector = build_gated_connector(
             _manifest(chosen), plan=lambda _proposal: op, interpret=lambda raw, _op: raw,
-            opener=lambda planned: transmit(planned, key_ref), principal=principal,
+            opener=lambda planned: transmit(planned, key_ref, chosen), principal=principal,
             parent_operation_id=parent, broker=broker)
         try:
             answer = connector(None)
@@ -578,7 +634,7 @@ class EmailChannel:
             return Outcome("failed", "egress_refused", {"error": redact(exc.reason, body)})
         except EmailTransportError as exc:
             return Outcome("unknown" if exc.left else "failed", exc.code)
-        outcome = chosen.interpret(answer.status, answer.headers, answer.errors)
+        outcome = chosen.interpret(answer.status, answer.headers, answer.body)
         if outcome.proof.get("error"):
             # Cut BEFORE the excerpt scan (story 02's GATE 1): the scan's cost is bounded by 240 characters.
             cut = " ".join(str(outcome.proof["error"]).split())[:ERROR_LIMIT]

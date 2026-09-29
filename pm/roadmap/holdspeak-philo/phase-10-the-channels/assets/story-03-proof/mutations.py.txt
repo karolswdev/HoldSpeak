@@ -18,8 +18,8 @@ TESTS = "tests/unit/test_philo10_email_channel.py"
 
 MUTATIONS = [
     ("M1 redirects followed (the default handler)", EMAIL,
-     "for handler in (HTTPS_HANDLER(), _RefuseRedirect(),",
-     "for handler in (HTTPS_HANDLER(), urllib.request.HTTPRedirectHandler(),",
+     "for handler in (edge, _RefuseRedirect(),",
+     "for handler in (edge, urllib.request.HTTPRedirectHandler(),",
      ["-k", "redirect"]),
     ("M2 the kernel records the exception's text (main's external_egress.py:290)", MATERIAL,
      "    return type(exc).__name__",
@@ -34,8 +34,8 @@ MUTATIONS = [
      'payload_material={"destination": destination},',
      ["-k", "c1_ or c6"]),
     ("M5 the key becomes planning material (read at plan time, held by the sender)", EMAIL,
-     "            opener=lambda planned: transmit(planned, key_ref), principal=principal,",
-     "            opener=lambda planned, _key=read_key(key_ref): transmit(planned, key_ref), principal=principal,",
+     "            opener=lambda planned: transmit(planned, key_ref, chosen), principal=principal,",
+     "            opener=lambda planned, _key=read_key(key_ref): transmit(planned, key_ref, chosen), principal=principal,",
      ["-k", "never_planning_material"]),
     ("M6 any 4xx is FAILED (no pinned list)", EMAIL,
      "        if error_excerpt and status in self.PINNED:",
@@ -66,6 +66,24 @@ MUTATIONS = [
      '        chosen = EMAIL_PROVIDERS.get(str(account.get("provider") or ""))\n        if chosen is None:',
      '        chosen = SendGridProvider()\n        if chosen is None:',
      ["-k", "c6_"]),
+    ("M13 the edge inherits the global wire debug (Codex r1 P1; both local pins removed)", EMAIL,
+     ("        super().__init__(debuglevel=0)",
+      "            def set_debuglevel(self, level: int) -> None:\n                self.debuglevel = 0"),
+     ("        super().__init__()",
+      "            def set_debuglevel(self, level: int) -> None:\n                self.debuglevel = level"),
+     ["-k", "r2_global_http_debug"]),
+    ("M14 a TLS failure is FAILED whatever was written (Codex r1 P1)", EMAIL,
+     "        if sent_any is not None:  # the real edge knows whether a byte was written\n            left = bool(sent_any)",
+     "        if isinstance(sent_any, bool) and code == 'tls_failed':\n            left = False",
+     ["-k", "r2_a_failure"]),
+    ("M15 the transmitter hard-codes SendGrid's Bearer auth (Codex r1 P2)", EMAIL,
+     "    for name, value in dict(chosen.auth_headers(key)).items():",
+     "    for name, value in {'Authorization': 'Bearer ' + key}.items():",
+     ["-k", "c6_"]),
+    ("M16 a success body is not given to interpret (Codex r1 P2)", EMAIL,
+     "            return _answer(response.status, response.headers, response.read(_BODY_READ), key)",
+     "            return _answer(response.status, response.headers, b'', key)",
+     ["-k", "c6_"]),
 ]
 
 
@@ -87,12 +105,15 @@ def main() -> int:
         target = Path(path)
         original = target.read_bytes()
         text = original.decode()
-        if text.count(old) != 1:
-            print(f"{label}: ANCHOR NOT FOUND ({text.count(old)})")
+        pairs = list(zip(old, new)) if isinstance(old, tuple) else [(old, new)]
+        if any(text.count(a) != 1 for a, _b in pairs):
+            print(f"{label}: ANCHOR NOT FOUND")
             missed += 1
             continue
+        for a, b in pairs:
+            text = text.replace(a, b)
         try:
-            target.write_text(text.replace(old, new))
+            target.write_text(text)
             code, tail = run(args)
         finally:
             target.write_bytes(original)
