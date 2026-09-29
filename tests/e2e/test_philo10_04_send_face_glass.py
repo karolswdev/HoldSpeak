@@ -1551,7 +1551,7 @@ class TestSendEmailGlass(_Rig):
                 page.wait_for_timeout(300)
                 keyed = shots.shoot(page, "b08-add-email-key-set", [key_row],
                                     seat=f"CENTER:{key_row}")
-                assert self.memory.values == {self._key_ref(): KEY}
+                assert self.memory.values == {f"sendgrid:{self._key_ref()}": KEY}  # PHILO-10-07: <provider>:<key_ref>
                 assert KEY not in page.content() and "glassKEY" not in page.content()
                 page.locator("[data-testid=dest-save]").click()
                 page.locator("[data-testid=dest-row]").first.wait_for(timeout=T)

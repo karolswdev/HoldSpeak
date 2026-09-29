@@ -17,6 +17,7 @@ keychain (grounding F17: an isolated HOME still resolves to the macOS Keychain).
 | 4 the sentinel fence | ``test_c4_*`` |
 | 5 key custody | ``test_c5_*`` |
 | 6 a second provider: one class, one row | ``test_c6_*`` (a Postmark-like TEST provider: its own auth header, its id in the JSON body) |
+| 7 Resend, the second provider (PHILO-10-07) | ``test_c7_*``: its exact request, its id, its pinned list, its key slot, its own B11 answer |
 | r2 (Codex Astra r1 on #696) | ``test_r2_*``: the REAL edge over an offline socket -- wire debug, the write transition |
 """
 from __future__ import annotations
@@ -140,8 +141,9 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, store: Any, wire: Wire)
     composition.install(composition.bare(label="pytest"))
 
 
-def save_key(hub: Hub, key: str = KEY, key_ref: str = "sendgrid") -> Any:
-    return hub.client.put(f"/api/channels/email-keys/{key_ref}", json={"api_key": key})
+def save_key(hub: Hub, key: str = KEY, key_ref: str = "sendgrid", provider: Optional[str] = None) -> Any:
+    return hub.client.put(f"/api/channels/email-keys/{key_ref}",
+                          json={"api_key": key, **({"provider": provider} if provider else {})})
 
 
 def email_destination(hub: Hub, **extra: Any) -> str:
@@ -670,7 +672,7 @@ def test_c5_the_key_is_held_never_an_argument_and_the_owner_alone_saves_it(hub: 
     assert saved.status_code == 200, saved.text
     assert {k: saved.json()[k] for k in ("key_ref", "provider", "saved")} == {
         "key_ref": "sendgrid", "provider": "sendgrid", "saved": True}
-    assert store.values == {"sendgrid": KEY}
+    assert store.values == {"sendgrid:sendgrid": KEY}  # PHILO-10-07: the slot is <provider>:<key_ref>
     assert KEY_MARK not in saved.text
     assert KEY_MARK not in dump(hub)
     [operation] = ops(hub, "channel.save_email_key")
@@ -777,7 +779,7 @@ def test_c6_a_materially_different_provider_plugs_in_with_one_class_and_one_row(
     monkeypatch.setitem(channel_email.EMAIL_PROVIDERS, "postmarklike", PostmarkLikeProvider())
     wire.default = response(200, {"Content-Type": "application/json"},
                             json.dumps({"ErrorCode": 0, "Message": "OK", "MessageID": "pm-0a1b"}).encode())
-    assert save_key(hub, key_ref="postmarklike").status_code == 200
+    assert save_key(hub, key_ref="postmarklike", provider="postmarklike").status_code == 200
     _pid, update = room(hub, body="Through a second provider.")
     dest = email_destination(hub, provider="postmarklike", key_ref="postmarklike", cc=[])
     result = send(hub, press(hub, "send_id", update, dest, "c6")).json()
@@ -792,6 +794,208 @@ def test_c6_a_materially_different_provider_plugs_in_with_one_class_and_one_row(
     full = native(hub, child["operation_id"])["canonical"]
     assert (full["destination"], full["data_classes"]) == ("api.postmark.test:443", ["email_message"])
     assert full["payload_digest"] == "sha256:" + result["send"]["payload_digest"]
+
+
+# ── 7: Resend, the second provider (PHILO-10-07) ───────────────────────────
+
+RESEND_KEY = "re_syntheticRESEND9d2f0000.neverLeavesTheOpener"
+RESEND_MARK = "syntheticRESEND9d2f"
+RESEND_ID = "49a3999c-0ce1-4ea6-ab68-afcd6dc2e794"
+DOMAIN_403 = "The example.com domain is not verified. Please, add and verify your domain on https://resend.com/domains"
+TESTING_403 = ("You can only send testing emails to your own email address (karol@example.com). To send emails to "
+               "other recipients, please verify a domain at resend.com/domains")
+
+
+def resend_ok(message_id: str = RESEND_ID) -> Callable[[Any], Any]:
+    return response(200, {"Content-Type": "application/json"}, json.dumps({"id": message_id}).encode())
+
+
+def resend_error(status: int, name: str, message: str) -> Callable[[Any], Any]:
+    """Resend's error body: ``{statusCode, name, message}`` (resend.com/docs/api-reference/errors)."""
+    return response(status, {"Content-Type": "application/json"},
+                    json.dumps({"statusCode": status, "name": name, "message": message}).encode())
+
+
+def resend_ready(hub: Hub, wire: Wire, *, body: str = f"Cutover is green. {SENTINEL}", **extra: Any) -> tuple[str, str]:
+    wire.default = resend_ok()
+    assert save_key(hub, RESEND_KEY, key_ref="resend", provider="resend").status_code == 200
+    _pid, update = room(hub, body=body)
+    return update, email_destination(hub, provider="resend", key_ref="resend", **extra)
+
+
+def test_c7_resend_sends_its_exact_request_and_its_id_is_the_acceptance(hub: Hub, wire: Wire) -> None:
+    update, dest = resend_ready(hub, wire)
+    result = send(hub, press(hub, "send_id", update, dest, "c7-wire")).json()
+    [row] = [r for r in sends(hub) if r["state"] != "prepared"]
+    frozen = bytes(row["payload"])
+    [sent] = wire.requests
+    # The request, byte for byte: POST https://api.resend.com/emails, Bearer key, a User-Agent, text only.
+    assert (sent["host"], sent["url"]) == ("api.resend.com", "https://api.resend.com/emails")
+    assert sent["body"] == frozen
+    assert frozen == json.dumps({"from": "Karol <karol@example.com>", "to": ["Priya Raman <priya@example.com>"],
+                                 "cc": ["lead@example.com"], "subject": json.loads(frozen)["subject"],
+                                 "text": f"Cutover is green. {SENTINEL}"},
+                                ensure_ascii=False, separators=(",", ":")).encode()
+    assert sent["headers"]["Authorization"] == f"Bearer {RESEND_KEY}"
+    assert sent["headers"]["User-agent"] == "HoldSpeak"
+    assert sent["headers"]["Content-type"] == "application/json"
+    assert "html" not in json.loads(frozen)
+    # The id in Resend's JSON body is the proof; the word names Resend; accepted, never "delivered".
+    assert result["outcome"] == "sent"
+    assert result["send"]["proof"] == {"provider": "resend", "message_id": RESEND_ID, "word": "ACCEPTED BY RESEND",
+                                       "scope": "accepted for processing, not delivery"}
+    assert result["send"]["preview"] == {"from": "Karol <karol@example.com>",
+                                         "to": ["Priya Raman <priya@example.com>"], "cc": ["lead@example.com"],
+                                         "subject": json.loads(frozen)["subject"],
+                                         "text": f"Cutover is green. {SENTINEL}"}
+    # One external.egress child to the Resend host, the frozen digest admitted.
+    [child] = egress_ops(hub)
+    full = native(hub, child["operation_id"])["canonical"]
+    assert (full["destination"], full["data_classes"]) == ("api.resend.com:443", ["email_message"])
+    assert full["payload_digest"] == "sha256:" + row["payload_digest"]
+    assert {f"destination:{dest}", "egress:api.resend.com:443"} <= journal_refs(hub, child["operation_id"])
+
+
+def test_c7_a_sender_name_is_kept_as_typed_and_quoted_when_it_must_be() -> None:
+    from holdspeak.services.channel_email import EmailMessage, ResendProvider
+
+    chosen = ResendProvider()
+    body = chosen.serialize(EmailMessage(from_email="k@example.com", from_name="Karol Ś, Jr", to=("a@example.com",),
+                                         cc=(), subject="S", text="T"))
+    assert json.loads(body) == {"from": '"Karol Ś, Jr" <k@example.com>', "to": ["a@example.com"], "subject": "S",
+                                "text": "T"}
+    assert chosen.preview(body)["from"] == '"Karol Ś, Jr" <k@example.com>'
+
+
+RESEND_OUTCOMES = [
+    ("accepted", resend_ok(), "sent", None),
+    ("accepted-no-id", response(200, {"Content-Type": "application/json"}, b"{}"), "unknown",
+     "accepted_without_message_id"),
+    ("accepted-not-json", response(200, {}, b"ok"), "unknown", "accepted_without_message_id"),
+    ("400-validation", resend_error(400, "validation_error", "Invalid `to` field."), "failed",
+     "resend_invalid_request"),
+    ("401-missing-key", resend_error(401, "missing_api_key", "Missing API key in the authorization header."),
+     "failed", "resend_key_invalid"),
+    ("403-invalid-key", resend_error(403, "invalid_api_key", "API key is invalid"), "failed", "resend_key_invalid"),
+    ("403-restricted", resend_error(403, "restricted_api_key", "API key is not active"), "failed",
+     "resend_key_invalid"),
+    ("403-suspended", resend_error(403, "suspended_api_key", "This API key is suspended"), "failed",
+     "resend_key_invalid"),
+    ("403-domain", resend_error(403, "validation_error", DOMAIN_403), "failed", "sender_not_verified"),
+    ("403-testing", resend_error(403, "validation_error", TESTING_403), "failed", "sender_not_verified"),
+    ("403-other", resend_error(403, "invalid_permission", "Access token is missing required scopes."), "failed",
+     "resend_forbidden"),
+    ("422-missing", resend_error(422, "missing_required_field", "The request body is missing one or more required "
+                                                                "fields."), "failed", "resend_invalid_request"),
+    ("422-validation", resend_error(422, "validation_error", "Invalid `from` field."), "failed",
+     "resend_invalid_request"),
+    ("429-rate", resend_error(429, "rate_limit_exceeded", "Too many requests."), "failed", "resend_rate_limited"),
+    ("429-daily", resend_error(429, "daily_quota_exceeded", "You have exceeded your daily email sending quota."),
+     "failed", "resend_quota_exceeded"),
+    ("429-monthly", resend_error(429, "monthly_quota_exceeded", "monthly quota"), "failed", "resend_quota_exceeded"),
+    ("403-not-resend", response(403, {"Content-Type": "text/html"}, b"<html>cloudflare</html>"), "unknown",
+     "unpinned_403"),
+    ("409-unpinned-name", resend_error(409, "concurrent_idempotent_requests", "in progress"), "unknown",
+     "unpinned_409"),
+    ("500", resend_error(500, "application_error", "An unexpected error occurred."), "unknown", "unpinned_500"),
+    ("503", resend_error(503, "service_unavailable", "API is temporarily unavailable"), "unknown", "unpinned_503"),
+    ("timeout", raising(socket.timeout("timed out")), "unknown", "timeout"),
+    ("refused", raising(urllib.error.URLError(ConnectionRefusedError("refused"))), "failed", "connect_refused"),
+    ("redirect", response(302, {"Location": "https://evil.example/steal"}), "unknown", "redirect_refused"),
+    ("redirect-308", response(308, {"Location": "https://api.resend.com.evil.example/"}), "unknown",
+     "redirect_refused"),
+]
+
+
+@pytest.mark.parametrize("case,answer,state,reason", RESEND_OUTCOMES, ids=[c[0] for c in RESEND_OUTCOMES])
+def test_c7_each_resend_answer_settles_by_the_pinned_list(
+    hub: Hub, wire: Wire, case: str, answer: Any, state: str, reason: Optional[str],
+) -> None:
+    update, dest = resend_ready(hub, wire)
+    wire.script = [answer]
+    reply = send(hub, press(hub, "inline", update, dest, f"c7-{case}"))
+    assert reply.status_code == 200, reply.text
+    result = reply.json()
+    assert (result["outcome"], result["send"]["reason"]) == (state, reason), result["send"]
+    assert result["receipt"]["state"] == KERNEL[state]
+    # Redirects are NOT followed: one request, to Resend only.
+    assert [r["host"] for r in wire.requests] == ["api.resend.com"]
+    read_back = hub.client.get(f"/api/channels/sends?send_id={result['send']['id']}").json()["sends"][0]
+    assert (read_back["state"], read_back["reason"]) == (state, reason)
+    if state == "sent":
+        assert read_back["proof"]["word"] == "ACCEPTED BY RESEND"
+
+
+def test_c7_resends_error_that_echoes_the_key_and_the_body_leaves_neither(
+    hub: Hub, wire: Wire, caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level("DEBUG")
+    update, dest = resend_ready(hub, wire)
+    wire.script = [resend_error(422, "validation_error", f"bad text near '{SENTINEL}' with {RESEND_KEY}"),
+                   raising(RuntimeError(f"socket said: Authorization: Bearer {RESEND_KEY} {SENTINEL}"))]
+    failed = send(hub, press(hub, "send_id", update, dest, "c7-echo-a")).json()
+    lost = send(hub, press(hub, "send_id", update, dest, "c7-echo-b")).json()
+    assert (failed["send"]["reason"], lost["send"]["reason"]) == ("resend_invalid_request", "transport_error")
+    assert "[redacted]" in failed["send"]["proof"]["error"]
+    places = {"errors and receipts": json.dumps([[a["receipt"], a["send"]["reason"], a["send"]["proof"]]
+                                                 for a in (failed, lost)]), "logs": caplog.text,
+              "database": dump(hub, skip=(("channel_sends", "payload"),), only=BODY_FREE)}
+    for where, text in places.items():
+        assert RESEND_MARK not in text, where
+        assert SENTINEL not in text, where
+    assert RESEND_MARK not in dump(hub) and RESEND_MARK not in json.dumps([failed, lost])
+
+
+def test_c7_each_provider_has_its_own_key_slot_and_one_key_never_reaches_the_other(
+    hub: Hub, wire: Wire, store: Any,
+) -> None:
+    # The same key name for both providers: two slots, two keys.
+    assert save_key(hub, KEY, key_ref="work", provider="sendgrid").status_code == 200
+    assert save_key(hub, RESEND_KEY, key_ref="work", provider="resend").status_code == 200
+    assert store.values == {"sendgrid:work": KEY, "resend:work": RESEND_KEY}
+    _pid, update = room(hub, body="Two providers.")
+    by_sendgrid = email_destination(hub, key_ref="work")
+    by_resend = email_destination(hub, provider="resend", key_ref="work", name="Priya by Resend")
+    wire.script = [response(202, {"X-Message-Id": "sg-msg-0001"}), resend_ok()]
+    first = send(hub, press(hub, "inline", update, by_sendgrid, "c7-slot-a")).json()
+    second = send(hub, press(hub, "inline", update, by_resend, "c7-slot-b")).json()
+    assert (first["outcome"], second["outcome"]) == ("sent", "sent")
+    assert [(r["host"], r["headers"]["Authorization"]) for r in wire.requests] == [
+        ("api.sendgrid.com", f"Bearer {KEY}"), ("api.resend.com", f"Bearer {RESEND_KEY}")]
+    # A key saved for SendGrid only: a Resend destination that names it is refused; nothing leaves.
+    assert save_key(hub, KEY, key_ref="sg-only", provider="sendgrid").status_code == 200
+    stray = email_destination(hub, provider="resend", key_ref="sg-only", name="Stray")
+    assert hub.client.post(f"/api/channels/destinations/{stray}/check").json()["check"]["state"] == "email_key_missing"
+    refused = send(hub, press(hub, "inline", update, stray, "c7-slot-c"))
+    assert refused.json()["code"] == "email_key_missing" and len(wire.requests) == 2
+
+
+def test_c7_the_check_reads_the_answer_of_its_own_provider_only(hub: Hub, wire: Wire) -> None:
+    """B11: a Resend 403 for a sender does not speak for the SendGrid destination of that sender."""
+    update, by_resend = resend_ready(hub, wire)
+    assert save_key(hub).status_code == 200
+    by_sendgrid = email_destination(hub, name="Priya by SendGrid")
+    wire.script = [resend_error(403, "validation_error", DOMAIN_403)]
+    assert send(hub, press(hub, "inline", update, by_resend, "c7-b11")).json()["send"]["reason"] == "sender_not_verified"
+
+    def check(dest: str) -> str:
+        return hub.client.post(f"/api/channels/destinations/{dest}/check").json()["check"]["state"]
+
+    assert (check(by_resend), check(by_sendgrid)) == ("sender_not_verified", "ready")
+    # The Resend key saved again after that answer: the answer no longer speaks for it.
+    assert save_key(hub, RESEND_KEY, key_ref="resend", provider="resend").status_code == 200
+    assert (check(by_resend), check(by_sendgrid)) == ("key_changed", "ready")
+
+
+def test_c7_resend_is_one_class_and_one_row() -> None:
+    from holdspeak.services import channel_email
+
+    assert list(channel_email.EMAIL_PROVIDERS) == ["sendgrid", "resend"]
+    chosen = channel_email.EMAIL_PROVIDERS["resend"]
+    assert isinstance(chosen, channel_email.ResendProvider)
+    assert (chosen.host, chosen.url, chosen.limits.max_recipients) == (
+        "api.resend.com", "https://api.resend.com/emails", 50)
+    assert channel_email._manifest(chosen).allowed_hosts == ("api.resend.com",)
 
 
 # ── r2 (Codex Astra r1 on #696): the REAL HTTPS edge over an offline socket ──
@@ -894,7 +1098,7 @@ from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 token, hold, wire_log, key = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 memory = channel_email.MemoryEmailKeyStore()
-memory.put("sendgrid", key)
+memory.put("sendgrid:sendgrid", key)
 channel_email.KEY_STORE = lambda: memory
 keyring.get_keyring = lambda: (_ for _ in ()).throw(AssertionError("real keychain"))
 forever = threading.Event()

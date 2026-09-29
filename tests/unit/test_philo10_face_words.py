@@ -55,6 +55,8 @@ def test_the_derivation_sees_the_known_codes_of_each_kind() -> None:
         "tls_failed": "unknown",                    # _classify, through EmailTransportError
         "email_key_store_locked": "refused",        # EmailKeyError, through the flow
         "payload_changed": "failed",                # the CLI flow's declared source
+        "resend_quota_exceeded": "failed",          # PHILO-10-07: Resend's pinned (status, name) table
+        "resend_forbidden": "failed",               # PHILO-10-07: Resend's 403 fallback literal
     }
     for code, kind in want.items():
         assert kind in got.get(code, {}).get("kinds", set()), (code, kind, got.get(code))

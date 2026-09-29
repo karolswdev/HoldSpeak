@@ -225,7 +225,7 @@ function OutcomeLine({ o }: { o: Outcome }) {
 /** A destination row's last send, from the stored record. */
 function LastChip({ s }: { s: Send | undefined }) {
   if (!s) return null;
-  if (s.state === "sent") return <span data-testid="send-last-sent"><StateChip state="success" label={`${SENT_WORD[s.channel] ?? sentWord(s.channel)} ${stamp(s.settled_at).slice(-5)}`} /></span>;
+  if (s.state === "sent") return <span data-testid="send-last-sent"><StateChip state="success" label={`${sentWord(s.channel, s.proof, s.account)} ${stamp(s.settled_at).slice(-5)}`} /></span>;
   if (s.state === "unknown") return <span data-testid="send-last-unknown"><StateChip state="warning" label={SEND_WORDS.lastUnknown} /></span>;
   if (s.state === "failed") return <span data-testid="send-last-failed" data-code={s.reason ?? ""}><StateChip state="failure" label={SEND_WORDS.lastFailed} /></span>;
   if (s.state === "dispatching") return <span data-testid="send-last-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>;
@@ -237,7 +237,7 @@ function LatestReceipt({ s }: { s: Send | undefined }) {
   if (!s) return null;
   if (s.state === "sent") return (
     <span className="send-line" data-testid="send-sent" data-receipt="latest" data-state="sent">
-      <StateChip state="success" label={sentWord(s.channel)} />
+      <StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} />
       <ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} />
     </span>
   );
@@ -524,7 +524,7 @@ function PreparedRow({ uid, revision, s, reload, conns, dest, open, onToggle, on
 
   const result = waiting ? null
     : running ? <span data-testid="prepared-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>
-    : s.state === "sent" ? <><StateChip state="success" label={sentWord(s.channel)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} /></>
+    : s.state === "sent" ? <><StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} /></>
     : s.state === "failed" ? <><StateChip state="failure" label="FAILED" /><span className="surface-token" data-chip>{failedWord(s.reason ?? "")}</span><span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span></>
     : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><span className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</span></>
     : <StateChip state="idle" label={SEND_WORDS.discarded} />;
@@ -647,7 +647,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                     primary={<span className="surface-primary" data-to={r.deliveredTo ?? ""}>{r.deliveredTo ?? "—"}</span>}
                     cells={<>
                       <span className="surface-token" data-chip data-tone="ok" data-testid="history-word">
-                        {manual ? SENT_WORD.manual : sentWord(r.channel)}
+                        {manual ? SENT_WORD.manual : sentWord(r.channel, r.proof, send?.account)}
                       </span>
                       {manual
                         ? <span className="surface-token" data-chip>MANUAL</span>

@@ -203,23 +203,27 @@ class ChannelService:
         if row["state"] != "active":
             return "parked", None
         account = json.loads(row["account_json"] or "{}")
+        provider_name = str(account.get("provider") or "")
         try:
             key_ref = channel_email.valid_key_ref(account.get("key_ref"))
-            channel_email.read_key(key_ref)
+            channel_email.read_key(provider_name, key_ref)
         except channel_email.EmailKeyError as exc:
             return exc.code, None
         except ValidationError:
             return "email_key_ref_invalid", None
         with self._db._connection() as conn:
+            # PHILO-10-07: the answer of THIS provider for this sender (a Resend answer never speaks for SendGrid).
             latest = conn.execute(
                 "SELECT state, reason, dispatch_started_at FROM channel_sends WHERE channel='email'"
-                " AND json_extract(account_json, '$.from_email')=? AND dispatch_seq IS NOT NULL"
+                " AND json_extract(account_json, '$.from_email')=? AND json_extract(account_json, '$.provider')=?"
+                " AND dispatch_seq IS NOT NULL"
                 " AND (state='sent' OR (state='failed' AND reason='sender_not_verified'))"
-                " ORDER BY dispatch_seq DESC LIMIT 1", (str(account.get("from_email") or ""),)).fetchone()
+                " ORDER BY dispatch_seq DESC LIMIT 1",
+                (str(account.get("from_email") or ""), provider_name)).fetchone()
             key_saved = conn.execute(
                 "SELECT MAX(r.created_at) AS at FROM kernel_receipts r JOIN kernel_operations o"
                 " ON o.operation_id=r.operation_id WHERE o.name='channel.save_email_key' AND r.state='succeeded'"
-                " AND r.result_ref=?", (f"email_key:{key_ref}",)).fetchone()
+                " AND r.result_ref=?", (f"email_key:{channel_email.key_slot(provider_name, key_ref)}",)).fetchone()
         if latest is None:
             return "ready", None
         answered_at = str(latest["dispatch_started_at"] or "")
@@ -322,10 +326,10 @@ class ChannelService:
         if not key.strip() or len(key) > 512 or any(ch.isspace() for ch in key):
             raise ValidationError("The key is one line of 1-512 characters with no spaces", code="email_key_invalid")
         try:
-            channel_email.save_key(ref, key)
+            channel_email.save_key(chosen, ref, key)
         except channel_email.EmailKeyError as exc:
             raise ChannelRefused(exc.code, f"The key could not be saved: {exc.code}", status=400) from None
-        handle.terminal("succeeded", "succeeded", f"email_key:{ref}")
+        handle.terminal("succeeded", "succeeded", f"email_key:{channel_email.key_slot(chosen, ref)}")
         return answer
 
     def _stored(self, destination_id: str) -> dict[str, Any]:

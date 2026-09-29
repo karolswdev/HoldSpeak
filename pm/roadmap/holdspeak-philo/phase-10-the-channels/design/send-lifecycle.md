@@ -139,7 +139,7 @@ EmailProvider (Protocol)
   plan(body_bytes) -> GatedOperation.outbound   no key in it; the frozen bytes unchanged
   interpret(status, headers, error_excerpt) -> Sent(message_id) | Failed(code) | Unknown(reason)
 
-EMAIL_PROVIDERS = {"sendgrid": SendGridProvider()}   the registry TABLE
+EMAIL_PROVIDERS = {"sendgrid": SendGridProvider(), "resend": ResendProvider()}   the registry TABLE (Resend: story 07)
 ```
 
 - **The message** he composes (from, to[], cc[], subject, text) is serialized once, at prepare, into the provider's request body. **That body is the frozen payload**, and its digest is the digest the egress admission binds. The preview parses it back into From, To, Cc, Subject and the text, never showing JSON. Dispatch sends those bytes. A fence asserts that the bytes on the wire (a recording opener) equal the frozen bytes.
@@ -147,7 +147,9 @@ EMAIL_PROVIDERS = {"sendgrid": SendGridProvider()}   the registry TABLE
 - **Refusals before dispatch** (REFUSED, nothing leaves) are named: `email_provider_unknown`, `email_key_missing`, `email_key_store_not_native`, `payload_too_large:email`, `email_recipients_too_many`, `destination_changed`.
 - **Adding a provider** means one class and one table row. Postmark, Mailgun, SES and generic SMTP are named for later in the BACKLOG. Callers do not change. A future provider that can accept some recipients and reject others maps that answer to UNKNOWN `partial_acceptance`. It is never "nothing sent", and it builds no second lifecycle now.
 
-**SendGrid, the one implementation in this phase.**
+**Resend, the second implementation (story 07, the owner's closing-review ruling "We can have SendGrid and Resend").** `POST https://api.resend.com/emails` with `Authorization: Bearer …` and `User-Agent: HoldSpeak`; body `{from, to[], cc[], subject, text}`. `200` + `{"id"}` → `sent`, face word **ACCEPTED BY RESEND**. FAILED only on Resend's own error body with a pinned (status, name) pair (`resend_invalid_request`, `resend_key_invalid`, `resend_rate_limited`, `resend_quota_exceeded`); a 403 that names an unverified domain → `sender_not_verified`; any other 403 from Resend → `resend_forbidden`; everything else UNKNOWN. Each provider's key has its own keychain slot, `<provider>:<key_ref>`. The rules below hold for it unchanged.
+
+**SendGrid, the first implementation.**
 
 - `POST https://api.sendgrid.com/v3/mail/send` with the frozen JSON body. It runs as an `external.egress` child of the send: destination `api.sendgrid.com:443`, data class `email_message`, `payload_digest` the frozen digest, and the parent, principal and broker threaded (section 6).
 - **The key is never planning material** (round five, Codex Astra r3 condition 2). It is not in the payload, the `GatedOperation`, `payload_material`, `args` or `kwargs`. Only the dispatch opener reads it from the key store and sets `Authorization: Bearer …` on the request it opens.
