@@ -5,7 +5,9 @@
 # assets/story-05-shots/<label>/ (OBS_ONLY=1: each run's observation only).
 # ROOT=<export dir>: run the product of a `git archive` export (its own web
 # build, PYTHONPATH); this branch's rig and the named atlas files are copied in.
-# Exit: the rig's status, or retain's when the rig passed (never a pipe's).
+# Exit: 3 when the bundle build fails (Codex Astra r1 on #698: nothing walks or is
+# retained on a stale bundle); else the rig's status, or retain's when the rig passed
+# (never a pipe's).
 # Usage: [OBS_ONLY=1] [ROOT=<export> [KEEP_RIG=1]] rig_phase.sh <label> <jobs> <atlas.json> ...
 cd ${0:A:h}/../../../../../..
 HERE=pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-proof
@@ -13,13 +15,13 @@ label=$1; jobs=$2; shift 2
 echo "HEAD = $(git rev-parse HEAD); load $(sysctl -n vm.loadavg)"
 if [[ -n $ROOT ]]; then
   echo "product: the export at $ROOT"
-  (cd $ROOT/web && npm run build 2>&1 | tail -1)
+  (cd $ROOT/web && npm run build 2>&1 | tail -1; exit ${pipestatus[1]}) || { echo "BUILD FAILED: no walk, no retention"; exit 3; }
   # KEEP_RIG=1: the export's OWN rig (a "before" run of the rig change).
   [[ -z $KEEP_RIG ]] && cp scripts/graph_walk.py $ROOT/scripts/
   mkdir -p $ROOT/tests/fixtures/philo10_atlas && cp tests/fixtures/philo10_atlas/*.json $ROOT/tests/fixtures/philo10_atlas/
   for f in "$@"; do [[ $f == *.json ]] && cp $f $ROOT/$f; done
 else
-  (cd web && npm run build 2>&1 | tail -1)
+  (cd web && npm run build 2>&1 | tail -1; exit ${pipestatus[1]}) || { echo "BUILD FAILED: no walk, no retention"; exit 3; }
 fi
 H=$(mktemp -d); trap 'rm -rf "$H"' EXIT INT TERM
 HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm \

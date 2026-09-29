@@ -51,6 +51,32 @@ FLOWS = {
 }
 
 
+# Codex Astra r1 on #698 (finding 1): a code with a variable part is accepted ONLY
+# as one of these exact f-strings (each takes its face word by prefix, or expands
+# over the CLI channel names). Any other f-string, a ``.format()``, a ``+``, a call
+# -- any code expression this derivation cannot read -- is UNSUPPORTED and fails
+# the fence (``test_no_code_expression_is_unsupported``), so no formatted code can
+# slip past it.
+ALLOWED_TEMPLATES = {
+    'f"create_{errno.errorcode.get(exc.errno or 0, \'error\').lower()}"',
+    'f"write_{errno.errorcode.get(exc.errno or 0, \'error\').lower()}"',
+    'f"dispatch_{type(exc).__name__.lower()}"',
+    'f"recover_{type(exc).__name__.lower()}"',
+    'f"unpinned_{status}"',
+    'f"payload_too_large:{channel}"',
+    'f"{self.name}_interrupted"',
+    'f"{self.name}_cli_missing"',
+    'f"{self.name}_cli_not_started"',
+    'f"{self.name}_no_proof"',
+    'f"{self.name}_exit_{code}"',
+}
+# A variable that carries a code into a source the derivation already reads
+# (the ``code`` of EmailKeyError caught in the transport; a pinned() answer
+# from its PINNED table). Anything else assigned to ``code`` / returned by
+# ``pinned`` is unsupported.
+ALLOWED_CARRIERS = {"exc.code", "_first_pinned(text, self.PINNED)"}
+
+
 def _src(node: ast.AST, text: str) -> str:
     return ast.get_source_segment(text, node) or ""
 
@@ -77,6 +103,7 @@ def emitted() -> dict[str, dict]:
     """{code: {"kinds": set, "template": bool, "where": [...]}} plus the variable sites seen."""
     codes: dict[str, dict] = {}
     variables: set[tuple[str, str]] = set()
+    unsupported: list[str] = []
 
     def add(code: str, kind: str, where: str, template: bool = False) -> None:
         if not code:
@@ -90,51 +117,60 @@ def emitted() -> dict[str, dict]:
         text = (REPO / rel).read_text()
         tree = ast.parse(text)
         exc_codes[rel] = {}
+
+        def read(arg: ast.AST, where: str, *, variable_ok: bool = True) -> list[tuple[str, bool]]:
+            """The code(s) an expression carries: [(code, is_template)]; a variable is recorded; else UNSUPPORTED."""
+            if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                return [(arg.value, False)]
+            if isinstance(arg, ast.Constant) and arg.value is None:
+                return []
+            seg = _src(arg, text)
+            if isinstance(arg, ast.JoinedStr):
+                if seg not in ALLOWED_TEMPLATES:
+                    unsupported.append(f"{where}: f-string code {seg}")
+                    return []
+                return [(c, True) for c in _template(arg, text)]
+            if variable_ok and isinstance(arg, (ast.Name, ast.Attribute, ast.Subscript)):
+                variables.add((rel, seg))
+                return []
+            unsupported.append(f"{where}: code expression {seg}")
+            return []
         for node in ast.walk(tree):
+            if rel.endswith("steward_contract.py") and not (
+                    isinstance(node, ast.Call) and getattr(node.func, "id", "") == "channel_send_ended_effect"):
+                continue  # the steward module is read ONLY for the restart's row reason of a send
             if isinstance(node, ast.Call):
                 fn = node.func.attr if isinstance(node.func, ast.Attribute) else getattr(node.func, "id", "")
                 where = f"{rel}:{node.lineno}"
                 if fn in ("ChannelRefused", "EmailKeyError", "EmailTransportError") and node.args:
-                    arg = node.args[0]
-                    kind = "refused"
-                    if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
-                        exc_codes[rel].setdefault(fn, set()).add(arg.value)
+                    for code, template in read(node.args[0], where):
+                        exc_codes[rel].setdefault(fn, set()).add(code)
                         if fn == "ChannelRefused":
-                            add(arg.value, kind, where)
-                    elif isinstance(arg, ast.JoinedStr):
-                        for code in _template(arg, text):
-                            if fn == "ChannelRefused":
-                                add(code, kind, where, template=True)
-                            exc_codes[rel].setdefault(fn, set()).add(code)
-                    else:
-                        variables.add((rel, _src(arg, text)))
+                            add(code, "refused", where, template=template)
                 elif fn in ("ValidationError", "ServiceError", "NotFound"):
                     for kw in node.keywords:
-                        if kw.arg == "code" and isinstance(kw.value, ast.Constant):
-                            add(kw.value.value, "refused", where)
+                        if kw.arg == "code":
+                            for code, template in read(kw.value, where, variable_ok=False):
+                                add(code, "refused", where, template=template)
                 elif fn == "Outcome" and len(node.args) >= 2:
                     state, arg = node.args[0], node.args[1]
                     kinds = {s for s in _strings(state) if s in ("failed", "unknown")}
                     if not kinds and not (isinstance(state, ast.Constant) and state.value == "sent"):
                         variables.add((rel, _src(arg, text)))
                         continue
-                    if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                    for code, template in read(arg, where):
                         for k in kinds:
-                            add(arg.value, k, where)
-                    elif isinstance(arg, ast.JoinedStr):
-                        for code in _template(arg, text):
-                            for k in kinds:
-                                add(code, k, where, template=True)
-                    elif not (isinstance(arg, ast.Constant) and arg.value is None):
-                        variables.add((rel, _src(arg, text)))
+                            add(code, k, where, template=template)
                 elif fn == "channel_send_ended_effect":
                     for kw in node.keywords:
-                        if kw.arg == "row_reason" and isinstance(kw.value, ast.Constant):
-                            add(kw.value.value, "unknown", where)
+                        if kw.arg == "row_reason":
+                            for code, _t in read(kw.value, where, variable_ok=False):
+                                add(code, "unknown", where)
             elif isinstance(node, ast.FunctionDef) and node.name == "channel_send_ended_effect":
                 for arg, default in zip(node.args.kwonlyargs, node.args.kw_defaults):
-                    if arg.arg == "row_reason" and isinstance(default, ast.Constant):
-                        add(default.value, "unknown", f"{rel}:{node.lineno}")
+                    if arg.arg == "row_reason" and default is not None:
+                        for code, _t in read(default, f"{rel}:{node.lineno}", variable_ok=False):
+                            add(code, "unknown", f"{rel}:{node.lineno}")
             elif isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id in ("PINNED", "FAILED_ON_CREATE")
                                                       for t in node.targets):
                 value = node.value
@@ -144,36 +180,45 @@ def emitted() -> dict[str, dict]:
                     items = [e.elts[1] for e in value.elts if isinstance(e, ast.Tuple)]
                 else:
                     items = []
+                if not isinstance(value, (ast.Dict, ast.Tuple)) or any(
+                        not (isinstance(e, ast.Tuple) and len(e.elts) == 2) for e in getattr(value, "elts", [])):
+                    unsupported.append(f"{rel}:{node.lineno}: a pinned table that is not literal pairs")
                 for item in items:
-                    if isinstance(item, ast.Constant):
-                        add(item.value, "failed", f"{rel}:{node.lineno}")
+                    for code, _t in read(item, f"{rel}:{node.lineno}", variable_ok=False):
+                        add(code, "failed", f"{rel}:{node.lineno}")
             elif rel.endswith("channel_cli.py") and isinstance(node, ast.Assign) and any(
                     isinstance(t, ast.Name) and t.id == "reason" for t in node.targets):
                 # the value, or both arms of a conditional -- never a string inside a call
                 arms = [node.value.body, node.value.orelse] if isinstance(node.value, ast.IfExp) else [node.value]
                 for arm in arms:
-                    if isinstance(arm, ast.Constant) and isinstance(arm.value, str):
-                        add(arm.value, "failed", f"{rel}:{node.lineno}")
+                    for code, _t in read(arm, f"{rel}:{node.lineno}", variable_ok=False):
+                        add(code, "failed", f"{rel}:{node.lineno}")
             elif isinstance(node, ast.FunctionDef) and node.name == "pinned":
                 # a channel's own pinned() override answers a code directly (gh exit 4)
                 for ret in ast.walk(node):
-                    if isinstance(ret, ast.Return) and isinstance(ret.value, ast.Constant) and ret.value.value:
-                        add(ret.value.value, "failed", f"{rel}:{ret.lineno}")
+                    if isinstance(ret, ast.Return) and ret.value is not None:
+                        if _src(ret.value, text) in ALLOWED_CARRIERS:
+                            continue
+                        for code, _t in read(ret.value, f"{rel}:{ret.lineno}", variable_ok=False):
+                            add(code, "failed", f"{rel}:{ret.lineno}")
             elif isinstance(node, ast.FunctionDef) and node.name == "_classify":
                 for ret in ast.walk(node):
                     if isinstance(ret, ast.Return) and isinstance(ret.value, ast.Tuple):
-                        first = ret.value.elts[0]
-                        if isinstance(first, ast.Constant):
-                            exc_codes[rel].setdefault("EmailTransportError", set()).add(first.value)
-            elif isinstance(node, ast.Assign) and isinstance(node.value, ast.Tuple) and any(
+                        for code, _t in read(ret.value.elts[0], f"{rel}:{ret.lineno}", variable_ok=False):
+                            exc_codes[rel].setdefault("EmailTransportError", set()).add(code)
+                    elif isinstance(ret, ast.Return):
+                        unsupported.append(f"{rel}:{ret.lineno}: _classify returns no (code, left) pair")
+            elif rel.endswith("channel_email.py") and isinstance(node, ast.Assign) and isinstance(node.value, ast.Tuple) and any(
                     isinstance(t, ast.Tuple) and t.elts and isinstance(t.elts[0], ast.Name) and t.elts[0].id == "code"
                     for t in node.targets):
-                first = node.value.elts[0]
-                if isinstance(first, ast.Constant) and first.value:
-                    exc_codes[rel].setdefault("EmailTransportError", set()).add(first.value)
-            elif isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "code" for t in node.targets):
-                if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str) and node.value.value:
-                    exc_codes[rel].setdefault("EmailTransportError", set()).add(node.value.value)
+                for code, _t in read(node.value.elts[0], f"{rel}:{node.lineno}", variable_ok=False):
+                    exc_codes[rel].setdefault("EmailTransportError", set()).add(code)
+            elif rel.endswith("channel_email.py") and isinstance(node, ast.Assign) and any(
+                    isinstance(t, ast.Name) and t.id == "code" for t in node.targets):
+                # the transport's own code variable (transmit): what it raises EmailTransportError with
+                if _src(node.value, text) not in ALLOWED_CARRIERS:
+                    for code, _t in read(node.value, f"{rel}:{node.lineno}", variable_ok=False):
+                        exc_codes[rel].setdefault("EmailTransportError", set()).add(code)
     # Follow each declared flow to its source codes.
     for (rel, text_arg), flows in FLOWS.items():
       for kinds, source in (flows if isinstance(flows, list) else [flows]):
@@ -189,6 +234,7 @@ def emitted() -> dict[str, dict]:
                 for k in kinds:
                     add(code, k, f"{rel} (flow {text_arg} <- {cls})")
     codes["__variables__"] = {"kinds": set(), "template": False, "where": sorted(variables)}
+    codes["__unsupported__"] = {"kinds": set(), "template": False, "where": sorted(set(unsupported))}
     return codes
 
 
@@ -234,6 +280,7 @@ def missing() -> list[tuple[str, str]]:
     """Every (kind, code) the services emit with no face word."""
     codes = emitted()
     codes.pop("__variables__")
+    codes.pop("__unsupported__")
     for code in declared_refusals():
         codes.setdefault(code, {"kinds": set(), "template": code.endswith(":"), "where": []})["kinds"].add("refused")
     tables = face_tables()

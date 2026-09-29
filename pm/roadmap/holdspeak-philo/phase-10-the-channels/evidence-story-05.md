@@ -3,7 +3,7 @@
 - **Story:** PHILO-10-05 - The atlas cases for Send
 - **Status:** done
 - **Date:** 2026-09-29
-- **Branch:** `feat/philo-10-05` from main `dce3afa9` (stories 01–04 merged). The product under test is main: this story changes no product file. It adds the atlas file, the rig's recording runner and four small rig extensions, the fences, the proof scripts and the retained runs.
+- **Branch:** `feat/philo-10-05` from main `dce3afa9` (stories 01–04 merged). Round one changed no product file: it added the atlas file, the rig's recording runner and four small rig extensions, the fences, the proof scripts and the retained runs. Round two changed ONE product file, `web/src/features/channels/channels.ts` (the face's word tables, Muad'Dib's ruling); no service changed.
 - **Red on main:** the pre-Phase-10 main is `98ea2cfa` (the parent of `3be017db`, story 01's merge): an export with its own web build and product package, this branch's rig and atlas copied in.
 
 ## What was built
@@ -22,6 +22,16 @@
 - **Fences** `tests/unit/test_philo10_atlas.py` (54 tests); `tests/unit/test_philo_graph_atlas.py` sibling count 45 → 57 and the channel operations in its mutating/readable sets (an `.op` predicate may be `all_of` of `op_facts` and `cli_calls`); `tests/unit/test_philo9_atlas.py` counts gain the Phase 10 file.
 - **Proof scripts** (`assets/story-05-proof/`): `rig_run.py` (one hub, one HOME, one run directory `<case>--<width>/<run id>` per run, reuse refused), `retain.py` (the copier: keyed by case × width × run; refuses a label that exists, two rows sharing a directory, a directory that is not `<case>--<width>/<run id>` of its row, an observation of another case, width or verdict — all BEFORE it writes anything), `rig_phase.sh`, `batch.sh` (+ its log `batch1.log`), `equivalence.py`, `base_diff.py`, `mutations.py` (14), `fences.sh`, `exit_combos.sh`, `docs_nav.sh`.
 - **Retained runs** `assets/story-05-shots/<label>/`: `p10-merged` (42, with shots), `red-98ea2cfa` (42), `p789-merged` (97, with shots), `p789-dce3afa9` (97, observations only), `base-merged` and `base-dce3afa9` (194 each, observations only), `serial-merged` (6), `s5-{merged,dce3afa9}-a{1,2,3}` (1 each).
+
+## Round three — Codex Astra r1 on #698 @ `813e6684` (RATIFY-WITH-CONDITIONS), paid
+
+`checks/story-05-built-astra-r1.md` (verbatim). Codex reproduced 9 atlas runs and found the census honest and the recording runner answering where production reads. Its conditions:
+
+| # | Finding | Payment | Proof |
+|---|---|---|---|
+| 1 (P2) | The code census silently skipped non-literal codes: an f-string, a `.format()` and a formatted code through the `reason` flow all escaped (9/9 green) | Every code expression goes through ONE reader (`_philo10_codes.py` `read`): a literal; an f-string ONLY if it is one of the eleven `ALLOWED_TEMPLATES` (the known variable-code forms); a variable only where FLOWS follows it; anything else is recorded UNSUPPORTED — in a producer, a pinned table, a `pinned()` answer, the `reason` arms, `_classify`, the transport's `code`, the kernel's row reason. New fence `test_no_code_expression_is_unsupported`; the steward module is read only for the restart's row reason (its other `code` variables are not channel codes) | `face_words_mutations.sh`: m4 (f-string), m5 (`.format()`), m6 (formatted code through the `reason` flow) RED; 6/6 red in all |
+| 2 (P2) | `rig_phase.sh` ignored the build's status: npm exit 7 → the rig still walked (`--no-build`) and the wrapper exited 0 | Both branches (the tree and an export) stop on a failed build: exit 3, "BUILD FAILED: no walk, no retention" | `exit_combos.sh`: the build × rig × copier combinations on both branches (16) — a failed build exits 3 and NEITHER the rig nor the copier runs (markers); the 813e6684 script shown walking and retaining after a failed build (exit 0) |
+| 3 (P3) | Stale summaries | The story's red count is 23 blocked / 17 not run (the retained runs); the Branch line says round two changed `channels.ts` | this file, the story file |
 
 ## Round two — Muad'Dib's ruling on #698: the face words, closed as a class
 
@@ -574,4 +584,92 @@ HEALED (5):
 Suite totals: 2966 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
+```
+
+### Captured run — 2026-09-29T16:13:25Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-proof/fences.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 3ccc225deab6918e4d9c8b8a9626c8e6092e1d8d
+
+```text
+HEAD = 813e668433af24d6b5ac934afff59a640b82670a
+........................................................................ [ 98%]
+.....                                                                    [100%]
+365 passed in 13.57s
+baseline (unmutated): 57 passed in 0.72s
+m1   RED    ['test_the_general_fences_hold_for_the_phase10_file[test_every_case_reference_inside_the_atl', 'test_the_counts_over_every_atlas_file']
+m2   RED    ['test_the_general_fences_hold_for_the_phase10_file[test_face_cases_carry_both_ruled_viewpor', 'test_every_matrix_state_and_transition_has_its_case']
+m3   RED    ['test_every_face_case_reads_its_hub_outcome_in_the_same_observation']
+m4   RED    ['test_every_admitted_write_twin_reads_its_kernel_receipt_with_its_actor']
+m5   RED    ['test_one_dispatch_is_counted_at_the_runner_where_the_runner_answers_a_send']
+m6   RED    ['test_one_dispatch_is_counted_at_the_runner_where_the_runner_answers_a_send']
+m7   RED    ['test_the_pairs_read_the_same_values']
+m8   RED    ['test_a_timed_window_is_one_gesture']
+m9   RED    ['test_no_trigger_is_optional_and_no_optional_step_is_the_outcome']
+m10  RED    ['test_every_face_case_without_a_twin_is_excluded_with_a_reason']
+m11  RED    ['test_the_counts_over_every_atlas_file', 'test_every_matrix_state_and_transition_has_its_case']
+m12  RED    ['test_the_general_fences_hold_for_the_phase10_file[test_every_desk_face_case_crosses_the_ga']
+m13  RED    ['test_every_api_step_exists_in_the_generated_openapi']
+m14  RED    ['test_the_pairs_read_the_same_values']
+14 mutations: 14 red, 0 missed
+fences exit 0; mutations exit 0
+```
+
+### Captured run — 2026-09-29T16:13:57Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-proof/face_words_mutations.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 3ccc225deab6918e4d9c8b8a9626c8e6092e1d8d
+
+```text
+10 passed in 0.56s
+baseline exit 0
+2 failed, 8 passed in 0.56s
+m1 RED (a FAILED word dropped)
+1 failed, 9 passed in 0.57s
+m2 RED (a new refusal code with no word)
+1 failed, 9 passed in 0.57s
+m3 RED (a code through a new variable site)
+1 failed, 9 passed in 0.55s
+m4 RED (an f-string code outside the allow-list)
+1 failed, 9 passed in 0.61s
+m5 RED (a .format() code)
+1 failed, 9 passed in 0.59s
+m6 RED (a formatted code through the reason flow)
+6 mutations: 6 red, 0 missed
+```
+
+### Captured run — 2026-09-29T16:14:04Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-proof/exit_combos.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 3ccc225deab6918e4d9c8b8a9626c8e6092e1d8d
+
+```text
+fences.sh A=0 B=0 -> exit 0 (wanted 0): ok
+fences.sh A=0 B=1 -> exit 1 (wanted nonzero): ok
+fences.sh A=1 B=0 -> exit 1 (wanted nonzero): ok
+fences.sh A=1 B=1 -> exit 1 (wanted nonzero): ok
+rig_phase.sh [tree] BUILD=0 RIG=0 RETAIN=0 -> exit 0, ran: rig retain (wanted 0): ok
+rig_phase.sh [tree] BUILD=0 RIG=0 RETAIN=1 -> exit 1, ran: rig retain (wanted nonzero): ok
+rig_phase.sh [tree] BUILD=0 RIG=1 RETAIN=0 -> exit 1, ran: rig retain (wanted nonzero): ok
+rig_phase.sh [tree] BUILD=0 RIG=1 RETAIN=1 -> exit 1, ran: rig retain (wanted nonzero): ok
+rig_phase.sh [tree] BUILD=7 RIG=0 RETAIN=0 -> exit 3, ran: nothing (wanted nonzero, nothing ran): ok
+rig_phase.sh [tree] BUILD=7 RIG=0 RETAIN=1 -> exit 3, ran: nothing (wanted nonzero, nothing ran): ok
+rig_phase.sh [tree] BUILD=7 RIG=1 RETAIN=0 -> exit 3, ran: nothing (wanted nonzero, nothing ran): ok
+rig_phase.sh [tree] BUILD=7 RIG=1 RETAIN=1 -> exit 3, ran: nothing (wanted nonzero, nothing ran): ok
+rig_phase.sh [export] BUILD=0 RIG=0 RETAIN=0 -> exit 0, ran: rig retain (wanted 0): ok
+rig_phase.sh [export] BUILD=0 RIG=0 RETAIN=1 -> exit 1, ran: rig retain (wanted nonzero): ok
+rig_phase.sh [export] BUILD=0 RIG=1 RETAIN=0 -> exit 1, ran: rig retain (wanted nonzero): ok
+rig_phase.sh [export] BUILD=0 RIG=1 RETAIN=1 -> exit 1, ran: rig retain (wanted nonzero): ok
+rig_phase.sh [export] BUILD=7 RIG=0 RETAIN=0 -> exit 3, ran: nothing (wanted nonzero, nothing ran): ok
+rig_phase.sh [export] BUILD=7 RIG=0 RETAIN=1 -> exit 3, ran: nothing (wanted nonzero, nothing ran): ok
+rig_phase.sh [export] BUILD=7 RIG=1 RETAIN=0 -> exit 3, ran: nothing (wanted nonzero, nothing ran): ok
+rig_phase.sh [export] BUILD=7 RIG=1 RETAIN=1 -> exit 3, ran: nothing (wanted nonzero, nothing ran): ok
+before (813e6684) [tree] BUILD=7 -> exit 0, ran: rig retain (the defect: shown, not counted)
+0 wrong
 ```

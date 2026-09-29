@@ -25,6 +25,13 @@ def test_every_emitted_code_has_a_face_word() -> None:
     assert codes.missing() == []
 
 
+def test_no_code_expression_is_unsupported() -> None:
+    """Codex Astra r1 on #698 (finding 1): an f-string outside ALLOWED_TEMPLATES, a
+    ``.format()``, a concatenation, a call -- any code expression the derivation
+    cannot read, in a producer or behind a declared flow -- fails here, by name."""
+    assert codes.emitted()["__unsupported__"]["where"] == []
+
+
 def test_every_variable_code_site_is_followed() -> None:
     """A code passed through a variable is followed by FLOWS; a new such site fails until it is."""
     seen = set(codes.emitted()["__variables__"]["where"])
