@@ -17,7 +17,6 @@ import {
   MicButton,
   Material,
   StateChip,
-  StringGadget,
   ProvenanceChip,
   ActionNotice,
   CitationChips,
@@ -27,9 +26,9 @@ import {
   type ChipState,
 } from "../../../desk/surface";
 import { openSourceRef } from "../../../desk/surface/citations";
-import { egressFor, refusalWord } from "../../../desk/surface/egress";
+import { egressFor } from "../../../desk/surface/egress";
 import type { UpdateController } from "./useUpdateController";
-import type { Delivery, ProjectUpdate, UpdateClaim } from "./model";
+import type { ProjectUpdate, UpdateClaim } from "./model";
 import {
   claimChipTitle,
   generatorLabel,
@@ -39,144 +38,15 @@ import {
   provenancePhrase,
   refChipLabel,
   refIdentityLabel,
-  isDelivered,
   refKind,
 } from "./model";
 import "./update-posture.css";
+import { ListChips, PublishedWells } from "../../channels/SendWell";
 
 
-/* PHILO-9-03 (the Q0 ruling, the ratified copy-and-confirm canvas): the
-   delivery words, one constant so the fence reads the same. */
-export const DELIVERY_WORDS = {
-  section: "DELIVERY",
-  history: "DELIVERED",
-  verb: "Mark delivered",
-  field: "To",
-  chip: "DELIVERED",
-  retry: "Retry",
-  /* PHILO-10-01: a channel send whose result is not known is never a delivery. */
-  unknown: "RESULT UNKNOWN",
-  check: "CHECK",
-} as const;
-
-const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-/** `SEP 27 14:05` -- the owner's confirmation time, exact. */
-export function deliveryTime(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${MONTHS[d.getMonth()]} ${d.getDate()} ${hh}:${mm}`;
-}
-
-/** The list chip, `DELIVERED ×N` (the owner's Q2 pick). No chip at zero
- *  deliveries. A mistaken delivery counts: undo is on the BACKLOG. A send
- *  whose result is unknown is not counted: it has its own warning chip. */
-function DeliveredChip({ deliveries }: { deliveries: Delivery[] }) {
-  const delivered = deliveries.filter(isDelivered).length;
-  const unknown = deliveries.length - delivered;
-  if (deliveries.length === 0) return null;
-  return (
-    <>
-      {delivered > 0 ? (
-        <span data-testid="update-delivered-chip">
-          <StateChip state="success" label={`${DELIVERY_WORDS.chip} ×${delivered}`} />
-        </span>
-      ) : null}
-      {unknown > 0 ? (
-        <span data-testid="update-unknown-chip">
-          <StateChip state="warning" label={`${DELIVERY_WORDS.unknown} ×${unknown}`} />
-        </span>
-      ) : null}
-    </>
-  );
-}
-
-/** The confirm line and the history, on a published update: To + Mark
- *  delivered ABOVE the body (the owner's Q3 pick). No modal, no egress badge
- *  (the product sends nothing). */
-function DeliverySection({ ctrl, update }: { ctrl: UpdateController; update: ProjectUpdate }) {
-  const rows = update.deliveries;
-  const delivered = rows.filter(isDelivered).length;
-  return (
-    <SurfaceSection
-      label={delivered > 0 ? `${DELIVERY_WORDS.history} ${delivered}` : DELIVERY_WORDS.section}
-    >
-      <div className="update-deliver-line" data-testid="deliver-line">
-        <span className="update-deliver-to">
-          <StringGadget
-            label={DELIVERY_WORDS.field}
-            value={ctrl.deliverTo}
-            onChange={ctrl.setDeliverTo}
-            placeholder={DELIVERY_WORDS.field}
-            disabled={ctrl.deliverBusy || ctrl.deliverLocked}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                void ctrl.markDelivered();
-              }
-            }}
-            inputProps={{ "data-testid": "deliver-to" } as never}
-          />
-        </span>
-        {/* With the result unknown the verb is Retry: the SAME update, the
-            SAME command_id and the SAME To (the field is locked). */}
-        <Button
-          dense
-          variant="primary"
-          loading={ctrl.deliverBusy}
-          onClick={() => void ctrl.markDelivered()}
-          data-testid={ctrl.deliverOutcome.kind === "uncertain" ? "deliver-retry" : "deliver-verb"}
-        >
-          {ctrl.deliverOutcome.kind === "uncertain" ? DELIVERY_WORDS.retry : DELIVERY_WORDS.verb}
-        </Button>
-      </div>
-      {ctrl.deliverOutcome.kind === "refused" ? (
-        // A named refusal: the result is known; nothing was recorded.
-        <span className="update-deliver-outcome" data-testid="deliver-refused" data-code={ctrl.deliverOutcome.code}>
-          <StateChip state="failure" label="REFUSED" />
-          <span className="surface-token" data-chip>
-            {refusalWord(ctrl.deliverOutcome.code)}
-          </span>
-        </span>
-      ) : ctrl.deliverOutcome.kind === "uncertain" ? (
-        // No answer: it may be recorded. Never "not marked".
-        <span className="update-deliver-outcome" data-testid="deliver-uncertain">
-          <StateChip state="warning" label="NO ANSWER · RESULT UNKNOWN" />
-        </span>
-      ) : null}
-      {rows.length > 0 ? (
-        <SurfaceLedger count="" cols="room">
-          <ul className="surface-ledger-rows" data-testid="delivery-history">
-            {rows.map((row) => (
-              <SurfaceLedgerRow
-                key={row.id}
-                data-testid="delivery-row"
-                wrap
-                expands={false}
-                lead={
-                  <span data-outcome={row.outcome}>
-                    {isDelivered(row)
-                      ? <StateChip state="success" label="" icon="✓" />
-                      : <StateChip state="warning" label="" icon="⚠" />}
-                  </span>
-                }
-                primary={isDelivered(row)
-                  ? <span className="surface-primary">{row.deliveredTo ?? "—"}</span>
-                  : (
-                    <span className="surface-primary">
-                      {`${DELIVERY_WORDS.unknown} · ${DELIVERY_WORDS.check} ${row.deliveredTo ?? "—"}`}
-                    </span>
-                  )}
-                cells={<span className="surface-token" data-chip>{deliveryTime(row.deliveredAt)}</span>}
-              />
-            ))}
-          </ul>
-        </SurfaceLedger>
-      ) : null}
-    </SurfaceSection>
-  );
-}
+/* PHILO-10-04 (the owner's A2 ruling, 2026-09-29): the SEND well and the
+   one DELIVERY history live in features/channels/SendWell.tsx; the record
+   word is DELIVERY ×N / DELIVERY N (the same counts, `isDelivered`). */
 
 /* ── Lifecycle to StateChip state mapping ── */
 
@@ -429,7 +299,7 @@ function UpdateList({
                 }
                 cells={
                   <>
-                    <DeliveredChip deliveries={update.deliveries} />
+                    <ListChips update={update} />
                     <ProvenanceChip
                       source={generatorChipSource(update.generator)}
                       boundary={generatorChipBoundary(update.generator)}
@@ -563,10 +433,9 @@ function UpdateEditor({
         </div>
       ) : (
         <div data-testid="update-body-readonly">
-          {/* PHILO-9-03: DELIVERY sits first on a published update. */}
-          {update.lifecycle === "published" ? (
-            <div data-section="delivery"><DeliverySection ctrl={ctrl} update={update} /></div>
-          ) : null}
+          {/* PHILO-10-04: SEND first, then the one DELIVERY history (every
+              channel + the manual Mark delivered, kept). A draft has no Send. */}
+          {update.lifecycle === "published" ? <PublishedWells ctrl={ctrl} update={update} /> : null}
           <SurfaceSection
             label="Update"
             actions={

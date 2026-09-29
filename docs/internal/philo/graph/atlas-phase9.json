@@ -2171,15 +2171,15 @@
           "claim": "the ITEMS section, after NEEDS YOU, omitted when empty, UNAVAILABLE + Retry on a failed read"
         },
         {
-          "path": "web/src/features/project-room/update/UpdatePosture.tsx",
-          "symbol": "function DeliverySection",
-          "line": 98,
-          "claim": "To + Mark delivered above the body of a published update, and the delivery history"
+          "path": "web/src/features/channels/SendWell.tsx",
+          "symbol": "export function DeliveryHistory",
+          "line": 593,
+          "claim": "To + Mark delivered above the body of a published update, and the delivery history (PHILO-10-04: under the SEND well, story 01's one table)"
         },
         {
           "path": "web/src/features/project-room/update/UpdatePosture.tsx",
           "symbol": "countLabel(\"UPDATES\"",
-          "line": 392,
+          "line": 262,
           "claim": "the update list's head counts updates"
         },
         {
@@ -2215,19 +2215,19 @@
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
           "symbol": "data-testid=\"project-grant-chip\"",
-          "line": 394,
+          "line": 395,
           "claim": "the project line's chip: RUN AND PUBLISH ALLOWED or STOPPED"
         },
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
           "symbol": "data-testid={`credential-row-${cred.id}`}",
-          "line": 973,
+          "line": 974,
           "claim": "one ledger row per credential"
         },
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
           "symbol": "data-testid=\"palette-token\"",
-          "line": 978,
+          "line": 979,
           "claim": "the row's palette token reads the issued name"
         },
         {

@@ -1,0 +1,74 @@
+/* PHILO-10-04: layout for the SEND well, the DELIVERY history and the
+ * Destinations group. Every species style (Button, StateChip, EgressChip,
+ * StringGadget, SurfaceLedger, the gadget sheet) is the library's. Tokens
+ * only; no new colour. */
+
+[data-send] .send-line,
+[data-send] .send-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+[data-send] .send-verbs { margin-top: 8px; }
+[data-send] .send-open { padding: 6px 6px 10px; min-width: 0; }
+[data-send] .send-pick { color: var(--accent-hover); font-family: var(--font-mono); }
+[data-send] .send-preview { margin-top: 4px; min-width: 0; }
+[data-send] .send-fields {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0 0 8px;
+}
+[data-send] .send-field { display: contents; }
+[data-send] .send-field dt { align-self: center; }
+[data-send] .send-field dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+}
+[data-send] .send-preview-body { min-width: 0; overflow-wrap: anywhere; }
+[data-send] .send-preview-text {
+  white-space: pre-wrap;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+/* The preview's verbs sit between its fields and its body. */
+[data-send] .send-preview .send-verbs { margin: 4px 0 10px; }
+/* A long path or id wraps instead of running past the window. */
+[data-send] .send-wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+[data-send] .surface-ledger[data-cols="room"] .surface-token.send-wrap {
+  white-space: normal;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+/* A literal (a path, a message id, an address, a repository) keeps its exact
+   spelling: the token species uppercases its text (surface.css). */
+html body [data-send] .send-literal,
+html body [data-send] .surface-token.send-literal { text-transform: none; }
+[data-send] .send-manual { margin-bottom: 6px; }
+[data-send] .update-deliver-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+[data-send] .update-deliver-to { flex: 1 1 180px; min-width: 0; display: flex; }
+[data-send] .update-deliver-to .gadget-string { flex: 1 1 auto; min-width: 0; }
+[data-send] .dest-form { padding: 6px 0; min-width: 0; }
+[data-send] .dest-secret .gadget-secret { padding: 4px 0; }
+[data-send] .surface-ledger-open { min-width: 0; }
+/* The Room's Add destination arrives at the group: below the window head. */
+[data-send="destinations"] { scroll-margin-top: 8px; }
+/* A destination row's target token: at most two lines on the row (the whole
+   literal is its title, and the open preview's field shows it in full). */
+[data-send] .send-target {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}

@@ -4977,7 +4977,7 @@
     {
       "name": "channel.check_destination",
       "version": 1,
-      "description": "Check a saved destination: a folder still resolves to the saved path, exists and is writable; a GitHub, Jira or Confluence destination shows the stored state of its connection; an email destination's key is in the OS keychain (no call to the provider).",
+      "description": "Check a saved destination: a folder still resolves to the saved path, exists and is writable; a GitHub, Jira or Confluence destination shows the stored state of its connection; an email destination's key is in the OS keychain, then its sender's verification as the provider last answered a send from it (no call to the provider).",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -4993,7 +4993,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "read",
-      "result": "{destination, check: {state: ready | changed | missing | not_writable | parked | connected | never_checked | owner_action_required | unavailable | degraded | email_key_missing | email_key_store_not_native | email_key_store_locked, resolved}}",
+      "result": "{destination, check: {state: ready | changed | missing | not_writable | parked | connected | never_checked | owner_action_required | unavailable | degraded | email_key_missing | email_key_store_not_native | email_key_store_locked | sender_accepted | sender_not_verified | key_changed, resolved, answered_at (email: when the provider gave that answer)}}",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
@@ -5242,6 +5242,10 @@
         "github_identity_changed",
         "github_not_logged_in",
         "github_identity_unverified",
+        "atlassian_not_signed_in",
+        "atlassian_switch_failed",
+        "atlassian_identity_unverified",
+        "lock_timeout",
         "email_provider_unknown",
         "email_key_missing",
         "email_key_store_not_native",

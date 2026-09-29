@@ -67,6 +67,26 @@ export function useUpdateController(
     setToDrafts((d) => ({ ...d, [openId]: v }));
   }, [openId]);
 
+  // ── PHILO-10-04: the open update's history, read again after a send
+  // settles (story 01's one table). Only `deliveries` is replaced: the
+  // editor's state stays. A read that gets no answer is named, never empty.
+  const [deliveriesReadFailed, setDeliveriesReadFailed] = useState(false);
+  const reloadDeliveries = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const list = await updateApi.fetchUpdates(projectId);
+      setUpdates(list);
+      setCurrent((u) => {
+        if (!u) return u;
+        const fresh = list.find((x) => x.id === u.id);
+        return fresh ? { ...u, deliveries: fresh.deliveries } : u;
+      });
+      setDeliveriesReadFailed(false);
+    } catch {
+      setDeliveriesReadFailed(true);
+    }
+  }, [projectId]);
+
   // ── Enter update posture (fetch list) ──
   const enterUpdates = useCallback(async () => {
     if (!projectId) return;
@@ -95,6 +115,7 @@ export function useUpdateController(
 
   // ── Open a specific update in the editor ──
   const openUpdate = useCallback((update: ProjectUpdate) => {
+    setDeliveriesReadFailed(false);
     setCurrent(update);
     setEditBody(update.bodyMd);
     setDirty(false);
@@ -322,6 +343,10 @@ export function useUpdateController(
     deliverBusy,
     deliverOutcome,
     deliverLocked: !!openHold,
+
+    // PHILO-10-04: the history read again after a send settles
+    reloadDeliveries,
+    deliveriesReadFailed,
   } as const;
 }
 

@@ -34,7 +34,7 @@
   min-height: 14px;
   background: var(--accent-tint);
   border: 1px solid var(--border-subtle);
-  font-size: 9px;
+  font-size: var(--desk-surface-label-size); /* PHILO-10-04: the 12 px floor (was 9 px) */
   letter-spacing: var(--letter-spacing-eyebrow);
   color: var(--accent);
 }

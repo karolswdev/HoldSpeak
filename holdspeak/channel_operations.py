@@ -146,7 +146,8 @@ CHANNEL_CHECK_DESTINATION = OperationDescriptor(
     version=1,
     description="Check a saved destination: a folder still resolves to the saved path, exists and is writable; a "
                 "GitHub, Jira or Confluence destination shows the stored state of its connection; an email "
-                "destination's key is in the OS keychain (no call to the provider).",
+                "destination's key is in the OS keychain, then its sender's verification as the provider last "
+                "answered a send from it (no call to the provider).",
     args_schema={
         "type": "object",
         "properties": {"destination_id": _DESTINATION_ID},
@@ -157,7 +158,8 @@ CHANNEL_CHECK_DESTINATION = OperationDescriptor(
     effect="read",
     result="{destination, check: {state: ready | changed | missing | not_writable | parked | connected | "
            "never_checked | owner_action_required | unavailable | degraded | email_key_missing | "
-           "email_key_store_not_native | email_key_store_locked, resolved}}",
+           "email_key_store_not_native | email_key_store_locked | sender_accepted | sender_not_verified | "
+           "key_changed, resolved, answered_at (email: when the provider gave that answer)}}",
     refusals=_CONTRACT_REFUSALS + ("destination_not_saved",),
     completion="synchronous",
     exposure=("http:POST /api/channels/destinations/{destination_id}/check", "mcp:channel.check_destination"),
@@ -272,7 +274,9 @@ CHANNEL_SEND = OperationDescriptor(
                                    "destination_parked", "destination_changed", "preview_changed", "payload_changed",
                                    "payload_too_large:<channel>", "send_already_settled", "update_not_published",
                                    "path_outside_folder", "github_identity_changed", "github_not_logged_in",
-                                   "github_identity_unverified", "email_provider_unknown", "email_key_missing",
+                                   "github_identity_unverified", "atlassian_not_signed_in",
+                                   "atlassian_switch_failed", "atlassian_identity_unverified", "lock_timeout",
+                                   "email_provider_unknown", "email_key_missing",
                                    "email_key_store_not_native", "email_key_store_locked",
                                    "email_recipients_too_many", "idempotency_conflict"),
     completion="synchronous; channel.sends and project.list_updates (deliveries) show it",

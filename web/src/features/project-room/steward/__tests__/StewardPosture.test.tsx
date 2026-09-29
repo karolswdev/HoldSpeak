@@ -865,9 +865,9 @@ describe("Policy: round-trip", () => {
     const effectsSection = screen.getByTestId("steward-policy-effects");
     expect(effectsSection).toBeTruthy();
 
-    // There are checkboxes for 5 effect kinds
+    // One checkbox per effect kind (PHILO-10-04: prepare_send is the seventh)
     const checkboxes = effectsSection.querySelectorAll('input[type="checkbox"]');
-    expect(checkboxes.length).toBe(6);
+    expect(checkboxes.length).toBe(7);
 
     // Save
     const saveBtn = screen.getByTestId("steward-verb-save-policy");

@@ -1,0 +1,2136 @@
+{
+  "boards": {
+    "26-prepared-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved THIS DEVICE",
+        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Old THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "DELIVERY",
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "18d8af4a08e418efed18f78fe8fc2fcdbe3a0a26ada366580f0b2a7dc66f9c22",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=prepared-row]",
+          "text": "◆ Folder Payments ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 S",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=prepared-open] [data-testid=prepared-send]",
+          "text": "Send",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            770,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47
+          ],
+          "text": "◆\nFolder Payments\n◆\nPREPARED\nB"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            24
+          ],
+          "text": "Send"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            24
+          ],
+          "text": "Discard"
+        },
+        {
+          "face": [
+            770,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47
+          ],
+          "text": "◆\nFolder Moved\n◆\nPREPARED\nBY R"
+        },
+        {
+          "face": [
+            770,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47
+          ],
+          "text": "◆\nFolder Old\n◆\nPREPARED\nBY REM"
+        },
+        {
+          "face": [
+            770,
+            26
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            26
+          ],
+          "text": "◆\nFolder Ledger\n◆\nPREPARED\nBY "
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Ledger\nFILE\n/private/"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Moved\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Old\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            620.2,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            620.2,
+            20
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            24
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [
+        "◆ Folder Payments ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50 THIS DEVICE",
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50 THIS DEVICE",
+        "◆ Folder Ledger ◆ PREPARED BY YOU REV 1 SEP 29 03:50 THIS DEVICE"
+      ],
+      "prepared_open": 1,
+      "prepared_results": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "28-prepared-failed-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments ✓ SAVED 03:50 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved THIS DEVICE",
+        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Old THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md SEP 29 03:50",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger/2026-09-29-payments-ledger-cutover-r1-f5ace5db.md JAN 1 02:00"
+      ],
+      "history_head": "DELIVERY 2",
+      "history_outcomes": [
+        "sent",
+        "sent"
+      ],
+      "last_chips": [
+        "✓ SAVED 03:50",
+        "✗ LAST SEND FAILED"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "10fe3d8d1971277bcbf1f02c4f2c2996590a160d6311fbe5e0797b1ca2cfe6bf",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=prepared-result] [data-state=failed]",
+          "text": "Folder Ledger",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            770,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47
+          ],
+          "text": "◆\nFolder Moved\n◆\nPREPARED\nBY R"
+        },
+        {
+          "face": [
+            770,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47
+          ],
+          "text": "◆\nFolder Old\n◆\nPREPARED\nBY REM"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Ledger\nFILE\n/private/"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Moved\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Old\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            620.2,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            620.2,
+            20
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            24
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50 THIS DEVICE"
+      ],
+      "prepared_open": 0,
+      "prepared_results": [
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 29 03:50"
+      ],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "28b-destination-latest-failed-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments ✓ SAVED 03:50 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved THIS DEVICE",
+        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Old THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md SEP 29 03:50",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger/2026-09-29-payments-ledger-cutover-r1-f5ace5db.md JAN 1 02:00"
+      ],
+      "history_head": "DELIVERY 2",
+      "history_outcomes": [
+        "sent",
+        "sent"
+      ],
+      "last_chips": [
+        "✓ SAVED 03:50",
+        "✗ LAST SEND FAILED"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "d5f9d4f9687609b3cbdb1b5605f7c4444a51ce8464787f698e5d03383353cb6f",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=destination-row]:has([data-destination='Folder Ledger']) [data-testid=send-last-failed]",
+          "text": "✗ LAST SEND FAILED",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            770,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47
+          ],
+          "text": "◆\nFolder Moved\n◆\nPREPARED\nBY R"
+        },
+        {
+          "face": [
+            770,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47
+          ],
+          "text": "◆\nFolder Old\n◆\nPREPARED\nBY REM"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Ledger\nFILE\n/private/"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Moved\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Old\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            620.2,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            620.2,
+            20
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            24
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50 THIS DEVICE"
+      ],
+      "prepared_open": 0,
+      "prepared_results": [
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 29 03:50"
+      ],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "28c-destination-reopened-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments ✓ SAVED 03:50 THIS DEVICE",
+        "● Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved THIS DEVICE",
+        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Old THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md SEP 29 03:50",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger/2026-09-29-payments-ledger-cutover-r1-f5ace5db.md JAN 1 02:00"
+      ],
+      "history_head": "DELIVERY 2",
+      "history_outcomes": [
+        "sent",
+        "sent"
+      ],
+      "last_chips": [
+        "✓ SAVED 03:50",
+        "✗ LAST SEND FAILED"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "9f4b79588ccde88bc5b864cb4ff10ca341c68fabbfb352736d6d69ca6099fc58",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Folder Ledger'] [data-testid=send-failed]",
+          "text": "✗ FAILED NO PERMISSION NOTHING SENT",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            770,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47
+          ],
+          "text": "◆\nFolder Moved\n◆\nPREPARED\nBY R"
+        },
+        {
+          "face": [
+            770,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47
+          ],
+          "text": "◆\nFolder Old\n◆\nPREPARED\nBY REM"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "●\nFolder Ledger\nFILE\n/private/"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            24
+          ],
+          "text": "Send again"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Moved\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Old\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            620.2,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            620.2,
+            20
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            24
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50 THIS DEVICE"
+      ],
+      "prepared_open": 0,
+      "prepared_results": [
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 29 03:50"
+      ],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": "permission_denied",
+          "state": "failed",
+          "text": "✗ FAILED NO PERMISSION NOTHING SENT"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "29-prepared-file-sent-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments ✓ SAVED 03:50 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved THIS DEVICE",
+        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Old THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md SEP 29 03:50"
+      ],
+      "history_head": "DELIVERY 1",
+      "history_outcomes": [
+        "sent"
+      ],
+      "last_chips": [
+        "✓ SAVED 03:50"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "5987137d86e3b202f6144305a8843b94f60607cf6424641fffe8a7abe5faeb0a",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=prepared-result]",
+          "text": "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            770,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47
+          ],
+          "text": "◆\nFolder Moved\n◆\nPREPARED\nBY R"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            24
+          ],
+          "text": "Send"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            24
+          ],
+          "text": "Discard"
+        },
+        {
+          "face": [
+            770,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47
+          ],
+          "text": "◆\nFolder Old\n◆\nPREPARED\nBY REM"
+        },
+        {
+          "face": [
+            770,
+            26
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            26
+          ],
+          "text": "◆\nFolder Ledger\n◆\nPREPARED\nBY "
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Ledger\nFILE\n/private/"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Moved\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Old\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            620.2,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            620.2,
+            20
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            24
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50 THIS DEVICE",
+        "◆ Folder Ledger ◆ PREPARED BY YOU REV 1 SEP 29 03:50 THIS DEVICE"
+      ],
+      "prepared_open": 1,
+      "prepared_results": [
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50"
+      ],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "30-prepared-destination-changed-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments ✓ SAVED 03:50 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved THIS DEVICE",
+        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Old THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md SEP 29 03:50",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger/2026-09-29-payments-ledger-cutover-r1-f5ace5db.md JAN 1 02:00"
+      ],
+      "history_head": "DELIVERY 2",
+      "history_outcomes": [
+        "sent",
+        "sent"
+      ],
+      "last_chips": [
+        "✓ SAVED 03:50",
+        "✗ LAST SEND FAILED"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "957bc82688c159590481df62bcba44c983bd2046df79202a99b54dd2a0fede02",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='Folder Moved']) [data-testid=prepared-refused-chip]",
+          "text": "✗ DESTINATION CHANGED",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='Folder Moved']) [data-testid=prepared-discard]",
+          "text": "Discard",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            770,
+            47.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47.5
+          ],
+          "text": "◆\nFolder Moved\n◆\nPREPARED\nBY R"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            24
+          ],
+          "text": "Discard"
+        },
+        {
+          "face": [
+            770,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47
+          ],
+          "text": "◆\nFolder Old\n◆\nPREPARED\nBY REM"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Ledger\nFILE\n/private/"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Moved\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Old\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            620.2,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            620.2,
+            20
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            24
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION CHANGED SEP 29 03:50 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50 THIS DEVICE"
+      ],
+      "prepared_open": 1,
+      "prepared_results": [
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 29 03:50"
+      ],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": "destination_changed",
+          "state": "send-refused",
+          "text": "✗ REFUSED DESTINATION CHANGED NOTHING SENT"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "31-prepared-destination-parked-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments ✓ SAVED 03:50 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md SEP 29 03:50",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger/2026-09-29-payments-ledger-cutover-r1-f5ace5db.md JAN 1 02:00"
+      ],
+      "history_head": "DELIVERY 2",
+      "history_outcomes": [
+        "sent",
+        "sent"
+      ],
+      "last_chips": [
+        "✓ SAVED 03:50",
+        "✗ LAST SEND FAILED"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "1f69123bfc795871bf6a294a6c87ea481a4174875329e4bc89a126ada802142c",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='Folder Old']) [data-testid=prepared-refused-chip]",
+          "text": "✗ DESTINATION PARKED",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='Folder Old']) [data-testid=prepared-discard]",
+          "text": "Discard",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            770,
+            47.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47.5
+          ],
+          "text": "◆\nFolder Moved\n◆\nPREPARED\nBY R"
+        },
+        {
+          "face": [
+            770,
+            47.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47.5
+          ],
+          "text": "◆\nFolder Old\n◆\nPREPARED\nBY REM"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            24
+          ],
+          "text": "Discard"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Ledger\nFILE\n/private/"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Moved\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            620.2,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            620.2,
+            20
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            24
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION CHANGED SEP 29 03:50 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION PARKED SEP 29 03:50 THIS DEVICE"
+      ],
+      "prepared_open": 1,
+      "prepared_results": [
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 29 03:50"
+      ],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Old"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": "destination_parked",
+          "state": "send-refused",
+          "text": "✗ REFUSED DESTINATION PARKED NOTHING SENT"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "32-discard-armed-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments ✓ SAVED 03:50 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md SEP 29 03:50",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger/2026-09-29-payments-ledger-cutover-r1-f5ace5db.md JAN 1 02:00"
+      ],
+      "history_head": "DELIVERY 2",
+      "history_outcomes": [
+        "sent",
+        "sent"
+      ],
+      "last_chips": [
+        "✓ SAVED 03:50",
+        "✗ LAST SEND FAILED"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "ff90db037ee7f941bb0151c675057e1c88b9235b2ad49747a0d01a38abfbdbec",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='Folder Old']) [data-testid=prepared-discard]",
+          "text": "Discard?",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            770,
+            47.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47.5
+          ],
+          "text": "◆\nFolder Moved\n◆\nPREPARED\nBY R"
+        },
+        {
+          "face": [
+            770,
+            47.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47.5
+          ],
+          "text": "◆\nFolder Old\n◆\nPREPARED\nBY REM"
+        },
+        {
+          "face": [
+            75.6,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            75.6,
+            24
+          ],
+          "text": "Discard?"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Ledger\nFILE\n/private/"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Moved\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            620.2,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            620.2,
+            20
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            24
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION CHANGED SEP 29 03:50 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION PARKED SEP 29 03:50 THIS DEVICE"
+      ],
+      "prepared_open": 1,
+      "prepared_results": [
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 29 03:50"
+      ],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Old"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": "destination_parked",
+          "state": "send-refused",
+          "text": "✗ REFUSED DESTINATION PARKED NOTHING SENT"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "33-discarded-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments ✓ SAVED 03:50 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md SEP 29 03:50",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger/2026-09-29-payments-ledger-cutover-r1-f5ace5db.md JAN 1 02:00"
+      ],
+      "history_head": "DELIVERY 2",
+      "history_outcomes": [
+        "sent",
+        "sent"
+      ],
+      "last_chips": [
+        "✓ SAVED 03:50",
+        "✗ LAST SEND FAILED"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "938a6e7ed84175bdd139f1da59fbc66fd3e5a2d8b6d91fe78ad2b9f9fc247400",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=prepared-result] [data-state=discarded]",
+          "text": "Folder Old",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            770,
+            47.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            47.5
+          ],
+          "text": "◆\nFolder Moved\n◆\nPREPARED\nBY R"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            24
+          ],
+          "text": "Discard"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Ledger\nFILE\n/private/"
+        },
+        {
+          "face": [
+            770,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77
+          ],
+          "text": "○\nFolder Moved\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            620.2,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            620.2,
+            20
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            24
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION CHANGED SEP 29 03:50 THIS DEVICE"
+      ],
+      "prepared_open": 1,
+      "prepared_results": [
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50",
+        "· Folder Old ○ DISCARDED BY REMOTE-PROJECT-AGENT REV 1 SEP 29 03:50",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 29 03:50"
+      ],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": "destination_changed",
+          "state": "send-refused",
+          "text": "✗ REFUSED DESTINATION CHANGED NOTHING SENT"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "35b-list-prepared-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [
+        "◆ PREPARED ×4"
+      ],
+      "list_rows": [
+        "just now ▤ PUBLISHED REV 1 ◆ PREPARED ×4 DETERMINISTIC ›"
+      ],
+      "masked_sha": "48bcb848a548444355e7ad86fd9b4cf87e16a10857856abcbdb4358e94168d82",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=update-prepared-chip]",
+          "text": "◆ PREPARED ×4",
+          "why": ""
+        }
+      ],
+      "pointer": [],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    }
+  },
+  "hub_sends": [
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2026-09-29T09:50:16+00:00",
+      "destination_id": "chd_b4a3bde5ea39b446d9f300d5",
+      "destination_name": "Folder Payments",
+      "dispatch_seq": 1,
+      "dispatch_started_at": "2026-09-29T09:50:24.018810+00:00",
+      "document_ref": "project_update:pupd_7ea8abcd70d54cf798c5b7efa82db0ed",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md",
+      "id": "chs_44c108b031d9b741a398c072",
+      "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "prepare_operation_id": "op_9894a408450e4152982851747d37445e",
+      "prepared_by": {
+        "identity": "remote-project-agent",
+        "kind": "agent"
+      },
+      "preview": {
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+      },
+      "proof": {
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments/2026-09-29-payments-ledger-cutover-r1-44c108b0.md",
+        "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "size": 286
+      },
+      "reason": null,
+      "send_operation_id": "op_4ac34b5f66284b4bb00b187143aa6bad",
+      "settled_at": "2026-09-29T09:50:24+00:00",
+      "size": 286,
+      "state": "sent",
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Payments"
+      },
+      "target_digest": "e28e23081da3a5b391d43b108af31c19489da18ae6e749d8a21a732553220415"
+    },
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2026-09-29T09:50:16+00:00",
+      "destination_id": "chd_0ef3b531ab0f449d0d6920c6",
+      "destination_name": "Folder Moved",
+      "dispatch_seq": null,
+      "dispatch_started_at": null,
+      "document_ref": "project_update:pupd_7ea8abcd70d54cf798c5b7efa82db0ed",
+      "file_path": null,
+      "id": "chs_446fe8f0b54d755654195265",
+      "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "prepare_operation_id": "op_f83fff4b1ab0422eb057b7297e181559",
+      "prepared_by": {
+        "identity": "remote-project-agent",
+        "kind": "agent"
+      },
+      "preview": {
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+      },
+      "proof": null,
+      "reason": null,
+      "send_operation_id": null,
+      "settled_at": null,
+      "size": 286,
+      "state": "prepared",
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Moved"
+      },
+      "target_digest": "99034eef823cb47e6daaf6a203b152a84f86daf34ce6d0e30deef13600993384"
+    },
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2026-09-29T09:50:16+00:00",
+      "destination_id": "chd_875488367d4ccc33e2a8fd16",
+      "destination_name": "Folder Old",
+      "dispatch_seq": null,
+      "dispatch_started_at": null,
+      "document_ref": "project_update:pupd_7ea8abcd70d54cf798c5b7efa82db0ed",
+      "file_path": null,
+      "id": "chs_f7407db9ed89c8d0f4575767",
+      "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "prepare_operation_id": "op_c8782e3f3d7d44ab9ade153cc566f09f",
+      "prepared_by": {
+        "identity": "remote-project-agent",
+        "kind": "agent"
+      },
+      "preview": {
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+      },
+      "proof": null,
+      "reason": null,
+      "send_operation_id": null,
+      "settled_at": "2026-09-29T09:50:43+00:00",
+      "size": 286,
+      "state": "discarded",
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Old"
+      },
+      "target_digest": "2a5f95fe78d1e1214a1a05a6166d497d079f94c7190acd73b048d13928f69f0b"
+    },
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2026-09-29T09:50:16+00:00",
+      "destination_id": "chd_b5694e96975f52fda9641211",
+      "destination_name": "Folder Ledger",
+      "dispatch_seq": 3,
+      "dispatch_started_at": "2030-01-01T09:00:00.000000+00:00",
+      "document_ref": "project_update:pupd_7ea8abcd70d54cf798c5b7efa82db0ed",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger/2026-09-29-payments-ledger-cutover-r1-4825c7d0.md",
+      "id": "chs_4825c7d0281cb4a8cf4b0718",
+      "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "prepare_operation_id": "op_06c5dc4af49f487bb03cf320cd866ae4",
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+      },
+      "proof": null,
+      "reason": "permission_denied",
+      "send_operation_id": "op_331458a74ec14632847b6944f5780082",
+      "settled_at": "2026-09-29T09:50:28+00:00",
+      "size": 286,
+      "state": "failed",
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger"
+      },
+      "target_digest": "ceae985ec6f7e56ab5d41903ae9da1b048554f71c917c8e61df2f4a010a8715a"
+    },
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2030-01-01T09:00:00.000000+00:00",
+      "destination_id": "chd_b5694e96975f52fda9641211",
+      "destination_name": "Folder Ledger",
+      "dispatch_seq": 2,
+      "dispatch_started_at": "2030-01-01T09:00:00.000000+00:00",
+      "document_ref": "project_update:pupd_7ea8abcd70d54cf798c5b7efa82db0ed",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger/2026-09-29-payments-ledger-cutover-r1-f5ace5db.md",
+      "id": "chs_f5ace5db28250bc7b0846244",
+      "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "prepare_operation_id": null,
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+      },
+      "proof": {
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger/2026-09-29-payments-ledger-cutover-r1-f5ace5db.md",
+        "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "size": 286
+      },
+      "reason": null,
+      "send_operation_id": "op_89feb1488c974c709eca8b257538b6fa",
+      "settled_at": "2026-09-29T09:50:27+00:00",
+      "size": 286,
+      "state": "sent",
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_prepared_sends_and_the_la0/Ledger"
+      },
+      "target_digest": "ceae985ec6f7e56ab5d41903ae9da1b048554f71c917c8e61df2f4a010a8715a"
+    }
+  ]
+}

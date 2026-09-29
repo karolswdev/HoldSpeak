@@ -106,6 +106,11 @@ export type Delivery = {
   outcome: string;
   /** `manual`, or the channel that sent it (`file`, ...). */
   channel: string;
+  /** PHILO-10-04: the channel's proof (a file's path; a comment URL; a
+   *  provider's message id), exact as stored. Null for a manual row. */
+  proof?: Record<string, unknown> | null;
+  /** PHILO-10-04: the channel send this row settled, if any. */
+  sendId?: string | null;
 };
 
 /** A row that counts as delivered: his confirmation or a channel's proof. */
@@ -123,7 +128,20 @@ export function decodeDelivery(raw: Record<string, unknown>): Delivery {
     operationId: String(raw.operation_id ?? ""),
     outcome: String(raw.outcome ?? "confirmed") || "confirmed",
     channel: String(raw.channel ?? "manual") || "manual",
+    proof: decodeProof(raw.proof_json),
+    sendId: raw.send_id ? String(raw.send_id) : null,
   };
+}
+
+function decodeProof(raw: unknown): Record<string, unknown> | null {
+  if (raw && typeof raw === "object") return raw as Record<string, unknown>;
+  if (typeof raw !== "string" || !raw) return null;
+  try {
+    const v = JSON.parse(raw);
+    return v && typeof v === "object" ? (v as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
 }
 
 function decodeSupportRecord(raw: unknown): ClaimSupportRecord | null {

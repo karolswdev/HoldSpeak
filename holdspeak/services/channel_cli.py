@@ -48,7 +48,7 @@ from ..plugins.gated_connector import (
     build_gated_connector,
 )
 from .channel_contract import ChannelRefused, Document, Outcome, private_payload_file, redact, sha256
-from .errors import ValidationError
+from .errors import ServiceError, ValidationError
 
 #: The process edge every CLI channel command goes through (tests can it).
 CLI_RUNNER: Any = subprocess.run
@@ -319,6 +319,19 @@ class GitHubChannel(CliChannel):
 # ── Atlassian (Jira and Confluence) ────────────────────────────────────────
 
 
+class _Held:
+    """Releases a lock this code already entered (``with`` for an explicit ``__enter__``)."""
+
+    def __init__(self, lock: Any) -> None:
+        self._lock = lock
+
+    def __enter__(self) -> Any:
+        return self._lock
+
+    def __exit__(self, *exc: Any) -> None:
+        self._lock.__exit__(*exc)
+
+
 class _Atlassian(CliChannel):
     product = ""
 
@@ -331,8 +344,52 @@ class _Atlassian(CliChannel):
             raise ValidationError("An Atlassian destination needs the account's email", code="atlassian_email_invalid")
         return {"site": site, "email": email}
 
-    def check_before_dispatch(self, target: Mapping[str, Any], **_: Any) -> None:
+    def check_before_dispatch(self, target: Mapping[str, Any], *, account: Optional[Mapping[str, Any]] = None,
+                              principal: Any = None, **_: Any) -> None:
+        """Before the boundary (PHILO-10-04, board 14 as ratified): the frozen target is valid and the frozen
+        account is signed in -- the same switch-and-verify the dispatch runs, as a classified read under the
+        acli lock. Signed out: REFUSED ``atlassian_not_signed_in``, nothing sent. A sign-out after this
+        check stays the post-boundary known failure (``atlassian_not_logged_in``)."""
+        from .jira_provider import _ACLI_LOCK, _is_account_not_found, _is_unauthenticated, _parse_acli_auth_status
+
         self.valid(target)
+        account = account or {}
+        site, email = str(account.get("site") or ""), str(account.get("email") or "")
+        # A lock that stays held is a KNOWN refusal before the boundary (nothing ran): 409, like every
+        # refusal of this send, never the provider read's 503 (Codex Astra r2 on #697, finding 2).
+        try:
+            _ACLI_LOCK.__enter__()
+        except ServiceError as exc:
+            if exc.code != "lock_timeout":
+                raise
+            raise ChannelRefused("lock_timeout", "Another HoldSpeak process holds the acli lock") from None
+        with _Held(_ACLI_LOCK):
+            code, out, err = self._read(["acli", self.product, "auth", "switch", "--site", site, "--email", email],
+                                        principal)
+            text = out + "\n" + err
+            if code != 0:
+                if _is_unauthenticated(text) or _is_account_not_found(text):
+                    raise ChannelRefused("atlassian_not_signed_in", f"acli is not signed in to {site} as {email}")
+                raise ChannelRefused("atlassian_switch_failed", "acli could not switch to the saved account")
+            code, out, err = self._read(["acli", self.product, "auth", "status"], principal)
+            if code != 0 or not _parse_acli_auth_status(out + "\n" + err, site, email).get("match"):
+                raise ChannelRefused("atlassian_identity_unverified", "acli does not name the saved account")
+
+    def _read(self, argv: list[str], principal: Any) -> tuple[int, str, str]:
+        """One acli auth read on the provider's read manifest (not an effect; like GitHub's ``gh api user``)."""
+        from ..connector_packs import acli_confluence, acli_jira
+        from ..connector_runtime import PermissionGate
+
+        manifest = acli_jira.MANIFEST if self.product == "jira" else acli_confluence.MANIFEST
+        try:
+            completed = PermissionGate(manifest).run_read_subprocess(
+                argv, principal=principal, runner=CLI_RUNNER, stdin=subprocess.DEVNULL, capture_output=True,
+                text=True, errors="replace", timeout=15.0)
+        except subprocess.TimeoutExpired as exc:
+            raise ChannelRefused("atlassian_identity_unverified", "acli did not answer") from exc
+        except OSError as exc:
+            raise ChannelRefused(f"{self.name}_cli_missing", "acli is not installed") from exc
+        return _native(completed)
 
     def valid(self, target: Mapping[str, Any]) -> None:  # pragma: no cover - each product
         raise NotImplementedError

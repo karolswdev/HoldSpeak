@@ -4215,7 +4215,9 @@ CREATE INDEX IF NOT EXISTS idx_channel_destinations_state
 -- dispatching -> sent | failed | unknown; prepared -> discarded.  The frozen
 -- target and the exact transport bytes (payload) with their digest.  The
 -- dispatch boundary (state dispatching + send_operation_id) commits BEFORE any
--- effect; recovery never dispatches again.
+-- effect; recovery never dispatches again.  PHILO-10-04 (additive): dispatch_seq
+-- is the order sends LEFT in, allocated inside the boundary transaction
+-- (MAX + 1 under BEGIN IMMEDIATE); the face's "latest" reads it.
 CREATE TABLE IF NOT EXISTS channel_sends (
     id TEXT PRIMARY KEY,
     document_ref TEXT NOT NULL,
@@ -4236,7 +4238,8 @@ CREATE TABLE IF NOT EXISTS channel_sends (
     file_path TEXT,
     created_at TEXT NOT NULL,
     dispatch_started_at TEXT,
-    settled_at TEXT
+    settled_at TEXT,
+    dispatch_seq INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_channel_sends_document
     ON channel_sends(document_ref, created_at);

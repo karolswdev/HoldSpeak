@@ -1,0 +1,115 @@
+{
+  "boards": {
+    "25-unknown-after-restart-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw0/test_board_25_unknown_after_a_0/Payments ⚠ LAST SEND UNKNOWN THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "⚠ RESULT UNKNOWN · CHECK Folder Payments INTERRUPTED SEP 29 03:49"
+      ],
+      "history_head": "DELIVERY",
+      "history_outcomes": [
+        "unknown"
+      ],
+      "last_chips": [
+        "⚠ LAST SEND UNKNOWN"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "6e846bec09e33e830212062c1d79f9e27157d3d62ebd6320520fb4442da01c03",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=destination-row]:has([data-destination='Folder Payments']) [data-testid=send-last-unknown]",
+          "text": "⚠ LAST SEND UNKNOWN",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=delivery-history] > li:first-child > [data-testid=delivery-row]",
+          "text": "⚠ RESULT UNKNOWN · CHECK Folder Payments INTERRUPTED SEP 29 ",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            770,
+            77.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            770,
+            77.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            620.2,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            620.2,
+            20
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            24
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    }
+  },
+  "settled": {
+    "proof_json": "{\"found_on_disk\":{\"path\":\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw0/test_board_25_unknown_after_a_0/Payments/2026-09-29-payments-ledger-cutover-r1-ee0d614c.md\",\"sha256\":\"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\",\"size\":286}}",
+    "reason": "interrupted",
+    "state": "unknown"
+  }
+}

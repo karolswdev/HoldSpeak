@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime, timezone
 from typing import Any, Mapping, Optional
 
 from holdspeak.db.channels import now_iso, settle_in_transaction
@@ -117,6 +118,7 @@ class ChannelService:
             "proof": json.loads(row["proof_json"]) if row["proof_json"] else None,
             "file_path": row["file_path"], "created_at": row["created_at"],
             "dispatch_started_at": row["dispatch_started_at"], "settled_at": row["settled_at"],
+            "dispatch_seq": row["dispatch_seq"],
         }
 
     def _answer(self, row: Mapping[str, Any]) -> dict[str, Any]:
@@ -172,8 +174,9 @@ class ChannelService:
 
         row = self._destination(destination_id)
         if row["channel"] == "email":
-            return {"destination": self._destination_view(row), "check": {"state": self._email_state(row),
-                                                                         "resolved": None}}
+            state, answered_at = self._email_state(row)
+            return {"destination": self._destination_view(row),
+                    "check": {"state": state, "resolved": None, "answered_at": answered_at}}
         if row["channel"] != "file":
             view = self._destination_view(row)
             state = "parked" if row["state"] != "active" else str((view["connection"] or {}).get("state") or "")
@@ -188,19 +191,45 @@ class ChannelService:
                  else "not_writable")
         return {"destination": self._destination_view(row), "check": {"state": state, "resolved": resolved}}
 
-    @staticmethod
-    def _email_state(row: Mapping[str, Any]) -> str:
-        """An email destination, checked locally: its key is in a native keychain (no call to the provider)."""
+    def _email_state(self, row: Mapping[str, Any]) -> tuple[str, Optional[str]]:
+        """An email destination, checked locally (no call to the provider): the key in a native keychain, then
+        what the provider LAST answered for a send from this from address, and when (PHILO-10-04, B11; Codex
+        Astra r2 on #697: say what is known, never a fresh verification).
+
+        ``sender_accepted``: the provider accepted the latest answered send (at ``answered_at``);
+        ``sender_not_verified``: its latest answer was the pinned 403; ``key_changed``: the key was saved
+        again after that answer, so the answer no longer speaks for it; ``ready``: the key is there and no
+        send from this sender has an answer yet."""
         if row["state"] != "active":
-            return "parked"
+            return "parked", None
         account = json.loads(row["account_json"] or "{}")
         try:
-            channel_email.read_key(channel_email.valid_key_ref(account.get("key_ref")))
+            key_ref = channel_email.valid_key_ref(account.get("key_ref"))
+            channel_email.read_key(key_ref)
         except channel_email.EmailKeyError as exc:
-            return exc.code
+            return exc.code, None
         except ValidationError:
-            return "email_key_ref_invalid"
-        return "ready"
+            return "email_key_ref_invalid", None
+        with self._db._connection() as conn:
+            latest = conn.execute(
+                "SELECT state, reason, dispatch_started_at FROM channel_sends WHERE channel='email'"
+                " AND json_extract(account_json, '$.from_email')=? AND dispatch_seq IS NOT NULL"
+                " AND (state='sent' OR (state='failed' AND reason='sender_not_verified'))"
+                " ORDER BY dispatch_seq DESC LIMIT 1", (str(account.get("from_email") or ""),)).fetchone()
+            key_saved = conn.execute(
+                "SELECT MAX(r.created_at) AS at FROM kernel_receipts r JOIN kernel_operations o"
+                " ON o.operation_id=r.operation_id WHERE o.name='channel.save_email_key' AND r.state='succeeded'"
+                " AND r.result_ref=?", (f"email_key:{key_ref}",)).fetchone()
+        if latest is None:
+            return "ready", None
+        answered_at = str(latest["dispatch_started_at"] or "")
+        try:
+            answered = datetime.fromisoformat(answered_at).timestamp()
+        except ValueError:
+            answered = 0.0
+        if key_saved is not None and key_saved["at"] is not None and float(key_saved["at"]) > answered:
+            return "key_changed", answered_at
+        return ("sender_accepted" if latest["state"] == "sent" else "sender_not_verified"), answered_at
 
     # ── destinations (admitted, the owner's) ───────────────────────────────
 
@@ -439,9 +468,14 @@ class ChannelService:
         folder = chan.check_before_dispatch(frozen_target, account=frozen_account, principal=handle.principal)
         path = (chan.choose_path(folder, contract.naming(self._db, document_ref), send_id)
                 if channel_name == "file" else None)
-        started = now_iso()
+        # PHILO-10-04: the boundary time (display only; the order is dispatch_seq).
+        started = datetime.now(timezone.utc).isoformat(timespec="microseconds")
         operation_id = handle.operation_id
         claimed = "EXISTS (SELECT 1 FROM kernel_operations WHERE operation_id=? AND state='claimed')"
+        # PHILO-10-04: the order sends LEFT in, allocated inside the boundary
+        # transaction (BEGIN IMMEDIATE holds the write lock): a total order for
+        # "latest", whatever the clock says.
+        next_seq = "SELECT COALESCE(MAX(dispatch_seq), 0) + 1 FROM channel_sends"
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             # The destination, read again INSIDE the boundary transaction: a Remove
@@ -451,14 +485,14 @@ class ChannelService:
             if row is not None:
                 moved = conn.execute(
                     "UPDATE channel_sends SET state='dispatching', send_operation_id=?, dispatch_started_at=?,"
-                    f" file_path=? WHERE id=? AND state='prepared' AND {claimed}",
+                    f" file_path=?, dispatch_seq=({next_seq}) WHERE id=? AND state='prepared' AND {claimed}",
                     (operation_id, started, path, send_id, operation_id)).rowcount
             else:
                 moved = conn.execute(
                     "INSERT INTO channel_sends (id, document_ref, destination_id, channel, account_json, target_json,"
                     " target_digest, payload, payload_digest, prepared_by_kind, prepared_by_identity,"
-                    " send_operation_id, state, file_path, created_at, dispatch_started_at)"
-                    f" SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'dispatching', ?, ?, ? WHERE {claimed}",
+                    " send_operation_id, state, file_path, created_at, dispatch_started_at, dispatch_seq)"
+                    f" SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'dispatching', ?, ?, ?, ({next_seq}) WHERE {claimed}",
                     (send_id, document_ref, destination["id"], channel_name, destination["account_json"],
                      destination["target_json"], destination["target_digest"], payload, contract.sha256(payload),
                      "owner", str(getattr(handle.principal, "identity", "") or ""), operation_id, path, started,

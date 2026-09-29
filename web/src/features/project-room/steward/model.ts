@@ -229,6 +229,8 @@ const EFFECT_KIND_LABELS: Record<string, string> = {
   draft_update: "Drafted update",
   create_door_item: "Door item created",
   github_comment: "Reviewer nudge",
+  /* PHILO-10-02/04: the steward prepares a send; only the owner sends it. */
+  prepare_send: "Prepared send",
 };
 
 /** Effect kind as words a Senior Architect reads on a Tuesday. */
@@ -402,7 +404,7 @@ export function receiptRefs(step: StewardStep): string[] {
   return refs;
 }
 
-/* ── The six canonical effect kinds (mirrors backend EFFECT_KINDS) ── */
+/* ── The canonical effect kinds (mirrors backend EFFECT_KINDS) ── */
 
 export const EFFECT_KINDS: readonly string[] = [
   "refresh_sources",
@@ -411,6 +413,7 @@ export const EFFECT_KINDS: readonly string[] = [
   "draft_update",
   "create_door_item",
   "github_comment",
+  "prepare_send",
 ];
 
 /* ── Coverage: partial/degraded observe phase ── */

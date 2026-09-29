@@ -1,0 +1,624 @@
+{
+  "boards": {
+    "16-picked-email-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "● Email lena@acme.io EMAIL lena@acme.io +1 API.SENDGRID.COM"
+      ],
+      "egress_chips": [
+        "API.SENDGRID.COM:cloud",
+        "API.SENDGRID.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "DELIVERY",
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "30bc46b25fd1d53e41ce4186b191e5d0a093a151296b9b63143a6280c86a5887",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=destination-row]:has([data-destination='Email lena@acme.io'])",
+          "text": "● Email lena@acme.io EMAIL lena@acme.io +1 API.SENDGRID.COM",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Email lena@acme.io'] [data-testid=send-verb]",
+          "text": "Send",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            93
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93
+          ],
+          "text": "●\nEmail lena@acme.io\nEMAIL\nlen"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Send"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "FROM Karol <karol@acme.io>",
+        "TO lena@acme.io, tomas@acme.io",
+        "CC priya@acme.io",
+        "SUBJECT Payments ledger cutover — update r1 (2026-09-29)"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "17-failed-email-sender-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "● Email lena@acme.io EMAIL lena@acme.io +1 ✗ LAST SEND FAILED API.SENDGRID.COM"
+      ],
+      "egress_chips": [
+        "API.SENDGRID.COM:cloud",
+        "API.SENDGRID.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "DELIVERY",
+      "history_outcomes": [],
+      "last_chips": [
+        "✗ LAST SEND FAILED"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "2474d8a852c3fd93d996f4263bde3869c164cadfd0a9ba006e6fdf235d8bc4f9",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Email lena@acme.io'] [data-testid=send-failed]",
+          "text": "✗ FAILED SENDER NOT VERIFIED NOTHING SENT",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            93.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93.5
+          ],
+          "text": "●\nEmail lena@acme.io\nEMAIL\nlen"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            44
+          ],
+          "text": "Send again"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "FROM Karol <karol@acme.io>",
+        "TO lena@acme.io, tomas@acme.io",
+        "CC priya@acme.io",
+        "SUBJECT Payments ledger cutover — update r1 (2026-09-29)"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": "sender_not_verified",
+          "state": "failed",
+          "text": "✗ FAILED SENDER NOT VERIFIED NOTHING SENT"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "18-accepted-by-sendgrid-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "● Email lena@acme.io EMAIL lena@acme.io +1 ✓ ACCEPTED BY SENDGRID 03:50 API.SENDGRID.COM"
+      ],
+      "egress_chips": [
+        "API.SENDGRID.COM:cloud",
+        "API.SENDGRID.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Email lena@acme.io ACCEPTED BY SENDGRID ID sg-Msg-04AbCd SEP 29 03:50"
+      ],
+      "history_head": "DELIVERY 1",
+      "history_outcomes": [
+        "sent"
+      ],
+      "last_chips": [
+        "✓ ACCEPTED BY SENDGRID 03:50"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "761f15bbd1ded46812138a774ae7db8afa2375994638b9b02221169848a6d07b",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Email lena@acme.io'] [data-testid=send-sent]",
+          "text": "✓ ACCEPTED BY SENDGRID ID sg-Msg-04AbCd",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            115.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            115.5
+          ],
+          "text": "●\nEmail lena@acme.io\nEMAIL\nlen"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            44
+          ],
+          "text": "Send again"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "FROM Karol <karol@acme.io>",
+        "TO lena@acme.io, tomas@acme.io",
+        "CC priya@acme.io",
+        "SUBJECT Payments ledger cutover — update r1 (2026-09-29)"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ ACCEPTED BY SENDGRID ID sg-Msg-04AbCd"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "19-accepted-history-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Email lena@acme.io EMAIL lena@acme.io +1 ✓ ACCEPTED BY SENDGRID 03:50 API.SENDGRID.COM"
+      ],
+      "egress_chips": [
+        "API.SENDGRID.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Email lena@acme.io ACCEPTED BY SENDGRID ID sg-Msg-04AbCd SEP 29 03:50"
+      ],
+      "history_head": "DELIVERY 1",
+      "history_outcomes": [
+        "sent"
+      ],
+      "last_chips": [
+        "✓ ACCEPTED BY SENDGRID 03:50"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "0786b8380ec34792cf9025d1ba214c985dca190253b0994f31c750f536c8ce4d",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=delivery-history] > li:first-child > [data-testid=delivery-row]",
+          "text": "✓ Email lena@acme.io ACCEPTED BY SENDGRID ID sg-Msg-04AbCd S",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            115.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            115.5
+          ],
+          "text": "○\nEmail lena@acme.io\nEMAIL\nlen"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    }
+  },
+  "hub_deliveries": [
+    {
+      "channel": "email",
+      "delivered_at": "2026-09-29T09:50:45.693963+00:00",
+      "delivered_to": "Email lena@acme.io",
+      "id": "pdel_482c764888a10880",
+      "operation_id": "op_997b0ef8bc894bd7ac7c93ce5d55af56",
+      "outcome": "sent",
+      "project_id": "proj-a85f7bba53c7",
+      "proof_json": "{\"message_id\":\"sg-Msg-04AbCd\",\"provider\":\"sendgrid\",\"scope\":\"accepted for processing, not delivery\",\"word\":\"ACCEPTED BY SENDGRID\"}",
+      "send_id": "chs_482c764888a108807f43d19f",
+      "update_id": "pupd_5403a2714ccb496c8bb0f21812dd014c"
+    }
+  ],
+  "hub_sends": [
+    {
+      "account": {
+        "from_email": "karol@acme.io",
+        "from_name": "Karol",
+        "key_ref": "sendgrid-karol@acme.io",
+        "provider": "sendgrid"
+      },
+      "badge": "cloud",
+      "channel": "email",
+      "created_at": "2026-09-29T09:50:43.583562+00:00",
+      "destination_id": "chd_25140b2d815a3f54641e90f0",
+      "destination_name": "Email lena@acme.io",
+      "dispatch_seq": 1,
+      "dispatch_started_at": "2026-09-29T09:50:43.583562+00:00",
+      "document_ref": "project_update:pupd_5403a2714ccb496c8bb0f21812dd014c",
+      "file_path": null,
+      "id": "chs_364154a6d86ab2a6236ce9f6",
+      "payload_digest": "8303a89f212756e6766c6e39043f8a446801eee0cb448c7e8a27fbf524a71ca1",
+      "prepare_operation_id": null,
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "cc": [
+          "priya@acme.io"
+        ],
+        "from": "Karol <karol@acme.io>",
+        "subject": "Payments ledger cutover — update r1 (2026-09-29)",
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+        "to": [
+          "lena@acme.io",
+          "tomas@acme.io"
+        ]
+      },
+      "proof": {
+        "error": "The from address does not match a verified Sender Identity. Mail cannot be sent until this error is resolved."
+      },
+      "reason": "sender_not_verified",
+      "send_operation_id": "op_8259f867ccf44f9e94b71f61ee3961b4",
+      "settled_at": "2026-09-29T09:50:43+00:00",
+      "size": 580,
+      "state": "failed",
+      "target": {
+        "cc": [
+          "priya@acme.io"
+        ],
+        "to": [
+          "lena@acme.io",
+          "tomas@acme.io"
+        ]
+      },
+      "target_digest": "c36d7386aea304719c547af5a6d6e3714f6b4f18ea3eca1a20a266747c6f2676"
+    },
+    {
+      "account": {
+        "from_email": "karol@acme.io",
+        "from_name": "Karol",
+        "key_ref": "sendgrid-karol@acme.io",
+        "provider": "sendgrid"
+      },
+      "badge": "cloud",
+      "channel": "email",
+      "created_at": "2026-09-29T09:50:45.693963+00:00",
+      "destination_id": "chd_25140b2d815a3f54641e90f0",
+      "destination_name": "Email lena@acme.io",
+      "dispatch_seq": 2,
+      "dispatch_started_at": "2026-09-29T09:50:45.693963+00:00",
+      "document_ref": "project_update:pupd_5403a2714ccb496c8bb0f21812dd014c",
+      "file_path": null,
+      "id": "chs_482c764888a108807f43d19f",
+      "payload_digest": "8303a89f212756e6766c6e39043f8a446801eee0cb448c7e8a27fbf524a71ca1",
+      "prepare_operation_id": null,
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "cc": [
+          "priya@acme.io"
+        ],
+        "from": "Karol <karol@acme.io>",
+        "subject": "Payments ledger cutover — update r1 (2026-09-29)",
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+        "to": [
+          "lena@acme.io",
+          "tomas@acme.io"
+        ]
+      },
+      "proof": {
+        "message_id": "sg-Msg-04AbCd",
+        "provider": "sendgrid",
+        "scope": "accepted for processing, not delivery",
+        "word": "ACCEPTED BY SENDGRID"
+      },
+      "reason": null,
+      "send_operation_id": "op_997b0ef8bc894bd7ac7c93ce5d55af56",
+      "settled_at": "2026-09-29T09:50:45+00:00",
+      "size": 580,
+      "state": "sent",
+      "target": {
+        "cc": [
+          "priya@acme.io"
+        ],
+        "to": [
+          "lena@acme.io",
+          "tomas@acme.io"
+        ]
+      },
+      "target_digest": "c36d7386aea304719c547af5a6d6e3714f6b4f18ea3eca1a20a266747c6f2676"
+    }
+  ],
+  "wire_hosts": [
+    "api.sendgrid.com",
+    "api.sendgrid.com"
+  ]
+}

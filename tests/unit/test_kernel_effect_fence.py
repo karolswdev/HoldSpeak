@@ -434,6 +434,12 @@ _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "mandatory authenticated owner read",  # PHILO-10-02: gh api user, the frozen login re-read
     (
+        "holdspeak/services/channel_cli.py",
+        "_Atlassian._read",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # PHILO-10-04: acli auth switch/status before the boundary, the gh twin
+    (
         "holdspeak/missioncontrol_bridge.py",
         "_default_runner",
         "run",

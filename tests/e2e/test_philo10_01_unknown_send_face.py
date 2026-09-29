@@ -7,11 +7,13 @@ normal and one whose folder path leaves no room for the file's name (the OS
 refuses the create with ENAMETOOLONG, which is off the pinned FAILED list, so
 the file channel settles UNKNOWN). No response is substituted.
 
-The ratified count semantics (PHILO-9-03 Q2): DELIVERED ×N counts deliveries.
+The ratified count semantics (PHILO-9-03 Q2): the chip counts deliveries.
 An UNKNOWN row is not one: the list chip counts only the delivered rows and a
 warning chip names the unknown ones; the history row reads
 `⚠ RESULT UNKNOWN · CHECK <destination>` (the existing StateChip species, its
-warning state). The full Send face is story 04.
+warning state). PHILO-10-04 (the owner's A2, 2026-09-29): the record word is
+DELIVERY ×N / DELIVERY N, the same counts; a SENT row names its channel word
+and proof (SAVED + the exact path).
 """
 from __future__ import annotations
 
@@ -133,13 +135,13 @@ class TestUnknownSendFace:
                     {"hub": hub, "listed": listed, "opened": opened}, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
 
                 # The list: DELIVERED counts only the delivered row; the unknown one has its own chip.
-                assert listed["delivered_chips"] == ["✓ DELIVERED ×1"], listed["delivered_chips"]
+                assert listed["delivered_chips"] == ["✓ DELIVERY ×1"], listed["delivered_chips"]
                 assert listed["unknown_chips"] == ["⚠ RESULT UNKNOWN ×1"], listed["unknown_chips"]
                 # The history: the head counts one delivery; the unknown row says so and names where to check.
-                assert opened["delivery_head"] == "DELIVERED 1", opened["delivery_head"]
+                assert opened["delivery_head"] == "DELIVERY 1", opened["delivery_head"]
                 assert opened["delivery_rows"] == [
-                    f"✓ Team folder {_delivery_time(hub[0]['delivered_at'])}",
-                    f"⚠ RESULT UNKNOWN · CHECK Long path folder {_delivery_time(hub[1]['delivered_at'])}",
+                    f"✓ Team folder SAVED {ok['send']['proof']['path']} {_delivery_time(hub[0]['delivered_at'])}",
+                    f"⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED {_delivery_time(hub[1]['delivered_at'])}",
                 ], opened["delivery_rows"]
                 assert opened["row_outcomes"] == ["sent", "unknown"], opened["row_outcomes"]
                 assert opened["row_lead_states"] == ["success", "warning"], opened["row_lead_states"]

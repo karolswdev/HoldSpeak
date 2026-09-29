@@ -1,0 +1,1421 @@
+{
+  "boards": {
+    "10-picked-jira-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "● Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ACME.ATLASSIAN.NET",
+        "○ Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ACME.ATLASSIAN.NET"
+      ],
+      "egress_chips": [
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "DELIVERY",
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "11d6b9ceb865999af74ee4898fbe6f243b46e43415a12676f9165a20833e303a",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=destination-row]:has([data-destination='Jira PAY-121'])",
+          "text": "● Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ACME.ATLASSIAN.NET",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Jira PAY-121'] [data-testid=send-verb]",
+          "text": "Send",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            93
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93
+          ],
+          "text": "●\nJira PAY-121\nJIRA\nPAY-121\n✓\n"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Send"
+        },
+        {
+          "face": [
+            363,
+            93
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93
+          ],
+          "text": "○\nConfluence space 98304\nCONFL"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "WORK ITEM PAY-121",
+        "ACCOUNT owner@acme.example · acme.atlassian.net"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "11-unknown-jira-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "● Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ⚠ LAST SEND UNKNOWN ACME.ATLASSIAN.NET",
+        "○ Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ACME.ATLASSIAN.NET"
+      ],
+      "egress_chips": [
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud"
+      ],
+      "h_overflow": false,
+      "history": [
+        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 03:50"
+      ],
+      "history_head": "DELIVERY",
+      "history_outcomes": [
+        "unknown"
+      ],
+      "last_chips": [
+        "⚠ LAST SEND UNKNOWN"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "12465b9840a955ac64f92cd677349460d3f4dc9df794670c969facdef17022f2",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Jira PAY-121'] [data-testid=send-unknown]",
+          "text": "⚠ RESULT UNKNOWN TIMED OUT",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Jira PAY-121'] [data-testid=send-check]",
+          "text": "Check PAY-121",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            93.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93.5
+          ],
+          "text": "●\nJira PAY-121\nJIRA\nPAY-121\n✓\n"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            44
+          ],
+          "text": "Send again"
+        },
+        {
+          "face": [
+            111.6,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            111.6,
+            44
+          ],
+          "text": "Check PAY-121"
+        },
+        {
+          "face": [
+            363,
+            93
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93
+          ],
+          "text": "○\nConfluence space 98304\nCONFL"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Check"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "WORK ITEM PAY-121",
+        "ACCOUNT owner@acme.example · acme.atlassian.net"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "unknown",
+          "text": "⚠ RESULT UNKNOWN TIMED OUT"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "12-commented-jira-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "● Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 03:51 ACME.ATLASSIAN.NET",
+        "○ Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ACME.ATLASSIAN.NET"
+      ],
+      "egress_chips": [
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud"
+      ],
+      "h_overflow": false,
+      "history": [
+        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 03:50",
+        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 03:51"
+      ],
+      "history_head": "DELIVERY 1",
+      "history_outcomes": [
+        "unknown",
+        "sent"
+      ],
+      "last_chips": [
+        "✓ COMMENTED 03:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "36c46d8777cfc45f86530b1d53d6f5c13b2c50a99d37aea6b45bb4206eb71ae5",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Jira PAY-121'] [data-testid=send-sent]",
+          "text": "✓ COMMENTED PAY-121",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            93.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93.5
+          ],
+          "text": "●\nJira PAY-121\nJIRA\nPAY-121\n✓\n"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            44
+          ],
+          "text": "Send again"
+        },
+        {
+          "face": [
+            80.6,
+            27
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            80.6,
+            44
+          ],
+          "text": "PAY-121"
+        },
+        {
+          "face": [
+            363,
+            93
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93
+          ],
+          "text": "○\nConfluence space 98304\nCONFL"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Check"
+        },
+        {
+          "face": [
+            80.6,
+            27
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            80.6,
+            44
+          ],
+          "text": "PAY-121"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "WORK ITEM PAY-121",
+        "ACCOUNT owner@acme.example · acme.atlassian.net"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ COMMENTED PAY-121"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "13-picked-confluence-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 03:51 ACME.ATLASSIAN.NET",
+        "● Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ACME.ATLASSIAN.NET"
+      ],
+      "egress_chips": [
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud"
+      ],
+      "h_overflow": false,
+      "history": [
+        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 03:50",
+        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 03:51"
+      ],
+      "history_head": "DELIVERY 1",
+      "history_outcomes": [
+        "unknown",
+        "sent"
+      ],
+      "last_chips": [
+        "✓ COMMENTED 03:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "71d3da0f926fe459d8b85d712d6874773689885ea82c8ec875ed3a026bc55862",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=destination-row]:has([data-destination='Confluence space 98304'])",
+          "text": "● Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Confluence space 98304'] [data-testid=send-verb]",
+          "text": "Send",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            93.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93.5
+          ],
+          "text": "○\nJira PAY-121\nJIRA\nPAY-121\n✓\n"
+        },
+        {
+          "face": [
+            363,
+            93
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93
+          ],
+          "text": "●\nConfluence space 98304\nCONFL"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Send"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Check"
+        },
+        {
+          "face": [
+            80.6,
+            27
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            80.6,
+            44
+          ],
+          "text": "PAY-121"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "SPACE 98304",
+        "TITLE Payments ledger cutover — update r1 (2026-09-29)",
+        "ACCOUNT owner@acme.example · acme.atlassian.net"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "14-refused-confluence-sign-in-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 03:51 ACME.ATLASSIAN.NET",
+        "● Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ACME.ATLASSIAN.NET"
+      ],
+      "egress_chips": [
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud"
+      ],
+      "h_overflow": false,
+      "history": [
+        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 03:50",
+        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 03:51"
+      ],
+      "history_head": "DELIVERY 1",
+      "history_outcomes": [
+        "unknown",
+        "sent"
+      ],
+      "last_chips": [
+        "✓ COMMENTED 03:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "d81070dcda3c40ca5ff5a801261e29235c1478f39a76a6581cce0162dc4af2a4",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Confluence space 98304'] [data-testid=send-refused]",
+          "text": "✗ REFUSED NOT SIGNED IN NOTHING SENT",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            93.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93.5
+          ],
+          "text": "○\nJira PAY-121\nJIRA\nPAY-121\n✓\n"
+        },
+        {
+          "face": [
+            363,
+            93
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93
+          ],
+          "text": "●\nConfluence space 98304\nCONFL"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Send"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Check"
+        },
+        {
+          "face": [
+            80.6,
+            27
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            80.6,
+            44
+          ],
+          "text": "PAY-121"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "SPACE 98304",
+        "TITLE Payments ledger cutover — update r1 (2026-09-29)",
+        "ACCOUNT owner@acme.example · acme.atlassian.net"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": "atlassian_not_signed_in",
+          "state": "send-refused",
+          "text": "✗ REFUSED NOT SIGNED IN NOTHING SENT"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "15-blog-posted-confluence-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 03:51 ACME.ATLASSIAN.NET",
+        "● Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ✓ BLOG POSTED 03:51 ACME.ATLASSIAN.NET"
+      ],
+      "egress_chips": [
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud"
+      ],
+      "h_overflow": false,
+      "history": [
+        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 03:50",
+        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 03:51",
+        "✓ Confluence space 98304 BLOG POSTED SPACE 98304 SEP 29 03:51"
+      ],
+      "history_head": "DELIVERY 2",
+      "history_outcomes": [
+        "unknown",
+        "sent",
+        "sent"
+      ],
+      "last_chips": [
+        "✓ COMMENTED 03:51",
+        "✓ BLOG POSTED 03:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "348f3cd00442580f670ae75dcb7a842190d2afaa4db208136cc77b82fc7e2d80",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Confluence space 98304'] [data-testid=send-sent]",
+          "text": "✓ BLOG POSTED SPACE 98304",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            93.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93.5
+          ],
+          "text": "○\nJira PAY-121\nJIRA\nPAY-121\n✓\n"
+        },
+        {
+          "face": [
+            363,
+            93.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93.5
+          ],
+          "text": "●\nConfluence space 98304\nCONFL"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            44
+          ],
+          "text": "Send again"
+        },
+        {
+          "face": [
+            111.8,
+            27
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            111.8,
+            44
+          ],
+          "text": "SPACE 98304"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Check"
+        },
+        {
+          "face": [
+            80.6,
+            27
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            80.6,
+            44
+          ],
+          "text": "PAY-121"
+        },
+        {
+          "face": [
+            111.8,
+            27
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            111.8,
+            44
+          ],
+          "text": "SPACE 98304"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "SPACE 98304",
+        "TITLE Payments ledger cutover — update r1 (2026-09-29)",
+        "ACCOUNT owner@acme.example · acme.atlassian.net"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ BLOG POSTED SPACE 98304"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "34c-history-remote-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 03:51 ACME.ATLASSIAN.NET",
+        "○ Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ✓ BLOG POSTED 03:51 ACME.ATLASSIAN.NET"
+      ],
+      "egress_chips": [
+        "ACME.ATLASSIAN.NET:cloud",
+        "ACME.ATLASSIAN.NET:cloud"
+      ],
+      "h_overflow": false,
+      "history": [
+        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 03:50",
+        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 03:51",
+        "✓ Confluence space 98304 BLOG POSTED SPACE 98304 SEP 29 03:51"
+      ],
+      "history_head": "DELIVERY 2",
+      "history_outcomes": [
+        "unknown",
+        "sent",
+        "sent"
+      ],
+      "last_chips": [
+        "✓ COMMENTED 03:51",
+        "✓ BLOG POSTED 03:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "85e295aedeb3b779818ebfd3ce292fe4d316cf96f72cb39e748b6ca1149143da",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=delivery-history] > li:first-child > [data-testid=delivery-row]",
+          "text": "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            93.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93.5
+          ],
+          "text": "○\nJira PAY-121\nJIRA\nPAY-121\n✓\n"
+        },
+        {
+          "face": [
+            363,
+            93.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            93.5
+          ],
+          "text": "○\nConfluence space 98304\nCONFL"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Check"
+        },
+        {
+          "face": [
+            80.6,
+            27
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            80.6,
+            44
+          ],
+          "text": "PAY-121"
+        },
+        {
+          "face": [
+            111.8,
+            27
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            111.8,
+            44
+          ],
+          "text": "SPACE 98304"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    }
+  },
+  "hub_deliveries": [
+    {
+      "channel": "jira",
+      "delivered_at": "2026-09-29T09:50:56.002565+00:00",
+      "delivered_to": "Jira PAY-121",
+      "id": "pdel_0762dea9bbd3bcfa",
+      "operation_id": "op_1ddf9d36b47d48bda72776fc39f64118",
+      "outcome": "unknown",
+      "project_id": "proj-8c14033ba577",
+      "proof_json": null,
+      "send_id": "chs_0762dea9bbd3bcfacde98104",
+      "update_id": "pupd_2f02d9096d994891885f0774c7279192"
+    },
+    {
+      "channel": "jira",
+      "delivered_at": "2026-09-29T09:51:00.049256+00:00",
+      "delivered_to": "Jira PAY-121",
+      "id": "pdel_a6c9d810440c9e36",
+      "operation_id": "op_d810cbe264c34494bef6c5150ca1e10b",
+      "outcome": "sent",
+      "project_id": "proj-8c14033ba577",
+      "proof_json": "{\"id\":\"10042\",\"key\":\"PAY-121\",\"url\":\"https://acme.atlassian.net/rest/api/3/issue/10001/comment/10042\"}",
+      "send_id": "chs_a6c9d810440c9e369eaa8685",
+      "update_id": "pupd_2f02d9096d994891885f0774c7279192"
+    },
+    {
+      "channel": "confluence",
+      "delivered_at": "2026-09-29T09:51:08.309672+00:00",
+      "delivered_to": "Confluence space 98304",
+      "id": "pdel_9f9106bbd614c3ed",
+      "operation_id": "op_786cc4d102bf44559a3237c20990ad55",
+      "outcome": "sent",
+      "project_id": "proj-8c14033ba577",
+      "proof_json": "{\"id\":\"5550001\",\"url\":\"/spaces/OPS/blog/5550001\"}",
+      "send_id": "chs_9f9106bbd614c3ed2ac64a81",
+      "update_id": "pupd_2f02d9096d994891885f0774c7279192"
+    }
+  ],
+  "hub_sends": [
+    {
+      "account": {
+        "email": "owner@acme.example",
+        "site": "acme.atlassian.net"
+      },
+      "badge": "cloud",
+      "channel": "jira",
+      "created_at": "2026-09-29T09:50:56.002565+00:00",
+      "destination_id": "chd_0fae9fdcd3b8a3ce32f39739",
+      "destination_name": "Jira PAY-121",
+      "dispatch_seq": 1,
+      "dispatch_started_at": "2026-09-29T09:50:56.002565+00:00",
+      "document_ref": "project_update:pupd_2f02d9096d994891885f0774c7279192",
+      "file_path": null,
+      "id": "chs_0762dea9bbd3bcfacde98104",
+      "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "prepare_operation_id": null,
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+      },
+      "proof": null,
+      "reason": "timeout",
+      "send_operation_id": "op_1ddf9d36b47d48bda72776fc39f64118",
+      "settled_at": "2026-09-29T09:50:56+00:00",
+      "size": 286,
+      "state": "unknown",
+      "target": {
+        "key": "PAY-121"
+      },
+      "target_digest": "3eb648aec5108d31b33e398b49e12fc0682bf74045eb22665d041a39d9a2dc1d"
+    },
+    {
+      "account": {
+        "email": "owner@acme.example",
+        "site": "acme.atlassian.net"
+      },
+      "badge": "cloud",
+      "channel": "jira",
+      "created_at": "2026-09-29T09:51:00.049256+00:00",
+      "destination_id": "chd_0fae9fdcd3b8a3ce32f39739",
+      "destination_name": "Jira PAY-121",
+      "dispatch_seq": 2,
+      "dispatch_started_at": "2026-09-29T09:51:00.049256+00:00",
+      "document_ref": "project_update:pupd_2f02d9096d994891885f0774c7279192",
+      "file_path": null,
+      "id": "chs_a6c9d810440c9e369eaa8685",
+      "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "prepare_operation_id": null,
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+      },
+      "proof": {
+        "id": "10042",
+        "key": "PAY-121",
+        "url": "https://acme.atlassian.net/rest/api/3/issue/10001/comment/10042"
+      },
+      "reason": null,
+      "send_operation_id": "op_d810cbe264c34494bef6c5150ca1e10b",
+      "settled_at": "2026-09-29T09:51:00+00:00",
+      "size": 286,
+      "state": "sent",
+      "target": {
+        "key": "PAY-121"
+      },
+      "target_digest": "3eb648aec5108d31b33e398b49e12fc0682bf74045eb22665d041a39d9a2dc1d"
+    },
+    {
+      "account": {
+        "email": "owner@acme.example",
+        "site": "acme.atlassian.net"
+      },
+      "badge": "cloud",
+      "channel": "confluence",
+      "created_at": "2026-09-29T09:51:08.309672+00:00",
+      "destination_id": "chd_76bc0a66f191760e7829bc81",
+      "destination_name": "Confluence space 98304",
+      "dispatch_seq": 3,
+      "dispatch_started_at": "2026-09-29T09:51:08.309672+00:00",
+      "document_ref": "project_update:pupd_2f02d9096d994891885f0774c7279192",
+      "file_path": null,
+      "id": "chs_9f9106bbd614c3ed2ac64a81",
+      "payload_digest": "a3fb2d70f3710b0c9533eaa50124bc05e44879756f1661f11b18d6c235047485",
+      "prepare_operation_id": null,
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "text": "Progress\nNo focus items in this window.\nDecisions\nNo decisions in this window.\nRisks & Blockers\nNo risks or blockers in this window.\nDependencies\nNo dependencies tracked.\nNext Actions\nNo upcoming actions.\nSource Coverage\nAll sources consulted successfully.",
+        "title": "Payments ledger cutover — update r1 (2026-09-29)"
+      },
+      "proof": {
+        "id": "5550001",
+        "url": "/spaces/OPS/blog/5550001"
+      },
+      "reason": null,
+      "send_operation_id": "op_786cc4d102bf44559a3237c20990ad55",
+      "settled_at": "2026-09-29T09:51:08+00:00",
+      "size": 473,
+      "state": "sent",
+      "target": {
+        "space_id": "98304"
+      },
+      "target_digest": "7f5c3abe036b122618fa62109cee6a1c52eec92b90bb36729047d1db4c1ca504"
+    }
+  ]
+}
