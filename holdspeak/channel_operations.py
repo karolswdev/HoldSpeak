@@ -59,7 +59,7 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
     description="Save a destination you send to: a folder (an absolute path; HoldSpeak writes a new file there per "
                 "send), a GitHub issue or pull request (a comment per send; the gh login is saved with it), one "
                 "Jira work item (a comment per send), a Confluence space (a blog post per send), or email through "
-                "a provider (SendGrid): your verified sender, the name of the saved key, and the To and Cc "
+                "a provider (SendGrid or Resend): your verified sender, the name of the saved key, and the To and Cc "
                 "addresses. Mark a folder synced if a cloud client syncs it. Give replaces to edit one: the old "
                 "destination is parked and this one is new.",
     args_schema={
@@ -80,7 +80,8 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
             "email": {"type": ["string", "null"], "description": "jira, confluence: the email of the acli account."},
             "key": {"type": ["string", "null"], "description": "jira: ONE work item key, like ABC-123."},
             "space_id": {"type": ["string", "null"], "description": "confluence: the space id (digits)."},
-            "provider": {"type": ["string", "null"], "description": "email: the provider (sendgrid if not given)."},
+            "provider": {"type": ["string", "null"],
+                         "description": "email: the provider, sendgrid or resend (sendgrid if not given)."},
             "from_email": {"type": ["string", "null"],
                            "description": "email: the sender address (a sender the provider verified)."},
             "from_name": {"type": ["string", "null"], "maxLength": 120, "description": "email: the sender's name."},
@@ -250,7 +251,7 @@ CHANNEL_SEND = OperationDescriptor(
                 "destination with the digest of the preview he saw (update_id, destination_id, preview_digest). "
                 "The answer is the channel's proof (a folder: the file's path, sha256 and size, read back; GitHub: "
                 "the comment URL; Jira and Confluence: the id acli gives; email: the provider's message id, "
-                "ACCEPTED BY SENDGRID -- accepted for processing, not delivered), a known failure with its code, or "
+                "ACCEPTED BY SENDGRID or ACCEPTED BY RESEND -- accepted for processing, not delivered), a known failure with its code, or "
                 "unknown. HoldSpeak never sends again by itself: a repeat of the same command_id answers the first "
                 "result. Only the owner sends; an agent prepares.",
     args_schema={
@@ -283,7 +284,7 @@ CHANNEL_SEND = OperationDescriptor(
     exposure=("http:POST /api/channels/send", "mcp:channel.send"),
     service="channel_service",
     method="send",
-    blocking_io=True,  # gh / acli children; the email egress (a SendGrid call up to 30 s)
+    blocking_io=True,  # gh / acli children; the email egress (a SendGrid or Resend call up to 30 s)
     owner_press=True,
     admission=Admission("admitted", "Crosses egress or files (XI.1): one terminal receipt -- succeeded (sent), "
                                     "failed, indeterminate (unknown), or refused before the dispatch boundary. "
@@ -318,14 +319,14 @@ CHANNEL_SENDS = OperationDescriptor(
 CHANNEL_SAVE_EMAIL_KEY = OperationDescriptor(
     name="channel.save_email_key",
     version=1,
-    description="Save your email provider's key (a SendGrid API key) in the OS keychain under a name; an email "
-                "destination names that key. The key is sent in the request body, is never an argument, and is "
+    description="Save your email provider's key (a SendGrid or Resend API key) in the OS keychain under a name and "
+                "the provider; an email destination names that key. The key is sent in the request body, is never an argument, and is "
                 "never shown again.",
     args_schema={
         "type": "object",
         "properties": {
             "key_ref": {"type": "string", "description": "The key's name (from the path)."},
-            "provider": {"type": ["string", "null"], "description": "Optional: the provider (sendgrid)."},
+            "provider": {"type": ["string", "null"], "description": "Optional: the provider, sendgrid or resend (sendgrid if not given)."},
             "command_id": _COMMAND_ID,
         },
         "required": ["key_ref"],

@@ -36,7 +36,7 @@ COUNTS = {
     "atlas-phase8.json": 19,
     "atlas-phase9.json": 13,
     "atlas-phase9-steward.json": 4,
-    "atlas-phase10.json": 27,
+    "atlas-phase10.json": 32,  # PHILO-10-07: five Resend face cases
 }
 
 # The charter's state/width matrix -> its face case (Manual is Phase 9's).
@@ -196,16 +196,59 @@ def test_one_dispatch_is_counted_at_the_runner_where_the_runner_answers_a_send()
         sends = any(s.get("name") == "channel.send" or "send-verb" in str(s.get("selector", "")) for s in steps)
         if runner and sends:
             counts = [p for p in _parts(case) if p["kind"] == "cli_calls"]
-            assert counts == [{"kind": "cli_calls", "argv_prefix": ["gh", "issue", "comment"], "count": 1}], cid
+            https = json.loads((REPO / runner["reply"]).read_text()).get("https")
+            prefix = ["https", "POST", "api.resend.com", "/emails"] if https else ["gh", "issue", "comment"]
+            assert counts == [{"kind": "cli_calls", "argv_prefix": prefix, "count": 1}], cid
+
+
+def test_every_email_case_boots_the_memory_key_store_before_a_key_is_saved() -> None:
+    """PHILO-10-07: a case that saves an email key (face or route) declares the email edge,
+    whose install replaces the key store with a memory one: the rig never reaches the OS keychain."""
+    for cid, case in _cases().items():
+        steps = case["setup"] + [case["trigger"]]
+        saves_key = any("email-keys" in str(s.get("path", "")) or "dest-key-row" in str(s.get("selector", ""))
+                        for s in steps)
+        if saves_key:
+            runner = next((s for s in steps if s.get("substitute") == "cli_runner"), None)
+            assert runner and json.loads((REPO / runner["reply"]).read_text()).get("https"), cid
+
+
+def test_the_email_edge_records_before_it_answers_and_never_the_key(tmp_path, monkeypatch) -> None:
+    rig = _rig()
+    import urllib.request
+
+    from holdspeak.services import channel_email
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr(channel_email, "HTTPS_HANDLER", channel_email.HTTPS_HANDLER)
+    monkeypatch.setattr(channel_email, "KEY_STORE", channel_email.KEY_STORE)
+    rig._install_cli_runner(REPO / "tests/fixtures/philo10_atlas/resend-accepted.json")
+    assert isinstance(channel_email.KEY_STORE(), channel_email.MemoryEmailKeyStore)
+    opener = urllib.request.OpenerDirector()
+    opener.add_handler(channel_email.HTTPS_HANDLER())
+    req = urllib.request.Request("https://api.resend.com/emails", data=b"{}", method="POST",
+                                 headers={"Authorization": "Bearer re_secret_never_logged", "User-Agent": "HoldSpeak"})
+    with opener.open(req) as answer:
+        assert answer.status == 200 and json.loads(answer.read()) == {"id": "re-atlas-4ef9-0001"}
+    text = (tmp_path / rig.CLI_CALLS_FILE).read_text()
+    [entry] = [json.loads(line) for line in text.splitlines()]
+    assert entry["argv"] == ["https", "POST", "api.resend.com", "/emails"]
+    assert (entry["auth"], entry["user_agent"]) == ("Bearer", "HoldSpeak")
+    assert "re_secret_never_logged" not in text
 
 
 def test_every_runner_script_is_retained_and_answers_by_argv_prefix() -> None:
     scripts = {s["reply"] for c in _cases().values() for s in c["setup"] if s.get("substitute") == "cli_runner"}
     assert scripts == {f"tests/fixtures/philo10_atlas/{n}" for n in
-                       ("gh-posted.json", "gh-held.json", "gh-not-found.json", "gh-unpinned.json")}
+                       ("gh-posted.json", "gh-held.json", "gh-not-found.json", "gh-unpinned.json",
+                        "resend-accepted.json", "resend-unknown.json")}
     for script in scripts:
-        answers = json.loads((REPO / script).read_text())["answers"]
-        assert answers and all(a["argv_prefix"][0] == "gh" for a in answers), script
+        data = json.loads((REPO / script).read_text())
+        answers, https = data["answers"], data.get("https") or []
+        assert answers or https, script
+        assert all(a["argv_prefix"][0] == "gh" for a in answers), script
+        # PHILO-10-07: the email edge answers only Resend's one send route, by host + path.
+        assert all((a["host"], a["path"]) == ("api.resend.com", "/emails") for a in https), script
 
 
 def test_no_trigger_is_optional_and_no_optional_step_is_the_outcome() -> None:
@@ -339,7 +382,9 @@ def test_the_copier_refuses_an_observation_of_another_case_or_width(tmp_path) ->
     assert not (tmp_path / "dest").exists()  # a refusal leaves no partial label
 
 
+SHOTS07 = REPO / "pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-07-shots"
 RETAINED = sorted(p.name for p in SHOTS.iterdir()) if SHOTS.exists() else []
+RETAINED += sorted(f"../story-07-shots/{p.name}" for p in SHOTS07.iterdir()) if SHOTS07.exists() else []
 
 
 @pytest.mark.parametrize("label", RETAINED)

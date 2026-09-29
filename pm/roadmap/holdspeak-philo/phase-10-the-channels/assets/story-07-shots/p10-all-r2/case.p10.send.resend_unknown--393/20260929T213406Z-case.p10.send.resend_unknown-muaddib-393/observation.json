@@ -1,0 +1,1514 @@
+{
+  "id": "obs-20260929T213406Z-case.p10.send.resend_unknown-muaddib-393",
+  "run_id": "20260929T213406Z-case.p10.send.resend_unknown-muaddib-393",
+  "case_id": "case.p10.send.resend_unknown",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase10.json",
+  "job": "p10",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p10_send_face",
+  "provenance": {
+    "revision": "1ac9a5f3b33e204e41bfb138fa5d444aba9713d5",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "18f299869d984fd50e4ce99c6855356a2ed7d5c1317b688ef4c2d2bbd54e4ddb",
+      "assets": [
+        "index-CRd8xHI_.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:61525",
+      "port": 61525,
+      "pid": 58962,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7ba8f3b8",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7ba8f3b8/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo10_atlas/resend-unknown.json": "3d5bd4731310621a8fa776b8df3bbb92aa2033b84d34036d9436af949502a25e"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T21:34:06.677695+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "the email HTTPS edge: resend-unknown.json",
+        "substitute": "cli_runner",
+        "installed_sha256": "3d5bd4731310621a8fa776b8df3bbb92aa2033b84d34036d9436af949502a25e"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase10.json",
+      "sha256": "e4be86992649e386ab352ab696f6adde5f6e7cd9e649211a1fe9124f6ae9134b",
+      "version": "phase10-send"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDING runner at the CLI channels' process edge (no real gh or acli)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": "3d5bd4731310621a8fa776b8df3bbb92aa2033b84d34036d9436af949502a25e"
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-29T15:34:11.029433"
+        }
+      },
+      "response_sha256": "7c73b4ac8d404debf43e2dd73c83a01bda0708c01b6eed8ae62efeddec7eadbc"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "boundary",
+      "label": "the email HTTPS edge: resend-unknown.json",
+      "substitute": "cli_runner",
+      "adapter": "email-https-edge",
+      "installed_sha256": "3d5bd4731310621a8fa776b8df3bbb92aa2033b84d34036d9436af949502a25e",
+      "seam": "holdspeak.services.channel_cli.CLI_RUNNER"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-448a6cbaeda9",
+          "name": "Atlas send ledger",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-09-29T15:34:11.059181",
+          "updated_at": "2026-09-29T15:34:11.059181",
+          "result_kind": "created",
+          "project_id": "proj-448a6cbaeda9",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-448a6cbaeda9"
+          ]
+        }
+      },
+      "response_sha256": "6807b37f07058b721d40d262a407c6bb4acfd768355833e11ac2b3338daa4c81",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-448a6cbaeda9"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects/proj-448a6cbaeda9/updates/draft",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_6e020c04c86a43fb8db89c83417d33f2",
+          "project_id": "proj-448a6cbaeda9",
+          "project_revision": 1,
+          "review_id": null,
+          "lifecycle": "draft",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-09-29T21:34:11+00:00",
+          "updated_at": "2026-09-29T21:34:11+00:00",
+          "published_at": null,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generatorHost": null,
+          "generatorModel": null
+        }
+      },
+      "response_sha256": "2fc9dca4dfa2dcccbaa135bf70689edcee9231ce24bf7c17a8431d6274f6eca8",
+      "captured": {
+        "name": "update_id",
+        "path": "update.id",
+        "value": "pupd_6e020c04c86a43fb8db89c83417d33f2"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/updates/pupd_6e020c04c86a43fb8db89c83417d33f2/publish",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_6e020c04c86a43fb8db89c83417d33f2",
+          "project_id": "proj-448a6cbaeda9",
+          "project_revision": 2,
+          "review_id": null,
+          "lifecycle": "published",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-09-29T21:34:11+00:00",
+          "updated_at": "2026-09-29T21:34:11+00:00",
+          "published_at": "2026-09-29T21:34:11+00:00",
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "result_kind": "updated",
+          "changed_refs": [
+            "project:proj-448a6cbaeda9"
+          ],
+          "generatorHost": null,
+          "generatorModel": null
+        },
+        "operation_id": "op_28dc86194e5a47f58bc812e0a1447c2a",
+        "receipt": {
+          "receipt_id": "rcpt_713d2cc50d584d32ad4d25a881d187b3",
+          "operation_id": "op_28dc86194e5a47f58bc812e0a1447c2a",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project_update:pupd_6e020c04c86a43fb8db89c83417d33f2",
+          "created_at": 1790717651.0687501,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project_update:pupd_6e020c04c86a43fb8db89c83417d33f2"
+        }
+      },
+      "response_sha256": "b263c4fe1187ca34c06a81e3a60a5d85961f364b69978be6c64287c929a8e319"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/destinations",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "destination": {
+          "id": "chd_702614aa52885d044acda6d5",
+          "name": "ResendPriya",
+          "channel": "email",
+          "account": {
+            "from_email": "karol@example.com",
+            "from_name": "Karol",
+            "key_ref": "resend-atlas",
+            "provider": "resend"
+          },
+          "target": {
+            "cc": [],
+            "to": [
+              "priya@example.com"
+            ]
+          },
+          "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+          "synced": false,
+          "state": "active",
+          "badge": "cloud",
+          "created_at": "2026-09-29T21:34:11+00:00",
+          "parked_at": null,
+          "connection": null
+        },
+        "replaced": null,
+        "operation_id": "op_f9b9e442f7a94b7290f2a519929141a4",
+        "receipt": {
+          "receipt_id": "rcpt_4902e8ad9b5a4b7bba7fe3cb2051d186",
+          "operation_id": "op_f9b9e442f7a94b7290f2a519929141a4",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_destination:chd_702614aa52885d044acda6d5",
+          "created_at": 1790717651.074494,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_destination"
+        }
+      },
+      "response_sha256": "02878b6db4743589af8baf7dac580e112ec24d4c489f9a179402fc2ce857158c",
+      "captured": {
+        "name": "key_ref",
+        "path": "destination.account.key_ref",
+        "value": "resend-atlas"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/channels/destinations",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "destinations": [
+          {
+            "id": "chd_702614aa52885d044acda6d5",
+            "name": "ResendPriya",
+            "channel": "email",
+            "account": {
+              "from_email": "karol@example.com",
+              "from_name": "Karol",
+              "key_ref": "resend-atlas",
+              "provider": "resend"
+            },
+            "target": {
+              "cc": [],
+              "to": [
+                "priya@example.com"
+              ]
+            },
+            "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+            "synced": false,
+            "state": "active",
+            "badge": "cloud",
+            "created_at": "2026-09-29T21:34:11+00:00",
+            "parked_at": null,
+            "connection": null
+          }
+        ]
+      },
+      "response_sha256": "878a126d25ca48e3254f598363dfd3e5338d44b72fac2093321ec9ccba6c45b8",
+      "captured": {
+        "name": "dest_id",
+        "path": "destinations",
+        "value": "chd_702614aa52885d044acda6d5",
+        "match": {
+          "name": "ResendPriya"
+        }
+      }
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/channels/email-keys/resend-atlas",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "key_ref": "resend-atlas",
+        "provider": "resend",
+        "saved": true,
+        "operation_id": "op_a325fd9130a04ca8b48d266ff7ff6566",
+        "receipt": {
+          "receipt_id": "rcpt_005873fb01244a37bd4e7527309d2bc7",
+          "operation_id": "op_a325fd9130a04ca8b48d266ff7ff6566",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "email_key:resend:resend-atlas",
+          "created_at": 1790717651.078912,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_email_key"
+        }
+      },
+      "response_sha256": "42e35c1e36cb296583b5bff082d532cd5d5e98c0f65bb42401a96ef4b7f06c63"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-project.open.proj-448a6cbaeda9']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=room-body]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=updates-verb]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=update-list]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=update-list-item] [data-update-id='pupd_6e020c04c86a43fb8db89c83417d33f2']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=send-well]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=destination-row]:has([data-destination='ResendPriya'])",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=destination-row]:has([data-destination='ResendPriya'])",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-preview]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "scroll_into_view",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-verbs]",
+      "block": "center",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7ba8f3b8",
+    "project_id": "proj-448a6cbaeda9",
+    "update_id": "pupd_6e020c04c86a43fb8db89c83417d33f2",
+    "key_ref": "resend-atlas",
+    "dest_id": "chd_702614aa52885d044acda6d5"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-verb]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Check priya@example.com"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "type": "button",
+        "class": "btn btn--ghost btn--sm ",
+        "data-testid": "send-check",
+        "data-href": "https://resend.com/emails"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 51,
+        "y": 409,
+        "w": 184,
+        "h": 24
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "ResendPriya, EMAIL",
+      "after": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n03:34 PM\n1 need you\n\u25cf\n3 OF"
+    },
+    "document_text_sha256": {
+      "before": "f15fe419d16296cdb5c81db629d0e567d339c389d2823f37c273ddd4cfa79081",
+      "after": "eae50e675ca5abdee9d4a44101d87a7e5188aa58136ccab6c5dc68b3a7210449"
+    },
+    "document_text_len": {
+      "before": 1221,
+      "after": 1376
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends?update_id=pupd_6e020c04c86a43fb8db89c83417d33f2",
+          "status": 200,
+          "payload": {
+            "sends": []
+          },
+          "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/proj-448a6cbaeda9/updates",
+          "status": 200,
+          "payload": {
+            "updates": [
+              {
+                "id": "pupd_6e020c04c86a43fb8db89c83417d33f2",
+                "project_id": "proj-448a6cbaeda9",
+                "project_revision": 1,
+                "review_id": null,
+                "lifecycle": "published",
+                "draft_revision": 1,
+                "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+                "claims_json": "[]",
+                "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "created_at": "2026-09-29T21:34:11+00:00",
+                "updated_at": "2026-09-29T21:34:11+00:00",
+                "published_at": "2026-09-29T21:34:11+00:00",
+                "fallback_reason": null,
+                "fallback_receipt": null,
+                "deliveries": [],
+                "generatorHost": null,
+                "generatorModel": null
+              }
+            ]
+          },
+          "body_sha256": "3a35306c5d6f9d43428497aa821322047e7c42e95c623c78228ef9c577d547d8"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends?update_id=pupd_6e020c04c86a43fb8db89c83417d33f2",
+          "status": 200,
+          "payload": {
+            "sends": [
+              {
+                "id": "chs_c1b6bf9ad187d7a5643f0c83",
+                "document_ref": "project_update:pupd_6e020c04c86a43fb8db89c83417d33f2",
+                "destination_id": "chd_702614aa52885d044acda6d5",
+                "destination_name": "ResendPriya",
+                "channel": "email",
+                "badge": "cloud",
+                "account": {
+                  "from_email": "karol@example.com",
+                  "from_name": "Karol",
+                  "key_ref": "resend-atlas",
+                  "provider": "resend"
+                },
+                "target": {
+                  "cc": [],
+                  "to": [
+                    "priya@example.com"
+                  ]
+                },
+                "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+                "payload_digest": "b7107d61d11900a45cbb1c0656965e59e8571e32cfb09280e8c06119d5498251",
+                "size": 439,
+                "preview": {
+                  "from": "Karol <karol@example.com>",
+                  "to": [
+                    "priya@example.com"
+                  ],
+                  "cc": [],
+                  "subject": "Atlas send ledger \u2014 update r1 (2026-09-29)",
+                  "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+                },
+                "prepared_by": {
+                  "kind": "owner",
+                  "identity": "owner-session"
+                },
+                "prepare_operation_id": null,
+                "send_operation_id": "op_ce49450f08a94f8e989701a82823e275",
+                "state": "unknown",
+                "reason": "unpinned_503",
+                "proof": null,
+                "file_path": null,
+                "created_at": "2026-09-29T21:34:14.323740+00:00",
+                "dispatch_started_at": "2026-09-29T21:34:14.323740+00:00",
+                "settled_at": "2026-09-29T21:34:14+00:00",
+                "dispatch_seq": 1
+              }
+            ]
+          },
+          "body_sha256": "0aeacd1b35cd671b32a7d34a84e54338bf84d812519507637210b919c3a0fcbe"
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/proj-448a6cbaeda9/updates",
+          "status": 200,
+          "payload": {
+            "updates": [
+              {
+                "id": "pupd_6e020c04c86a43fb8db89c83417d33f2",
+                "project_id": "proj-448a6cbaeda9",
+                "project_revision": 1,
+                "review_id": null,
+                "lifecycle": "published",
+                "draft_revision": 1,
+                "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+                "claims_json": "[]",
+                "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "created_at": "2026-09-29T21:34:11+00:00",
+                "updated_at": "2026-09-29T21:34:11+00:00",
+                "published_at": "2026-09-29T21:34:11+00:00",
+                "fallback_reason": null,
+                "fallback_receipt": null,
+                "deliveries": [
+                  {
+                    "id": "pdel_c1b6bf9ad187d7a5",
+                    "update_id": "pupd_6e020c04c86a43fb8db89c83417d33f2",
+                    "project_id": "proj-448a6cbaeda9",
+                    "delivered_at": "2026-09-29T21:34:14.323740+00:00",
+                    "delivered_to": "ResendPriya",
+                    "operation_id": "op_ce49450f08a94f8e989701a82823e275",
+                    "channel": "email",
+                    "send_id": "chs_c1b6bf9ad187d7a5643f0c83",
+                    "outcome": "unknown",
+                    "proof_json": null
+                  }
+                ],
+                "generatorHost": null,
+                "generatorModel": null
+              }
+            ]
+          },
+          "body_sha256": "1826204f74cdac61cb404f19adf951c8515eb416b5e22ea960744c505bd22801"
+        }
+      ]
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "div > section.surface-section > div.update-deliver-line.send-manual > span.update-deliver-to > span.gadget-string > input",
+          "value": ""
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-check]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [
+      {
+        "selector": "div > section.surface-section > div.update-deliver-line.send-manual > span.update-deliver-to > span.gadget-string > input",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "ResendPriya, EMAIL",
+    "url": "http://127.0.0.1:61525/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "f15fe419d16296cdb5c81db629d0e567d339c389d2823f37c273ddd4cfa79081",
+    "document_text_len": 1221,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?update_id=pupd_6e020c04c86a43fb8db89c83417d33f2",
+        "status": 200,
+        "payload": {
+          "sends": []
+        },
+        "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-448a6cbaeda9/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_6e020c04c86a43fb8db89c83417d33f2",
+              "project_id": "proj-448a6cbaeda9",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-09-29T21:34:11+00:00",
+              "updated_at": "2026-09-29T21:34:11+00:00",
+              "published_at": "2026-09-29T21:34:11+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "3a35306c5d6f9d43428497aa821322047e7c42e95c623c78228ef9c577d547d8"
+      }
+    ],
+    "cli_calls": [],
+    "at_utc": "2026-09-29T21:34:14.226667+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-check]",
+    "target_present": true,
+    "text": "Check priya@example.com",
+    "attrs": {
+      "type": "button",
+      "class": "btn btn--ghost btn--sm ",
+      "data-testid": "send-check",
+      "data-href": "https://resend.com/emails"
+    },
+    "rect": {
+      "x": 51,
+      "y": 409,
+      "w": 184,
+      "h": 24
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 51,
+        "y": 409,
+        "w": 184,
+        "h": 24
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 53,
+          "y": 411,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 53,
+          "y": 421,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 53,
+          "y": 431,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 143,
+          "y": 411,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 143,
+          "y": 421,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 143,
+          "y": 431,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 233,
+          "y": 411,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 233,
+          "y": 421,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 233,
+          "y": 431,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n03:34 PM\n1 need you\n\u25cf\n3 OF",
+    "url": "http://127.0.0.1:61525/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "eae50e675ca5abdee9d4a44101d87a7e5188aa58136ccab6c5dc68b3a7210449",
+    "document_text_len": 1376,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?update_id=pupd_6e020c04c86a43fb8db89c83417d33f2",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_c1b6bf9ad187d7a5643f0c83",
+              "document_ref": "project_update:pupd_6e020c04c86a43fb8db89c83417d33f2",
+              "destination_id": "chd_702614aa52885d044acda6d5",
+              "destination_name": "ResendPriya",
+              "channel": "email",
+              "badge": "cloud",
+              "account": {
+                "from_email": "karol@example.com",
+                "from_name": "Karol",
+                "key_ref": "resend-atlas",
+                "provider": "resend"
+              },
+              "target": {
+                "cc": [],
+                "to": [
+                  "priya@example.com"
+                ]
+              },
+              "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+              "payload_digest": "b7107d61d11900a45cbb1c0656965e59e8571e32cfb09280e8c06119d5498251",
+              "size": 439,
+              "preview": {
+                "from": "Karol <karol@example.com>",
+                "to": [
+                  "priya@example.com"
+                ],
+                "cc": [],
+                "subject": "Atlas send ledger \u2014 update r1 (2026-09-29)",
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": null,
+              "send_operation_id": "op_ce49450f08a94f8e989701a82823e275",
+              "state": "unknown",
+              "reason": "unpinned_503",
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-09-29T21:34:14.323740+00:00",
+              "dispatch_started_at": "2026-09-29T21:34:14.323740+00:00",
+              "settled_at": "2026-09-29T21:34:14+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "0aeacd1b35cd671b32a7d34a84e54338bf84d812519507637210b919c3a0fcbe"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-448a6cbaeda9/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_6e020c04c86a43fb8db89c83417d33f2",
+              "project_id": "proj-448a6cbaeda9",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-09-29T21:34:11+00:00",
+              "updated_at": "2026-09-29T21:34:11+00:00",
+              "published_at": "2026-09-29T21:34:11+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [
+                {
+                  "id": "pdel_c1b6bf9ad187d7a5",
+                  "update_id": "pupd_6e020c04c86a43fb8db89c83417d33f2",
+                  "project_id": "proj-448a6cbaeda9",
+                  "delivered_at": "2026-09-29T21:34:14.323740+00:00",
+                  "delivered_to": "ResendPriya",
+                  "operation_id": "op_ce49450f08a94f8e989701a82823e275",
+                  "channel": "email",
+                  "send_id": "chs_c1b6bf9ad187d7a5643f0c83",
+                  "outcome": "unknown",
+                  "proof_json": null
+                }
+              ],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "1826204f74cdac61cb404f19adf951c8515eb416b5e22ea960744c505bd22801"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "https",
+          "POST",
+          "api.resend.com",
+          "/emails"
+        ],
+        "body_sha256": "b7107d61d11900a45cbb1c0656965e59e8571e32cfb09280e8c06119d5498251",
+        "pid": 58962,
+        "at": "2026-09-29T21:34:14.325247+00:00",
+        "answer": 0,
+        "auth": "Bearer",
+        "user_agent": "HoldSpeak"
+      }
+    ],
+    "at_utc": "2026-09-29T21:34:15.393623+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/channels/send",
+      "status": 200,
+      "body_sha256": "26f7e9266e055394d4bd426c9ba9264e86c0511401ab71873ba65b1411a4566a",
+      "body": {
+        "send": {
+          "id": "chs_c1b6bf9ad187d7a5643f0c83",
+          "document_ref": "project_update:pupd_6e020c04c86a43fb8db89c83417d33f2",
+          "destination_id": "chd_702614aa52885d044acda6d5",
+          "destination_name": "ResendPriya",
+          "channel": "email",
+          "badge": "cloud",
+          "account": {
+            "from_email": "karol@example.com",
+            "from_name": "Karol",
+            "key_ref": "resend-atlas",
+            "provider": "resend"
+          },
+          "target": {
+            "cc": [],
+            "to": [
+              "priya@example.com"
+            ]
+          },
+          "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+          "payload_digest": "b7107d61d11900a45cbb1c0656965e59e8571e32cfb09280e8c06119d5498251",
+          "size": 439,
+          "preview": {
+            "from": "Karol <karol@example.com>",
+            "to": [
+              "priya@example.com"
+            ],
+            "cc": [],
+            "subject": "Atlas send ledger \u2014 update r1 (2026-09-29)",
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": null,
+          "send_operation_id": "op_ce49450f08a94f8e989701a82823e275",
+          "state": "unknown",
+          "reason": "unpinned_503",
+          "proof": null,
+          "file_path": null,
+          "created_at": "2026-09-29T21:34:14.323740+00:00",
+          "dispatch_started_at": "2026-09-29T21:34:14.323740+00:00",
+          "settled_at": "2026-09-29T21:34:14+00:00",
+          "dispatch_seq": 1
+        },
+        "outcome": "unknown",
+        "operation_id": "op_ce49450f08a94f8e989701a82823e275",
+        "receipt": {
+          "receipt_id": "rcpt_bdb5c0e210df446bbe405d0c7a2c904c",
+          "operation_id": "op_ce49450f08a94f8e989701a82823e275",
+          "state": "indeterminate",
+          "outcome": "unpinned_503",
+          "result_ref": "channel_send:chs_c1b6bf9ad187d7a5643f0c83",
+          "created_at": 1790717654.3260732,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project_update:pupd_6e020c04c86a43fb8db89c83417d33f2"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/send"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=send-open][data-destination='ResendPriya'] [data-testid=send-check]",
+    "target_present": true,
+    "text": "Check priya@example.com",
+    "attrs": {
+      "type": "button",
+      "class": "btn btn--ghost btn--sm ",
+      "data-testid": "send-check",
+      "data-href": "https://resend.com/emails"
+    },
+    "rect": {
+      "x": 51,
+      "y": 409,
+      "w": 184,
+      "h": 24
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 51,
+        "y": 409,
+        "w": 184,
+        "h": 24
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 53,
+          "y": 411,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 53,
+          "y": 421,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 53,
+          "y": 431,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 143,
+          "y": 411,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 143,
+          "y": 421,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 143,
+          "y": 431,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 233,
+          "y": 411,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 233,
+          "y": 421,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        },
+        {
+          "x": 233,
+          "y": 431,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--ghost"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n03:34 PM\n1 need you\n\u25cf\n3 OF",
+    "url": "http://127.0.0.1:61525/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "eae50e675ca5abdee9d4a44101d87a7e5188aa58136ccab6c5dc68b3a7210449",
+    "document_text_len": 1376,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?update_id=pupd_6e020c04c86a43fb8db89c83417d33f2",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_c1b6bf9ad187d7a5643f0c83",
+              "document_ref": "project_update:pupd_6e020c04c86a43fb8db89c83417d33f2",
+              "destination_id": "chd_702614aa52885d044acda6d5",
+              "destination_name": "ResendPriya",
+              "channel": "email",
+              "badge": "cloud",
+              "account": {
+                "from_email": "karol@example.com",
+                "from_name": "Karol",
+                "key_ref": "resend-atlas",
+                "provider": "resend"
+              },
+              "target": {
+                "cc": [],
+                "to": [
+                  "priya@example.com"
+                ]
+              },
+              "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+              "payload_digest": "b7107d61d11900a45cbb1c0656965e59e8571e32cfb09280e8c06119d5498251",
+              "size": 439,
+              "preview": {
+                "from": "Karol <karol@example.com>",
+                "to": [
+                  "priya@example.com"
+                ],
+                "cc": [],
+                "subject": "Atlas send ledger \u2014 update r1 (2026-09-29)",
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": null,
+              "send_operation_id": "op_ce49450f08a94f8e989701a82823e275",
+              "state": "unknown",
+              "reason": "unpinned_503",
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-09-29T21:34:14.323740+00:00",
+              "dispatch_started_at": "2026-09-29T21:34:14.323740+00:00",
+              "settled_at": "2026-09-29T21:34:14+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "0aeacd1b35cd671b32a7d34a84e54338bf84d812519507637210b919c3a0fcbe"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-448a6cbaeda9/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_6e020c04c86a43fb8db89c83417d33f2",
+              "project_id": "proj-448a6cbaeda9",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-09-29T21:34:11+00:00",
+              "updated_at": "2026-09-29T21:34:11+00:00",
+              "published_at": "2026-09-29T21:34:11+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [
+                {
+                  "id": "pdel_c1b6bf9ad187d7a5",
+                  "update_id": "pupd_6e020c04c86a43fb8db89c83417d33f2",
+                  "project_id": "proj-448a6cbaeda9",
+                  "delivered_at": "2026-09-29T21:34:14.323740+00:00",
+                  "delivered_to": "ResendPriya",
+                  "operation_id": "op_ce49450f08a94f8e989701a82823e275",
+                  "channel": "email",
+                  "send_id": "chs_c1b6bf9ad187d7a5643f0c83",
+                  "outcome": "unknown",
+                  "proof_json": null
+                }
+              ],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "1826204f74cdac61cb404f19adf951c8515eb416b5e22ea960744c505bd22801"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "https",
+          "POST",
+          "api.resend.com",
+          "/emails"
+        ],
+        "body_sha256": "b7107d61d11900a45cbb1c0656965e59e8571e32cfb09280e8c06119d5498251",
+        "pid": 58962,
+        "at": "2026-09-29T21:34:14.325247+00:00",
+        "answer": 0,
+        "auth": "Bearer",
+        "user_agent": "HoldSpeak"
+      }
+    ],
+    "at_utc": "2026-09-29T21:34:15.244348+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/channels/send",
+      "status": 200,
+      "body_sha256": "26f7e9266e055394d4bd426c9ba9264e86c0511401ab71873ba65b1411a4566a",
+      "body": {
+        "send": {
+          "id": "chs_c1b6bf9ad187d7a5643f0c83",
+          "document_ref": "project_update:pupd_6e020c04c86a43fb8db89c83417d33f2",
+          "destination_id": "chd_702614aa52885d044acda6d5",
+          "destination_name": "ResendPriya",
+          "channel": "email",
+          "badge": "cloud",
+          "account": {
+            "from_email": "karol@example.com",
+            "from_name": "Karol",
+            "key_ref": "resend-atlas",
+            "provider": "resend"
+          },
+          "target": {
+            "cc": [],
+            "to": [
+              "priya@example.com"
+            ]
+          },
+          "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+          "payload_digest": "b7107d61d11900a45cbb1c0656965e59e8571e32cfb09280e8c06119d5498251",
+          "size": 439,
+          "preview": {
+            "from": "Karol <karol@example.com>",
+            "to": [
+              "priya@example.com"
+            ],
+            "cc": [],
+            "subject": "Atlas send ledger \u2014 update r1 (2026-09-29)",
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": null,
+          "send_operation_id": "op_ce49450f08a94f8e989701a82823e275",
+          "state": "unknown",
+          "reason": "unpinned_503",
+          "proof": null,
+          "file_path": null,
+          "created_at": "2026-09-29T21:34:14.323740+00:00",
+          "dispatch_started_at": "2026-09-29T21:34:14.323740+00:00",
+          "settled_at": "2026-09-29T21:34:14+00:00",
+          "dispatch_seq": 1
+        },
+        "outcome": "unknown",
+        "operation_id": "op_ce49450f08a94f8e989701a82823e275",
+        "receipt": {
+          "receipt_id": "rcpt_bdb5c0e210df446bbe405d0c7a2c904c",
+          "operation_id": "op_ce49450f08a94f8e989701a82823e275",
+          "state": "indeterminate",
+          "outcome": "unpinned_503",
+          "result_ref": "channel_send:chs_c1b6bf9ad187d7a5643f0c83",
+          "created_at": 1790717654.3260732,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project_update:pupd_6e020c04c86a43fb8db89c83417d33f2"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/send"
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 26f7e9266e05); response body contains the declared admission facts | readable_text: 'Check priya@example.com' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 409, 'w': 184, 'h': 24} | attr_equals: data-href='https://resend.com/emails', wanted 'https://resend.com/emails' | protocol_reads: GET /api/channels/sends?update_id=pupd_6e020c04c86a43fb8db89c83417d33f2 answered 200 with 1 row(s) {'state': 'unknown', 'reason': 'unpinned_503'}; GET /api/projects/proj-448a6cbaeda9/updates answered 200 with 1 row(s) {'id': 'pupd_6e020c04c86a43fb8db89c83417d33f2', 'deliveries.0.outcome': 'unknown'} | cli_calls: 1 call(s) starting ['https', 'POST', 'api.resend.com', '/emails'] at the recording runner (pids [58962]; 1 call(s) in all), wanted 1",
+    "elapsed_s": 0.943
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 26f7e9266e05); response body contains the declared admission facts | readable_text: 'Check priya@example.com' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 409, 'w': 184, 'h': 24} | attr_equals: data-href='https://resend.com/emails', wanted 'https://resend.com/emails' | protocol_reads: GET /api/channels/sends?update_id=pupd_6e020c04c86a43fb8db89c83417d33f2 answered 200 with 1 row(s) {'state': 'unknown', 'reason': 'unpinned_503'}; GET /api/projects/proj-448a6cbaeda9/updates answered 200 with 1 row(s) {'id': 'pupd_6e020c04c86a43fb8db89c83417d33f2', 'deliveries.0.outcome': 'unknown'} | cli_calls: 1 call(s) starting ['https', 'POST', 'api.resend.com', '/emails'] at the recording runner (pids [58962]; 1 call(s) in all), wanted 1",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.088,
+    "first_satisfied_at_s": 0.943,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 26f7e9266e05); response body contains the declared admission facts | readable_text: 'Check priya@example.com' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 409, 'w': 184, 'h': 24} | attr_equals: data-href='https://resend.com/emails', wanted 'https://resend.com/emails' | protocol_reads: GET /api/channels/sends?update_id=pupd_6e020c04c86a43fb8db89c83417d33f2 answered 200 with 1 row(s) {'state': 'unknown', 'reason': 'unpinned_503'}; GET /api/projects/proj-448a6cbaeda9/updates answered 200 with 1 row(s) {'id': 'pupd_6e020c04c86a43fb8db89c83417d33f2', 'deliveries.0.outcome': 'unknown'} | cli_calls: 1 call(s) starting ['https', 'POST', 'api.resend.com', '/emails'] at the recording runner (pids [58962]; 1 call(s) in all), wanted 1"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/channels/send",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/channels/send",
+      "status": 200,
+      "body_sha256": "26f7e9266e055394d4bd426c9ba9264e86c0511401ab71873ba65b1411a4566a",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/send"
+    },
+    "why": "chosen by the declared trigger_route POST /api/channels/send",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/channels/send",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-448a6cbaeda9/updates",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-10-07/.tmp/p10s07/p10-all-r2/case.p10.send.resend_unknown--393/20260929T213406Z-case.p10.send.resend_unknown-muaddib-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-10-07/.tmp/p10s07/p10-all-r2/case.p10.send.resend_unknown--393/20260929T213406Z-case.p10.send.resend_unknown-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7ba8f3b8/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7ba8f3b8/.config/holdspeak/config.json",
+    "CLI_RUNNER 3d5bd4731310621a8fa776b8df3bbb92aa2033b84d34036d9436af949502a25e",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDING runner at the CLI channels' process edge (no real gh or acli)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:61525",
+    "CLI_CALL [\"https\", \"POST\", \"api.resend.com\", \"/emails\"]"
+  ],
+  "duration_s": 9.107
+}

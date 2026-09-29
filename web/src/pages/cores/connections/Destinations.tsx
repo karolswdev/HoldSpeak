@@ -37,8 +37,9 @@ import {
 import type { ConnectionsResponse } from "./api";
 import { accountChip, useConnections } from "../../../features/channels/SendWell";
 import {
-  CHANNEL_WORD, DEST_FOCUS, SEND_WORDS, egressOf, refusedWord, stamp, takeDestinationsFocus,
-  targetToken, wire, Refusal, type Channel, type Destination, type SaveBody,
+  CHANNEL_WORD, DEST_FOCUS, EMAIL_PROVIDERS, SEND_WORDS, egressOf, emailProvider, refusedWord, stamp,
+  takeDestinationsFocus, targetToken, wire, Refusal, type Channel, type Destination, type EmailProvider,
+  type SaveBody,
 } from "../../../features/channels/channels";
 import "../../../features/channels/channels.css";
 
@@ -47,8 +48,10 @@ const CHANNELS: { value: Channel; label: string }[] = [
   { value: "github", label: "GitHub comment" },
   { value: "jira", label: "Jira comment" },
   { value: "confluence", label: "Confluence blog post" },
-  { value: "email", label: "Email (SendGrid)" },
+  { value: "email", label: "Email" },
 ];
+/** Story 07: the email providers, from the one table (SendGrid first: the ratified canvas). */
+const PROVIDERS = (Object.keys(EMAIL_PROVIDERS) as EmailProvider[]).map((p) => ({ value: p, label: EMAIL_PROVIDERS[p].label }));
 
 type Draft = {
   channel: Channel; name: string; nameTouched: boolean;
@@ -56,11 +59,11 @@ type Draft = {
   repo: string; kind: "issue" | "pr"; number: string;
   jiraAccount: string; key: string;
   confAccount: string; space: string;
-  fromEmail: string; fromName: string; to: string; cc: string;
+  provider: EmailProvider; fromEmail: string; fromName: string; to: string; cc: string;
 };
 const EMPTY: Draft = {
   channel: "file", name: "", nameTouched: false, folder: "", synced: false, repo: "", kind: "issue", number: "",
-  jiraAccount: "", key: "", confAccount: "", space: "", fromEmail: "", fromName: "", to: "", cc: "",
+  jiraAccount: "", key: "", confAccount: "", space: "", provider: "sendgrid", fromEmail: "", fromName: "", to: "", cc: "",
 };
 
 function fromDestination(d: Destination): Draft {
@@ -71,6 +74,7 @@ function fromDestination(d: Destination): Draft {
     repo: String(t.repo ?? ""), kind: t.kind === "pr" ? "pr" : "issue", number: t.number != null ? String(t.number) : "",
     jiraAccount: d.channel === "jira" ? `${a.site}|${a.email}` : "", key: String(t.key ?? ""),
     confAccount: d.channel === "confluence" ? `${a.site}|${a.email}` : "", space: String(t.space_id ?? ""),
+    provider: a.provider === "resend" ? "resend" : "sendgrid",
     fromEmail: String(a.from_email ?? ""), fromName: String(a.from_name ?? ""),
     to: [t.to as unknown].flat().filter(Boolean).join(", "), cc: [t.cc as unknown].flat().filter(Boolean).join(", "),
   };
@@ -87,14 +91,14 @@ export function autoName(d: Pick<Draft, "channel" | "folder" | "repo" | "kind" |
     default: return "";
   }
 }
-/** The keychain item's name for a sender (story 03's key_ref: letters, digits, `_ . @ -`). */
-export const keyRef = (fromEmail: string) =>
-  `sendgrid-${fromEmail.trim().toLowerCase().replace(/[^a-z0-9_.@-]/g, "-")}`.slice(0, 100);
+/** The keychain item's name for a sender, per provider (story 03's key_ref: letters, digits, `_ . @ -`). */
+export const keyRef = (fromEmail: string, provider: EmailProvider = "sendgrid") =>
+  `${provider}-${fromEmail.trim().toLowerCase().replace(/[^a-z0-9_.@-]/g, "-")}`.slice(0, 100);
 const addresses = (text: string) => text.split(",").map((a) => a.trim()).filter(Boolean);
 
 function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
   conns: ConnectionsResponse | null; initial: Draft; replaces?: string; keys: Record<string, boolean>;
-  onKey: (ref: string, v: string) => Promise<string | null>; onDone: () => void; onCancel?: () => void;
+  onKey: (ref: string, v: string, provider: EmailProvider) => Promise<string | null>; onDone: () => void; onCancel?: () => void;
 }) {
   const [keyRefused, setKeyRefused] = useState<string | null>(null);
   const [d, setD] = useState<Draft>(initial);
@@ -102,6 +106,7 @@ function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
   const [refused, setRefused] = useState<string | null>(null);
   const set = (patch: Partial<Draft>) => { setRefused(null); setD((x) => ({ ...x, ...patch })); };
   const name = d.nameTouched ? d.name : autoName(d);
+  const ref = keyRef(d.fromEmail, d.provider);
   const gh = conns?.tools.find((t) => t.provider_id === "github");
   const jiraConns = conns?.tools.find((t) => t.provider_id === "jira")?.connections ?? [];
   const confConns = conns?.tools.find((t) => t.provider_id === "confluence")?.connections ?? [];
@@ -112,7 +117,7 @@ function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
     d.channel === "github" ? { host: "github.com", login: String(gh?.account?.login ?? "") }
     : d.channel === "jira" ? pick(jiraAcc)
     : d.channel === "confluence" ? pick(confAcc)
-    : d.channel === "email" ? { provider: "sendgrid", from_email: d.fromEmail, from_name: d.fromName, key_ref: keyRef(d.fromEmail), key_present: !!keys[keyRef(d.fromEmail)] }
+    : d.channel === "email" ? { provider: d.provider, from_email: d.fromEmail, from_name: d.fromName, key_ref: ref, key_present: !!keys[ref] }
     : {};
   const eg = egressOf({ channel: d.channel, account, synced: d.synced });
   const acc = accountChip({ channel: d.channel, account }, conns);
@@ -124,8 +129,8 @@ function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
       : d.channel === "github" ? { ...base, host: "github.com", repo: d.repo.trim(), kind: d.kind, number: Number(d.number) || 0 }
       : d.channel === "jira" ? { ...base, ...pick(jiraAcc), key: d.key.trim() }
       : d.channel === "confluence" ? { ...base, ...pick(confAcc), space_id: d.space.trim() }
-      : { ...base, provider: "sendgrid", from_email: d.fromEmail.trim(), from_name: d.fromName.trim(),
-          key_ref: keyRef(d.fromEmail), to: addresses(d.to), cc: addresses(d.cc) };
+      : { ...base, provider: d.provider, from_email: d.fromEmail.trim(), from_name: d.fromName.trim(),
+          key_ref: ref, to: addresses(d.to), cc: addresses(d.cc) };
     try {
       await wire.save(body);
       onDone();
@@ -180,12 +185,12 @@ function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
         <GadgetRow label="Space id"><StringGadget label="Space id" value={d.space} onChange={(v) => set({ space: v })} placeholder="98304" inputProps={{ "data-testid": "dest-space", inputMode: "numeric" } as never} /></GadgetRow>
       </>) : null}
       {d.channel === "email" ? (<>
-        <GadgetRow label="Provider"><CycleGadget label="Provider" value="sendgrid" options={[{ value: "sendgrid", label: "SendGrid" }]} onChange={() => {}} /></GadgetRow>
+        <GadgetRow label="Provider"><CycleGadget label="Provider" value={d.provider} options={PROVIDERS} onChange={(v) => { setKeyRefused(null); set({ provider: v as EmailProvider }); }} /></GadgetRow>
         <GadgetRow label="From"><StringGadget label="From" value={d.fromEmail} onChange={(v) => set({ fromEmail: v })} placeholder="you@company.com" inputProps={{ "data-testid": "dest-from" } as never} /></GadgetRow>
         <GadgetRow label="From name"><StringGadget label="From name" value={d.fromName} onChange={(v) => set({ fromName: v })} placeholder="Your name" /></GadgetRow>
         <div className="dest-secret" data-testid="dest-key-row">
-          <SecretRow label="SendGrid key" configured={!!keys[keyRef(d.fromEmail)]}
-            onReplace={(v) => { setKeyRefused(null); void onKey(keyRef(d.fromEmail), v).then(setKeyRefused); }} />
+          <SecretRow label={`${EMAIL_PROVIDERS[d.provider].label} key`} configured={!!keys[ref]}
+            onReplace={(v) => { setKeyRefused(null); void onKey(ref, v, d.provider).then(setKeyRefused); }} />
           {keyRefused ? (
             <span className="send-line" data-testid="dest-key-refused" data-code={keyRefused}>
               <StateChip state="failure" label={SEND_WORDS.keyNotSaved} />
@@ -229,7 +234,7 @@ function detailFields(d: Destination): [string, string][] {
     case "github": return [...base, ["Account", `@${a.login} · ${a.host}`], ["Repository", String(t.repo)], [t.kind === "pr" ? "Pull request" : "Issue", `#${t.number}`]];
     case "jira": return [...base, ["Account", `${a.email} · ${a.site}`], ["Work item", String(t.key)]];
     case "confluence": return [...base, ["Account", `${a.email} · ${a.site}`], ["Space id", String(t.space_id)]];
-    case "email": return [...base, ["Provider", "SendGrid"], ["From", a.from_name ? `${a.from_name} <${a.from_email}>` : String(a.from_email)],
+    case "email": return [...base, ["Provider", emailProvider(a).label], ["From", a.from_name ? `${a.from_name} <${a.from_email}>` : String(a.from_email)],
       ["To", [t.to as unknown].flat().join(", ")], ["Cc", [t.cc as unknown].flat().join(", ") || "—"]];
     default: return base;
   }
@@ -300,7 +305,7 @@ export function Destinations() {
     setOpen(null); setEditing(null); setAdding(true);
     requestAnimationFrame(() => groupRef.current?.scrollIntoView({ block: "start" }));
   }, [arrive, rows, readFailed]);
-  const onKey = (ref: string, v: string): Promise<string | null> => wire.saveKey(ref, v)
+  const onKey = (ref: string, v: string, provider: EmailProvider): Promise<string | null> => wire.saveKey(ref, v, provider)
     .then(() => { setKeys((k) => ({ ...k, [ref]: true })); return null; })
     .catch((e) => (e instanceof Refusal ? e.code : "no_answer"));
   if (readFailed) {
@@ -320,7 +325,12 @@ export function Destinations() {
   const parked = rows.filter((d) => d.state === "parked");
   const form = (
     <DestForm conns={conns} initial={EMPTY} keys={keys} onKey={onKey}
-      onDone={() => { setAdding(false); reload(); }}
+      onDone={() => {
+        // PHILO-10-07: after Save the form closes; the saved row stays in view (at 393 the closed form
+        // otherwise leaves the list above the window).
+        setAdding(false); reload();
+        requestAnimationFrame(() => groupRef.current?.scrollIntoView({ block: "start" }));
+      }}
       onCancel={active.length ? () => setAdding(false) : undefined} />
   );
   return (

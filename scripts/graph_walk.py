@@ -115,6 +115,12 @@ A step is `{"kind": <one of STEP_KINDS>, ...}`:
             `graph-walk-cli-calls.jsonl` in the run's HOME, which survives a
             `restart_hub`; every observation carries it (`cli_calls`). No real
             `gh` or `acli` runs; no account is touched.
+            PHILO-10-07: a script that also names `https` answers installs the
+            email channel's HTTPS edge the same way (`channel_email.HTTPS_HANDLER`
+            + a MEMORY key store, never the OS keychain): each request is logged
+            as argv `["https", <method>, <host>, <path>]` (the body's sha256,
+            the auth scheme and the User-Agent; never the key) and answered by
+            host + path from the script. No request reaches the network.
 
 VARIABLE `hub_home` (PHILO-10-05) is bound before setup to the run's isolated
 HOME, so a file destination's folder is a real folder on that HOME.
@@ -2761,10 +2767,13 @@ def _install_cli_runner(path: Path) -> str:
 
     script = json.loads(path.read_text())
     answers = script.get("answers")
-    if not isinstance(answers, list) or not answers:
+    https = script.get("https")
+    if not isinstance(answers, list) or not (answers or https):
         raise Refused(f"the recording runner script {path} names no answers")
     log_path = Path(os.environ["HOME"]).resolve() / CLI_CALLS_FILE
     lock = _threading.Lock()
+    if https:
+        _install_email_edge(https, log_path, lock)
 
     def runner(argv: Any, **_kwargs: Any) -> Any:
         argv = [str(a) for a in argv]
@@ -2795,6 +2804,61 @@ def _install_cli_runner(path: Path) -> str:
 
     channel_cli.CLI_RUNNER = runner
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _install_email_edge(https: list[dict[str, Any]], log_path: Path, lock: Any) -> None:
+    """PHILO-10-07: a RECORDING HTTPS edge for the email channel, and a MEMORY key store.
+
+    The seams are `holdspeak.services.channel_email.HTTPS_HANDLER` and
+    `KEY_STORE` (the same attributes the story 03 / 07 fences replace), set
+    inside the hub's OWN process: the channel's real `plan`, the kernel's
+    `external.egress` admission with its real allow-list and the real opener
+    (redirects refused) run; only the socket is canned. The key a case saves
+    lives in this process's memory: the OS keychain is never read or written.
+    Each request is logged BEFORE it answers: argv `["https", method, host,
+    path]`, the body's sha256, the auth scheme, the User-Agent. Never the key.
+    """
+    import http.client as _http_client
+    import io as _io
+    import urllib.error as _urllib_error
+    import urllib.request as _urllib_request
+    import urllib.response as _urllib_response
+    from urllib.parse import urlparse as _urlparse
+
+    from holdspeak.services import channel_email
+
+    memory = channel_email.MemoryEmailKeyStore()
+    channel_email.KEY_STORE = lambda: memory
+
+    class RecordingEdge(_urllib_request.BaseHandler):
+        def https_open(self, req: Any) -> Any:
+            url = _urlparse(req.full_url)
+            argv = ["https", req.get_method(), url.hostname or "", url.path]
+            headers = {k.lower(): v for k, v in req.header_items()}
+            index = next((i for i, a in enumerate(https)
+                          if a.get("host") == argv[2] and a.get("path") == argv[3]), None)
+            entry = {"argv": argv, "body_sha256": hashlib.sha256(bytes(req.data or b"")).hexdigest(),
+                     "pid": os.getpid(), "at": datetime.now(timezone.utc).isoformat(), "answer": index,
+                     "auth": str(headers.get("authorization", "")).split(" ", 1)[0] or None,
+                     "user_agent": headers.get("user-agent")}
+            with lock, log_path.open("a") as handle:
+                handle.write(json.dumps(entry) + "\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            print("CLI_CALL " + json.dumps(argv), flush=True)
+            if index is None:
+                raise _urllib_error.URLError(ConnectionRefusedError("recording edge: no answer"))
+            answer = https[index]
+            body = answer.get("body", b"")
+            raw = body if isinstance(body, str) else json.dumps(body)
+            head = "".join(f"{k}: {v}\r\n" for k, v in (answer.get("headers") or {}).items()) + "\r\n"
+            resp = _urllib_response.addinfourl(_io.BytesIO(raw.encode()),
+                                               _http_client.parse_headers(_io.BytesIO(head.encode())),
+                                               req.full_url, int(answer.get("status", 200)))
+            resp.msg = "recorded"
+            return resp
+
+    channel_email.HTTPS_HANDLER = RecordingEdge
 
 
 def read_cli_calls(hub: Any) -> list[dict[str, Any]] | None:

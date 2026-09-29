@@ -27,10 +27,12 @@ into major providers like sendgrid and so on."
   ``redirect_refused``). A transport exception leaves only a fixed code
   (:class:`EmailTransportError`), raised outside the handler so it carries no
   context.
-* **SendGrid** is the one implementation: ``202`` + ``X-Message-Id`` is SENT and
+* **SendGrid** and **Resend** (PHILO-10-07) are the implementations. SendGrid: ``202`` + ``X-Message-Id`` is SENT and
   its word is ACCEPTED BY SENDGRID (accepted for processing, never "delivered");
   FAILED only on a pinned whole-request rejection (a status on the list AND
-  SendGrid's own ``errors`` answer); everything else is UNKNOWN. Text only.
+  SendGrid's own ``errors`` answer); everything else is UNKNOWN. Resend: ``200`` +
+  ``{"id"}`` is ACCEPTED BY RESEND, by the same rules. Text only. Each key has its
+  own keychain slot per provider (:func:`key_slot`).
 
 Tests replace :data:`KEY_STORE` (a memory store: never the real keychain) and
 :data:`HTTPS_HANDLER` (a canned handler at the HTTPS edge: never the network).
@@ -45,6 +47,7 @@ import ssl
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, replace
+from email.headerregistry import Address
 from email.utils import formataddr, parseaddr
 from typing import Any, Callable, Mapping, Optional, Protocol
 from urllib.parse import urlparse
@@ -151,7 +154,7 @@ def _rendered(box: Mapping[str, Any]) -> str:
     return formataddr((name, addr)) if name else addr
 
 
-# ── SendGrid: the one implementation in this phase ─────────────────────────
+# ── SendGrid: the first implementation ──────────────────────────────────────
 
 
 class SendGridProvider:
@@ -236,8 +239,124 @@ def sendgrid_errors(raw: bytes) -> tuple[tuple[str, str], ...]:
                  for item in found[:10] if isinstance(item, dict))
 
 
+# ── Resend: the second implementation (PHILO-10-07, the owner's closing-review ruling) ──
+
+
+class ResendProvider:
+    """``POST https://api.resend.com/emails`` (text only), the contract read from Resend's API reference
+    (resend.com/docs/api-reference/emails/send-email and /errors, 2026-09-29).
+
+    ``200`` + ``{"id": ...}`` in the JSON body is SENT; its word is ACCEPTED BY RESEND (accepted, never
+    "delivered"). A 4xx is FAILED only when the body is Resend's whole, consistent error envelope (a JSON
+    object: an integer ``statusCode`` EQUAL to the HTTP status, a string ``name``, a string ``message``;
+    :func:`resend_error`) AND the (status, name) pair is on the pinned list. A pinned ``403
+    validation_error`` whose message says the domain is not verified (or that a test sender sends only to
+    its owner) is ``sender_not_verified``. Everything else -- an unknown name, a name of another status, a
+    malformed or inconsistent envelope -- is UNKNOWN (Codex Astra r1 on #701: never a false "nothing sent").
+    """
+
+    name = "resend"
+    host = "api.resend.com"
+    port = 443
+    url = "https://api.resend.com/emails"
+    #: Resend takes 50 ``to`` addresses and 40 MB with attachments; HoldSpeak sends text only.
+    limits = EmailLimits(max_bytes=1_000_000, max_recipients=50)
+    #: The face word for SENT: accepted for processing, never "delivered".
+    WORD = "ACCEPTED BY RESEND"
+    #: Resend refuses a request with no User-Agent (403); this one names HoldSpeak.
+    USER_AGENT = "HoldSpeak"
+    PINNED = {
+        (400, "validation_error"): "resend_invalid_request",
+        (401, "missing_api_key"): "resend_key_invalid",
+        (403, "invalid_api_key"): "resend_key_invalid",
+        (403, "restricted_api_key"): "resend_key_invalid",
+        (403, "suspended_api_key"): "resend_key_invalid",
+        (403, "invalid_permission"): "resend_forbidden",
+        (403, "validation_error"): "resend_forbidden",
+        (422, "validation_error"): "resend_invalid_request",
+        (422, "missing_required_field"): "resend_invalid_request",
+        (422, "missing_required_parameter"): "resend_invalid_request",
+        (422, "invalid_parameter"): "resend_invalid_request",
+        (429, "rate_limit_exceeded"): "resend_rate_limited",
+        (429, "daily_quota_exceeded"): "resend_quota_exceeded",
+        (429, "monthly_quota_exceeded"): "resend_quota_exceeded",
+    }
+    #: The 403 discriminators: the from domain is not verified in Resend.
+    SENDER_NOT_VERIFIED = ("domain is not verified", "only send testing emails to your own email address")
+
+    def serialize(self, message: EmailMessage) -> bytes:
+        # ``Name <address>`` with the name kept as typed (quoted when it must be; never RFC 2047 encoded).
+        sender = (str(Address(display_name=message.from_name, addr_spec=message.from_email))
+                  if message.from_name else message.from_email)
+        body: dict[str, Any] = {"from": sender, "to": list(message.to)}
+        if message.cc:
+            body["cc"] = list(message.cc)
+        body.update({"subject": message.subject, "text": message.text})
+        return json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+    def preview(self, body: bytes) -> dict[str, Any]:
+        data = json.loads(bytes(body).decode("utf-8"))
+        return {"from": str(data.get("from") or ""), "to": [str(a) for a in data.get("to") or []],
+                "cc": [str(a) for a in data.get("cc") or []], "subject": str(data.get("subject") or ""),
+                "text": str(data.get("text") or "")}
+
+    def plan(self, body: bytes) -> GatedOperation:
+        return GatedOperation.outbound(self.host, self.port, request=EmailRequest(self.url, bytes(body)),
+                                       data_classes=(DATA_CLASS,), payload_digest=sha256(bytes(body)))
+
+    @classmethod
+    def auth_headers(cls, key: str) -> dict[str, str]:
+        return {"Authorization": "Bearer " + key, "User-Agent": cls.USER_AGENT}
+
+    def interpret(self, status: int, headers: Mapping[str, str], body: bytes) -> Outcome:
+        envelope = resend_error(body, status) if status >= 400 else None
+        name, message = envelope or ("", "")
+        detail = {"error": message} if message else {}
+        if status == 200:
+            message_id = resend_id(body)
+            if not message_id:
+                return Outcome("unknown", "accepted_without_message_id")
+            return Outcome("sent", None, {"provider": self.name, "message_id": message_id, "word": self.WORD,
+                                          "scope": "accepted for processing, not delivery"})
+        if 300 <= status < 400:
+            return Outcome("unknown", "redirect_refused", detail)
+        if envelope is None or (status, name) not in self.PINNED:
+            return Outcome("unknown", f"unpinned_{status}", detail)
+        if (status, name) == (403, "validation_error") and any(m in message.lower() for m in self.SENDER_NOT_VERIFIED):
+            return Outcome("failed", "sender_not_verified", detail)
+        return Outcome("failed", self.PINNED[status, name], detail)
+
+
+def resend_error(raw: bytes, status: int) -> Optional[tuple[str, str]]:
+    """Resend's own error envelope, validated whole: ``(name, message)`` bounded, or None.
+
+    A JSON object with an integer ``statusCode`` equal to *status* (a bool is not an integer), a string
+    ``name`` and a string ``message``. Anything else is not Resend's answer, and it proves nothing.
+    """
+    try:
+        data = json.loads(bytes(raw).decode("utf-8", errors="replace"))
+    except ValueError:
+        return None
+    if not isinstance(data, dict):
+        return None
+    answered, name, message = data.get("statusCode"), data.get("name"), data.get("message")
+    if type(answered) is not int or answered != int(status) or not isinstance(name, str) or not isinstance(message, str):
+        return None
+    return name[:80], message[:500]
+
+
+def resend_id(raw: bytes) -> str:
+    """The id Resend gives an accepted email (``{"id": ...}``), bounded; "" when absent."""
+    try:
+        data = json.loads(bytes(raw).decode("utf-8", errors="replace"))
+    except ValueError:
+        return ""
+    found = data.get("id") if isinstance(data, dict) else None
+    return found.strip()[:200] if isinstance(found, str) else ""
+
+
 #: THE registry table: provider name -> its implementation. One row per provider.
-EMAIL_PROVIDERS: dict[str, EmailProvider] = {"sendgrid": SendGridProvider()}
+EMAIL_PROVIDERS: dict[str, EmailProvider] = {"sendgrid": SendGridProvider(), "resend": ResendProvider()}
 
 
 def provider(name: Any) -> EmailProvider:
@@ -337,13 +456,19 @@ def _backend_name(backend: Any) -> str:
 KEY_STORE: Callable[[], Any] = NativeEmailKeyStore
 
 
-def read_key(key_ref: str) -> str:
+def key_slot(provider_name: str, key_ref: str) -> str:
+    """The keychain item for a provider's key: ``<provider>:<key_ref>`` (``:`` is never in a key_ref),
+    so a SendGrid key and a Resend key never share a slot, and one provider's key never reaches the other."""
+    return f"{provider_name}:{key_ref}"
+
+
+def read_key(provider_name: str, key_ref: str) -> str:
     """The key, or a content-free :class:`EmailKeyError` (not native, missing, locked)."""
-    return KEY_STORE().get(key_ref)
+    return KEY_STORE().get(key_slot(provider_name, key_ref))
 
 
-def save_key(key_ref: str, key: str) -> None:
-    KEY_STORE().put(key_ref, key)
+def save_key(provider_name: str, key_ref: str, key: str) -> None:
+    KEY_STORE().put(key_slot(provider_name, key_ref), key)
 
 
 def valid_key_ref(value: Any) -> str:
@@ -470,7 +595,7 @@ def transmit(op: GatedOperation, key_ref: str, chosen: Any) -> HttpAnswer:
         raise EmailTransportError("url_not_admitted", left=False)
     code, left = "", False
     try:
-        key = read_key(key_ref)
+        key = read_key(chosen.name, key_ref)
     except EmailKeyError as exc:
         code = exc.code
     except Exception:
@@ -599,7 +724,7 @@ class EmailChannel:
         chosen = provider(account.get("provider"))
         self._recipients(target, chosen)
         try:
-            read_key(valid_key_ref(account.get("key_ref")))
+            read_key(chosen.name, valid_key_ref(account.get("key_ref")))
         except EmailKeyError as exc:
             raise ChannelRefused(exc.code, f"The {chosen.name} key cannot be read: {exc.code}", status=400) from None
         return None
@@ -651,5 +776,5 @@ CHANNELS["email"] = EmailChannel()
 __all__ = [
     "DATA_CLASS", "EMAIL_PROVIDERS", "EmailChannel", "EmailKeyError", "EmailLimits", "EmailMessage",
     "EmailProvider", "EmailRequest", "EmailTransportError", "HttpAnswer", "MemoryEmailKeyStore",
-    "NativeEmailKeyStore", "SendGridProvider", "canonical_address", "transmit",
+    "NativeEmailKeyStore", "ResendProvider", "SendGridProvider", "canonical_address", "key_slot", "transmit",
 ]

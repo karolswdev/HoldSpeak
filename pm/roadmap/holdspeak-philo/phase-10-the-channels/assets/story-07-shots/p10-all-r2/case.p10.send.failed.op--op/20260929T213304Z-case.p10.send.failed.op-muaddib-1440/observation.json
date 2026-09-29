@@ -1,0 +1,2675 @@
+{
+  "id": "obs-20260929T213304Z-case.p10.send.failed.op-muaddib-1440",
+  "run_id": "20260929T213304Z-case.p10.send.failed.op-muaddib-1440",
+  "case_id": "case.p10.send.failed.op",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase10.json",
+  "job": "p10",
+  "edge_ids": [
+    "edge.tool.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p10_send_face",
+  "provenance": {
+    "revision": "1ac9a5f3b33e204e41bfb138fa5d444aba9713d5",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "18f299869d984fd50e4ce99c6855356a2ed7d5c1317b688ef4c2d2bbd54e4ddb",
+      "assets": [
+        "index-CRd8xHI_.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:60616",
+      "port": 60616,
+      "pid": 57029,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jqw2t81h",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jqw2t81h/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo10_atlas/gh-not-found.json": "0c20c79d00baa056ed99c1cc7fca7816b38a6e7443362a03864f913d478fd269"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T21:33:05.023119+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "the CLI process edge: gh-not-found.json",
+        "substitute": "cli_runner",
+        "installed_sha256": "0c20c79d00baa056ed99c1cc7fca7816b38a6e7443362a03864f913d478fd269"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase10.json",
+      "sha256": "e4be86992649e386ab352ab696f6adde5f6e7cd9e649211a1fe9124f6ae9134b",
+      "version": "phase10-send"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDING runner at the CLI channels' process edge (no real gh or acli)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": "0c20c79d00baa056ed99c1cc7fca7816b38a6e7443362a03864f913d478fd269"
+  },
+  "setup": [
+    {
+      "kind": "boundary",
+      "label": "the CLI process edge: gh-not-found.json",
+      "substitute": "cli_runner",
+      "adapter": "cli-process-edge",
+      "installed_sha256": "0c20c79d00baa056ed99c1cc7fca7816b38a6e7443362a03864f913d478fd269",
+      "seam": "holdspeak.services.channel_cli.CLI_RUNNER"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.create",
+      "args": {
+        "name": "Atlas send ledger"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "project.create",
+          "arguments": {
+            "name": "Atlas send ledger"
+          }
+        }
+      },
+      "response": {
+        "project": {
+          "changed_refs": [
+            "project:proj-9a4e63472344"
+          ],
+          "context": {},
+          "created_at": "2026-09-29T15:33:06.570941",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-9a4e63472344",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "Atlas send ledger",
+          "project_id": "proj-9a4e63472344",
+          "project_revision": 1,
+          "result_kind": "created",
+          "team_members": [],
+          "updated_at": "2026-09-29T15:33:06.570941"
+        },
+        "success": true
+      },
+      "domain_response": {
+        "project": {
+          "changed_refs": [
+            "project:proj-9a4e63472344"
+          ],
+          "context": {},
+          "created_at": "2026-09-29T15:33:06.570941",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-9a4e63472344",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "Atlas send ledger",
+          "project_id": "proj-9a4e63472344",
+          "project_revision": 1,
+          "result_kind": "created",
+          "team_members": [],
+          "updated_at": "2026-09-29T15:33:06.570941"
+        },
+        "success": true
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"project\": {\"changed_refs\": [\"project:proj-9a4e63472344\"], \"context\": {}, \"created_at\": \"2026-09-29T15:33:06.570941\", \"description\": \"\", \"detection_threshold\": 0.4, \"id\": \"proj-9a4e63472344\", \"is_archived\": false, \"keywords\": [], \"meeting_count\": 0, \"name\": \"Atlas send ledger\", \"project_id\": \"proj-9a4e63472344\", \"project_revision\": 1, \"result_kind\": \"created\", \"team_members\": [], \"updated_at\": \"2026-09-29T15:33:06.570941\"}, \"success\": true}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.009,
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-9a4e63472344"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.draft_update",
+      "args": {
+        "project_id": "proj-9a4e63472344",
+        "generator": "deterministic"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "project.draft_update",
+          "arguments": {
+            "project_id": "proj-9a4e63472344",
+            "generator": "deterministic"
+          }
+        }
+      },
+      "response": {
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "created_at": "2026-09-29T21:33:06+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_12278b46e6914219aae9205a485050ff",
+          "lifecycle": "draft",
+          "project_id": "proj-9a4e63472344",
+          "project_revision": 1,
+          "published_at": null,
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-09-29T21:33:06+00:00"
+        }
+      },
+      "domain_response": {
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "created_at": "2026-09-29T21:33:06+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_12278b46e6914219aae9205a485050ff",
+          "lifecycle": "draft",
+          "project_id": "proj-9a4e63472344",
+          "project_revision": 1,
+          "published_at": null,
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-09-29T21:33:06+00:00"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"success\": true, \"update\": {\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[]\", \"created_at\": \"2026-09-29T21:33:06+00:00\", \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_12278b46e6914219aae9205a485050ff\", \"lifecycle\": \"draft\", \"project_id\": \"proj-9a4e63472344\", \"project_revision\": 1, \"published_at\": null, \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-09-29T21:33:06+00:00\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.004,
+      "captured": {
+        "name": "update_id",
+        "path": "update.id",
+        "value": "pupd_12278b46e6914219aae9205a485050ff"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.publish_update",
+      "args": {
+        "update_id": "pupd_12278b46e6914219aae9205a485050ff"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "project.publish_update",
+          "arguments": {
+            "update_id": "pupd_12278b46e6914219aae9205a485050ff"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_7a95efed7055413a9eb726fb39ff9991",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717586.578658,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_7a95efed7055413a9eb726fb39ff9991",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_1a771c6e293a444195cd9a36694e9e6b",
+          "result_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+          "state": "succeeded",
+          "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+        },
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "changed_refs": [
+            "project:proj-9a4e63472344"
+          ],
+          "claims_json": "[]",
+          "created_at": "2026-09-29T21:33:06+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_12278b46e6914219aae9205a485050ff",
+          "lifecycle": "published",
+          "project_id": "proj-9a4e63472344",
+          "project_revision": 2,
+          "published_at": "2026-09-29T21:33:06+00:00",
+          "result_kind": "updated",
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-09-29T21:33:06+00:00"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_7a95efed7055413a9eb726fb39ff9991",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717586.578658,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_7a95efed7055413a9eb726fb39ff9991",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_1a771c6e293a444195cd9a36694e9e6b",
+          "result_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+          "state": "succeeded",
+          "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+        },
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "changed_refs": [
+            "project:proj-9a4e63472344"
+          ],
+          "claims_json": "[]",
+          "created_at": "2026-09-29T21:33:06+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_12278b46e6914219aae9205a485050ff",
+          "lifecycle": "published",
+          "project_id": "proj-9a4e63472344",
+          "project_revision": 2,
+          "published_at": "2026-09-29T21:33:06+00:00",
+          "result_kind": "updated",
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-09-29T21:33:06+00:00"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_7a95efed7055413a9eb726fb39ff9991\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717586.578658, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_7a95efed7055413a9eb726fb39ff9991\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_1a771c6e293a444195cd9a36694e9e6b\", \"result_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"state\": \"succeeded\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\"}, \"success\": true, \"update\": {\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"changed_refs\": [\"project:proj-9a4e63472344\"], \"claims_json\": \"[]\", \"created_at\": \"2026-09-29T21:33:06+00:00\", \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_12278b46e6914219aae9205a485050ff\", \"lifecycle\": \"published\", \"project_id\": \"proj-9a4e63472344\", \"project_revision\": 2, \"published_at\": \"2026-09-29T21:33:06+00:00\", \"result_kind\": \"updated\", \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-09-29T21:33:06+00:00\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.save_destination",
+      "args": {
+        "name": "Issue42",
+        "channel": "github",
+        "repo": "acme/payments",
+        "kind": "issue",
+        "number": 42
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.save_destination",
+          "arguments": {
+            "name": "Issue42",
+            "channel": "github",
+            "repo": "acme/payments",
+            "kind": "issue",
+            "number": 42
+          }
+        }
+      },
+      "response": {
+        "destination": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "connection": {
+            "id": "wpc_github",
+            "last_checked_at": null,
+            "state": "never_checked"
+          },
+          "created_at": "2026-09-29T21:33:06+00:00",
+          "id": "chd_b61207abce431abe81a5e51d",
+          "name": "Issue42",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        },
+        "operation_id": "op_44050be6890f46178024bc15bffe60ef",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717586.584736,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_44050be6890f46178024bc15bffe60ef",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_2cb92e44cf54428ab1ed2eb9b86076b4",
+          "result_ref": "channel_destination:chd_b61207abce431abe81a5e51d",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "domain_response": {
+        "destination": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "connection": {
+            "id": "wpc_github",
+            "last_checked_at": null,
+            "state": "never_checked"
+          },
+          "created_at": "2026-09-29T21:33:06+00:00",
+          "id": "chd_b61207abce431abe81a5e51d",
+          "name": "Issue42",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        },
+        "operation_id": "op_44050be6890f46178024bc15bffe60ef",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717586.584736,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_44050be6890f46178024bc15bffe60ef",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_2cb92e44cf54428ab1ed2eb9b86076b4",
+          "result_ref": "channel_destination:chd_b61207abce431abe81a5e51d",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"destination\": {\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"connection\": {\"id\": \"wpc_github\", \"last_checked_at\": null, \"state\": \"never_checked\"}, \"created_at\": \"2026-09-29T21:33:06+00:00\", \"id\": \"chd_b61207abce431abe81a5e51d\", \"name\": \"Issue42\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}, \"operation_id\": \"op_44050be6890f46178024bc15bffe60ef\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717586.584736, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_44050be6890f46178024bc15bffe60ef\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_2cb92e44cf54428ab1ed2eb9b86076b4\", \"result_ref\": \"channel_destination:chd_b61207abce431abe81a5e51d\", \"state\": \"succeeded\", \"target_ref\": \"desk:channel.save_destination\"}, \"replaced\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.006,
+      "captured": {
+        "name": "gh_id",
+        "path": "destination.id",
+        "value": "chd_b61207abce431abe81a5e51d"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.preview",
+      "args": {
+        "update_id": "pupd_12278b46e6914219aae9205a485050ff",
+        "destination_id": "chd_b61207abce431abe81a5e51d"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.preview",
+          "arguments": {
+            "update_id": "pupd_12278b46e6914219aae9205a485050ff",
+            "destination_id": "chd_b61207abce431abe81a5e51d"
+          }
+        }
+      },
+      "response": {
+        "badge": "cloud",
+        "channel": "github",
+        "destination_id": "chd_b61207abce431abe81a5e51d",
+        "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+        "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "preview": {
+          "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+        },
+        "size": 286,
+        "title": "Atlas send ledger \u2014 update r1 (2026-09-29)"
+      },
+      "domain_response": {
+        "badge": "cloud",
+        "channel": "github",
+        "destination_id": "chd_b61207abce431abe81a5e51d",
+        "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+        "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "preview": {
+          "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+        },
+        "size": 286,
+        "title": "Atlas send ledger \u2014 update r1 (2026-09-29)"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"badge\": \"cloud\", \"channel\": \"github\", \"destination_id\": \"chd_b61207abce431abe81a5e51d\", \"document_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"size\": 286, \"title\": \"Atlas send ledger \\u2014 update r1 (2026-09-29)\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001,
+      "captured": {
+        "name": "digest",
+        "path": "payload_digest",
+        "value": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. Every id is captured from this run's own producer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jqw2t81h",
+    "project_id": "proj-9a4e63472344",
+    "update_id": "pupd_12278b46e6914219aae9205a485050ff",
+    "gh_id": "chd_b61207abce431abe81a5e51d",
+    "digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+    "send_op": "op_0c00f8e47c2c40788d38f475be2aa31f"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "channel.send",
+    "args": {
+      "update_id": "pupd_12278b46e6914219aae9205a485050ff",
+      "destination_id": "chd_b61207abce431abe81a5e51d",
+      "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "command_id": "atlas-p10-05-failed"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "method": "tools/call",
+      "params": {
+        "name": "channel.send",
+        "arguments": {
+          "update_id": "pupd_12278b46e6914219aae9205a485050ff",
+          "destination_id": "chd_b61207abce431abe81a5e51d",
+          "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "command_id": "atlas-p10-05-failed"
+        }
+      }
+    },
+    "response": {
+      "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+      "outcome": "failed",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790717586.594962,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+        "outcome": "github_target_not_found",
+        "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+        "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+        "state": "failed",
+        "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+      },
+      "send": {
+        "account": {
+          "host": "github.com",
+          "login": "octo-owner"
+        },
+        "badge": "cloud",
+        "channel": "github",
+        "created_at": "2026-09-29T21:33:06.592668+00:00",
+        "destination_id": "chd_b61207abce431abe81a5e51d",
+        "destination_name": "Issue42",
+        "dispatch_seq": 1,
+        "dispatch_started_at": "2026-09-29T21:33:06.592668+00:00",
+        "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+        "file_path": null,
+        "id": "chs_02cf0940b3a6ae79d2bb0dcb",
+        "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "prepare_operation_id": null,
+        "prepared_by": {
+          "identity": "owner-session",
+          "kind": "owner"
+        },
+        "preview": {
+          "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+        },
+        "proof": {
+          "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+        },
+        "reason": "github_target_not_found",
+        "send_operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+        "settled_at": "2026-09-29T21:33:06+00:00",
+        "size": 286,
+        "state": "failed",
+        "target": {
+          "host": "github.com",
+          "kind": "issue",
+          "number": 42,
+          "repo": "acme/payments"
+        },
+        "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+      }
+    },
+    "domain_response": {
+      "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+      "outcome": "failed",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790717586.594962,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+        "outcome": "github_target_not_found",
+        "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+        "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+        "state": "failed",
+        "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+      },
+      "send": {
+        "account": {
+          "host": "github.com",
+          "login": "octo-owner"
+        },
+        "badge": "cloud",
+        "channel": "github",
+        "created_at": "2026-09-29T21:33:06.592668+00:00",
+        "destination_id": "chd_b61207abce431abe81a5e51d",
+        "destination_name": "Issue42",
+        "dispatch_seq": 1,
+        "dispatch_started_at": "2026-09-29T21:33:06.592668+00:00",
+        "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+        "file_path": null,
+        "id": "chs_02cf0940b3a6ae79d2bb0dcb",
+        "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "prepare_operation_id": null,
+        "prepared_by": {
+          "identity": "owner-session",
+          "kind": "owner"
+        },
+        "preview": {
+          "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+        },
+        "proof": {
+          "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+        },
+        "reason": "github_target_not_found",
+        "send_operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+        "settled_at": "2026-09-29T21:33:06+00:00",
+        "size": 286,
+        "state": "failed",
+        "target": {
+          "host": "github.com",
+          "kind": "issue",
+          "number": 42,
+          "repo": "acme/payments"
+        },
+        "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+      }
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"failed\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717586.594962, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"github_target_not_found\", \"receipt_id\": \"rcpt_bd92979b5fe747aebc7e1f585673a2fc\", \"result_ref\": \"channel_send:chs_02cf0940b3a6ae79d2bb0dcb\", \"state\": \"failed\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\"}, \"send\": {\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-09-29T21:33:06.592668+00:00\", \"destination_id\": \"chd_b61207abce431abe81a5e51d\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-29T21:33:06.592668+00:00\", \"document_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"file_path\": null, \"id\": \"chs_02cf0940b3a6ae79d2bb0dcb\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"error\": \"GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)\"}, \"reason\": \"github_target_not_found\", \"send_operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"settled_at\": \"2026-09-29T21:33:06+00:00\", \"size\": 286, \"state\": \"failed\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.005,
+    "captured": {
+      "name": "send_op",
+      "path": "operation_id",
+      "value": "op_0c00f8e47c2c40788d38f475be2aa31f"
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": "54113c67a83f1bb1df34512c926d4eeea8c8d245e2f71968c748a4057e288a2a",
+      "after": "c9a2276b3d99a3c8f126b8c6ed034f252c83cbd3b96f45bcc2bf8affb6ed6ed2"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": null,
+          "skipped": "unresolved placeholder; not sent"
+        },
+        {
+          "kind": "op",
+          "name": "project.list_updates",
+          "args": {
+            "project_id": "proj-9a4e63472344"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "method": "tools/call",
+            "params": {
+              "name": "project.list_updates",
+              "arguments": {
+                "project_id": "proj-9a4e63472344"
+              }
+            }
+          },
+          "response": {
+            "updates": [
+              {
+                "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+                "claims_json": "[]",
+                "created_at": "2026-09-29T21:33:06+00:00",
+                "deliveries": [],
+                "draft_revision": 1,
+                "fallback_reason": null,
+                "fallback_receipt": null,
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "id": "pupd_12278b46e6914219aae9205a485050ff",
+                "lifecycle": "published",
+                "project_id": "proj-9a4e63472344",
+                "project_revision": 1,
+                "published_at": "2026-09-29T21:33:06+00:00",
+                "review_id": null,
+                "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+                "updated_at": "2026-09-29T21:33:06+00:00"
+              }
+            ]
+          },
+          "domain_response": {
+            "updates": [
+              {
+                "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+                "claims_json": "[]",
+                "created_at": "2026-09-29T21:33:06+00:00",
+                "deliveries": [],
+                "draft_revision": 1,
+                "fallback_reason": null,
+                "fallback_receipt": null,
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "id": "pupd_12278b46e6914219aae9205a485050ff",
+                "lifecycle": "published",
+                "project_id": "proj-9a4e63472344",
+                "project_revision": 1,
+                "published_at": "2026-09-29T21:33:06+00:00",
+                "review_id": null,
+                "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+                "updated_at": "2026-09-29T21:33:06+00:00"
+              }
+            ]
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"updates\": [{\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[]\", \"created_at\": \"2026-09-29T21:33:06+00:00\", \"deliveries\": [], \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_12278b46e6914219aae9205a485050ff\", \"lifecycle\": \"published\", \"project_id\": \"proj-9a4e63472344\", \"project_revision\": 1, \"published_at\": \"2026-09-29T21:33:06+00:00\", \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-09-29T21:33:06+00:00\"}]}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 13,
+            "method": "tools/call",
+            "params": {
+              "name": "kernel.receipt",
+              "arguments": {
+                "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f"
+              }
+            }
+          },
+          "response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-project-writer",
+                  "correlation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                  "created_at": 1790717586.591573,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40",
+                  "idempotency_key": "channel.send:cmd:atlas-p10-05-failed",
+                  "name": "channel.send",
+                  "native_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                  "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                  "revision": 5,
+                  "state": "failed",
+                  "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                  "updated_at": 1790717586.594947,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40",
+                    "execution_expires_at": 1790721186.5920372,
+                    "expires_at": 1790717616.5920372,
+                    "issued_at": 1790717586.5920372,
+                    "native_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                    "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-project-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "64ee832fa23a8a3fd6afa510d042475f2d09792b7900ecd9a2c22893958993a3",
+                    "target_binding": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                    "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                    "uses": 1,
+                    "warrant_id": "war_dc738989d5464a3e992e5daed9b23174"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790717586.594962,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                  "outcome": "github_target_not_found",
+                  "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+                  "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+                  "state": "failed",
+                  "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+                },
+                "ref": "operation:op_0c00f8e47c2c40788d38f475be2aa31f"
+              }
+            ],
+            "view": "receipt"
+          },
+          "domain_response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-project-writer",
+                  "correlation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                  "created_at": 1790717586.591573,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40",
+                  "idempotency_key": "channel.send:cmd:atlas-p10-05-failed",
+                  "name": "channel.send",
+                  "native_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                  "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                  "revision": 5,
+                  "state": "failed",
+                  "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                  "updated_at": 1790717586.594947,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40",
+                    "execution_expires_at": 1790721186.5920372,
+                    "expires_at": 1790717616.5920372,
+                    "issued_at": 1790717586.5920372,
+                    "native_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                    "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-project-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "64ee832fa23a8a3fd6afa510d042475f2d09792b7900ecd9a2c22893958993a3",
+                    "target_binding": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                    "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                    "uses": 1,
+                    "warrant_id": "war_dc738989d5464a3e992e5daed9b23174"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790717586.594962,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                  "outcome": "github_target_not_found",
+                  "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+                  "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+                  "state": "failed",
+                  "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+                },
+                "ref": "operation:op_0c00f8e47c2c40788d38f475be2aa31f"
+              }
+            ],
+            "view": "receipt"
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 13,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-project-writer\", \"correlation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"created_at\": 1790717586.591573, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40\", \"idempotency_key\": \"channel.send:cmd:atlas-p10-05-failed\", \"name\": \"channel.send\", \"native_id\": \"9e9e8534-8fe6-59d5-95c4-5c23d866aecb\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"9e9e8534-8fe6-59d5-95c4-5c23d866aecb\", \"revision\": 5, \"state\": \"failed\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"updated_at\": 1790717586.594947, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40\", \"execution_expires_at\": 1790721186.5920372, \"expires_at\": 1790717616.5920372, \"issued_at\": 1790717586.5920372, \"native_id\": \"9e9e8534-8fe6-59d5-95c4-5c23d866aecb\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"64ee832fa23a8a3fd6afa510d042475f2d09792b7900ecd9a2c22893958993a3\", \"target_binding\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"uses\": 1, \"warrant_id\": \"war_dc738989d5464a3e992e5daed9b23174\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717586.594962, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"github_target_not_found\", \"receipt_id\": \"rcpt_bd92979b5fe747aebc7e1f585673a2fc\", \"result_ref\": \"channel_send:chs_02cf0940b3a6ae79d2bb0dcb\", \"state\": \"failed\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\"}, \"ref\": \"operation:op_0c00f8e47c2c40788d38f475be2aa31f\"}], \"view\": \"receipt\"}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        },
+        {
+          "kind": "op",
+          "name": "project.list_updates",
+          "args": {
+            "project_id": "proj-9a4e63472344"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 14,
+            "method": "tools/call",
+            "params": {
+              "name": "project.list_updates",
+              "arguments": {
+                "project_id": "proj-9a4e63472344"
+              }
+            }
+          },
+          "response": {
+            "updates": [
+              {
+                "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+                "claims_json": "[]",
+                "created_at": "2026-09-29T21:33:06+00:00",
+                "deliveries": [],
+                "draft_revision": 1,
+                "fallback_reason": null,
+                "fallback_receipt": null,
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "id": "pupd_12278b46e6914219aae9205a485050ff",
+                "lifecycle": "published",
+                "project_id": "proj-9a4e63472344",
+                "project_revision": 1,
+                "published_at": "2026-09-29T21:33:06+00:00",
+                "review_id": null,
+                "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+                "updated_at": "2026-09-29T21:33:06+00:00"
+              }
+            ]
+          },
+          "domain_response": {
+            "updates": [
+              {
+                "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+                "claims_json": "[]",
+                "created_at": "2026-09-29T21:33:06+00:00",
+                "deliveries": [],
+                "draft_revision": 1,
+                "fallback_reason": null,
+                "fallback_receipt": null,
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "id": "pupd_12278b46e6914219aae9205a485050ff",
+                "lifecycle": "published",
+                "project_id": "proj-9a4e63472344",
+                "project_revision": 1,
+                "published_at": "2026-09-29T21:33:06+00:00",
+                "review_id": null,
+                "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+                "updated_at": "2026-09-29T21:33:06+00:00"
+              }
+            ]
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 14,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"updates\": [{\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[]\", \"created_at\": \"2026-09-29T21:33:06+00:00\", \"deliveries\": [], \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_12278b46e6914219aae9205a485050ff\", \"lifecycle\": \"published\", \"project_id\": \"proj-9a4e63472344\", \"project_revision\": 1, \"published_at\": \"2026-09-29T21:33:06+00:00\", \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-09-29T21:33:06+00:00\"}]}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:60616",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "channel.sends",
+      "args": {
+        "update_id": "pupd_12278b46e6914219aae9205a485050ff"
+      }
+    },
+    "op": {
+      "name": "channel.sends",
+      "args": {
+        "update_id": "pupd_12278b46e6914219aae9205a485050ff"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.sends",
+          "arguments": {
+            "update_id": "pupd_12278b46e6914219aae9205a485050ff"
+          }
+        }
+      },
+      "response": {
+        "sends": []
+      },
+      "domain_response": {
+        "sends": []
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"sends\": []}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "54113c67a83f1bb1df34512c926d4eeea8c8d245e2f71968c748a4057e288a2a",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": null,
+        "skipped": "unresolved placeholder; not sent"
+      },
+      {
+        "kind": "op",
+        "name": "project.list_updates",
+        "args": {
+          "project_id": "proj-9a4e63472344"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "project.list_updates",
+            "arguments": {
+              "project_id": "proj-9a4e63472344"
+            }
+          }
+        },
+        "response": {
+          "updates": [
+            {
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "created_at": "2026-09-29T21:33:06+00:00",
+              "deliveries": [],
+              "draft_revision": 1,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "id": "pupd_12278b46e6914219aae9205a485050ff",
+              "lifecycle": "published",
+              "project_id": "proj-9a4e63472344",
+              "project_revision": 1,
+              "published_at": "2026-09-29T21:33:06+00:00",
+              "review_id": null,
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "updated_at": "2026-09-29T21:33:06+00:00"
+            }
+          ]
+        },
+        "domain_response": {
+          "updates": [
+            {
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "created_at": "2026-09-29T21:33:06+00:00",
+              "deliveries": [],
+              "draft_revision": 1,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "id": "pupd_12278b46e6914219aae9205a485050ff",
+              "lifecycle": "published",
+              "project_id": "proj-9a4e63472344",
+              "project_revision": 1,
+              "published_at": "2026-09-29T21:33:06+00:00",
+              "review_id": null,
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "updated_at": "2026-09-29T21:33:06+00:00"
+            }
+          ]
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"updates\": [{\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[]\", \"created_at\": \"2026-09-29T21:33:06+00:00\", \"deliveries\": [], \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_12278b46e6914219aae9205a485050ff\", \"lifecycle\": \"published\", \"project_id\": \"proj-9a4e63472344\", \"project_revision\": 1, \"published_at\": \"2026-09-29T21:33:06+00:00\", \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-09-29T21:33:06+00:00\"}]}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 57029,
+        "at": "2026-09-29T21:33:06.584338+00:00",
+        "answer": 0,
+        "hold": false
+      }
+    ],
+    "at_utc": "2026-09-29T21:33:06.590268+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:60616",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "channel.sends",
+      "args": {
+        "update_id": "pupd_12278b46e6914219aae9205a485050ff"
+      }
+    },
+    "op": {
+      "name": "channel.sends",
+      "args": {
+        "update_id": "pupd_12278b46e6914219aae9205a485050ff"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 12,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.sends",
+          "arguments": {
+            "update_id": "pupd_12278b46e6914219aae9205a485050ff"
+          }
+        }
+      },
+      "response": {
+        "sends": [
+          {
+            "account": {
+              "host": "github.com",
+              "login": "octo-owner"
+            },
+            "badge": "cloud",
+            "channel": "github",
+            "created_at": "2026-09-29T21:33:06.592668+00:00",
+            "destination_id": "chd_b61207abce431abe81a5e51d",
+            "destination_name": "Issue42",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-29T21:33:06.592668+00:00",
+            "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+            "file_path": null,
+            "id": "chs_02cf0940b3a6ae79d2bb0dcb",
+            "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "prepare_operation_id": null,
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+            },
+            "proof": {
+              "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+            },
+            "reason": "github_target_not_found",
+            "send_operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+            "settled_at": "2026-09-29T21:33:06+00:00",
+            "size": 286,
+            "state": "failed",
+            "target": {
+              "host": "github.com",
+              "kind": "issue",
+              "number": 42,
+              "repo": "acme/payments"
+            },
+            "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+          }
+        ]
+      },
+      "domain_response": {
+        "sends": [
+          {
+            "account": {
+              "host": "github.com",
+              "login": "octo-owner"
+            },
+            "badge": "cloud",
+            "channel": "github",
+            "created_at": "2026-09-29T21:33:06.592668+00:00",
+            "destination_id": "chd_b61207abce431abe81a5e51d",
+            "destination_name": "Issue42",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-29T21:33:06.592668+00:00",
+            "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+            "file_path": null,
+            "id": "chs_02cf0940b3a6ae79d2bb0dcb",
+            "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "prepare_operation_id": null,
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+            },
+            "proof": {
+              "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+            },
+            "reason": "github_target_not_found",
+            "send_operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+            "settled_at": "2026-09-29T21:33:06+00:00",
+            "size": 286,
+            "state": "failed",
+            "target": {
+              "host": "github.com",
+              "kind": "issue",
+              "number": 42,
+              "repo": "acme/payments"
+            },
+            "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+          }
+        ]
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 12,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"sends\": [{\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-09-29T21:33:06.592668+00:00\", \"destination_id\": \"chd_b61207abce431abe81a5e51d\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-29T21:33:06.592668+00:00\", \"document_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"file_path\": null, \"id\": \"chs_02cf0940b3a6ae79d2bb0dcb\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"error\": \"GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)\"}, \"reason\": \"github_target_not_found\", \"send_operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"settled_at\": \"2026-09-29T21:33:06+00:00\", \"size\": 286, \"state\": \"failed\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}]}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "c9a2276b3d99a3c8f126b8c6ed034f252c83cbd3b96f45bcc2bf8affb6ed6ed2",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 13,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                "created_at": 1790717586.591573,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40",
+                "idempotency_key": "channel.send:cmd:atlas-p10-05-failed",
+                "name": "channel.send",
+                "native_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                "revision": 5,
+                "state": "failed",
+                "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                "updated_at": 1790717586.594947,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40",
+                  "execution_expires_at": 1790721186.5920372,
+                  "expires_at": 1790717616.5920372,
+                  "issued_at": 1790717586.5920372,
+                  "native_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                  "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "64ee832fa23a8a3fd6afa510d042475f2d09792b7900ecd9a2c22893958993a3",
+                  "target_binding": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                  "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                  "uses": 1,
+                  "warrant_id": "war_dc738989d5464a3e992e5daed9b23174"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790717586.594962,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                "outcome": "github_target_not_found",
+                "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+                "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+                "state": "failed",
+                "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+              },
+              "ref": "operation:op_0c00f8e47c2c40788d38f475be2aa31f"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                "created_at": 1790717586.591573,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40",
+                "idempotency_key": "channel.send:cmd:atlas-p10-05-failed",
+                "name": "channel.send",
+                "native_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                "revision": 5,
+                "state": "failed",
+                "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                "updated_at": 1790717586.594947,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40",
+                  "execution_expires_at": 1790721186.5920372,
+                  "expires_at": 1790717616.5920372,
+                  "issued_at": 1790717586.5920372,
+                  "native_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                  "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "64ee832fa23a8a3fd6afa510d042475f2d09792b7900ecd9a2c22893958993a3",
+                  "target_binding": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                  "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                  "uses": 1,
+                  "warrant_id": "war_dc738989d5464a3e992e5daed9b23174"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790717586.594962,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                "outcome": "github_target_not_found",
+                "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+                "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+                "state": "failed",
+                "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+              },
+              "ref": "operation:op_0c00f8e47c2c40788d38f475be2aa31f"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 13,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-project-writer\", \"correlation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"created_at\": 1790717586.591573, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40\", \"idempotency_key\": \"channel.send:cmd:atlas-p10-05-failed\", \"name\": \"channel.send\", \"native_id\": \"9e9e8534-8fe6-59d5-95c4-5c23d866aecb\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"9e9e8534-8fe6-59d5-95c4-5c23d866aecb\", \"revision\": 5, \"state\": \"failed\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"updated_at\": 1790717586.594947, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40\", \"execution_expires_at\": 1790721186.5920372, \"expires_at\": 1790717616.5920372, \"issued_at\": 1790717586.5920372, \"native_id\": \"9e9e8534-8fe6-59d5-95c4-5c23d866aecb\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"64ee832fa23a8a3fd6afa510d042475f2d09792b7900ecd9a2c22893958993a3\", \"target_binding\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"uses\": 1, \"warrant_id\": \"war_dc738989d5464a3e992e5daed9b23174\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717586.594962, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"github_target_not_found\", \"receipt_id\": \"rcpt_bd92979b5fe747aebc7e1f585673a2fc\", \"result_ref\": \"channel_send:chs_02cf0940b3a6ae79d2bb0dcb\", \"state\": \"failed\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\"}, \"ref\": \"operation:op_0c00f8e47c2c40788d38f475be2aa31f\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      },
+      {
+        "kind": "op",
+        "name": "project.list_updates",
+        "args": {
+          "project_id": "proj-9a4e63472344"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 14,
+          "method": "tools/call",
+          "params": {
+            "name": "project.list_updates",
+            "arguments": {
+              "project_id": "proj-9a4e63472344"
+            }
+          }
+        },
+        "response": {
+          "updates": [
+            {
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "created_at": "2026-09-29T21:33:06+00:00",
+              "deliveries": [],
+              "draft_revision": 1,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "id": "pupd_12278b46e6914219aae9205a485050ff",
+              "lifecycle": "published",
+              "project_id": "proj-9a4e63472344",
+              "project_revision": 1,
+              "published_at": "2026-09-29T21:33:06+00:00",
+              "review_id": null,
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "updated_at": "2026-09-29T21:33:06+00:00"
+            }
+          ]
+        },
+        "domain_response": {
+          "updates": [
+            {
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "created_at": "2026-09-29T21:33:06+00:00",
+              "deliveries": [],
+              "draft_revision": 1,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "id": "pupd_12278b46e6914219aae9205a485050ff",
+              "lifecycle": "published",
+              "project_id": "proj-9a4e63472344",
+              "project_revision": 1,
+              "published_at": "2026-09-29T21:33:06+00:00",
+              "review_id": null,
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "updated_at": "2026-09-29T21:33:06+00:00"
+            }
+          ]
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 14,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"updates\": [{\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[]\", \"created_at\": \"2026-09-29T21:33:06+00:00\", \"deliveries\": [], \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_12278b46e6914219aae9205a485050ff\", \"lifecycle\": \"published\", \"project_id\": \"proj-9a4e63472344\", \"project_revision\": 1, \"published_at\": \"2026-09-29T21:33:06+00:00\", \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-09-29T21:33:06+00:00\"}]}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 57029,
+        "at": "2026-09-29T21:33:06.584338+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 57029,
+        "at": "2026-09-29T21:33:06.592567+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "issue",
+          "comment",
+          "42",
+          "--repo",
+          "acme/payments",
+          "--body-file",
+          "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/holdspeak-send-7qtvklzb/payload.md"
+        ],
+        "body_sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "pid": 57029,
+        "at": "2026-09-29T21:33:06.594346+00:00",
+        "answer": 1,
+        "hold": false
+      }
+    ],
+    "at_utc": "2026-09-29T21:33:07.513749+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "channel.send",
+      "body_sha256": "30c1b9c71b87354f713b296f6fe0469cf56d6f61bc186f6d4a02b6b6557fe5d1",
+      "body": {
+        "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+        "outcome": "failed",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717586.594962,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+          "outcome": "github_target_not_found",
+          "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+          "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+          "state": "failed",
+          "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+        },
+        "send": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "created_at": "2026-09-29T21:33:06.592668+00:00",
+          "destination_id": "chd_b61207abce431abe81a5e51d",
+          "destination_name": "Issue42",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-29T21:33:06.592668+00:00",
+          "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+          "file_path": null,
+          "id": "chs_02cf0940b3a6ae79d2bb0dcb",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": null,
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+          },
+          "reason": "github_target_not_found",
+          "send_operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+          "settled_at": "2026-09-29T21:33:06+00:00",
+          "size": 286,
+          "state": "failed",
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"failed\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717586.594962, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"github_target_not_found\", \"receipt_id\": \"rcpt_bd92979b5fe747aebc7e1f585673a2fc\", \"result_ref\": \"channel_send:chs_02cf0940b3a6ae79d2bb0dcb\", \"state\": \"failed\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\"}, \"send\": {\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-09-29T21:33:06.592668+00:00\", \"destination_id\": \"chd_b61207abce431abe81a5e51d\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-29T21:33:06.592668+00:00\", \"document_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"file_path\": null, \"id\": \"chs_02cf0940b3a6ae79d2bb0dcb\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"error\": \"GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)\"}, \"reason\": \"github_target_not_found\", \"send_operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"settled_at\": \"2026-09-29T21:33:06+00:00\", \"size\": 286, \"state\": \"failed\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.send",
+      "args": {
+        "update_id": "pupd_12278b46e6914219aae9205a485050ff",
+        "destination_id": "chd_b61207abce431abe81a5e51d",
+        "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "command_id": "atlas-p10-05-failed"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.send",
+          "arguments": {
+            "update_id": "pupd_12278b46e6914219aae9205a485050ff",
+            "destination_id": "chd_b61207abce431abe81a5e51d",
+            "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "command_id": "atlas-p10-05-failed"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+        "outcome": "failed",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717586.594962,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+          "outcome": "github_target_not_found",
+          "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+          "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+          "state": "failed",
+          "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+        },
+        "send": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "created_at": "2026-09-29T21:33:06.592668+00:00",
+          "destination_id": "chd_b61207abce431abe81a5e51d",
+          "destination_name": "Issue42",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-29T21:33:06.592668+00:00",
+          "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+          "file_path": null,
+          "id": "chs_02cf0940b3a6ae79d2bb0dcb",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": null,
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+          },
+          "reason": "github_target_not_found",
+          "send_operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+          "settled_at": "2026-09-29T21:33:06+00:00",
+          "size": 286,
+          "state": "failed",
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+        "outcome": "failed",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717586.594962,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+          "outcome": "github_target_not_found",
+          "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+          "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+          "state": "failed",
+          "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+        },
+        "send": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "created_at": "2026-09-29T21:33:06.592668+00:00",
+          "destination_id": "chd_b61207abce431abe81a5e51d",
+          "destination_name": "Issue42",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-29T21:33:06.592668+00:00",
+          "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+          "file_path": null,
+          "id": "chs_02cf0940b3a6ae79d2bb0dcb",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": null,
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+          },
+          "reason": "github_target_not_found",
+          "send_operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+          "settled_at": "2026-09-29T21:33:06+00:00",
+          "size": 286,
+          "state": "failed",
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"failed\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717586.594962, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"github_target_not_found\", \"receipt_id\": \"rcpt_bd92979b5fe747aebc7e1f585673a2fc\", \"result_ref\": \"channel_send:chs_02cf0940b3a6ae79d2bb0dcb\", \"state\": \"failed\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\"}, \"send\": {\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-09-29T21:33:06.592668+00:00\", \"destination_id\": \"chd_b61207abce431abe81a5e51d\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-29T21:33:06.592668+00:00\", \"document_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"file_path\": null, \"id\": \"chs_02cf0940b3a6ae79d2bb0dcb\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"error\": \"GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)\"}, \"reason\": \"github_target_not_found\", \"send_operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"settled_at\": \"2026-09-29T21:33:06+00:00\", \"size\": 286, \"state\": \"failed\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.005,
+      "captured": {
+        "name": "send_op",
+        "path": "operation_id",
+        "value": "op_0c00f8e47c2c40788d38f475be2aa31f"
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:60616",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "channel.sends",
+      "args": {
+        "update_id": "pupd_12278b46e6914219aae9205a485050ff"
+      }
+    },
+    "op": {
+      "name": "channel.sends",
+      "args": {
+        "update_id": "pupd_12278b46e6914219aae9205a485050ff"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.sends",
+          "arguments": {
+            "update_id": "pupd_12278b46e6914219aae9205a485050ff"
+          }
+        }
+      },
+      "response": {
+        "sends": [
+          {
+            "account": {
+              "host": "github.com",
+              "login": "octo-owner"
+            },
+            "badge": "cloud",
+            "channel": "github",
+            "created_at": "2026-09-29T21:33:06.592668+00:00",
+            "destination_id": "chd_b61207abce431abe81a5e51d",
+            "destination_name": "Issue42",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-29T21:33:06.592668+00:00",
+            "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+            "file_path": null,
+            "id": "chs_02cf0940b3a6ae79d2bb0dcb",
+            "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "prepare_operation_id": null,
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+            },
+            "proof": {
+              "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+            },
+            "reason": "github_target_not_found",
+            "send_operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+            "settled_at": "2026-09-29T21:33:06+00:00",
+            "size": 286,
+            "state": "failed",
+            "target": {
+              "host": "github.com",
+              "kind": "issue",
+              "number": 42,
+              "repo": "acme/payments"
+            },
+            "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+          }
+        ]
+      },
+      "domain_response": {
+        "sends": [
+          {
+            "account": {
+              "host": "github.com",
+              "login": "octo-owner"
+            },
+            "badge": "cloud",
+            "channel": "github",
+            "created_at": "2026-09-29T21:33:06.592668+00:00",
+            "destination_id": "chd_b61207abce431abe81a5e51d",
+            "destination_name": "Issue42",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-29T21:33:06.592668+00:00",
+            "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+            "file_path": null,
+            "id": "chs_02cf0940b3a6ae79d2bb0dcb",
+            "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "prepare_operation_id": null,
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+            },
+            "proof": {
+              "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+            },
+            "reason": "github_target_not_found",
+            "send_operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+            "settled_at": "2026-09-29T21:33:06+00:00",
+            "size": 286,
+            "state": "failed",
+            "target": {
+              "host": "github.com",
+              "kind": "issue",
+              "number": 42,
+              "repo": "acme/payments"
+            },
+            "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+          }
+        ]
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"sends\": [{\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-09-29T21:33:06.592668+00:00\", \"destination_id\": \"chd_b61207abce431abe81a5e51d\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-29T21:33:06.592668+00:00\", \"document_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"file_path\": null, \"id\": \"chs_02cf0940b3a6ae79d2bb0dcb\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"error\": \"GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)\"}, \"reason\": \"github_target_not_found\", \"send_operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"settled_at\": \"2026-09-29T21:33:06+00:00\", \"size\": 286, \"state\": \"failed\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}]}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "c9a2276b3d99a3c8f126b8c6ed034f252c83cbd3b96f45bcc2bf8affb6ed6ed2",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                "created_at": 1790717586.591573,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40",
+                "idempotency_key": "channel.send:cmd:atlas-p10-05-failed",
+                "name": "channel.send",
+                "native_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                "revision": 5,
+                "state": "failed",
+                "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                "updated_at": 1790717586.594947,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40",
+                  "execution_expires_at": 1790721186.5920372,
+                  "expires_at": 1790717616.5920372,
+                  "issued_at": 1790717586.5920372,
+                  "native_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                  "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "64ee832fa23a8a3fd6afa510d042475f2d09792b7900ecd9a2c22893958993a3",
+                  "target_binding": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                  "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                  "uses": 1,
+                  "warrant_id": "war_dc738989d5464a3e992e5daed9b23174"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790717586.594962,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                "outcome": "github_target_not_found",
+                "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+                "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+                "state": "failed",
+                "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+              },
+              "ref": "operation:op_0c00f8e47c2c40788d38f475be2aa31f"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                "created_at": 1790717586.591573,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40",
+                "idempotency_key": "channel.send:cmd:atlas-p10-05-failed",
+                "name": "channel.send",
+                "native_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                "revision": 5,
+                "state": "failed",
+                "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                "updated_at": 1790717586.594947,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40",
+                  "execution_expires_at": 1790721186.5920372,
+                  "expires_at": 1790717616.5920372,
+                  "issued_at": 1790717586.5920372,
+                  "native_id": "9e9e8534-8fe6-59d5-95c4-5c23d866aecb",
+                  "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "64ee832fa23a8a3fd6afa510d042475f2d09792b7900ecd9a2c22893958993a3",
+                  "target_binding": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                  "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+                  "uses": 1,
+                  "warrant_id": "war_dc738989d5464a3e992e5daed9b23174"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790717586.594962,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+                "outcome": "github_target_not_found",
+                "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+                "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+                "state": "failed",
+                "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+              },
+              "ref": "operation:op_0c00f8e47c2c40788d38f475be2aa31f"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-project-writer\", \"correlation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"created_at\": 1790717586.591573, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40\", \"idempotency_key\": \"channel.send:cmd:atlas-p10-05-failed\", \"name\": \"channel.send\", \"native_id\": \"9e9e8534-8fe6-59d5-95c4-5c23d866aecb\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"9e9e8534-8fe6-59d5-95c4-5c23d866aecb\", \"revision\": 5, \"state\": \"failed\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"updated_at\": 1790717586.594947, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:cb40861ae356c39034c342e27ba2e63b93cacc4d0c9399261d3296e7b9d80a40\", \"execution_expires_at\": 1790721186.5920372, \"expires_at\": 1790717616.5920372, \"issued_at\": 1790717586.5920372, \"native_id\": \"9e9e8534-8fe6-59d5-95c4-5c23d866aecb\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"64ee832fa23a8a3fd6afa510d042475f2d09792b7900ecd9a2c22893958993a3\", \"target_binding\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"uses\": 1, \"warrant_id\": \"war_dc738989d5464a3e992e5daed9b23174\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717586.594962, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"github_target_not_found\", \"receipt_id\": \"rcpt_bd92979b5fe747aebc7e1f585673a2fc\", \"result_ref\": \"channel_send:chs_02cf0940b3a6ae79d2bb0dcb\", \"state\": \"failed\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\"}, \"ref\": \"operation:op_0c00f8e47c2c40788d38f475be2aa31f\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      },
+      {
+        "kind": "op",
+        "name": "project.list_updates",
+        "args": {
+          "project_id": "proj-9a4e63472344"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 11,
+          "method": "tools/call",
+          "params": {
+            "name": "project.list_updates",
+            "arguments": {
+              "project_id": "proj-9a4e63472344"
+            }
+          }
+        },
+        "response": {
+          "updates": [
+            {
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "created_at": "2026-09-29T21:33:06+00:00",
+              "deliveries": [],
+              "draft_revision": 1,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "id": "pupd_12278b46e6914219aae9205a485050ff",
+              "lifecycle": "published",
+              "project_id": "proj-9a4e63472344",
+              "project_revision": 1,
+              "published_at": "2026-09-29T21:33:06+00:00",
+              "review_id": null,
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "updated_at": "2026-09-29T21:33:06+00:00"
+            }
+          ]
+        },
+        "domain_response": {
+          "updates": [
+            {
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "created_at": "2026-09-29T21:33:06+00:00",
+              "deliveries": [],
+              "draft_revision": 1,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "id": "pupd_12278b46e6914219aae9205a485050ff",
+              "lifecycle": "published",
+              "project_id": "proj-9a4e63472344",
+              "project_revision": 1,
+              "published_at": "2026-09-29T21:33:06+00:00",
+              "review_id": null,
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "updated_at": "2026-09-29T21:33:06+00:00"
+            }
+          ]
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 11,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"updates\": [{\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[]\", \"created_at\": \"2026-09-29T21:33:06+00:00\", \"deliveries\": [], \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_12278b46e6914219aae9205a485050ff\", \"lifecycle\": \"published\", \"project_id\": \"proj-9a4e63472344\", \"project_revision\": 1, \"published_at\": \"2026-09-29T21:33:06+00:00\", \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-09-29T21:33:06+00:00\"}]}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 57029,
+        "at": "2026-09-29T21:33:06.584338+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 57029,
+        "at": "2026-09-29T21:33:06.592567+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "issue",
+          "comment",
+          "42",
+          "--repo",
+          "acme/payments",
+          "--body-file",
+          "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/holdspeak-send-7qtvklzb/payload.md"
+        ],
+        "body_sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "pid": 57029,
+        "at": "2026-09-29T21:33:06.594346+00:00",
+        "answer": 1,
+        "hold": false
+      }
+    ],
+    "at_utc": "2026-09-29T21:33:07.510394+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "channel.send",
+      "body_sha256": "30c1b9c71b87354f713b296f6fe0469cf56d6f61bc186f6d4a02b6b6557fe5d1",
+      "body": {
+        "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+        "outcome": "failed",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717586.594962,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+          "outcome": "github_target_not_found",
+          "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+          "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+          "state": "failed",
+          "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+        },
+        "send": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "created_at": "2026-09-29T21:33:06.592668+00:00",
+          "destination_id": "chd_b61207abce431abe81a5e51d",
+          "destination_name": "Issue42",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-29T21:33:06.592668+00:00",
+          "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+          "file_path": null,
+          "id": "chs_02cf0940b3a6ae79d2bb0dcb",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": null,
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+          },
+          "reason": "github_target_not_found",
+          "send_operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+          "settled_at": "2026-09-29T21:33:06+00:00",
+          "size": 286,
+          "state": "failed",
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"failed\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717586.594962, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"github_target_not_found\", \"receipt_id\": \"rcpt_bd92979b5fe747aebc7e1f585673a2fc\", \"result_ref\": \"channel_send:chs_02cf0940b3a6ae79d2bb0dcb\", \"state\": \"failed\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\"}, \"send\": {\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-09-29T21:33:06.592668+00:00\", \"destination_id\": \"chd_b61207abce431abe81a5e51d\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-29T21:33:06.592668+00:00\", \"document_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"file_path\": null, \"id\": \"chs_02cf0940b3a6ae79d2bb0dcb\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"error\": \"GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)\"}, \"reason\": \"github_target_not_found\", \"send_operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"settled_at\": \"2026-09-29T21:33:06+00:00\", \"size\": 286, \"state\": \"failed\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.send",
+      "args": {
+        "update_id": "pupd_12278b46e6914219aae9205a485050ff",
+        "destination_id": "chd_b61207abce431abe81a5e51d",
+        "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "command_id": "atlas-p10-05-failed"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.send",
+          "arguments": {
+            "update_id": "pupd_12278b46e6914219aae9205a485050ff",
+            "destination_id": "chd_b61207abce431abe81a5e51d",
+            "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "command_id": "atlas-p10-05-failed"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+        "outcome": "failed",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717586.594962,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+          "outcome": "github_target_not_found",
+          "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+          "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+          "state": "failed",
+          "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+        },
+        "send": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "created_at": "2026-09-29T21:33:06.592668+00:00",
+          "destination_id": "chd_b61207abce431abe81a5e51d",
+          "destination_name": "Issue42",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-29T21:33:06.592668+00:00",
+          "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+          "file_path": null,
+          "id": "chs_02cf0940b3a6ae79d2bb0dcb",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": null,
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+          },
+          "reason": "github_target_not_found",
+          "send_operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+          "settled_at": "2026-09-29T21:33:06+00:00",
+          "size": 286,
+          "state": "failed",
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+        "outcome": "failed",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790717586.594962,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+          "outcome": "github_target_not_found",
+          "receipt_id": "rcpt_bd92979b5fe747aebc7e1f585673a2fc",
+          "result_ref": "channel_send:chs_02cf0940b3a6ae79d2bb0dcb",
+          "state": "failed",
+          "target_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff"
+        },
+        "send": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "created_at": "2026-09-29T21:33:06.592668+00:00",
+          "destination_id": "chd_b61207abce431abe81a5e51d",
+          "destination_name": "Issue42",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-29T21:33:06.592668+00:00",
+          "document_ref": "project_update:pupd_12278b46e6914219aae9205a485050ff",
+          "file_path": null,
+          "id": "chs_02cf0940b3a6ae79d2bb0dcb",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": null,
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+          },
+          "reason": "github_target_not_found",
+          "send_operation_id": "op_0c00f8e47c2c40788d38f475be2aa31f",
+          "settled_at": "2026-09-29T21:33:06+00:00",
+          "size": 286,
+          "state": "failed",
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"failed\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790717586.594962, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"outcome\": \"github_target_not_found\", \"receipt_id\": \"rcpt_bd92979b5fe747aebc7e1f585673a2fc\", \"result_ref\": \"channel_send:chs_02cf0940b3a6ae79d2bb0dcb\", \"state\": \"failed\", \"target_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\"}, \"send\": {\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-09-29T21:33:06.592668+00:00\", \"destination_id\": \"chd_b61207abce431abe81a5e51d\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-29T21:33:06.592668+00:00\", \"document_ref\": \"project_update:pupd_12278b46e6914219aae9205a485050ff\", \"file_path\": null, \"id\": \"chs_02cf0940b3a6ae79d2bb0dcb\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"error\": \"GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)\"}, \"reason\": \"github_target_not_found\", \"send_operation_id\": \"op_0c00f8e47c2c40788d38f475be2aa31f\", \"settled_at\": \"2026-09-29T21:33:06+00:00\", \"size\": 286, \"state\": \"failed\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.005,
+      "captured": {
+        "name": "send_op",
+        "path": "operation_id",
+        "value": "op_0c00f8e47c2c40788d38f475be2aa31f"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: op_facts: all 8 facts hold: the trigger outcome holds; observe_at sends.0.state holds; observe_at sends.0.reason holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_kind holds; op read #1 (project.list_updates) updates.0.deliveries holds | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [57029]; 3 call(s) in all), wanted 1",
+    "elapsed_s": 0.92
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: op_facts: all 8 facts hold: the trigger outcome holds; observe_at sends.0.state holds; observe_at sends.0.reason holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_kind holds; op read #1 (project.list_updates) updates.0.deliveries holds | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [57029]; 3 call(s) in all), wanted 1",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 0.923,
+    "first_satisfied_at_s": 0.92,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['send_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: all_of: op_facts: all 8 facts hold: the trigger outcome holds; observe_at sends.0.state holds; observe_at sends.0.reason holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_kind holds; op read #1 (project.list_updates) updates.0.deliveries holds | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [57029]; 3 call(s) in all), wanted 1"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "send_op"
+  ],
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jqw2t81h/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jqw2t81h/.config/holdspeak/config.json",
+    "CLI_RUNNER 0c20c79d00baa056ed99c1cc7fca7816b38a6e7443362a03864f913d478fd269",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDING runner at the CLI channels' process edge (no real gh or acli)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:60616",
+    "CLI_CALL [\"gh\", \"api\", \"user\", \"--hostname\"]",
+    "CLI_CALL [\"gh\", \"api\", \"user\", \"--hostname\"]",
+    "CLI_CALL [\"gh\", \"issue\", \"comment\", \"42\"]"
+  ],
+  "duration_s": 2.741
+}
