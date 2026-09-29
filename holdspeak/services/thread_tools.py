@@ -88,7 +88,7 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "proposal.dismiss":        ("effect_proposal",   False),
     # --- reviewer nudge (HS-173-04) ---
     "steward.nudges":          ("evidence_read",     False),
-    "nudge.send":              ("effect_proposal",   False),
+    # nudge.send is an owner press (OWNER_PRESS_TOOLS; #694 ruling): never here.
     "nudge.dismiss":           ("effect_proposal",   False),
     # --- monday brief ---
     "monday_brief.get":       ("evidence_read",     False),

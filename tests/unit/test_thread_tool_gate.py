@@ -351,7 +351,8 @@ class TestClassificationCensus:
         from holdspeak.services.thread_modes import MODE_SEEDS
 
         assert {"channel.send", "channel.discard", "project.mark_update_delivered",
-                "channel.save_destination", "channel.remove_destination"} <= OWNER_PRESS_TOOLS
+                "channel.save_destination", "channel.remove_destination",
+                "nudge.send"} <= OWNER_PRESS_TOOLS  # nudge.send: Muad'Dib's ruling on #694
         assert "channel.prepare" in TOOL_NAMES  # a model may prepare
         assert not (OWNER_PRESS_TOOLS & TOOL_NAMES)
         assert not (OWNER_PRESS_TOOLS & CHAT_PALETTE)
@@ -370,9 +371,9 @@ class TestClassificationCensus:
 
         # Owner-principal (an agent is refused) but not the owner's press; they
         # were thread tools before #694 and a thread acts as the owner.
-        # nudge.send is egress (a GitHub comment) -- flagged for a ruling.
+        # (nudge.send, a GitHub comment as the owner, was ruled an owner press.)
         offered = {
-            "project.steward.trigger", "nudge.send", "project.watch.inspect",
+            "project.steward.trigger", "project.watch.inspect",
             "project.watch.test", "project.watch.evaluate", "project.watch.set_rules",
             "project.watch.pause", "project.watch.resume", "project.watch.retire",
             "project.add_suggested_source", "connection.recheck",

@@ -3734,7 +3734,7 @@
       ],
       "held": [],
       "owner_only": false,
-      "owner_press": false,
+      "owner_press": true,
       "admission": {
         "rule": "admitted",
         "condition": "A GitHub comment: egress (Q1).",

@@ -240,6 +240,7 @@ NUDGE_SEND = OperationDescriptor(
     exposure=("http:POST /api/nudges/{step_id}/send", "mcp:nudge.send"),
     service="project_steward_service",
     method="send_nudge_command",
+    owner_press=True,  # a GitHub comment posted as the owner: his press (Muad'Dib ruling on #694)
     admission=Admission("admitted", "A GitHub comment: egress (Q1)."),
 )
 
