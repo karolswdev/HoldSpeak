@@ -151,7 +151,8 @@
     "ProjectRoomCore": {
       "A3-prose": 5,
       "A8": 2,
-      "B": 2
+      "B": 2,
+      "emoji": 3
     },
     "RailsPicker": {
       "A1": 1,
@@ -189,9 +190,7 @@
       "emoji": 3
     },
     "StewardPosture": {
-      "A1": 1,
-      "A3-sentence": 1,
-      "A8": 2
+      "A3-sentence": 1
     },
     "Surface": {
       "A3-prose": 1,
@@ -204,12 +203,6 @@
     },
     "ThoughtContextPicker": {
       "B": 1
-    },
-    "ThoughtDocumentPane": {
-      "B": 2
-    },
-    "ThoughtWorkspaceWindow": {
-      "A3-prose": 5
     },
     "ThreadComposer": {
       "B": 2
@@ -233,7 +226,7 @@
       "A3-prose": 1
     },
     "UpdatePosture": {
-      "A1": 2
+      "emoji": 2
     },
     "WhyControl": {
       "A8": 1
@@ -261,11 +254,13 @@
       "A1": 3
     },
     "WorldStage": {
-      "A1": 3,
-      "B": 1
+      "A1": 3
     },
     "XtermPane": {
       "C": 1
+    },
+    "ZoneRenameRow": {
+      "B": 1
     },
     "ZoneWindow": {
       "A1": 2
@@ -278,21 +273,21 @@
     }
   },
   "per_rule": {
-    "A1": 105,
-    "A3-prose": 48,
+    "A1": 102,
+    "A3-prose": 43,
     "A3-sentence": 2,
     "A4": 0,
-    "A8": 25,
+    "A8": 23,
     "A9": 0,
-    "B": 32,
+    "B": 30,
     "C": 4,
     "DS6": 0,
-    "emoji": 21,
+    "emoji": 26,
     "mic": 0,
     "raw-ids": 17
   },
   "ratchet": {
     "date": "2026-09-28",
-    "reason": "PHILO-9-04, 2026-09-28: A1 falls 106 -> 105 -- the sortable table's sort headers are one library SortButton (DeskSortableTable.tsx); no raw <button> is left in that species. Only A1 is lowered here; the other rules keep their numbers. Earlier: HS-202-03, 2026-09-21: A1 falls 174 -> 106. The surface inventory of 2026-09-20 (SURFACE-INVENTORY-2026-09-20.md \u00a73.3) found the worst raw-HTML sites were the SHARED species themselves -- every menu item (DeskMenu), every wing tab (wings), the dock (7), the editor's rail (11) -- so a stranger's first five minutes met raw HTML at every turn. 68 sites on the five first-use jobs' screens now draw through the library Button, most of them through the new `chrome` variant (Signal.tsx): the species without the plate, for a verb whose material the strip it rides already draws. The residue (106) is the inventory's ledger -- WorkbenchWindow (23), the tool inspector (10), the Session/Coder/Thread pullouts, GroundingSection -- faces the five jobs do not touch. Only shrinks. The A1_RATCHET constant in tests/unit/test_ux_canon_ratchet.py carries the same number."
+    "reason": "Main reds after PHILO-9/10, 2026-09-28: emoji rises 21 -> 26 by the ratified state glyphs of the receipt grammar (egress.ts receiptFace: ✗ refused or failed, ⚠ result unknown, ✓ done), drawn as library StateChip status icons on owner-ratified canvases -- ProjectRoomCore ItemMark (Phase 9 story 03, PHILO-9-03, 3) and UpdatePosture delivery mark (Phase 10, PHILO-10-01, 2). They are status icons in the library chip, not decoration in prose. Accepted by Muad'Dib's ruling on #694 (2026-09-28). Every other rule is lowered to its live count (A1 105 -> 102, A3-prose 48 -> 43, A8 25 -> 23, B 32 -> 30). Earlier: PHILO-9-04, 2026-09-28: A1 falls 106 -> 105 -- the sortable table's sort headers are one library SortButton (DeskSortableTable.tsx); no raw <button> is left in that species. Only A1 is lowered here; the other rules keep their numbers. Earlier: HS-202-03, 2026-09-21: A1 falls 174 -> 106. The surface inventory of 2026-09-20 (SURFACE-INVENTORY-2026-09-20.md §3.3) found the worst raw-HTML sites were the SHARED species themselves -- every menu item (DeskMenu), every wing tab (wings), the dock (7), the editor's rail (11) -- so a stranger's first five minutes met raw HTML at every turn. 68 sites on the five first-use jobs' screens now draw through the library Button, most of them through the new `chrome` variant (Signal.tsx): the species without the plate, for a verb whose material the strip it rides already draws. The residue (106) is the inventory's ledger -- WorkbenchWindow (23), the tool inspector (10), the Session/Coder/Thread pullouts, GroundingSection -- faces the five jobs do not touch. Only shrinks. The A1_RATCHET constant in tests/unit/test_ux_canon_ratchet.py carries the same number."
   }
 }

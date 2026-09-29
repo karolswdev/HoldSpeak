@@ -528,7 +528,7 @@ function NudgeCard({
     return (
       <SurfaceLedgerRow
         data-testid="nudge-unknown-row"
-        lead={<StateChip state="warning" label="" icon={"⚠"} />}
+        lead={<StateChip state="warning" label="" icon={"●"} />}
         primary={<span className="surface-primary">RESULT UNKNOWN</span>}
         wrap
         cells={

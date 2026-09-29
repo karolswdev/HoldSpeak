@@ -1231,3 +1231,298 @@ Suite totals: 2949 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
 ```
+
+
+## #694 merged in (main 84657927)
+
+- **One owner-press source.** The branch's `OWNER_PRESS` set is gone. The kernel's steward-child refusal (`kernel/project_codec.py`) reads `kernel/channel_send.owner_press_operations()`, which is derived from the descriptors' `owner_press` flag (#694), the same flag the MCP authority table and the thread gate read. A steward run's child that is any owner press (`channel.send`, `channel.discard`, `channel.save_destination`, `channel.remove_destination`, `project.mark_update_delivered`, `nudge.send`) is refused `owner_principal_required` (mutations M12, M12b).
+- **`blocking_io` stays on the descriptor, one source; a census ties it to the authority table.** The two axes differ: `connection.recheck` is `work` yet runs gh; `channel.discard` is `egress` yet writes only the database. So neither can be derived from the other. The fence `test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table` asserts:
+  - the blocking set is exactly `channel.send`, `channel.save_destination`, `nudge.send`, `connection.recheck`;
+  - every blocking operation has an authority row;
+  - `channel.send` and `nudge.send` are EGRESS, owner presses and blocking;
+  - the kernel's press set equals the descriptors' flag.
+- **Story-02 operations in the table.** Story 02 adds no new operation name; its rows (`channel.save_destination` AUTHORITY, `channel.send` / `channel.discard` / `nudge.send` EGRESS, `channel.prepare` WORK) are #694's. `test_thread_tool_gate.py` is green.
+- **The kernel line budget is green now.** `project.py` is 256 lines on main (#694 carved the grant module); this branch adds zero lines there.
+- **Re-anchored after the merge:** the pinned census sites that moved (`test_phase143_inference_capability_census.py` `operations.py` 2156/2157 -> 2162/2163; `test_phase143_routing_authority_census.py` `settings_service.py`, `config/core.py`, `project_service.py`) and three `atlas-phase7.json` anchors. The UNKNOWN row's lead icon is now `●` on a warning chip, not `⚠`: the UX canon ratchet counts `⚠` as an emoji, and it held the ceiling at 26.
+- The first mutation capture below exits 1 on row M12. That row still named the removed `OWNER_PRESS` text; the row is corrected, and M12b is added. The second capture is the verdict: 31/31.
+
+### Captured run — 2026-09-29T05:06:14Z
+
+- **Command:** `bash .tmp/r5-scoped.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 8aacec7c5fe9784f89c377f5ed99abce3bfee6ce
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+...................s.................................................... [  5%]
+........................................................................ [ 10%]
+........................................................................ [ 15%]
+........................................................................ [ 20%]
+........................................................................ [ 25%]
+........................................................................ [ 30%]
+........................................................................ [ 35%]
+........................................................................ [ 40%]
+........................................................................ [ 45%]
+........................................................................ [ 50%]
+........................................................................ [ 55%]
+........................................................................ [ 61%]
+........................................................................ [ 66%]
+........................................................................ [ 71%]
+........................................................................ [ 76%]
+........................................................................ [ 81%]
+........................................................................ [ 86%]
+........................................................................ [ 91%]
+........................................................................ [ 96%]
+................................................                         [100%]
+=============================== warnings summary ===============================
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:260: SyntaxWarning: invalid escape sequence '\s'
+    ? '.' + el.className.trim().split(/\s+/)
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:439: SyntaxWarning: invalid escape sequence '\('
+    const m = /rgba?\(([^)]+)\)/.exec(s || '');
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_philo9_03_room_face_glass.py:804: SyntaxWarning: invalid escape sequence '\s'
+    face = row.evaluate("""r => ({text: r.innerText.replace(/\s+/g, ' ').trim(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1415 passed, 1 skipped, 3 warnings in 105.38s (0:01:45)
+```
+
+### Captured run — 2026-09-29T05:07:59Z
+
+- **Command:** `zsh -c cd web && npx vitest run src/features/project-room/__tests__/nudgeUnknown10.test.tsx src/features/project-room/health.test.ts && npx tsc --noEmit -p . && echo TSC-OK`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 8aacec7c5fe9784f89c377f5ed99abce3bfee6ce
+
+```text
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-10-02/web
+
+
+ Test Files  2 passed (2)
+      Tests  30 passed (30)
+   Start at  23:08:00
+   Duration  1.17s (transform 694ms, setup 177ms, import 1.08s, tests 144ms, environment 630ms)
+
+TSC-OK
+```
+
+### Captured run — 2026-09-29T05:08:11Z
+
+- **Command:** `env PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm HOLDSPEAK_EVIDENCE_WRITE=1 .tmp/iso.sh .venv/bin/python -m pytest -q -p no:cacheprovider tests/e2e/test_philo10_02_nudge_unknown_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 8aacec7c5fe9784f89c377f5ed99abce3bfee6ce
+
+```text
+..                                                                       [100%]
+2 passed in 27.81s
+```
+
+### Captured run — 2026-09-29T05:08:41Z
+
+- **Command:** `zsh .tmp/docs_checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 8aacec7c5fe9784f89c377f5ed99abce3bfee6ce
+
+```text
+== scripts/gen_operations_json.py --check
+OK docs/generated/operations.json
+== scripts/gen_mcp_sidecar_doc.py --check
+wrote docs/MCP_SIDECAR.md
+  246 tools across 43 families
+== scripts/check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+== scripts/philo_repository_census.py --check
+Repository census: 5 outputs verified.
+== scripts/philo_api_reference.py --check
+API reference checked
+== scripts/philo_openapi_reference.py --check
+OpenAPI: 579 paths
+== scripts/philo_boundary_census.py --check
+Boundary candidate census checked
+== scripts/philo_doctor_reference.py --check
+Doctor reference: 41 check functions
+== scripts/philo_config_reference.py --check
+Configuration declaration reference is current
+== scripts/philo_graph_reference.py --check
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+== scripts/validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+== scripts/generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
+== scripts/check_doc_coverage.py --check
+Documentation coverage checked.
+== scripts/residual_census.py --check
+RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-10-02
+DOCS RC=0
+```
+
+### Captured run — 2026-09-29T05:09:01Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-02-proof/mutations.py.txt`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 8aacec7c5fe9784f89c377f5ed99abce3bfee6ce
+
+```text
+CAUGHT G1a the redactor scans the uncut error and any payload (story 01's cost): rc=1 1 failed in 7.92s
+    first assertion: E           AssertionError: 2000-char error x 10 MiB: 7.16 s
+CAUGHT G1b the named code passes through the redactor: rc=1 1 failed in 1.43s
+    first assertion: E       AssertionError: assert ('failed', 'g...cted]_denied') == ('failed', 'g...ssion_denied')
+CAUGHT G2a the HTTP routes run the service on the event loop: rc=1 1 failed in 3.26s
+    first assertion: E           AssertionError: the read waited 1.402 s during the send (baseline 0.001 s)
+CAUGHT G2b the MCP transport runs channel.send on the event loop: rc=1 1 failed in 3.28s
+    first assertion: E           AssertionError: the read waited 1.380 s during the send (baseline 0.001 s)
+CAUGHT G2c (round three) MCP tool calls on the event loop again (setup's identity read): rc=1 1 failed in 3.57s
+    first assertion: E           AssertionError: mcp-save-destination: the read waited 1.419 s during the slow gh call
+CAUGHT G2d (round two) the HTTP recheck on the event loop: rc=1 1 failed in 3.44s
+    first assertion: E           AssertionError: http-recheck: the read waited 1.265 s during the slow gh call
+CAUGHT G2e (round three) channel.save_destination does not declare its blocking I/O: rc=1 1 failed in 3.56s
+    first assertion: E           AssertionError: mcp-save-destination: the read waited 1.272 s during the slow gh call
+CAUGHT S1 (round three) the settings write without its lock: rc=1 1 failed in 1.68s
+    first assertion: E       AssertionError: ['accepted', 'accepted']
+CAUGHT S2 (round three) the settings file written in place (not atomic), as before this round: rc=1 1 failed in 0.35s
+    first assertion: E       assert ('{\n  "config...oss_meeting_r' == '{\n  "config...": []\n  }\n}'
+CAUGHT W2 (round three) the nudge card not keyed by the Room's live state: rc=1    Duration  1.04s (transform 425ms, setup 55ms, import 598ms, tests 138ms, environment 171ms)
+    first assertion: × UNKNOWN survives a close and reopen while Send is still in flight 20ms
+CAUGHT W3 (round four) the Room's per-Send state forgets the submitted text (a remount restores the default): rc=1    Duration  1.06s (transform 438ms, setup 59ms, import 612ms, tests 137ms, environment 176ms)
+    first assertion: × a known failed Send keeps the edited comment for retry 23ms
+CAUGHT W1 (round two) the nudge card starts open whatever its step's persisted state: rc=1    Duration  4.07s (transform 453ms, setup 58ms, import 633ms, tests 3.12s, environment 178ms)
+    first assertion: × UNKNOWN survives closing and reopening the card 1053ms
+CAUGHT M1 the CLI children unparented: rc=1 1 failed in 1.42s
+    first assertion: E           AssertionError: {'name': 'subprocess.exec', 'operation_id': 'op_07cf27647fea47b78da42e2f9d9a2ffa', 'outcome': 'succeeded', 'parent_operation_id': ''
+CAUGHT M2 the CLI children under the default local-owner (the seam's principal not threaded): rc=1 1 failed in 1.40s
+    first assertion: E       AssertionError: {"send":{"id":"chs_a4066294641a6fb5b1f14b92","document_ref":"project_update:pupd_cc65fb5d7e3b430184c27a393dbcc418","destination_id":"chd
+CAUGHT M3 a nudge's UNKNOWN treated as a known failure (F4, main's mapping): rc=1 1 failed in 1.40s
+    first assertion: E       AssertionError: {"success":false,"error":"send_failed","code":"send_failed","message":"send failed","operation_id":"op_bf4e12de4e6f4a679431d2c9541a2b58"
+CAUGHT M4 an unpinned nonzero exit is FAILED: rc=1 1 failed in 1.46s
+    first assertion: E           AssertionError: {'operation_id': 'op_1865a66906f94374812f0440ca4e0cda', 'outcome': 'failed', 'receipt': {'actor_identity': 'owner-sess...b.com', 'lo
+CAUGHT M5 exit 0 without a proof is SENT: rc=1 1 failed in 1.39s
+    first assertion: E           AssertionError: {'operation_id': 'op_d29c2189d46548968acdf3969a7efc43', 'outcome': 'sent', 'receipt': {'actor_identity': 'owner-sessio...', 'site': 
+CAUGHT M6 the GitHub login not compared before the boundary: rc=1 1 failed in 1.37s
+    first assertion: E       AssertionError: {"send":{"id":"chs_ceb49e9fd52dae4b2fdc63c9","document_ref":"project_update:pupd_6b40be86ca28480b9c7c6a74b1066489","destination_id":"chd
+CAUGHT M7 the Atlassian create outside the acli lock: rc=1 1 failed in 31.44s
+    first assertion: E       AssertionError: condition never held
+CAUGHT M8 a plan may carry --jql, --filter or --edit-last: rc=1 1 failed in 1.39s
+    first assertion: E           Failed: DID NOT RAISE <class 'ValueError'>
+CAUGHT M9 a second Jira key accepted: rc=1 1 failed in 1.37s
+    first assertion: E           holdspeak.services.errors.ValidationError: A Jira destination needs one work item key, like ABC-123
+CAUGHT M10 the body in argv, not in the private file: rc=1 1 failed in 1.41s
+    first assertion: E       AssertionError: assert 'failed' == 'sent'
+CAUGHT M11 the Confluence title in argv: rc=1 1 failed in 1.36s
+    first assertion: E           assert (False)
+Traceback (most recent call last):
+  File "/Users/karol/dev/tools/wt-philo-10-02/pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-02-proof/mutations.py.txt", line 156, in <module>
+    assert mutated.count(before) == 1, (name, "the original text is not unique", before[:60])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ("M12 the steward's child send admitted (no owner-press rule)", 'the original text is not unique', '        if self.name in rooms.OWNER_PRESS and context')
+```
+
+### Captured run — 2026-09-29T05:10:35Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python scripts/check_web_baseline.py --run`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 8aacec7c5fe9784f89c377f5ed99abce3bfee6ce
+
+```text
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (5):
+  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+Suite totals: 2949 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```
+
+### Captured run — 2026-09-29T05:11:29Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-02-proof/mutations.py.txt`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** d9d439f3cd075bf8ce533f327134fd7dab6e6de2
+
+```text
+CAUGHT G1a the redactor scans the uncut error and any payload (story 01's cost): rc=1 1 failed in 7.92s
+    first assertion: E           AssertionError: 2000-char error x 10 MiB: 7.19 s
+CAUGHT G1b the named code passes through the redactor: rc=1 1 failed in 1.42s
+    first assertion: E       AssertionError: assert ('failed', 'g...cted]_denied') == ('failed', 'g...ssion_denied')
+CAUGHT G2a the HTTP routes run the service on the event loop: rc=1 1 failed in 3.45s
+    first assertion: E           AssertionError: the read waited 1.404 s during the send (baseline 0.001 s)
+CAUGHT G2b the MCP transport runs channel.send on the event loop: rc=1 1 failed in 3.35s
+    first assertion: E           AssertionError: the read waited 1.377 s during the send (baseline 0.001 s)
+CAUGHT G2c (round three) MCP tool calls on the event loop again (setup's identity read): rc=1 1 failed in 3.71s
+    first assertion: E           AssertionError: mcp-save-destination: the read waited 1.372 s during the slow gh call
+CAUGHT G2d (round two) the HTTP recheck on the event loop: rc=1 1 failed in 3.47s
+    first assertion: E           AssertionError: http-recheck: the read waited 1.262 s during the slow gh call
+CAUGHT G2e (round three) channel.save_destination does not declare its blocking I/O: rc=1 1 failed in 3.52s
+    first assertion: E           AssertionError: mcp-save-destination: the read waited 1.294 s during the slow gh call
+CAUGHT S1 (round three) the settings write without its lock: rc=1 1 failed in 1.74s
+    first assertion: E       AssertionError: ['accepted', 'accepted']
+CAUGHT S2 (round three) the settings file written in place (not atomic), as before this round: rc=1 1 failed in 0.34s
+    first assertion: E       assert ('{\n  "config...oss_meeting_r' == '{\n  "config...": []\n  }\n}'
+CAUGHT W2 (round three) the nudge card not keyed by the Room's live state: rc=1    Duration  1.13s (transform 487ms, setup 59ms, import 682ms, tests 141ms, environment 174ms)
+    first assertion: × UNKNOWN survives a close and reopen while Send is still in flight 21ms
+CAUGHT W3 (round four) the Room's per-Send state forgets the submitted text (a remount restores the default): rc=1    Duration  1.20s (transform 515ms, setup 64ms, import 715ms, tests 149ms, environment 188ms)
+    first assertion: × a known failed Send keeps the edited comment for retry 24ms
+CAUGHT W1 (round two) the nudge card starts open whatever its step's persisted state: rc=1    Duration  4.15s (transform 503ms, setup 65ms, import 695ms, tests 3.13s, environment 184ms)
+    first assertion: × UNKNOWN survives closing and reopening the card 1055ms
+CAUGHT M1 the CLI children unparented: rc=1 1 failed in 1.49s
+    first assertion: E           AssertionError: {'name': 'subprocess.exec', 'operation_id': 'op_524b3fe49926466e966f97a9140782de', 'outcome': 'succeeded', 'parent_operation_id': ''
+CAUGHT M2 the CLI children under the default local-owner (the seam's principal not threaded): rc=1 1 failed in 1.44s
+    first assertion: E       AssertionError: {"send":{"id":"chs_83beb02403af7e857fc31a0d","document_ref":"project_update:pupd_b3766d80ecb6437bb331208d8eebe8bf","destination_id":"chd
+CAUGHT M3 a nudge's UNKNOWN treated as a known failure (F4, main's mapping): rc=1 1 failed in 1.36s
+    first assertion: E       AssertionError: {"success":false,"error":"send_failed","code":"send_failed","message":"send failed","operation_id":"op_8ac5eae11d7b49a4b970442c27032114"
+CAUGHT M4 an unpinned nonzero exit is FAILED: rc=1 1 failed in 1.43s
+    first assertion: E           AssertionError: {'operation_id': 'op_23fc3daa06f242f1abb7273a36bd7018', 'outcome': 'failed', 'receipt': {'actor_identity': 'owner-sess...b.com', 'lo
+CAUGHT M5 exit 0 without a proof is SENT: rc=1 1 failed in 1.41s
+    first assertion: E           AssertionError: {'operation_id': 'op_9e8e6bddaa884b109c7a29f30f01fb69', 'outcome': 'sent', 'receipt': {'actor_identity': 'owner-sessio...', 'site': 
+CAUGHT M6 the GitHub login not compared before the boundary: rc=1 1 failed in 1.47s
+    first assertion: E       AssertionError: {"send":{"id":"chs_37ea3f5c3eedc409626e5c26","document_ref":"project_update:pupd_6b9415edcb404f26b0a5278896896057","destination_id":"chd
+CAUGHT M7 the Atlassian create outside the acli lock: rc=1 1 failed in 31.44s
+    first assertion: E       AssertionError: condition never held
+CAUGHT M8 a plan may carry --jql, --filter or --edit-last: rc=1 1 failed in 1.40s
+    first assertion: E           Failed: DID NOT RAISE <class 'ValueError'>
+CAUGHT M9 a second Jira key accepted: rc=1 1 failed in 1.42s
+    first assertion: E           holdspeak.services.errors.ValidationError: A Jira destination needs one work item key, like ABC-123
+CAUGHT M10 the body in argv, not in the private file: rc=1 1 failed in 1.34s
+    first assertion: E       AssertionError: assert 'failed' == 'sent'
+CAUGHT M11 the Confluence title in argv: rc=1 1 failed in 1.39s
+    first assertion: E           assert (False)
+CAUGHT M12 the steward's child press admitted (no owner-press rule): rc=1 1 failed in 1.47s
+    first assertion: E       AssertionError: assert ('sent', 'op_...9e7f63fef404') == ('prepared', ...9e7f63fef404')
+CAUGHT M12b (#694 merged) the steward-child rule reads a hand list without channel.send, not the owner_press flag: rc=1 1 failed in 1.48s
+    first assertion: E       AssertionError: assert ('sent', 'op_...62c4f419f597') == ('prepared', ...62c4f419f597')
+CAUGHT M13 the scheduler may not submit the steward's prepare: rc=1 1 failed in 1.34s
+    first assertion: E       ValueError: too many values to unpack (expected 1)
+CAUGHT M14 the nudge without its durable boundary (it stays proposed while gh runs): rc=1 1 failed in 1.33s
+    first assertion: E       AssertionError: assert 'proposed' == 'sending'
+CAUGHT M15 the reaper leaves a sending nudge as it is: rc=1 1 failed in 1.41s
+    first assertion: E       KeyError: 'outcome'
+CAUGHT M16 a CLI take-over dispatches from a dispatching row as from a prepared one: rc=1 1 failed in 1.37s
+    first assertion: E       AssertionError: assert ('sent', None) == ('unknown', 'interrupted')
+CAUGHT M17 the per-channel size limit dropped: rc=1 1 failed in 1.35s
+    first assertion: E       AssertionError: {"send":{"id":"chs_4c5f75f02e836a24512d23b7","document_ref":"project_update:pupd_f6153d19fa6e49659439e6a7735c2497","destination_id":"chd
+CAUGHT M18 the file mode not private: rc=1 1 failed in 1.37s
+    first assertion: E       assert 420 == 384
+31/31 mutations caught
+```

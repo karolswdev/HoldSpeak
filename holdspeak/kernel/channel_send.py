@@ -29,7 +29,23 @@ SETTLED_ROW_REPLAY: frozenset[str] = frozenset({"channel.send"})
 #: its own identity; its send or discard reaches the codec only to be refused
 #: ``owner_principal_required`` with a receipt ("You, every time").
 STEWARD_SEND_CHILDREN: frozenset[str] = frozenset({"channel.prepare", "channel.send", "channel.discard"})
-OWNER_PRESS: frozenset[str] = frozenset({"channel.send", "channel.discard"})
+
+
+def owner_press_operations() -> frozenset[str]:
+    """The owner's presses: ONE source, the descriptors' ``owner_press`` flag (#694).
+
+    A steward run's child in this set is refused ``owner_principal_required``
+    (``kernel/project_codec.py``): the steward prepares, only the owner presses.
+    """
+    global _OWNER_PRESS
+    if _OWNER_PRESS is None:
+        from ..operations import DESCRIPTORS
+
+        _OWNER_PRESS = frozenset(d.name for d in DESCRIPTORS if d.owner_press)
+    return _OWNER_PRESS
+
+
+_OWNER_PRESS: frozenset[str] | None = None
 
 def channel_send_ended_effect(store: Any, operation: Mapping[str, Any], reason: str, *,
                               row_reason: str = "reaped", before: str = "reaped_before_dispatch") -> Any:

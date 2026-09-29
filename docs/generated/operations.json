@@ -60,6 +60,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "A decision made (D3).",
@@ -132,6 +133,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "A decision changed (D3).",
@@ -173,6 +175,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -210,6 +213,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -292,6 +296,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -336,6 +341,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -403,6 +409,7 @@
       ],
       "owner_only": true,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -442,6 +449,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -470,6 +478,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -498,6 +507,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -542,6 +552,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -569,6 +580,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -602,6 +614,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -644,6 +657,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -679,6 +693,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -714,6 +729,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -753,6 +769,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": null
     },
     {
@@ -795,6 +812,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A plain edit: no placement field (D3).",
@@ -836,6 +854,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -894,6 +913,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A plain edit (title, body, tags) or a Thought save (D3).",
@@ -943,6 +963,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted_if",
         "condition": "The note belongs to a Thought: its tombstone unfiles the note from its zone (db/refinement_thoughts.py:236). A plain note's delete is exempt: its zone membership row stays.",
@@ -983,6 +1004,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -1028,6 +1050,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted_if",
         "condition": "directory_id is given and not empty: over an existing zone the create sets its parent_id (to parent_id or null), so it can move that zone with its contents. Without directory_id: exempt.",
@@ -1071,6 +1094,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -1120,6 +1144,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted_if",
         "condition": "parent_id is present (null included): the zone moves with its contents. A rename alone (no parent_id) is exempt and writes the name only (PHILO-7-01 rename repair).",
@@ -1163,6 +1188,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Every member unfiled and every child zone moved to the root, in the same transaction (db/primitives.py:1182-1204).",
@@ -1195,6 +1221,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -1239,6 +1266,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted_if",
         "condition": "member_ids is given and not empty, in any accepted form (a list; a mapping, whose keys the repository files as references; any other non-empty value), or kb_id is given and not empty: knowledge memberships can be written (over an existing kb_id the membership set is REPLACED). Otherwise exempt.",
@@ -1283,6 +1311,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -1330,6 +1359,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted_if",
         "condition": "member_ids is present and not null, in any accepted form (a list; a mapping, whose keys the repository files as references; an empty value removes every member): knowledge memberships are added and removed to match it. A rename alone is exempt and writes the name only (PHILO-7-01 rename repair).",
@@ -1373,6 +1403,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "The knowledge base row is tombstoned; its membership rows are not touched (R4).",
@@ -1405,6 +1436,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -1452,6 +1484,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "A primitive filed; a re-file moves it (D3).",
@@ -1499,6 +1532,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "The filing relationship removed (R4).",
@@ -1541,6 +1575,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -1587,6 +1622,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "A durable reference filed into a knowledge base (R4).",
@@ -1633,6 +1669,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "A durable reference removed from a knowledge base (R4).",
@@ -1674,6 +1711,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -1716,6 +1754,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "A decision withdrawn: a lifecycle change (R4; in the delegation grant by R5).",
@@ -1760,6 +1799,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "The same status mutation as the admitted decision.update (R4).",
@@ -1805,6 +1845,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "A decision replaced: two rows, ONE admission (D3); the successor id is minted before submission.",
@@ -1846,6 +1887,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -1886,6 +1928,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -1927,6 +1970,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -1968,6 +2012,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -2028,6 +2073,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A bare project: a project row, revision, change and event; no watch (Q1).",
@@ -2071,6 +2117,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted_if",
         "condition": "Any source given: armed watches read GitHub/Jira on a schedule (egress, Q1). Without sources: exempt.",
@@ -2136,6 +2183,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A plain edit of the project's own fields (Q1).",
@@ -2193,6 +2241,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Pauses the watches and turns unattended steward runs off: changes authority, stops scheduled egress (Q1; F18).",
@@ -2250,6 +2299,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "Lifecycle active; resumes no watch and no unattended run (Q1).",
@@ -2313,6 +2363,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Files a meeting in the Room; the meeting watch it ensures (watch.create) is its child, not a second top-level admission (Q1).",
@@ -2376,6 +2427,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Unfiles the meeting (Q1).",
@@ -2417,6 +2469,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "Freezes a local review window (Q1).",
@@ -2458,6 +2511,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -2537,6 +2591,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Each of the four verbs decides (Q1; Codex Astra r2 F2).",
@@ -2591,6 +2646,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Accepts the window: bumps the revision, supersedes undecided proposals (Q1).",
@@ -2639,6 +2695,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -2695,6 +2752,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A draft; a model draft's call keeps its own inference.invoke admission (Q1).",
@@ -2747,6 +2805,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "The draft's text (Q1).",
@@ -2799,6 +2858,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "A published update is read-only: may be irreversible; sends nothing (Q1).",
@@ -2833,6 +2893,7 @@
       ],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -2890,6 +2951,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -2989,6 +3051,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "The owner's own record in the Room (Q1).",
@@ -3074,6 +3137,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "The owner's own record in the Room (Q1).",
@@ -3143,6 +3207,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "The owner's own record in the Room (Q1).",
@@ -3184,6 +3249,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -3254,6 +3320,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Files a thing in the Room (Q1).",
@@ -3317,6 +3384,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Unfiles a thing from the Room (Q1).",
@@ -3426,6 +3494,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted_if",
         "condition": "Any policy field given: it sets what the steward may do and whether it runs on its own (a delegation; changes authority, Q1). Only project_id: a read.",
@@ -3496,6 +3565,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "A run acts under the policy; each executed effect is a child operation (XI.2); github_comment crosses egress (Q1).",
@@ -3549,6 +3619,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "A durable stop on a run: controls a process (Q1).",
@@ -3590,6 +3661,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -3632,6 +3704,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Evaluates due watches and starts due steward work: controls a process; its runs are children (Q1).",
@@ -3686,6 +3759,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -3737,6 +3811,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": true,
+      "owner_press": true,
       "admission": {
         "rule": "admitted",
         "condition": "A GitHub comment: egress (Q1).",
@@ -3777,6 +3852,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "The nudge's own state only (Q1).",
@@ -3822,6 +3898,7 @@
       ],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -3867,6 +3944,7 @@
       ],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Fetches the source (egress) and stores the test result (Q1).",
@@ -3912,6 +3990,7 @@
       ],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Snapshot, diff, transitions; records effects the steward can act on: egress (Q1).",
@@ -3972,6 +4051,7 @@
       ],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "What the watch does and how often: changes what may act (Q1).",
@@ -4017,6 +4097,7 @@
       ],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Stops scheduled source reads: controls a process (Q1).",
@@ -4062,6 +4143,7 @@
       ],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Starts scheduled source reads: controls a process (Q1).",
@@ -4107,6 +4189,7 @@
       ],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Stops scheduled source reads for good: controls a process (Q1).",
@@ -4185,6 +4268,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Changes what the watch reads and when: changes what may act (the charter's HTTP capability exceptions).",
@@ -4227,6 +4311,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "A baseline read of the source: egress (the charter's HTTP capability exceptions).",
@@ -4268,6 +4353,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -4324,6 +4410,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Files the source in the Room and arms a watch that reads the provider (filing; arms egress, Q1).",
@@ -4370,6 +4457,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "The suggestion never shows again (Q1).",
@@ -4402,6 +4490,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -4450,6 +4539,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": true,
+      "owner_press": false,
       "admission": {
         "rule": "admitted_if",
         "condition": "github, jira, confluence: asks the provider and stores its state (egress, Q1; B1). calendar, models: local readiness, no egress.",
@@ -4511,6 +4601,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Fetches GitHub/Jira snapshots to count: egress (Q1; F21).",
@@ -4570,6 +4661,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": true,
       "admission": {
         "rule": "admitted",
         "condition": "Each mark is final: its receipt proves he recorded that confirmation, not that anyone received anything. Owner-only: never in the grant (Q0; R4-2).",
@@ -4610,6 +4702,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
@@ -4764,6 +4857,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": true,
+      "owner_press": true,
       "admission": {
         "rule": "admitted",
         "condition": "Changes where the owner's documents may go: the allow-list (XI.1). The owner's; Edit parks the old row.",
@@ -4814,6 +4908,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": true,
       "admission": {
         "rule": "admitted",
         "condition": "Changes the allow-list (XI.1); Remove parks, never deletes.",
@@ -4855,6 +4950,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A folder: a local check, no egress (the phase's table). A remote channel: the stored connection state, no probe (connection.recheck probes, admitted).",
@@ -4905,6 +5001,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "Computation: a render per channel, nothing leaves (XI.5).",
@@ -4962,6 +5059,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "admitted",
         "condition": "Records a prepared send under the preparer's identity: the owner, or an agent he connected (Q5). Nothing leaves.",
@@ -5012,6 +5110,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": true,
       "admission": {
         "rule": "admitted",
         "condition": "Decides a prepared send (prepared -> discarded, one conditional write). The owner's.",
@@ -5095,6 +5194,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": true,
+      "owner_press": true,
       "admission": {
         "rule": "admitted",
         "condition": "Crosses egress or files (XI.1): one terminal receipt -- succeeded (sent), failed, indeterminate (unknown), or refused before the dispatch boundary. The owner's press ('You, every time').",
@@ -5143,6 +5243,7 @@
       "held": [],
       "owner_only": false,
       "blocking_io": false,
+      "owner_press": false,
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",

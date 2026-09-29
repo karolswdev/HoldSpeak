@@ -276,11 +276,13 @@ class TestMCPParity:
 
     def test_heartbeat_tools_classified_in_thread_gate(self) -> None:
         """All heartbeat tools are classified in thread_tools._TOOL_CLASSES."""
-        from holdspeak.services.thread_tools import TOOL_NAMES
+        from holdspeak.services.thread_tools import EXCLUDED_TOOLS, TOOL_NAMES
 
         assert "heartbeat.status" in TOOL_NAMES
         assert "heartbeat.run_now" in TOOL_NAMES
-        assert "heartbeat.set" in TOOL_NAMES
+        # #694, the owner's ruling: changing the sweep's settings is CONFIG,
+        # classified as never a thread tool.
+        assert "heartbeat.set" in EXCLUDED_TOOLS
 
 
 # ---------------------------------------------------------------------------

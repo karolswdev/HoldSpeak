@@ -113,10 +113,12 @@ def test_ratchet():
 # a raw `<button>` is a species bug.  This number may only shrink; raising it
 # requires changing A1_RATCHET_REASON in the same commit to name the debt
 # being admitted (the HS-200-03 / HS-200-46 shape).
-A1_RATCHET = 105
+A1_RATCHET = 102
 A1_RATCHET_DATE = "2026-09-28"
 A1_RATCHET_REASON = (
-    "PHILO-9-04: 106 -> 105, the sortable table's sort headers became the "
+    "Main reds after PHILO-9/10, 2026-09-28: 105 -> 102, the live count once "
+    "the Phase 9 and 10 faces landed (the ceiling file moved in the same "
+    "commit). Earlier, PHILO-9-04: 106 -> 105, the sortable table's sort headers became the "
     "library Button (DeskSortableTable.tsx SortButton). Earlier, "
     "HS-202-03: 106 raw <button> elements remain across the scanner's scope "
     "(features/, pages/cores/, desk/; not Signal.tsx, gadgets.tsx, tests or "

@@ -482,25 +482,27 @@ CLAIMS: list[Claim] = [
     # ── owned by HS-200-44 ────────────────────────────────────────────
     Claim(
         doc="docs/internal/UX-CANON.md",
-        anchor="A1 (raw `<button>`) is held to a\ndated, down-only ratchet of 105, measured on 2026-09-28 by PHILO-9-04",
+        anchor="A1 (raw `<button>`) is held to a\ndated, down-only ratchet of 102, measured on 2026-09-28 by #694",
         sentence=(
-            "A1 (raw `<button>`) is held to a dated, down-only ratchet of 105, "
-            "measured on 2026-09-28 by PHILO-9-04 (the sortable table's sort "
-            "headers; 106 on 2026-09-21 by HS-202-03; 175 on 2026-09-17 by "
+            "A1 (raw `<button>`) is held to a dated, down-only ratchet of 102, "
+            "measured on 2026-09-28 by #694 (the live count once the Phase 9 and "
+            "10 faces landed; 105 the same day by PHILO-9-04, the sortable table's "
+            "sort headers; 106 on 2026-09-21 by HS-202-03; 175 on 2026-09-17 by "
             "HS-200-44, once the matcher could see a multi-line opening tag). "
             "That number can only shrink."
         ),
         predicate=lambda: (
-            ux_canon_ceiling_a1() == 105
+            ux_canon_ceiling_a1() == 102
             and int(re.search(r"down-only ratchet of (\d+)", _read("docs/internal/UX-CANON.md")).group(1))
             == ux_canon_ceiling_a1()
             and canon_scanner_a1_total() <= ux_canon_ceiling_a1()
         ),
         state="holds",
         truth=(
-            "tests/ux_canon_ceiling.json holds A1 = 105 with a dated reason, the "
+            "tests/ux_canon_ceiling.json holds A1 = 102 with a dated reason, the "
             "canon scanner's A1 count over web/src is at or under it, and the "
-            "document states the same number. Lowered 106 -> 105 on 2026-09-28 by "
+            "document states the same number. Lowered 105 -> 102 on 2026-09-28 by "
+            "#694 (the ceiling rewritten to the live counts). Lowered 106 -> 105 on 2026-09-28 by "
             "PHILO-9-04 (the sortable table's sort headers became the library "
             "Button). Lowered 175 -> 106 on 2026-09-21 by "
             "HS-202-03 (the shared species on the first-use path became library "

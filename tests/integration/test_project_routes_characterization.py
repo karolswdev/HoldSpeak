@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.project_service import ProjectService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_projects_router
@@ -31,6 +32,17 @@ def rig(tmp_path, monkeypatch):
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     svc = ProjectService(db)
     app = FastAPI()
+
+    # PHILO-9-02 admitted archive, link, unlink and the resource writes under
+    # Article XI: they need the transport's authenticated principal. The hub's
+    # edge (web_server._web_auth_gate) sets request.state.principal before any
+    # route runs; this bare router has no edge, so the rig sets the owner the
+    # way the hub does. Without it every admitted write is refused by name.
+    @app.middleware("http")
+    async def _owner_edge(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "project-routes-char")
+        return await call_next(request)
+
     app.include_router(build_projects_router(WebContext(
         get_state=lambda: {},
         project_service=svc,

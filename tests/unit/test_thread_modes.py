@@ -118,6 +118,9 @@ class TestAllowLists:
         # (both evidence_read; the receipt is declared in the DESK palette,
         # tests/unit/test_philo7_article_xi.py).
         assert {"monday_brief.shelf_read", "kernel.receipt"} <= _DESK_TOOLS
+        # #694 (the owner's ruling): connection.recheck is WORK (a read of his
+        # connection), so Desk keeps it (mcp/tool_authority.py).
+        assert "connection.recheck" in _DESK_TOOLS
         assert len(_DESK_TOOLS) == 68
 
     def test_chase_size(self) -> None:
@@ -127,6 +130,8 @@ class TestAllowLists:
         # HS-171: + heartbeat.status (evidence_read).
         # HS-172 + HS-173: meeting.proposals, project.suggested_sources, steward.nudges.
         # PHILO-5-02 + PHILO-7-02: + monday_brief.shelf_read, kernel.receipt (via Desk).
+        # #694: unchanged; people.note.create is WORK and stays (the ruling).
+        assert "people.note.create" in _CHASE_TOOLS
         assert len(_CHASE_TOOLS) == 74
 
     def test_draft_empty(self) -> None:

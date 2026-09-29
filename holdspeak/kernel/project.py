@@ -19,7 +19,6 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from contextvars import ContextVar
-import json
 from typing import Any, Iterator, Mapping
 
 #: story 01's admitted rows, enforced here.
@@ -38,7 +37,14 @@ STEWARD_AND_CONNECTORS_ADMITTED: frozenset[str] = frozenset({
     "connection.recheck", "project.mark_update_delivered",
 })
 #: PHILO-10-01: the Send's rows live beside their settle (``kernel/channel_send.py``).
-from .channel_send import AGENT_PREPARE_OPERATIONS, CHANNEL_ADMITTED, OWNER_PRESS, SETTLED_ROW_REPLAY, STEWARD_SEND_CHILDREN  # noqa: E402,F401,E501
+from .channel_send import AGENT_PREPARE_OPERATIONS, CHANNEL_ADMITTED, SETTLED_ROW_REPLAY, STEWARD_SEND_CHILDREN, owner_press_operations  # noqa: E402,F401,E501
+#: PHILO-9-07: the project delegation grant lives in its own concern module
+#: (``kernel/project_grant.py``); its names stay readable here.
+from .project_grant import (  # noqa: E402,F401
+    PROJECT_GRANT_OPERATIONS, REQUIRED, EXPIRED, REVOKED, PROJECT_BASIS_KIND, GRANT_CODES,
+    terms_for, terms_sha256, basis, parse_basis, check_row, by_identity, by_grant, by_basis,
+    provenance, grant_code, frozen_grant_code, grant_view, ProjectGrantRefused, grant_effect, revoke_effect,
+)
 #: The beat's section 5: one child per executed policy slot that has no
 #: admitted operation of its own. Internal: no transport, never grantable.
 STEWARD_EFFECT = "project.steward.effect"
@@ -55,11 +61,13 @@ PROJECT_DELEGATION_OPERATIONS: frozenset[str] = frozenset({
 #: Scopes the atomic terminal writes, the claim and the recovery ONLY; never an authority set.
 PROJECT_KERNEL_OPERATIONS: frozenset[str] = (ROOM_ADMITTED | STEWARD_AND_CONNECTORS_ADMITTED | {STEWARD_EFFECT}
                                              | PROJECT_DELEGATION_OPERATIONS | CHANNEL_ADMITTED)
-#: The owner's ruled bound for the project grant ("Run, stop, publish"):
-#: without a LIVE grant naming it for that project, every agent call is refused.
-PROJECT_GRANT_OPERATIONS: frozenset[str] = frozenset({
-    "project.run_steward", "project.stop_steward", "project.publish_update",
-})
+#: #694 (Codex Astra counsel r2): the Room operations an AGENT can never be
+#: admitted to outside its own steward run -- no grant covers them and they
+#: are not the agent's prepare. ``ProjectCodec.authorize`` refuses a non-owner
+#: by this set. (What a THREAD acting as the owner may do is the owner's
+#: separate ruling: ``holdspeak/mcp/tool_authority.py``.)
+OWNER_ONLY_OPERATIONS: frozenset[str] = (PROJECT_KERNEL_OPERATIONS - PROJECT_GRANT_OPERATIONS
+                                         - AGENT_PREPARE_OPERATIONS)
 #: The operations whose terminal receipt a daemon writes later (the beat, section 2).
 ASYNC_OPERATIONS: frozenset[str] = frozenset({"project.run_steward", "project.steward.trigger"})
 #: The steward's operations the startup recovery closes as ``hub_restart_during_steward``.
@@ -67,9 +75,6 @@ STEWARD_OPERATIONS: frozenset[str] = frozenset({
     "project.run_steward", "project.steward.trigger", STEWARD_EFFECT,
 })
 
-REQUIRED = "project_delegation_required"
-EXPIRED = "project_delegation_expired"
-REVOKED = "project_delegation_revoked"
 RUN_OWNER_REQUIRED = "steward_run_owner_required"
 
 #: The node identity that claims and executes the Room's operations inside the hub.
@@ -167,190 +172,9 @@ def scheduler_approves(operation: Mapping[str, Any], principal: Any) -> bool:
 _SCHEDULER_MODEL_CHILDREN = frozenset({"inference.invoke"})
 
 
-# ── the project delegation grant (PHILO-9-07) ────────────────────────────
-#
-# The owner's Q2 ruling: an agent may do the bound (``PROJECT_GRANT_OPERATIONS``)
-# in ONE project under a grant he gives. Phase 7's desk grant, scoped to a
-# project (``kernel/desk.py``): the same one check (``desk.check_row``), the
-# same codes in the same order, the same imported terms hash with the expiry
-# inside it, the same atomic terminal writes. The grant rows are the sibling
-# table ``kernel_project_delegations`` (one LIVE per agent and project).
-
-PROJECT_BASIS_KIND = "project-delegation"
-GRANT_CODES: frozenset[str] = frozenset({REQUIRED, EXPIRED, REVOKED})
 OWNER_REQUIRED = "owner_principal_required"
 #: The children a steward run makes under the run's actor (the beat, section 5).
 STEWARD_CHILDREN: frozenset[str] = frozenset({STEWARD_EFFECT, "project.decide_proposal", *STEWARD_SEND_CHILDREN})
-_TABLE = "kernel_project_delegations"
-
-
-def terms_for(agent_identity: str, project_id: str) -> dict[str, Any]:
-    """The grant's terms, stored in the row: a later code change never widens an old grant."""
-    return {"agent_identity": agent_identity, "project_id": project_id,
-            "operations": sorted(PROJECT_GRANT_OPERATIONS)}
-
-
-def terms_sha256(terms: Mapping[str, Any], expires_at: float | None) -> str:
-    from . import desk
-
-    return desk.terms_sha256(terms, expires_at)
-
-
-def basis(grant_id: str, sha: str) -> str:
-    return f"{PROJECT_BASIS_KIND}:{grant_id}:{sha}"
-
-
-def parse_basis(value: str) -> tuple[str, str] | None:
-    parts = str(value or "").split(":", 2)
-    if len(parts) != 3 or parts[0] != PROJECT_BASIS_KIND or not parts[1] or not parts[2]:
-        return None
-    return parts[1], parts[2]
-
-
-def check_row(row: Any, *, agent_identity: str, project_id: str, operation_name: str | None, now: float,
-              frozen_sha256: str | None = None, conn: Any = None, authoritative: bool = False) -> str:
-    """Phase 7's one check, plus the project: a grant on project A is nothing on project B."""
-    from . import desk
-
-    if row is None or str(row["project_id"]) != str(project_id):
-        return REQUIRED
-    code = desk.check_row(row, agent_identity=agent_identity, operation_name=operation_name, now=now,
-                          frozen_sha256=frozen_sha256, conn=conn, authoritative=authoritative, table=_TABLE)
-    # The same order, the project siblings of Phase 7's codes.
-    return {desk.REQUIRED: REQUIRED, desk.EXPIRED: EXPIRED, desk.REVOKED: REVOKED}.get(code, code)
-
-
-def by_identity(conn: Any, agent_identity: str, project_id: str, operation_name: str | None, now: float, *,
-                authoritative: bool = False) -> tuple[str, Any]:
-    """Admission and the chip: the LIVE row; else the latest historical row, for the CODE only."""
-    row = conn.execute(
-        f"SELECT * FROM {_TABLE} WHERE agent_identity=? AND project_id=? AND state='LIVE'",
-        (agent_identity, project_id),
-    ).fetchone()
-    if row is None:
-        row = conn.execute(
-            f"SELECT * FROM {_TABLE} WHERE agent_identity=? AND project_id=? ORDER BY updated_at DESC, id DESC LIMIT 1",
-            (agent_identity, project_id),
-        ).fetchone()
-    return check_row(row, agent_identity=agent_identity, project_id=project_id, operation_name=operation_name,
-                     now=now, conn=conn, authoritative=authoritative), row
-
-
-def by_grant(conn: Any, grant_id: str, sha: str, *, agent_identity: str, project_id: str | None,
-             operation_name: str | None, now: float, authoritative: bool = False) -> str:
-    """Approval, the claim and a steward child: ONLY the row the frozen basis names (never a newer G2).
-
-    ``project_id=None``: the row's own project (the admission already bound
-    it to the stored run or update, whose project never changes).
-    """
-    row = conn.execute(f"SELECT * FROM {_TABLE} WHERE id=?", (grant_id,)).fetchone()
-    if project_id is None:
-        project_id = str(row["project_id"]) if row is not None else ""
-    return check_row(row, agent_identity=agent_identity, project_id=project_id, operation_name=operation_name,
-                     now=now, frozen_sha256=sha, conn=conn, authoritative=authoritative)
-
-
-def by_basis(conn: Any, operation: Mapping[str, Any], project_id: str | None, now: float, *,
-             authoritative: bool = True) -> str:
-    parsed = parse_basis(str(operation.get("authority_basis") or ""))
-    if parsed is None:
-        return REQUIRED
-    return by_grant(conn, parsed[0], parsed[1], agent_identity=str(operation.get("principal_identity") or ""),
-                    project_id=project_id, operation_name=str(operation.get("name") or ""), now=now,
-                    authoritative=authoritative)
-
-
-def provenance(row: Any, target_ref: str) -> dict[str, str]:
-    values = {"target_ref": target_ref}
-    if row is not None:
-        values.update({
-            "delegator_kind": str(row["delegator_kind"]),
-            "delegator_identity": str(row["delegator_identity"]),
-            "authority_basis": basis(str(row["id"]), str(row["terms_sha256"])),
-        })
-    return values
-
-
-def grant_code(conn: Any, principal: Any, name: str, project_id: str,
-               now: float | None = None) -> tuple[str, Mapping[str, str]]:
-    """THE check point: ``("", basis)`` when a LIVE grant for this agent AND this project names the operation.
-
-    Else the refusal code in Phase 7's order (required -> expired -> revoked)
-    and, for a historical row, its provenance for the refusal receipt.
-    """
-    import time as _time
-
-    now = _time.time() if now is None else now
-    identity = str(getattr(principal, "identity", "") or "")
-    code, row = by_identity(conn, identity, str(project_id or ""), name, now)
-    if code:
-        return code, (provenance(row, "") if code in {EXPIRED, REVOKED} else {})
-    return "", {"authority_basis": basis(str(row["id"]), str(row["terms_sha256"])),
-                "delegator_kind": str(row["delegator_kind"]),
-                "delegator_identity": str(row["delegator_identity"])}
-
-
-def frozen_grant_code(conn: Any, frozen: Mapping[str, Any] | None, *, agent_identity: str, project_id: str,
-                      now: float, authoritative: bool = False) -> str:
-    """A steward run's frozen grant (``{id, terms_sha256}``) re-checked now; "" for a run with none."""
-    if not frozen:
-        return ""
-    return by_grant(conn, str(frozen.get("id") or ""), str(frozen.get("terms_sha256") or ""),
-                    agent_identity=agent_identity, project_id=project_id, operation_name="project.run_steward",
-                    now=now, authoritative=authoritative)
-
-
-def grant_view(conn: Any, agent_identity: str, project_id: str, now: float) -> dict[str, Any] | None:
-    """The chip's projection for one (agent, project): ``{state, grant_id, expires_at}``; ``None`` = never granted."""
-    code, row = by_identity(conn, agent_identity, project_id, None, now)
-    if row is None or code == REQUIRED:
-        return None
-    state = {"": "LIVE", EXPIRED: "EXPIRED", REVOKED: "REVOKED"}[code]
-    return {"state": state, "grant_id": str(row["id"]), "expires_at": row["expires_at"]}
-
-
-class ProjectGrantRefused(Exception):
-    """A domain refusal inside a grant-table effect: the transaction rolls back."""
-
-    def __init__(self, code: str) -> None:
-        super().__init__(code)
-        self.code = code
-
-
-def grant_effect(*, grant_id: str, agent_identity: str, project_id: str, delegator_kind: str,
-                 delegator_identity: str, expires_at: float | None, operation_id: str, now: float) -> Any:
-    terms = terms_for(agent_identity, project_id)
-    sha = terms_sha256(terms, expires_at)
-
-    def effect(conn: Any) -> None:
-        # Local SQL on the supplied connection ONLY (the callback contract).
-        conn.execute(
-            f"UPDATE {_TABLE} SET state='REVOKED',revoked_at=?,revocation_reason='reapproved',updated_at=? "
-            "WHERE agent_identity=? AND project_id=? AND state='LIVE'",
-            (now, now, agent_identity, project_id),
-        )
-        conn.execute(
-            f"INSERT INTO {_TABLE}(id,agent_identity,project_id,delegator_kind,delegator_identity,operations_json,"
-            "terms_sha256,expires_at,state,revoked_at,revocation_reason,grant_operation_id,created_at,updated_at) "
-            "VALUES(?,?,?,?,?,?,?,?,'LIVE',NULL,'',?,?,?)",
-            (grant_id, agent_identity, project_id, delegator_kind, delegator_identity,
-             json.dumps(terms["operations"]), sha, expires_at, operation_id, now, now),
-        )
-
-    return effect
-
-
-def revoke_effect(*, agent_identity: str, project_id: str, reason: str, now: float) -> Any:
-    def effect(conn: Any) -> None:
-        changed = conn.execute(
-            f"UPDATE {_TABLE} SET state='REVOKED',revoked_at=?,revocation_reason=?,updated_at=? "
-            "WHERE agent_identity=? AND project_id=? AND state='LIVE'",
-            (now, reason, now, agent_identity, project_id),
-        ).rowcount
-        if changed != 1:
-            raise ProjectGrantRefused(REQUIRED)
-
-    return effect
 
 
 def agent_steward_child(name: str, principal: Any, parent_operation_id: str) -> bool:

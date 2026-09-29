@@ -782,3 +782,26 @@ def test_gate2_a_slow_cli_read_in_setup_or_recheck_never_blocks_the_hub(tmp_path
         assert read < 0.5, f"{call}: the read waited {read:.3f} s during the slow gh call"
     finally:
         hub.kill()
+
+
+# ── #694 merged: one authority table, one owner-press flag, one blocking_io flag ──
+
+
+def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -> None:
+    """``blocking_io`` (threading) lives on the descriptor; authority lives in ``mcp/tool_authority.py``.
+
+    The two axes differ (``connection.recheck`` is work yet blocks on gh; ``channel.discard`` is egress
+    yet writes only the database), so each has ONE source and this census ties them: every blocking
+    operation has an authority row, and the two sends are EGRESS, owner presses and blocking.
+    """
+    from holdspeak import operations
+    from holdspeak.kernel.channel_send import owner_press_operations
+    from holdspeak.mcp.tool_authority import EGRESS, TOOL_AUTHORITY
+
+    blocking = {d.name for d in operations.DESCRIPTORS if d.blocking_io}
+    assert blocking == {"channel.send", "channel.save_destination", "nudge.send", "connection.recheck"}
+    assert all(name in TOOL_AUTHORITY for name in blocking), blocking - set(TOOL_AUTHORITY)
+    for name in ("channel.send", "nudge.send"):
+        assert TOOL_AUTHORITY[name] == EGRESS and name in owner_press_operations() and name in blocking, name
+    # The kernel's steward-child refusal reads the SAME flag the descriptors declare (no second list).
+    assert owner_press_operations() == frozenset(d.name for d in operations.DESCRIPTORS if d.owner_press)
