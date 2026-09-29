@@ -27092,6 +27092,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -27217,6 +27218,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -27394,6 +27396,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -27509,6 +27512,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -27634,6 +27638,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -27746,6 +27751,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -27860,6 +27866,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -27980,6 +27987,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -28097,6 +28105,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -28218,6 +28227,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -28331,6 +28341,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -28462,6 +28473,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -28575,6 +28587,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -28695,6 +28708,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -28775,6 +28789,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -28904,6 +28919,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -29029,6 +29045,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -29156,6 +29173,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -29285,6 +29303,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -29407,6 +29426,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -29532,6 +29552,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -29657,6 +29678,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -29777,6 +29799,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -29891,6 +29914,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -30008,6 +30032,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -30124,6 +30149,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -30251,6 +30277,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -30378,6 +30405,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -30504,6 +30532,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -30584,6 +30613,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -30664,6 +30694,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -30744,6 +30775,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -30824,6 +30856,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -30939,6 +30972,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -31053,6 +31087,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -31167,6 +31202,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -31281,6 +31317,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -31404,6 +31441,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -31525,6 +31563,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -31648,6 +31687,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -31763,6 +31803,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -31891,6 +31932,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -32012,6 +32054,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -32124,6 +32167,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -32245,6 +32289,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -32373,6 +32418,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -32490,6 +32536,7 @@
         "tests/integration/test_steward_routes.py",
         "tests/integration/test_update_routes.py",
         "tests/integration/test_web_activity_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
@@ -33770,6 +33817,7 @@
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_threads_api.py",
         "tests/uat/test_conductor_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_capability_invocations.py",
         "tests/unit/test_engine_off_the_loop.py",
         "tests/unit/test_hs13103_remaining_obligations.py",
@@ -33846,6 +33894,7 @@
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_threads_api.py",
         "tests/uat/test_conductor_api.py",
+        "tests/unit/test_694_thread_never_sends.py",
         "tests/unit/test_capability_invocations.py",
         "tests/unit/test_engine_off_the_loop.py",
         "tests/unit/test_hs13103_remaining_obligations.py",
@@ -40046,7 +40095,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40123,7 +40173,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40255,7 +40306,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40323,7 +40375,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40407,7 +40460,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40474,7 +40528,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40559,7 +40614,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40634,7 +40690,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40711,7 +40768,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40779,7 +40837,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40864,7 +40923,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40941,7 +41001,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -41009,7 +41070,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -41086,7 +41148,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -41162,7 +41225,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -41237,7 +41301,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -41316,7 +41381,8 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/integration/test_interview_conversation.py",
         "tests/integration/test_phase200_working_context.py",
-        "tests/integration/test_threads_api.py"
+        "tests/integration/test_threads_api.py",
+        "tests/unit/test_694_thread_never_sends.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {

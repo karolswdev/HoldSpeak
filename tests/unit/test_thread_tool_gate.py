@@ -19,7 +19,7 @@ import pytest
 from holdspeak.db import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.thread_tools import (
-    OWNER_PRESS_TOOLS,
+    OWNER_ONLY_TOOLS,
     TOOL_NAMES,
     ThreadToolExecutor,
     ToolCallHandle,
@@ -324,9 +324,9 @@ class TestClassificationCensus:
         from holdspeak.mcp.tools import TOOLS as MCP_TOOLS
 
         mcp_names = {t["name"] for t in MCP_TOOLS}
-        # #694: an owner-press operation is classified too -- as never a
-        # thread tool (OWNER_PRESS_TOOLS, derived from its descriptor).
-        unclassified = mcp_names - TOOL_NAMES - OWNER_PRESS_TOOLS
+        # #694: an owner-only operation is classified too -- as never a
+        # thread tool (OWNER_ONLY_TOOLS, derived from the runtime's authority).
+        unclassified = mcp_names - TOOL_NAMES - OWNER_ONLY_TOOLS
         assert unclassified == set(), (
             f"Unclassified MCP tools (add them to thread_tools._TOOL_CLASSES): "
             f"{sorted(unclassified)}"
@@ -343,52 +343,77 @@ class TestClassificationCensus:
             f"{sorted(phantom)}"
         )
 
-    def test_an_owner_press_tool_is_never_a_thread_tool(self) -> None:
-        """#694 (Codex Astra counsel r1, P1): a thread runs its tools as the
-        owner, so an owner-press operation in the table lets a model press for
-        him. Never in the table, never in a palette, refused by name."""
+    #: #694 (Codex Astra counsels r1 and r2): every MCP tool only the owner
+    #: may be admitted to, classified by name. The derivation must produce
+    #: exactly this; a change is a decision someone makes here.
+    OWNER_ONLY = {
+        # the owner's presses (owner_press; r1, and the nudge ruling)
+        "channel.send", "channel.discard", "channel.save_destination", "channel.remove_destination",
+        "project.mark_update_delivered", "nudge.send",
+        # the Room's kernel owner-only set (kernel/project.OWNER_ONLY_OPERATIONS; r2)
+        "project.archive", "project.configure_steward", "project.decide_proposal", "project.accept_review",
+        "project.link", "project.unlink", "project.resource.add", "project.resource.remove",
+        "project.steward.trigger", "project.add_suggested_source", "connection.recheck",
+        "project.watch.test", "project.watch.evaluate", "project.watch.set_rules",
+        "project.watch.pause", "project.watch.resume", "project.watch.retire",
+        # the registry's owner_only (the hub's file custody, PHILO-5-02)
+        "meeting.import",
+    }
+
+    def test_an_owner_only_tool_is_never_a_thread_tool(self) -> None:
+        """A thread runs its tools as the owner, so an owner-only operation in
+        the table lets a model act for him (r1: a Send; r2: an archive and an
+        unattended steward policy). Never in the table, never in a palette,
+        refused by name."""
         from holdspeak.services.thread_tools import CHAT_PALETTE
         from holdspeak.services.thread_modes import MODE_SEEDS
 
-        assert {"channel.send", "channel.discard", "project.mark_update_delivered",
-                "channel.save_destination", "channel.remove_destination",
-                "nudge.send"} <= OWNER_PRESS_TOOLS  # nudge.send: Muad'Dib's ruling on #694
+        assert OWNER_ONLY_TOOLS == self.OWNER_ONLY, (
+            f"added={sorted(OWNER_ONLY_TOOLS - self.OWNER_ONLY)} gone={sorted(self.OWNER_ONLY - OWNER_ONLY_TOOLS)}")
         assert "channel.prepare" in TOOL_NAMES  # a model may prepare
-        assert not (OWNER_PRESS_TOOLS & TOOL_NAMES)
-        assert not (OWNER_PRESS_TOOLS & CHAT_PALETTE)
+        assert not (OWNER_ONLY_TOOLS & TOOL_NAMES)
+        assert not (OWNER_ONLY_TOOLS & CHAT_PALETTE)
         for mode in MODE_SEEDS:
-            assert not (OWNER_PRESS_TOOLS & mode.tools), mode.id
-        for name in OWNER_PRESS_TOOLS:
-            with pytest.raises(ValueError, match="owner's own press"):
+            assert not (OWNER_ONLY_TOOLS & mode.tools), mode.id
+        for name in OWNER_ONLY_TOOLS:
+            with pytest.raises(ValueError, match="owner's alone"):
                 tool_class(name)
 
-    def test_owner_principal_operations_are_decided_for_the_thread(self) -> None:
-        """Close the class (#694): every MCP-exposed operation that refuses a
-        non-owner principal is either an owner PRESS (never a thread tool) or
-        named here as an owner-principal tool a thread may offer. A new one
-        fails until someone decides which it is."""
-        import holdspeak.operations as operations
+    def test_the_kernel_refuses_by_the_same_set(self) -> None:
+        """One source of truth: the codec's non-owner refusal reads the set
+        the thread table is derived from, and that set covers every Room
+        operation outside the agent's grant and its prepare."""
+        import inspect
 
-        # Owner-principal (an agent is refused) but not the owner's press; they
-        # were thread tools before #694 and a thread acts as the owner.
-        # (nudge.send, a GitHub comment as the owner, was ruled an owner press.)
-        offered = {
-            "project.steward.trigger", "project.watch.inspect",
-            "project.watch.test", "project.watch.evaluate", "project.watch.set_rules",
-            "project.watch.pause", "project.watch.resume", "project.watch.retire",
-            "project.add_suggested_source", "connection.recheck",
-            "meeting.import",  # owner_only: the hub's file custody (PHILO-5-02)
-        }
+        from holdspeak.kernel import project as rooms
+        from holdspeak.kernel.project_codec import ProjectCodec
+
+        assert "rooms.OWNER_ONLY_OPERATIONS" in inspect.getsource(ProjectCodec.authorize)
+        assert rooms.OWNER_ONLY_OPERATIONS == (
+            rooms.PROJECT_KERNEL_OPERATIONS - rooms.PROJECT_GRANT_OPERATIONS - rooms.AGENT_PREPARE_OPERATIONS)
+
+    def test_owner_principal_operations_are_decided_for_the_thread(self) -> None:
+        """Close the class (#694): every MCP-exposed operation the runtime
+        refuses to a non-owner (the kernel set, the registry's owner_only, the
+        declared press, or an owner_principal_required refusal) is either
+        owner-only (never a thread tool) or named here as offered."""
+        import holdspeak.operations as operations
+        from holdspeak.kernel.project import OWNER_ONLY_OPERATIONS
+
+        # Declares owner_principal_required but is a read outside the kernel
+        # owner-only set: a thread may offer it.
+        offered = {"project.watch.inspect"}
         undecided = []
         for descriptor in operations.DESCRIPTORS:
-            owner_principal = descriptor.owner_only or any(
-                "owner_principal_required" in str(r) for r in descriptor.refusals)
             mcp = [e[len("mcp:"):] for e in descriptor.exposure if e.startswith("mcp:")]
+            kernel_owner = descriptor.name in OWNER_ONLY_OPERATIONS
+            owner_principal = kernel_owner or descriptor.owner_only or descriptor.owner_press or any(
+                "owner_principal_required" in str(r) for r in descriptor.refusals)
             if not owner_principal or not mcp:
                 continue
             for name in mcp:
-                if descriptor.owner_press:
-                    assert name in OWNER_PRESS_TOOLS and name not in TOOL_NAMES, name
+                if kernel_owner or descriptor.owner_only or descriptor.owner_press:
+                    assert name in OWNER_ONLY_TOOLS and name not in TOOL_NAMES, name
                 elif name not in offered:
                     undecided.append(name)
         assert not undecided, f"owner-principal operations with no thread decision: {sorted(undecided)}"

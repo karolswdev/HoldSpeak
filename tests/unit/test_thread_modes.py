@@ -118,7 +118,10 @@ class TestAllowLists:
         # (both evidence_read; the receipt is declared in the DESK palette,
         # tests/unit/test_philo7_article_xi.py).
         assert {"monday_brief.shelf_read", "kernel.receipt"} <= _DESK_TOOLS
-        assert len(_DESK_TOOLS) == 68
+        # #694 (Codex Astra counsel r2): - connection.recheck, a kernel
+        # owner-only operation (thread_tools.OWNER_ONLY_TOOLS).
+        assert "connection.recheck" not in _DESK_TOOLS
+        assert len(_DESK_TOOLS) == 67
 
     def test_chase_size(self) -> None:
         # Chase includes door.add_item which is a forward reference
@@ -127,7 +130,8 @@ class TestAllowLists:
         # HS-171: + heartbeat.status (evidence_read).
         # HS-172 + HS-173: meeting.proposals, project.suggested_sources, steward.nudges.
         # PHILO-5-02 + PHILO-7-02: + monday_brief.shelf_read, kernel.receipt (via Desk).
-        assert len(_CHASE_TOOLS) == 74
+        # #694: - connection.recheck (kernel owner-only, via Desk).
+        assert len(_CHASE_TOOLS) == 73
 
     def test_draft_empty(self) -> None:
         assert len(_DRAFT_TOOLS) == 0

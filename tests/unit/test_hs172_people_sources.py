@@ -578,9 +578,11 @@ class TestToolClassification:
         assert _TOOL_CLASSES["project.suggested_sources"][0] == "evidence_read"
 
     def test_project_add_suggested_source_classified(self) -> None:
-        from holdspeak.services.thread_tools import _TOOL_CLASSES
-        assert "project.add_suggested_source" in _TOOL_CLASSES
-        assert _TOOL_CLASSES["project.add_suggested_source"][0] == "effect_proposal"
+        # #694 (Codex Astra counsel r2): the kernel makes it owner-only, so it
+        # is classified as never a thread tool (fail-closed either way).
+        from holdspeak.services.thread_tools import OWNER_ONLY_TOOLS, _TOOL_CLASSES
+        assert "project.add_suggested_source" in OWNER_ONLY_TOOLS
+        assert "project.add_suggested_source" not in _TOOL_CLASSES
 
     def test_project_dismiss_suggested_source_classified(self) -> None:
         from holdspeak.services.thread_tools import _TOOL_CLASSES

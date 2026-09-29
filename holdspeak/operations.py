@@ -167,7 +167,7 @@ class OperationDescriptor:
     #: The owner's own press decides it (#694, Codex Astra counsel r1): no model
     #: and no agent acts it, in any thread mode (yolo, a remembered allow,
     #: confirm). The thread tool table derives from this flag
-    #: (``services/thread_tools.OWNER_PRESS_TOOLS``): such a tool is never
+    #: (``services/thread_tools.OWNER_ONLY_TOOLS``): such a tool is never
     #: offered to a model and never admitted from one. A model may PREPARE.
     owner_press: bool = False
     #: Article XI admission (PHILO-7-01 declares it for the desk slice; story

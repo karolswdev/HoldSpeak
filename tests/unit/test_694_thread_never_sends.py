@@ -182,3 +182,39 @@ def test_a_yolo_thread_cannot_post_a_nudge(hub: Any, monkeypatch: pytest.MonkeyP
     assert gh_calls == [], f"the model posted a GitHub comment as the owner: {gh_calls}"
     assert ops(h, "nudge.send") == [], ops(h, "nudge.send")
     assert all("nudge.send" not in palette for palette in model.palettes), model.palettes
+
+
+@pytest.mark.parametrize("tool", ["project.archive", "project.configure_steward"])
+def test_a_yolo_thread_cannot_change_the_room_for_the_owner(hub: Any, tool: str) -> None:
+    """Codex Astra counsel r2 on #694 (P1): the kernel makes these owner-only
+    (kernel/project.OWNER_ONLY_OPERATIONS), yet a yolo thread archived a real
+    project and enabled unattended steward work as the owner. The model is
+    not offered the tool; the project and its policy do not change."""
+    from holdspeak.config import Config
+
+    cfg = Config.load()
+    cfg.control_mode = "yolo"
+    cfg.save()
+    h = hub()
+    pid, _update = room(h, body="The thread must not change this Room.")
+    before_project = h.client.get(f"/api/projects/{pid}").json()
+    before_policy = h.client.get(f"/api/projects/{pid}/steward/policy").json()
+    arguments = {"project_id": pid} if tool == "project.archive" else {
+        "project_id": pid, "enabled": True, "unattended_enabled": True, "eligible_effect_kinds": ["github_comment"]}
+
+    mode = h.client.post("/api/recipes", json={"name": "Room mode", "kind": "mode", "tools": [tool]})
+    assert mode.status_code == 201, mode.text
+    thread = h.client.post("/api/threads", json={"title": "Room", "recipe_id": mode.json()["recipe"]["id"]})
+    assert thread.status_code == 201, thread.text
+    model = _ModelThatSends(tool=tool, arguments=arguments)
+    _assign_model(h, model)
+    _run_turn(h, thread.json()["id"])
+
+    assert model.calls >= 1
+    after_project = h.client.get(f"/api/projects/{pid}").json()
+    after_policy = h.client.get(f"/api/projects/{pid}/steward/policy").json()
+    assert after_project.get("is_archived") is False and after_project == before_project, \
+        f"the model changed the project as the owner: {after_project}"
+    assert after_policy == before_policy, f"the model changed the steward policy as the owner: {after_policy}"
+    assert ops(h, tool) == [], ops(h, tool)
+    assert all(tool not in palette for palette in model.palettes), model.palettes

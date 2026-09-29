@@ -95,10 +95,11 @@ class ProjectCodec:
             # Admitted as the run's child; its approval and its claim re-check
             # the frozen grant, so a refused child keeps its parent and receipt.
             return _steward_basis(admission, context or {})
-        if self.name not in rooms.PROJECT_GRANT_OPERATIONS:
+        if self.name in rooms.OWNER_ONLY_OPERATIONS:
             # PHILO-9-06 (found by the closing use): outside the owner's bound
             # no grant can ever admit it, so the code names the owner, never a
-            # delegation the agent could ask for.
+            # delegation the agent could ask for. #694: the set is data the
+            # thread tool table reads too.
             raise KernelRefused(rooms.OWNER_REQUIRED, provenance=target)
         # R4-1: the project is resolved from the stored run or update, never
         # from the request; stop is bound to the stored run's requester.

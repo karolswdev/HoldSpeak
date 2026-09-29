@@ -61,6 +61,13 @@ PROJECT_DELEGATION_OPERATIONS: frozenset[str] = frozenset({
 #: Scopes the atomic terminal writes, the claim and the recovery ONLY; never an authority set.
 PROJECT_KERNEL_OPERATIONS: frozenset[str] = (ROOM_ADMITTED | STEWARD_AND_CONNECTORS_ADMITTED | {STEWARD_EFFECT}
                                              | PROJECT_DELEGATION_OPERATIONS | CHANNEL_ADMITTED)
+#: #694 (Codex Astra counsel r2): the Room operations an AGENT can never be
+#: admitted to outside its own steward run -- no grant covers them and they
+#: are not the agent's prepare. ``KernelProjectCodec.authorize`` refuses a
+#: non-owner by this set, and the thread tool table excludes every one of
+#: them (``services/thread_tools.OWNER_ONLY_TOOLS``): one source of truth.
+OWNER_ONLY_OPERATIONS: frozenset[str] = (PROJECT_KERNEL_OPERATIONS - PROJECT_GRANT_OPERATIONS
+                                         - AGENT_PREPARE_OPERATIONS)
 #: The operations whose terminal receipt a daemon writes later (the beat, section 2).
 ASYNC_OPERATIONS: frozenset[str] = frozenset({"project.run_steward", "project.steward.trigger"})
 #: The steward's operations the startup recovery closes as ``hub_restart_during_steward``.

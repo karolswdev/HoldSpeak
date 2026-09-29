@@ -88,7 +88,7 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "proposal.dismiss":        ("effect_proposal",   False),
     # --- reviewer nudge (HS-173-04) ---
     "steward.nudges":          ("evidence_read",     False),
-    # nudge.send is an owner press (OWNER_PRESS_TOOLS; #694 ruling): never here.
+    # nudge.send is an owner press (OWNER_ONLY_TOOLS; #694 ruling): never here.
     "nudge.dismiss":           ("effect_proposal",   False),
     # --- monday brief ---
     "monday_brief.get":       ("evidence_read",     False),
@@ -120,7 +120,6 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "concierge.download": ("effect_proposal", False),
     "desk.needs_you":     ("evidence_read",   False),
     "meeting.run_intelligence": ("effect_proposal", False),
-    "meeting.import": ("effect_proposal", False),  # PHILO-5-02: the MCP import intake
     # --- coder family ---
     "coder.list":   ("evidence_read",     False),
     "coder.get":    ("evidence_read",     False),
@@ -243,48 +242,31 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "provider.confluence_connections": ("evidence_read", False),
     "provider.confluence_discover": ("evidence_read", False),
     "provider.confluence_validate_space": ("evidence_read", False),
-    "project.accept_review": ("effect_proposal", False),
-    "project.archive": ("effect_proposal", False),
-    "project.configure_steward": ("effect_proposal", False),
     "project.create": ("effect_proposal", False),
-    "project.decide_proposal": ("effect_proposal", False),
     "project.draft_update": ("effect_proposal", False),
-    "project.link": ("effect_proposal", False),
     "project.open_review": ("effect_proposal", False),
     "project.publish_update": ("effect_proposal", False),
     "project.restore": ("effect_proposal", False),
     "project.run_steward": ("effect_proposal", False),
-    "project.steward.trigger": ("effect_proposal", False),  # HS-167-02: desk-wide trigger, same class as run_steward
     "project.setup.answer": ("effect_proposal", False),
     "project.setup.finalize": ("effect_proposal", False),
     "project.setup.clarify_jira_scope": ("effect_proposal", False),  # HS-166
     "project.setup.start": ("effect_proposal", False),
     "project.setup.suggest": ("effect_proposal", False),
     "project.stop_steward": ("effect_proposal", False),
-    "project.unlink": ("effect_proposal", False),
     "project.update": ("effect_proposal", False),
     "project.update_draft": ("effect_proposal", False),
-    "project.watch.evaluate": ("effect_proposal", False),
-    "project.watch.pause": ("effect_proposal", False),
-    "project.watch.resume": ("effect_proposal", False),
-    "project.watch.retire": ("effect_proposal", False),
-    "project.watch.set_rules": ("effect_proposal", False),
-    "project.watch.test": ("effect_proposal", False),
     # PHILO-9-01: the Room's item and resource tools (MCP-only, in no thread palette).
     "project.item.list": ("evidence_read", False),
     "project.resource.list": ("evidence_read", False),
     "project.item.create": ("effect_proposal", False),
     "project.item.update": ("effect_proposal", False),
     "project.item.transition": ("effect_proposal", False),
-    "project.resource.add": ("effect_proposal", False),
-    "project.resource.remove": ("effect_proposal", False),
     # HS-172-06: suggested source tools
     "project.suggested_sources":         ("evidence_read",     False),
-    "project.add_suggested_source":      ("effect_proposal",   False),
     "project.dismiss_suggested_source":  ("effect_proposal",   False),
     # HS-168-02: connection tools (reads only -- no state mutation)
     "connection.list": ("evidence_read", False),
-    "connection.recheck": ("evidence_read", False),
     # HS-171-02: heartbeat family
     "heartbeat.status": ("evidence_read", False),
     "heartbeat.run_now": ("effect_proposal", False),
@@ -292,7 +274,9 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "heartbeat.notify_test": ("effect_proposal", False),
     # PHILO-10-01: the channel family. A model may read and PREPARE; the
     # owner's presses (send, discard, the destinations, the delivery mark) are
-    # OWNER_PRESS_TOOLS below, never in this table.
+    # OWNER_ONLY_TOOLS below, never in this table. (#694: so are the Room's
+    # owner-only operations -- archive, link, the steward policy, the watches,
+    # the resources, connection.recheck -- and meeting.import.)
     "channel.destinations": ("evidence_read", False),
     "channel.check_destination": ("evidence_read", False),
     "channel.preview": ("evidence_read", False),
@@ -316,28 +300,33 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
 }
 
 # Public accessors
-def _owner_press_tools() -> frozenset[str]:
-    """The MCP names of every operation the owner's own press decides.
+def _owner_only_tools() -> frozenset[str]:
+    """The MCP names of every operation only the owner may be admitted to.
 
-    Derived from the operation's declared authority
-    (``OperationDescriptor.owner_press``), not from its effect: a declared
-    effect sets a tool's class; it does not say who authorized the call
-    (#694, Codex Astra counsel r1). A thread runs its tools with the owner's
-    principal, so a model holding one of these would press for him.
+    Derived from authority, not effect (#694, Codex Astra counsels r1 and r2):
+    a declared effect sets a tool's class; it does not say who authorized the
+    call. A thread runs its tools with the owner's principal, so a model
+    holding one of these would act for him. Three sources, each the one the
+    runtime itself refuses a non-owner by: the kernel's
+    ``kernel/project.OWNER_ONLY_OPERATIONS`` (read by its codec's
+    ``authorize``), the registry's ``owner_only`` (``OperationRegistry
+    .authorize``), and the declared ``owner_press``.
     """
+    from ..kernel.project import OWNER_ONLY_OPERATIONS
     from ..operations import DESCRIPTORS
 
     return frozenset(
         exposure[len("mcp:"):]
-        for descriptor in DESCRIPTORS if descriptor.owner_press
+        for descriptor in DESCRIPTORS
+        if descriptor.owner_press or descriptor.owner_only or descriptor.name in OWNER_ONLY_OPERATIONS
         for exposure in descriptor.exposure if exposure.startswith("mcp:")
     )
 
 
 #: Classified for the gate, and never a thread tool in any mode: no palette
 #: offers one and :func:`tool_class` refuses one by name.
-OWNER_PRESS_TOOLS: frozenset[str] = _owner_press_tools()
-assert not (OWNER_PRESS_TOOLS & set(_TOOL_CLASSES)), sorted(OWNER_PRESS_TOOLS & set(_TOOL_CLASSES))
+OWNER_ONLY_TOOLS: frozenset[str] = _owner_only_tools()
+assert not (OWNER_ONLY_TOOLS & set(_TOOL_CLASSES)), sorted(OWNER_ONLY_TOOLS & set(_TOOL_CLASSES))
 
 TOOL_NAMES: frozenset[str] = frozenset(_TOOL_CLASSES)
 
@@ -371,8 +360,8 @@ assert CHAT_PALETTE <= TOOL_NAMES, sorted(CHAT_PALETTE - TOOL_NAMES)
 
 def tool_class(name: str) -> str:
     """Return the tool's class or raise ValueError (fail-closed)."""
-    if name in OWNER_PRESS_TOOLS:
-        raise ValueError(f"{name} is the owner's own press; a model never calls it")
+    if name in OWNER_ONLY_TOOLS:
+        raise ValueError(f"{name} is the owner's alone; a model never calls it")
     entry = _TOOL_CLASSES.get(name)
     if entry is None:
         raise ValueError(f"Unclassified tool: {name}")
@@ -853,7 +842,7 @@ class ThreadToolExecutor:
 
 
 __all__ = [
-    "OWNER_PRESS_TOOLS",
+    "OWNER_ONLY_TOOLS",
     "TOOL_NAMES",
     "TOOL_RESULT_BYTE_CAP",
     "ThreadToolExecutor",
