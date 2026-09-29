@@ -5,7 +5,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_a_known_failure_outlives_0/Payments ✗ LAST SEND FAILED THIS DEVICE"
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_a_known_failure_outlives_0/Payments ✗ LAST SEND FAILED THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -13,7 +13,7 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_a_known_failure_outlives_0/Payments/2026-09-29-payments-ledger-cutover-r1-e77c580d.md SEP 29 02:21"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_a_known_failure_outlives_0/Payments/2026-09-29-payments-ledger-cutover-r1-ad260acd.md SEP 29 03:49"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
@@ -24,7 +24,7 @@
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "98f270c4ea917b83ef7c81d82c2b0ab879cc9b14ec03e05e127edaffad769cbf",
+      "masked_sha": "c81b06698902ebc30d6a6159135875ab0493e3f092a23f22da4fa0fd2aa3cbf7",
       "modal": false,
       "named": [
         {
@@ -121,7 +121,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_a_known_failure_outlives_0/Payments"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_a_known_failure_outlives_0/Payments"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -157,14 +157,14 @@
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-29T08:21:22.002173+00:00",
-      "destination_id": "chd_9c08125d1dae6c3602d7baa7",
+      "created_at": "2026-09-29T09:49:51.833000+00:00",
+      "destination_id": "chd_261978a203c2580856c60060",
       "destination_name": "Folder Payments",
       "dispatch_seq": 1,
-      "dispatch_started_at": "2026-09-29T08:21:22.002173+00:00",
-      "document_ref": "project_update:pupd_37dd071eab494b13acf7440db31a8e45",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_a_known_failure_outlives_0/Payments/2026-09-29-payments-ledger-cutover-r1-e77c580d.md",
-      "id": "chs_e77c580de5a02a1695d68803",
+      "dispatch_started_at": "2026-09-29T09:49:51.833000+00:00",
+      "document_ref": "project_update:pupd_82f0e052853842ea80accf5bae9fc382",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_a_known_failure_outlives_0/Payments/2026-09-29-payments-ledger-cutover-r1-ad260acd.md",
+      "id": "chs_ad260acde249e1677c63b3f6",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -175,32 +175,32 @@
         "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
       },
       "proof": {
-        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_a_known_failure_outlives_0/Payments/2026-09-29-payments-ledger-cutover-r1-e77c580d.md",
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_a_known_failure_outlives_0/Payments/2026-09-29-payments-ledger-cutover-r1-ad260acd.md",
         "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
         "size": 286
       },
       "reason": null,
-      "send_operation_id": "op_7b745e0512cf4f759df86f8863c240b4",
-      "settled_at": "2026-09-29T08:21:22+00:00",
+      "send_operation_id": "op_d4ad7dfc08db420ab978cea5b42c1c92",
+      "settled_at": "2026-09-29T09:49:51+00:00",
       "size": 286,
       "state": "sent",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_a_known_failure_outlives_0/Payments"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_a_known_failure_outlives_0/Payments"
       },
-      "target_digest": "eee38d18fe488ad0ba53254936b8696e8aa6e987c2076c938684632548c81e62"
+      "target_digest": "fc3c7085013b76b6e47db01baec3fbf95c55b75a99aeef1f489f37aecc2ca506"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-29T08:21:22.657596+00:00",
-      "destination_id": "chd_9c08125d1dae6c3602d7baa7",
+      "created_at": "2026-09-29T09:49:52.481165+00:00",
+      "destination_id": "chd_261978a203c2580856c60060",
       "destination_name": "Folder Payments",
       "dispatch_seq": 2,
-      "dispatch_started_at": "2026-09-29T08:21:22.657596+00:00",
-      "document_ref": "project_update:pupd_37dd071eab494b13acf7440db31a8e45",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_a_known_failure_outlives_0/Payments/2026-09-29-payments-ledger-cutover-r1-031f28fa.md",
-      "id": "chs_031f28fa55c7e9cc1c5a9117",
+      "dispatch_started_at": "2026-09-29T09:49:52.481165+00:00",
+      "document_ref": "project_update:pupd_82f0e052853842ea80accf5bae9fc382",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_a_known_failure_outlives_0/Payments/2026-09-29-payments-ledger-cutover-r1-b894a61b.md",
+      "id": "chs_b894a61b3a11a5308c521ae9",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -212,14 +212,14 @@
       },
       "proof": null,
       "reason": "permission_denied",
-      "send_operation_id": "op_b51c59a21ec941dba1cfb00ce0ef9b37",
-      "settled_at": "2026-09-29T08:21:22+00:00",
+      "send_operation_id": "op_79ec64eec23446ed8ce25058956c2fbb",
+      "settled_at": "2026-09-29T09:49:52+00:00",
       "size": 286,
       "state": "failed",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_a_known_failure_outlives_0/Payments"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_a_known_failure_outlives_0/Payments"
       },
-      "target_digest": "eee38d18fe488ad0ba53254936b8696e8aa6e987c2076c938684632548c81e62"
+      "target_digest": "fc3c7085013b76b6e47db01baec3fbf95c55b75a99aeef1f489f37aecc2ca506"
     }
   ]
 }

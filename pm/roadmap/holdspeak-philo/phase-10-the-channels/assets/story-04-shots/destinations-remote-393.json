@@ -18,7 +18,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "c33fd03c96fc6c6ce94aab9d553cfe8387a465ede4e3f19ad1da60c22969430a",
+      "masked_sha": "afc40e856d02514ab2d8b97e7327c560409b8d0e61cebbc8980eacee794f22a4",
       "modal": false,
       "named": [
         {
@@ -176,7 +176,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "42c9b2dc888189ebe918a3513790a7b56f85e35f864eddff7f44ac956f1c69ba",
+      "masked_sha": "31f9acb75a3f4871b44e772e25cddc17e70c0cd9bc793535edb5b6395678bf2a",
       "modal": false,
       "named": [
         {
@@ -290,7 +290,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "4756e906a51d52a019c97378cfd6e95f5e90d6e103098b99b2175d5d30228922",
+      "masked_sha": "65f383ab3563ded01786183aeda9ebc5846f7f8b4464bb8199d84f31b5243181",
       "modal": false,
       "named": [
         {
@@ -445,8 +445,8 @@
         "last_checked_at": null,
         "state": "never_checked"
       },
-      "created_at": "2026-09-29T08:18:25+00:00",
-      "id": "chd_fa644f54ff2720991d4d013f",
+      "created_at": "2026-09-29T09:49:40+00:00",
+      "id": "chd_3dc16801d8b3c017a22483c2",
       "name": "acme/Payments #42",
       "parked_at": null,
       "state": "active",
@@ -468,11 +468,11 @@
       "channel": "jira",
       "connection": {
         "id": "wpc_jira_acme.atlassian.net|owner@acme.example",
-        "last_checked_at": "2026-09-29T08:18:22.234986+00:00",
+        "last_checked_at": "2026-09-29T09:49:37.762378+00:00",
         "state": "connected"
       },
-      "created_at": "2026-09-29T08:18:27+00:00",
-      "id": "chd_ce400943704a99cf084e3a3a",
+      "created_at": "2026-09-29T09:49:43+00:00",
+      "id": "chd_a617842d1cc77ea1acdf4734",
       "name": "Jira PAY-118",
       "parked_at": null,
       "state": "active",
@@ -491,11 +491,11 @@
       "channel": "confluence",
       "connection": {
         "id": "wpc_confluence_acme.atlassian.net|owner@acme.example",
-        "last_checked_at": "2026-09-29T08:18:22.243911+00:00",
+        "last_checked_at": "2026-09-29T09:49:37.769905+00:00",
         "state": "connected"
       },
-      "created_at": "2026-09-29T08:18:28+00:00",
-      "id": "chd_2055e192abd74f6f4dd39728",
+      "created_at": "2026-09-29T09:49:43+00:00",
+      "id": "chd_53225395bbed22a8195bf8af",
       "name": "Confluence space 98304",
       "parked_at": null,
       "state": "active",

@@ -157,7 +157,7 @@
       ],
       "h_overflow": false,
       "history": [
-        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 02:23"
+        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 03:50"
       ],
       "history_head": "DELIVERY",
       "history_outcomes": [
@@ -331,7 +331,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 02:23 ACME.ATLASSIAN.NET",
+        "● Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 03:50 ACME.ATLASSIAN.NET",
         "○ Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ACME.ATLASSIAN.NET"
       ],
       "egress_chips": [
@@ -341,8 +341,8 @@
       ],
       "h_overflow": false,
       "history": [
-        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 02:23",
-        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 02:23"
+        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 03:50",
+        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 03:50"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
@@ -350,11 +350,11 @@
         "sent"
       ],
       "last_chips": [
-        "✓ COMMENTED 02:23"
+        "✓ COMMENTED 03:50"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "86a4db975bc7d03da0362723bd18be29a307c98802b8497cb62b3b07e1cd7519",
+      "masked_sha": "18b8a2ebcc1f0d8716d8cc777c6d943d7e49b96e735d7298feb6d55fe61f30dd",
       "modal": false,
       "named": [
         {
@@ -526,7 +526,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 02:23 ACME.ATLASSIAN.NET",
+        "○ Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 03:50 ACME.ATLASSIAN.NET",
         "● Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ACME.ATLASSIAN.NET"
       ],
       "egress_chips": [
@@ -536,8 +536,8 @@
       ],
       "h_overflow": false,
       "history": [
-        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 02:23",
-        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 02:23"
+        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 03:50",
+        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 03:50"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
@@ -545,11 +545,11 @@
         "sent"
       ],
       "last_chips": [
-        "✓ COMMENTED 02:23"
+        "✓ COMMENTED 03:50"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "bc66b993b1ec78550be1c4ca1439301b577dd5938964c85266f5a80de79fc5d4",
+      "masked_sha": "8424ec5d16c6686314f72ab9a618416a4f1fb8150006119ccc50a38c5a889653",
       "modal": false,
       "named": [
         {
@@ -707,7 +707,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 02:23 ACME.ATLASSIAN.NET",
+        "○ Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 03:50 ACME.ATLASSIAN.NET",
         "● Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ACME.ATLASSIAN.NET"
       ],
       "egress_chips": [
@@ -717,8 +717,8 @@
       ],
       "h_overflow": false,
       "history": [
-        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 02:23",
-        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 02:23"
+        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 03:50",
+        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 03:50"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
@@ -726,11 +726,11 @@
         "sent"
       ],
       "last_chips": [
-        "✓ COMMENTED 02:23"
+        "✓ COMMENTED 03:50"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "635b5fda6adf814a7ff3131cb2552e655ea94a1a044ffa32215a7fc6c0c8cd9b",
+      "masked_sha": "e6c604eed572f0276f07823bec951df71e5f50bbe6fe0c00c3405c302f7eb85e",
       "modal": false,
       "named": [
         {
@@ -888,8 +888,8 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 02:23 ACME.ATLASSIAN.NET",
-        "● Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ✓ BLOG POSTED 02:23 ACME.ATLASSIAN.NET"
+        "○ Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 03:50 ACME.ATLASSIAN.NET",
+        "● Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ✓ BLOG POSTED 03:50 ACME.ATLASSIAN.NET"
       ],
       "egress_chips": [
         "ACME.ATLASSIAN.NET:cloud",
@@ -898,9 +898,9 @@
       ],
       "h_overflow": false,
       "history": [
-        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 02:23",
-        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 02:23",
-        "✓ Confluence space 98304 BLOG POSTED SPACE 98304 SEP 29 02:23"
+        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 03:50",
+        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 03:50",
+        "✓ Confluence space 98304 BLOG POSTED SPACE 98304 SEP 29 03:50"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -909,12 +909,12 @@
         "sent"
       ],
       "last_chips": [
-        "✓ COMMENTED 02:23",
-        "✓ BLOG POSTED 02:23"
+        "✓ COMMENTED 03:50",
+        "✓ BLOG POSTED 03:50"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "e15c4093de1d68b1ee8ddc6d7f66ae1830bec25e4da3b8ed23e972f8018c1683",
+      "masked_sha": "ceefa901e3d88bc0784e7867494082319573e0460a7fa56eb4bceb7ef674d012",
       "modal": false,
       "named": [
         {
@@ -1102,8 +1102,8 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 02:23 ACME.ATLASSIAN.NET",
-        "○ Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ✓ BLOG POSTED 02:23 ACME.ATLASSIAN.NET"
+        "○ Jira PAY-121 JIRA PAY-121 ✓ CONNECTED ✓ COMMENTED 03:50 ACME.ATLASSIAN.NET",
+        "○ Confluence space 98304 CONFLUENCE SPACE 98304 ✓ CONNECTED ✓ BLOG POSTED 03:50 ACME.ATLASSIAN.NET"
       ],
       "egress_chips": [
         "ACME.ATLASSIAN.NET:cloud",
@@ -1111,9 +1111,9 @@
       ],
       "h_overflow": false,
       "history": [
-        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 02:23",
-        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 02:23",
-        "✓ Confluence space 98304 BLOG POSTED SPACE 98304 SEP 29 02:23"
+        "⚠ RESULT UNKNOWN · CHECK Jira PAY-121 TIMED OUT Check SEP 29 03:50",
+        "✓ Jira PAY-121 COMMENTED PAY-121 SEP 29 03:50",
+        "✓ Confluence space 98304 BLOG POSTED SPACE 98304 SEP 29 03:50"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -1122,12 +1122,12 @@
         "sent"
       ],
       "last_chips": [
-        "✓ COMMENTED 02:23",
-        "✓ BLOG POSTED 02:23"
+        "✓ COMMENTED 03:50",
+        "✓ BLOG POSTED 03:50"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "7f125de2ba55c626be6fc4f635b9c08384d85cdd9089555faef04b9a6a54f572",
+      "masked_sha": "c869ee6fb4707a2bdd090eb8376f6fe013068769ae9ce991c576bdece3e43b46",
       "modal": false,
       "named": [
         {
@@ -1268,39 +1268,39 @@
   "hub_deliveries": [
     {
       "channel": "jira",
-      "delivered_at": "2026-09-29T08:23:37.694752+00:00",
+      "delivered_at": "2026-09-29T09:50:30.958483+00:00",
       "delivered_to": "Jira PAY-121",
-      "id": "pdel_c823e5ff6054a028",
-      "operation_id": "op_fdd18edc7bcd4313bfee57fd2f51d227",
+      "id": "pdel_47d23a3756ec2066",
+      "operation_id": "op_a63d8a1672e04f67a0fd8a5b9027bcc7",
       "outcome": "unknown",
-      "project_id": "proj-2c6c0228be20",
+      "project_id": "proj-d8969f79d0c4",
       "proof_json": null,
-      "send_id": "chs_c823e5ff6054a028b812e789",
-      "update_id": "pupd_58d8ab7362ff4dd0b562f759d1ef60a4"
+      "send_id": "chs_47d23a3756ec2066f2bb26e8",
+      "update_id": "pupd_a4a0ed76965042c7b50c0b3bc1f1d3b7"
     },
     {
       "channel": "jira",
-      "delivered_at": "2026-09-29T08:23:41.735207+00:00",
+      "delivered_at": "2026-09-29T09:50:35.042449+00:00",
       "delivered_to": "Jira PAY-121",
-      "id": "pdel_7c46fdbcb9e801a1",
-      "operation_id": "op_d0cfcccb7afd4efebf8556b7382a9ec7",
+      "id": "pdel_cabc272e56c163cb",
+      "operation_id": "op_6a8b5eaeb9ee476ba2e2b83cad355d88",
       "outcome": "sent",
-      "project_id": "proj-2c6c0228be20",
+      "project_id": "proj-d8969f79d0c4",
       "proof_json": "{\"id\":\"10042\",\"key\":\"PAY-121\",\"url\":\"https://acme.atlassian.net/rest/api/3/issue/10001/comment/10042\"}",
-      "send_id": "chs_7c46fdbcb9e801a12c8a226c",
-      "update_id": "pupd_58d8ab7362ff4dd0b562f759d1ef60a4"
+      "send_id": "chs_cabc272e56c163cb72bfe1de",
+      "update_id": "pupd_a4a0ed76965042c7b50c0b3bc1f1d3b7"
     },
     {
       "channel": "confluence",
-      "delivered_at": "2026-09-29T08:23:50.039281+00:00",
+      "delivered_at": "2026-09-29T09:50:43.225598+00:00",
       "delivered_to": "Confluence space 98304",
-      "id": "pdel_447553cfd075d584",
-      "operation_id": "op_44f86efee4be4f828b9cd5bd63ef40c1",
+      "id": "pdel_8d52489c469f3cfc",
+      "operation_id": "op_244a8850748041f382524a508f105797",
       "outcome": "sent",
-      "project_id": "proj-2c6c0228be20",
+      "project_id": "proj-d8969f79d0c4",
       "proof_json": "{\"id\":\"5550001\",\"url\":\"/spaces/OPS/blog/5550001\"}",
-      "send_id": "chs_447553cfd075d584112646c7",
-      "update_id": "pupd_58d8ab7362ff4dd0b562f759d1ef60a4"
+      "send_id": "chs_8d52489c469f3cfccb1f9418",
+      "update_id": "pupd_a4a0ed76965042c7b50c0b3bc1f1d3b7"
     }
   ],
   "hub_sends": [
@@ -1311,14 +1311,14 @@
       },
       "badge": "cloud",
       "channel": "jira",
-      "created_at": "2026-09-29T08:23:37.694752+00:00",
-      "destination_id": "chd_1e5248faaeaf07083f376913",
+      "created_at": "2026-09-29T09:50:30.958483+00:00",
+      "destination_id": "chd_8acade8e82d2fbfb828bb07e",
       "destination_name": "Jira PAY-121",
       "dispatch_seq": 1,
-      "dispatch_started_at": "2026-09-29T08:23:37.694752+00:00",
-      "document_ref": "project_update:pupd_58d8ab7362ff4dd0b562f759d1ef60a4",
+      "dispatch_started_at": "2026-09-29T09:50:30.958483+00:00",
+      "document_ref": "project_update:pupd_a4a0ed76965042c7b50c0b3bc1f1d3b7",
       "file_path": null,
-      "id": "chs_c823e5ff6054a028b812e789",
+      "id": "chs_47d23a3756ec2066f2bb26e8",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -1330,8 +1330,8 @@
       },
       "proof": null,
       "reason": "timeout",
-      "send_operation_id": "op_fdd18edc7bcd4313bfee57fd2f51d227",
-      "settled_at": "2026-09-29T08:23:37+00:00",
+      "send_operation_id": "op_a63d8a1672e04f67a0fd8a5b9027bcc7",
+      "settled_at": "2026-09-29T09:50:30+00:00",
       "size": 286,
       "state": "unknown",
       "target": {
@@ -1346,14 +1346,14 @@
       },
       "badge": "cloud",
       "channel": "jira",
-      "created_at": "2026-09-29T08:23:41.735207+00:00",
-      "destination_id": "chd_1e5248faaeaf07083f376913",
+      "created_at": "2026-09-29T09:50:35.042449+00:00",
+      "destination_id": "chd_8acade8e82d2fbfb828bb07e",
       "destination_name": "Jira PAY-121",
       "dispatch_seq": 2,
-      "dispatch_started_at": "2026-09-29T08:23:41.735207+00:00",
-      "document_ref": "project_update:pupd_58d8ab7362ff4dd0b562f759d1ef60a4",
+      "dispatch_started_at": "2026-09-29T09:50:35.042449+00:00",
+      "document_ref": "project_update:pupd_a4a0ed76965042c7b50c0b3bc1f1d3b7",
       "file_path": null,
-      "id": "chs_7c46fdbcb9e801a12c8a226c",
+      "id": "chs_cabc272e56c163cb72bfe1de",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -1369,8 +1369,8 @@
         "url": "https://acme.atlassian.net/rest/api/3/issue/10001/comment/10042"
       },
       "reason": null,
-      "send_operation_id": "op_d0cfcccb7afd4efebf8556b7382a9ec7",
-      "settled_at": "2026-09-29T08:23:41+00:00",
+      "send_operation_id": "op_6a8b5eaeb9ee476ba2e2b83cad355d88",
+      "settled_at": "2026-09-29T09:50:35+00:00",
       "size": 286,
       "state": "sent",
       "target": {
@@ -1385,14 +1385,14 @@
       },
       "badge": "cloud",
       "channel": "confluence",
-      "created_at": "2026-09-29T08:23:50.039281+00:00",
-      "destination_id": "chd_69c829b2672ebc34aa3a5282",
+      "created_at": "2026-09-29T09:50:43.225598+00:00",
+      "destination_id": "chd_b192f05ea8d45a836be00383",
       "destination_name": "Confluence space 98304",
       "dispatch_seq": 3,
-      "dispatch_started_at": "2026-09-29T08:23:50.039281+00:00",
-      "document_ref": "project_update:pupd_58d8ab7362ff4dd0b562f759d1ef60a4",
+      "dispatch_started_at": "2026-09-29T09:50:43.225598+00:00",
+      "document_ref": "project_update:pupd_a4a0ed76965042c7b50c0b3bc1f1d3b7",
       "file_path": null,
-      "id": "chs_447553cfd075d584112646c7",
+      "id": "chs_8d52489c469f3cfccb1f9418",
       "payload_digest": "a3fb2d70f3710b0c9533eaa50124bc05e44879756f1661f11b18d6c235047485",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -1408,8 +1408,8 @@
         "url": "/spaces/OPS/blog/5550001"
       },
       "reason": null,
-      "send_operation_id": "op_44f86efee4be4f828b9cd5bd63ef40c1",
-      "settled_at": "2026-09-29T08:23:50+00:00",
+      "send_operation_id": "op_244a8850748041f382524a508f105797",
+      "settled_at": "2026-09-29T09:50:43+00:00",
       "size": 473,
       "state": "sent",
       "target": {

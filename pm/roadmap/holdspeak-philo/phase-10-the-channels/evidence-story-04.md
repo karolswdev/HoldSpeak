@@ -180,3 +180,69 @@ Architecture metadata validation passed.
 Architecture documentation checked (10 outputs).
 Documentation coverage checked.
 ```
+
+### Captured run — 2026-09-29T09:48:57Z
+
+- **Command:** `bash -c set -o pipefail; H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOLDSPEAK_EVIDENCE_WRITE=1 HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm .venv/bin/python -m pytest -q -n 4 --basetemp=$H/pt tests/unit/test_kernel_effect_fence.py tests/unit/test_philo_graph_atlas.py tests/unit/test_ux_canon_ratchet.py tests/e2e/test_philo10_04_send_face_glass.py tests/unit/test_philo10_04_atlassian_sign_in.py tests/unit/test_philo10_cli_channels.py 2>&1 | tail -2`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 625168bf11817e535342f8127f52b9034bd569bb
+
+```text
+...................................                                      [100%]
+179 passed in 149.20s (0:02:29)
+```
+
+### Captured run — 2026-09-29T09:51:33Z
+
+- **Command:** `bash -c H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOME=$H npm_config_cache=/Users/karol/.npm .venv/bin/python scripts/check_web_baseline.py --run 2>&1 | grep -A3 "BRANCH-NEW\|Suite totals"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 625168bf11817e535342f8127f52b9034bd569bb
+
+```text
+BRANCH-NEW (1):
+  BRANCH-NEW: src/pages/cores/__tests__/ModelLibraryCore.test.tsx > ModelLibraryCore > keeps radio selection inert, restores Add focus, and maps Mod+Enter to the sole action
+
+Suite totals: 2965 passed, 1 failed, 0 skipped
+
+VERDICT: BRANCH-NEW FAILURES: 1
+```
+
+### Captured run — 2026-09-29T09:52:06Z
+
+- **Command:** `bash -c set -e; P=.venv/bin/python; python3 -m unittest discover -s tests/unit -p test_docs_navigation.py 2>&1 | tail -1; $P scripts/check_docs.py; $P scripts/check_docs.py docs/internal/philo/*.md docs/internal/philo/adr/*.md docs/internal/philo/checks/*.md docs/internal/philo/visuals/README.md docs/internal/philo/desktop-prototypes/README.md agent/skills/*/SKILL.md; $P scripts/philo_repository_census.py --check; $P scripts/philo_api_reference.py --check; $P scripts/philo_boundary_census.py --check; $P scripts/philo_doctor_reference.py --check; $P scripts/philo_config_reference.py --check; $P scripts/philo_graph_reference.py --check 2>&1 | tail -1; $P scripts/validate_architecture.py; $P scripts/generate_capability_docs.py --check; $P scripts/check_doc_coverage.py --check`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 625168bf11817e535342f8127f52b9034bd569bb
+
+```text
+OK
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+Repository census: 5 outputs verified.
+API reference checked
+Boundary candidate census checked
+Doctor reference: 41 check functions
+Configuration declaration reference is current
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+Architecture documentation checked (10 outputs).
+Documentation coverage checked.
+```
+
+### Captured run — 2026-09-29T09:52:31Z
+
+- **Command:** `bash -c cd web && npx vitest run src/pages/cores/__tests__/ModelLibraryCore.test.tsx 2>&1 | grep -E "Test Files|Tests "; cd .. && H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOME=$H npm_config_cache=/Users/karol/.npm .venv/bin/python scripts/check_web_baseline.py --run 2>&1 | grep -A3 "BRANCH-NEW\|Suite totals"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 625168bf11817e535342f8127f52b9034bd569bb
+
+```text
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+Suite totals: 2966 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```

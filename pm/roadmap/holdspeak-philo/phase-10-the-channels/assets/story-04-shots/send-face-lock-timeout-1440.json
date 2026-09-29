@@ -130,20 +130,20 @@
     "code": "lock_timeout",
     "error_code": "lock_timeout",
     "message": "Another HoldSpeak process holds the acli lock",
-    "operation_id": "op_735f39b43add496783f2f97967198e6a",
+    "operation_id": "op_77ba253a0a3049a1a90d0c83dda681d6",
     "receipt": {
       "actor_identity": "owner-session",
       "actor_kind": "owner",
       "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-      "created_at": 1790669876.457393,
+      "created_at": 1790675354.505559,
       "delegator_identity": "",
       "delegator_kind": "",
-      "operation_id": "op_735f39b43add496783f2f97967198e6a",
+      "operation_id": "op_77ba253a0a3049a1a90d0c83dda681d6",
       "outcome": "lock_timeout",
-      "receipt_id": "rcpt_08d66818a2304d35880fe8eccffd40f7",
+      "receipt_id": "rcpt_01a2b628459e47b198025fcb7b0c542b",
       "result_ref": "",
       "state": "refused",
-      "target_ref": "project_update:pupd_4f49a92debd24762879f66bf894bc24f"
+      "target_ref": "project_update:pupd_7ebe68b49c6a4eb1a279f73080e5c0ae"
     },
     "status": 409,
     "success": false

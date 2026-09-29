@@ -143,7 +143,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "e900113ba5bd02668b628a5fdd5c35bb5f69a11e54d65f0d4682a033c753946e",
+      "masked_sha": "fb297a4349bc80a853ee8583a8bee5c13097a9bf9adfa0f91b5d41345770ee4a",
       "modal": false,
       "named": [
         {
@@ -705,8 +705,8 @@
       "dest_head": "DESTINATIONS 2",
       "dest_parked": [],
       "destinations": [
-        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Drive SYNCED FOLDER",
-        "▸ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports THIS DEVICE"
+        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Drive SYNCED FOLDER",
+        "▸ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports THIS DEVICE"
       ],
       "egress_chips": [
         "SYNCED FOLDER:cloud",
@@ -719,7 +719,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "01eca03cfb13366f376be2bbb33b2fa7246737e212f74980ec75b662f1b270c8",
+      "masked_sha": "10d18f29557bd3a83a4d13da28c9537b73b33ae41268baa95d357f097b100f46",
       "modal": false,
       "named": [
         {
@@ -801,8 +801,8 @@
       "dest_head": "DESTINATIONS 2",
       "dest_parked": [],
       "destinations": [
-        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Drive SYNCED FOLDER",
-        "▾ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports THIS DEVICE"
+        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Drive SYNCED FOLDER",
+        "▾ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports THIS DEVICE"
       ],
       "egress_chips": [
         "SYNCED FOLDER:cloud",
@@ -816,7 +816,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "29d31aa196d7a9ba47e2c19aec5c73048c86b6614e4d5c24dc528b9af093841e",
+      "masked_sha": "d3af515caff2a2dd9c867ca9513d5683186a3e0d9b17fd50f2618e9e69cd461b",
       "modal": false,
       "named": [
         {
@@ -943,8 +943,8 @@
       "dest_head": "DESTINATIONS 2",
       "dest_parked": [],
       "destinations": [
-        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Drive SYNCED FOLDER",
-        "▾ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports THIS DEVICE"
+        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Drive SYNCED FOLDER",
+        "▾ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports THIS DEVICE"
       ],
       "egress_chips": [
         "SYNCED FOLDER:cloud",
@@ -958,7 +958,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "c7a49df765774c0e8d1cd4578efafd97e4b9c520e7ab8fcca902cc01041cfbac",
+      "masked_sha": "41c05d8505b608e546f5e28f71372792f243b0af6fc86421954bada441d1ae8b",
       "modal": false,
       "named": [
         {
@@ -1120,11 +1120,11 @@
       "body_overflow_x": false,
       "dest_head": "DESTINATIONS 2",
       "dest_parked": [
-        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports PARKED SEP 29 02:21"
+        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports PARKED SEP 29 03:50"
       ],
       "destinations": [
-        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Drive SYNCED FOLDER",
-        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports THIS DEVICE"
+        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Drive SYNCED FOLDER",
+        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports THIS DEVICE"
       ],
       "egress_chips": [
         "SYNCED FOLDER:cloud",
@@ -1137,7 +1137,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "414c2e86927cb0bbb2c67b7cb644f2fa6f2bc2ca6477ed5a8659814248d61006",
+      "masked_sha": "7d3506fd41d6811f36831ad7d2e9e10ce8b6f21fb81bc2520a25bb11cc5f461c",
       "modal": false,
       "named": [
         {
@@ -1218,11 +1218,11 @@
       "body_overflow_x": false,
       "dest_head": "DESTINATIONS 2",
       "dest_parked": [
-        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports PARKED SEP 29 02:21"
+        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports PARKED SEP 29 03:50"
       ],
       "destinations": [
-        "▾ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Drive SYNCED FOLDER",
-        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports THIS DEVICE"
+        "▾ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Drive SYNCED FOLDER",
+        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports THIS DEVICE"
       ],
       "egress_chips": [
         "SYNCED FOLDER:cloud",
@@ -1236,7 +1236,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "dcce0a7da1f123280143974c7183f0060ef29dee96a9204a7f3a34a211ce8f6b",
+      "masked_sha": "46e7ceec408d487a1c995cfa968e30d9069b69eb485b4ecdf14bf61b3c92dddd",
       "modal": false,
       "named": [
         {
@@ -1362,11 +1362,11 @@
       "body_overflow_x": false,
       "dest_head": "DESTINATIONS 2",
       "dest_parked": [
-        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports PARKED SEP 29 02:21"
+        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports PARKED SEP 29 03:50"
       ],
       "destinations": [
-        "▾ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Drive SYNCED FOLDER",
-        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports THIS DEVICE"
+        "▾ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Drive SYNCED FOLDER",
+        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports THIS DEVICE"
       ],
       "egress_chips": [
         "SYNCED FOLDER:cloud",
@@ -1380,7 +1380,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "23f19ba1df504bbf180c3ef6c725260744508e7a6253fd10a24b5948242afa84",
+      "masked_sha": "b8cb6b2d489f579190be9592255e9844a47848190a6a716b226bb6afe3751e15",
       "modal": false,
       "named": [
         {
@@ -1527,11 +1527,11 @@
       "body_overflow_x": false,
       "dest_head": "DESTINATIONS 1",
       "dest_parked": [
-        "Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Drive PARKED SEP 29 02:22",
-        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports PARKED SEP 29 02:21"
+        "Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Drive PARKED SEP 29 03:50",
+        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports PARKED SEP 29 03:50"
       ],
       "destinations": [
-        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports THIS DEVICE"
+        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local"
@@ -1543,7 +1543,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "d120489c4bfef21db5728dbbdd32416251f897d9980f167631e2b07dae267905",
+      "masked_sha": "c44c080ab3e091649c3bb51f5ff77cb713b237552a057eaa2324119815701c76",
       "modal": false,
       "named": [
         {
@@ -1672,48 +1672,48 @@
       "badge": "cloud",
       "channel": "file",
       "connection": null,
-      "created_at": "2026-09-29T08:21:50+00:00",
-      "id": "chd_7cd488b35d5b264ad78bfd0a",
+      "created_at": "2026-09-29T09:50:20+00:00",
+      "id": "chd_50d1f66dcfcd268a6f76a683",
       "name": "Folder Drive",
-      "parked_at": "2026-09-29T08:22:02+00:00",
+      "parked_at": "2026-09-29T09:50:32+00:00",
       "state": "parked",
       "synced": true,
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Drive"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Drive"
       },
-      "target_digest": "04551e28ab75b6365ac9757d459845109b91c15c7b575c78e1ce67fc4f79391d"
+      "target_digest": "7cc5afb09f2cda2002bcdc5fce34b747f07ed913169a70832ff70576fa7884ab"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
       "connection": null,
-      "created_at": "2026-09-29T08:21:50+00:00",
-      "id": "chd_480f9cdc29babd5f43f37152",
+      "created_at": "2026-09-29T09:50:20+00:00",
+      "id": "chd_3e04e5f75e989f8b6e9c6af4",
       "name": "Folder Reports",
-      "parked_at": "2026-09-29T08:21:56+00:00",
+      "parked_at": "2026-09-29T09:50:26+00:00",
       "state": "parked",
       "synced": false,
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports"
       },
-      "target_digest": "1efb3bcb5561eaf3f4787da256a9dc1a87fc833096bf83e2c17a0bb59e569f33"
+      "target_digest": "f4dda46dd815ec690255624d6c14ea929e818e7ccfd0d3643eaf414215b49bca"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
       "connection": null,
-      "created_at": "2026-09-29T08:21:56+00:00",
-      "id": "chd_33c7a2ae1695ff901ca4ea53",
+      "created_at": "2026-09-29T09:50:26+00:00",
+      "id": "chd_4dc5faf608b5937a9ccefcdd",
       "name": "Reports folder",
       "parked_at": null,
       "state": "active",
       "synced": false,
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_destinations_group_140/Reports"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw2/test_the_destinations_group_140/Reports"
       },
-      "target_digest": "1efb3bcb5561eaf3f4787da256a9dc1a87fc833096bf83e2c17a0bb59e569f33"
+      "target_digest": "f4dda46dd815ec690255624d6c14ea929e818e7ccfd0d3643eaf414215b49bca"
     }
   ]
 }

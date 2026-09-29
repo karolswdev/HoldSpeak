@@ -225,7 +225,7 @@ function OutcomeLine({ o }: { o: Outcome }) {
 /** A destination row's last send, from the stored record. */
 function LastChip({ s }: { s: Send | undefined }) {
   if (!s) return null;
-  if (s.state === "sent") return <span data-testid="send-last-sent"><StateChip state="success" icon="✓" label={`${SENT_WORD[s.channel] ?? sentWord(s.channel)} ${stamp(s.settled_at).slice(-5)}`} /></span>;
+  if (s.state === "sent") return <span data-testid="send-last-sent"><StateChip state="success" label={`${SENT_WORD[s.channel] ?? sentWord(s.channel)} ${stamp(s.settled_at).slice(-5)}`} /></span>;
   if (s.state === "unknown") return <span data-testid="send-last-unknown"><StateChip state="warning" label={SEND_WORDS.lastUnknown} /></span>;
   if (s.state === "failed") return <span data-testid="send-last-failed" data-code={s.reason ?? ""}><StateChip state="failure" label={SEND_WORDS.lastFailed} /></span>;
   if (s.state === "dispatching") return <span data-testid="send-last-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>;
@@ -237,7 +237,7 @@ function LatestReceipt({ s }: { s: Send | undefined }) {
   if (!s) return null;
   if (s.state === "sent") return (
     <span className="send-line" data-testid="send-sent" data-receipt="latest" data-state="sent">
-      <StateChip state="success" icon="✓" label={sentWord(s.channel)} />
+      <StateChip state="success" label={sentWord(s.channel)} />
       <ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} />
     </span>
   );
@@ -251,7 +251,7 @@ function LatestReceipt({ s }: { s: Send | undefined }) {
   if (s.state === "unknown") return (
     <span className="send-line" data-testid="send-unknown" data-receipt="latest" data-state="unknown">
       <StateChip state="warning" label={SEND_WORDS.unknownChip} />
-      <span className="surface-token" data-chip>{unknownWord(s.reason ?? "no_answer")}</span>
+      <span className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</span>
     </span>
   );
   if (s.state === "dispatching") return (
@@ -520,12 +520,13 @@ function PreparedRow({ uid, revision, s, reload, conns, dest, open, onToggle, on
   const waiting = s.state === "prepared";
   const running = s.state === "dispatching";
   const name = s.destination_name ?? dest?.name ?? "—";
+  const frozen = previewOf(s.channel, s.target, s.account, s.preview, s.file_path);
 
   const result = waiting ? null
     : running ? <span data-testid="prepared-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>
-    : s.state === "sent" ? <><StateChip state="success" icon="✓" label={sentWord(s.channel)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} /></>
+    : s.state === "sent" ? <><StateChip state="success" label={sentWord(s.channel)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} /></>
     : s.state === "failed" ? <><StateChip state="failure" label="FAILED" /><span className="surface-token" data-chip>{failedWord(s.reason ?? "")}</span><span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span></>
-    : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><span className="surface-token" data-chip>{unknownWord(s.reason ?? "no_answer")}</span></>
+    : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><span className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</span></>
     : <StateChip state="idle" label={SEND_WORDS.discarded} />;
 
   return (
@@ -554,7 +555,7 @@ function PreparedRow({ uid, revision, s, reload, conns, dest, open, onToggle, on
     >
       {waiting && open ? (
         <div className="send-open" data-testid="prepared-open">
-          <PreviewWell preview={previewOf(s.channel, s.target, s.account, s.preview, s.file_path)} testid="prepared-preview" verbs={
+          <PreviewWell preview={frozen} testid="prepared-preview" verbs={
             <div className="send-verbs" data-testid="prepared-verbs">
               {!dead ? (
                 <Button dense variant="primary" loading={busy} data-testid={o.kind === "lost" ? "prepared-retry" : "prepared-send"}
@@ -630,7 +631,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                   const reason = send?.reason ?? null;
                   return (
                     <SurfaceLedgerRow key={r.id} data-testid="delivery-row" wrap expands={false}
-                      lead={<span data-outcome={r.outcome}><StateChip state="warning" label="" icon="⚠" /></span>}
+                      lead={<span data-outcome={r.outcome}><StateChip state="warning" label="" /></span>}
                       primary={<span className="surface-primary" data-to={r.deliveredTo ?? ""}>{`${SEND_WORDS.unknownChip} · CHECK ${r.deliveredTo ?? "—"}`}</span>}
                       cells={<>
                         {reason ? <span className="surface-token" data-chip data-code={reason}>{unknownWord(reason)}</span> : null}
@@ -642,7 +643,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                 const manual = r.channel === "manual";
                 return (
                   <SurfaceLedgerRow key={r.id} data-testid="delivery-row" wrap expands={false}
-                    lead={<span data-outcome={r.outcome}><StateChip state="success" label="" icon="✓" /></span>}
+                    lead={<span data-outcome={r.outcome}><StateChip state="success" label="" /></span>}
                     primary={<span className="surface-primary" data-to={r.deliveredTo ?? ""}>{r.deliveredTo ?? "—"}</span>}
                     cells={<>
                       <span className="surface-token" data-chip data-tone="ok" data-testid="history-word">

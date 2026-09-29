@@ -36,6 +36,7 @@ PROVISIONAL: 2–3 engineering days (canvases included).
 
 ## Notes
 
+- 2026-09-29 — the full suite's three branch-new reds on effd25f8 paid: the Atlassian pre-check read classified in the effect fence (the gh twin), the phase 9 atlas re-anchored, the UX ratchet held by fixing the face. `assets/story-04-proof/captures.md`.
 - 2026-09-29 — Codex Astra r3 on #697: RATIFY-WITH-CONDITIONS (`checks/story-04-built-astra-r3.md`); its docs conditions paid (the 409 rule stated as implemented; the obsolete `sender_verified` text removed; the PR description refreshed). No product change.
 - 2026-09-29 — round three: Codex Astra r2 on #697 DO-NOT-RATIFY (`checks/story-04-built-astra-r2.md`) paid — B11 says what was answered and when (and NOT CHECKED SINCE KEY CHANGE); a held acli lock is a 409 refusal with its receipt and the client honours any refused receipt; the lying Atlassian seed replaced by the real connection-check producer; board 05's receipt centred. Glass 24/24, red first.
 - 2026-09-29 — DONE: story 03 merged in (main e22b1b95); the email boards (16–19, B7, B8, B11) fenced on story 03's canned HTTPS edge and in-memory key store; B11's Check reports the sender's verification from the provider's last answer. Every ratified board built and fenced at 1440 and 393 (glass 22/22), each through the real hub with the hub's record in the same fence; web baseline zero branch-new. Evidence: `evidence-story-04.md`; proof table: `assets/story-04-proof/captures.md`. The real-account legs are story 06's.

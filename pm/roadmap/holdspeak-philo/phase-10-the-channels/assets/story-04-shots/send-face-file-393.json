@@ -101,7 +101,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local"
@@ -113,7 +113,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "b579758b7f27aed29d31a766ed088c00fd6cde8210ae4651f0a68921f0ed8717",
+      "masked_sha": "6213c99d2d5ce030a1488d444e3181b24243ee5bb6e803f531732caff8cbc616",
       "modal": false,
       "named": [
         {
@@ -195,10 +195,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Locked THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Locked THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -213,7 +213,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "84cc1b7dc37dde9e557c2d5602c578171a500127c8d0cd96f0af0c0470839838",
+      "masked_sha": "2bbab8859aff0757bf040ddc3089f23cd815b9b50941920a2e3fec7646749cc7",
       "modal": false,
       "named": [
         {
@@ -346,10 +346,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Locked THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Locked THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -365,7 +365,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "78a180ebf4bc600d276936b6da8fba49dde6a09d2e48c67acd3ea842c2b7c907",
+      "masked_sha": "3ad55a2ad664e7697df75ffdfd943b7c9f6582b872919e3a343ef7783cebde33",
       "modal": false,
       "named": [
         {
@@ -498,7 +498,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -527,10 +527,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 02:18 THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Locked THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 03:49 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Locked THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -541,18 +541,18 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-05801c15.md SEP 29 02:18"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-02092db9.md SEP 29 03:49"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 02:18"
+        "✓ SAVED 03:49"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "77a0fe7e7373a164990baeb1f5e029325c69faee57a8aeb53fc368d82c097316",
+      "masked_sha": "6c94c667058d39ce12594c4fb63217c3c527c1ae57f4102cbaa756f6571ab1e7",
       "modal": false,
       "named": [
         {
@@ -673,7 +673,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -684,7 +684,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-05801c15.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-02092db9.md"
         }
       ],
       "send_head": "SEND",
@@ -708,10 +708,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 02:18 THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Locked THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 03:49 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Locked THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -722,18 +722,18 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-05801c15.md SEP 29 02:18"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-02092db9.md SEP 29 03:49"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 02:18"
+        "✓ SAVED 03:49"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "39101815f88f53ad5adaf5eea159836af13190dcb4b2f2f6e1ed6046fa8aa02a",
+      "masked_sha": "588aefa81c4a2f67756d6f5ce66277116e2edb730f606ec639167fd0a4e831fc",
       "modal": false,
       "named": [
         {
@@ -854,7 +854,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -865,7 +865,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-05801c15.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-02092db9.md"
         }
       ],
       "send_head": "SEND",
@@ -889,10 +889,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 02:18 THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Locked ✗ LAST SEND FAILED THIS DEVICE",
-        "● Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 03:49 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Locked ✗ LAST SEND FAILED THIS DEVICE",
+        "● Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -903,8 +903,8 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-05801c15.md SEP 29 02:18",
-        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 29 02:19"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-02092db9.md SEP 29 03:49",
+        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 29 03:50"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
@@ -912,13 +912,13 @@
         "unknown"
       ],
       "last_chips": [
-        "✓ SAVED 02:18",
+        "✓ SAVED 03:49",
         "✗ LAST SEND FAILED",
         "⚠ LAST SEND UNKNOWN"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "2295cd609d88500e3f0b784af8d02b9ebfbfa49d778b3b922e0ae94eb0210f5f",
+      "masked_sha": "615f2b3cf481941c7a6e40cbe3a0a4fa1486088bb94bd2b4bcbde361d13dc14f",
       "modal": false,
       "named": [
         {
@@ -1045,7 +1045,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -1080,10 +1080,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 02:18 THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
-        "● Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Locked ✗ LAST SEND FAILED THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 03:49 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "● Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Locked ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1094,19 +1094,19 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-05801c15.md SEP 29 02:18"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-02092db9.md SEP 29 03:49"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 02:18",
+        "✓ SAVED 03:49",
         "✗ LAST SEND FAILED"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "222458b3451a68e1fbaaf051853dbe8abd851d0e0cfbad6bedc7680bb339a5d6",
+      "masked_sha": "29f717e405eacf50bc5802bd8bdff54fae500ddeb8b9b9f0c2a04351f95a46ae",
       "modal": false,
       "named": [
         {
@@ -1233,7 +1233,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Locked"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Locked"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -1268,10 +1268,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 02:18 THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Locked ✗ LAST SEND FAILED THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 03:49 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Locked ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1281,9 +1281,9 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-05801c15.md SEP 29 02:18",
-        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 29 02:19",
-        "✓ Priya DELIVERED MANUAL SEP 29 02:19"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-02092db9.md SEP 29 03:49",
+        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 29 03:50",
+        "✓ Priya DELIVERED MANUAL SEP 29 03:50"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -1292,13 +1292,13 @@
         "confirmed"
       ],
       "last_chips": [
-        "✓ SAVED 02:18",
+        "✓ SAVED 03:49",
         "✗ LAST SEND FAILED",
         "⚠ LAST SEND UNKNOWN"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "3794652fe1c331174ed6dbc330a236030538a2fd16da5cf6f0e560acfa107183",
+      "masked_sha": "6cb24ce58670ff0a196ea58cdfef04bc0c4bde10dafd44e4f98118113f26c834",
       "modal": false,
       "named": [
         {
@@ -1425,10 +1425,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 02:18 THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Locked ✗ LAST SEND FAILED THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 03:49 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Locked ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1438,9 +1438,9 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-05801c15.md SEP 29 02:18",
-        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 29 02:19",
-        "✓ Priya DELIVERED MANUAL SEP 29 02:19"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-02092db9.md SEP 29 03:49",
+        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 29 03:50",
+        "✓ Priya DELIVERED MANUAL SEP 29 03:50"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -1449,19 +1449,19 @@
         "confirmed"
       ],
       "last_chips": [
-        "✓ SAVED 02:18",
+        "✓ SAVED 03:49",
         "✗ LAST SEND FAILED",
         "⚠ LAST SEND UNKNOWN"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "5df9a6ade5376e4e02800bc41a7526c5c6b4f4fd7c019c96b15db2698a0d1a5d",
+      "masked_sha": "b82878275f7d303c1d81c64deac446eab80f9ffcd1e27d7be398e73c3b93dc9e",
       "modal": false,
       "named": [
         {
           "ok": true,
           "sel": "[data-testid=delivery-history] > li:last-child > [data-testid=delivery-row]",
-          "text": "✓ Priya DELIVERED MANUAL SEP 29 02:19",
+          "text": "✓ Priya DELIVERED MANUAL SEP 29 03:50",
           "why": ""
         }
       ],
@@ -1691,7 +1691,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "eafcce4d41ec1643f2c8b0588e7c2a3089c70dc5179d78c6c3426bea36a13946",
+      "masked_sha": "dc9c3efb452769d1ae726e7a12c9d702661d09c53b6109e963e59e23b35577c9",
       "modal": false,
       "named": [
         {
@@ -1819,7 +1819,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "01e83970d14e1b0ba5e935c056184d202c66422109229446848373c9fcae25fe",
+      "masked_sha": "5655ba494a385f806d48cf0230e6182d81fcee0ee464635b0ee608c2dd712731",
       "modal": false,
       "named": [
         {
@@ -1942,39 +1942,39 @@
   "hub_deliveries": [
     {
       "channel": "file",
-      "delivered_at": "2026-09-29T08:18:52.062018+00:00",
+      "delivered_at": "2026-09-29T09:49:57.500991+00:00",
       "delivered_to": "Folder Payments",
-      "id": "pdel_05801c1502536709",
-      "operation_id": "op_ce9e11c9af8d445d9025259e13a6acc4",
+      "id": "pdel_02092db918178ca1",
+      "operation_id": "op_8014078266d04f49814d545bca0e5b92",
       "outcome": "sent",
-      "project_id": "proj-8a5db6c6e34d",
-      "proof_json": "{\"path\":\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-05801c15.md\",\"sha256\":\"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\",\"size\":286}",
-      "send_id": "chs_05801c1502536709e83ff187",
-      "update_id": "pupd_6e8e74051dcb4f7b97c9edaeeb519dfd"
+      "project_id": "proj-9b5104d84bb1",
+      "proof_json": "{\"path\":\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-02092db9.md\",\"sha256\":\"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\",\"size\":286}",
+      "send_id": "chs_02092db918178ca1fa29e613",
+      "update_id": "pupd_c01327d237754d5ba1c71d16ff1306af"
     },
     {
       "channel": "file",
-      "delivered_at": "2026-09-29T08:19:00.477432+00:00",
+      "delivered_at": "2026-09-29T09:50:05.495816+00:00",
       "delivered_to": "Long path folder",
-      "id": "pdel_91b5a8e9f2d6a395",
-      "operation_id": "op_b313da3575c140ceadbe1eee5fab8a62",
+      "id": "pdel_f3e9824ba40e0ef5",
+      "operation_id": "op_b8bf6c65c6d24e13a52f10ed6c5ac1d4",
       "outcome": "unknown",
-      "project_id": "proj-8a5db6c6e34d",
+      "project_id": "proj-9b5104d84bb1",
       "proof_json": null,
-      "send_id": "chs_91b5a8e9f2d6a3953b6a0e45",
-      "update_id": "pupd_6e8e74051dcb4f7b97c9edaeeb519dfd"
+      "send_id": "chs_f3e9824ba40e0ef5e7cac09a",
+      "update_id": "pupd_c01327d237754d5ba1c71d16ff1306af"
     },
     {
       "channel": "manual",
-      "delivered_at": "2026-09-29T08:19:03+00:00",
+      "delivered_at": "2026-09-29T09:50:08+00:00",
       "delivered_to": "Priya",
-      "id": "pdel_c1a638e25ee0939e",
-      "operation_id": "op_99cacfbe6f6648cab06821fe35c07ed9",
+      "id": "pdel_a774482796b70643",
+      "operation_id": "op_305e7604434647999c63e7d05bad31df",
       "outcome": "confirmed",
-      "project_id": "proj-8a5db6c6e34d",
+      "project_id": "proj-9b5104d84bb1",
       "proof_json": null,
       "send_id": null,
-      "update_id": "pupd_6e8e74051dcb4f7b97c9edaeeb519dfd"
+      "update_id": "pupd_c01327d237754d5ba1c71d16ff1306af"
     }
   ],
   "hub_sends": [
@@ -1982,14 +1982,14 @@
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-29T08:18:52.062018+00:00",
-      "destination_id": "chd_d99990fbccd840991932d64d",
+      "created_at": "2026-09-29T09:49:57.500991+00:00",
+      "destination_id": "chd_d614ed52548858a0f33279bb",
       "destination_name": "Folder Payments",
       "dispatch_seq": 1,
-      "dispatch_started_at": "2026-09-29T08:18:52.062018+00:00",
-      "document_ref": "project_update:pupd_6e8e74051dcb4f7b97c9edaeeb519dfd",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-05801c15.md",
-      "id": "chs_05801c1502536709e83ff187",
+      "dispatch_started_at": "2026-09-29T09:49:57.500991+00:00",
+      "document_ref": "project_update:pupd_c01327d237754d5ba1c71d16ff1306af",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-02092db9.md",
+      "id": "chs_02092db918178ca1fa29e613",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -2000,32 +2000,32 @@
         "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
       },
       "proof": {
-        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-05801c15.md",
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-02092db9.md",
         "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
         "size": 286
       },
       "reason": null,
-      "send_operation_id": "op_ce9e11c9af8d445d9025259e13a6acc4",
-      "settled_at": "2026-09-29T08:18:52+00:00",
+      "send_operation_id": "op_8014078266d04f49814d545bca0e5b92",
+      "settled_at": "2026-09-29T09:49:57+00:00",
       "size": 286,
       "state": "sent",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Reports/Payments"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Reports/Payments"
       },
-      "target_digest": "d28e6edeaeeab817968c9d5b987645b02af497765d01c71c3bba3a8168ff21d4"
+      "target_digest": "ba7a5a5b9688535bf5d9c6f4c4b0cb7a7d8eda93f590ba15b5c3d0e5c6945c9c"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-29T08:18:57.251418+00:00",
-      "destination_id": "chd_c19bb6b24ff6998811a09142",
+      "created_at": "2026-09-29T09:50:02.412290+00:00",
+      "destination_id": "chd_8253ee292d276773fc573d92",
       "destination_name": "Locked folder",
       "dispatch_seq": 2,
-      "dispatch_started_at": "2026-09-29T08:18:57.251418+00:00",
-      "document_ref": "project_update:pupd_6e8e74051dcb4f7b97c9edaeeb519dfd",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Locked/2026-09-29-payments-ledger-cutover-r1-98ffda57.md",
-      "id": "chs_98ffda574fa308a90363d5bb",
+      "dispatch_started_at": "2026-09-29T09:50:02.412290+00:00",
+      "document_ref": "project_update:pupd_c01327d237754d5ba1c71d16ff1306af",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Locked/2026-09-29-payments-ledger-cutover-r1-32c0326d.md",
+      "id": "chs_32c0326d0576a06475c0d7dd",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -2037,27 +2037,27 @@
       },
       "proof": null,
       "reason": "permission_denied",
-      "send_operation_id": "op_8d4156f6772a4c8781f7d06c72ede487",
-      "settled_at": "2026-09-29T08:18:57+00:00",
+      "send_operation_id": "op_7a6d1003efba45c39f99c347e3a0b290",
+      "settled_at": "2026-09-29T09:50:02+00:00",
       "size": 286,
       "state": "failed",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/Locked"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/Locked"
       },
-      "target_digest": "64b0abf70f65bca593e1350c265fff62639be10bcec70570ff2700adc51f2d04"
+      "target_digest": "d995539e19074a612eac997191f5bc8133da37a05dffb31cafbcf9be110d6eb4"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-29T08:19:00.477432+00:00",
-      "destination_id": "chd_d80afda959973b8210349141",
+      "created_at": "2026-09-29T09:50:05.495816+00:00",
+      "destination_id": "chd_3f13e5f91c94bd4dc379d091",
       "destination_name": "Long path folder",
       "dispatch_seq": 3,
-      "dispatch_started_at": "2026-09-29T08:19:00.477432+00:00",
-      "document_ref": "project_update:pupd_6e8e74051dcb4f7b97c9edaeeb519dfd",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/2026-09-29-payments-ledger-cutover-r1-91b5a8e9.md",
-      "id": "chs_91b5a8e9f2d6a3953b6a0e45",
+      "dispatch_started_at": "2026-09-29T09:50:05.495816+00:00",
+      "document_ref": "project_update:pupd_c01327d237754d5ba1c71d16ff1306af",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/2026-09-29-payments-ledger-cutover-r1-f3e9824b.md",
+      "id": "chs_f3e9824ba40e0ef5e7cac09a",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -2069,14 +2069,14 @@
       },
       "proof": null,
       "reason": "create_enametoolong",
-      "send_operation_id": "op_b313da3575c140ceadbe1eee5fab8a62",
-      "settled_at": "2026-09-29T08:19:00+00:00",
+      "send_operation_id": "op_b8bf6c65c6d24e13a52f10ed6c5ac1d4",
+      "settled_at": "2026-09-29T09:50:05+00:00",
       "size": 286,
       "state": "unknown",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rGq8aTtgmw/pt/popen-gw0/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8Z33P1SBmi/pt/popen-gw3/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       },
-      "target_digest": "2989c11712e58a04e07a5dcfca10b873a4756c815e4df02ddf828e6557b186d3"
+      "target_digest": "8039a96aef1b8b882889bdcd680d19c85ea642a8d8a20a3b79ae16ddee49c253"
     }
   ]
 }

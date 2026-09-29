@@ -15,7 +15,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "6215a19bcd1bacfda722b423c27695dfa34fc737ca2e2775d8a920d71aa66164",
+      "masked_sha": "3068abe85f06131a98a00934d8a5f2f1e16429dd5c55b2891b0048944505d458",
       "modal": false,
       "named": [
         {
@@ -197,7 +197,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "29fcea8eb0896856d9688cc9839ddae6ba607baf551414fe1ecc5d919d3e39c2",
+      "masked_sha": "c32b8182ac68b14cabbc0ddcf6c559bffd81715a5a94f9b9b8eb47a7c3593ef6",
       "modal": false,
       "named": [
         {
@@ -382,13 +382,13 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "46b687977aa926c2a2de6a1466c1bb564782452ff33355be6c440135ed88bc76",
+      "masked_sha": "f46a53c2003e7fad6d578d5f2671546d5519b7ef2fe44b41482270c987152934",
       "modal": false,
       "named": [
         {
           "ok": true,
           "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Email lena@acme.io']) [data-testid=dest-check-result]",
-          "text": "✗ SENDER NOT VERIFIED LAST SEND SEP 29 02:19",
+          "text": "✗ SENDER NOT VERIFIED LAST SEND SEP 29 03:51",
           "why": ""
         }
       ],
@@ -507,7 +507,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "bb7b47cc0de4e38195d7a4160ab8a5c89afa60fdf52640ece0cf141536401454",
+      "masked_sha": "adee43e1a888d104776a2ce6b7c0361ea3198815b811f31acb4b79eb519f4841",
       "modal": false,
       "named": [
         {
@@ -632,13 +632,13 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "97b55641d80bed0a3c804d2672f0c75ce89fc64c7e819093193e006b308de724",
+      "masked_sha": "7154506b0c4249adadba84830b0d43e3a4f5930c0742fe734e65e00cc79d8a5d",
       "modal": false,
       "named": [
         {
           "ok": true,
           "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Email lena@acme.io']) [data-testid=dest-check-result]",
-          "text": "✓ SENDER ACCEPTED LAST SEND SEP 29 02:19",
+          "text": "✓ SENDER ACCEPTED LAST SEND SEP 29 03:51",
           "why": ""
         }
       ],
@@ -741,7 +741,7 @@
     }
   },
   "check": {
-    "answered_at": "2026-09-29T08:19:59.958644+00:00",
+    "answered_at": "2026-09-29T09:51:03.320519+00:00",
     "resolved": null,
     "state": "sender_not_verified"
   },
@@ -749,7 +749,7 @@
     {
       "ok": true,
       "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Email lena@acme.io']) [data-testid=dest-check-result]",
-      "text": "✗ SENDER NOT VERIFIED LAST SEND SEP 29 02:19",
+      "text": "✗ SENDER NOT VERIFIED LAST SEND SEP 29 03:51",
       "why": ""
     }
   ],
@@ -764,8 +764,8 @@
       "badge": "cloud",
       "channel": "email",
       "connection": null,
-      "created_at": "2026-09-29T08:19:54+00:00",
-      "id": "chd_eca5d298208fa502a43ec9b1",
+      "created_at": "2026-09-29T09:50:59+00:00",
+      "id": "chd_9e2dd1b8a470b858382427f4",
       "name": "Email lena@acme.io",
       "parked_at": null,
       "state": "active",

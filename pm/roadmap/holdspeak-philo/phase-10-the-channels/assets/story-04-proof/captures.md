@@ -74,6 +74,16 @@ The wire, not the face: the Jira and Confluence channels check the saved account
 | F3 the Atlassian glass seed was a lying fixture (`wpc-…` vs production `wpc_…`) | Removed. The Jira and Confluence accounts come from the REAL connection-check producer (`POST /api/connections/{provider}/recheck`, acli answered at the process edge); B10 asserts `connected` and ✓ CHECKED explicitly, and the destination's `connection.state` = connected. Census of the glass file: that seed was its only direct write to a production table; B7's store double is replaced by the REAL classifier on keyring's `fail` backend; the remaining doubles are process edges (the CLI runner, the HTTPS handler, the in-memory key store, the boundary clock). |
 | Board 05 at 393 | The long receipt itself is centred and asserted fully on screen; the row's chip is read from the facts. |
 
+## Muad'Dib's full suite on effd25f8: the three branch-new reds paid
+
+| Red | Paid |
+|---|---|
+| `test_kernel_effect_fence::test_effect_ledger_is_complete_and_current`: `channel_cli.py` `_Atlassian._read` → `run_read_subprocess` unledgered | Classified in the fence's `_EXCLUDED_CALLS` (the ledger is a tombstone): "mandatory authenticated owner read", the twin of `GitHubChannel.login` (the acli auth switch/status before the boundary). |
+| `test_philo_graph_atlas` `atlas-phase9.json`: anchors moved | `p9_room_face`'s delivery source re-anchored from the removed `UpdatePosture.tsx` `DeliverySection` to `SendWell.tsx` `export function DeliveryHistory` (the same claim: To + Mark delivered and the history); four line anchors moved by this story's edits updated. |
+| `test_ux_canon_ratchet`: SendWell A8 +1, emoji +5, raw-ids +2 | The FACE fixed, no ceiling raised: the explicit `icon="✓"` / `icon="⚠"` removed (StateChip's own default glyphs, identical on screen); the `"no_answer"` fallback literal replaced by the word NO ANSWER; the prepared preview computed before the JSX (the count pattern read `s.account`). |
+
+The web baseline's one branch-new in the first capture (`ModelLibraryCore`, the known load flake) passes alone and in the recapture (2966, zero branch-new).
+
 ## Captured runs
 
 ### Captured run — 2026-09-29T05:48:27Z (RED on main: `web/src` laid from HEAD 84657927 by `git archive`, main's bundle built; the exit code is the pipeline's `grep`, pytest reads 4 failed)
