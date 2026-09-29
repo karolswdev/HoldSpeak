@@ -2,6 +2,16 @@
 
 Built to the owner's ratified canvases (`../story-04-send-canvas/`, `../story-04-destinations-canvas/`, "Ratify as drawn", 2026-09-29). Shots: `../story-04-shots/` (1440 × 900 and 393 × 852, each board's facts in the `*-<width>.json` next to them). The glass: `tests/e2e/test_philo10_04_send_face_glass.py` (helpers `tests/e2e/_send_face_glass.py`), through the real hub on an isolated HOME; every board asserts its named elements on screen (in the viewport, inside every clipping ancestor, on top at the centre and two inner corners), no two shots of one test and width share bytes with the menu-bar clock masked, no text under 12 px in the window, no raw `<button>` in the touched face, no modal, no overflow, no raw JSON or XHTML in a preview, and a nine-point pointer pass (elementFromPoint AND a real pointer move; the 44 × 44 target at 393) on every touched control.
 
+## Round two: Codex Astra r1 on #697 (`../../checks/story-04-built-astra-r1.md`, DO-NOT-RATIFY)
+
+| r1 | Paid |
+|---|---|
+| F1 a known FAILED hidden by a failed or stale sends read | The hub's returned record joins the ONE result source (`mergeKnown`, `SendWell.tsx`): a read replaces it only when as far along. Fence `r1-failed-read-keeps-failure` (SAVED → folder 0555 → every sends read fails → Send again: header LAST SEND FAILED, receipt FAILED `permission_denied`, CANNOT READ SENDS named) at both widths; red on the old face. |
+| F2 a failed Remove closed the row silently | The row stays open: ✗ NOT REMOVED + the reason + Retry. Fence `b14b-remove-failed` (DELETE with no answer; hub still active) then Retry → parked, both widths. |
+| F3 microseconds are not an order | `channel_sends.dispatch_seq` (additive), allocated inside the boundary transaction (MAX + 1 under BEGIN IMMEDIATE); `latestFor` orders by it; the microsecond stamp stays for display. Fence: Codex's sequence with the boundary clock PINNED (equal `dispatch_started_at`): A's FAILED is latest (28b, 28c), both widths; red on the old face. Unit: `SendWell.test.tsx`. |
+| F4 B10 lost the Checked time | Restored: the open row shows Checked + the time the hub answered the Check. |
+| F5 four armed shots bypassed the board checks | 32 and B14 armed are now measured boards (on-screen, byte, pointer). |
+
 ## The ratified boards: built and fenced, or owed
 
 | Board | Real producer | State |
@@ -139,4 +149,89 @@ Architecture metadata: 4 shard(s), 147 record(s)
 Architecture metadata validation passed.
 Architecture documentation checked (10 outputs).
 Documentation coverage checked.
+```
+
+### Captured run — 2026-09-29T06:19:26Z (RED on #697's head face: `SendWell.tsx` and `Destinations.tsx` laid from 8d7fa1ea; r1 F1 and B10 red at both widths; the exit is the pipeline's `grep`)
+
+- **Command:** `bash -c H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm .venv/bin/python -m pytest -q -n 4 --basetemp=$H/pt tests/e2e/test_philo10_04_send_face_glass.py -k "outlives or prepared or destinations_group" -rf 2>&1 | grep -E "^(FAILED|E   )|passed|failed" | cut -c1-300 | head -40`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 3d2bad7a4a41a19e0887ff62b1c1b34ea9edb32b
+
+```text
+__ TestSendFaceGlass.test_a_known_failure_outlives_a_failed_sends_read[1440] ___
+    def test_a_known_failure_outlives_a_failed_sends_read(self, width: int) -> None:
+>               page.locator(f"{self._open_sel('Folder Payments')} [data-receipt=latest][data-state=failed]").wait_for(timeout=T)
+E           playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 20000ms exceeded.
+E           Call log:
+E             - waiting for locator("[data-testid=send-open][data-destination='Folder Payments'] [data-receipt=latest][data-state=failed]") to be visible
+___ TestSendFaceGlass.test_a_known_failure_outlives_a_failed_sends_read[393] ___
+    def test_a_known_failure_outlives_a_failed_sends_read(self, width: int) -> None:
+>               page.locator(f"{self._open_sel('Folder Payments')} [data-receipt=latest][data-state=failed]").wait_for(timeout=T)
+E           playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 20000ms exceeded.
+E           Call log:
+E             - waiting for locator("[data-testid=send-open][data-destination='Folder Payments'] [data-receipt=latest][data-state=failed]") to be visible
+E               assert 'CHECKED' in 'CHANNEL\nFILE\nFOLDER\n/PRIVATE/VAR/FOLDERS/Q7/5DZZ5G2116B3LQ8RHG7HWJRR0000GN/T/TMP.VOSYKDJ0AG/PT/POPEN-GW1/TEST_THE_DESTINATIONS_GROUP_390/REPORTS\nSYNCED\nNO\nSAVED\nSEP 29 00:20'
+E                +  where 'CHANNEL\nFILE\nFOLDER\n/PRIVATE/VAR/FOLDERS/Q7/5DZZ5G2116B3LQ8RHG7HWJRR0000GN/T/TMP.VOSYKDJ0AG/PT/POPEN-GW1/TEST_THE_DESTINATIONS_GROUP_390/REPORTS\nSYNCED\nNO\nSAVED\nSEP 29 00:20' = <built-in method upper of str object at 0x12148fbb0>()
+E                +    where <built-in method upper of str object at 0x12148fbb0> = 'CHANNEL\nFILE\nFOLDER\n/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.vosYkdJ0AG/pt/popen-gw1/test_the_destinations_group_390/Reports\nSYNCED\nNO\nSAVED\nSEP 29 00:20'.upper
+E                +      where 'CHANNEL\nFILE\nFOLDER\n/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.vosYkdJ0AG/pt/popen-gw1/test_the_destinations_group_390/Reports\nSYNCED\nNO\nSAVED\nSEP 29 00:20' = inner_text()
+E                +        where inner_text = <Locator frame=<Frame name= url='http://127.0.0.1:65119/'> selector="li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Folder Reports']) [data-testid=dest-open] dl">.inner_text
+E                +          where <Locator frame=<Frame name= url='http://127.0.0.1:65119/'> selector="li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Folder Reports']) [data-testid=dest-open] dl"> = locator("li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination=
+E                +            where locator = <Page url='http://127.0.0.1:65119/'>.locator
+E               assert 'CHECKED' in 'CHANNEL\nFILE\nFOLDER\n/PRIVATE/VAR/FOLDERS/Q7/5DZZ5G2116B3LQ8RHG7HWJRR0000GN/T/TMP.VOSYKDJ0AG/PT/POPEN-GW0/TEST_THE_DESTINATIONS_GROUP_140/REPORTS\nSYNCED\nNO\nSAVED\nSEP 29 00:20'
+E                +  where 'CHANNEL\nFILE\nFOLDER\n/PRIVATE/VAR/FOLDERS/Q7/5DZZ5G2116B3LQ8RHG7HWJRR0000GN/T/TMP.VOSYKDJ0AG/PT/POPEN-GW0/TEST_THE_DESTINATIONS_GROUP_140/REPORTS\nSYNCED\nNO\nSAVED\nSEP 29 00:20' = <built-in method upper of str object at 0x1104ebad0>()
+E                +    where <built-in method upper of str object at 0x1104ebad0> = 'CHANNEL\nFILE\nFOLDER\n/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.vosYkdJ0AG/pt/popen-gw0/test_the_destinations_group_140/Reports\nSYNCED\nNO\nSAVED\nSEP 29 00:20'.upper
+E                +      where 'CHANNEL\nFILE\nFOLDER\n/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.vosYkdJ0AG/pt/popen-gw0/test_the_destinations_group_140/Reports\nSYNCED\nNO\nSAVED\nSEP 29 00:20' = inner_text()
+E                +        where inner_text = <Locator frame=<Frame name= url='http://127.0.0.1:65118/'> selector="li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Folder Reports']) [data-testid=dest-open] dl">.inner_text
+E                +          where <Locator frame=<Frame name= url='http://127.0.0.1:65118/'> selector="li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Folder Reports']) [data-testid=dest-open] dl"> = locator("li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination=
+E                +            where locator = <Page url='http://127.0.0.1:65118/'>.locator
+FAILED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_a_known_failure_outlives_a_failed_sends_read[1440]
+FAILED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_a_known_failure_outlives_a_failed_sends_read[393]
+FAILED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the_destinations_group[393]
+FAILED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the_destinations_group[1440]
+4 failed, 2 passed in 56.91s
+```
+
+### Captured run — 2026-09-29T06:20:46Z (RED on #697's head `SendWell.tsx`: the equal-clock sequence, r1 F3, shows the older SAVED as latest at both widths)
+
+- **Command:** `bash -c H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm .venv/bin/python -m pytest -q -n 2 --basetemp=$H/pt tests/e2e/test_philo10_04_send_face_glass.py -k "prepared" -rf 2>&1 | grep -E "^(FAILED|E   )|passed|failed" | cut -c1-300 | head -20`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 3d2bad7a4a41a19e0887ff62b1c1b34ea9edb32b
+
+```text
+                    .some((e) => e.dataset.state === 'failed')""", timeout=T)
+                shots.shoot(page, "28-prepared-failed", ["[data-testid=prepared-result] [data-state=failed]"])
+                assert [s["state"] for s in ledger] == ["sent", "failed"], ledger
+                latest = shots.shoot(page, "28b-destination-latest-failed",
+                                     [f"{self._row('Folder Ledger')} [data-testid=send-last-failed]"])
+                                       [f"{self._open_sel('Folder Ledger')} [data-testid=send-failed]"])
+>               assert [r["state"] for r in reopened["receipts"]] == ["failed"], reopened["receipts"]
+E               AssertionError: [{'code': None, 'state': 'sent', 'text': '✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Ixreo440Zr/pt/popen-gw1/test_prepared_sends_and_the_la0/Ledger/2026-09-29-payments-ledger-cutover-r1-a1961074.md'}]
+E               assert ['sent'] == ['failed']
+E                 
+E                 At index 0 diff: 'sent' != 'failed'
+E                 Use -v to get more diff
+                    .some((e) => e.dataset.state === 'failed')""", timeout=T)
+                shots.shoot(page, "28-prepared-failed", ["[data-testid=prepared-result] [data-state=failed]"])
+                assert [s["state"] for s in ledger] == ["sent", "failed"], ledger
+                latest = shots.shoot(page, "28b-destination-latest-failed",
+                                     [f"{self._row('Folder Ledger')} [data-testid=send-last-failed]"])
+                                       [f"{self._open_sel('Folder Ledger')} [data-testid=send-failed]"])
+>               assert [r["state"] for r in reopened["receipts"]] == ["failed"], reopened["receipts"]
+E               AssertionError: [{'code': None, 'state': 'sent', 'text': '✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Ixreo440Zr/pt/popen-gw0/test_prepared_sends_and_the_la0/Ledger/2026-09-29-payments-ledger-cutover-r1-3c307c9a.md'}]
+```
+
+### Captured run — 2026-09-29T06:21:48Z
+
+- **Command:** `bash -c set -o pipefail; H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOLDSPEAK_EVIDENCE_WRITE=1 HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm .venv/bin/python -m pytest -q -n 4 --basetemp=$H/pt tests/e2e/test_philo10_04_send_face_glass.py tests/unit/test_philo10_send_contract.py tests/unit/test_philo10_send_recovery.py tests/unit/test_philo10_send_restart.py "tests/unit/test_db.py::TestDatabaseShape" 2>&1 | tail -2 && cd web && npx vitest run src/features/channels src/features/project-room 2>&1 | grep -E "Test Files|Tests |Errors"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 3d2bad7a4a41a19e0887ff62b1c1b34ea9edb32b
+
+```text
+.....................................................................    [100%]
+69 passed in 158.62s (0:02:38)
+ Test Files  24 passed (24)
+      Tests  459 passed (459)
 ```

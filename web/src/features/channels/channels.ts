@@ -62,6 +62,8 @@ export type Send = {
   created_at: string;
   dispatch_started_at: string | null;
   settled_at: string | null;
+  /** The order sends LEFT in, allocated inside the boundary transaction. */
+  dispatch_seq?: number | null;
 };
 
 export type PreviewField = { label: string; value: string };

@@ -705,8 +705,8 @@
       "dest_head": "DESTINATIONS 2",
       "dest_parked": [],
       "destinations": [
-        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Drive SYNCED FOLDER",
-        "▸ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports THIS DEVICE"
+        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Drive SYNCED FOLDER",
+        "▸ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports THIS DEVICE"
       ],
       "egress_chips": [
         "SYNCED FOLDER:cloud",
@@ -719,7 +719,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "3615943a8c62394db4470ea58b68294090aab8f2d75f9e626635cd314fd2221d",
+      "masked_sha": "d2837109ab78faf0d57b6d40b495b4d1b9089eeb77f9b04e9ceed47645c457a3",
       "modal": false,
       "named": [
         {
@@ -801,8 +801,8 @@
       "dest_head": "DESTINATIONS 2",
       "dest_parked": [],
       "destinations": [
-        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Drive SYNCED FOLDER",
-        "▾ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports THIS DEVICE"
+        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Drive SYNCED FOLDER",
+        "▾ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports THIS DEVICE"
       ],
       "egress_chips": [
         "SYNCED FOLDER:cloud",
@@ -816,7 +816,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "5031a49f42bb997723d948cc9fc7572b8406315224117e6a18b604bae138cea8",
+      "masked_sha": "db735e0216fae3a648503e0918c25031f3487b5ed42613e64fb43ab32c675576",
       "modal": false,
       "named": [
         {
@@ -943,8 +943,8 @@
       "dest_head": "DESTINATIONS 2",
       "dest_parked": [],
       "destinations": [
-        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Drive SYNCED FOLDER",
-        "▾ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports THIS DEVICE"
+        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Drive SYNCED FOLDER",
+        "▾ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports THIS DEVICE"
       ],
       "egress_chips": [
         "SYNCED FOLDER:cloud",
@@ -1120,11 +1120,11 @@
       "body_overflow_x": false,
       "dest_head": "DESTINATIONS 2",
       "dest_parked": [
-        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports PARKED SEP 28 23:54"
+        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports PARKED SEP 29 00:22"
       ],
       "destinations": [
-        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Drive SYNCED FOLDER",
-        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports THIS DEVICE"
+        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Drive SYNCED FOLDER",
+        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports THIS DEVICE"
       ],
       "egress_chips": [
         "SYNCED FOLDER:cloud",
@@ -1137,7 +1137,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "20c87a58ef2c23fd0cc8403ccfe84b4fdde5adb72196f5ece94c4ce4b7acf1fb",
+      "masked_sha": "ca4298b5faa89e53fd80d7a30878ef5e9427fd65a4e1c5608790d22ebbaa13c4",
       "modal": false,
       "named": [
         {
@@ -1214,15 +1214,324 @@
       "window": true,
       "words_delivered_word": false
     },
+    "b14-remove-armed-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 2",
+      "dest_parked": [
+        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports PARKED SEP 29 00:22"
+      ],
+      "destinations": [
+        "▾ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Drive SYNCED FOLDER",
+        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports THIS DEVICE"
+      ],
+      "egress_chips": [
+        "SYNCED FOLDER:cloud",
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "05435f57d3478cf8bc0863da2558dee968639f485fc317673c2f3ed3e34b810d",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Folder Drive']) [data-testid=dest-remove]",
+          "text": "Remove?",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▾\nFolder Drive\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Check"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Edit"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            44
+          ],
+          "text": "Remove?"
+        },
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▸\nReports folder\nFILE\n/private"
+        },
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            44
+          ],
+          "text": "Add destination"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b14b-remove-failed-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 2",
+      "dest_parked": [
+        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports PARKED SEP 29 00:22"
+      ],
+      "destinations": [
+        "▾ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Drive SYNCED FOLDER",
+        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports THIS DEVICE"
+      ],
+      "egress_chips": [
+        "SYNCED FOLDER:cloud",
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "a0d649b37a0c5b4950a7bcaec26f3582797a380a21c2f70299b1399c93946ea8",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Folder Drive']) [data-testid=dest-remove-failed]",
+          "text": "✗ NOT REMOVED NO ANSWER Retry",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Folder Drive']) [data-testid=dest-remove-retry]",
+          "text": "Retry",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▾\nFolder Drive\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Check"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Edit"
+        },
+        {
+          "face": [
+            61.2,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            61.2,
+            44
+          ],
+          "text": "Remove"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Retry"
+        },
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▸\nReports folder\nFILE\n/private"
+        },
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            44
+          ],
+          "text": "Add destination"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
     "b15-removed-parked-393": {
       "body_overflow_x": false,
       "dest_head": "DESTINATIONS 1",
       "dest_parked": [
-        "Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Drive PARKED SEP 28 23:54",
-        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports PARKED SEP 28 23:54"
+        "Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Drive PARKED SEP 29 00:22",
+        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports PARKED SEP 29 00:22"
       ],
       "destinations": [
-        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports THIS DEVICE"
+        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local"
@@ -1234,7 +1543,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "300cabe348ba20dec4338852e1c7f203583e92d1d387618d5a63c4e055314626",
+      "masked_sha": "a92605df6182674f062a992953963a42d4434ce610bb8dde8346236f4cd1d25f",
       "modal": false,
       "named": [
         {
@@ -1362,46 +1671,46 @@
       "account": {},
       "badge": "cloud",
       "channel": "file",
-      "created_at": "2026-09-29T05:54:28+00:00",
-      "id": "chd_86428803dbff51dcc7b59a7f",
+      "created_at": "2026-09-29T06:22:45+00:00",
+      "id": "chd_9f29b604088cdee0445a69f4",
       "name": "Folder Drive",
-      "parked_at": "2026-09-29T05:54:37+00:00",
+      "parked_at": "2026-09-29T06:22:58+00:00",
       "state": "parked",
       "synced": true,
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Drive"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Drive"
       },
-      "target_digest": "accfa2492c8033bfb075ba158a9971ec1ea45985f918f070db68595a66dc5a16"
+      "target_digest": "c88be88cf9211cb3dad015ccf8ef130e74fba148d7bf2d851a2177a90de60ac5"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-29T05:54:28+00:00",
-      "id": "chd_72b0a3679fb1bc55e1928830",
+      "created_at": "2026-09-29T06:22:45+00:00",
+      "id": "chd_f7c9f4ea7bd87ab2db0c45b4",
       "name": "Folder Reports",
-      "parked_at": "2026-09-29T05:54:35+00:00",
+      "parked_at": "2026-09-29T06:22:52+00:00",
       "state": "parked",
       "synced": false,
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports"
       },
-      "target_digest": "49984be3564fc4b9b43d1f6a206e843af5fcd265bf071813cf23a43d296d7589"
+      "target_digest": "42ecccae95fe65e9d039564c9a729fbc7c8ed5ccf84ceab5e852663b513b1d13"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-29T05:54:35+00:00",
-      "id": "chd_05409f8084b398d8c671bcf9",
+      "created_at": "2026-09-29T06:22:52+00:00",
+      "id": "chd_3f85e46f4a69484a218e82fb",
       "name": "Reports folder",
       "parked_at": null,
       "state": "active",
       "synced": false,
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw2/test_the_destinations_group_390/Reports"
       },
-      "target_digest": "49984be3564fc4b9b43d1f6a206e843af5fcd265bf071813cf23a43d296d7589"
+      "target_digest": "42ecccae95fe65e9d039564c9a729fbc7c8ed5ccf84ceab5e852663b513b1d13"
     }
   ]
 }

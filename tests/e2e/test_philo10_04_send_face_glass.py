@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -84,6 +85,22 @@ def _mode(page: Any, key: str, value: str | None) -> None:
       window.__modes = m; sessionStorage.setItem('__modes', JSON.stringify(m)); }""", [key, value])
 
 
+class _PinnedClock(datetime):
+    """The boundary clock pinned: every send "leaves" at the same instant."""
+
+    @classmethod
+    def now(cls, tz=None):  # type: ignore[override]
+        return datetime(2030, 1, 1, 9, 0, 0, tzinfo=tz)  # later than every real created_at: the read order cannot break the tie by luck
+
+
+def _confirm(loc: Any, armed: str) -> None:
+    """ConfirmVerb disarms after 3 s (a measured board outlasts that): arm again, then confirm."""
+    if loc.inner_text().strip() != armed:
+        loc.click()
+        loc.page.wait_for_timeout(150)
+    loc.click()
+
+
 def _long_folder(root: Path) -> Path:
     """Story 01's UNKNOWN recipe: a folder whose path leaves no room for the file's name."""
     limit = os.pathconf("/", "PC_PATH_MAX")
@@ -102,6 +119,7 @@ class TestSendFaceGlass:
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
         self.server, self.base = server, base
         self.locked: list[Path] = []
+        self.monkeypatch = monkeypatch
         try:
             yield
         finally:
@@ -461,6 +479,10 @@ class TestSendFaceGlass:
 
                 # 28b / 28c: an inline send to Ledger first (SAVED), then the OLDER
                 # preparation is sent and FAILS: the destination shows the latest to leave.
+                # Codex Astra r1 F3 on #697: the boundary clock PINNED, so both sends
+                # carry the same dispatch_started_at; the order is the hub's dispatch_seq.
+                from holdspeak.services import channel_service as _cs
+                self.monkeypatch.setattr(_cs, "datetime", _PinnedClock)
                 self._pick(page, "Folder Ledger")
                 self._send(page, "Folder Ledger")
                 self._unpick(page, "Folder Ledger")
@@ -475,9 +497,12 @@ class TestSendFaceGlass:
                 page.wait_for_timeout(600)
                 shots.shoot(page, "28-prepared-failed", ["[data-testid=prepared-result] [data-state=failed]"])
                 hub = {s["id"]: s for s in self._sends(page, uid)}
+                self.monkeypatch.setattr(_cs, "datetime", datetime)
                 ledger = sorted((s for s in hub.values() if s["destination_id"] == ids["Folder Ledger"]),
-                                key=lambda s: s["dispatch_started_at"])
+                                key=lambda s: s["dispatch_seq"])
                 assert [s["state"] for s in ledger] == ["sent", "failed"], ledger
+                assert ledger[0]["dispatch_started_at"] == ledger[1]["dispatch_started_at"], ledger  # an equal clock
+                assert ledger[0]["dispatch_seq"] < ledger[1]["dispatch_seq"], ledger
                 assert ledger[-1]["id"] == prepared["Folder Ledger"]  # prepared first, left last
                 latest = shots.shoot(page, "28b-destination-latest-failed",
                                      [f"{self._row('Folder Ledger')} [data-testid=send-last-failed]"])
@@ -522,8 +547,8 @@ class TestSendFaceGlass:
                 discard.click()
                 page.wait_for_timeout(200)
                 assert discard.inner_text().strip() == "Discard?"
-                page.screenshot(path=str(SHOTS / f"32-discard-armed-{width}.png"))
-                discard.click()
+                shots.shoot(page, "32-discard-armed", [f"{row} [data-testid=prepared-discard]"])
+                _confirm(discard, "Discard?")
                 page.wait_for_function("""() => [...document.querySelectorAll('[data-testid=prepared-result] [data-state]')]
                     .some((e) => e.dataset.state === 'discarded')""", timeout=T)
                 page.wait_for_timeout(500)
@@ -641,6 +666,55 @@ class TestSendFaceGlass:
             finally:
                 browser.close()
 
+    # ── 3b: a known FAILED outlives a failed read (Codex Astra r1 F1 on #697) ──
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(1200)
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_a_known_failure_outlives_a_failed_sends_read(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        shots = Boards(SHOTS, width, UP)
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                pid = _api(page, "POST", "/api/projects", {"name": NAME}, token=TOKEN)["project"]["id"]
+                uid = self._published(page, pid)
+                out = self.tmp / "Payments"
+                out.mkdir()
+                self._dest(page, "Folder Payments", out)
+                self._room(page, pid)
+                self._updates(page)
+                self._open_update(page, uid)
+                self._pick(page, "Folder Payments")
+                self._send(page, "Folder Payments")
+                # The folder turns unwritable, and every sends read from now on gets no answer.
+                out.chmod(0o555)
+                self.locked.append(out)
+                _mode(page, "GET ^/api/channels/sends$", "fail")
+                verb = page.locator(f"{self._open_sel('Folder Payments')} [data-testid=send-verb]")
+                assert verb.inner_text().strip() == "Send again"
+                verb.click()
+                page.locator(f"{self._open_sel('Folder Payments')} [data-receipt=latest][data-state=failed]").wait_for(timeout=T)
+                page.wait_for_timeout(900)
+                calls = [c for c in page.evaluate("window.__calls") if c["path"] == "/api/channels/sends" and c["method"] == "GET"]
+                _mode(page, "GET ^/api/channels/sends$", None)
+                hub = sorted(self._sends(page, uid), key=lambda s: s["dispatch_seq"])
+                f = shots.shoot(page, "r1-failed-read-keeps-failure",
+                                [f"{self._row('Folder Payments')} [data-testid=send-last-failed]",
+                                 f"{self._open_sel('Folder Payments')} [data-testid=send-failed]"])
+                assert [s["state"] for s in hub] == ["sent", "failed"], hub
+                assert calls, "the sends read after the press was not attempted"
+                assert [r["state"] for r in f["receipts"]] == ["failed"], f["receipts"]
+                assert f["receipts"][0]["code"] == "permission_denied", f["receipts"]
+                assert any("LAST SEND FAILED" in c for c in f["last_chips"]) and not any("SAVED" in c for c in f["last_chips"]), f["last_chips"]
+                assert page.locator("[data-testid=sends-unreadable]").count() == 1  # the failed read is named too
+                shots.write("send-face-failed-read", {"hub_sends": hub})
+                shots.assert_clean()
+                assert not errors, errors
+            finally:
+                browser.close()
+
     # ── 4: the Destinations group in Settings -> Connections ──────────────
 
     @pytest.mark.e2e
@@ -721,6 +795,7 @@ class TestSendFaceGlass:
                 shots.shoot(page, "b10-row-open-checked", [f"{row} [data-testid=dest-check-result]"])
                 assert page.locator(f"{row} [data-testid=dest-check-result]").inner_text().split() == ["✓", "CHECKED"]
                 assert page.locator(f"{row} [data-testid=dest-check-result]").get_attribute("data-code") == "ready"
+                assert "CHECKED" in page.locator(f"{row} [data-testid=dest-open] dl").inner_text().upper()  # the canvas's Checked time
 
                 # B12, B13: Edit saves a new row and parks the old one.
                 page.locator(f"{row} [data-testid=dest-edit]").click()
@@ -743,8 +818,22 @@ class TestSendFaceGlass:
                 remove.click()
                 page.wait_for_timeout(150)
                 assert remove.inner_text().strip() == "Remove?"
-                page.screenshot(path=str(SHOTS / f"b14-remove-armed-{width}.png"))
-                remove.click()
+                shots.shoot(page, "b14-remove-armed", [f"{row} [data-testid=dest-remove]"])
+                # Codex Astra r1 F2 on #697: a Remove with no answer stays open, named, with Retry.
+                _mode(page, "DELETE ^/api/channels/destinations/", "fail")
+                _confirm(remove, "Remove?")
+                page.locator(f"{row} [data-testid=dest-remove-failed]").wait_for(timeout=T)
+                page.wait_for_timeout(300)
+                not_removed = shots.shoot(page, "b14b-remove-failed", [f"{row} [data-testid=dest-remove-failed]",
+                                                                      f"{row} [data-testid=dest-remove-retry]"])
+                hub_nr = _api(page, "GET", "/api/channels/destinations?include_parked=true", token=TOKEN)["destinations"]
+                assert next(d for d in hub_nr if d["name"] == "Folder Drive")["state"] == "active", hub_nr
+                assert page.locator(f"{row} [data-testid=dest-open]").count() == 1
+                assert page.locator(f"{row} [data-testid=dest-remove-failed]").inner_text().split("\n")[:3] == [
+                    "✗", "NOT REMOVED", "NO ANSWER"], page.locator(f"{row} [data-testid=dest-remove-failed]").inner_text()
+                assert not_removed["dest_head"] == "DESTINATIONS 2"
+                _mode(page, "DELETE ^/api/channels/destinations/", None)
+                page.locator(f"{row} [data-testid=dest-remove-retry]").click()
                 page.wait_for_function("document.querySelectorAll('[data-testid=dest-row]').length === 1", timeout=T)
                 page.wait_for_timeout(400)
                 if not page.locator("[data-testid=dest-parked-row]").count():

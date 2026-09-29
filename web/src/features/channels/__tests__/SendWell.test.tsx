@@ -19,7 +19,7 @@ vi.mock("../../../pages/cores/connections/api", async () => {
 });
 
 import { ApiError } from "../../../lib/api";
-import { DeliveryHistory, ListChips, SendWell, latestFor, resetSendStore, useSends } from "../SendWell";
+import { DeliveryHistory, ListChips, SendWell, latestFor, mergeKnown, resetSendStore, useSends } from "../SendWell";
 
 const FOLDER = "/Users/karol/Reports/Payments";
 const dest = (over: Partial<Destination> = {}): Destination => ({
@@ -196,6 +196,29 @@ describe("the SEND well", () => {
     // The posture's rule is `lifecycle === "published"`; the history below
     // is the only DELIVERY face, and it needs a published update.
     expect(update({ lifecycle: "draft" }).lifecycle).not.toBe("published");
+  });
+});
+
+describe("latestFor: ONE source, by dispatch_seq (Codex Astra r1 F3 on #697)", () => {
+  it("an equal clock is ordered by the hub's dispatch sequence", () => {
+    const at = "2026-09-28T10:00:00.000000+00:00";
+    const sends = [
+      send({ id: "a", state: "failed", reason: "permission_denied", dispatch_started_at: at, dispatch_seq: 2 }),
+      send({ id: "b", state: "sent", dispatch_started_at: at, dispatch_seq: 1 }),
+    ];
+    expect(latestFor(sends, "chd_1")?.id).toBe("a");
+  });
+});
+
+describe("mergeKnown: a stale or failed read never hides a returned result (r1 F1 on #697)", () => {
+  it("keeps the returned FAILED over a read that predates it, and a read never replaces an ended row with a running one", () => {
+    const old = send({ id: "old", state: "sent", dispatch_seq: 1 });
+    const failed = send({ id: "new", state: "failed", reason: "permission_denied", dispatch_seq: 2 });
+    const merged = mergeKnown("u1", [old], [failed]);
+    expect(latestFor(merged, "chd_1")?.state).toBe("failed");
+    const running = { ...failed, state: "dispatching" as const };
+    expect(mergeKnown("u1", [old, running], [failed]).find((s) => s.id === "new")?.state).toBe("failed");
+    expect(mergeKnown("u2", [old], [failed]).map((s) => s.id)).toEqual(["old"]);
   });
 });
 

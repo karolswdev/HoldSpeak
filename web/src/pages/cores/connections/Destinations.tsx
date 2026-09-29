@@ -252,8 +252,19 @@ export function Destinations() {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [keys, setKeys] = useState<Record<string, boolean>>({});
-  const [checks, setChecks] = useState<Record<string, { busy: boolean; state?: string }>>({});
+  const [checks, setChecks] = useState<Record<string, { busy: boolean; state?: string; at?: string }>>({});
   const [removeBusy, setRemoveBusy] = useState<string | null>(null);
+  // A Remove the hub did not confirm: the row stays open, named, with Retry
+  // (Codex Astra r1 F2 on #697). Never closed as if it were parked.
+  const [removeFailed, setRemoveFailed] = useState<Record<string, string>>({});
+  const remove = (id: string) => {
+    setRemoveBusy(id);
+    setRemoveFailed((m) => { const n = { ...m }; delete n[id]; return n; });
+    void wire.park(id)
+      .then(() => { setOpen(null); reload(); })
+      .catch((e) => setRemoveFailed((m) => ({ ...m, [id]: e instanceof Refusal ? e.code : "no_answer" })))
+      .finally(() => setRemoveBusy(null));
+  };
   const reload = useCallback(() => void wire.destinations(true).then((r) => {
     setRows(r); setReadFailed(false);
     setKeys((k) => ({
@@ -329,19 +340,27 @@ export function Destinations() {
                           <dl className="send-fields">
                             {detailFields(d).map(([l, v]) => <Field key={l} label={l} value={v} />)}
                             <Field label="Saved" value={stamp(d.created_at)} />
+                            {c?.at ? <Field label="Checked" value={stamp(c.at)} /> : null}
                           </dl>
                           <div className="send-verbs" data-testid="dest-verbs">
                             <Button dense variant="ghost" loading={c?.busy} data-testid="dest-check"
                               onClick={() => {
                                 setChecks((m) => ({ ...m, [d.id]: { busy: true } }));
                                 void wire.check(d.id)
-                                  .then((r) => setChecks((m) => ({ ...m, [d.id]: { busy: false, state: r.check.state } })))
+                                  .then((r) => setChecks((m) => ({ ...m, [d.id]: { busy: false, state: r.check.state, at: new Date().toISOString() } })))
                                   .catch((e) => setChecks((m) => ({ ...m, [d.id]: { busy: false, state: e instanceof Refusal ? e.code : "no_answer" } })));
                               }}>Check</Button>
                             <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
                             <Button dense variant="ghost" data-testid="dest-edit" onClick={() => setEditing(d.id)}>Edit</Button>
                             <ConfirmVerb label="Remove" confirmLabel="Remove?" busy={removeBusy === d.id} data-testid="dest-remove"
-                              onConfirm={() => { setRemoveBusy(d.id); void wire.park(d.id).catch(() => undefined).finally(() => { setRemoveBusy(null); setOpen(null); reload(); }); }} />
+                              onConfirm={() => remove(d.id)} />
+                            {removeFailed[d.id] ? (
+                              <span className="send-line" data-testid="dest-remove-failed" data-code={removeFailed[d.id]}>
+                                <StateChip state="failure" label="NOT REMOVED" />
+                                <span className="surface-token" data-chip>{refusedWord(removeFailed[d.id])}</span>
+                                <Button dense variant="ghost" data-testid="dest-remove-retry" onClick={() => remove(d.id)}>{SEND_WORDS.retry}</Button>
+                              </span>
+                            ) : null}
                             {c?.state ? (
                               <span className="send-line" data-testid="dest-check-result" data-code={c.state}>
                                 <CheckChip state={c.state} />

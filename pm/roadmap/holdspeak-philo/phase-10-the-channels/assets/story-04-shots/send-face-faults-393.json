@@ -6,7 +6,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments ✓ SAVED 23:53 THIS DEVICE"
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments ✓ SAVED 00:22 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -14,18 +14,18 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-120156a1.md SEP 28 23:53"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-3e37de4a.md SEP 29 00:22"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 23:53"
+        "✓ SAVED 00:22"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "25494a8da2060b542ef18df09b63d821129c79013991224443f8a9b5ab50c8ad",
+      "masked_sha": "dcf0bdfa5015060cda601e978c5505de97e613c1a22905cd627fe81e04bd79af",
       "modal": false,
       "named": [
         {
@@ -107,7 +107,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -142,7 +142,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments ✓ SAVED 23:53 THIS DEVICE"
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments ✓ SAVED 00:22 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -150,18 +150,18 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-120156a1.md SEP 28 23:53"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-3e37de4a.md SEP 29 00:22"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 23:53"
+        "✓ SAVED 00:22"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "2b7ae12daacc34a20e8f62ca37d06b960f05fba12e32c013ec75a23984a096ef",
+      "masked_sha": "5d5a373aa9ae0337601848f7a0e5fd24a1a192c32ca2ab8ea48b35b3a3fde4f4",
       "modal": false,
       "named": [
         {
@@ -237,7 +237,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -248,7 +248,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-120156a1.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-3e37de4a.md"
         }
       ],
       "send_head": "SEND",
@@ -275,7 +275,7 @@
       "egress_chips": [],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-120156a1.md SEP 28 23:53"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-3e37de4a.md SEP 29 00:22"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
@@ -284,7 +284,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "005733294a46c37cf6978ce6aba290465b76ac8afd5ae372f293cc200ed5cc08",
+      "masked_sha": "0104213b30e087aac4d0feabfe36575ae89df3a336afb664f55e8b5ccf54d960",
       "modal": false,
       "named": [
         {
@@ -366,23 +366,25 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments ✓ SAVED 00:22 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local"
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-120156a1.md SEP 28 23:53"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-3e37de4a.md SEP 29 00:22"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
-      "last_chips": [],
+      "last_chips": [
+        "✓ SAVED 00:22"
+      ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "18810f9b7db7cc6d5cbf3f97466f68e55637be5f6f9a33c7d4749f36d5ae79ea",
+      "masked_sha": "7ac1a95090db0d80de5c59665e41e348d9c45c72b01fc91cdcde3ff2fbd4de88",
       "modal": false,
       "named": [
         {
@@ -411,7 +413,7 @@
         {
           "face": [
             363,
-            125
+            125.5
           ],
           "failed_points": [],
           "kind": "row",
@@ -419,7 +421,7 @@
           "retried": null,
           "target": [
             363,
-            125
+            125.5
           ],
           "text": "○\nFolder Payments\nFILE\n/privat"
         },
@@ -479,25 +481,25 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments ✓ SAVED 23:53 THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments ✓ SAVED 00:22 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local"
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-120156a1.md SEP 28 23:53"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-3e37de4a.md SEP 29 00:22"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 23:53"
+        "✓ SAVED 00:22"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "5e324c50238204bf9d16052a38e0f026b86915875c7aeeb49077c9b6b82e2722",
+      "masked_sha": "7a25408ec0a4de4ce6237a9d66ac8cacfbcd5db6c1f218788f2e66a274106301",
       "modal": false,
       "named": [
         {
@@ -594,25 +596,25 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments ✓ SAVED 23:53 THIS DEVICE"
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments ✓ SAVED 00:22 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local"
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-120156a1.md SEP 28 23:53"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-3e37de4a.md SEP 29 00:22"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 23:53"
+        "✓ SAVED 00:22"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "2e5d37b1b39ca0525793f2aa669064c3ba6d73e5215c1c1465fe93df3d8e2d09",
+      "masked_sha": "ecd94b7001e2369ba225aa44023d0f4da0a0822f3eef4efa235160e9a0bb47aa",
       "modal": false,
       "named": [
         {
@@ -723,22 +725,22 @@
       "path": "/api/channels/sends"
     },
     {
-      "destination_id": "chd_189fd0e634ed1533ce7812c4",
+      "destination_id": "chd_8fcba1e82c9622da77c762e3",
       "method": "POST",
       "path": "/api/channels/preview",
-      "update_id": "pupd_316dd84456ad433491875bd533985517"
+      "update_id": "pupd_ba1274a5b8a7405eba0ba55cb19df65e"
     },
     {
       "method": "GET",
       "path": "/api/channels/sends"
     },
     {
-      "command_id": "5390300f-056f-49a0-83a9-e225a79beb2a",
-      "destination_id": "chd_189fd0e634ed1533ce7812c4",
+      "command_id": "5fe8eee6-c770-426f-80a4-a273dc7e1593",
+      "destination_id": "chd_8fcba1e82c9622da77c762e3",
       "method": "POST",
       "path": "/api/channels/send",
       "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
-      "update_id": "pupd_316dd84456ad433491875bd533985517"
+      "update_id": "pupd_ba1274a5b8a7405eba0ba55cb19df65e"
     },
     {
       "method": "GET",
@@ -781,22 +783,22 @@
       "path": "/api/channels/destinations"
     },
     {
-      "destination_id": "chd_189fd0e634ed1533ce7812c4",
+      "destination_id": "chd_8fcba1e82c9622da77c762e3",
       "method": "POST",
       "path": "/api/channels/preview",
-      "update_id": "pupd_316dd84456ad433491875bd533985517"
+      "update_id": "pupd_ba1274a5b8a7405eba0ba55cb19df65e"
     },
     {
       "method": "GET",
       "path": "/api/channels/sends"
     },
     {
-      "command_id": "5390300f-056f-49a0-83a9-e225a79beb2a",
-      "destination_id": "chd_189fd0e634ed1533ce7812c4",
+      "command_id": "5fe8eee6-c770-426f-80a4-a273dc7e1593",
+      "destination_id": "chd_8fcba1e82c9622da77c762e3",
       "method": "POST",
       "path": "/api/channels/send",
       "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
-      "update_id": "pupd_316dd84456ad433491875bd533985517"
+      "update_id": "pupd_ba1274a5b8a7405eba0ba55cb19df65e"
     },
     {
       "method": "GET",
@@ -867,10 +869,10 @@
       "path": "/api/channels/sends"
     },
     {
-      "destination_id": "chd_189fd0e634ed1533ce7812c4",
+      "destination_id": "chd_8fcba1e82c9622da77c762e3",
       "method": "POST",
       "path": "/api/channels/preview",
-      "update_id": "pupd_316dd84456ad433491875bd533985517"
+      "update_id": "pupd_ba1274a5b8a7405eba0ba55cb19df65e"
     },
     {
       "method": "GET",
@@ -882,13 +884,14 @@
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-29T05:53:25.363536+00:00",
-      "destination_id": "chd_189fd0e634ed1533ce7812c4",
+      "created_at": "2026-09-29T06:22:20.109774+00:00",
+      "destination_id": "chd_8fcba1e82c9622da77c762e3",
       "destination_name": "Folder Payments",
-      "dispatch_started_at": "2026-09-29T05:53:25.363536+00:00",
-      "document_ref": "project_update:pupd_316dd84456ad433491875bd533985517",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-120156a1.md",
-      "id": "chs_120156a1f095fe9b6d16c511",
+      "dispatch_seq": 1,
+      "dispatch_started_at": "2026-09-29T06:22:20.109774+00:00",
+      "document_ref": "project_update:pupd_ba1274a5b8a7405eba0ba55cb19df65e",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-3e37de4a.md",
+      "id": "chs_3e37de4af7a6f4aba549418c",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -899,19 +902,19 @@
         "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
       },
       "proof": {
-        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-120156a1.md",
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments/2026-09-29-payments-ledger-cutover-r1-3e37de4a.md",
         "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
         "size": 286
       },
       "reason": null,
-      "send_operation_id": "op_ece322bad9b2474abf57f557e099c280",
-      "settled_at": "2026-09-29T05:53:25+00:00",
+      "send_operation_id": "op_22bc440dff294614ab19ecfd2dc8738c",
+      "settled_at": "2026-09-29T06:22:20+00:00",
       "size": 286,
       "state": "sent",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_a_lost_answer_and_every_u1/Payments"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.CvytPtEXw2/pt/popen-gw1/test_a_lost_answer_and_every_u1/Payments"
       },
-      "target_digest": "ab5c91d54c48131fe5c91cb03e4e3928754126492ef4fd5cc44d6c8ffde3dd0b"
+      "target_digest": "77a726a9a5cb0623e451321c509d85f1096ec76056d428e992a25aaacef3070d"
     }
   ],
   "update_b_clean": true

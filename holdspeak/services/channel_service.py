@@ -90,6 +90,7 @@ class ChannelService:
             "proof": json.loads(row["proof_json"]) if row["proof_json"] else None,
             "file_path": row["file_path"], "created_at": row["created_at"],
             "dispatch_started_at": row["dispatch_started_at"], "settled_at": row["settled_at"],
+            "dispatch_seq": row["dispatch_seq"],
         }
 
     def _answer(self, row: Mapping[str, Any]) -> dict[str, Any]:
@@ -331,12 +332,14 @@ class ChannelService:
             raise ChannelRefused("payload_changed", "The frozen payload does not match its digest")
         self._size(channel_name, payload)
         path = chan.choose_path(folder, contract.naming(self._db, document_ref), send_id)
-        # PHILO-10-04: the boundary time to the microsecond. The face shows a
-        # destination's latest send by this order (header and receipt, one
-        # source); two sends in one second must still have an order.
+        # PHILO-10-04: the boundary time (display only; the order is dispatch_seq).
         started = datetime.now(timezone.utc).isoformat(timespec="microseconds")
         operation_id = handle.operation_id
         claimed = "EXISTS (SELECT 1 FROM kernel_operations WHERE operation_id=? AND state='claimed')"
+        # PHILO-10-04: the order sends LEFT in, allocated inside the boundary
+        # transaction (BEGIN IMMEDIATE holds the write lock): a total order for
+        # "latest", whatever the clock says.
+        next_seq = "SELECT COALESCE(MAX(dispatch_seq), 0) + 1 FROM channel_sends"
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             # The destination, read again INSIDE the boundary transaction: a Remove
@@ -346,14 +349,14 @@ class ChannelService:
             if row is not None:
                 moved = conn.execute(
                     "UPDATE channel_sends SET state='dispatching', send_operation_id=?, dispatch_started_at=?,"
-                    f" file_path=? WHERE id=? AND state='prepared' AND {claimed}",
+                    f" file_path=?, dispatch_seq=({next_seq}) WHERE id=? AND state='prepared' AND {claimed}",
                     (operation_id, started, path, send_id, operation_id)).rowcount
             else:
                 moved = conn.execute(
                     "INSERT INTO channel_sends (id, document_ref, destination_id, channel, account_json, target_json,"
                     " target_digest, payload, payload_digest, prepared_by_kind, prepared_by_identity,"
-                    " send_operation_id, state, file_path, created_at, dispatch_started_at)"
-                    f" SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'dispatching', ?, ?, ? WHERE {claimed}",
+                    " send_operation_id, state, file_path, created_at, dispatch_started_at, dispatch_seq)"
+                    f" SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'dispatching', ?, ?, ?, ({next_seq}) WHERE {claimed}",
                     (send_id, document_ref, destination["id"], channel_name, destination["account_json"],
                      destination["target_json"], destination["target_digest"], payload, contract.sha256(payload),
                      "owner", str(getattr(handle.principal, "identity", "") or ""), operation_id, path, started,

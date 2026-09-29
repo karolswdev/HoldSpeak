@@ -60,6 +60,9 @@ const store = {
   holds: new Map<string, Held>(),                     // `${updateId}|${target}` -> the held press
   outcomes: new Map<string, Outcome>(),
   busy: new Set<string>(),
+  /** Records the hub RETURNED to a press (send, discard): a later read that
+   *  fails or is stale can never hide them (Codex Astra r1 F1 on #697). */
+  known: new Map<string, Send>(),
   tick: 0,
   subs: new Set<() => void>(),
 };
@@ -69,7 +72,8 @@ const useStore = () =>
 
 /** Test seam: forget every held press (a fresh page has none). */
 export function resetSendStore() {
-  store.picked.clear(); store.preparedOpen.clear(); store.holds.clear(); store.outcomes.clear(); store.busy.clear(); bump();
+  store.picked.clear(); store.preparedOpen.clear(); store.holds.clear(); store.outcomes.clear(); store.busy.clear();
+  store.known.clear(); bump();
 }
 
 /* ── the reads (each names its failure) ──────────────────────────────── */
@@ -287,6 +291,7 @@ async function press(updateId: string, target: string, fresh: () => Held["body"]
     const peek = setTimeout(reload, 250);
     const send = await pending.finally(() => clearTimeout(peek));
     store.holds.delete(k);
+    store.known.set(send.id, send);
     store.outcomes.set(k, { kind: "settled", send });
   } catch (e) {
     if (e instanceof Refusal) { store.holds.delete(k); store.outcomes.set(k, { kind: "refused", code: e.code, at: Date.now() }); }
@@ -303,8 +308,26 @@ export function latestFor(sends: Send[], destId: string): Send | undefined {
   return sends
     .filter((s) => s.destination_id === destId && !!s.dispatch_started_at
       && (s.state === "sent" || s.state === "unknown" || s.state === "failed" || s.state === "dispatching"))
-    .sort((a, b) => String(a.dispatch_started_at).localeCompare(String(b.dispatch_started_at)))
+    .sort((a, b) => (a.dispatch_seq ?? 0) - (b.dispatch_seq ?? 0)
+      || String(a.dispatch_started_at).localeCompare(String(b.dispatch_started_at)))
     .pop();
+}
+
+const ENDED = new Set(["sent", "failed", "unknown", "discarded"]);
+
+/** The ONE result source: the last read, with every record the hub returned
+ *  to a press merged in. A read row replaces a returned one only when it is
+ *  as far along (an ended row, or the returned one still running); a read
+ *  that failed or predates the press never hides a known result. */
+export function mergeKnown(updateId: string, read: Send[], known: Iterable<Send> = store.known.values()): Send[] {
+  const ref = `project_update:${updateId}`;
+  const out = new Map(read.map((s) => [s.id, s]));
+  for (const k of known) {
+    if (k.document_ref !== ref) continue;
+    const r = out.get(k.id);
+    if (!r || (ENDED.has(k.state) && !ENDED.has(r.state))) out.set(k.id, k);
+  }
+  return [...out.values()];
 }
 
 /* ── the SEND well ─────────────────────────────────────────────────── */
@@ -329,7 +352,7 @@ export function SendWell({ update, sendsRead, onSettled }: {
     return () => { live = false; };
   }, [uid, picked, previewTry]);
 
-  const sends = sendsRead.data ?? [];
+  const sends = mergeKnown(uid, sendsRead.data ?? []);
   const reload = sendsRead.reload;
   // Every send that went through a prepare, in the order prepared: the open
   // ones and the ones that ended (their result stays here).
@@ -529,7 +552,7 @@ function PreparedRow({ uid, revision, s, reload, conns, dest, open, onToggle, on
                 onConfirm={() => {
                   setDiscardBusy(true);
                   void wire.discard(s.id)
-                    .then(() => { store.outcomes.delete(k); store.preparedOpen.delete(uid); bump(); })
+                    .then((ended) => { store.known.set(ended.id, ended); store.outcomes.delete(k); store.preparedOpen.delete(uid); bump(); })
                     .catch((e) => setDiscardOutcome(e instanceof Refusal ? e.code : "no_answer"))
                     .finally(() => { setDiscardBusy(false); reload(); });
                 }} />
@@ -631,7 +654,7 @@ export function ListChips({ update }: { update: ProjectUpdate }) {
   const { data } = useSends(update.id);
   const ok = update.deliveries.filter(isDelivered).length;
   const unknown = update.deliveries.length - ok;
-  const prep = (data ?? []).filter((s) => s.state === "prepared").length;
+  const prep = mergeKnown(update.id, data ?? []).filter((s) => s.state === "prepared").length;
   return (
     <>
       {prep > 0 ? <span data-testid="update-prepared-chip"><StateChip state="active" icon="◆" label={`${SEND_WORDS.prepared} ×${prep}`} /></span> : null}
@@ -652,7 +675,7 @@ export function PublishedWells({ ctrl, update }: { ctrl: UpdateController; updat
   return (
     <>
       <SendWell update={update} sendsRead={sendsRead} onSettled={settled} />
-      <div data-section="delivery"><DeliveryHistory ctrl={ctrl} update={update} sends={sendsRead.data ?? []} /></div>
+      <div data-section="delivery"><DeliveryHistory ctrl={ctrl} update={update} sends={mergeKnown(update.id, sendsRead.data ?? [])} /></div>
     </>
   );
 }
