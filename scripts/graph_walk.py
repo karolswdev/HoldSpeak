@@ -4174,6 +4174,11 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         raise Blocked(
             f"ui action {action!r} is not in the rig's vocabulary "
             f"{sorted(UI_ACTIONS)}; nothing was fired")
+    if action == "scroll_into_view" and (not step.get("selector")
+                                         or step.get("block", "center") not in ("start", "center", "end")):
+        # PHILO-10-05: a malformed seat is refused by name before anything is touched.
+        raise Blocked(f"ui action 'scroll_into_view' needs a selector and a block of start, center or end; "
+                      f"got selector={step.get('selector')!r} block={step.get('block')!r}; nothing was fired")
     if page is None:
         raise Blocked("headless mode refuses UI/face steps: no Page is opened")
     optional = bool(step.get("optional"))

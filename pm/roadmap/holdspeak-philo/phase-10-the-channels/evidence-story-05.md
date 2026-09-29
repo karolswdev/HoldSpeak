@@ -23,6 +23,12 @@
 - **Proof scripts** (`assets/story-05-proof/`): `rig_run.py` (one hub, one HOME, one run directory `<case>--<width>/<run id>` per run, reuse refused), `retain.py` (the copier: keyed by case × width × run; refuses a label that exists, two rows sharing a directory, a directory that is not `<case>--<width>/<run id>` of its row, an observation of another case, width or verdict — all BEFORE it writes anything), `rig_phase.sh`, `batch.sh` (+ its log `batch1.log`), `equivalence.py`, `base_diff.py`, `mutations.py` (14), `fences.sh`, `exit_combos.sh`, `docs_nav.sh`.
 - **Retained runs** `assets/story-05-shots/<label>/`: `p10-merged` (42, with shots), `red-98ea2cfa` (42), `p789-merged` (97, with shots), `p789-dce3afa9` (97, observations only), `base-merged` and `base-dce3afa9` (194 each, observations only), `serial-merged` (6), `s5-{merged,dce3afa9}-a{1,2,3}` (1 each).
 
+## Round four — Muad'Dib's full suite on #698 @ `813e6684`: two branch-new reds, paid
+
+- `tests/unit/test_graph_walk_calibration.py::test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires`: the closed UI vocabulary now names `scroll_into_view`, and a malformed seat (no selector, or a block other than start / center / end) blocks by name before any page is reached ("nothing was fired"; two cases added to the fence). `cli_calls` and the `protocol_reads` row `count` are not pinned by any closed-vocabulary fence (the predicate-kind fence reads `check_predicate` itself).
+- `tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence`: `tests/unit/test_philo10_atlas.py` only READS pm/roadmap (the atlas, the retained runs, `retain.py`); every write of its copier and runner fences goes under `tmp_path`. Added to the guard's allow-list with that reason.
+- Every unit file that imports the rig, plus the guard: 500 passed (capture below).
+
 ## Round three — Codex Astra r1 on #698 @ `813e6684` (RATIFY-WITH-CONDITIONS), paid
 
 `checks/story-05-built-astra-r1.md` (verbatim). Codex reproduced 9 atlas runs and found the census honest and the recording runner answering where production reads. Its conditions:
@@ -672,4 +678,47 @@ rig_phase.sh [export] BUILD=7 RIG=1 RETAIN=0 -> exit 3, ran: nothing (wanted non
 rig_phase.sh [export] BUILD=7 RIG=1 RETAIN=1 -> exit 3, ran: nothing (wanted nonzero, nothing ran): ok
 before (813e6684) [tree] BUILD=7 -> exit 0, ran: rig retain (the defect: shown, not counted)
 0 wrong
+```
+
+### Captured run — 2026-09-29T17:01:26Z
+
+- **Command:** `zsh -c H=$(mktemp -d); HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright .venv/bin/python -m pytest -q -p no:cacheprovider -n 4 --basetemp=$H/pt tests/unit/test_evidence_scratch_guard.py tests/unit/test_philo8_atlas.py tests/unit/test_graph_walk_producer_clock.py tests/unit/test_philo9_atlas.py tests/unit/test_philo5_rehearsal_capture.py tests/unit/test_graph_walk_http_fault.py tests/unit/test_graph_walk_first_paint.py tests/unit/test_philo_graph_atlas.py tests/unit/test_philo9_room_contract.py tests/unit/test_philo5_graph_op.py tests/unit/test_philo4_02_readable_rows.py tests/unit/test_philo4_04_atlas_contracts.py tests/unit/test_philo9_04_atlas.py tests/unit/test_philo10_atlas.py tests/unit/test_philo5_rig_import_boundary.py tests/unit/test_philo7_rig_faithful.py tests/unit/test_philo5_codex_seams.py tests/unit/test_philo3_summary_rig.py tests/unit/test_philo7_atlas.py tests/unit/test_philo9_02_rig_op.py tests/unit/test_philo10_rig_op.py tests/unit/test_philo5_pairs.py tests/unit/test_philo9_rig_op.py tests/unit/test_graph_walk_calibration.py  2>&1 | tail -2; rc=${pipestatus[1]}; rm -rf $H; exit $rc`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** c0d7f64cc7277ffa7599e6382fdd8a5327640ceb
+
+```text
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+500 passed, 3 warnings in 104.42s (0:01:44)
+```
+
+### Captured run — 2026-09-29T17:03:11Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-proof/fences.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** c0d7f64cc7277ffa7599e6382fdd8a5327640ceb
+
+```text
+HEAD = 67cbd84b3cd62dd0901e7c8348bf75971d9925a7
+........................................................................ [ 98%]
+.....                                                                    [100%]
+365 passed in 11.90s
+baseline (unmutated): 57 passed in 0.65s
+m1   RED    ['test_the_general_fences_hold_for_the_phase10_file[test_every_case_reference_inside_the_atl', 'test_the_counts_over_every_atlas_file']
+m2   RED    ['test_the_general_fences_hold_for_the_phase10_file[test_face_cases_carry_both_ruled_viewpor', 'test_every_matrix_state_and_transition_has_its_case']
+m3   RED    ['test_every_face_case_reads_its_hub_outcome_in_the_same_observation']
+m4   RED    ['test_every_admitted_write_twin_reads_its_kernel_receipt_with_its_actor']
+m5   RED    ['test_one_dispatch_is_counted_at_the_runner_where_the_runner_answers_a_send']
+m6   RED    ['test_one_dispatch_is_counted_at_the_runner_where_the_runner_answers_a_send']
+m7   RED    ['test_the_pairs_read_the_same_values']
+m8   RED    ['test_a_timed_window_is_one_gesture']
+m9   RED    ['test_no_trigger_is_optional_and_no_optional_step_is_the_outcome']
+m10  RED    ['test_every_face_case_without_a_twin_is_excluded_with_a_reason']
+m11  RED    ['test_the_counts_over_every_atlas_file', 'test_every_matrix_state_and_transition_has_its_case']
+m12  RED    ['test_the_general_fences_hold_for_the_phase10_file[test_every_desk_face_case_crosses_the_ga']
+m13  RED    ['test_every_api_step_exists_in_the_generated_openapi']
+m14  RED    ['test_the_pairs_read_the_same_values']
+14 mutations: 14 red, 0 missed
+fences exit 0; mutations exit 0
 ```

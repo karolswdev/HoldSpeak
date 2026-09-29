@@ -28,6 +28,7 @@ ALLOWLIST = {
     "tests/unit/test_philo7_atlas.py": "reads the Phase 7 phase status (its named atlas cases) as input; writes only to tmp_path",
     "tests/unit/test_philo9_atlas.py": "reads the Phase 9 atlas cases and the story-05 retained runs as input; json.dumps only serializes for a text check, no file is written",
     "tests/unit/test_philo9_room_job.py": "reads the retained story-06 room-job runs as input; every mutation writes a copy under tmp_path",
+    "tests/unit/test_philo10_atlas.py": "reads the Phase 10 atlas, its retained story-05 runs and the proof scripts (retain.py) as input; the copier's fences and the recording runner's fence write only under tmp_path",
 }
 
 WRITE_RE = re.compile(
