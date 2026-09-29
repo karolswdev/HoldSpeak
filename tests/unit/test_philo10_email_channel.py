@@ -915,6 +915,16 @@ class Canned(urllib.request.BaseHandler):
         return resp
 
 channel_email.HTTPS_HANDLER = Canned
+if hold == "slowkey":  # a keychain read that waits 1.5 s (the owner's unlock prompt)
+    real_get = memory.get
+
+    def slow_get(ref):
+        with open(wire_log, "a") as log:
+            log.write("keychain read started\n")
+        time.sleep(1.5)
+        return real_get(ref)
+
+    memory.get = slow_get
 server = MeetingWebServer(
     WebRuntimeCallbacks(on_bookmark=MagicMock(), on_stop=MagicMock(), get_state=MagicMock(return_value={})),
     auth_token=token,
@@ -1085,5 +1095,40 @@ def test_r3_the_hub_answers_a_read_during_a_slow_email_send(tmp_path: Path, tran
         assert read < 0.5, f"the read waited {read:.3f} s during the email send"
         [row] = _rows(home, "SELECT state FROM channel_sends WHERE id=?", body["send_id"])
         assert row["state"] == "sent"
+    finally:
+        hub.kill()
+
+
+@pytest.mark.timeout(240)
+@pytest.mark.parametrize("transport", ["http", "mcp"])
+def test_r4_a_slow_keychain_read_in_the_destination_check_never_blocks_the_hub(tmp_path: Path, transport: str) -> None:
+    """Codex Astra r2 on #696: channel.check_destination read the keychain on the event loop; an
+    unrelated read waited 1.45 s (HTTP) / 1.51 s (MCP). It is ``blocking_io`` now (a real socket hub)."""
+    import time
+
+    home, log = tmp_path / "home", tmp_path / "keychain.log"
+    home.mkdir()
+    hub = _EmailHub(home, "slowkey", log)
+    try:
+        status, saved = hub.call("POST", "/api/channels/destinations", {
+            "name": "Review email", "channel": "email", "from_email": "karol@example.com",
+            "to": ["review@example.com"]})
+        assert status == 200, saved
+        dest = saved["destination"]["id"]
+
+        def check() -> Any:
+            if transport == "http":
+                return hub.call("POST", f"/api/channels/destinations/{dest}/check", {})
+            return hub.call("POST", "/api/mcp", {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {
+                "name": "channel.check_destination", "arguments": {"destination_id": dest}}})
+
+        thread, answer = in_thread(check)
+        _until(lambda: log.exists() and log.read_text().strip())  # the check is inside its keychain read
+        started = time.perf_counter()
+        status, _listed = hub.call("GET", "/api/channels/destinations")
+        read = time.perf_counter() - started
+        thread.join(30)
+        assert status == 200 and answer and answer[0][0] == 200, answer
+        assert read < 0.5, f"{transport}: the read waited {read:.3f} s during the keychain check"
     finally:
         hub.kill()

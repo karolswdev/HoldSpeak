@@ -800,7 +800,7 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
 
     blocking = {d.name for d in operations.DESCRIPTORS if d.blocking_io}
     assert blocking == {"channel.send", "channel.save_destination", "nudge.send", "connection.recheck",
-                        "channel.save_email_key"}
+                        "channel.save_email_key", "channel.check_destination"}
     # PHILO-10-03: the table covers the MCP tools; channel.save_email_key (the keychain) is HTTP only --
     # in no MCP palette, so it has no row -- and is config by its own declaration: the owner's press, owner only.
     by_name = {d.name: d for d in operations.DESCRIPTORS}

@@ -163,6 +163,7 @@ CHANNEL_CHECK_DESTINATION = OperationDescriptor(
     exposure=("http:POST /api/channels/destinations/{destination_id}/check", "mcp:channel.check_destination"),
     service="channel_service",
     method="check_destination",
+    blocking_io=True,  # email: the OS keychain read (it may wait on the owner's unlock); Codex Astra r2 on #696
     admission=Admission("exempt", "A folder: a local check, no egress (the phase's table). A remote channel: the "
                                   "stored connection state, no probe (connection.recheck probes, admitted)."),
 )

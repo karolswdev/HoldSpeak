@@ -161,6 +161,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-29, story 03 ROUND FOUR (PR #696): Codex Astra r2 DO-NOT-RATIFY on one P2, paid — `channel.check_destination` is `blocking_io` (the email check reads the keychain), fenced over HTTP and MCP on a real hub. Criterion 2's displayed word (story 04) and criterion 7 (story 06) stay OPEN.
+
 2026-09-29, story 03 ROUND THREE (PR #696): merged with main `3965c5e1` (#695); the CLI seam and the email seam share one `build_gated_connector` authority path; the email send is `blocking_io` and a read answers during a slow send (HTTP and MCP, a real socket hub). Owed: Muad'Dib's full suite and the Codex Astra r2 check.
 
 2026-09-29, story 03 ROUND TWO (PR #696) on Codex Astra r1 DO-NOT-RATIFY (`checks/story-03-built-astra-r1.md`): the edge forces wire debug off locally; a failure after any written byte is UNKNOWN; the provider contract carries its own auth headers and interprets bounded response material (a Postmark-like test provider proves it). Criterion 2's displayed word and criterion 7 stay open (stories 04, 06). Owed: merge #695, then the CLI + email seams and the event loop checked together.

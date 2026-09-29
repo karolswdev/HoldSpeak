@@ -1,7 +1,7 @@
 # Proof captures — PHILO-10-03 The email channel (a provider interface)
 
 - **Story:** PHILO-10-03 - The email channel — a provider interface
-- **Status:** in-progress (criteria 1–6 proven here; criterion 7, the owner's real-account send (Q6), is owed)
+- **Status:** in-progress. Proven here: criteria 1, 3, 4, 5, 6 and criterion 2's outcomes, read-back and crash fences. OPEN: criterion 2's DISPLAYED word on the Room face (story 04 builds it; Codex Astra r1 finding 6 / r2) and criterion 7, the owner's real-account send (story 06, Q6).
 - **Date:** 2026-09-29
 - **Branch:** `feat/philo-10-03` from main `eee4d9b2`, merged with main `84657927` (#694). Story 02 (#695) is not merged: this branch threads the network seam itself; the CLI seam's matching `build_gated_connector(principal, parent_operation_id, broker)` lines are the same shape as #695's, so that merge is mechanical.
 - **Design:** `design/send-lifecycle.md` sections 3, 4, 4a, 6, 8 and Codex Astra r3's conditions, built as ratified.
@@ -521,6 +521,13 @@ RED   M16 a success body is not given to interpret (Codex r1 P2): rc=1 1 failed,
 MUTATIONS: 16/16 turned their fences red
 ```
 
+## Round four (Codex Astra r2 DO-NOT-RATIFY on ebefe05e, `checks/story-03-built-astra-r2.md`)
+
+- **P2 paid:** `channel.check_destination` is `blocking_io` (an email destination's check reads the keychain, which can wait on the owner's unlock). Fence `test_r4_a_slow_keychain_read_in_the_destination_check_never_blocks_the_hub[http, mcp]` (Codex's probe as a repository fence: a real socket hub, a 1.5 s keychain read). Red with the flag removed (`.tmp/m18.sh`: the read waited 1.46 s HTTP / 1.47 s MCP; captured below; the scoped set on this head: 308 passed); green with it. Story 02's blocking census names it.
+- **The class, censused (the channel family, every declared `channel.*` operation):** `channel.send` (CLI children, the email egress, the key read) blocking; `channel.save_destination` (GitHub's `gh api user`) blocking; `channel.save_email_key` (keychain write) blocking; `channel.check_destination` (email: keychain read) blocking, this round; `channel.destinations`, `channel.sends`, `channel.remove_destination`, `channel.discard` (database only), `channel.preview` and `channel.prepare` (a render and the provider's serialize: no key, no CLI, no network) stay on the loop. `nudge.send` and `connection.recheck` are story 02's, both blocking.
+- **Recorded, not changed (outside the channel family):** the People store opens the OS keychain through `production_people_store()` (`holdspeak/people/store.py:487`) from HTTP routes and MCP (`web/routes/follow_through.py:43`, `web/routes/monday_brief.py:75`, `mcp/families/people.py:240`); a few HTTP routes run `subprocess.run` directly (`web/routes/roadmaps.py:46`, `web/routes/repositories.py:56`). Whether each runs on the event loop is not verified in this lane; BACKLOG row "Keychain and CLI calls on the event loop outside the channels".
+- **The proof header and the PR description** now say criterion 2's displayed word is OPEN.
+
 ## Round three captured runs
 
 ### Captured run — 2026-09-29T06:25:11Z
@@ -704,4 +711,79 @@ DOCS RC=0
 E           AssertionError: the read waited 1.465 s during the email send
 E           AssertionError: the read waited 1.473 s during the email send
 2 failed, 61 deselected in 6.18s
+```
+
+## Round four captured runs
+
+### Captured run — 2026-09-29T06:40:24Z
+
+- **Command:** `zsh .tmp/m18.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ee37320cd3173f5dd503d1f9e555387551257e77
+
+```text
+E           AssertionError: http: the read waited 1.456 s during the keychain check
+E           AssertionError: mcp: the read waited 1.468 s during the keychain check
+2 failed, 1 passed, 62 deselected in 8.13s
+```
+
+### Captured run — 2026-09-29T06:40:34Z
+
+- **Command:** `.tmp/iso.sh zsh -c .venv/bin/python -m pytest -q -p no:cacheprovider -n 8 -rf --basetemp=$HOME/pt tests/unit/test_philo10_email_channel.py tests/unit/test_philo10_cli_channels.py tests/unit/test_philo10_send_contract.py tests/unit/test_philo10_send_recovery.py tests/unit/test_philo10_send_restart.py tests/unit/test_philo10_settings_atomic.py tests/unit/test_thread_tool_gate.py tests/unit/test_694_thread_never_sends.py tests/unit/test_philo5_the_loop_r2.py tests/unit/test_api_surface.py tests/unit/test_mcp_sidecar_doc_drift.py tests/unit/test_external_egress_kernel.py tests/unit/test_gated_connector.py tests/unit/test_connector_runtime.py tests/unit/test_kernel_effect_fence.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ee37320cd3173f5dd503d1f9e555387551257e77
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 23%]
+........................................................................ [ 46%]
+........................................................................ [ 70%]
+........................................................................ [ 93%]
+....................                                                     [100%]
+308 passed in 57.87s
+```
+
+### Captured run — 2026-09-29T06:41:33Z
+
+- **Command:** `zsh .tmp/docs_checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ee37320cd3173f5dd503d1f9e555387551257e77
+
+```text
+== scripts/gen_operations_json.py --check
+OK docs/generated/operations.json
+== scripts/gen_mcp_sidecar_doc.py --check
+wrote docs/MCP_SIDECAR.md
+  246 tools across 43 families
+== scripts/check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+== scripts/philo_repository_census.py --check
+Repository census: 5 outputs verified.
+== scripts/philo_api_reference.py --check
+API reference checked
+== scripts/philo_openapi_reference.py --check
+OpenAPI: 580 paths
+== scripts/philo_boundary_census.py --check
+Boundary candidate census checked
+== scripts/philo_doctor_reference.py --check
+Doctor reference: 41 check functions
+== scripts/philo_config_reference.py --check
+Configuration declaration reference is current
+== scripts/philo_graph_reference.py --check
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+== scripts/validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+== scripts/generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
+== scripts/check_doc_coverage.py --check
+Documentation coverage checked.
+== scripts/residual_census.py --check
+RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-10-03
+DOCS RC=0
 ```
