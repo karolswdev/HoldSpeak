@@ -290,6 +290,18 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "heartbeat.run_now": ("effect_proposal", False),
     "heartbeat.set": ("effect_proposal", False),
     "heartbeat.notify_test": ("effect_proposal", False),
+    # PHILO-10-01: the channel family and the Room's delivery mark; the class
+    # follows each operation's declared effect (read -> evidence_read).
+    "channel.destinations": ("evidence_read", False),
+    "channel.check_destination": ("evidence_read", False),
+    "channel.preview": ("evidence_read", False),
+    "channel.sends": ("evidence_read", False),
+    "channel.save_destination": ("effect_proposal", False),
+    "channel.remove_destination": ("effect_proposal", False),
+    "channel.prepare": ("effect_proposal", False),
+    "channel.discard": ("effect_proposal", False),
+    "channel.send": ("effect_proposal", False),
+    "project.mark_update_delivered": ("effect_proposal", False),
     "project.setup.select_proposal": ("effect_proposal", False),
     "project.setup.deselect_proposal": ("effect_proposal", False),
     "project.setup.test_proposal": ("effect_proposal", False),

@@ -169,6 +169,14 @@ def _seed_meetings() -> None:
                 ("m-queued", f"Quick word {i}",
                  "Karol", float(i * 600), float((i + 1) * 600)),
             )
+        # HS-201-11 draws the HAS OPEN ACTIONS facet only when an open
+        # action exists for it to find; one open, accepted action lets the
+        # HS-170-04 restored-door check below see the facet it guards.
+        conn.execute(
+            "INSERT INTO action_items (id, meeting_id, task, owner, status, review_state) "
+            "VALUES (?, ?, ?, ?, 'pending', 'accepted')",
+            ("ai-glass-open", "m-queued", "Send the rollout note", "Karol"),
+        )
 
         conn.commit()
 
@@ -206,13 +214,17 @@ class TestMeetingsGlass:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         _ensure_build()
-        self.server, self.base = _boot(tmp_path, monkeypatch, token=TOKEN)
 
-        # Monkeypatch the intel run route to return a fake job
+        # Monkeypatch the intel run route to return a fake job. PHILO-5-02
+        # binds meeting.run_intelligence to the live instance's method at hub
+        # start (operations.bind), so the fake goes in BEFORE the boot; patched
+        # after it, the real run queued the meeting and the 393 leg read QUEUED.
         from holdspeak.services import meeting_intel_service as mis_mod
         def fake_run_intelligence(self_svc, principal, meeting_id, *, expected_selection_hash=None):
             return {"jobId": "job-glass-123", "state": "queued", "host": "THIS DEVICE"}
         monkeypatch.setattr(mis_mod.MeetingIntelService, "run_intelligence", fake_run_intelligence)
+
+        self.server, self.base = _boot(tmp_path, monkeypatch, token=TOKEN)
 
         # HS-201-04: a run verb needs a disclosed route to run on, or it is
         # withheld (UX-CANON A.11). This rig's subject is the meetings FACE,

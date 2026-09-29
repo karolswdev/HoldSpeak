@@ -221,7 +221,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
         "chat.compact", "services.thread_practice", "InferenceRunner admitted child",
     ),
     # HS-162-03: model drafter for project update drafting.
-    "holdspeak/services/project_update_service.py:1463|ProjectUpdateService._draft_with_model|call": ProposedRoute(
+    "holdspeak/services/project_update_service.py:1491|ProjectUpdateService._draft_with_model|call": ProposedRoute(
         "project.update_draft", "services.project_update_service", "InferenceRunner admitted child",
     ),
     # HS-200-11: model drafter for the preparation brief, constrained to the
@@ -248,8 +248,8 @@ OPERATION_CONTRACT_VARIABLE_SITES: dict[str, str] = {
     "holdspeak/mcp/tools.py:662|_primitive_list|call": "ops().invoke(principal, _desk_operation(kind, 'list'), {})",
     "holdspeak/mcp/tools.py:668|_primitive_get|call": "ops().invoke(principal, _desk_operation(kind, 'get'), ...)",
     # PHILO-7-02: invoke_receipted calls the registry's own invoke with its name.
-    "holdspeak/operations.py:1403|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args)",
-    "holdspeak/operations.py:1404|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args, held=held)",
+    "holdspeak/operations.py:2151|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args)",
+    "holdspeak/operations.py:2152|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args, held=held)",
 }
 
 
@@ -405,14 +405,14 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     # invocation id the row already pinned (ruling B3), so the answer can be
     # claimed instead of paid for twice.  Same capability as the transport row
     # above, because it is the same operation reached a second way.
-    "holdspeak/web/routes/projects.py:142|build_projects_router.api_resume_ask_task.dispatch|ask": ProposedRoute(
+    "holdspeak/web/routes/projects.py:171|build_projects_router.api_resume_ask_task.dispatch|ask": ProposedRoute(
         "ask.answer", "web.routes.projects", "AskService semantic caller; saved-task resume through the ask transport",
     ),
     # PHILO-5-01/02: re-anchored after the operation contract moved dispatch
     # down; the recipe.run branch itself is unchanged. PHILO-7-01/02: moved
     # down again (852 -> 1008) with the desk operations; re-anchored, same
     # branch, same call.
-    "holdspeak/mcp/tools.py:1008|dispatch|run": ProposedRoute(
+    "holdspeak/mcp/tools.py:1029|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
     # HS-151-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115
