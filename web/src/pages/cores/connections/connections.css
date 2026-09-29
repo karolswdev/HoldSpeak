@@ -128,7 +128,7 @@
 
 .connections-field-label-text {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--desk-surface-label-size); /* PHILO-10-04: the 12 px floor (was 10 px) */
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;

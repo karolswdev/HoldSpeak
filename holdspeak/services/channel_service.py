@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime, timezone
 from typing import Any, Mapping, Optional
 
 from holdspeak.db.channels import now_iso, settle_in_transaction
@@ -330,7 +331,10 @@ class ChannelService:
             raise ChannelRefused("payload_changed", "The frozen payload does not match its digest")
         self._size(channel_name, payload)
         path = chan.choose_path(folder, contract.naming(self._db, document_ref), send_id)
-        started = now_iso()
+        # PHILO-10-04: the boundary time to the microsecond. The face shows a
+        # destination's latest send by this order (header and receipt, one
+        # source); two sends in one second must still have an order.
+        started = datetime.now(timezone.utc).isoformat(timespec="microseconds")
         operation_id = handle.operation_id
         claimed = "EXISTS (SELECT 1 FROM kernel_operations WHERE operation_id=? AND state='claimed')"
         with self._db._connection() as conn:

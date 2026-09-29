@@ -4,7 +4,7 @@ the real hub on an isolated HOME at 1440x900 and 393x852.
 The owner ratified both story 03 canvases "as drawn" on 2026-09-27
 (pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/
 story-03-items-canvas/ and story-03-delivery-canvas/): Q1 ITEMS after NEEDS
-YOU, omitted when empty; Q2 the list chip `DELIVERED ×N`; Q3 To + Mark
+YOU, omitted when empty; Q2 the list chip `DELIVERED ×N` (PHILO-10-04 A2: now `DELIVERY ×N`, the same count); Q3 To + Mark
 delivered above the body. Settled: missed ✗ (danger), dropped — (idle), a
 failed items read is ITEMS UNAVAILABLE + Retry; a named refusal ✗ REFUSED +
 its plain word; a lost answer ⚠ NO ANSWER · RESULT UNKNOWN with Retry bound to
@@ -568,7 +568,7 @@ class TestRoomFaceGlass:
                 _shot(page, "deliver-4-delivered-once", width)
                 assert len(calls) == 1, calls  # one press, one call
                 assert len(hub1) == 1 and hub1[0]["delivered_to"] == "Priya", hub1
-                assert once["delivery_rows"] == [f"✓ Priya {_delivery_time(hub1[0]['delivered_at'])}"], once["delivery_rows"]
+                assert once["delivery_rows"] == [f"✓ Priya DELIVERED MANUAL {_delivery_time(hub1[0]['delivered_at'])}"], once["delivery_rows"]
                 assert once["deliver_to"] == {"value": "", "disabled": False}
                 # Priya was the wrong person: "Tomas" too. Both rows stay.
                 page.locator("[data-testid=deliver-to]").fill("Tomas")
@@ -586,9 +586,12 @@ class TestRoomFaceGlass:
                 _shot(page, "deliver-5-mistake-kept", width)
                 assert calls[0]["command_id"] != calls[1]["command_id"], calls  # a new press, a new key
                 assert [d["delivered_to"] for d in hub2] == ["Priya", "Tomas"], hub2
-                assert both["delivery_rows"] == [f"✓ {d['delivered_to']} {_delivery_time(d['delivered_at'])}" for d in hub2]
-                assert both["delivery_head"] == "DELIVERED 2", both["delivery_head"]
-                assert both["delivery_egress"] == 0 and not both["words_send"] and not both["modal"]
+                assert both["delivery_rows"] == [f"✓ {d['delivered_to']} DELIVERED MANUAL {_delivery_time(d['delivered_at'])}" for d in hub2]
+                # PHILO-10-04 (the owner's A2): DELIVERY N, the same count. The SEND
+                # well now sits above (the ratified Send face); the manual history
+                # itself still carries no egress badge.
+                assert both["delivery_head"] == "DELIVERY 2", both["delivery_head"]
+                assert both["delivery_egress"] == 0 and both["words_send"] and not both["modal"]
                 assert both["small_text_count"] == 0, both["small_text"]
                 assert both["raw_buttons"] == [], both["raw_buttons"]
                 assert not both["h_overflow"]
@@ -597,7 +600,7 @@ class TestRoomFaceGlass:
                 self._back(page)
                 listed = self._facts(page)
                 _shot(page, "deliver-6-list-chip", width)
-                assert listed["delivered_chips"] == ["✓ DELIVERED ×2"], listed["delivered_chips"]
+                assert listed["delivered_chips"] == ["✓ DELIVERY ×2"], listed["delivered_chips"]
                 # A draft offers no Mark delivered.
                 page.locator("[data-testid=update-verb-draft-deterministic]").click()
                 page.locator("[data-testid=update-editor][data-lifecycle=draft]").wait_for(timeout=T)
@@ -680,7 +683,7 @@ class TestRoomFaceGlass:
                 assert retry["command_id"] == lost["command_id"] and retry["delivered_to"] == lost["delivered_to"] == "Lena"
                 assert [d["delivered_to"] for d in hub_a] == ["Lena"], hub_a
                 assert hub_b == [] and not any(c["update_id"] == b for c in calls)
-                assert retried["delivery_rows"] == [f"✓ Lena {_delivery_time(hub_a[0]['delivered_at'])}"]
+                assert retried["delivery_rows"] == [f"✓ Lena DELIVERED MANUAL {_delivery_time(hub_a[0]['delivered_at'])}"]
                 assert all(not p["not_owned"] for p in pointer), pointer
                 assert not errors, errors
             finally:

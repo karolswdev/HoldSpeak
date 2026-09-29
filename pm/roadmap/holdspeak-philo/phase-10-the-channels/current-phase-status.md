@@ -142,7 +142,7 @@ The journal carries the destination's id (`destination:<id>`) and the payload di
 | PHILO-10-01 | The Send contract, saved destinations and the file channel | done | [story-01-the-send-contract-and-the-file-channel](./story-01-the-send-contract-and-the-file-channel.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-10-02 | The GitHub and Atlassian channels (and the nudge) | backlog | [story-02-the-github-and-atlassian-channels](./story-02-the-github-and-atlassian-channels.md) | — |
 | PHILO-10-03 | The email channel — a provider interface | backlog | [story-03-the-email-channel](./story-03-the-email-channel.md) | — |
-| PHILO-10-04 | The Send face and the destinations setup (canvas first) | backlog | [story-04-the-send-face-and-the-destinations](./story-04-the-send-face-and-the-destinations.md) | — |
+| PHILO-10-04 | The Send face and the destinations setup (canvas first) | in-progress | [story-04-the-send-face-and-the-destinations](./story-04-the-send-face-and-the-destinations.md) | — |
 | PHILO-10-05 | The atlas cases for Send | backlog | [story-05-the-atlas-cases-for-send](./story-05-the-atlas-cases-for-send.md) | — |
 | PHILO-10-06 | Prepare it cold, send it yourself | backlog | [story-06-prepare-it-cold-send-it-yourself](./story-06-prepare-it-cold-send-it-yourself.md) | — |
 
@@ -160,6 +160,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 01 lands first: the operation table, the record columns and the destinations table have one shipping owner. 02 and 03 each add one channel module and its manifest; they touch the send service only through the channel registry 01 defines. The story 04 canvases can be drawn while 01 is built. A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call (`docs/internal/ORCHESTRATION.md:64-67`). CI does not gate a merge (the owner, 2026-09-28; `../phase-9-the-room-on-the-contract/final-summary.md:146`).
 
 ## Where we are
+
+2026-09-29, story 04 BUILT (branch `feat/philo-10-04`), in-progress: the ratified canvases in the real species — the SEND well (A1 pick in place; A3 prepared first, one open, an ended one stays as its result; one source for a destination's header and receipt, the latest by `dispatch_started_at`, now to the microsecond), the one DELIVERY history (A2 `DELIVERY ×N` / `DELIVERY N`, the same counts), the Destinations group under Tools (B1–B3), named read failures, the library repairs (12 px floor, 44 px narrow target) and `prepare_send` on the steward policy face. Glass on the real wire at 1440 and 393: 8/8; RED on main captured; web baseline zero branch-new (`assets/story-04-proof/captures.md`). Owed: the channel boards when 02 (#695) and 03 merge, SENDING across Back → return (02's GATE 2), the Codex Astra check, Muad'Dib's full suite.
 
 2026-09-29, the story 04 canvases RATIFIED by the owner ("Ratify as drawn (Recommended)", AskUserQuestion; all six recommendations: A1 the pick opens preview and Send in place; A2 DELIVERY ×N / DELIVERY N replace DELIVERED, same counts; A3 prepared first with PREPARED ×K, one preview open; B1 Settings → Connections under Tools; B2 Add destination opens Settings at the form, the Room updates without a reload; B3 names fill from the target, editable), with the two built face changes (story 01's RESULT UNKNOWN row; story 02's nudge card), after Codex Astra r4 RATIFY (`checks/canvases-astra-r4.md`). The story 04 face build is unblocked.
 

@@ -57,6 +57,7 @@ import { WallpaperModule } from "./settingsWallpaper";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
+import { Destinations } from "./connections/Destinations";
 // HS-139-05: activateLauncher removed (Delivery tile absorbed).
 import {
   CADENCE_PRESSURE_OPTIONS,
@@ -2326,6 +2327,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
               onFooterUpdate={handleConnectionsFooter}
               onOpenModule={openModule}
             />
+            {/* PHILO-10-04 (B1): the Destinations group, under Tools. */}
+            <Destinations />
             <GadgetGroup label="Credentials">
               <div className="prefs-egress-line">
                 <EgressChip />

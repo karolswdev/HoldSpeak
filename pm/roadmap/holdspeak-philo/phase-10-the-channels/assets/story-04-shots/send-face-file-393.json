@@ -1,0 +1,2085 @@
+{
+  "boards": {
+    "01-no-destination-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "DELIVERY",
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "be800c1db8e2a7fb9aeb74b6efbcb8e345bfc84c428890b72dede08688dd9a3e",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=send-none]",
+          "text": "NO DESTINATION Add destination",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=send-add-destination]",
+          "text": "Add destination",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            44
+          ],
+          "text": "Add destination"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "02-back-in-the-room-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "DELIVERY",
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "7e6ced15ce7fc89aa703b1fc817f32123828923225e2bfff3b3546381203bb61",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=destination-row]:has([data-destination='Folder Payments'])",
+          "text": "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3l",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "03-destinations-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Locked THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "DELIVERY",
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "7f7565062b35d969eb871540f54839d054c39dbb2c5aa77ab6a157079c036176",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=destination-row]:has([data-destination='Folder Payments'])",
+          "text": "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3l",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=destination-row]:has([data-destination='Team drive'])",
+          "text": "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nTeam drive\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nLocked folder\nFILE\n/private/"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nLong path folder\nFILE\n/priva"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "04-picked-folder-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Locked THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "DELIVERY",
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "42ae357f20d5859ff9730ca86cbf7e95f71417551b8327df2b9cd69fab3a8841",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=destination-row]:has([data-destination='Folder Payments'])",
+          "text": "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3l",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Folder Payments'] [data-testid=send-preview-field] dd",
+          "text": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Folder Payments'] [data-testid=send-verb]",
+          "text": "Send",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "●\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Send"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nTeam drive\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nLocked folder\nFILE\n/private/"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nLong path folder\nFILE\n/priva"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "05-saved-folder-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 23:51 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Locked THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-2f8b1836.md SEP 28 23:51"
+      ],
+      "history_head": "DELIVERY 1",
+      "history_outcomes": [
+        "sent"
+      ],
+      "last_chips": [
+        "✓ SAVED 23:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "9b63374dcc1e223c219bd20ddd677f58fef0f10d791e75239b762750d4627c6f",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=destination-row]:has([data-destination='Folder Payments']) [data-testid=send-last-sent]",
+          "text": "✓ SAVED 23:51",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Folder Payments'] [data-testid=send-sent]",
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "●\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            44
+          ],
+          "text": "Send again"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nTeam drive\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nLocked folder\nFILE\n/private/"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nLong path folder\nFILE\n/priva"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-2f8b1836.md"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "06-saved-folder-history-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 23:51 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Locked THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-2f8b1836.md SEP 28 23:51"
+      ],
+      "history_head": "DELIVERY 1",
+      "history_outcomes": [
+        "sent"
+      ],
+      "last_chips": [
+        "✓ SAVED 23:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "3557ba3a982ef91999659598aa3397b12ad55168b242bb3d6c4668afe38ac8a6",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=delivery-row]",
+          "text": "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "●\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            44
+          ],
+          "text": "Send again"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nTeam drive\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nLocked folder\nFILE\n/private/"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nLong path folder\nFILE\n/priva"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-2f8b1836.md"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "11-unknown-folder-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 23:51 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Locked ✗ LAST SEND FAILED THIS DEVICE",
+        "● Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-2f8b1836.md SEP 28 23:51",
+        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 28 23:51"
+      ],
+      "history_head": "DELIVERY 1",
+      "history_outcomes": [
+        "sent",
+        "unknown"
+      ],
+      "last_chips": [
+        "✓ SAVED 23:51",
+        "✗ LAST SEND FAILED",
+        "⚠ LAST SEND UNKNOWN"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "481320d979de9c3128b1380ce16f87971279de1fe0771815d59e9b929c693f26",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=destination-row]:has([data-destination='Long path folder']) [data-testid=send-last-unknown]",
+          "text": "⚠ LAST SEND UNKNOWN",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Long path folder'] [data-testid=send-unknown]",
+          "text": "⚠ RESULT UNKNOWN FILE NOT CONFIRMED",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nTeam drive\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "○\nLocked folder\nFILE\n/private/"
+        },
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "●\nLong path folder\nFILE\n/priva"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            44
+          ],
+          "text": "Send again"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "unknown",
+          "text": "⚠ RESULT UNKNOWN FILE NOT CONFIRMED"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "17-failed-folder-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 23:51 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "● Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Locked ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-2f8b1836.md SEP 28 23:51"
+      ],
+      "history_head": "DELIVERY 1",
+      "history_outcomes": [
+        "sent"
+      ],
+      "last_chips": [
+        "✓ SAVED 23:51",
+        "✗ LAST SEND FAILED"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "323164051d3bc358e7c4668a918adf7554444753a7a160b9e9f2855fbb1e2ed1",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=destination-row]:has([data-destination='Locked folder']) [data-testid=send-last-failed]",
+          "text": "✗ LAST SEND FAILED",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=send-open][data-destination='Locked folder'] [data-testid=send-failed]",
+          "text": "✗ FAILED NO PERMISSION NOTHING SENT",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nTeam drive\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "●\nLocked folder\nFILE\n/private/"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            44
+          ],
+          "text": "Send again"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nLong path folder\nFILE\n/priva"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Locked"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": "permission_denied",
+          "state": "failed",
+          "text": "✗ FAILED NO PERMISSION NOTHING SENT"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "34-history-several-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 23:51 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Locked ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-2f8b1836.md SEP 28 23:51",
+        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 28 23:51",
+        "✓ Priya DELIVERED MANUAL SEP 28 23:51"
+      ],
+      "history_head": "DELIVERY 2",
+      "history_outcomes": [
+        "sent",
+        "unknown",
+        "confirmed"
+      ],
+      "last_chips": [
+        "✓ SAVED 23:51",
+        "✗ LAST SEND FAILED",
+        "⚠ LAST SEND UNKNOWN"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "dab088d56806406f4a05cb754326042ce0b782debe38bf8c91fb023aaacf9ae2",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=delivery-history]",
+          "text": "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nTeam drive\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "○\nLocked folder\nFILE\n/private/"
+        },
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "○\nLong path folder\nFILE\n/priva"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "34b-history-manual-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments ✓ SAVED 23:51 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Locked ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-2f8b1836.md SEP 28 23:51",
+        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 28 23:51",
+        "✓ Priya DELIVERED MANUAL SEP 28 23:51"
+      ],
+      "history_head": "DELIVERY 2",
+      "history_outcomes": [
+        "sent",
+        "unknown",
+        "confirmed"
+      ],
+      "last_chips": [
+        "✓ SAVED 23:51",
+        "✗ LAST SEND FAILED",
+        "⚠ LAST SEND UNKNOWN"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "7491c28c82b1f56e24e6dc3e3ef42d2c9cdb0f604b613dbf1fc2ca89c9e478e8",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=delivery-history] > li:last-child > [data-testid=delivery-row]",
+          "text": "✓ Priya DELIVERED MANUAL SEP 28 23:51",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "○\nFolder Payments\nFILE\n/privat"
+        },
+        {
+          "face": [
+            363,
+            125
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125
+          ],
+          "text": "○\nTeam drive\nFILE\n/private/var"
+        },
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "○\nLocked folder\nFILE\n/private/"
+        },
+        {
+          "face": [
+            363,
+            125.5
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            125.5
+          ],
+          "text": "○\nLong path folder\nFILE\n/priva"
+        },
+        {
+          "face": [
+            190.2,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            190.2,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            118.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            118.8,
+            44
+          ],
+          "text": "Mark delivered"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "35-list-chips-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [
+        "⚠ RESULT UNKNOWN ×1",
+        "✓ DELIVERY ×2"
+      ],
+      "list_rows": [
+        "just now ▤ PUBLISHED REV 1 ⚠ RESULT UNKNOWN ×1 ✓ DELIVERY ×2 DETERMINISTIC ›"
+      ],
+      "masked_sha": "919eaf16b056a1713630ca02d73f39905dee6594acf430f3874c964f882c99c7",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=update-delivered-chip]",
+          "text": "✓ DELIVERY ×2",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=update-unknown-chip]",
+          "text": "⚠ RESULT UNKNOWN ×1",
+          "why": ""
+        }
+      ],
+      "pointer": [],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "36-draft-no-send-393": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "15cc7e31879216dcd035bd27826e8fb14eaa1d53143dab73f0e476a7af5ef92f",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=update-verb-back]",
+          "text": "Back",
+          "why": ""
+        }
+      ],
+      "pointer": [],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b01-arrive-from-room-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS",
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "dc9c3efb452769d1ae726e7a12c9d702661d09c53b6109e963e59e23b35577c9",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-send=destinations] .gadget-group-label",
+          "text": "DESTINATIONS",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-form] select",
+          "text": "Folder GitHub comment Jira comment Confluence blog post Emai",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            188,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            188,
+            44
+          ],
+          "text": "Folder\nGitHub comment\nJira com"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Folder"
+        },
+        {
+          "face": [
+            65.5,
+            44
+          ],
+          "failed_points": [],
+          "kind": "label",
+          "owned": true,
+          "retried": null,
+          "target": [
+            65.5,
+            44
+          ],
+          "text": "SYNCED"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Save"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b02-add-folder-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS",
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "26a451d892783fa73697a18452ed84204a56a5c0709b4ed3dc7d8f546814538d",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-folder]",
+          "text": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-name]",
+          "text": "Folder Payments",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-save]",
+          "text": "Save",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            188,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            188,
+            44
+          ],
+          "text": "Folder\nGitHub comment\nJira com"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Folder"
+        },
+        {
+          "face": [
+            65.5,
+            44
+          ],
+          "failed_points": [],
+          "kind": "label",
+          "owned": true,
+          "retried": null,
+          "target": [
+            65.5,
+            44
+          ],
+          "text": "SYNCED"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Save"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    }
+  },
+  "hub_deliveries": [
+    {
+      "channel": "file",
+      "delivered_at": "2026-09-29T05:51:30.930775+00:00",
+      "delivered_to": "Folder Payments",
+      "id": "pdel_2f8b18369ec11130",
+      "operation_id": "op_19b4cee1f4a545cd94c17e6ada186a9c",
+      "outcome": "sent",
+      "project_id": "proj-45c4131ff352",
+      "proof_json": "{\"path\":\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-2f8b1836.md\",\"sha256\":\"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\",\"size\":286}",
+      "send_id": "chs_2f8b18369ec1113006100541",
+      "update_id": "pupd_05597597e63f4925914b842d80a34606"
+    },
+    {
+      "channel": "file",
+      "delivered_at": "2026-09-29T05:51:39.385823+00:00",
+      "delivered_to": "Long path folder",
+      "id": "pdel_0b8e6bb8bfd3fc23",
+      "operation_id": "op_efb6a9e2619a4d75b63af10542639b74",
+      "outcome": "unknown",
+      "project_id": "proj-45c4131ff352",
+      "proof_json": null,
+      "send_id": "chs_0b8e6bb8bfd3fc23321e8419",
+      "update_id": "pupd_05597597e63f4925914b842d80a34606"
+    },
+    {
+      "channel": "manual",
+      "delivered_at": "2026-09-29T05:51:42+00:00",
+      "delivered_to": "Priya",
+      "id": "pdel_23fa99dc0014be32",
+      "operation_id": "op_1f0aa73353b14985bd7cc67b32a10f25",
+      "outcome": "confirmed",
+      "project_id": "proj-45c4131ff352",
+      "proof_json": null,
+      "send_id": null,
+      "update_id": "pupd_05597597e63f4925914b842d80a34606"
+    }
+  ],
+  "hub_sends": [
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2026-09-29T05:51:30.930775+00:00",
+      "destination_id": "chd_a3373a50066993eb26d38f02",
+      "destination_name": "Folder Payments",
+      "dispatch_started_at": "2026-09-29T05:51:30.930775+00:00",
+      "document_ref": "project_update:pupd_05597597e63f4925914b842d80a34606",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-2f8b1836.md",
+      "id": "chs_2f8b18369ec1113006100541",
+      "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "prepare_operation_id": null,
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+      },
+      "proof": {
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments/2026-09-29-payments-ledger-cutover-r1-2f8b1836.md",
+        "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "size": 286
+      },
+      "reason": null,
+      "send_operation_id": "op_19b4cee1f4a545cd94c17e6ada186a9c",
+      "settled_at": "2026-09-29T05:51:30+00:00",
+      "size": 286,
+      "state": "sent",
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Reports/Payments"
+      },
+      "target_digest": "d78becc4cb6811fead4f77f22d2cc5aa89d86abd209092144bc2daf1dda5bbd9"
+    },
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2026-09-29T05:51:36.151645+00:00",
+      "destination_id": "chd_c763c865b678eae93689e229",
+      "destination_name": "Locked folder",
+      "dispatch_started_at": "2026-09-29T05:51:36.151645+00:00",
+      "document_ref": "project_update:pupd_05597597e63f4925914b842d80a34606",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Locked/2026-09-29-payments-ledger-cutover-r1-083cf12a.md",
+      "id": "chs_083cf12afc57e244c8c0add6",
+      "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "prepare_operation_id": null,
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+      },
+      "proof": null,
+      "reason": "permission_denied",
+      "send_operation_id": "op_43c34d381e7a49ccb91d5b06892d919e",
+      "settled_at": "2026-09-29T05:51:36+00:00",
+      "size": 286,
+      "state": "failed",
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/Locked"
+      },
+      "target_digest": "6cb1113c993d0700c08c2629941663ff311d040f00a77dcd6d3cb7eb7920c017"
+    },
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2026-09-29T05:51:39.385823+00:00",
+      "destination_id": "chd_0bd7ac57724cb1df25edad40",
+      "destination_name": "Long path folder",
+      "dispatch_started_at": "2026-09-29T05:51:39.385823+00:00",
+      "document_ref": "project_update:pupd_05597597e63f4925914b842d80a34606",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/2026-09-29-payments-ledger-cutover-r1-0b8e6bb8.md",
+      "id": "chs_0b8e6bb8bfd3fc23321e8419",
+      "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "prepare_operation_id": null,
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+      },
+      "proof": null,
+      "reason": "create_enametoolong",
+      "send_operation_id": "op_efb6a9e2619a4d75b63af10542639b74",
+      "settled_at": "2026-09-29T05:51:39+00:00",
+      "size": 286,
+      "state": "unknown",
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_first_setup_loop_and_1/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "target_digest": "3984117a0f2263f2808d3a57347f62ba606818cce29e8e1f72ada8e1583365c7"
+    }
+  ]
+}

@@ -10,7 +10,7 @@ import { WingSlotContext } from "../../../../desk/surface/wings";
 import { useDesk } from "../../../../desk/store";
 import { EMPTY_ITEMS } from "../../../../desk/api";
 import { ProjectRoomCore } from "../../ProjectRoomCore";
-import { effectKindLabel, isModelTouchingKind, effectKindEgressHost } from "../model";
+import { EFFECT_KINDS, effectKindLabel, isModelTouchingKind, effectKindEgressHost } from "../model";
 
 // ── Mocks ──
 
@@ -237,6 +237,17 @@ describe("HS-173-04: github_comment model labels", () => {
 
   it("effectKindEgressHost returns 'GITHUB.COM'", () => {
     expect(effectKindEgressHost("github_comment")).toBe("GITHUB.COM");
+  });
+});
+
+// ── PHILO-10-04: the steward's prepare_send effect kind (story 02's gap) ──
+
+describe("PHILO-10-04: prepare_send is listed", () => {
+  it("is a canonical effect kind with its own label, no egress (prepare sends nothing)", () => {
+    expect(EFFECT_KINDS).toContain("prepare_send");
+    expect(effectKindLabel("prepare_send")).toBe("Prepared send");
+    expect(effectKindEgressHost("prepare_send")).toBeFalsy();
+    expect(isModelTouchingKind("prepare_send")).toBe(false);
   });
 });
 

@@ -1,0 +1,1407 @@
+{
+  "boards": {
+    "b02b-empty-group-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS",
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "88af9f52d83060f2f6ffbaf5b69f85a46806d032ea67098019e1baffd5833894",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-send=destinations] .gadget-group-label",
+          "text": "DESTINATIONS",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-form] select",
+          "text": "Folder GitHub comment Jira comment Confluence blog post Emai",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            188,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            188,
+            44
+          ],
+          "text": "Folder\nGitHub comment\nJira com"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Folder"
+        },
+        {
+          "face": [
+            65.5,
+            44
+          ],
+          "failed_points": [],
+          "kind": "label",
+          "owned": true,
+          "retried": null,
+          "target": [
+            65.5,
+            44
+          ],
+          "text": "SYNCED"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Save"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b03-add-synced-folder-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS",
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [
+        "SYNCED FOLDER:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "fa25aa28bf4a8ed20611999808580e9f08b1b7970c0e859f3277b259e8a3bb93",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-form] label.gadget-check-token",
+          "text": "✓ SYNCED",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-form-verbs] .gadget-chip-egress",
+          "text": "SYNCED FOLDER",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            188,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            188,
+            44
+          ],
+          "text": "Folder\nGitHub comment\nJira com"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Folder"
+        },
+        {
+          "face": [
+            81.4,
+            44
+          ],
+          "failed_points": [],
+          "kind": "label",
+          "owned": true,
+          "retried": null,
+          "target": [
+            81.4,
+            44
+          ],
+          "text": "✓ SYNCED"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Save"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b04-add-github-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS",
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [
+        "GITHUB.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "8f01d0d2384d153cf6b53224242ddf867e701f84ec80cbb5aa5a9dafefb0488c",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-number]",
+          "text": "42",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-name]",
+          "text": "karol/Payments-Ops #42",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            188,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            188,
+            44
+          ],
+          "text": "Folder\nGitHub comment\nJira com"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Repository"
+        },
+        {
+          "face": [
+            127,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            127,
+            44
+          ],
+          "text": "Issue\nPull request"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Number"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Save"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b06-add-confluence-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS",
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [
+        ":cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "249cbf522c803a1600e1cbf2ff638a99c4f43b8400f1f13e558c29f42aa24628",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-space]",
+          "text": "98304",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-name]",
+          "text": "Confluence space 98304",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            188,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            188,
+            44
+          ],
+          "text": "Folder\nGitHub comment\nJira com"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Space id"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Save"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b08-add-email-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS",
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [
+        "API.SENDGRID.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "d9bbaddf234383ba0286edcbc6af59f658761447fb0d1d0e8d656a83d4a17e85",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-to]",
+          "text": "lena@acme.io, tomas@acme.io",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-name]",
+          "text": "Email lena@acme.io",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            188,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            188,
+            44
+          ],
+          "text": "Folder\nGitHub comment\nJira com"
+        },
+        {
+          "face": [
+            96,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            96,
+            44
+          ],
+          "text": "SendGrid"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "From"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "From name"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            44
+          ],
+          "text": "Replace"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "To"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Cc"
+        },
+        {
+          "face": [
+            305,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            305,
+            44
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Save"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b09-list-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 2",
+      "dest_parked": [],
+      "destinations": [
+        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Drive SYNCED FOLDER",
+        "▸ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports THIS DEVICE"
+      ],
+      "egress_chips": [
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "3615943a8c62394db4470ea58b68294090aab8f2d75f9e626635cd314fd2221d",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-list]",
+          "text": "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8r",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▸\nFolder Drive\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▸\nFolder Reports\nFILE\n/private"
+        },
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            44
+          ],
+          "text": "Add destination"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b10-row-open-checked-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 2",
+      "dest_parked": [],
+      "destinations": [
+        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Drive SYNCED FOLDER",
+        "▾ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports THIS DEVICE"
+      ],
+      "egress_chips": [
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "5031a49f42bb997723d948cc9fc7572b8406315224117e6a18b604bae138cea8",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Folder Reports']) [data-testid=dest-check-result]",
+          "text": "✓ CHECKED",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▸\nFolder Drive\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▾\nFolder Reports\nFILE\n/private"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Check"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Edit"
+        },
+        {
+          "face": [
+            61.2,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            61.2,
+            44
+          ],
+          "text": "Remove"
+        },
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            44
+          ],
+          "text": "Add destination"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b12-edit-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 2",
+      "dest_parked": [],
+      "destinations": [
+        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Drive SYNCED FOLDER",
+        "▾ Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports THIS DEVICE"
+      ],
+      "egress_chips": [
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "9babe68c852974f102a0f267a946c29953d40af624ed5d16b131995cb4078036",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Folder Reports']) [data-testid=dest-name]",
+          "text": "Reports folder",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=dest-row] [data-destination='Folder Reports']) [data-testid=dest-save]",
+          "text": "Save",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▸\nFolder Drive\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▾\nFolder Reports\nFILE\n/private"
+        },
+        {
+          "face": [
+            285,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            285,
+            44
+          ],
+          "text": "Folder"
+        },
+        {
+          "face": [
+            65.5,
+            44
+          ],
+          "failed_points": [],
+          "kind": "label",
+          "owned": true,
+          "retried": null,
+          "target": [
+            65.5,
+            44
+          ],
+          "text": "SYNCED"
+        },
+        {
+          "face": [
+            285,
+            44
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            285,
+            44
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            44
+          ],
+          "text": "Save"
+        },
+        {
+          "face": [
+            61.2,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            61.2,
+            44
+          ],
+          "text": "Cancel"
+        },
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            44
+          ],
+          "text": "Add destination"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b13-edited-old-parked-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 2",
+      "dest_parked": [
+        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports PARKED SEP 28 23:54"
+      ],
+      "destinations": [
+        "▸ Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Drive SYNCED FOLDER",
+        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports THIS DEVICE"
+      ],
+      "egress_chips": [
+        "SYNCED FOLDER:cloud",
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "20c87a58ef2c23fd0cc8403ccfe84b4fdde5adb72196f5ece94c4ce4b7acf1fb",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-parked-row]",
+          "text": "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8r",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▸\nFolder Drive\nFILE\n/private/v"
+        },
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▸\nReports folder\nFILE\n/private"
+        },
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            44
+          ],
+          "text": "Add destination"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b15-removed-parked-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 1",
+      "dest_parked": [
+        "Folder Drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Drive PARKED SEP 28 23:54",
+        "Folder Reports FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports PARKED SEP 28 23:54"
+      ],
+      "destinations": [
+        "▸ Reports folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "300cabe348ba20dec4338852e1c7f203583e92d1d387618d5a63c4e055314626",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-parked]",
+          "text": "PARKED 2 Folder Drive FILE /private/var/folders/q7/5dzz5g211",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            363,
+            77
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            363,
+            77
+          ],
+          "text": "▸\nReports folder\nFILE\n/private"
+        },
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            44
+          ],
+          "text": "Add destination"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "b16-destinations-unreadable-393": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS",
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "6905671ebd1f622ccc3b2adc8eb08f5caa93e1c35b34cd71539ccbe31bd88089",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-unreadable]",
+          "text": "✗ CANNOT READ DESTINATIONS Retry",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            44
+          ],
+          "text": "Retry"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    }
+  },
+  "hub": [
+    {
+      "account": {},
+      "badge": "cloud",
+      "channel": "file",
+      "created_at": "2026-09-29T05:54:28+00:00",
+      "id": "chd_86428803dbff51dcc7b59a7f",
+      "name": "Folder Drive",
+      "parked_at": "2026-09-29T05:54:37+00:00",
+      "state": "parked",
+      "synced": true,
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Drive"
+      },
+      "target_digest": "accfa2492c8033bfb075ba158a9971ec1ea45985f918f070db68595a66dc5a16"
+    },
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2026-09-29T05:54:28+00:00",
+      "id": "chd_72b0a3679fb1bc55e1928830",
+      "name": "Folder Reports",
+      "parked_at": "2026-09-29T05:54:35+00:00",
+      "state": "parked",
+      "synced": false,
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports"
+      },
+      "target_digest": "49984be3564fc4b9b43d1f6a206e843af5fcd265bf071813cf23a43d296d7589"
+    },
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2026-09-29T05:54:35+00:00",
+      "id": "chd_05409f8084b398d8c671bcf9",
+      "name": "Reports folder",
+      "parked_at": null,
+      "state": "active",
+      "synced": false,
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.p1fFwkLdfx/pt/test_the_destinations_group_390/Reports"
+      },
+      "target_digest": "49984be3564fc4b9b43d1f6a206e843af5fcd265bf071813cf23a43d296d7589"
+    }
+  ]
+}

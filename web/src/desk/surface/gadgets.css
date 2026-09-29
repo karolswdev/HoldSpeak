@@ -1075,3 +1075,30 @@ button.gadget-chip-egress {
   color: var(--text-muted);
   white-space: nowrap;
 }
+
+/* ── PHILO-10-04: the library repairs the ratified Send canvases carried
+   (assets/story-04-send-canvas/harness/canvas.css, "PROPOSED LIBRARY
+   REPAIRS"). The 12 px floor (--desk-surface-label-size): the SYNCED token
+   (.gadget-check-token-face was 11 px), the PARKED fold count
+   (.gadget-fold-token was 10 px), the TransportKey word (9 px). ── */
+.gadget-check-token-face,
+.gadget-fold-token,
+.gadget-transport-word {
+  font-size: var(--desk-surface-label-size);
+}
+/* The 44 px narrow target (UX-CANON C). Under a 420 px container the sheet
+   stacks (above) but its controls kept their desk heights: the string field
+   22 px with a 20 px input, the docked mic 20 px, the token check 22 px,
+   the cycle select 22 px. The 393 pointer pass failed each of them. */
+@container surface (max-width: 419px) {
+  .gadget-string,
+  .desk-next .gadget-string { min-height: 46px; }
+  .gadget-string input,
+  .desk-next .gadget-string input { min-height: 44px; }
+  .gadget-string .desk-mic,
+  .desk-next .gadget-string .desk-mic { width: 44px; height: 44px; margin-right: 0; }
+  .gadget-cycle select,
+  .desk-next .gadget-cycle select { min-height: 44px; }
+  .gadget-check-token-face,
+  .desk-next .gadget-check-token-face { height: 44px; }
+}

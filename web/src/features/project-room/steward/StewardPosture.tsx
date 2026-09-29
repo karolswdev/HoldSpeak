@@ -61,6 +61,7 @@ const GRANT_TOKENS: Record<string, string> = {
   draft_update: "DRAFT UPDATE",
   create_door_item: "DOOR ITEM",
   github_comment: "REVIEWER NUDGE",
+  prepare_send: "PREPARE SEND",
 };
 
 function grantToken(kind: string): string {

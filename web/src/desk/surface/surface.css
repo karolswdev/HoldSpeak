@@ -2545,7 +2545,7 @@ button.surface-edit-in-place:hover {
   flex: 1;
   min-width: 0;
   text-align: center;
-  font-size: 10px;
+  font-size: var(--desk-surface-label-size); /* PHILO-10-04: the 12 px floor on the Connections window (was 10 px) */
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
