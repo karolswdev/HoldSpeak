@@ -907,6 +907,8 @@ class Canned(urllib.request.BaseHandler):
             log.write(json.dumps({"host": req.host, "sha": __import__("hashlib").sha256(req.data).hexdigest()}) + "\n")
         if hold == "after":
             forever.wait()
+        if hold == "slow":  # a SendGrid answer that takes 1.5 s
+            time.sleep(1.5)
         raw = http.client.parse_headers(io.BytesIO(b"X-Message-Id: sg-restart\r\n\r\n"))
         resp = urllib.response.addinfourl(io.BytesIO(b""), raw, req.full_url, 202)
         resp.msg = "canned"
@@ -1039,3 +1041,49 @@ def test_c2_r3_a_restart_during_an_email_send_ends_unknown_once_and_never_sends_
                 assert KEY_MARK.encode() not in path.read_bytes(), path
     finally:
         second.kill()
+
+
+@pytest.mark.timeout(240)
+@pytest.mark.parametrize("transport", ["http", "mcp"])
+def test_r3_the_hub_answers_a_read_during_a_slow_email_send(tmp_path: Path, transport: str) -> None:
+    """Round three (#695's GATE 2 for email): channel.send is ``blocking_io``, so a 1.5 s SendGrid call
+    runs off the event loop and a concurrent read answers at once (a real socket hub process)."""
+    import time
+
+    home, wire_log = tmp_path / "home", tmp_path / "wire.jsonl"
+    home.mkdir()
+    hub = _EmailHub(home, "slow", wire_log)
+    try:
+        assert hub.call("PUT", "/api/channels/email-keys/sendgrid", {"api_key": KEY})[0] == 200
+        _s, made = hub.call("POST", "/api/projects", {"name": "Payments ledger cutover"})
+        update = hub.call("POST", f"/api/projects/{made['project']['id']}/updates/draft", {})[1]["update"]["id"]
+        assert hub.call("POST", f"/api/updates/{update}/publish", {})[0] == 200
+        status, saved = hub.call("POST", "/api/channels/destinations", {
+            "name": "Priya by email", "channel": "email", "from_email": "karol@example.com",
+            "to": ["priya@example.com"]})
+        assert status == 200, saved
+        _s, prepared = hub.call("POST", "/api/channels/sends", {"update_id": update,
+                                                                "destination_id": saved["destination"]["id"]})
+        body = {"send_id": prepared["send"]["id"]}
+
+        def pressing() -> Any:
+            if transport == "http":
+                return hub.call("POST", "/api/channels/send", body)
+            return hub.call("POST", "/api/mcp", {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                                                 "params": {"name": "channel.send", "arguments": body}})
+
+        thread, answer = in_thread(pressing)
+        _until(lambda: wire_log.exists() and wire_log.read_text().strip())  # the request is on the wire
+        started = time.perf_counter()
+        status, _listed = hub.call("GET", "/api/channels/destinations")
+        read = time.perf_counter() - started
+        thread.join(60)
+        assert status == 200
+        assert answer and answer[0][0] == 200, answer
+        if transport == "mcp":
+            assert answer[0][1]["result"]["isError"] is False, answer
+        assert read < 0.5, f"the read waited {read:.3f} s during the email send"
+        [row] = _rows(home, "SELECT state FROM channel_sends WHERE id=?", body["send_id"])
+        assert row["state"] == "sent"
+    finally:
+        hub.kill()

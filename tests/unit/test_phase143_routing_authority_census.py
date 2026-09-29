@@ -110,8 +110,8 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/mcp/tools.py:1163:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:44:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:45:ref:resolve_meeting_placement",
-    "holdspeak/services/settings_service.py:72:import:resolve_meeting_placement",
-    "holdspeak/services/settings_service.py:80:ref:resolve_meeting_placement",
+    "holdspeak/services/settings_service.py:78:import:resolve_meeting_placement",
+    "holdspeak/services/settings_service.py:86:ref:resolve_meeting_placement",
     "holdspeak/speech_session/plan.py:452:import:resolve_placement",
     "holdspeak/speech_session/plan.py:461:ref:resolve_placement",
     "holdspeak/speech_session/plan.py:629:import:resolve_placement",
@@ -137,8 +137,8 @@ ROUTING_RESOLVER_REFERENCES = {
     # helper, the proposal row's `meeting_started_at`, and the Room
     # projections carrying each row's `kind`; re-anchored, the site unchanged.
     # The reference count is still 50 and no added line names a resolver.
-    "holdspeak/services/project_service.py:2549:import:resolve_placement",
-    "holdspeak/services/project_service.py:2550:ref:resolve_placement",
+    "holdspeak/services/project_service.py:2551:import:resolve_placement",
+    "holdspeak/services/project_service.py:2552:ref:resolve_placement",
     # Pre-existing and previously UNREGISTERED, found by the HS-200-41 sweep and
     # registered here rather than left red: ``_captured_deployment_revision``
     # (project_update_service.py:1034) resolves a profile's target only to
@@ -152,8 +152,8 @@ ROUTING_RESOLVER_REFERENCES = {
 }
 
 ROUTING_POINTER_ATTRIBUTES = {
-    "holdspeak/config/core.py:212:intel_profile_id",
-    "holdspeak/config/core.py:235:intel_profile_id",
+    "holdspeak/config/core.py:214:intel_profile_id",
+    "holdspeak/config/core.py:237:intel_profile_id",
     "holdspeak/config/integrations.py:190:inference_target_id",
     "holdspeak/config/integrations.py:191:inference_target_id",
     "holdspeak/config/meeting.py:173:intel_profile_id",
@@ -165,8 +165,8 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/services/inference_setup_service.py:650:inference_target_id",
     "holdspeak/services/inference_setup_service.py:654:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:181:inference_target_id",
-    "holdspeak/services/settings_service.py:673:intel_profile_id",
-    "holdspeak/services/settings_service.py:924:inference_target_id",
+    "holdspeak/services/settings_service.py:680:intel_profile_id",
+    "holdspeak/services/settings_service.py:931:inference_target_id",
     "holdspeak/services/workbench_service.py:592:resolver_profile_id",
     # HS-172: resolve_meeting_placement pointer reads
     # HS-201-03: mcp/tools.py moved down three lines (see the reference set).
@@ -180,11 +180,11 @@ ROUTING_POINTER_ATTRIBUTES = {
 # receipts, DTOs, readiness, and unrelated records out of the assignment lane.
 PROFILE_ID_CLASSIFICATIONS = {
     **{site: "mutable assignment pointer" for site in {
-        "holdspeak/config/core.py:215:profile_id", "holdspeak/config/core.py:246:profile_id",
+        "holdspeak/config/core.py:217:profile_id", "holdspeak/config/core.py:248:profile_id",
         "holdspeak/config/integrations.py:269:profile_id", "holdspeak/config/model.py:80:profile_id",
         "holdspeak/plugins/dictation/assembly.py:327:profile_id",
-        "holdspeak/services/settings_service.py:825:profile_id",
-        "holdspeak/services/settings_service.py:897:profile_id",
+        "holdspeak/services/settings_service.py:832:profile_id",
+        "holdspeak/services/settings_service.py:904:profile_id",
         "holdspeak/services/sync_service.py:844:profile_id",
         "holdspeak/services/sync_service.py:859:profile_id",
     }},
@@ -199,7 +199,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/web/routes/front_door.py:417:profile_id",
         "holdspeak/web/routes/front_door.py:444:profile_id",
         "holdspeak/services/ask_service.py:320:profile_id",
-        "holdspeak/services/inference_setup_service.py:653:profile_id", "holdspeak/services/settings_service.py:103:profile_id",
+        "holdspeak/services/inference_setup_service.py:653:profile_id", "holdspeak/services/settings_service.py:109:profile_id",
         "holdspeak/setup_status.py:160:profile_id",
         "holdspeak/services/model_profile_service.py:225:profile_id",
         "holdspeak/services/model_profile_service.py:264:profile_id",

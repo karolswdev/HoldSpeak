@@ -658,7 +658,9 @@ class StewardContract:
                                         **{k: v for k, v in result.items() if k != "error"}})
         # Codex Astra r3: the comment's own evidence (URL, reviewer, time) and the
         # kernel receipt the transports add are two things, under two keys.
-        return {"success": True, "comment_receipt": result.get("receipt")}
+        # PHILO-10-02 (F4): an UNKNOWN answer is not a success, and says so.
+        outcome = "unknown" if result.get("outcome") == "unknown" else "sent"
+        return {"success": outcome == "sent", "outcome": outcome, "comment_receipt": result.get("receipt")}
 
     # ── recovery (the beat, section 3; L6) ────────────────────────────
 

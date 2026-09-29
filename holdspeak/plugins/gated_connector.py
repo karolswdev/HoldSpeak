@@ -285,10 +285,11 @@ def build_gated_connector(
 
     Both operation families run **plan → kernel → interpret**.
 
-    PHILO-10-03 (design section 6): a connector used inside an admitted
+    PHILO-10-02/03 (design section 6): a connector used inside an admitted
     operation passes the authenticated ``principal``, that operation as
-    ``parent_operation_id`` and its ``broker``; each op it runs is then a
-    CHILD of that operation, under that principal.
+    ``parent_operation_id`` and its ``broker``; each subprocess or outbound op
+    it runs is then a CHILD of that operation (``subprocess.exec`` or
+    ``external.egress``), under that principal.
     """
     the_gate = gate if gate is not None else manifest.build_gate()
     seam: dict[str, Any] = {}

@@ -428,6 +428,12 @@ _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "mandatory authenticated owner read",  # HS-174: acli confluence, the jira twin
     (
+        "holdspeak/services/channel_cli.py",
+        "GitHubChannel.login",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # PHILO-10-02: gh api user, the frozen login re-read
+    (
         "holdspeak/missioncontrol_bridge.py",
         "_default_runner",
         "run",

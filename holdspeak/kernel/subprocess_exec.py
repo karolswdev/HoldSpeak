@@ -231,6 +231,7 @@ def run_subprocess_operation(
     principal: Principal = LOCAL_OWNER,
     runner: SubprocessRunner = subprocess.run,
     broker: Any = None,
+    parent_operation_id: str = "",  # PHILO-10-02: the admitted operation this child acts for
     **kwargs: Any,
 ) -> subprocess.CompletedProcess[str]:
     if broker is None:
@@ -245,20 +246,15 @@ def run_subprocess_operation(
         runner=runner,
         kwargs=kwargs,
     )
-    request_id = str(uuid.uuid4())
-    handle = broker.submit(
-        {
-            "request_schema": 1,
-            "request_id": request_id,
-            "idempotency_key": f"subprocess:{plan.native_id}",
-            "operation": {"name": "subprocess.exec", "version": 1},
-            "subject_refs": [f"connector:{plan.connector_id}"],
-            "target": {"ref": f"subprocess:{plan.native_id}"},
-            "arguments": {"execution_id": plan.native_id},
-            "placement": "node:local",
-        },
-        principal,
-    )
+    raw: dict[str, Any] = {
+        "request_schema": 1, "request_id": str(uuid.uuid4()), "idempotency_key": f"subprocess:{plan.native_id}",
+        "operation": {"name": "subprocess.exec", "version": 1}, "subject_refs": [f"connector:{plan.connector_id}"],
+        "target": {"ref": f"subprocess:{plan.native_id}"}, "arguments": {"execution_id": plan.native_id},
+        "placement": "node:local",
+    }
+    if parent_operation_id:
+        raw["parent_operation_id"] = str(parent_operation_id)
+    handle = broker.submit(raw, principal)
     if handle["state"] == "refused":
         receipt = handle.get("receipt") or {}
         raise SubprocessOperationRefused(plan.binary, str(receipt.get("outcome") or "kernel_refused"))

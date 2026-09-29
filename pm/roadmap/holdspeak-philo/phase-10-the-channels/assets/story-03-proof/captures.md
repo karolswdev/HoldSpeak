@@ -296,6 +296,13 @@ RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-10-03
 DOCS RC=0
 ```
 
+## Round three (the #695 merge)
+
+- Merged main `3965c5e1`. Conflicts resolved in `channel_service.py` (both channel families in `save_destination`, `check_destination`, the docstrings), `channel_operations.py` (both argument sets and refusal lists), `gated_connector.py` (the docstring only: both branches carried the same `principal` / `parent_operation_id` / `broker` threading), `web/routes/channels.py` (story 02's `blocking_io` threadpool dispatch, now also carrying the held key), the phase status and the README; the generated docs regenerated.
+- Event loop: `channel.send` (already `blocking_io` from story 02) now names the email egress; `channel.save_email_key` is `blocking_io` (the keychain). Fence `test_r3_the_hub_answers_a_read_during_a_slow_email_send[http, mcp]` (a real socket hub process, a 1.5 s SendGrid answer at the canned edge).
+- Changed story 02 / Phase 5 fences: `test_philo10_cli_channels.py::test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table` (the blocking census now includes `channel.save_email_key`, HTTP only, no MCP row, owner press + owner only + the held key); `test_philo5_the_loop_r2.py` (the owner-only list names `channel.save_email_key`; a result-shape producer for it, the memory key store). Both were red on the merged tree before the edit (an interactive scoped run: 2 failed, 835 passed; not captured).
+- Mutation M17 (`.tmp/m17.sh`: `channel.send` without `blocking_io`): the slow-send read fence goes RED (the read waited 1.47 s), captured below; the file is restored by the script.
+
 ## Round two captured runs
 
 The first mutation run below shows M13 GREEN: it removed only one of the edge's two local debug pins (the handler's `debuglevel=0` still held). M13 was strengthened to remove both; the second run shows 16/16 RED.
@@ -512,4 +519,189 @@ RED   M14 a TLS failure is FAILED whatever was written (Codex r1 P1): rc=1 1 fai
 RED   M15 the transmitter hard-codes SendGrid's Bearer auth (Codex r1 P2): rc=1 1 failed, 60 deselected in 2.12s
 RED   M16 a success body is not given to interpret (Codex r1 P2): rc=1 1 failed, 60 deselected in 3.38s
 MUTATIONS: 16/16 turned their fences red
+```
+
+## Round three captured runs
+
+### Captured run — 2026-09-29T06:25:11Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python -m pytest --collect-only -q -p no:cacheprovider tests/unit/test_philo10_email_channel.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1bb2176a3d16adf520244f2e80aac6bf09776676
+
+```text
+tests/unit/test_philo10_email_channel.py::test_c1_one_send_is_one_egress_child_whose_wire_bytes_and_digest_are_the_frozen_ones[send_id]
+tests/unit/test_philo10_email_channel.py::test_c1_one_send_is_one_egress_child_whose_wire_bytes_and_digest_are_the_frozen_ones[inline]
+tests/unit/test_philo10_email_channel.py::test_c1_two_different_bodies_are_two_different_admitted_digests
+tests/unit/test_philo10_email_channel.py::test_c1_a_request_to_any_other_host_is_refused_by_the_kernel
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[accepted]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[accepted-no-id]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[400]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[401]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[403-sender]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[403-other]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[413]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[429]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[400-not-sendgrid]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[404]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[500]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[503]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[timeout]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[timeout-url]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[reset]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[refused]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[dns]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[redirect]
+tests/unit/test_philo10_email_channel.py::test_c2_each_answer_settles_by_the_pinned_list[redirect-307]
+tests/unit/test_philo10_email_channel.py::test_c2_the_two_403_discriminators_map_apart
+tests/unit/test_philo10_email_channel.py::test_c2_r1_a_failed_settle_is_taken_over_as_unknown_and_never_sent_again[send_id]
+tests/unit/test_philo10_email_channel.py::test_c2_r1_a_failed_settle_is_taken_over_as_unknown_and_never_sent_again[inline]
+tests/unit/test_philo10_email_channel.py::test_c2_r2_the_reaper_settles_a_silent_email_unknown_and_the_replay_answers_it[held-before-the-wire-send_id]
+tests/unit/test_philo10_email_channel.py::test_c2_r2_the_reaper_settles_a_silent_email_unknown_and_the_replay_answers_it[held-before-the-wire-inline]
+tests/unit/test_philo10_email_channel.py::test_c2_r2_the_reaper_settles_a_silent_email_unknown_and_the_replay_answers_it[held-after-the-wire-send_id]
+tests/unit/test_philo10_email_channel.py::test_c2_r2_the_reaper_settles_a_silent_email_unknown_and_the_replay_answers_it[held-after-the-wire-inline]
+tests/unit/test_philo10_email_channel.py::test_c2_r4_a_take_over_that_wins_leaves_the_reaper_nothing
+tests/unit/test_philo10_email_channel.py::test_c2_r6_reaped_before_the_boundary_sends_nothing[send_id]
+tests/unit/test_philo10_email_channel.py::test_c2_r6_reaped_before_the_boundary_sends_nothing[inline]
+tests/unit/test_philo10_email_channel.py::test_c3_every_egress_caller_records_a_sanitized_exception
+tests/unit/test_philo10_email_channel.py::test_c3_an_email_transport_exception_carrying_the_key_and_body_leaves_neither
+tests/unit/test_philo10_email_channel.py::test_c4_no_key_and_no_body_in_the_journal_a_receipt_a_log_an_error_or_a_file
+tests/unit/test_philo10_email_channel.py::test_c4_the_key_is_never_planning_material
+tests/unit/test_philo10_email_channel.py::test_c5_a_native_backend_stores_and_reads_the_key[keyring.backends.macOS-Keyring]
+tests/unit/test_philo10_email_channel.py::test_c5_a_native_backend_stores_and_reads_the_key[keyring.backends.SecretService-Keyring]
+tests/unit/test_philo10_email_channel.py::test_c5_a_native_backend_stores_and_reads_the_key[keyring.backends.Windows-WinVaultKeyring]
+tests/unit/test_philo10_email_channel.py::test_c5_every_other_backend_is_refused_not_native[fail]
+tests/unit/test_philo10_email_channel.py::test_c5_every_other_backend_is_refused_not_native[chainer-without-native]
+tests/unit/test_philo10_email_channel.py::test_c5_every_other_backend_is_refused_not_native[keyrings.alt-file]
+tests/unit/test_philo10_email_channel.py::test_c5_every_other_backend_is_refused_not_native[keyrings.alt-encrypted]
+tests/unit/test_philo10_email_channel.py::test_c5_every_other_backend_is_refused_not_native[null]
+tests/unit/test_philo10_email_channel.py::test_c5_a_store_that_is_not_native_refuses_the_save_and_the_send_before_anything_leaves[send_id]
+tests/unit/test_philo10_email_channel.py::test_c5_a_store_that_is_not_native_refuses_the_save_and_the_send_before_anything_leaves[inline]
+tests/unit/test_philo10_email_channel.py::test_c5_a_missing_key_refuses_by_name_and_the_check_says_so
+tests/unit/test_philo10_email_channel.py::test_c5_the_key_is_held_never_an_argument_and_the_owner_alone_saves_it
+tests/unit/test_philo10_email_channel.py::test_the_destination_freezes_the_sender_and_refuses_bad_addresses_by_name
+tests/unit/test_philo10_email_channel.py::test_an_edited_sender_parks_the_destination_and_refuses_the_prepared_send
+tests/unit/test_philo10_email_channel.py::test_a_request_over_the_size_limit_is_refused_by_name
+tests/unit/test_philo10_email_channel.py::test_c6_a_materially_different_provider_plugs_in_with_one_class_and_one_row
+tests/unit/test_philo10_email_channel.py::test_r2_global_http_debug_on_prints_no_key_and_no_body
+tests/unit/test_philo10_email_channel.py::test_r2_a_failure_is_failed_only_when_no_byte_was_written[tls-during-the-body-write-None-2-unknown-tls_failed]
+tests/unit/test_philo10_email_channel.py::test_r2_a_failure_is_failed_only_when_no_byte_was_written[tls-during-the-header-write-None-1-unknown-tls_failed]
+tests/unit/test_philo10_email_channel.py::test_r2_a_failure_is_failed_only_when_no_byte_was_written[tls-handshake-ssl-0-failed-tls_failed]
+tests/unit/test_philo10_email_channel.py::test_r2_a_failure_is_failed_only_when_no_byte_was_written[connection-refused-refused-0-failed-connect_refused]
+tests/unit/test_philo10_email_channel.py::test_r2_a_failure_is_failed_only_when_no_byte_was_written[dns-dns-0-failed-dns_failed]
+tests/unit/test_philo10_email_channel.py::test_c2_r3_a_restart_during_an_email_send_ends_unknown_once_and_never_sends_again[killed-before-the-wire]
+tests/unit/test_philo10_email_channel.py::test_c2_r3_a_restart_during_an_email_send_ends_unknown_once_and_never_sends_again[killed-after-the-wire]
+tests/unit/test_philo10_email_channel.py::test_r3_the_hub_answers_a_read_during_a_slow_email_send[http]
+tests/unit/test_philo10_email_channel.py::test_r3_the_hub_answers_a_read_during_a_slow_email_send[mcp]
+
+63 tests collected in 0.12s
+```
+
+### Captured run — 2026-09-29T06:25:11Z
+
+- **Command:** `.tmp/iso.sh zsh -c .venv/bin/python -m pytest -q -p no:cacheprovider -n 8 -rf --basetemp=$HOME/pt tests/unit/test_philo10_email_channel.py tests/unit/test_philo10_send_contract.py tests/unit/test_philo10_send_recovery.py tests/unit/test_philo10_send_restart.py tests/unit/test_philo10_rig_op.py tests/unit/test_external_egress_kernel.py tests/unit/test_connector_runtime.py tests/unit/test_gated_connector.py tests/unit/test_webhook_post_actuator.py tests/unit/test_github_issue_actuator.py tests/unit/test_hs151_honest_dispatch.py tests/unit/test_kernel_effect_fence.py tests/unit/test_live_proposals.py tests/unit/test_slack_export.py tests/unit/test_subprocess_exec_kernel.py tests/unit/test_voice_macro_connector.py tests/unit/test_thread_tool_gate.py tests/unit/test_694_thread_never_sends.py tests/unit/test_api_surface.py tests/unit/test_mcp_sidecar_doc_drift.py tests/unit/test_doc_drift_guard.py tests/unit/test_philo_graph_atlas.py tests/unit/test_kernel_broker.py tests/integration/test_actuator_kernel_real_hub.py tests/integration/test_web_companion_slack.py tests/integration/test_web_companion_webhook.py tests/integration/test_web_slack_export.py tests/integration/test_kernel_real_hub.py tests/integration/test_principal_separation.py tests/unit/test_philo10_cli_channels.py tests/unit/test_philo10_settings_atomic.py tests/unit/test_hs173_nudge_wire.py tests/unit/test_philo9_02_round_three.py tests/unit/test_philo5_the_loop_r2.py tests/unit/test_philo9_mark_delivered.py tests/unit/test_philo9_steward_admission.py tests/unit/test_project_mcp.py tests/unit/test_project_mcp_palette.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1bb2176a3d16adf520244f2e80aac6bf09776676
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  8%]
+........................................................................ [ 17%]
+........................................................................ [ 25%]
+........................................................................ [ 34%]
+........................................................................ [ 42%]
+........................................................................ [ 51%]
+........................................................................ [ 60%]
+........................................................................ [ 68%]
+........................................................................ [ 77%]
+........................................................................ [ 85%]
+........................................................................ [ 94%]
+..............................................                           [100%]
+838 passed in 66.09s (0:01:06)
+```
+
+### Captured run — 2026-09-29T06:26:18Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-03-proof/mutations.py.txt`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1bb2176a3d16adf520244f2e80aac6bf09776676
+
+```text
+BASELINE (no mutation): rc=0 63 passed in 48.20s
+RED   M1 redirects followed (the default handler): rc=1 1 failed, 61 deselected in 1.40s
+RED   M2 the kernel records the exception's text (main's external_egress.py:290): rc=1 1 failed, 62 deselected in 0.62s
+RED   M3 the opener lets a raw transport exception out: rc=1 1 failed, 62 deselected in 1.41s
+RED   M4 the network seam hashes the destination only (main's connector_runtime.py:215): rc=1 1 failed, 58 deselected in 1.40s
+RED   M5 the key becomes planning material (read at plan time, held by the sender): rc=1 1 failed, 62 deselected in 1.47s
+RED   M6 any 4xx is FAILED (no pinned list): rc=1 1 failed, 8 passed, 44 deselected in 6.57s
+RED   M7 403 is not split by its discriminator: rc=1 1 failed, 1 passed, 60 deselected in 1.98s
+RED   M8 the key store admits any backend: rc=1 1 failed, 56 deselected in 0.42s
+RED   M9 202 without X-Message-Id is SENT: rc=1 1 failed, 62 deselected in 1.31s
+RED   M10 the egress child has no parent (the send's operation is not threaded): rc=1 1 failed, 61 deselected in 1.30s
+RED   M11 a take-over sends again: rc=1 1 failed, 61 deselected in 1.32s
+RED   M12 the channel calls SendGrid directly (no registry row): rc=1 1 failed, 62 deselected in 1.31s
+RED   M13 the edge inherits the global wire debug (Codex r1 P1; both local pins removed): rc=1 1 failed, 62 deselected in 1.40s
+RED   M14 a TLS failure is FAILED whatever was written (Codex r1 P1): rc=1 1 failed, 58 deselected in 1.31s
+RED   M15 the transmitter hard-codes SendGrid's Bearer auth (Codex r1 P2): rc=1 1 failed, 62 deselected in 1.31s
+RED   M16 a success body is not given to interpret (Codex r1 P2): rc=1 1 failed, 62 deselected in 1.31s
+MUTATIONS: 16/16 turned their fences red
+```
+
+### Captured run — 2026-09-29T06:27:45Z
+
+- **Command:** `zsh .tmp/docs_checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1bb2176a3d16adf520244f2e80aac6bf09776676
+
+```text
+== scripts/gen_operations_json.py --check
+OK docs/generated/operations.json
+== scripts/gen_mcp_sidecar_doc.py --check
+wrote docs/MCP_SIDECAR.md
+  246 tools across 43 families
+== scripts/check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+== scripts/philo_repository_census.py --check
+Repository census: 5 outputs verified.
+== scripts/philo_api_reference.py --check
+API reference checked
+== scripts/philo_openapi_reference.py --check
+OpenAPI: 580 paths
+== scripts/philo_boundary_census.py --check
+Boundary candidate census checked
+== scripts/philo_doctor_reference.py --check
+Doctor reference: 41 check functions
+== scripts/philo_config_reference.py --check
+Configuration declaration reference is current
+== scripts/philo_graph_reference.py --check
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+== scripts/validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+== scripts/generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
+== scripts/check_doc_coverage.py --check
+Documentation coverage checked.
+== scripts/residual_census.py --check
+RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-10-03
+DOCS RC=0
+```
+
+### Captured run — 2026-09-29T06:28:13Z
+
+- **Command:** `zsh .tmp/m17.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1bb2176a3d16adf520244f2e80aac6bf09776676
+
+```text
+E           AssertionError: the read waited 1.465 s during the email send
+E           AssertionError: the read waited 1.473 s during the email send
+2 failed, 61 deselected in 6.18s
 ```

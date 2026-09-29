@@ -47,14 +47,23 @@ _CHILD = textwrap.dedent('''
 
     hold = sys.argv[2] if len(sys.argv) > 2 else ""
     forever = threading.Event()
+    if hold == "slow":  # PHILO-10-02 GATE 2: a dispatch that takes 1.5 s
+        from holdspeak.services.channel_contract import FileChannel
+        real = FileChannel.dispatch
+
+        def dispatch(channel, row, *rest):
+            time.sleep(1.5)
+            return real(channel, row, *rest)
+
+        FileChannel.dispatch = dispatch
     if hold in ("before", "after"):
         from holdspeak.services.channel_contract import FileChannel
         real = FileChannel.dispatch
 
-        def dispatch(channel, row):
+        def dispatch(channel, row, *rest):
             if hold == "before":
                 forever.wait()
-            outcome = real(channel, row)
+            outcome = real(channel, row, *rest)
             forever.wait()
             return outcome
 
@@ -71,8 +80,8 @@ _CHILD = textwrap.dedent('''
 
 
 class HubProcess:
-    def __init__(self, home: Path, hold: str = "") -> None:
-        env = dict(os.environ, HOME=str(home))
+    def __init__(self, home: Path, hold: str = "", extra_env: dict[str, str] | None = None) -> None:
+        env = dict(os.environ, HOME=str(home), **(extra_env or {}))
         env.pop("HOLDSPEAK_ALLOW_REAL_HOME", None)
         self.proc = subprocess.Popen(
             [sys.executable, "-c", _CHILD, TOKEN, hold], cwd=str(REPO_ROOT), env=env,

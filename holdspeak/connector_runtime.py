@@ -145,12 +145,18 @@ class PermissionGate:
         runner: Optional[SubprocessRunner] = None,
         principal: Principal = LOCAL_OWNER,
         allowed_argv_prefixes: Iterable[Iterable[str]] = (),
+        parent_operation_id: str = "",
+        broker: Any = None,
         **kwargs: Any,
     ) -> subprocess.CompletedProcess[str]:
         """Execute a consequential connector command through the kernel.
 
         The manifest permission and any argv prefixes are hard prerequisites of
         the typed admission, not a second decision in this legacy gate.
+        PHILO-10-02: a caller inside an admitted operation passes its
+        authenticated *principal*, its operation (*parent_operation_id*) and
+        its *broker*; ``local-owner`` stays the default only for callers that
+        act outside one (the older actuators).
         """
         try:
             return run_subprocess_operation(
@@ -160,6 +166,8 @@ class PermissionGate:
                 allowed_argv_prefixes=tuple(tuple(prefix) for prefix in allowed_argv_prefixes),
                 principal=principal,
                 runner=runner or subprocess.run,
+                broker=broker,
+                parent_operation_id=parent_operation_id,
                 **kwargs,
             )
         except SubprocessOperationRefused as exc:

@@ -59,6 +59,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -131,6 +132,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -172,6 +174,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -209,6 +212,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -291,6 +295,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -335,6 +340,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -402,6 +408,7 @@
         "transcriber_factory"
       ],
       "owner_only": true,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -441,6 +448,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -469,6 +477,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -497,6 +506,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -541,6 +551,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -568,6 +579,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -601,6 +613,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -643,6 +656,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -678,6 +692,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -713,6 +728,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -752,6 +768,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": null
     },
@@ -794,6 +811,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -835,6 +853,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -893,6 +912,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -942,6 +962,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted_if",
@@ -982,6 +1003,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -1027,6 +1049,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted_if",
@@ -1070,6 +1093,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -1119,6 +1143,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted_if",
@@ -1162,6 +1187,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -1194,6 +1220,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -1238,6 +1265,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted_if",
@@ -1282,6 +1310,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -1329,6 +1358,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted_if",
@@ -1372,6 +1402,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -1404,6 +1435,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -1451,6 +1483,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -1498,6 +1531,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -1540,6 +1574,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -1586,6 +1621,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -1632,6 +1668,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -1673,6 +1710,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -1715,6 +1753,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -1759,6 +1798,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -1804,6 +1844,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -1845,6 +1886,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -1885,6 +1927,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -1926,6 +1969,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -1967,6 +2011,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -2027,6 +2072,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -2070,6 +2116,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted_if",
@@ -2135,6 +2182,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -2192,6 +2240,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -2249,6 +2298,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -2312,6 +2362,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -2375,6 +2426,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -2416,6 +2468,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -2457,6 +2510,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -2536,6 +2590,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -2590,6 +2645,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -2638,6 +2694,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -2694,6 +2751,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -2746,6 +2804,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -2798,6 +2857,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -2832,6 +2892,7 @@
         "door_upcoming"
       ],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -2889,6 +2950,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -2988,6 +3050,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -3073,6 +3136,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -3142,6 +3206,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -3183,6 +3248,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -3253,6 +3319,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -3316,6 +3383,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -3425,6 +3493,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted_if",
@@ -3495,6 +3564,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -3548,6 +3618,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -3589,6 +3660,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -3631,6 +3703,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -3642,7 +3715,7 @@
     {
       "name": "steward.nudges",
       "version": 1,
-      "description": "List the steward's reviewer nudges for a project (proposed, sent or dismissed).",
+      "description": "List the steward's reviewer nudges for a project (proposed, sent, unknown or dismissed).",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -3659,6 +3732,7 @@
               "proposed",
               "sent",
               "dismissed",
+              "unknown",
               null
             ],
             "description": "Optional filter."
@@ -3684,6 +3758,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -3716,7 +3791,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "write",
-      "result": "{success: true, comment_receipt: the comment's own receipt (comment_url, pr_number, reviewer, timestamp ...), operation_id, receipt: the kernel receipt}",
+      "result": "{success, outcome: sent | unknown, comment_receipt: the comment's own receipt (comment_url, pr_number, reviewer, timestamp ...; outcome unknown with its reason when HoldSpeak cannot know), operation_id, receipt: the kernel receipt (indeterminate for unknown)}",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
@@ -3724,16 +3799,18 @@
         "nudge_not_found",
         "nudge_not_proposed",
         "empty_text",
-        "the policy or gh refusals",
+        "the policy refusals",
+        "send_failed (a known non-delivery; the nudge stays proposed)",
         "owner_principal_required"
       ],
-      "completion": "synchronous; steward.nudges shows it sent",
+      "completion": "synchronous; steward.nudges shows it sent, or unknown (never offered again)",
       "exposure": [
         "http:POST /api/nudges/{step_id}/send",
         "mcp:nudge.send"
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": true,
       "owner_press": true,
       "admission": {
         "rule": "admitted",
@@ -3774,6 +3851,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -3819,6 +3897,7 @@
         "graduated_only"
       ],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -3864,6 +3943,7 @@
         "graduated_only"
       ],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -3909,6 +3989,7 @@
         "graduated_only"
       ],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -3969,6 +4050,7 @@
         "graduated_only"
       ],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -4014,6 +4096,7 @@
         "graduated_only"
       ],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -4059,6 +4142,7 @@
         "graduated_only"
       ],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -4104,6 +4188,7 @@
         "graduated_only"
       ],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -4182,6 +4267,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -4224,6 +4310,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -4265,6 +4352,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -4321,6 +4409,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -4367,6 +4456,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -4399,6 +4489,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -4447,6 +4538,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": true,
       "owner_press": false,
       "admission": {
         "rule": "admitted_if",
@@ -4508,6 +4600,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -4567,6 +4660,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": true,
       "admission": {
         "rule": "admitted",
@@ -4578,7 +4672,7 @@
     {
       "name": "channel.destinations",
       "version": 1,
-      "description": "Where can I send? List your saved destinations (a folder today): each with its name, channel, target, badge (local, or cloud for a folder you marked synced) and state.",
+      "description": "Where can I send? List your saved destinations (a folder, a GitHub issue or pull request, a Jira work item, a Confluence space): each with its name, channel, account, target, badge (local, or cloud), state, and the state of its connection.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -4594,7 +4688,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "read",
-      "result": "{destinations: [{id, name, channel, account, target, target_digest, synced, state, badge, created_at, parked_at}]}",
+      "result": "{destinations: [{id, name, channel, account, target, target_digest, synced, state, badge, created_at, parked_at, connection: {id, state, last_checked_at} or null for a folder}]}",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
@@ -4607,6 +4701,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -4618,7 +4713,7 @@
     {
       "name": "channel.save_destination",
       "version": 1,
-      "description": "Save a destination you send to: a folder (an absolute path; HoldSpeak writes a new file there per send), or email through a provider (SendGrid): your verified sender, the name of the saved key, and the To and Cc addresses. Mark a folder synced if a cloud client syncs it. Give replaces to edit one: the old destination is parked and this one is new.",
+      "description": "Save a destination you send to: a folder (an absolute path; HoldSpeak writes a new file there per send), a GitHub issue or pull request (a comment per send; the gh login is saved with it), one Jira work item (a comment per send), a Confluence space (a blog post per send), or email through a provider (SendGrid): your verified sender, the name of the saved key, and the To and Cc addresses. Mark a folder synced if a cloud client syncs it. Give replaces to edit one: the old destination is parked and this one is new.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -4631,9 +4726,12 @@
             "type": "string",
             "enum": [
               "file",
+              "github",
+              "jira",
+              "confluence",
               "email"
             ],
-            "description": "The channel: file (a folder) or email."
+            "description": "The channel: file (a folder), github, jira, confluence or email."
           },
           "folder": {
             "type": [
@@ -4648,6 +4746,68 @@
               "null"
             ],
             "description": "Optional, file: a cloud client syncs this folder (the badge says cloud)."
+          },
+          "host": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "github: the host (github.com if not given)."
+          },
+          "repo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "github: owner/repo."
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "issue",
+              "pr",
+              null
+            ],
+            "description": "github: issue or pr (a pull request)."
+          },
+          "number": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "description": "github: the issue or pull request number."
+          },
+          "site": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "jira, confluence: the Atlassian site (name.atlassian.net)."
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "jira, confluence: the email of the acli account."
+          },
+          "key": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "jira: ONE work item key, like ABC-123."
+          },
+          "space_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "confluence: the space id (digits)."
           },
           "provider": {
             "type": [
@@ -4733,6 +4893,12 @@
         "destination_name_invalid",
         "destination_parked",
         "channel_unknown",
+        "github_target_invalid",
+        "github_not_logged_in",
+        "jira_key_not_single",
+        "jira_key_invalid",
+        "atlassian_email_invalid",
+        "confluence_space_invalid",
         "email_provider_unknown",
         "email_address_invalid",
         "email_key_ref_invalid",
@@ -4748,6 +4914,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": true,
       "owner_press": true,
       "admission": {
         "rule": "admitted",
@@ -4798,6 +4965,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": true,
       "admission": {
         "rule": "admitted",
@@ -4809,7 +4977,7 @@
     {
       "name": "channel.check_destination",
       "version": 1,
-      "description": "Check a saved destination: a folder still resolves to the saved path, exists and is writable; an email destination's key is in the OS keychain (no call to the provider).",
+      "description": "Check a saved destination: a folder still resolves to the saved path, exists and is writable; a GitHub, Jira or Confluence destination shows the stored state of its connection; an email destination's key is in the OS keychain (no call to the provider).",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -4825,7 +4993,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "read",
-      "result": "{destination, check: {state: ready | changed | missing | not_writable | parked | email_key_missing | email_key_store_not_native | email_key_store_locked, resolved}}",
+      "result": "{destination, check: {state: ready | changed | missing | not_writable | parked | connected | never_checked | owner_action_required | unavailable | degraded | email_key_missing | email_key_store_not_native | email_key_store_locked, resolved}}",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
@@ -4839,10 +5007,11 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
-        "condition": "A folder: a local check, no egress (the phase's table). The remote channels' account probe is admitted egress; it arrives with them (story 02, 03).",
+        "condition": "A folder: a local check, no egress (the phase's table). A remote channel: the stored connection state, no probe (connection.recheck probes, admitted).",
         "arguments": [],
         "enforced": true
       }
@@ -4871,7 +5040,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "read",
-      "result": "{document_ref, title, destination_id, channel, badge, payload_digest, size, preview: {text}}",
+      "result": "{document_ref, title, destination_id, channel, badge, payload_digest, size, preview: {text} (confluence: {title, text})}",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
@@ -4889,6 +5058,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -4946,6 +5116,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "admitted",
@@ -4996,6 +5167,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": true,
       "admission": {
         "rule": "admitted",
@@ -5007,7 +5179,7 @@
     {
       "name": "channel.send",
       "version": 1,
-      "description": "The owner's Send: send a prepared send (send_id), or send a published update to a saved destination with the digest of the preview he saw (update_id, destination_id, preview_digest). The answer is the channel's proof (a folder: the file's path, sha256 and size, read back; email: the provider's message id, ACCEPTED BY SENDGRID -- accepted for processing, not delivered), a known failure, or unknown. HoldSpeak never sends again by itself: a repeat of the same command_id answers the first result. Only the owner sends; an agent prepares.",
+      "description": "The owner's Send: send a prepared send (send_id), or send a published update to a saved destination with the digest of the preview he saw (update_id, destination_id, preview_digest). The answer is the channel's proof (a folder: the file's path, sha256 and size, read back; GitHub: the comment URL; Jira and Confluence: the id acli gives; email: the provider's message id, ACCEPTED BY SENDGRID -- accepted for processing, not delivered), a known failure with its code, or unknown. HoldSpeak never sends again by itself: a repeat of the same command_id answers the first result. Only the owner sends; an agent prepares.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -5067,6 +5239,9 @@
         "send_already_settled",
         "update_not_published",
         "path_outside_folder",
+        "github_identity_changed",
+        "github_not_logged_in",
+        "github_identity_unverified",
         "email_provider_unknown",
         "email_key_missing",
         "email_key_store_not_native",
@@ -5081,6 +5256,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": true,
       "owner_press": true,
       "admission": {
         "rule": "admitted",
@@ -5129,6 +5305,7 @@
       ],
       "held": [],
       "owner_only": false,
+      "blocking_io": false,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -5190,6 +5367,7 @@
         "api_key"
       ],
       "owner_only": true,
+      "blocking_io": true,
       "owner_press": true,
       "admission": {
         "rule": "admitted",

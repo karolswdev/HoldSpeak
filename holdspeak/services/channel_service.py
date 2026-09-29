@@ -23,6 +23,9 @@ Built to ``pm/roadmap/holdspeak-philo/phase-10-the-channels/design/send-lifecycl
   its receipt's transaction; Send and Discard at once: one wins.
 
 The file channel is the one direct writer (``services/channel_contract.py``);
+the GitHub, Jira and Confluence channels dispatch each command as a
+``subprocess.exec`` child of the send, under the send's authenticated owner
+principal, through its broker (``services/channel_cli.py``; PHILO-10-02);
 the email channel sends its frozen request body as an ``external.egress`` CHILD
 of the send, under the send's authenticated owner principal, through its
 broker (``services/channel_email.py``; PHILO-10-03).
@@ -68,14 +71,35 @@ class ChannelService:
 
     def _destination_view(self, row: Mapping[str, Any]) -> dict[str, Any]:
         target = json.loads(row["target_json"] or "{}")
+        account = json.loads(row["account_json"] or "{}")
         synced = bool(row["synced"])
         return {
             "id": row["id"], "name": row["name"], "channel": row["channel"],
-            "account": json.loads(row["account_json"] or "{}"), "target": target,
+            "account": account, "target": target,
             "target_digest": row["target_digest"], "synced": synced, "state": row["state"],
             "badge": contract.channel(row["channel"]).badge(synced), "created_at": row["created_at"],
-            "parked_at": row["parked_at"],
+            "parked_at": row["parked_at"], "connection": self._connection(str(row["channel"]), account),
         }
+
+    def _connection(self, channel: str, account: Mapping[str, Any]) -> Optional[dict[str, Any]]:
+        """The Phase 9 connection this destination's account uses, with its B1 state (shown, never the identity).
+
+        A stored read of ``watch_provider_connections`` (no probe): ``connected``,
+        ``never_checked``, or the state the last check stored.
+        """
+        if channel == "github":
+            connection_id = "wpc_github"
+        elif channel in {"jira", "confluence"}:
+            connection_id = f"wpc_{channel}_{account.get('site')}|{account.get('email')}"
+        else:
+            return None
+        row = self._db.automations.get_provider_connection(connection_id)
+        if row is None or not row.get("last_checked_at"):
+            return {"id": connection_id, "state": "never_checked", "last_checked_at": None}
+        state = str(row.get("state") or "")
+        display = {"connected": "connected", "disconnected": "owner_action_required",
+                   "owner_action_required": "owner_action_required", "unavailable": "unavailable"}.get(state, "degraded")
+        return {"id": connection_id, "state": display, "last_checked_at": row.get("last_checked_at")}
 
     def _send_view(self, row: Mapping[str, Any]) -> dict[str, Any]:
         destination = self._db.channel_destinations.get(row["destination_id"]) or {}
@@ -139,13 +163,21 @@ class ChannelService:
                 "preview": contract.preview_for(destination["channel"], payload, destination["account_json"])}
 
     def check_destination(self, principal: Any, destination_id: str) -> dict[str, Any]:
-        """A folder: a local check (it resolves to the saved folder, it is a folder, it is writable)."""
+        """A folder: a local check (it resolves to the saved folder, it is a folder, it is writable).
+
+        A GitHub, Jira or Confluence destination: its stored Phase 9 connection
+        state (no probe here; ``connection.recheck`` probes).
+        """
         import os
 
         row = self._destination(destination_id)
         if row["channel"] == "email":
             return {"destination": self._destination_view(row), "check": {"state": self._email_state(row),
                                                                          "resolved": None}}
+        if row["channel"] != "file":
+            view = self._destination_view(row)
+            state = "parked" if row["state"] != "active" else str((view["connection"] or {}).get("state") or "")
+            return {"destination": view, "check": {"state": state, "resolved": None}}
         target = json.loads(row["target_json"] or "{}")
         folder = str(target.get("folder") or "")
         resolved = os.path.realpath(folder) if folder else ""
@@ -173,13 +205,17 @@ class ChannelService:
     # ── destinations (admitted, the owner's) ───────────────────────────────
 
     def save_destination(self, principal: Any, name: str, channel: str, folder: Optional[str] = None,
-                         synced: bool = False, replaces: Optional[str] = None,
-                         provider: Optional[str] = None, from_email: Optional[str] = None,
-                         from_name: Optional[str] = None, key_ref: Optional[str] = None,
-                         to: Optional[list[str]] = None, cc: Optional[list[str]] = None,
-                         command_id: Optional[str] = None) -> dict[str, Any]:
+                         synced: bool = False, replaces: Optional[str] = None, host: Optional[str] = None,
+                         repo: Optional[str] = None, kind: Optional[str] = None, number: Optional[int] = None,
+                         site: Optional[str] = None, email: Optional[str] = None, key: Optional[str] = None,
+                         space_id: Optional[str] = None, provider: Optional[str] = None,
+                         from_email: Optional[str] = None, from_name: Optional[str] = None,
+                         key_ref: Optional[str] = None, to: Optional[list[str]] = None,
+                         cc: Optional[list[str]] = None, command_id: Optional[str] = None) -> dict[str, Any]:
         """Save one destination. ``replaces``: Edit -- the old row parks and this one is new.
 
+        The account is CONCRETE (design section 1): GitHub freezes ``{host, login}``
+        read now from ``gh api user --hostname``; Jira and Confluence ``{site, email}``.
         Email (PHILO-10-03): the account freezes ``{provider, from_email,
         from_name, key_ref}`` (the key's NAME, never the key); the target is
         ``{to, cc}``.
@@ -195,11 +231,16 @@ class ChannelService:
         chan = contract.channel(channel)
         if channel == "file":
             account, target = {}, chan.target_at_save(folder)
+        elif channel in {"github", "jira", "confluence"}:
+            account, target = chan.target_at_save(
+                {"host": host, "repo": repo, "kind": kind, "number": number, "site": site, "email": email,
+                 "key": key, "space_id": space_id}, handle.principal)
+            synced = False
         elif channel == "email":
             account, target = chan.target_at_save({"provider": provider, "from_email": from_email,
                                                    "from_name": from_name, "key_ref": key_ref, "to": to, "cc": cc})
             synced = False
-        else:  # pragma: no cover - story 02 adds its targets
+        else:
             raise ValidationError(f"{channel} destinations arrive with their channel", code="channel_unknown")
         if replaces:
             old = self._destination(replaces)
@@ -267,10 +308,10 @@ class ChannelService:
     # ── prepare and discard ──────────────────────────────────────────────
 
     def _size(self, channel: str, payload: bytes) -> None:
-        limit = contract.SIZE_LIMITS.get(channel)
-        if limit is not None and len(payload) > limit:
+        size, limit, unit = contract.payload_size(channel, payload)
+        if limit and size > limit:
             raise ChannelRefused(f"payload_too_large:{channel}",
-                                 f"The payload is {len(payload)} bytes; the {channel} channel takes {limit}", status=400)
+                                 f"The payload is {size} {unit}; the {channel} channel takes {limit}", status=400)
 
     def prepare(self, principal: Any, update_id: str, destination_id: str,
                 command_id: Optional[str] = None) -> dict[str, Any]:
@@ -342,8 +383,12 @@ class ChannelService:
             return self._close_as_row(handle, mine)
         row = self._boundary(handle, send_id=send_id, update_id=update_id, destination_id=destination_id,
                              preview_digest=preview_digest)
+        from .channel_cli import Seam
+
+        # The send's authority for its CLI children (design section 6).
+        seam = Seam(principal=handle.principal, parent_operation_id=handle.operation_id, broker=handle.broker)
         try:
-            outcome = contract.channel(row["channel"]).dispatch(row)
+            outcome = contract.channel(row["channel"]).dispatch(row, seam)
         except Exception as exc:  # the effect's own error after the boundary: never FAILED
             log.warning("channel send %s: dispatch raised %s", row["id"], type(exc).__name__)
             outcome = Outcome("unknown", f"dispatch_{type(exc).__name__.lower()}")
@@ -388,8 +433,9 @@ class ChannelService:
         if row is not None and contract.sha256(payload) != row["payload_digest"]:
             raise ChannelRefused("payload_changed", "The frozen payload does not match its digest")
         self._size(channel_name, payload)
-        # Before the boundary: the file's folder resolves again; email's key store
-        # is native and holds the key (email_key_store_not_native / email_key_missing).
+        # Before the boundary: the file's folder resolves again; GitHub reads its
+        # login again (github_identity_changed / github_not_logged_in by name);
+        # email's key store is native and holds the key (email_key_store_not_native / email_key_missing).
         folder = chan.check_before_dispatch(frozen_target, account=frozen_account, principal=handle.principal)
         path = (chan.choose_path(folder, contract.naming(self._db, document_ref), send_id)
                 if channel_name == "file" else None)
@@ -434,7 +480,7 @@ class ChannelService:
 
         def effect(conn: Any) -> None:
             settled = settle_in_transaction(conn, send_operation_id=handle.operation_id, state=outcome.state,
-                                            reason=outcome.reason, proof=dict(outcome.proof) or None,
+                                            reason=outcome.reason, proof=outcome.record(),
                                             delivered_to=str(destination.get("name") or ""))
             if settled is None:
                 raise RuntimeError("the send row is no longer dispatching")

@@ -399,7 +399,8 @@ class TestSendExecutesCorrectArgv:
         assert argv[:3] == ["gh", "pr", "comment"]
         assert "600" in argv
         assert "--repo" in argv
-        assert "--body" in argv
+        # PHILO-10-02: the body goes through a private file, never argv.
+        assert "--body-file" in argv and "--body" not in argv
 
 
 class TestReceiptShape:
@@ -440,8 +441,10 @@ class TestGhFailure:
 
     def test_gh_auth_failure(self, conn):
         def failing_runner(argv, **kwargs):
+            # PHILO-10-02: exit 4 is gh's "authentication required" -- a pinned,
+            # known non-delivery (an unpinned exit is UNKNOWN, never failed).
             return SimpleNamespace(
-                returncode=1,
+                returncode=4,
                 stdout="",
                 stderr="gh: not authenticated for testorg/testrepo",
             )
@@ -474,11 +477,12 @@ class TestTextPostedEqualsTextSent:
         captured_bodies: list[str] = []
 
         def capture_runner(argv, **kwargs):
-            # Extract the --body argument
+            # PHILO-10-02: the body is read from the --body-file path while gh runs
             argv_list = list(argv)
             for i, a in enumerate(argv_list):
-                if a == "--body" and i + 1 < len(argv_list):
-                    captured_bodies.append(argv_list[i + 1])
+                if a == "--body-file" and i + 1 < len(argv_list):
+                    with open(argv_list[i + 1], encoding="utf-8") as handle:
+                        captured_bodies.append(handle.read())
             return SimpleNamespace(
                 returncode=0,
                 stdout="https://github.com/testorg/testrepo/pull/900#issuecomment-789",
