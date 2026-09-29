@@ -45,6 +45,8 @@ FLOWS = {
                                                           ({"failed", "unknown"}, "EmailTransportError+EmailKeyError")],
     ("holdspeak/services/channel_email.py", "code"): (set(), "@assigned"),
     ("holdspeak/services/channel_email.py", "self.PINNED[status]"): ({"failed"}, "@PINNED"),
+    # PHILO-10-07: Resend's pinned (status, name) table.
+    ("holdspeak/services/channel_email.py", "self.PINNED[status, name]"): ({"failed"}, "@PINNED"),
     ("holdspeak/services/channel_service.py", "exc.code"): ({"refused"}, "EmailKeyError"),
     # _close_as_row: a stored row's own reason read back (already one of the codes above).
     ("holdspeak/services/channel_service.py", 'row["reason"]'): (set(), "@stored"),

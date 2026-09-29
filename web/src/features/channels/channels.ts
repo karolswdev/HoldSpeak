@@ -11,7 +11,7 @@
  * does not carry yet is refused by the hub by name (REFUSED + its word).
  *
  * Words (ASD-STE100): verbs and states, no prose. A provider's acceptance is
- * never "delivered" (ACCEPTED BY SENDGRID).
+ * never "delivered" (ACCEPTED BY SENDGRID, ACCEPTED BY RESEND).
  */
 import { apiFetch, ApiError } from "../../lib/api";
 import { refusalWord } from "../../desk/surface/egress";
@@ -104,6 +104,18 @@ export const CHANNEL_WORD: Record<Channel, string> = {
   email: "EMAIL",
 };
 
+/* ── the email providers (story 03 SendGrid; story 07 Resend) ─────── */
+
+export type EmailProvider = "sendgrid" | "resend";
+/** One row per provider the hub carries (holdspeak/services/channel_email.py EMAIL_PROVIDERS). */
+export const EMAIL_PROVIDERS: Record<EmailProvider, { label: string; word: string; host: string; activity: string }> = {
+  sendgrid: { label: "SendGrid", word: "SENDGRID", host: "api.sendgrid.com", activity: "https://app.sendgrid.com/email_activity" },
+  resend: { label: "Resend", word: "RESEND", host: "api.resend.com", activity: "https://resend.com/emails" },
+};
+/** An email account's provider (the hub's default is SendGrid). */
+export const emailProvider = (a?: Record<string, unknown> | null) =>
+  EMAIL_PROVIDERS[String(a?.provider ?? "sendgrid") as EmailProvider] ?? EMAIL_PROVIDERS.sendgrid;
+
 /** The face word of a SENT row, per channel. */
 export const SENT_WORD: Record<Channel | "manual", string> = {
   file: "SAVED",
@@ -113,8 +125,11 @@ export const SENT_WORD: Record<Channel | "manual", string> = {
   email: "ACCEPTED BY SENDGRID",
   manual: "DELIVERED",
 };
-export const sentWord = (channel: string): string =>
-  SENT_WORD[channel as Channel] ?? channel.toUpperCase();
+/** Email's word names the provider that accepted it (the proof's provider, else the account's). */
+export const sentWord = (channel: string, proof?: Record<string, unknown> | null,
+  account?: Record<string, unknown> | null): string =>
+  channel === "email" ? `ACCEPTED BY ${emailProvider(proof?.provider ? proof : account).word}`
+    : SENT_WORD[channel as Channel] ?? channel.toUpperCase();
 
 /* The words below cover EVERY code the channel services can emit: the fence
  * tests/unit/test_philo10_face_words.py derives the codes from the services'
@@ -145,7 +160,7 @@ const REFUSED: Record<string, string> = {
   document_unknown: "NO DOCUMENT",
   email_address_invalid: "ADDRESS NOT VALID",
   email_key_invalid: "KEY NOT VALID",
-  email_key_missing: "NO SENDGRID KEY",
+  email_key_missing: "NO KEY",
   email_key_ref_invalid: "KEY NAME NOT VALID",
   email_key_store_locked: "KEY STORE LOCKED",
   email_key_store_not_native: "NO SAFE KEY STORE",
@@ -206,6 +221,11 @@ const FAILED: Record<string, string> = {
   sender_not_verified: "SENDER NOT VERIFIED",
   sendgrid_forbidden: "SENDGRID REFUSED",
   api_key_invalid: "SENDGRID KEY NOT VALID",
+  resend_key_invalid: "RESEND KEY NOT VALID",
+  resend_forbidden: "RESEND REFUSED",
+  resend_invalid_request: "REQUEST NOT VALID",
+  resend_rate_limited: "RATE LIMITED",
+  resend_quota_exceeded: "SEND LIMIT REACHED",
   rate_limited: "RATE LIMITED",
   invalid_request: "REQUEST NOT VALID",
   payload_too_large: "TOO LARGE",
@@ -214,7 +234,7 @@ const FAILED: Record<string, string> = {
   subprocess_refused: "COMMAND NOT PERMITTED",
   egress_refused: "SEND NOT PERMITTED",
   email_provider_unknown: "PROVIDER NOT KNOWN",
-  email_key_missing: "NO SENDGRID KEY",
+  email_key_missing: "NO KEY",
   email_key_store_locked: "KEY STORE LOCKED",
   email_key_store_not_native: "NO SAFE KEY STORE",
   url_not_admitted: "ADDRESS NOT PERMITTED",
@@ -246,7 +266,7 @@ const UNKNOWN: Record<string, string> = {
   github_no_proof: "NO PROOF",
   jira_no_proof: "NO PROOF",
   confluence_no_proof: "NO PROOF",
-  email_key_missing: "NO SENDGRID KEY",
+  email_key_missing: "NO KEY",
   email_key_store_locked: "KEY STORE LOCKED",
   email_key_store_not_native: "NO SAFE KEY STORE",
   url_not_admitted: "ADDRESS NOT PERMITTED",
@@ -320,7 +340,10 @@ export function egressOf(d: { channel: Channel; account: Record<string, string |
       const site = String(d.account.site ?? "");
       return { label: site.toUpperCase(), scope: "cloud", title: site };
     }
-    case "email": return { label: "API.SENDGRID.COM", scope: "cloud", title: "api.sendgrid.com" };
+    case "email": {
+      const host = emailProvider(d.account).host;
+      return { label: host.toUpperCase(), scope: "cloud", title: host };
+    }
     default: return { label: "", scope: "local", title: "" };
   }
 }
@@ -331,7 +354,7 @@ export function farSide(channel: Channel, t: Record<string, string | number>, a:
     case "github": return `https://${a.host ?? "github.com"}/${t.repo}/${t.kind === "pr" ? "pull" : "issues"}/${t.number}`;
     case "jira": return `https://${a.site}/browse/${t.key}`;
     case "confluence": return `https://${a.site}/wiki/spaces/${t.space_id}/blog`;
-    case "email": return "https://app.sendgrid.com/email_activity";
+    case "email": return emailProvider(a).activity;
     default: return null;
   }
 }
@@ -468,10 +491,10 @@ export const wire = {
   check: (id: string) =>
     call<{ destination: Destination; check: { state: string; answered_at?: string | null } }>(
       `/api/channels/destinations/${encodeURIComponent(id)}/check`, { method: "POST", json: {} }),
-  /** Story 03: the SendGrid key, typed once, into the OS keychain (the key is the body, never shown again). */
-  saveKey: (keyRef: string, value: string) =>
+  /** Story 03/07: the provider's key, typed once, into the OS keychain (the key is the body, never shown again). */
+  saveKey: (keyRef: string, value: string, provider: EmailProvider = "sendgrid") =>
     call<{ key_ref: string; saved?: boolean }>(`/api/channels/email-keys/${encodeURIComponent(keyRef)}`, {
-      method: "PUT", json: { api_key: value, command_id: commandId() },
+      method: "PUT", json: { api_key: value, provider, command_id: commandId() },
     }),
   sends: (updateId: string) =>
     call<unknown>(`/api/channels/sends?update_id=${encodeURIComponent(updateId)}`).then((r) => listOf<Send>(r, "sends")),
