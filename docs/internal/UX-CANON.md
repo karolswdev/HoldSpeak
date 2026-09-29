@@ -177,8 +177,9 @@ counts must not exceed the committed ceiling file
 `tests/ux_canon_ceiling.json`; a regression names the rule, the delta,
 and the faces that rose.  (ii) *Hard zeros*: DS6 (accent rail) and A9
 (missing egress) must stay at 0; A1 (raw `<button>`) is held to a
-dated, down-only ratchet of 105, measured on 2026-09-28 by PHILO-9-04
-(the sortable table's sort headers; 106 on 2026-09-21 by HS-202-03;
+dated, down-only ratchet of 102, measured on 2026-09-28 by #694 (the
+live count once the Phase 9 and 10 faces landed; 105 the same day by
+PHILO-9-04, the sortable table's sort headers; 106 on 2026-09-21 by HS-202-03;
 175 on 2026-09-17 by HS-200-44, once the matcher could see a
 multi-line opening tag; the earlier "4 residues" was an artifact of a
 per-line regex, not a fact about the code).  That number can only shrink; the ruling itself is unchanged:
