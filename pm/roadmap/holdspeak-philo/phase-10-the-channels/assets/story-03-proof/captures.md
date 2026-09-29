@@ -787,3 +787,67 @@ Documentation coverage checked.
 RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-10-03
 DOCS RC=0
 ```
+
+## Round five (Muad'Dib's full suite on ebefe05e: two branch-new reds)
+
+- `tests/unit/test_philo5_graph_op.py::test_canonical_map_matches_live_operation_exposure_projection` and `tests/unit/test_philo5_one_decision.py::test_the_catalogue_is_explicit_descriptors` read declared lists that did not name `channel.save_email_key`. Added with its real exposure: `scripts/graph_walk.py` `OP_HTTP_ONLY` (HTTP only; the rig refuses it by name over MCP) and the explicit catalogue list; the graph-op fence's pinned set names it. Nothing else derives from those lists (the docs checks below are green). Two other reds in that suite run (graph_walk_smoke j9, hs176 393) are load flakes per Muad'Dib and were not touched.
+
+### Captured run — 2026-09-29T07:31:50Z
+
+- **Command:** `.tmp/iso.sh zsh -c .venv/bin/python -m pytest -q -p no:cacheprovider -n 8 -rf --basetemp=$HOME/pt tests/unit/test_philo5_graph_op.py tests/unit/test_philo5_one_decision.py tests/unit/test_philo10_email_channel.py tests/unit/test_philo10_cli_channels.py tests/unit/test_philo10_send_contract.py tests/unit/test_philo10_send_recovery.py tests/unit/test_philo10_send_restart.py tests/unit/test_philo10_settings_atomic.py tests/unit/test_thread_tool_gate.py tests/unit/test_694_thread_never_sends.py tests/unit/test_philo5_the_loop_r2.py tests/unit/test_api_surface.py tests/unit/test_mcp_sidecar_doc_drift.py tests/unit/test_external_egress_kernel.py tests/unit/test_gated_connector.py tests/unit/test_connector_runtime.py tests/unit/test_kernel_effect_fence.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** c01e958b9a52cbbc437236e3cfe3819ca99458a2
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 20%]
+........................................................................ [ 41%]
+........................................................................ [ 61%]
+........................................................................ [ 82%]
+..............................................................           [100%]
+350 passed in 39.08s
+```
+
+### Captured run — 2026-09-29T07:32:30Z
+
+- **Command:** `zsh .tmp/docs_checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** c01e958b9a52cbbc437236e3cfe3819ca99458a2
+
+```text
+== scripts/gen_operations_json.py --check
+OK docs/generated/operations.json
+== scripts/gen_mcp_sidecar_doc.py --check
+wrote docs/MCP_SIDECAR.md
+  246 tools across 43 families
+== scripts/check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+== scripts/philo_repository_census.py --check
+Repository census: 5 outputs verified.
+== scripts/philo_api_reference.py --check
+API reference checked
+== scripts/philo_openapi_reference.py --check
+OpenAPI: 580 paths
+== scripts/philo_boundary_census.py --check
+Boundary candidate census checked
+== scripts/philo_doctor_reference.py --check
+Doctor reference: 41 check functions
+== scripts/philo_config_reference.py --check
+Configuration declaration reference is current
+== scripts/philo_graph_reference.py --check
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+== scripts/validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+== scripts/generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
+== scripts/check_doc_coverage.py --check
+Documentation coverage checked.
+== scripts/residual_census.py --check
+RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-10-03
+DOCS RC=0
+```
