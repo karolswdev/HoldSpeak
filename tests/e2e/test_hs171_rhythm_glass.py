@@ -75,10 +75,9 @@ def _shot(page: Any, name: str, width: int) -> Path:
 
 def _seed_project(page: Any) -> str:
     """Create a project and return its id for mute-toggle tests."""
-    result = _api(page, "POST", "/api/projects", {
-        "name": "Q4 Platform",
-        "title": "Q4 Platform",
-    })
+    # project.create's declared contract (PHILO-9-01) refuses unknown keys;
+    # a project's one label is its name.
+    result = _api(page, "POST", "/api/projects", {"name": "Q4 Platform"})
     return result.get("project", {}).get("id", "")
 
 

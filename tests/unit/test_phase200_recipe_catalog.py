@@ -641,10 +641,18 @@ class TestOneDefinitionTwoTriggers:
 
     def test_the_steward_is_an_executor_not_a_trigger_owner(self) -> None:
         """``project.steward.trigger`` still answers scheduler_not_wired."""
-        family = inspect.getsource(
-            importlib.import_module("holdspeak.mcp.families.project")
-        )
-        assert "scheduler_not_wired" in family
+        # PHILO-9-02 moved the trigger onto the one service layer: the refusal
+        # is declared on the operation's contract row and raised by the
+        # steward service's own ``trigger`` (the MCP family is now a thin
+        # transport over it), so the fence reads both there.
+        # holdspeak.operations first: it imports room_operations at its foot,
+        # and room_operations imported cold closes that cycle half-built.
+        import holdspeak.operations  # noqa: F401
+        from holdspeak.room_operations import STEWARD_TRIGGER
+        from holdspeak.services.steward_contract import StewardContract
+
+        assert "scheduler_not_wired" in STEWARD_TRIGGER.refusals
+        assert "scheduler_not_wired" in inspect.getsource(StewardContract.trigger)
         assert catalog.SCHEDULED_TRIGGER_OWNER != "ProjectStewardService"
         # ...and the steward IS still named as the executor of the update.
         update = catalog.get_descriptor(catalog.RECIPE_WEEKLY_UPDATE)

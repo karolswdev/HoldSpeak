@@ -39,9 +39,12 @@ if TYPE_CHECKING:
 # ordinary Thread palette for the prepared-recipe catalog, and a mode
 # allow-list computed from the class map would have widened Desk and Chase
 # by three tools as a side effect of classifying them for the gate.
+# PHILO-10-01 (#694): ``channel.*`` joins them -- the Send's family is the
+# Room's, reached over MCP or named by a custom mode; the seeded Desk and
+# Chase palettes do not widen by classifying it for the gate.
 def _thread_side(name: str) -> bool:
     return not name.startswith(
-        ("project.", "provider.", "interview.", "practice_recipe.")
+        ("project.", "provider.", "interview.", "practice_recipe.", "channel.")
     )
 
 

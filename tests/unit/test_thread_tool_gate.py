@@ -19,6 +19,7 @@ import pytest
 from holdspeak.db import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.thread_tools import (
+    EXCLUDED_TOOLS,
     TOOL_NAMES,
     ThreadToolExecutor,
     ToolCallHandle,
@@ -323,7 +324,9 @@ class TestClassificationCensus:
         from holdspeak.mcp.tools import TOOLS as MCP_TOOLS
 
         mcp_names = {t["name"] for t in MCP_TOOLS}
-        unclassified = mcp_names - TOOL_NAMES
+        # #694: an excluded tool is classified too -- as egress, authority or
+        # config in the owner's table (mcp/tool_authority.py).
+        unclassified = mcp_names - TOOL_NAMES - EXCLUDED_TOOLS
         assert unclassified == set(), (
             f"Unclassified MCP tools (add them to thread_tools._TOOL_CLASSES): "
             f"{sorted(unclassified)}"
@@ -339,6 +342,164 @@ class TestClassificationCensus:
             f"Phantom tool classifications (remove from thread_tools._TOOL_CLASSES): "
             f"{sorted(phantom)}"
         )
+
+    def test_every_dispatched_tool_has_an_authority_row(self) -> None:
+        """#694, the owner's ruling (2026-09-29): ONE table classes EVERY tool
+        the MCP dispatch serves (the public list and every family) as work,
+        egress, authority or config. A tool with no row fails here."""
+        from holdspeak.mcp.tool_authority import TOOL_AUTHORITY
+        from holdspeak.mcp.tools import FAMILIES, TOOLS as MCP_TOOLS
+
+        dispatched = {t["name"] for t in MCP_TOOLS} | {t["name"] for f in FAMILIES for t in f.TOOLS}
+        assert dispatched == set(TOOL_AUTHORITY), (
+            f"unclassified={sorted(dispatched - set(TOOL_AUTHORITY))} "
+            f"phantom={sorted(set(TOOL_AUTHORITY) - dispatched)}")
+        assert set(TOOL_AUTHORITY.values()) <= {"work", "egress", "authority", "config"}
+
+    #: The owner's named examples, each in its class (the ruling's words).
+    RULED = {
+        "egress": {"channel.send", "nudge.send"},
+        "authority": {"project.archive", "project.configure_steward"},
+        "config": {"model_library.define_endpoint", "inference_assignment.set", "inference_assignment.clear",
+                   "project.setup.finalize", "thought.replace_default_context", "settings.update",
+                   "provider.jira_add_connection"},
+        "work": {"people.note.create", "desk.create", "project.draft_update", "zone.file", "channel.prepare",
+                 "project.setup.start", "project.setup.answer"},  # a setup's drafting (prepare-then-press)
+    }
+
+    #: #694 (Codex Astra counsels r4 and r5, law 9): every function that WRITES
+    #: a delegation or a schedule's authority, FOUND by its writer (not by a
+    #: tool name). The writer -> MCP tool mapping below is HAND-PINNED from
+    #: reading the callers, not derived reachability: the test proves the
+    #: writer set is exact and that every pinned tool is non-work or carries a
+    #: predicate; it cannot prove a pinned tool set is complete. A new writer
+    #: fails the census until someone reads its callers and pins it.
+    MINTERS: dict[tuple[str, str], frozenset[str]] = {
+        # the workbench schedule delegation (ScheduleDelegationService)
+        ("holdspeak/services/schedule_delegation.py", "enable_from_owner"): frozenset(),  # no caller today
+        ("holdspeak/services/schedule_delegation.py", "enable_from_owner_in_transaction"):
+            frozenset({"workbench.create", "workbench.update"}),
+        ("holdspeak/services/workbench_service.py", "create_workbench"): frozenset({"workbench.create"}),
+        ("holdspeak/services/workbench_service.py", "update_workbench"): frozenset({"workbench.update"}),
+        # the recording delegation receipt
+        ("holdspeak/services/scheduled_recording_service.py", "create_schedule"):
+            frozenset({"scheduled_recording.create"}),
+        ("holdspeak/services/scheduled_recording_service.py", "update_schedule"):
+            frozenset({"scheduled_recording.update"}),
+        # the steward's unattended runs (its policy)
+        ("holdspeak/services/steward_contract.py", "configure_policy"): frozenset({"project.configure_steward"}),
+        ("holdspeak/services/steward_contract.py", "effect"): frozenset({"project.configure_steward"}),
+        ("holdspeak/db/steward.py", "insert_policy"): frozenset({"project.configure_steward"}),
+        ("holdspeak/db/steward.py", "insert_policy_in_transaction"): frozenset({"project.configure_steward"}),
+        ("holdspeak/db/steward.py", "update_policy"): frozenset({"project.configure_steward"}),
+        ("holdspeak/db/steward.py", "update_policy_in_transaction"): frozenset({"project.configure_steward"}),
+        # an enabled recording written straight to the repository: the calendar
+        # ingest conductor's event-born recordings, under the owner's own
+        # auto-record setting (settings.update: config); no MCP tool reaches it
+        ("holdspeak/calendar_ingest_conductor.py", "_create_event_born_recordings"): frozenset(),
+        # the agent grants: HTTP only (/api/mcp/delegations), no MCP tool
+        ("holdspeak/kernel/desk.py", "grant_effect"): frozenset(),
+        ("holdspeak/kernel/desk.py", "effect"): frozenset(),
+        ("holdspeak/kernel/project_grant.py", "grant_effect"): frozenset(),
+        ("holdspeak/kernel/project_grant.py", "effect"): frozenset(),
+    }
+
+    def test_every_delegation_or_schedule_writer_is_authority_for_a_thread(self) -> None:
+        import ast
+        from pathlib import Path
+
+        from holdspeak.mcp.tool_authority import ARGUMENT_AUTHORITY, TOOL_AUTHORITY
+
+        repo = Path(__file__).resolve().parents[2]
+        found: set[tuple[str, str]] = set()
+        for path in sorted((repo / "holdspeak").rglob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            for fn in ast.walk(tree):
+                if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                for node in ast.walk(fn):
+                    minted = False
+                    if isinstance(node, ast.Call):
+                        callee = getattr(node.func, "attr", getattr(node.func, "id", ""))
+                        receiver = getattr(getattr(node.func, "value", None), "attr", "")
+                        minted = callee == "enable_from_owner_in_transaction" or any(
+                            (kw.arg == "unattended_enabled"
+                             or (kw.arg == "enabled" and receiver == "scheduled_recordings"
+                                 and callee in {"create", "update"}))
+                            and not (isinstance(kw.value, ast.Constant) and not kw.value.value)
+                            for kw in node.keywords)
+                    elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+                        minted = node.value == "delegation_enabled" or (
+                            "INSERT INTO kernel_" in node.value and "delegations" in node.value)
+                    elif isinstance(node, ast.JoinedStr):
+                        text = "".join(v.value for v in node.values if isinstance(v, ast.Constant))
+                        minted = "INSERT INTO " in text and "agent_identity" in text and "delegator" in text
+                    if minted:
+                        found.add((path.relative_to(repo).as_posix(), fn.name))
+                        break
+        assert found == set(self.MINTERS), (
+            f"new writers={sorted(found - set(self.MINTERS))} gone={sorted(set(self.MINTERS) - found)}")
+        for site, tools in self.MINTERS.items():
+            for tool in tools:
+                assert TOOL_AUTHORITY[tool] != "work" or tool in ARGUMENT_AUTHORITY, (site, tool)
+
+    def test_the_mixed_tools_decide_by_their_arguments(self) -> None:
+        from holdspeak.mcp.tool_authority import call_class
+
+        assert call_class("workbench.create", {"name": "x", "fields": {"schedule_enabled": True}}) == "authority"
+        assert call_class("workbench.create", {"name": "x", "fields": {"recipe_id": "r"}}) == "work"
+        assert call_class("workbench.update", {"workbench_id": "w", "fields": {"schedule": "0 9 * * 1"}}) == "authority"
+        assert call_class("workbench.update", {"workbench_id": "w", "fields": {"name": "y"}}) == "work"
+        assert call_class("scheduled_recording.create", {"cron_expr": "0 9 * * 1", "enabled": True}) == "authority"
+        assert call_class("scheduled_recording.create", {"calendar_event_id": "e"}) == "authority"
+        assert call_class("scheduled_recording.create", {"cron_expr": "0 9 * * 1"}) == "work"
+        assert call_class("scheduled_recording.update", {"schedule_id": "s", "enabled": True}) == "authority"
+        assert call_class("scheduled_recording.update", {"schedule_id": "s", "title": "t"}) == "work"
+
+    def test_the_rulings_examples_are_in_their_class(self) -> None:
+        from holdspeak.mcp.tool_authority import TOOL_AUTHORITY
+
+        for cls, names in self.RULED.items():
+            for name in names:
+                assert TOOL_AUTHORITY[name] == cls, (name, TOOL_AUTHORITY[name], cls)
+
+    def test_an_excluded_tool_is_never_a_thread_tool(self) -> None:
+        """A thread runs its tools as the owner: egress, authority and config
+        are never in the table, never in a palette, refused by name."""
+        from holdspeak.mcp.tool_authority import TOOL_AUTHORITY
+        from holdspeak.services.thread_tools import CHAT_PALETTE
+        from holdspeak.services.thread_modes import MODE_SEEDS
+
+        assert EXCLUDED_TOOLS == {n for n, c in TOOL_AUTHORITY.items() if c != "work"}
+        assert TOOL_NAMES == {n for n, c in TOOL_AUTHORITY.items() if c == "work"}
+        assert not (EXCLUDED_TOOLS & CHAT_PALETTE)
+        for mode in MODE_SEEDS:
+            assert not (EXCLUDED_TOOLS & mode.tools), mode.id
+        for name in EXCLUDED_TOOLS:
+            with pytest.raises(ValueError, match="the owner's press"):
+                tool_class(name)
+
+    def test_every_owner_press_descriptor_is_excluded(self) -> None:
+        """A declared owner press (a Send, a nudge, the destinations, the
+        delivery mark) is never classed work."""
+        import holdspeak.operations as operations
+
+        for descriptor in operations.DESCRIPTORS:
+            if descriptor.owner_press:
+                for exposure in descriptor.exposure:
+                    if exposure.startswith("mcp:"):
+                        assert exposure[len("mcp:"):] in EXCLUDED_TOOLS, descriptor.name
+
+    def test_the_kernel_refuses_an_agent_by_one_set(self) -> None:
+        """The codec's non-owner refusal reads one declared set (#694 r2)."""
+        import inspect
+
+        from holdspeak.kernel import project as rooms
+        from holdspeak.kernel.project_codec import ProjectCodec
+
+        assert "rooms.OWNER_ONLY_OPERATIONS" in inspect.getsource(ProjectCodec.authorize)
+        assert rooms.OWNER_ONLY_OPERATIONS == (
+            rooms.PROJECT_KERNEL_OPERATIONS - rooms.PROJECT_GRANT_OPERATIONS - rooms.AGENT_PREPARE_OPERATIONS)
 
     def test_unclassified_tool_raises(self) -> None:
         with pytest.raises(ValueError, match="Unclassified tool"):

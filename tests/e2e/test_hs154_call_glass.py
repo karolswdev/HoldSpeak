@@ -102,6 +102,15 @@ def hub(tmp_path, monkeypatch):
 
     reset_database()
 
+    # Both legs prove the law WITHOUT the TTS extra. The hub runs in this
+    # process, so pin its availability probe to "not installed": a machine
+    # whose venv carries kokoro_onnx (an all-extras sync) still tests the
+    # same law instead of reading its own install.
+    import holdspeak.web.routes.tts as tts_routes
+
+    monkeypatch.setattr(tts_routes, "_kokoro_checked", True)
+    monkeypatch.setattr(tts_routes, "_kokoro_available", False)
+
     server = MeetingWebServer(
         WebRuntimeCallbacks(
             on_bookmark=lambda *_: None,

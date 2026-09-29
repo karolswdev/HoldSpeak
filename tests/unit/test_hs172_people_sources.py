@@ -578,9 +578,11 @@ class TestToolClassification:
         assert _TOOL_CLASSES["project.suggested_sources"][0] == "evidence_read"
 
     def test_project_add_suggested_source_classified(self) -> None:
-        from holdspeak.services.thread_tools import _TOOL_CLASSES
-        assert "project.add_suggested_source" in _TOOL_CLASSES
-        assert _TOOL_CLASSES["project.add_suggested_source"][0] == "effect_proposal"
+        # #694 (the owner's ruling): it arms a Room watch -- CONFIG -- so it is
+        # classified as never a thread tool (fail-closed either way).
+        from holdspeak.services.thread_tools import EXCLUDED_TOOLS, _TOOL_CLASSES
+        assert "project.add_suggested_source" in EXCLUDED_TOOLS
+        assert "project.add_suggested_source" not in _TOOL_CLASSES
 
     def test_project_dismiss_suggested_source_classified(self) -> None:
         from holdspeak.services.thread_tools import _TOOL_CLASSES
