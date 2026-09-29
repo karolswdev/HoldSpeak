@@ -67,9 +67,15 @@ export const SEND_WORDS = {
   noDestination: "NO DESTINATION",
   prepared: "PREPARED",
   history: "DELIVERY",
+  unknownChip: "RESULT UNKNOWN",
   lastUnknown: "LAST SEND UNKNOWN",
+  lastFailed: "LAST SEND FAILED",
+  discarded: "DISCARDED",
   check: "Check",
   lost: "NO ANSWER · RESULT UNKNOWN",
+  cannotRead: "CANNOT READ",
+  noPreview: "NO PREVIEW",
+  keyNotSaved: "KEY NOT SAVED",
 } as const;
 
 export const CHANNEL_WORD: Record<Channel, string> = {
@@ -108,6 +114,7 @@ const REFUSED: Record<string, string> = {
   name_missing: "NAME MISSING",
   preview_changed: "PREVIEW CHANGED",
   owner_principal_required: "OWNER ONLY",
+  payload_too_large: "TOO LARGE",
   send_already_settled: "ALREADY DONE",
   update_not_published: "NOT PUBLISHED",
 };
@@ -205,22 +212,40 @@ async function call<T>(path: string, init: RequestInit & { json?: unknown } = {}
   }
 }
 
+/* ── the face's own change signal ─────────────────────────────────────
+ * Settings and the Room are two windows of one page. A save or a remove in
+ * the Destinations group tells every open SEND well to read again, so the
+ * Room shows the new destination when he comes back (no reload). The wells
+ * also read again on window focus. */
+export const DEST_CHANGED = "p10:destinations-changed";
+const destChanged = () => window.dispatchEvent(new Event(DEST_CHANGED));
+
+/* The Room's "Add destination" asks Settings to arrive AT the group: the
+ * intent is read once by the group when it mounts, or by the event when
+ * Settings is already open. */
+export const DEST_FOCUS = "p10:destinations-focus";
+let focusIntent = false;
+export function requestDestinationsFocus() { focusIntent = true; window.dispatchEvent(new Event(DEST_FOCUS)); }
+export function takeDestinationsFocus(): boolean { const f = focusIntent; focusIntent = false; return f; }
+
 export const wire = {
   destinations: (all = false) =>
-    call<{ destinations: Destination[] }>(`/api/channels/destinations${all ? "?include=parked" : ""}`).then((r) => r.destinations),
+    call<{ destinations: Destination[] }>(`/api/channels/destinations${all ? "?include_parked=true" : ""}`).then((r) => r.destinations),
   addDestination: (body: Partial<Destination> & { replaces?: string }) =>
-    call<{ destination: Destination }>("/api/channels/destinations", { method: "POST", json: body }).then((r) => r.destination),
-  park: (id: string) => call<{ destination: Destination }>(`/api/channels/destinations/${id}/park`, { method: "POST", json: {} }),
+    call<{ destination: Destination }>("/api/channels/destinations", { method: "POST", json: body }).then((r) => { destChanged(); return r.destination; }),
+  park: (id: string) =>
+    call<{ destination: Destination }>(`/api/channels/destinations/${id}`, { method: "DELETE" }).then((r) => { destChanged(); return r; }),
   check: (id: string) => call<{ destination: Destination; state: string }>(`/api/channels/destinations/${id}/check`, { method: "POST", json: {} }),
   saveKey: (keyRef: string, value: string) =>
     call<{ key_present: boolean }>("/api/channels/keys", { method: "POST", json: { key_ref: keyRef, value } }),
+  // Argument names as story 01 built them (holdspeak/channel_operations.py).
   sends: (updateId: string) =>
-    call<{ sends: Send[] }>(`/api/channels/sends?document_ref=project_update:${updateId}`).then((r) => r.sends),
+    call<{ sends: Send[] }>(`/api/channels/sends?update_id=${encodeURIComponent(updateId)}`).then((r) => r.sends),
   preview: (updateId: string, destinationId: string) =>
     call<{ payload_digest: string; preview: Preview; draft_revision: number }>("/api/channels/preview", {
-      method: "POST", json: { document_ref: `project_update:${updateId}`, destination_id: destinationId },
+      method: "POST", json: { update_id: updateId, destination_id: destinationId },
     }),
-  send: (body: { command_id: string; send_id?: string; document_ref?: string; destination_id?: string; preview_digest?: string }) =>
+  send: (body: { command_id: string; send_id?: string; update_id?: string; destination_id?: string; preview_digest?: string }) =>
     call<{ send: Send; replayed?: boolean }>("/api/channels/send", { method: "POST", json: body }).then((r) => r.send),
   discard: (sendId: string, commandId: string) =>
     call<{ send: Send }>(`/api/channels/sends/${sendId}/discard`, { method: "POST", json: { command_id: commandId } }),

@@ -1,30 +1,68 @@
 {
  "_seed": {
-  "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo10-04-canvas-spksz479",
+  "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo10-04-canvas-worz0l1i",
   "project": [
    200,
-   "proj-00030773a7d6"
+   "proj-fc56de34433a"
   ],
   "updates": [
    {
     "draft": 200,
     "publish": 200,
-    "id": "pupd_cc9bdae86efa4dc1a14ea2b9086dea45",
+    "id": "pupd_97c404f1049a4bbea8eec5d6e2eea08e",
     "lifecycle": "published"
    },
    {
     "draft": 200,
     "publish": 200,
-    "id": "pupd_a12309b885c94d77818d134f937b9b18",
+    "id": "pupd_3abeba4c07a54c6aa57ee7a0ad35f9e8",
+    "lifecycle": "published"
+   },
+   {
+    "draft": 200,
+    "publish": 200,
+    "id": "pupd_8613496ce87b4298bc24ec7e715072d1",
     "lifecycle": "published"
    }
   ],
+  "story01_real_on_c": {
+   "Team folder": [
+    200,
+    200,
+    200,
+    "sent"
+   ],
+   "Long path folder": [
+    200,
+    200,
+    200,
+    "unknown"
+   ],
+   "manual": 200,
+   "history": [
+    [
+     "Team folder",
+     "file",
+     "sent"
+    ],
+    [
+     "Long path folder",
+     "file",
+     "unknown"
+    ],
+    [
+     "Priya",
+     "manual",
+     "confirmed"
+    ]
+   ]
+  },
   "jira_account": [
    200,
    "disconnected"
   ]
  },
- "1-empty-from-room-1440": {
+ "1-arrive-from-room-1440": {
   "window": true,
   "destinations": [],
   "prepared": [],
@@ -34,6 +72,8 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS",
   "dest_parked": [],
@@ -45,7 +85,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.24,
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -57,6 +102,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=destinations] .gadget-group-label",
+    "ok": true,
+    "why": "",
+    "rect": [
+     385,
+     403
+    ],
+    "text": "DESTINATIONS"
+   },
+   {
+    "sel": "[data-testid=dest-form] select[aria-label=Channel]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     415,
+     437
+    ],
+    "text": "Folder GitHub comment Jira comment Confluence blog post Emai"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -676,7 +743,7 @@
       "at": "bottom-right",
       "efp": false,
       "pointer": false,
-      "hit": "btn--chrome"
+      "hit": "desk-dock"
      }
     ]
    }
@@ -692,6 +759,8 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS",
   "dest_parked": [],
@@ -703,7 +772,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.24,
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -715,6 +789,38 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-folder]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     506,
+     526
+    ],
+    "text": "/Users/karol/Reports/Payments"
+   },
+   {
+    "sel": "[data-testid=dest-name]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     558,
+     578
+    ],
+    "text": "Folder Payments"
+   },
+   {
+    "sel": "[data-testid=dest-save]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     589,
+     613
+    ],
+    "text": "Save"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -1343,7 +1449,7 @@
  "3-add-synced-folder-1440": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE"
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -1352,6 +1458,8 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 1",
   "dest_parked": [],
@@ -1364,7 +1472,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.24,
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -1376,6 +1489,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-form] label.gadget-check-token",
+    "ok": true,
+    "why": "",
+    "rect": [
+     531,
+     553
+    ],
+    "text": "✓ SYNCED"
+   },
+   {
+    "sel": "[data-testid=dest-form-verbs] .gadget-chip-egress",
+    "ok": true,
+    "why": "",
+    "rect": [
+     592,
+     610
+    ],
+    "text": "SYNCED FOLDER"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -1567,7 +1702,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -2038,8 +2173,8 @@
  "4-add-github-1440": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER"
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -2048,6 +2183,8 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 2",
   "dest_parked": [],
@@ -2061,7 +2198,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.24,
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -2073,6 +2215,38 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-repo]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     480,
+     500
+    ],
+    "text": "karol/payments-ops"
+   },
+   {
+    "sel": "[data-testid=dest-number]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     532,
+     552
+    ],
+    "text": "42"
+   },
+   {
+    "sel": "[data-testid=dest-save]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     589,
+     613
+    ],
+    "text": "Save"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -2264,7 +2438,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -2281,7 +2455,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -2786,9 +2960,9 @@
  "5-jira-one-key-1440": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM"
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -2802,6 +2976,8 @@
   ],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 3",
   "dest_parked": [],
@@ -2816,7 +2992,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.24,
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -2828,6 +3009,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-key]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     532,
+     552
+    ],
+    "text": "PAY-118, PAY-119"
+   },
+   {
+    "sel": "[data-testid=dest-refused]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     592,
+     610
+    ],
+    "text": "✗ REFUSED ONE KEY ONLY"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -3019,7 +3222,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -3036,7 +3239,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -3521,14 +3724,13 @@
    }
   ]
  },
- "6-add-email-key-set-1440": {
+ "6-add-confluence-1440": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
-   "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
-   "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET"
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -3537,23 +3739,29 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
-  "dest_head": "DESTINATIONS 5",
+  "dest_head": "DESTINATIONS 4",
   "dest_parked": [],
   "egress_chips": [
    "THIS DEVICE:local",
    "SYNCED FOLDER:cloud",
    "GITHUB.COM:cloud",
    "ACME.ATLASSIAN.NET:cloud",
-   "ACME.ATLASSIAN.NET:cloud",
-   "API.SENDGRID.COM:cloud"
+   "ACME.ATLASSIAN.NET:cloud"
   ],
   "modal": false,
   "small_text": {
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 4.5,
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -3565,6 +3773,38 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-form] select[aria-label='Confluence account']",
+    "ok": true,
+    "why": "",
+    "rect": [
+     505,
+     527
+    ],
+    "text": "acme.atlassian.net · karol@acme.io"
+   },
+   {
+    "sel": "[data-testid=dest-space]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     532,
+     552
+    ],
+    "text": "98304"
+   },
+   {
+    "sel": "[data-testid=dest-save]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     589,
+     613
+    ],
+    "text": "Save"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -3756,7 +3996,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -3773,7 +4013,790 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nkarol/payments-ops #42\nGITHU",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nJira PAY-118\nJIRA\nPAY-118\n○\n",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Folder\nGitHub comment\nJira com",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "select",
+    "touched": true,
+    "face": {
+     "w": 188,
+     "h": 22.2
+    },
+    "target": {
+     "w": 188,
+     "h": 22.2
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "acme.atlassian.net · karol@acm",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "select",
+    "touched": true,
+    "face": {
+     "w": 296,
+     "h": 22.2
+    },
+    "target": {
+     "w": 296,
+     "h": 22.2
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Space id",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 1117,
+     "h": 20
+    },
+    "target": {
+     "w": 1117,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak Space id",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 20,
+     "h": 20
+    },
+    "target": {
+     "w": 20,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Name",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 1117,
+     "h": 20
+    },
+    "target": {
+     "w": 1117,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak Name",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 20,
+     "h": 20
+    },
+    "target": {
+     "w": 20,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Save",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 46.8,
+     "h": 24
+    },
+    "target": {
+     "w": 46.8,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Cancel",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Delete",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-receipt-time"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-verbs"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-receipt-time"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-receipt-label"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-verbs"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-verbs"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     }
+    ]
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock-label"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock-label"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   }
+  ]
+ },
+ "7-key-not-saved-1440": {
+  "window": true,
+  "destinations": [
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
+   "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET"
+  ],
+  "prepared": [],
+  "preview_fields": [],
+  "preview_has_raw": false,
+  "send_verbs": [],
+  "outcomes": [],
+  "history_head": null,
+  "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
+  "list_chips": [],
+  "dest_head": "DESTINATIONS 5",
+  "dest_parked": [],
+  "egress_chips": [
+   "THIS DEVICE:local",
+   "SYNCED FOLDER:cloud",
+   "GITHUB.COM:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "API.SENDGRID.COM:cloud"
+  ],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": []
+  },
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
+  "low_contrast": [],
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": [
+    "C COPY"
+   ]
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "overflow_culprits": [],
+  "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-key-row]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     453,
+     503
+    ],
+    "text": "SendGrid key — Replace ✗ KEY NOT SAVED NO SAFE KEY STORE"
+   },
+   {
+    "sel": "[data-testid=dest-key-refused]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     485,
+     503
+    ],
+    "text": "✗ KEY NOT SAVED NO SAFE KEY STORE"
+   }
+  ],
+  "pointer": [
+   {
+    "text": "Close Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 16,
+     "h": 14
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Minimize Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 16,
+     "h": 14
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Maximize Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 16,
+     "h": 14
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "SETTINGS",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 89.4,
+     "h": 26
+    },
+    "target": {
+     "w": 89.4,
+     "h": 26
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "GUIDE",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 65.6,
+     "h": 26
+    },
+    "target": {
+     "w": 65.6,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Set up",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Open Models",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 97.2,
+     "h": 24
+    },
+    "target": {
+     "w": 97.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -4412,16 +5435,14 @@
   ],
   "key_text_on_face": false
  },
- "7-list-1440": {
+ "8-add-email-key-set-1440": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
    "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
-   "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
-   "▸ Email lena@acme.io EMAIL LENA@ACME.IO +1 ✓ KEY SET API.SENDGRID.COM",
-   "▸ Email board@acme.io EMAIL BOARD@ACME.IO ⚠ NO KEY API.SENDGRID.COM"
+   "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -4430,8 +5451,10 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
-  "dest_head": "DESTINATIONS 7",
+  "dest_head": "DESTINATIONS 5",
   "dest_parked": [],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -4439,7 +5462,6 @@
    "GITHUB.COM:cloud",
    "ACME.ATLASSIAN.NET:cloud",
    "ACME.ATLASSIAN.NET:cloud",
-   "API.SENDGRID.COM:cloud",
    "API.SENDGRID.COM:cloud"
   ],
   "modal": false,
@@ -4447,7 +5469,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.43,
+  "min_contrast": 4.50444771133278,
+  "min_contrast_el": {
+   "text": "SET",
+   "ratio": 4.50444771133278,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -4459,6 +5486,38 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-from]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     422,
+     442
+    ],
+    "text": "karol@acme.io"
+   },
+   {
+    "sel": "[data-testid=dest-key-row]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     471,
+     503
+    ],
+    "text": "SendGrid key SET Replace"
+   },
+   {
+    "sel": "[data-testid=dest-to]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     506,
+     526
+    ],
+    "text": "lena@acme.io, tomas@acme.io"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -4650,7 +5709,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -4667,7 +5726,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -4735,7 +5794,855 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail lena@acme.io\nEMAIL\nLEN",
+    "text": "Folder\nGitHub comment\nJira com",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "select",
+    "touched": true,
+    "face": {
+     "w": 188,
+     "h": 22.2
+    },
+    "target": {
+     "w": 188,
+     "h": 22.2
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "SendGrid",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "select",
+    "touched": true,
+    "face": {
+     "w": 96,
+     "h": 22.2
+    },
+    "target": {
+     "w": 96,
+     "h": 22.2
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "From",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 1117,
+     "h": 20
+    },
+    "target": {
+     "w": 1117,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak From",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 20,
+     "h": 20
+    },
+    "target": {
+     "w": 20,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "From name",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 1117,
+     "h": 20
+    },
+    "target": {
+     "w": 1117,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak From name",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 20,
+     "h": 20
+    },
+    "target": {
+     "w": 20,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "To",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 1117,
+     "h": 20
+    },
+    "target": {
+     "w": 1117,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak To",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 20,
+     "h": 20
+    },
+    "target": {
+     "w": 20,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Cc",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 1117,
+     "h": 20
+    },
+    "target": {
+     "w": 1117,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak Cc",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 20,
+     "h": 20
+    },
+    "target": {
+     "w": 20,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Name",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 1117,
+     "h": 20
+    },
+    "target": {
+     "w": 1117,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak Name",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 20,
+     "h": 20
+    },
+    "target": {
+     "w": 20,
+     "h": 20
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Save",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 46.8,
+     "h": 24
+    },
+    "target": {
+     "w": 46.8,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Cancel",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Delete",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-receipt-time"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-verbs"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-receipt-time"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-receipt-label"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-verbs"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-verbs"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     }
+    ]
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock-label"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock-label"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     }
+    ]
+   }
+  ],
+  "key_text_on_face": false
+ },
+ "9-list-1440": {
+  "window": true,
+  "destinations": [
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
+   "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
+   "▸ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
+   "▸ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDGRID.COM"
+  ],
+  "prepared": [],
+  "preview_fields": [],
+  "preview_has_raw": false,
+  "send_verbs": [],
+  "outcomes": [],
+  "history_head": null,
+  "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
+  "list_chips": [],
+  "dest_head": "DESTINATIONS 7",
+  "dest_parked": [],
+  "egress_chips": [
+   "THIS DEVICE:local",
+   "SYNCED FOLDER:cloud",
+   "GITHUB.COM:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "API.SENDGRID.COM:cloud",
+   "API.SENDGRID.COM:cloud"
+  ],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": []
+  },
+  "min_contrast": 5.431610437959098,
+  "min_contrast_el": {
+   "text": "▸",
+   "ratio": 5.431610437959098,
+   "fs": 12
+  },
+  "low_contrast": [],
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": [
+    "C COPY"
+   ]
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "overflow_culprits": [],
+  "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=destinations] .gadget-group-label",
+    "ok": true,
+    "why": "",
+    "rect": [
+     375,
+     393
+    ],
+    "text": "DESTINATIONS 7"
+   },
+   {
+    "sel": "[data-testid=dest-row]:has([data-destination='Folder Payments'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     407,
+     433
+    ],
+    "text": "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE"
+   },
+   {
+    "sel": "[data-testid=dest-row]:has([data-destination='karol/payments-ops #42'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     459,
+     485
+    ],
+    "text": "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CON"
+   }
+  ],
+  "pointer": [
+   {
+    "text": "Close Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 16,
+     "h": 14
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Minimize Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 16,
+     "h": 14
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Maximize Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 16,
+     "h": 14
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "SETTINGS",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 89.4,
+     "h": 26
+    },
+    "target": {
+     "w": 89.4,
+     "h": 26
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "GUIDE",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 65.6,
+     "h": 26
+    },
+    "target": {
+     "w": 65.6,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Set up",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Open Models",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 97.2,
+     "h": 24
+    },
+    "target": {
+     "w": 97.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -4752,7 +6659,92 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail board@acme.io\nEMAIL\nBO",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nkarol/payments-ops #42\nGITHU",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nJira PAY-118\nJIRA\nPAY-118\n○\n",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nConfluence space 98304\nCONFL",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nEmail lena@acme.io\nEMAIL\nlen",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nEmail board@acme.io\nEMAIL\nbo",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -5101,16 +7093,16 @@
    }
   ]
  },
- "8-row-open-checked-1440": {
+ "10-row-open-checked-1440": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▾ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▾ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
    "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
    "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
-   "▸ Email lena@acme.io EMAIL LENA@ACME.IO +1 ✓ KEY SET API.SENDGRID.COM",
-   "▸ Email board@acme.io EMAIL BOARD@ACME.IO ⚠ NO KEY API.SENDGRID.COM"
+   "▸ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
+   "▸ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDGRID.COM"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -5119,6 +7111,8 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 7",
   "dest_parked": [],
@@ -5137,7 +7131,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.43,
+  "min_contrast": 5.431610437959098,
+  "min_contrast_el": {
+   "text": "▸",
+   "ratio": 5.431610437959098,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -5149,6 +7148,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-row]:has([data-destination='karol/payments-ops #42'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     375,
+     401
+    ],
+    "text": "▾ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CON"
+   },
+   {
+    "sel": "[data-testid=dest-check-result]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     563,
+     581
+    ],
+    "text": "✓ CHECKED"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -5340,7 +7361,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -5357,7 +7378,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -5476,7 +7497,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail lena@acme.io\nEMAIL\nLEN",
+    "text": "▸\nEmail lena@acme.io\nEMAIL\nlen",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -5493,7 +7514,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail board@acme.io\nEMAIL\nBO",
+    "text": "▸\nEmail board@acme.io\nEMAIL\nbo",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -5842,16 +7863,16 @@
    }
   ]
  },
- "9-edit-1440": {
+ "11-email-check-not-verified-1440": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
-   "▾ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
    "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
-   "▸ Email lena@acme.io EMAIL LENA@ACME.IO +1 ✓ KEY SET API.SENDGRID.COM",
-   "▸ Email board@acme.io EMAIL BOARD@ACME.IO ⚠ NO KEY API.SENDGRID.COM"
+   "▾ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
+   "▸ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDGRID.COM"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -5860,6 +7881,8 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 7",
   "dest_parked": [],
@@ -5869,7 +7892,7 @@
    "GITHUB.COM:cloud",
    "ACME.ATLASSIAN.NET:cloud",
    "ACME.ATLASSIAN.NET:cloud",
-   "ACME.ATLASSIAN.NET:cloud",
+   "API.SENDGRID.COM:cloud",
    "API.SENDGRID.COM:cloud",
    "API.SENDGRID.COM:cloud"
   ],
@@ -5878,7 +7901,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.24,
+  "min_contrast": 5.431610437959098,
+  "min_contrast_el": {
+   "text": "▸",
+   "ratio": 5.431610437959098,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -5890,6 +7918,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-row]:has([data-destination='Email lena@acme.io'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     375,
+     401
+    ],
+    "text": "▾ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SEN"
+   },
+   {
+    "sel": "[data-testid=dest-check-result]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     610,
+     628
+    ],
+    "text": "✗ SENDER NOT VERIFIED"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -6081,7 +8131,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -6098,7 +8148,777 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nkarol/payments-ops #42\nGITHU",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nJira PAY-118\nJIRA\nPAY-118\n○\n",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nConfluence space 98304\nCONFL",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▾\nEmail lena@acme.io\nEMAIL\nlen",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Check",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 54,
+     "h": 24
+    },
+    "target": {
+     "w": 54,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Edit",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 46.8,
+     "h": 24
+    },
+    "target": {
+     "w": 46.8,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Remove",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nEmail board@acme.io\nEMAIL\nbo",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Add destination",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 126,
+     "h": 24
+    },
+    "target": {
+     "w": 126,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Delete",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-receipt-time"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-verbs"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-receipt-time"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-receipt-label"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-verbs"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-verbs"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     }
+    ]
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-window-edge"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock-label"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-window-edge"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-window-edge"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock-label"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   }
+  ]
+ },
+ "12-edit-1440": {
+  "window": true,
+  "destinations": [
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
+   "▾ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
+   "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
+   "▸ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
+   "▸ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDGRID.COM"
+  ],
+  "prepared": [],
+  "preview_fields": [],
+  "preview_has_raw": false,
+  "send_verbs": [],
+  "outcomes": [],
+  "history_head": null,
+  "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
+  "list_chips": [],
+  "dest_head": "DESTINATIONS 7",
+  "dest_parked": [],
+  "egress_chips": [
+   "THIS DEVICE:local",
+   "SYNCED FOLDER:cloud",
+   "GITHUB.COM:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "API.SENDGRID.COM:cloud",
+   "API.SENDGRID.COM:cloud"
+  ],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": []
+  },
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
+  "low_contrast": [],
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": [
+    "C COPY"
+   ]
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "overflow_culprits": [],
+  "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-form] [data-testid=dest-key]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     412,
+     432
+    ],
+    "text": "PAY-121"
+   },
+   {
+    "sel": "[data-testid=dest-form] [data-testid=dest-save]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     469,
+     493
+    ],
+    "text": "Save"
+   }
+  ],
+  "pointer": [
+   {
+    "text": "Close Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 16,
+     "h": 14
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Minimize Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 16,
+     "h": 14
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Maximize Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 16,
+     "h": 14
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "SETTINGS",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 89.4,
+     "h": 26
+    },
+    "target": {
+     "w": 89.4,
+     "h": 26
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "GUIDE",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 65.6,
+     "h": 26
+    },
+    "target": {
+     "w": 65.6,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Set up",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Open Models",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 97.2,
+     "h": 24
+    },
+    "target": {
+     "w": 97.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 1362,
+     "h": 26
+    },
+    "target": {
+     "w": 1362,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -6285,7 +9105,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail lena@acme.io\nEMAIL\nLEN",
+    "text": "▸\nEmail lena@acme.io\nEMAIL\nlen",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -6302,7 +9122,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail board@acme.io\nEMAIL\nBO",
+    "text": "▸\nEmail board@acme.io\nEMAIL\nbo",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -6651,15 +9471,15 @@
    }
   ]
  },
- "10-edited-old-parked-1440": {
+ "13-edited-old-parked-1440": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
    "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
-   "▸ Email lena@acme.io EMAIL LENA@ACME.IO +1 ✓ KEY SET API.SENDGRID.COM",
-   "▸ Email board@acme.io EMAIL BOARD@ACME.IO ⚠ NO KEY API.SENDGRID.COM",
+   "▸ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
+   "▸ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDGRID.COM",
    "▸ Jira PAY-121 JIRA PAY-121 ○ NEVER CHECKED ACME.ATLASSIAN.NET"
   ],
   "prepared": [],
@@ -6669,10 +9489,12 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 7",
   "dest_parked": [
-   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 17:32"
+   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 19:16"
   ],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -6688,7 +9510,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.43,
+  "min_contrast": 5.431610437959098,
+  "min_contrast_el": {
+   "text": "▸",
+   "ratio": 5.431610437959098,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -6700,6 +9527,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-parked-row]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     585,
+     611
+    ],
+    "text": "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 19:16"
+   },
+   {
+    "sel": "[data-testid=dest-row]:has([data-destination='Jira PAY-121'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     483,
+     509
+    ],
+    "text": "▸ Jira PAY-121 JIRA PAY-121 ○ NEVER CHECKED ACME.ATLASSIAN.N"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -6891,7 +9740,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -6908,7 +9757,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -6959,7 +9808,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail lena@acme.io\nEMAIL\nLEN",
+    "text": "▸\nEmail lena@acme.io\nEMAIL\nlen",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -6976,7 +9825,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail board@acme.io\nEMAIL\nBO",
+    "text": "▸\nEmail board@acme.io\nEMAIL\nbo",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -7359,15 +10208,15 @@
    }
   ]
  },
- "11-remove-armed-1440": {
+ "14-remove-armed-1440": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
    "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
-   "▸ Email lena@acme.io EMAIL LENA@ACME.IO +1 ✓ KEY SET API.SENDGRID.COM",
-   "▾ Email board@acme.io EMAIL BOARD@ACME.IO ⚠ NO KEY API.SENDGRID.COM",
+   "▸ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
+   "▾ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDGRID.COM",
    "▸ Jira PAY-121 JIRA PAY-121 ○ NEVER CHECKED ACME.ATLASSIAN.NET"
   ],
   "prepared": [],
@@ -7377,10 +10226,12 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 7",
   "dest_parked": [
-   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 17:32"
+   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 19:16"
   ],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -7397,7 +10248,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 4.83,
+  "min_contrast": 4.829404522659002,
+  "min_contrast_el": {
+   "text": "Remove?",
+   "ratio": 4.829404522659002,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -7409,6 +10265,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-row]:has([data-destination='Email board@acme.io'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     375,
+     401
+    ],
+    "text": "▾ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDG"
+   },
+   {
+    "sel": "[data-testid=dest-remove]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     584,
+     608
+    ],
+    "text": "Remove?"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -7600,7 +10478,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -7617,7 +10495,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -7668,7 +10546,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail lena@acme.io\nEMAIL\nLEN",
+    "text": "▸\nEmail lena@acme.io\nEMAIL\nlen",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -7685,7 +10563,7 @@
     "failed_points": []
    },
    {
-    "text": "▾\nEmail board@acme.io\nEMAIL\nBO",
+    "text": "▾\nEmail board@acme.io\nEMAIL\nbo",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -8119,14 +10997,14 @@
    }
   ]
  },
- "12-removed-parked-1440": {
+ "15-removed-parked-1440": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
    "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
-   "▸ Email lena@acme.io EMAIL LENA@ACME.IO +1 ✓ KEY SET API.SENDGRID.COM",
+   "▸ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
    "▸ Jira PAY-121 JIRA PAY-121 ○ NEVER CHECKED ACME.ATLASSIAN.NET"
   ],
   "prepared": [],
@@ -8136,11 +11014,13 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 6",
   "dest_parked": [
-   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 17:32",
-   "Email board@acme.io EMAIL BOARD@ACME.IO PARKED SEP 28 17:33"
+   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 19:16",
+   "Email board@acme.io EMAIL board@acme.io PARKED SEP 28 19:16"
   ],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -8155,7 +11035,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.43,
+  "min_contrast": 5.431610437959098,
+  "min_contrast_el": {
+   "text": "▸",
+   "ratio": 5.431610437959098,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -8167,6 +11052,18 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-parked-row]:has([data-destination='Email board@acme.io'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     585,
+     611
+    ],
+    "text": "Email board@acme.io EMAIL board@acme.io PARKED SEP 28 19:16"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -8358,7 +11255,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -8375,7 +11272,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -8426,7 +11323,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail lena@acme.io\nEMAIL\nLEN",
+    "text": "▸\nEmail lena@acme.io\nEMAIL\nlen",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -8494,7 +11391,7 @@
     "failed_points": []
    },
    {
-    "text": "Email board@acme.io\nEMAIL\nBOAR",
+    "text": "Email board@acme.io\nEMAIL\nboar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -8826,8 +11723,7 @@
    }
   ]
  },
- "_browser_errors_1440": [],
- "1-empty-from-room-393": {
+ "16-destinations-unreadable-1440": {
   "window": true,
   "destinations": [],
   "prepared": [],
@@ -8837,18 +11733,23 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS",
   "dest_parked": [],
-  "egress_chips": [
-   "THIS DEVICE:local"
-  ],
+  "egress_chips": [],
   "modal": false,
   "small_text": {
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.24,
+  "min_contrast": 6.84728176248441,
+  "min_contrast_el": {
+   "text": "✗ CANNOT READ DESTINATIONS",
+   "ratio": 6.84728176248441,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -8860,6 +11761,604 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-unreadable]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     595,
+     619
+    ],
+    "text": "✗ CANNOT READ DESTINATIONS Retry"
+   }
+  ],
+  "pointer": [
+   {
+    "text": "Close Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 16,
+     "h": 14
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Minimize Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 16,
+     "h": 14
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Maximize Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 16,
+     "h": 14
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "SETTINGS",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 89.4,
+     "h": 26
+    },
+    "target": {
+     "w": 89.4,
+     "h": 26
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "GUIDE",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 65.6,
+     "h": 26
+    },
+    "target": {
+     "w": 65.6,
+     "h": 26
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Set up",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Open Models",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 97.2,
+     "h": 24
+    },
+    "target": {
+     "w": 97.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Retry",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 54,
+     "h": 24
+    },
+    "target": {
+     "w": 54,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Delete",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-receipt-time"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-verbs"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-receipt-time"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-receipt-label"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-verbs"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-verbs"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     }
+    ]
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 24
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-window-edge"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock-label"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-window-edge"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-window-edge"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock-label"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   }
+  ]
+ },
+ "_browser_errors_1440": [],
+ "1-arrive-from-room-393": {
+  "window": true,
+  "destinations": [],
+  "prepared": [],
+  "preview_fields": [],
+  "preview_has_raw": false,
+  "send_verbs": [],
+  "outcomes": [],
+  "history_head": null,
+  "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
+  "list_chips": [],
+  "dest_head": "DESTINATIONS",
+  "dest_parked": [],
+  "egress_chips": [
+   "THIS DEVICE:local"
+  ],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": []
+  },
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
+  "low_contrast": [],
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": [
+    "C COPY"
+   ]
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "overflow_culprits": [],
+  "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=destinations] .gadget-group-label",
+    "ok": true,
+    "why": "",
+    "rect": [
+     163,
+     181
+    ],
+    "text": "DESTINATIONS"
+   },
+   {
+    "sel": "[data-testid=dest-form] select[aria-label=Channel]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     215,
+     259
+    ],
+    "text": "Folder GitHub comment Jira comment Confluence blog post Emai"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -9576,6 +13075,8 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS",
   "dest_parked": [],
@@ -9587,7 +13088,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.24,
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -9599,6 +13105,38 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-folder]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     219,
+     263
+    ],
+    "text": "/Users/karol/Reports/Payments"
+   },
+   {
+    "sel": "[data-testid=dest-name]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     365,
+     409
+    ],
+    "text": "Folder Payments"
+   },
+   {
+    "sel": "[data-testid=dest-save]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     436,
+     460
+    ],
+    "text": "Save"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -10308,7 +13846,7 @@
  "3-add-synced-folder-393": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE"
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -10317,6 +13855,8 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 1",
   "dest_parked": [],
@@ -10329,7 +13869,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.24,
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -10341,6 +13886,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-form] label.gadget-check-token",
+    "ok": true,
+    "why": "",
+    "rect": [
+     395,
+     439
+    ],
+    "text": "✓ SYNCED"
+   },
+   {
+    "sel": "[data-testid=dest-form-verbs] .gadget-chip-egress",
+    "ok": true,
+    "why": "",
+    "rect": [
+     542,
+     560
+    ],
+    "text": "SYNCED FOLDER"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -10613,7 +14180,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -11084,8 +14651,8 @@
  "4-add-github-393": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER"
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -11094,6 +14661,8 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 2",
   "dest_parked": [],
@@ -11107,7 +14676,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.24,
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -11119,6 +14693,38 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-repo]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     219,
+     263
+    ],
+    "text": "karol/payments-ops"
+   },
+   {
+    "sel": "[data-testid=dest-number]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     365,
+     409
+    ],
+    "text": "42"
+   },
+   {
+    "sel": "[data-testid=dest-save]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     510,
+     534
+    ],
+    "text": "Save"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -11391,7 +14997,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -11408,7 +15014,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -11913,9 +15519,9 @@
  "5-jira-one-key-393": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM"
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -11929,6 +15535,8 @@
   ],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 3",
   "dest_parked": [],
@@ -11943,7 +15551,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.24,
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -11955,6 +15568,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-key]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     418,
+     462
+    ],
+    "text": "PAY-118, PAY-119"
+   },
+   {
+    "sel": "[data-testid=dest-refused]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     607,
+     625
+    ],
+    "text": "✗ REFUSED ONE KEY ONLY"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -12227,7 +15862,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -12244,7 +15879,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -12729,14 +16364,13 @@
    }
   ]
  },
- "6-add-email-key-set-393": {
+ "6-add-confluence-393": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
-   "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
-   "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET"
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -12745,23 +16379,29 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
-  "dest_head": "DESTINATIONS 5",
+  "dest_head": "DESTINATIONS 4",
   "dest_parked": [],
   "egress_chips": [
    "THIS DEVICE:local",
    "SYNCED FOLDER:cloud",
    "GITHUB.COM:cloud",
    "ACME.ATLASSIAN.NET:cloud",
-   "ACME.ATLASSIAN.NET:cloud",
-   "API.SENDGRID.COM:cloud"
+   "ACME.ATLASSIAN.NET:cloud"
   ],
   "modal": false,
   "small_text": {
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 4.5,
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -12773,6 +16413,38 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-form] select[aria-label='Confluence account']",
+    "ok": true,
+    "why": "",
+    "rect": [
+     321,
+     365
+    ],
+    "text": "acme.atlassian.net · karol@acme.io"
+   },
+   {
+    "sel": "[data-testid=dest-space]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     418,
+     462
+    ],
+    "text": "98304"
+   },
+   {
+    "sel": "[data-testid=dest-save]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     563,
+     587
+    ],
+    "text": "Save"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -13045,7 +16717,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -13062,7 +16734,871 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 117
+    },
+    "target": {
+     "w": 363,
+     "h": 117
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nkarol/payments-ops #42\nGITHU",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nJira PAY-118\nJIRA\nPAY-118\n○\n",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Folder\nGitHub comment\nJira com",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "select",
+    "touched": true,
+    "face": {
+     "w": 188,
+     "h": 44
+    },
+    "target": {
+     "w": 188,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "acme.atlassian.net · karol@acm",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "select",
+    "touched": true,
+    "face": {
+     "w": 296,
+     "h": 44
+    },
+    "target": {
+     "w": 296,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Space id",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 305,
+     "h": 44
+    },
+    "target": {
+     "w": 305,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak Space id",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 44,
+     "h": 44
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Name",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 305,
+     "h": 44
+    },
+    "target": {
+     "w": 305,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak Name",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 44,
+     "h": 44
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Save",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 46.8,
+     "h": 24
+    },
+    "target": {
+     "w": 46.8,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Cancel",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Delete",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     }
+    ]
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-room-actions"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-room-actions"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     }
+    ]
+   }
+  ]
+ },
+ "7-key-not-saved-393": {
+  "window": true,
+  "destinations": [
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
+   "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET"
+  ],
+  "prepared": [],
+  "preview_fields": [],
+  "preview_has_raw": false,
+  "send_verbs": [],
+  "outcomes": [],
+  "history_head": null,
+  "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
+  "list_chips": [],
+  "dest_head": "DESTINATIONS 5",
+  "dest_parked": [],
+  "egress_chips": [
+   "THIS DEVICE:local",
+   "SYNCED FOLDER:cloud",
+   "GITHUB.COM:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "API.SENDGRID.COM:cloud"
+  ],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": []
+  },
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
+  "low_contrast": [],
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": [
+    "C COPY"
+   ]
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "overflow_culprits": [],
+  "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-key-row]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     219,
+     317
+    ],
+    "text": "SendGrid key — Replace ✗ KEY NOT SAVED NO SAFE KEY STORE"
+   },
+   {
+    "sel": "[data-testid=dest-key-refused]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     299,
+     317
+    ],
+    "text": "✗ KEY NOT SAVED NO SAFE KEY STORE"
+   }
+  ],
+  "pointer": [
+   {
+    "text": "Close Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "path"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-surface-window"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-surface-window"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "Minimize Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-traffic"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "svg"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "SETTINGS",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 89.4,
+     "h": 44
+    },
+    "target": {
+     "w": 89.4,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "GUIDE",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 65.6,
+     "h": 44
+    },
+    "target": {
+     "w": 65.6,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Set up",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Open Models",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 97.2,
+     "h": 24
+    },
+    "target": {
+     "w": 97.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -13701,16 +18237,14 @@
   ],
   "key_text_on_face": false
  },
- "7-list-393": {
+ "8-add-email-key-set-393": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
    "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
-   "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
-   "▸ Email lena@acme.io EMAIL LENA@ACME.IO +1 ✓ KEY SET API.SENDGRID.COM",
-   "▸ Email board@acme.io EMAIL BOARD@ACME.IO ⚠ NO KEY API.SENDGRID.COM"
+   "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -13719,8 +18253,10 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
-  "dest_head": "DESTINATIONS 7",
+  "dest_head": "DESTINATIONS 5",
   "dest_parked": [],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -13728,7 +18264,6 @@
    "GITHUB.COM:cloud",
    "ACME.ATLASSIAN.NET:cloud",
    "ACME.ATLASSIAN.NET:cloud",
-   "API.SENDGRID.COM:cloud",
    "API.SENDGRID.COM:cloud"
   ],
   "modal": false,
@@ -13736,7 +18271,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.43,
+  "min_contrast": 4.50444771133278,
+  "min_contrast_el": {
+   "text": "SET",
+   "ratio": 4.50444771133278,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -13748,6 +18288,38 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-from]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     219,
+     263
+    ],
+    "text": "karol@acme.io"
+   },
+   {
+    "sel": "[data-testid=dest-key-row]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     342,
+     422
+    ],
+    "text": "SendGrid key SET Replace"
+   },
+   {
+    "sel": "[data-testid=dest-to]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     447,
+     491
+    ],
+    "text": "lena@acme.io, tomas@acme.io"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -14020,7 +18592,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -14037,7 +18609,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -14105,7 +18677,936 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail lena@acme.io\nEMAIL\nLEN",
+    "text": "Folder\nGitHub comment\nJira com",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "select",
+    "touched": true,
+    "face": {
+     "w": 188,
+     "h": 44
+    },
+    "target": {
+     "w": 188,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "SendGrid",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "select",
+    "touched": true,
+    "face": {
+     "w": 96,
+     "h": 44
+    },
+    "target": {
+     "w": 96,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "From",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 305,
+     "h": 44
+    },
+    "target": {
+     "w": 305,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak From",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 44,
+     "h": 44
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "From name",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 305,
+     "h": 44
+    },
+    "target": {
+     "w": 305,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak From name",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 44,
+     "h": 44
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "To",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 305,
+     "h": 44
+    },
+    "target": {
+     "w": 305,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak To",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 44,
+     "h": 44
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Cc",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 305,
+     "h": 44
+    },
+    "target": {
+     "w": 305,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak Cc",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 44,
+     "h": 44
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Name",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "input",
+    "touched": true,
+    "face": {
+     "w": 305,
+     "h": 44
+    },
+    "target": {
+     "w": 305,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Speak Name",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 44,
+     "h": 44
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Save",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 46.8,
+     "h": 24
+    },
+    "target": {
+     "w": 46.8,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Cancel",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Delete",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     }
+    ]
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-room-actions"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-room-actions"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     }
+    ]
+   }
+  ],
+  "key_text_on_face": false
+ },
+ "9-list-393": {
+  "window": true,
+  "destinations": [
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
+   "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
+   "▸ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
+   "▸ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDGRID.COM"
+  ],
+  "prepared": [],
+  "preview_fields": [],
+  "preview_has_raw": false,
+  "send_verbs": [],
+  "outcomes": [],
+  "history_head": null,
+  "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
+  "list_chips": [],
+  "dest_head": "DESTINATIONS 7",
+  "dest_parked": [],
+  "egress_chips": [
+   "THIS DEVICE:local",
+   "SYNCED FOLDER:cloud",
+   "GITHUB.COM:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "API.SENDGRID.COM:cloud",
+   "API.SENDGRID.COM:cloud"
+  ],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": []
+  },
+  "min_contrast": 5.431610437959098,
+  "min_contrast_el": {
+   "text": "▸",
+   "ratio": 5.431610437959098,
+   "fs": 12
+  },
+  "low_contrast": [],
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": [
+    "C COPY"
+   ]
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "overflow_culprits": [],
+  "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=destinations] .gadget-group-label",
+    "ok": true,
+    "why": "",
+    "rect": [
+     219,
+     237
+    ],
+    "text": "DESTINATIONS 7"
+   },
+   {
+    "sel": "[data-testid=dest-row]:has([data-destination='Folder Payments'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     251,
+     344
+    ],
+    "text": "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE"
+   },
+   {
+    "sel": "[data-testid=dest-row]:has([data-destination='karol/payments-ops #42'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     461,
+     554
+    ],
+    "text": "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CON"
+   }
+  ],
+  "pointer": [
+   {
+    "text": "Close Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "path"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-surface-window"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-surface-window"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "Minimize Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-traffic"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "svg"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "SETTINGS",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 89.4,
+     "h": 44
+    },
+    "target": {
+     "w": 89.4,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "GUIDE",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 65.6,
+     "h": 44
+    },
+    "target": {
+     "w": 65.6,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Set up",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Open Models",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 97.2,
+     "h": 24
+    },
+    "target": {
+     "w": 97.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -14122,7 +19623,92 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail board@acme.io\nEMAIL\nBO",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 117
+    },
+    "target": {
+     "w": 363,
+     "h": 117
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nkarol/payments-ops #42\nGITHU",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nJira PAY-118\nJIRA\nPAY-118\n○\n",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nConfluence space 98304\nCONFL",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nEmail lena@acme.io\nEMAIL\nlen",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nEmail board@acme.io\nEMAIL\nbo",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -14471,16 +20057,16 @@
    }
   ]
  },
- "8-row-open-checked-393": {
+ "10-row-open-checked-393": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▾ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▾ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
    "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
    "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
-   "▸ Email lena@acme.io EMAIL LENA@ACME.IO +1 ✓ KEY SET API.SENDGRID.COM",
-   "▸ Email board@acme.io EMAIL BOARD@ACME.IO ⚠ NO KEY API.SENDGRID.COM"
+   "▸ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
+   "▸ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDGRID.COM"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -14489,6 +20075,8 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 7",
   "dest_parked": [],
@@ -14507,7 +20095,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.43,
+  "min_contrast": 5.431610437959098,
+  "min_contrast_el": {
+   "text": "▸",
+   "ratio": 5.431610437959098,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -14519,6 +20112,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-row]:has([data-destination='karol/payments-ops #42'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     219,
+     312
+    ],
+    "text": "▾ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CON"
+   },
+   {
+    "sel": "[data-testid=dest-check-result]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     529,
+     547
+    ],
+    "text": "✓ CHECKED"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -14791,7 +20406,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -14808,7 +20423,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -14927,7 +20542,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail lena@acme.io\nEMAIL\nLEN",
+    "text": "▸\nEmail lena@acme.io\nEMAIL\nlen",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -14944,7 +20559,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail board@acme.io\nEMAIL\nBO",
+    "text": "▸\nEmail board@acme.io\nEMAIL\nbo",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -15293,16 +20908,16 @@
    }
   ]
  },
- "9-edit-393": {
+ "11-email-check-not-verified-393": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
-   "▾ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
    "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
-   "▸ Email lena@acme.io EMAIL LENA@ACME.IO +1 ✓ KEY SET API.SENDGRID.COM",
-   "▸ Email board@acme.io EMAIL BOARD@ACME.IO ⚠ NO KEY API.SENDGRID.COM"
+   "▾ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
+   "▸ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDGRID.COM"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -15311,6 +20926,8 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 7",
   "dest_parked": [],
@@ -15320,7 +20937,7 @@
    "GITHUB.COM:cloud",
    "ACME.ATLASSIAN.NET:cloud",
    "ACME.ATLASSIAN.NET:cloud",
-   "ACME.ATLASSIAN.NET:cloud",
+   "API.SENDGRID.COM:cloud",
    "API.SENDGRID.COM:cloud",
    "API.SENDGRID.COM:cloud"
   ],
@@ -15329,7 +20946,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.24,
+  "min_contrast": 5.431610437959098,
+  "min_contrast_el": {
+   "text": "▸",
+   "ratio": 5.431610437959098,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -15341,6 +20963,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-row]:has([data-destination='Email lena@acme.io'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     219,
+     312
+    ],
+    "text": "▾ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SEN"
+   },
+   {
+    "sel": "[data-testid=dest-check-result]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     593,
+     611
+    ],
+    "text": "✗ SENDER NOT VERIFIED"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -15613,7 +21257,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -15630,7 +21274,858 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 117
+    },
+    "target": {
+     "w": 363,
+     "h": 117
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nkarol/payments-ops #42\nGITHU",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nJira PAY-118\nJIRA\nPAY-118\n○\n",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nConfluence space 98304\nCONFL",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▾\nEmail lena@acme.io\nEMAIL\nlen",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Check",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 54,
+     "h": 24
+    },
+    "target": {
+     "w": 54,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Edit",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 46.8,
+     "h": 24
+    },
+    "target": {
+     "w": 46.8,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Remove",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nEmail board@acme.io\nEMAIL\nbo",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Add destination",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 126,
+     "h": 24
+    },
+    "target": {
+     "w": 126,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Delete",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     }
+    ]
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-room-actions"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-room-actions"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     }
+    ]
+   }
+  ]
+ },
+ "12-edit-393": {
+  "window": true,
+  "destinations": [
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
+   "▾ Jira PAY-118 JIRA PAY-118 ○ NEVER CHECKED ACME.ATLASSIAN.NET",
+   "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
+   "▸ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
+   "▸ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDGRID.COM"
+  ],
+  "prepared": [],
+  "preview_fields": [],
+  "preview_has_raw": false,
+  "send_verbs": [],
+  "outcomes": [],
+  "history_head": null,
+  "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
+  "list_chips": [],
+  "dest_head": "DESTINATIONS 7",
+  "dest_parked": [],
+  "egress_chips": [
+   "THIS DEVICE:local",
+   "SYNCED FOLDER:cloud",
+   "GITHUB.COM:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "ACME.ATLASSIAN.NET:cloud",
+   "API.SENDGRID.COM:cloud",
+   "API.SENDGRID.COM:cloud"
+  ],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": []
+  },
+  "min_contrast": 5.238658088002096,
+  "min_contrast_el": {
+   "text": "Save",
+   "ratio": 5.238658088002096,
+   "fs": 12
+  },
+  "low_contrast": [],
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": [
+    "C COPY"
+   ]
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "overflow_culprits": [],
+  "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-form] [data-testid=dest-key]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     346,
+     390
+    ],
+    "text": "PAY-121"
+   },
+   {
+    "sel": "[data-testid=dest-form] [data-testid=dest-save]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     491,
+     515
+    ],
+    "text": "Save"
+   }
+  ],
+  "pointer": [
+   {
+    "text": "Close Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "path"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-surface-window"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-surface-window"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "Minimize Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-traffic"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "svg"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "SETTINGS",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 89.4,
+     "h": 44
+    },
+    "target": {
+     "w": 89.4,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "GUIDE",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 65.6,
+     "h": 44
+    },
+    "target": {
+     "w": 65.6,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Set up",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Open Models",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 97.2,
+     "h": 24
+    },
+    "target": {
+     "w": 97.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "row",
+    "touched": true,
+    "face": {
+     "w": 363,
+     "h": 93
+    },
+    "target": {
+     "w": 363,
+     "h": 93
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -15817,7 +22312,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail lena@acme.io\nEMAIL\nLEN",
+    "text": "▸\nEmail lena@acme.io\nEMAIL\nlen",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -15834,7 +22329,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail board@acme.io\nEMAIL\nBO",
+    "text": "▸\nEmail board@acme.io\nEMAIL\nbo",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -16183,15 +22678,15 @@
    }
   ]
  },
- "10-edited-old-parked-393": {
+ "13-edited-old-parked-393": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
    "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
-   "▸ Email lena@acme.io EMAIL LENA@ACME.IO +1 ✓ KEY SET API.SENDGRID.COM",
-   "▸ Email board@acme.io EMAIL BOARD@ACME.IO ⚠ NO KEY API.SENDGRID.COM",
+   "▸ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
+   "▸ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDGRID.COM",
    "▸ Jira PAY-121 JIRA PAY-121 ○ NEVER CHECKED ACME.ATLASSIAN.NET"
   ],
   "prepared": [],
@@ -16201,10 +22696,12 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 7",
   "dest_parked": [
-   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 17:37"
+   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 19:21"
   ],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -16220,7 +22717,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.43,
+  "min_contrast": 5.431610437959098,
+  "min_contrast_el": {
+   "text": "▸",
+   "ratio": 5.431610437959098,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -16232,6 +22734,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-parked-row]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     416,
+     465
+    ],
+    "text": "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 19:21"
+   },
+   {
+    "sel": "[data-testid=dest-row]:has([data-destination='Jira PAY-121'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     219,
+     312
+    ],
+    "text": "▸ Jira PAY-121 JIRA PAY-121 ○ NEVER CHECKED ACME.ATLASSIAN.N"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -16504,7 +23028,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -16521,7 +23045,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -16572,7 +23096,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail lena@acme.io\nEMAIL\nLEN",
+    "text": "▸\nEmail lena@acme.io\nEMAIL\nlen",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -16589,7 +23113,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail board@acme.io\nEMAIL\nBO",
+    "text": "▸\nEmail board@acme.io\nEMAIL\nbo",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -16972,15 +23496,15 @@
    }
   ]
  },
- "11-remove-armed-393": {
+ "14-remove-armed-393": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
    "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
-   "▸ Email lena@acme.io EMAIL LENA@ACME.IO +1 ✓ KEY SET API.SENDGRID.COM",
-   "▾ Email board@acme.io EMAIL BOARD@ACME.IO ⚠ NO KEY API.SENDGRID.COM",
+   "▸ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
+   "▾ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDGRID.COM",
    "▸ Jira PAY-121 JIRA PAY-121 ○ NEVER CHECKED ACME.ATLASSIAN.NET"
   ],
   "prepared": [],
@@ -16990,10 +23514,12 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 7",
   "dest_parked": [
-   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 17:37"
+   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 19:21"
   ],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -17010,7 +23536,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 4.83,
+  "min_contrast": 4.829404522659002,
+  "min_contrast_el": {
+   "text": "Remove?",
+   "ratio": 4.829404522659002,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -17022,6 +23553,28 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-row]:has([data-destination='Email board@acme.io'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     219,
+     312
+    ],
+    "text": "▾ Email board@acme.io EMAIL board@acme.io ⚠ NO KEY API.SENDG"
+   },
+   {
+    "sel": "[data-testid=dest-remove]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     586,
+     610
+    ],
+    "text": "Remove?"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -17294,7 +23847,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -17311,7 +23864,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -17362,7 +23915,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail lena@acme.io\nEMAIL\nLEN",
+    "text": "▸\nEmail lena@acme.io\nEMAIL\nlen",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -17379,7 +23932,7 @@
     "failed_points": []
    },
    {
-    "text": "▾\nEmail board@acme.io\nEMAIL\nBO",
+    "text": "▾\nEmail board@acme.io\nEMAIL\nbo",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -17813,14 +24366,14 @@
    }
   ]
  },
- "12-removed-parked-393": {
+ "15-removed-parked-393": {
   "window": true,
   "destinations": [
-   "▸ Folder Payments FILE ~/REPORTS/PAYMENTS THIS DEVICE",
-   "▸ Folder Updates FILE ~/LIBRARY/CLOUDSTORAGE/DROPBOX/UPDATES SYNCED FOLDER",
-   "▸ karol/payments-ops #42 GITHUB KAROL/PAYMENTS-OPS #42 ✓ CONNECTED GITHUB.COM",
+   "▸ Folder Payments FILE ~/Reports/Payments THIS DEVICE",
+   "▸ Folder Updates FILE ~/Library/CloudStorage/Dropbox/Updates SYNCED FOLDER",
+   "▸ karol/payments-ops #42 GITHUB karol/payments-ops #42 ✓ CONNECTED GITHUB.COM",
    "▸ Confluence space 98304 CONFLUENCE SPACE 98304 ⚠ SIGN IN ACME.ATLASSIAN.NET",
-   "▸ Email lena@acme.io EMAIL LENA@ACME.IO +1 ✓ KEY SET API.SENDGRID.COM",
+   "▸ Email lena@acme.io EMAIL lena@acme.io +1 ✓ KEY SET API.SENDGRID.COM",
    "▸ Jira PAY-121 JIRA PAY-121 ○ NEVER CHECKED ACME.ATLASSIAN.NET"
   ],
   "prepared": [],
@@ -17830,11 +24383,13 @@
   "outcomes": [],
   "history_head": null,
   "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
   "list_chips": [],
   "dest_head": "DESTINATIONS 6",
   "dest_parked": [
-   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 17:37",
-   "Email board@acme.io EMAIL BOARD@ACME.IO PARKED SEP 28 17:37"
+   "Jira PAY-118 JIRA PAY-118 PARKED SEP 28 19:21",
+   "Email board@acme.io EMAIL board@acme.io PARKED SEP 28 19:21"
   ],
   "egress_chips": [
    "THIS DEVICE:local",
@@ -17849,7 +24404,12 @@
    "proposal": [],
    "inherited": []
   },
-  "min_contrast": 5.43,
+  "min_contrast": 5.431610437959098,
+  "min_contrast_el": {
+   "text": "▸",
+   "ratio": 5.431610437959098,
+   "fs": 12
+  },
   "low_contrast": [],
   "raw_buttons": {
    "proposal": [],
@@ -17861,6 +24421,18 @@
   "body_overflow_x": false,
   "overflow_culprits": [],
   "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-parked-row]:has([data-destination='Email board@acme.io'])",
+    "ok": true,
+    "why": "",
+    "rect": [
+     312,
+     385
+    ],
+    "text": "Email board@acme.io EMAIL board@acme.io PARKED SEP 28 19:21"
+   }
+  ],
   "pointer": [
    {
     "text": "Close Settings",
@@ -18133,7 +24705,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Payments\nFILE\n~/REPOR",
+    "text": "▸\nFolder Payments\nFILE\n~/Repor",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -18150,7 +24722,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nFolder Updates\nFILE\n~/LIBRAR",
+    "text": "▸\nFolder Updates\nFILE\n~/Librar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -18201,7 +24773,7 @@
     "failed_points": []
    },
    {
-    "text": "▸\nEmail lena@acme.io\nEMAIL\nLEN",
+    "text": "▸\nEmail lena@acme.io\nEMAIL\nlen",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -18269,7 +24841,7 @@
     "failed_points": []
    },
    {
-    "text": "Email board@acme.io\nEMAIL\nBOAR",
+    "text": "Email board@acme.io\nEMAIL\nboar",
     "in_foot": false,
     "in_menu": false,
     "kind": "row",
@@ -18281,6 +24853,660 @@
     "target": {
      "w": 347,
      "h": 73
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Delete",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Rotate",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Replace",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "surface-footer-layout"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     }
+    ]
+   },
+   {
+    "text": "",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "centre",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-room-actions"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-room-actions"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-dock"
+     }
+    ]
+   }
+  ]
+ },
+ "16-destinations-unreadable-393": {
+  "window": true,
+  "destinations": [],
+  "prepared": [],
+  "preview_fields": [],
+  "preview_has_raw": false,
+  "send_verbs": [],
+  "outcomes": [],
+  "history_head": null,
+  "history": [],
+  "history_outcomes": [],
+  "prepared_results": [],
+  "list_chips": [],
+  "dest_head": "DESTINATIONS",
+  "dest_parked": [],
+  "egress_chips": [],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": []
+  },
+  "min_contrast": 6.84728176248441,
+  "min_contrast_el": {
+   "text": "✗ CANNOT READ DESTINATIONS",
+   "ratio": 6.84728176248441,
+   "fs": 12
+  },
+  "low_contrast": [],
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": [
+    "C COPY"
+   ]
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "overflow_culprits": [],
+  "words_delivered_on_email": false,
+  "named": [
+   {
+    "sel": "[data-testid=dest-unreadable]",
+    "ok": true,
+    "why": "",
+    "rect": [
+     219,
+     271
+    ],
+    "text": "✗ CANNOT READ DESTINATIONS Retry"
+   }
+  ],
+  "pointer": [
+   {
+    "text": "Close Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "path"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-surface-window"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-surface-window"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "Minimize Settings",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 16,
+     "h": 14
+    },
+    "target": {
+     "w": 44,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "top",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-traffic"
+     },
+     {
+      "at": "bottom",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "left",
+      "efp": false,
+      "pointer": false,
+      "hit": "svg"
+     },
+     {
+      "at": "top-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "desk-next"
+     },
+     {
+      "at": "bottom-left",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "SETTINGS",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 89.4,
+     "h": 44
+    },
+    "target": {
+     "w": 89.4,
+     "h": 44
+    },
+    "owned": false,
+    "failed_points": [
+     {
+      "at": "right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "top-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     },
+     {
+      "at": "bottom-right",
+      "efp": false,
+      "pointer": false,
+      "hit": "btn--chrome"
+     }
+    ]
+   },
+   {
+    "text": "GUIDE",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 65.6,
+     "h": 44
+    },
+    "target": {
+     "w": 65.6,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Recheck",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 68.4,
+     "h": 24
+    },
+    "target": {
+     "w": 68.4,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Set up",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 61.2,
+     "h": 24
+    },
+    "target": {
+     "w": 61.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Open Models",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": false,
+    "face": {
+     "w": 97.2,
+     "h": 24
+    },
+    "target": {
+     "w": 97.2,
+     "h": 44
+    },
+    "owned": true,
+    "failed_points": []
+   },
+   {
+    "text": "Retry",
+    "in_foot": false,
+    "in_menu": false,
+    "kind": "button",
+    "touched": true,
+    "face": {
+     "w": 54,
+     "h": 24
+    },
+    "target": {
+     "w": 54,
+     "h": 44
     },
     "owned": true,
     "failed_points": []

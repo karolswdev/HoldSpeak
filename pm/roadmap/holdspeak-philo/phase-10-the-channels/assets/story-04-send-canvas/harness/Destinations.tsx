@@ -12,8 +12,14 @@
  *   name, key_ref}. The key is typed once into the OS keychain and never
  *   shown again (SET / —).
  * - No counter of zero: the group head counts only when there is a row.
+ * Round two (Codex Astra r1 on #693):
+ * - The Room's "Add destination" ARRIVES here: the group scrolls itself into
+ *   view and opens the add form (the intent in p10.ts). No harness scroll.
+ * - A read that gets no answer says CANNOT READ DESTINATIONS + Retry; it is
+ *   never the empty add form. A refused key save says KEY NOT SAVED + why.
+ * - Email Check reports the sender's verification, never the key alone.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@w/components/signal/Signal";
 import {
   CheckGadget,
@@ -32,7 +38,8 @@ import {
 import { fetchConnections, type ConnectionsResponse } from "@w/pages/cores/connections/api";
 import { accountChip } from "./SendWell";
 import {
-  CHANNEL_WORD, egressOf, refusedWord, stamp, targetToken, wire, Refusal, type Channel, type Destination,
+  CHANNEL_WORD, DEST_FOCUS, SEND_WORDS, egressOf, failedWord, refusedWord, stamp, takeDestinationsFocus, targetToken, wire,
+  Refusal, type Channel, type Destination,
 } from "./p10";
 
 const CHANNELS: { value: Channel; label: string }[] = [
@@ -82,8 +89,9 @@ const keyRef = (fromEmail: string) => `holdspeak.email.sendgrid:${fromEmail.trim
 
 function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
   conns: ConnectionsResponse | null; initial: Draft; replaces?: string; keys: Record<string, boolean>;
-  onKey: (ref: string, v: string) => void; onDone: () => void; onCancel?: () => void;
+  onKey: (ref: string, v: string) => Promise<string | null>; onDone: () => void; onCancel?: () => void;
 }) {
+  const [keyRefused, setKeyRefused] = useState<string | null>(null);
   const [d, setD] = useState<Draft>(initial);
   const [busy, setBusy] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
@@ -170,7 +178,13 @@ function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
         <GadgetRow label="From name"><StringGadget label="From name" value={d.fromName} onChange={(v) => set({ fromName: v })} placeholder="Your name" /></GadgetRow>
         <div className="p10-secret" data-testid="dest-key-row">
           <SecretRow label="SendGrid key" configured={!!keys[keyRef(d.fromEmail)]}
-            onReplace={(v) => onKey(keyRef(d.fromEmail), v)} />
+            onReplace={(v) => { setKeyRefused(null); void onKey(keyRef(d.fromEmail), v).then(setKeyRefused); }} />
+          {keyRefused ? (
+            <span className="p10-outcome" data-testid="dest-key-refused" data-code={keyRefused}>
+              <StateChip state="failure" label={SEND_WORDS.keyNotSaved} />
+              <span className="surface-token" data-chip>{refusedWord(keyRefused)}</span>
+            </span>
+          ) : null}
         </div>
         <GadgetRow label="To"><StringGadget label="To" value={d.to} onChange={(v) => set({ to: v })} placeholder="a@company.com, b@company.com" inputProps={{ "data-testid": "dest-to" } as never} /></GadgetRow>
         <GadgetRow label="Cc"><StringGadget label="Cc" value={d.cc} onChange={(v) => set({ cc: v })} placeholder="c@company.com" /></GadgetRow>
@@ -214,6 +228,9 @@ function detailFields(d: Destination): [string, string][] {
 
 export function Destinations() {
   const [rows, setRows] = useState<Destination[] | null>(null);
+  const [readFailed, setReadFailed] = useState(false);
+  const [arrive, setArrive] = useState(false);
+  const groupRef = useRef<HTMLDivElement>(null);
   const [conns, setConns] = useState<ConnectionsResponse | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
@@ -221,12 +238,39 @@ export function Destinations() {
   const [keys, setKeys] = useState<Record<string, boolean>>({});
   const [checks, setChecks] = useState<Record<string, { busy: boolean; state?: string }>>({});
   const [removeBusy, setRemoveBusy] = useState<string | null>(null);
-  const reload = () => void wire.destinations(true).then((r) => {
-    setRows(r);
+  const reload = useCallback(() => void wire.destinations(true).then((r) => {
+    setRows(r); setReadFailed(false);
     setKeys((k) => ({ ...k, ...Object.fromEntries(r.filter((d) => d.channel === "email").map((d) => [String(d.account.key_ref), !!d.account.key_present])) }));
-  }).catch(() => setRows([]));
-  useEffect(() => { reload(); void fetchConnections().then(setConns).catch(() => setConns(null)); }, []);
-  const onKey = (ref: string, v: string) => void wire.saveKey(ref, v).then((r) => setKeys((k) => ({ ...k, [ref]: r.key_present })));
+  }).catch(() => setReadFailed(true)), []);
+  useEffect(() => {
+    reload(); void fetchConnections().then(setConns).catch(() => setConns(null));
+    const want = () => { if (takeDestinationsFocus()) setArrive(true); };
+    want();
+    window.addEventListener(DEST_FOCUS, want);
+    return () => window.removeEventListener(DEST_FOCUS, want);
+  }, [reload]);
+  // The arrival: once the group has drawn, bring it into view with the add form open.
+  useEffect(() => {
+    if (!arrive || (rows === null && !readFailed)) return;
+    setArrive(false);
+    setOpen(null); setEditing(null); setAdding(true);
+    requestAnimationFrame(() => groupRef.current?.scrollIntoView({ block: "start" }));
+  }, [arrive, rows, readFailed]);
+  const onKey = (ref: string, v: string): Promise<string | null> => wire.saveKey(ref, v)
+    .then((r) => { setKeys((k) => ({ ...k, [ref]: r.key_present })); return null; })
+    .catch((e) => (e instanceof Refusal ? e.code : "no_answer"));
+  if (readFailed) {
+    return (
+      <div data-p10="destinations" data-testid="destinations" ref={groupRef}>
+        <GadgetGroup label="Destinations">
+          <div className="p10-verbs" data-testid="dest-unreadable">
+            <StateChip state="failure" label={`${SEND_WORDS.cannotRead} DESTINATIONS`} />
+            <Button dense variant="ghost" data-testid="dest-unreadable-retry" onClick={reload}>{SEND_WORDS.retry}</Button>
+          </div>
+        </GadgetGroup>
+      </div>
+    );
+  }
   if (rows === null) return null;
   const active = rows.filter((d) => d.state === "active");
   const parked = rows.filter((d) => d.state === "parked");
@@ -236,7 +280,7 @@ export function Destinations() {
       onCancel={active.length ? () => setAdding(false) : undefined} />
   );
   return (
-    <div data-p10="destinations" data-testid="destinations">
+    <div data-p10="destinations" data-testid="destinations" ref={groupRef}>
       <GadgetGroup label={active.length ? `Destinations ${active.length}` : "Destinations"}>
         {active.length ? (
           <SurfaceLedger count="" cols="room">
@@ -253,7 +297,7 @@ export function Destinations() {
                     primary={<span className="surface-primary" data-destination={d.name}>{d.name}</span>}
                     cells={<>
                       <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel]}</span>
-                      <span className="surface-token p10-target" data-chip>{targetToken(d.channel, d.target)}</span>
+                      <span className="surface-token p10-literal p10-target" data-chip>{targetToken(d.channel, d.target)}</span>
                       {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
                       <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
                     </>}>
@@ -283,7 +327,9 @@ export function Destinations() {
                               <span className="p10-outcome" data-testid="dest-check-result" data-code={c.state}>
                                 {c.state === "checked" || c.state === "sender_verified" || c.state === "connected"
                                   ? <StateChip state="success" label={c.state === "sender_verified" ? "SENDER VERIFIED" : "CHECKED"} />
-                                  : <StateChip state="warning" label={refusedWord(c.state === "owner_action_required" ? "atlassian_not_signed_in" : c.state === "never_checked" ? "NEVER CHECKED" : c.state)} />}
+                                  : c.state === "sender_not_verified"
+                                    ? <StateChip state="failure" label={failedWord(c.state)} />
+                                    : <StateChip state="warning" label={refusedWord(c.state === "owner_action_required" ? "atlassian_not_signed_in" : c.state === "never_checked" ? "NEVER CHECKED" : c.state)} />}
                               </span>
                             ) : null}
                           </div>
@@ -308,10 +354,10 @@ export function Destinations() {
                 <ul className="surface-ledger-rows">
                   {parked.map((d) => (
                     <SurfaceLedgerRow key={d.id} data-testid="dest-parked-row" wrap expands={false}
-                      primary={<span className="surface-primary">{d.name}</span>}
+                      primary={<span className="surface-primary" data-destination={d.name}>{d.name}</span>}
                       cells={<>
                         <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel]}</span>
-                        <span className="surface-token p10-target" data-chip>{targetToken(d.channel, d.target)}</span>
+                        <span className="surface-token p10-literal p10-target" data-chip>{targetToken(d.channel, d.target)}</span>
                         <span className="surface-token" data-chip>{`PARKED ${stamp(d.parked_at)}`}</span>
                       </>} />
                   ))}

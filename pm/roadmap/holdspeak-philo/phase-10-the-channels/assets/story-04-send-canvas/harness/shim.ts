@@ -11,7 +11,7 @@
  *    `keys` (key_ref -> true: the stand-in for the OS keychain; the value
  *    typed into the face is DROPPED here, never stored, never returned).
  *    They survive a reload of the tab ("a restart") and nothing else.
- * 2. Destinations: GET/POST /api/channels/destinations, POST .../{id}/park,
+ * 2. Destinations: GET/POST /api/channels/destinations, DELETE .../{id} (park),
  *    POST .../{id}/check, POST /api/channels/keys. Validation at save as
  *    design section 5 (one Jira key; owner/repo; number >= 1; an absolute
  *    folder; at most 20 addresses; a name). Edit = the face POSTs a new row
@@ -21,7 +21,7 @@
  *    text; Confluence JSON {title, body XHTML}; email the SendGrid request
  *    JSON, text only) and returns the READABLE preview PARSED BACK FROM THOSE
  *    BYTES with their sha256. POST /api/channels/send takes the owner's
- *    inline form {document_ref, destination_id, preview_digest} or a
+ *    inline form {update_id, destination_id, preview_digest} or a
  *    prepared row {send_id}; one command_id = one send (a replay answers the
  *    stored row and never dispatches again). Before the boundary: parked /
  *    changed destination, GitHub login, Atlassian sign-in, email key ->
@@ -32,8 +32,23 @@
  *    POST /api/channels/sends/{id}/discard: prepared -> discarded, one wins.
  * 4. Recovery (section 4a stand-in): at load, a row still `dispatching`
  *    settles `unknown` with reason `interrupted` -- never a second dispatch.
- * 5. The history (section 1): a send that settles `sent` or `unknown` is a
- *    delivery record; the face merges them with the REAL manual rows.
+ * 5. The history (section 1; story 01's ONE table): a send that settles
+ *    `sent` or `unknown` writes ONE row into the update's deliveries, in
+ *    story 01's shape (`channel`, `send_id`, `outcome` sent|unknown,
+ *    `proof_json`; `delivered_to` = the destination's name). The shim adds
+ *    those rows to the REAL `GET /api/projects/{id}/updates` answer, next to
+ *    the real manual rows (`channel` manual, `outcome` confirmed). FAILED
+ *    and DISCARDED write no history row (story 01), so the SEND well shows
+ *    them from the send records.
+ * 5a. The file name (story 01, `choose_path`): `<date>-<slug>-r<rev>-<8 hex
+ *    of the send id>.md`, minted ONCE with the send id: at prepare for a
+ *    prepared send (its preview names it), at the boundary for an inline
+ *    send (its preview names only the folder). The receipt names the same file.
+ * 5b. Email Check (design section 8): the key present is not the sender
+ *    verified. The stand-in for SendGrid's verified-sender list is
+ *    `senders` (from address -> verified); a send from an unverified sender
+ *    crosses the boundary and settles FAILED `sender_not_verified` (the
+ *    pinned whole-request 403).
  * 6. The Connections read, overlaid (stated per board in the README):
  *    GitHub `connected` as `kwork` (an isolated HOME has no gh login);
  *    one Confluence account `owner_action_required` (no add route exists).
@@ -41,6 +56,11 @@
  *    connections; `never_checked`).
  *
  * Fixture faults (each stated on its board):
+ *    window.__p10VerifySender(email)  he verified the sender in SendGrid
+ *    window.__p10SignIn(provider)      he signed in to the Atlassian account again
+ *    window.__p10ReadFail = ["destinations"|"sends"|"history"]  that read gets no answer
+ *    window.__p10PreviewFail = true    the next preview read gets no answer
+ *    window.__p10KeyFail = code        the next key save is refused (e.g. no OS key store)
  *    window.__p10Next = {kind: "failed"|"unknown"|"refused", code}  the next dispatch's answer
  *    window.__p10LoseNext = true   the next send SETTLES, then its answer is lost
  *    window.__p10CrashNext = true  the next send commits the boundary, then never answers (reload = restart)
@@ -61,11 +81,11 @@ type Dest = {
 type SendRow = {
   id: string; update_id: string; destination_id: string; destination_name: string; channel: string;
   target: Record<string, unknown>; account: Record<string, unknown>; target_digest: string; draft_revision: number;
-  payload: string; payload_digest: string; preview: unknown; file_name?: string;
+  payload: string; payload_digest: string; preview: unknown; file_name?: string; dispatched_at?: string;
   prepared_by_kind: string; prepared_by_identity: string; state: string; proof: Record<string, unknown> | null;
   reason: string | null; command_id: string | null; created_at: string; settled_at: string | null;
 };
-type State = { destinations: Dest[]; sends: SendRow[]; keys: Record<string, boolean> };
+type State = { destinations: Dest[]; sends: SendRow[]; keys: Record<string, boolean>; senders: Record<string, boolean> };
 
 declare global {
   interface Window {
@@ -79,13 +99,18 @@ declare global {
     __p10Prepare?: (a: { update_id: string; destination_name: string; by_kind: string; by_identity: string }) => Promise<string>;
     __p10Move?: (destinationName: string, folder: string) => void;
     __p10Dump?: () => State;
+    __p10VerifySender?: (email: string) => void;
+    __p10SignIn?: (provider: string) => void;
+    __p10ReadFail?: string[];
+    __p10PreviewFail?: boolean;
+    __p10KeyFail?: string;
   }
 }
 
 const KEY = "p10.state";
 const load = (): State => {
-  try { return { destinations: [], sends: [], keys: {}, ...JSON.parse(sessionStorage.getItem(KEY) || "{}") }; }
-  catch { return { destinations: [], sends: [], keys: {} }; }
+  try { return { destinations: [], sends: [], keys: {}, senders: {}, ...JSON.parse(sessionStorage.getItem(KEY) || "{}") }; }
+  catch { return { destinations: [], sends: [], keys: {}, senders: {} }; }
 };
 const save = (s: State) => { try { sessionStorage.setItem(KEY, JSON.stringify(s)); } catch { /* canvas only */ } };
 const rid = (p: string) => `${p}_${Math.random().toString(16).slice(2, 14)}`;
@@ -183,10 +208,12 @@ function serialize(d: Dest, md: string, project: string, rev: number): string {
 }
 
 /** The READABLE preview, parsed back from the frozen bytes (never raw JSON or XHTML). */
-function derivePreview(d: { channel: string; target: Record<string, unknown>; account: Record<string, unknown> }, payload: string, fileName: string) {
+function derivePreview(d: { channel: string; target: Record<string, unknown>; account: Record<string, unknown> }, payload: string, fileName: string | null) {
   const t = d.target, a = d.account;
   switch (d.channel) {
-    case "file": return { fields: [{ label: "Folder", value: String(t.folder) }, { label: "File", value: fileName }], body_kind: "markdown", body: payload };
+    case "file": return {
+      fields: fileName ? [{ label: "Folder", value: String(t.folder) }, { label: "File", value: fileName }] : [{ label: "Folder", value: String(t.folder) }],
+      body_kind: "markdown", body: payload };
     case "github": return { fields: [
       { label: "Repository", value: String(t.repo) },
       { label: t.kind === "pr" ? "Pull request" : "Issue", value: `#${t.number}` },
@@ -224,7 +251,12 @@ function connOverlay(body: { tools: Record<string, unknown>[] }) {
     if (t.provider_id === "github" && !sessionStorage.getItem("p10.gh.real")) {
       Object.assign(t, { state: "connected", account: { login: window.__p10GhLogin ?? "kwork" }, last_checked_at: new Date(Date.now() - 5 * 60_000).toISOString() });
     }
-    if (t.provider_id === "confluence" && !(t.connections as unknown[] | undefined)?.length) {
+    if (t.provider_id === "confluence" && signedIn.has("confluence")) {
+      t.connections = [{ connection_ref: "acme.atlassian.net|karol@acme.io", state: "connected",
+        account: { site: "acme.atlassian.net", email: "karol@acme.io" }, recovery_hint: null, error_detail: null,
+        last_checked_at: new Date().toISOString(), checked_age_seconds: 0, egress_host: "acme.atlassian.net" }];
+      t.state = "connected";
+    } else if (t.provider_id === "confluence" && !(t.connections as unknown[] | undefined)?.length) {
       t.connections = [{ connection_ref: "acme.atlassian.net|karol@acme.io", state: "owner_action_required",
         account: { site: "acme.atlassian.net", email: "karol@acme.io" }, recovery_hint: null, error_detail: null,
         last_checked_at: new Date(Date.now() - 3 * 3600_000).toISOString(), checked_age_seconds: null, egress_host: "acme.atlassian.net" }];
@@ -234,6 +266,7 @@ function connOverlay(body: { tools: Record<string, unknown>[] }) {
   return body;
 }
 let connCache: { tools: Record<string, unknown>[] } | null = null;
+const signedIn = new Set<string>(JSON.parse(sessionStorage.getItem("p10.signedin") || "[]"));
 async function connections() {
   if (!connCache) {
     const r = await realFetch("/api/connections", { headers: authHeaders() });
@@ -245,6 +278,7 @@ async function accountState(channel: string, account: Record<string, unknown>): 
   const c = await connections();
   const tool = c.tools.find((t) => t.provider_id === channel);
   if (!tool) return "not_configured";
+  if (signedIn.has(channel)) return "connected";
   if (channel === "github") return String(tool.state);
   const conn = (tool.connections as Record<string, unknown>[] | undefined ?? [])
     .find((x) => (x.account as Record<string, unknown>).site === account.site && (x.account as Record<string, unknown>).email === account.email);
@@ -268,15 +302,20 @@ function proofOf(r: SendRow): Record<string, unknown> {
 const pub = (r: SendRow) => { const { payload: _p, command_id: _c, target_digest: _d, file_name: _f, ...rest } = r; return rest; };
 const pubDest = (d: Dest) => { const { digest: _d, resolved: _r, ...rest } = d; return rest; };
 
-async function makeRow(d: Dest, updateId: string, byKind: string, byIdentity: string): Promise<SendRow> {
+/** Story 01's name: minted once, from the send id (5a). */
+const fileNameFor = (project: string, rev: number, sendId: string) => `${ymd()}-${slug(project || "project")}-r${rev}-${sendId.slice(5, 13)}.md`;
+
+async function makeRow(d: Dest, updateId: string, byKind: string, byIdentity: string, prepared: boolean): Promise<SendRow> {
   const { md, meta, project } = await updateInfo(updateId);
   const id = rid("send");
-  const fileName = `${ymd()}-${slug(project || "project")}-r${meta.draft_revision}-${id.slice(5, 13)}.md`;
+  // A prepared send has its id now, so its name is fixed now; an inline
+  // preview has no send yet, so it names only the folder.
+  const fileName = d.channel === "file" && prepared ? fileNameFor(project, meta.draft_revision, id) : undefined;
   const payload = serialize(d, md, project || "Project", meta.draft_revision);
   return {
     id, update_id: updateId, destination_id: d.id, destination_name: d.name, channel: d.channel,
     target: d.target, account: d.account, target_digest: d.digest, draft_revision: meta.draft_revision,
-    payload, payload_digest: await sha256(payload), preview: derivePreview(d, payload, fileName), file_name: fileName,
+    payload, payload_digest: await sha256(payload), preview: derivePreview(d, payload, fileName ?? null), file_name: fileName,
     prepared_by_kind: byKind, prepared_by_identity: byIdentity, state: "prepared", proof: null, reason: null,
     command_id: null, created_at: now(), settled_at: null,
   };
@@ -300,7 +339,7 @@ async function doSend(args: Record<string, string>): Promise<Response> {
   } else {
     const d = s.destinations.find((x) => x.id === args.destination_id);
     if (!d || d.state !== "active") return refuse("destination_parked");
-    row = await makeRow(d, String(args.document_ref).replace("project_update:", ""), "owner", "owner");
+    row = await makeRow(d, String(args.update_id), "owner", "owner", false);
     if (row.payload_digest !== args.preview_digest) return refuse("preview_changed");
   }
   // Before the boundary: the destination, frozen twice (section 5).
@@ -321,7 +360,11 @@ async function doSend(args: Record<string, string>): Promise<Response> {
 
   // The durable dispatch boundary: its own commit, before any effect.
   s = load();
-  row.state = "dispatching"; row.command_id = cmd;
+  row.state = "dispatching"; row.command_id = cmd; row.dispatched_at = now();
+  if (row.channel === "file" && !row.file_name) {   // an inline send: the name is minted at the boundary, once
+    const { meta, project } = await updateInfo(row.update_id);
+    row.file_name = fileNameFor(project, meta.draft_revision, row.id);
+  }
   const i = s.sends.findIndex((x) => x.id === row.id);
   if (i >= 0) s.sends[i] = row; else s.sends.push(row);
   save(s);
@@ -334,7 +377,9 @@ async function doSend(args: Record<string, string>): Promise<Response> {
   }
   // The settle.
   const next = window.__p10Next; window.__p10Next = undefined;
-  if (next?.kind === "failed") { row.state = "failed"; row.reason = next.code; }
+  if (row.channel === "email" && !load().senders[String(row.account.from_email).toLowerCase()] && next?.kind !== "failed") {
+    row.state = "failed"; row.reason = "sender_not_verified";   // SendGrid's pinned 403 (5b)
+  } else if (next?.kind === "failed") { row.state = "failed"; row.reason = next.code; }
   else if (next?.kind === "unknown") { row.state = "unknown"; row.reason = next.code; }
   else { row.state = "sent"; row.proof = proofOf(row); }
   row.settled_at = now();
@@ -409,7 +454,7 @@ window.__p10Prepare = async ({ update_id, destination_name, by_kind, by_identity
   const s = load();
   const d = s.destinations.find((x) => x.name === destination_name && x.state === "active");
   if (!d) throw new Error(`no destination ${destination_name}`);
-  const row = await makeRow(d, update_id, by_kind, by_identity);
+  const row = await makeRow(d, update_id, by_kind, by_identity, true);
   const s2 = load(); s2.sends.push(row); save(s2);
   return row.id;
 };
@@ -419,6 +464,10 @@ window.__p10Move = (destinationName, folder) => {
   if (d) { d.resolved = folder; save(s); }  // realpath now resolves elsewhere; the stored digest does not match
 };
 window.__p10Dump = load;
+window.__p10VerifySender = (email) => { const s = load(); s.senders[email.toLowerCase()] = true; save(s); };
+window.__p10SignIn = (provider) => {
+  signedIn.add(provider); sessionStorage.setItem("p10.signedin", JSON.stringify([...signedIn])); connCache = null;
+};
 /* Harness navigation only (not a face verb): open Settings -> Connections the
  * way the Door does (web/src/features/project-room/door/useDoorController.ts:231). */
 (window as unknown as { __p10OpenConnections: () => void }).__p10OpenConnections =
@@ -433,16 +482,28 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const method = (init?.method || (typeof input !== "string" && !(input instanceof URL) ? input.method : "GET")).toUpperCase();
   const body = () => JSON.parse(String(init?.body ?? "{}"));
 
+  const readFails = (what: string) => (window.__p10ReadFail ?? []).includes(what);
   // Learn update -> project + revision from the REAL updates read.
   const list = path.match(/^\/api\/projects\/([^/]+)\/updates$/);
   if (list && method === "GET") {
+    if (readFails("history")) throw new TypeError("Failed to fetch");   // the history read gets no answer
     const res = await realFetch(input, init);
     const clone = res.clone();
     try {
       const b = await clone.json();
-      for (const u of b.updates ?? []) updateMeta.set(u.id, { project_id: u.project_id, lifecycle: u.lifecycle, draft_revision: Number(u.draft_revision ?? 1) });
-    } catch { /* passthrough */ }
-    return res;
+      const st = load();
+      for (const u of b.updates ?? []) {
+        updateMeta.set(u.id, { project_id: u.project_id, lifecycle: u.lifecycle, draft_revision: Number(u.draft_revision ?? 1) });
+        // 5. The one table: each settled send (sent | unknown) is ONE row, story 01's shape.
+        const mine = st.sends.filter((r) => r.update_id === u.id && (r.state === "sent" || r.state === "unknown")).map((r) => ({
+          id: `dlv_${r.id.slice(5)}`, update_id: u.id, project_id: u.project_id,
+          delivered_at: r.dispatched_at ?? r.settled_at, delivered_to: r.destination_name, operation_id: r.command_id,
+          channel: r.channel, send_id: r.id, outcome: r.state, proof_json: r.proof ? canon(r.proof) : null,
+        }));
+        u.deliveries = [...(u.deliveries ?? []), ...mine].sort((x: { delivered_at: string }, y: { delivered_at: string }) => String(x.delivered_at).localeCompare(String(y.delivered_at)));
+      }
+      return json(b, res.status);
+    } catch { return res; }
   }
   if (path === "/api/connections" && method === "GET") {
     const res = await realFetch(input, init);
@@ -452,7 +513,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   if (path === "/api/channels/destinations" && method === "GET") {
-    const all = query.get("include") === "parked";
+    if (readFails("destinations")) throw new TypeError("Failed to fetch");   // the read gets no answer
+    const all = query.get("include_parked") === "true";
     const s = load();
     const rows = s.destinations.filter((d) => all || d.state === "active").map((d) => ({
       ...pubDest(d), account: d.channel === "email" ? { ...d.account, key_present: !!s.keys[String(d.account.key_ref)] } : d.account,
@@ -460,8 +522,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     return json({ destinations: rows });
   }
   if (path === "/api/channels/destinations" && method === "POST") return addDestination(body());
-  const park = path.match(/^\/api\/channels\/destinations\/([^/]+)\/park$/);
-  if (park && method === "POST") {
+  const park = path.match(/^\/api\/channels\/destinations\/([^/]+)$/);
+  if (park && method === "DELETE") {
     const s = load();
     const d = s.destinations.find((x) => x.id === park[1]);
     if (!d) return json({ error_code: "not_found" }, 404);
@@ -478,26 +540,31 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     let state = "checked";
     if (d.channel === "github") state = (window.__p10GhLogin ?? "kwork") === d.account.login ? "checked" : "github_identity_changed";
     if (d.channel === "jira" || d.channel === "confluence") state = await accountState(d.channel, d.account);
-    if (d.channel === "email") state = s.keys[String(d.account.key_ref)] ? "sender_verified" : "email_key_missing";
+    // 5b: the key present is not the sender verified.
+    if (d.channel === "email") state = !s.keys[String(d.account.key_ref)] ? "email_key_missing"
+      : s.senders[String(d.account.from_email).toLowerCase()] ? "sender_verified" : "sender_not_verified";
     return json({ destination: pubDest(d), state });
   }
   if (path === "/api/channels/keys" && method === "POST") {
     const b = body();
+    if (window.__p10KeyFail) { const c = window.__p10KeyFail; window.__p10KeyFail = undefined; return json({ success: false, outcome: "refused", error_code: c }, 409); }
     const s = load();
     if (String(b.value ?? "").trim()) s.keys[String(b.key_ref)] = true;  // the value is dropped here
     save(s);
     return json({ key_present: !!s.keys[String(b.key_ref)] });
   }
   if (path === "/api/channels/sends" && method === "GET") {
-    const ref = String(query.get("document_ref") ?? "").replace("project_update:", "");
+    if (readFails("sends")) throw new TypeError("Failed to fetch");
+    const ref = String(query.get("update_id") ?? "");
     return json({ sends: load().sends.filter((r) => r.update_id === ref).map(pub) });
   }
   if (path === "/api/channels/preview" && method === "POST") {
+    if (window.__p10PreviewFail) { window.__p10PreviewFail = false; throw new TypeError("Failed to fetch"); }
     const b = body();
     const s = load();
     const d = s.destinations.find((x) => x.id === b.destination_id && x.state === "active");
     if (!d) return json({ outcome: "refused", error_code: "destination_parked" }, 409);
-    const row = await makeRow(d, String(b.document_ref).replace("project_update:", ""), "owner", "owner");
+    const row = await makeRow(d, String(b.update_id), "owner", "owner", false);
     return json({ payload_digest: row.payload_digest, preview: row.preview, draft_revision: row.draft_revision });
   }
   if (path === "/api/channels/send" && method === "POST") return doSend(body());

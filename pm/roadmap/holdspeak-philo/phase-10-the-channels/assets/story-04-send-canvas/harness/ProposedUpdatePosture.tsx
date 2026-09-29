@@ -43,6 +43,7 @@ import {
   provenancePhrase,
   refChipLabel,
   refIdentityLabel,
+  isDelivered,
   refKind,
 } from "@w/features/project-room/update/model";
 import "@w/features/project-room/update/update-posture.css";
@@ -58,6 +59,9 @@ export const DELIVERY_WORDS = {
   field: "To",
   chip: "DELIVERED",
   retry: "Retry",
+  /* PHILO-10-01: a channel send whose result is not known is never a delivery. */
+  unknown: "RESULT UNKNOWN",
+  check: "CHECK",
 } as const;
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -71,13 +75,25 @@ export function deliveryTime(iso: string): string {
 }
 
 /** The list chip, `DELIVERED ×N` (the owner's Q2 pick). No chip at zero
- *  deliveries. A mistaken delivery counts: undo is on the BACKLOG. */
+ *  deliveries. A mistaken delivery counts: undo is on the BACKLOG. A send
+ *  whose result is unknown is not counted: it has its own warning chip. */
 function DeliveredChip({ deliveries }: { deliveries: Delivery[] }) {
+  const delivered = deliveries.filter(isDelivered).length;
+  const unknown = deliveries.length - delivered;
   if (deliveries.length === 0) return null;
   return (
-    <span data-testid="update-delivered-chip">
-      <StateChip state="success" label={`${DELIVERY_WORDS.chip} ×${deliveries.length}`} />
-    </span>
+    <>
+      {delivered > 0 ? (
+        <span data-testid="update-delivered-chip">
+          <StateChip state="success" label={`${DELIVERY_WORDS.chip} ×${delivered}`} />
+        </span>
+      ) : null}
+      {unknown > 0 ? (
+        <span data-testid="update-unknown-chip">
+          <StateChip state="warning" label={`${DELIVERY_WORDS.unknown} ×${unknown}`} />
+        </span>
+      ) : null}
+    </>
   );
 }
 
@@ -86,9 +102,10 @@ function DeliveredChip({ deliveries }: { deliveries: Delivery[] }) {
  *  (the product sends nothing). */
 function DeliverySection({ ctrl, update }: { ctrl: UpdateController; update: ProjectUpdate }) {
   const rows = update.deliveries;
+  const delivered = rows.filter(isDelivered).length;
   return (
     <SurfaceSection
-      label={rows.length > 0 ? `${DELIVERY_WORDS.history} ${rows.length}` : DELIVERY_WORDS.section}
+      label={delivered > 0 ? `${DELIVERY_WORDS.history} ${delivered}` : DELIVERY_WORDS.section}
     >
       <div className="update-deliver-line" data-testid="deliver-line">
         <span className="update-deliver-to">
@@ -142,8 +159,20 @@ function DeliverySection({ ctrl, update }: { ctrl: UpdateController; update: Pro
                 data-testid="delivery-row"
                 wrap
                 expands={false}
-                lead={<StateChip state="success" label="" icon="✓" />}
-                primary={<span className="surface-primary">{row.deliveredTo ?? "—"}</span>}
+                lead={
+                  <span data-outcome={row.outcome}>
+                    {isDelivered(row)
+                      ? <StateChip state="success" label="" icon="✓" />
+                      : <StateChip state="warning" label="" icon="⚠" />}
+                  </span>
+                }
+                primary={isDelivered(row)
+                  ? <span className="surface-primary">{row.deliveredTo ?? "—"}</span>
+                  : (
+                    <span className="surface-primary">
+                      {`${DELIVERY_WORDS.unknown} · ${DELIVERY_WORDS.check} ${row.deliveredTo ?? "—"}`}
+                    </span>
+                  )}
                 cells={<span className="surface-token" data-chip>{deliveryTime(row.deliveredAt)}</span>}
               />
             ))}
@@ -156,11 +185,11 @@ function DeliverySection({ ctrl, update }: { ctrl: UpdateController; update: Pro
 
 /* PROPOSAL (PHILO-10-04): one read of this update's sends feeds both wells. */
 function PublishedWells({ ctrl, update }: { ctrl: UpdateController; update: ProjectUpdate }) {
-  const { sends, reload } = useSends(update.id);
+  const sendsRead = useSends(update.id);
   return (
     <>
-      <SendWell update={update} sends={sends} reload={reload} />
-      <div data-section="delivery"><DeliveryHistory ctrl={ctrl} update={update} sends={sends} /></div>
+      <SendWell update={update} sendsRead={sendsRead} />
+      <div data-section="delivery"><DeliveryHistory ctrl={ctrl} update={update} sends={sendsRead.data ?? []} /></div>
     </>
   );
 }

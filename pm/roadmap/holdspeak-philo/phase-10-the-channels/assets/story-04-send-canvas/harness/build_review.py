@@ -14,50 +14,67 @@ SEND = HERE.parent
 DEST = SEND.parent / "story-04-destinations-canvas"
 
 SEND_BOARDS = [
-    ("0-today", "0 · Today", "Today", "The real UpdatePosture on the real hub: Copy and Mark delivered only. No SEND well."),
-    ("1-no-destination", "1 · No destination saved", "No destination saved", "SEND holds one token and one verb: NO DESTINATION + Add destination (opens Settings → Connections at Destinations, canvas B board 1)."),
-    ("2-destinations", "2 · Destinations listed", "Destinations listed", "One row per destination: name, channel, target, account state (Phase 9 B1 words), last send, the egress chip (THIS DEVICE, SYNCED FOLDER or the host)."),
-    ("3-picked-folder", "3 · Folder picked", "Destination picked", "The pick opens the row in place (question A1): the preview parsed back from the frozen bytes (FOLDER, FILE, then the Markdown), then Send and the egress chip."),
-    ("4-saved-folder", "4 · Folder SAVED", "SENT", "The row gains ✓ SAVED; the DELIVERY history gains the row with the full path."),
-    ("5-picked-github", "5 · GitHub picked", "Destination picked", "Preview fields REPOSITORY, ISSUE, ACCOUNT (the concrete login and host)."),
-    ("6-sending", "6 · Sending", "Sending", "The answer is held: Send is busy; the pick cannot move; nothing else moves. The double-click made one send (board 7 fact)."),
-    ("7-posted-github", "7 · GitHub POSTED", "SENT", "✓ POSTED + the comment link. Fact: dispatches after the double-click = 1."),
-    ("8-picked-jira", "8 · Jira picked", "Destination picked", "Preview fields WORK ITEM, ACCOUNT; the body as plain text (the Jira payload is plain text)."),
-    ("9-unknown-jira", "9 · Jira UNKNOWN", "UNKNOWN", "Fixture fault: no answer. ⚠ RESULT UNKNOWN · NO ANSWER + Check PAY-121 (opens the work item). Send again is a new send with a new key."),
-    ("10-picked-confluence", "10 · Confluence picked", "Destination picked", "Preview fields SPACE, TITLE, ACCOUNT; the blog post body parsed back from the XHTML (never raw XHTML)."),
-    ("11-refused-confluence-sign-in", "11 · REFUSED: not signed in", "REFUSED", "The account needs sign-in: ✗ REFUSED · NOT SIGNED IN · NOTHING SENT. Refused before the boundary: nothing ran."),
-    ("12-picked-email", "12 · Email picked", "Destination picked", "Preview fields FROM, TO, CC, SUBJECT; the text body parsed back from the SendGrid request bytes."),
-    ("13-failed-email-sender", "13 · FAILED: sender not verified", "FAILED", "Fixture fault: SendGrid's pinned 403 whole-request rejection. ✗ FAILED · SENDER NOT VERIFIED · NOTHING SENT (design section 8: a FAILED outcome, not a refusal)."),
-    ("14-accepted-by-sendgrid", "14 · Email ACCEPTED BY SENDGRID", "SENT", "✓ ACCEPTED BY SENDGRID + ID <message id>. The word is never DELIVERED on an email row."),
-    ("15-refused-github-account", "15 · REFUSED: GitHub account changed", "REFUSED", "The gh login at dispatch is not the saved login: ✗ REFUSED · GITHUB ACCOUNT CHANGED · NOTHING SENT."),
-    ("16-lost-answer-a", "16 · The answer lost (update A)", "UNKNOWN", "Fixture fault: the send settles, then its answer is lost. NO ANSWER · RESULT UNKNOWN and Retry (the same key)."),
-    ("17-update-b-clean", "17 · Update B is clean", "UNKNOWN", "The lost answer is bound to update A (Phase 9 r2 F1): update B has no lost line, no Retry, no open row, no history."),
-    ("18-back-on-a-retry", "18 · Back on update A", "UNKNOWN", "The lost line and Retry are still on A."),
-    ("19-retried-one-dispatch", "19 · Retry: one dispatch", "SENT", "Retry with the same key reads the stored row. Fact: dispatches with the lost key = 1."),
-    ("20-unknown-after-restart", "20 · UNKNOWN after a restart", "UNKNOWN after a restart", "Fixture fault: a restart after the boundary. The row settles ⚠ RESULT UNKNOWN · INTERRUPTED; no second dispatch."),
-    ("21-prepared", "21 · PREPARED", "PREPARED", "Three prepared sends (the steward, an agent twice) sit first in SEND, open (question A3): who, revision, time, account, egress chip, the preview, Send and Discard."),
-    ("22-prepared-sent", "22 · A prepared send, sent", "PREPARED", "Send on the steward's row: the row leaves PREPARED and joins DELIVERY."),
-    ("23-prepared-destination-changed", "23 · DESTINATION CHANGED", "DESTINATION CHANGED", "The folder now resolves elsewhere: REFUSED · DESTINATION CHANGED. The email destination is parked: REFUSED · DESTINATION PARKED. Only Discard stays."),
-    ("24-discard-armed", "24 · Discard armed", "DESTINATION CHANGED", "The library ConfirmVerb: Discard? (a second press discards)."),
-    ("25-discarded", "25 · Discarded", "DESTINATION CHANGED", "The row goes. No counter of zero."),
-    ("26-history-several", "26 · Several sends", "Several sends", "One DELIVERY history: each send its own row with its proof; the manual Mark delivered row (DELIVERED · MANUAL) kept beside them. Head: DELIVERY N · UNKNOWN M."),
-    ("27-list-chips", "27 · The update list", "Several sends", "Chips on the published update: PREPARED ×K, UNKNOWN ×M, DELIVERY ×N (question A2). No chip at zero (the other update)."),
-    ("28-draft-no-send", "28 · A draft", "", "A draft has no SEND well: only a published update leaves the machine."),
+    ("0a-today-list", "0a · Today: the list (story 01's face)", "Today", "The product today on story 01's REAL records (update C: a real file send SENT, a real UNKNOWN by story 01's ENAMETOOLONG recipe, a real manual row). The list: DELIVERED ×2 and RESULT UNKNOWN ×1. Question A2 is asked against this face."),
+    ("0b-today-history", "0b · Today: the history (story 01's face)", "Today", "Story 01's history: DELIVERED 2; the UNKNOWN row reads ⚠ RESULT UNKNOWN · CHECK Long path folder. No SEND well."),
+    ("1-no-destination", "1 · No destination saved", "No destination saved", "SEND holds one token and one verb: NO DESTINATION + Add destination."),
+    ("2-back-in-the-room", "2 · Back in the Room, no reload", "Destinations listed", "After Add destination (canvas B boards 1–2: Settings arrives at the group), Save and closing Settings: the Room shows Folder Payments at once. The well reads its destinations again on the Settings change signal and on window focus. No harness scroll, no reload."),
+    ("3-destinations", "3 · Destinations listed", "Destinations listed", "One row per destination: name, channel, target (exact spelling), account state (Phase 9 B1 words), last send, the egress chip."),
+    ("4-picked-folder", "4 · Folder picked", "Destination picked", "The pick opens the row in place (A1). The preview's fields, then Send, then the body (the verbs sit above the body, in view at 393). An inline file send names only the FOLDER: story 01 mints the file name from the send id at the boundary."),
+    ("5-saved-folder", "5 · Folder SAVED", "SENT", "✓ SAVED + the exact path in the open row; the row's chip keeps ✓ SAVED + time from the stored record."),
+    ("6-saved-folder-history", "6 · SAVED in the history", "SENT", "The history row from story 01's one table: ✓ Folder Payments · SAVED · the exact path (exact case)."),
+    ("7-picked-github", "7 · GitHub picked", "Destination picked", "Preview fields REPOSITORY, ISSUE, ACCOUNT (the concrete login and host); Send."),
+    ("8-sending", "8 · Sending", "Sending", "The answer is held: Send is busy; the pick cannot move. The double-click made one send (board 9 fact)."),
+    ("9-posted-github", "9 · GitHub POSTED", "SENT", "✓ POSTED + the comment link. Fact: dispatches after the double-click = 1."),
+    ("10-picked-jira", "10 · Jira picked", "Destination picked", "Preview fields WORK ITEM, ACCOUNT; the body as plain text."),
+    ("11-unknown-jira", "11 · Jira UNKNOWN", "UNKNOWN", "Fixture fault: no answer. RESULT UNKNOWN · NO ANSWER + Check PAY-121 (opens the work item); Send again is a new send with a new key."),
+    ("12-commented-jira", "12 · Jira COMMENTED", "SENT", "Send again (a new key): ✓ COMMENTED + the work item link."),
+    ("13-picked-confluence", "13 · Confluence picked", "Destination picked", "Preview fields SPACE, TITLE, ACCOUNT; the blog post body parsed back from the XHTML."),
+    ("14-refused-confluence-sign-in", "14 · REFUSED: not signed in", "REFUSED", "The account needs sign-in: REFUSED · NOT SIGNED IN · NOTHING SENT."),
+    ("15-blog-posted-confluence", "15 · Confluence BLOG POSTED", "SENT", "Fixture: he signed in again and came back to the window. ✓ BLOG POSTED + the post link."),
+    ("16-picked-email", "16 · Email picked", "Destination picked", "Preview fields FROM, TO, CC, SUBJECT, parsed back from the SendGrid request bytes."),
+    ("17-failed-email-sender", "17 · FAILED: sender not verified", "FAILED", "The from address is not a verified sender in SendGrid (canvas B board 11 said so): SendGrid's pinned 403, FAILED · SENDER NOT VERIFIED · NOTHING SENT; the row's chip LAST SEND FAILED stays."),
+    ("18-accepted-by-sendgrid", "18 · Email ACCEPTED BY SENDGRID", "SENT", "Fixture: he verified the sender in SendGrid. ✓ ACCEPTED BY SENDGRID + ID <message id>, exact case."),
+    ("19-accepted-history", "19 · ACCEPTED in the history", "SENT", "The history row: ✓ Email lena@acme.io · ACCEPTED BY SENDGRID · ID <message id>. Never DELIVERED on an email row."),
+    ("20-refused-github-account", "20 · REFUSED: GitHub account changed", "REFUSED", "The gh login at dispatch is not the saved login: REFUSED · GITHUB ACCOUNT CHANGED · NOTHING SENT."),
+    ("21-lost-answer-a", "21 · The answer lost (update A)", "UNKNOWN", "Fixture fault: the send settles, then its answer is lost. NO ANSWER · RESULT UNKNOWN and Retry (the same key)."),
+    ("22-update-b-clean", "22 · Update B is clean", "UNKNOWN", "The lost answer is bound to update A: update B has no lost line, no Retry, no open row, no history."),
+    ("24-retried-one-dispatch", "24 · Back on A, Retry: one dispatch", "SENT", "Back on update A the lost line and Retry are on screen (fact back_on_a_before_retry); at 1440 the screen is board 21 byte for byte, so it is not a second board. Retry with the same key reads the stored row: ✓ SAVED. Fact: dispatches with the lost key = 1."),
+    ("25-unknown-after-restart", "25 · UNKNOWN after a restart", "UNKNOWN after a restart", "A restart after the boundary. The history row as story 01 renders it: ⚠ RESULT UNKNOWN · CHECK Jira PAY-121, with INTERRUPTED; no second dispatch."),
+    ("26-prepared", "26 · PREPARED", "PREPARED", "Five sends prepared by the steward and an agent sit first in SEND. One is open (the first): who, revision, time, account, egress, the preview's fields, Send and Discard in view (A3)."),
+    ("27-prepared-sent", "27 · A prepared send, sent", "PREPARED", "Send on the steward's row: the row stays, closed, as its result: ✓ POSTED + link. The next prepared row opens."),
+    ("28-prepared-failed", "28 · A prepared send, failed", "FAILED", "Fixture fault: SendGrid refuses the key. The row stays as its result: FAILED · SENDGRID KEY NOT VALID · NOTHING SENT (F1: a failed send never disappears)."),
+    ("29-prepared-file-sent", "29 · A prepared file send", "SENT", "The prepared preview names the FILE (minted with the send id at prepare); the result names the same file. Fact: same_file = true."),
+    ("30-prepared-destination-changed", "30 · DESTINATION CHANGED", "DESTINATION CHANGED", "The folder now resolves elsewhere: the chip DESTINATION CHANGED on the row; only Discard stays."),
+    ("31-prepared-destination-parked", "31 · DESTINATION PARKED", "DESTINATION CHANGED", "He removed the Jira destination in Settings: DESTINATION PARKED; only Discard stays."),
+    ("32-discard-armed", "32 · Discard armed", "DESTINATION CHANGED", "The library ConfirmVerb: Discard?"),
+    ("33-discarded", "33 · Discarded", "DESTINATION CHANGED", "The row stays as its result: DISCARDED, who prepared it, when (F1)."),
+    ("34-history-several", "34 · Several sends", "Several sends", "Story 01's one table: each send its own row with its proof, the UNKNOWN rows as story 01 renders them, the manual Mark delivered row (DELIVERED · MANUAL). Head DELIVERY N counts isDelivered rows only."),
+    ("34b-history-manual", "34b · The manual row, UNKNOWN beside it", "Manual", "Mark delivered kept as the manual channel: ✓ Priya · DELIVERED · MANUAL, the last row of story 01's one table (the channel rows above it)."),
+    ("35-list-chips", "35 · The update list", "Several sends", "PREPARED ×1, RESULT UNKNOWN ×M (story 01's chip, unchanged), DELIVERY ×N (A2). No chip at zero."),
+    ("36-draft-no-send", "36 · A draft", "", "A draft has no SEND well: only a published update leaves the machine."),
+    ("37-destinations-unreadable", "37 · Destinations: no answer", "Read failure", "The destinations read gets no answer: CANNOT READ DESTINATIONS + Retry. Never NO DESTINATION."),
+    ("38-sends-unreadable", "38 · Sends: no answer", "Read failure", "The sends read gets no answer: CANNOT READ SENDS + Retry."),
+    ("39-history-unreadable", "39 · History: no answer", "Read failure", "The history read gets no answer: CANNOT READ HISTORY + Retry. Never an empty history."),
+    ("40-preview-failed", "40 · Preview: no answer", "Read failure", "The preview gets no answer: NO PREVIEW · NO ANSWER + Retry; Send is not offered."),
 ]
 
 DEST_BOARDS = [
-    ("1-empty-from-room", "1 · Empty, reached from the Room", "The Room's Add destination opens Settings → Connections at the Destinations group (questions B1, B2): the add form, open."),
-    ("2-add-folder", "2 · Add a folder", "Channel FOLDER: Folder and Name. The name fills from the target and stays editable (question B3). The SYNCED mark is the owner's."),
-    ("3-add-synced-folder", "3 · Add a synced folder", "The SYNCED mark set: the row will carry SYNCED FOLDER, not THIS DEVICE."),
-    ("4-add-github", "4 · Add a GitHub comment", "Repository, Issue or Pull request, Number. The account is the gh login of today (✓ CONNECTED KWORK)."),
-    ("5-jira-one-key", "5 · REFUSED: one key only", "Two keys typed: ✗ REFUSED · ONE KEY ONLY; nothing saved."),
-    ("6-add-email-key-set", "6 · Add an email (SendGrid)", "Provider SENDGRID; From, From name; the SendGrid key typed once into the OS keychain: the face shows SET, never the key (fact: key text on the face = false); To, Cc."),
-    ("7-list", "7 · The list", "Seven destinations, one row each: channel, target, account state, egress chip."),
-    ("8-row-open-checked", "8 · A row open, checked", "The row opens in place: Check (✓ CHECKED + time), Edit, Remove."),
-    ("9-edit", "9 · Edit", "Edit opens the same form, filled. Save makes a new row and parks the old one (a row never changes)."),
-    ("10-edited-old-parked", "10 · The old row parked", "The PARKED fold holds Jira PAY-118; the list shows Jira PAY-121."),
-    ("11-remove-armed", "11 · Remove armed", "The library ConfirmVerb: Remove?"),
-    ("12-removed-parked", "12 · Removed = parked", "The row leaves the list and goes into PARKED (history kept)."),
+    ("1-arrive-from-room", "1 · Arrive from the Room", "The Room's Add destination opens Settings AT the Destinations group, in view, with the add form open (B1, B2). The group scrolls itself into view; the harness does not scroll."),
+    ("2-add-folder", "2 · Add a folder", "Folder and Name (filled from the target, editable: B3); Save. After Save and closing Settings, the Room shows it (canvas A board 2)."),
+    ("3-add-synced-folder", "3 · Add a synced folder", "The SYNCED mark set: the egress chip reads SYNCED FOLDER, not THIS DEVICE."),
+    ("4-add-github", "4 · Add a GitHub comment", "Repository, Issue or Pull request, Number. The account is today's gh login."),
+    ("5-jira-one-key", "5 · REFUSED: one key only", "Two keys typed: REFUSED · ONE KEY ONLY; nothing saved."),
+    ("6-add-confluence", "6 · Add a Confluence blog post", "The Confluence account (SIGN IN), Space id, Name."),
+    ("7-key-not-saved", "7 · KEY NOT SAVED", "Fixture fault: no safe OS key store. KEY NOT SAVED · NO SAFE KEY STORE; the key is not shown."),
+    ("8-add-email-key-set", "8 · Add an email (SendGrid)", "From, From name; the SendGrid key typed once into the OS keychain: SET, never the key; To, Cc."),
+    ("9-list", "9 · The list", "Seven destinations, one row each: channel, target (exact spelling), account state, egress chip."),
+    ("10-row-open-checked", "10 · GitHub checked", "The row opens in place: Check → CHECKED; Edit, Remove."),
+    ("11-email-check-not-verified", "11 · Email Check: sender not verified", "Check asks SendGrid about the SENDER, not the key: SENDER NOT VERIFIED (F6)."),
+    ("12-edit", "12 · Edit", "The same form, filled. Save makes a new row and parks the old one."),
+    ("13-edited-old-parked", "13 · The old row parked", "PARKED holds Jira PAY-118; the list shows Jira PAY-121."),
+    ("14-remove-armed", "14 · Remove armed", "The library ConfirmVerb: Remove?"),
+    ("15-removed-parked", "15 · Removed = parked", "The row goes into PARKED, history kept."),
+    ("16-destinations-unreadable", "16 · No answer", "The destinations read gets no answer: CANNOT READ DESTINATIONS + Retry; never the empty add form."),
 ]
 
 
@@ -66,6 +83,9 @@ def summary(facts: dict) -> dict:
     ptr = [c for v in boards.values() for c in v["pointer"]]
     touched = [c for c in ptr if c["touched"]]
     mins = [v["min_contrast"] for v in boards.values() if v["min_contrast"] is not None]
+    low = min((v["min_contrast_el"] for v in boards.values() if v.get("min_contrast_el")), key=lambda e: e["ratio"], default=None)
+    low_boards = sorted({k.rsplit("-", 1)[0] for k, v in boards.items() if v.get("min_contrast_el") and low and abs(v["min_contrast_el"]["ratio"] - low["ratio"]) < 1e-9})
+    named = [n for v in boards.values() for n in v.get("named", [])]
     inherited_raw = sorted({x for v in boards.values() for x in v["raw_buttons"]["inherited"]})
     return {
         "renders": len(boards),
@@ -76,6 +96,8 @@ def summary(facts: dict) -> dict:
         "raw_inherited": inherited_raw,
         "overflow": sum(1 for v in boards.values() if v["h_overflow"] or v["body_overflow_x"]),
         "contrast_min": min(mins) if mins else None,
+        "contrast_min_el": low, "contrast_min_boards": low_boards,
+        "named": len(named), "named_hidden": sum(1 for n in named if not n["ok"]),
         "contrast_low": sum(len(v["low_contrast"]) for v in boards.values()),
         "controls": len(ptr), "touched": len(touched), "points": 9 * len(touched),
         "touched_not_owned": sum(1 for c in touched if not c["owned"]),
@@ -91,9 +113,10 @@ def measure_line(m: dict) -> str:
     raw_inh = (f"; inherited raw buttons on {m['raw_inherited_boards']} renders ({', '.join(m['raw_inherited'])}, the library TransportKey, BACKLOG)"
                if m["raw_inherited_boards"] else "")
     return (f"Measured on {m['renders']} renders: text under 12 px {m['small_proposal']} in the proposal, {m['small_inherited']} inherited; "
-            f"proposal raw buttons {m['raw_proposal']}{raw_inh}; horizontal overflow {m['overflow']}; lowest contrast {m['contrast_min']}:1, "
+            f"proposal raw buttons {m['raw_proposal']}{raw_inh}; horizontal overflow {m['overflow']}; lowest contrast {m['contrast_min']:.7f}:1 "
+            f"({(m['contrast_min_el'] or {}).get('text', '')!r}, boards {', '.join(m['contrast_min_boards'])}), "
             f"under 4.5:1 {m['contrast_low']}; proposal controls {m['touched']}, points {m['points']}, not owned {m['touched_not_owned']}; "
-            f"modals {m['modal']}; raw JSON or XHTML in a preview {m['raw_preview']}; DELIVERED on an email row {m['email_delivered']}; browser errors {m['errors']}.")
+            f"named elements on screen {m['named'] - m['named_hidden']} of {m['named']}; modals {m['modal']}; raw JSON or XHTML in a preview {m['raw_preview']}; DELIVERED on an email row {m['email_delivered']}; browser errors {m['errors']}.")
 
 
 def pair(name: str, label: str) -> str:
@@ -158,8 +181,8 @@ def page(title: str, sub: str, words: str, boards: list[str], questions: list[st
 
 
 LIMITS_COMMON = [
-    "The wire is unbuilt (stories 01–03). <code>harness/shim.ts</code> stands in for it and says how in its header: stored destination and send records, the frozen payload bytes, the dispatch boundary, recovery after a restart. Every other request goes to a real hub on an isolated HOME.",
-    "The dispatch is a stand-in: nothing leaves the machine. Fixture faults (no answer, lost answer, restart, sender not verified, changed gh login, a moved folder) are named on their boards.",
+    "Story 01 is built (#692): board 0 is its face on its real records. The rest of the send wire (stories 02–03, and the canvas's own states) is <code>harness/shim.ts</code>, which says how in its header: the records, the frozen payload bytes, the file name minted once with the send id, the dispatch boundary, recovery after a restart, and each settled send written as ONE row of story 01's history table, in story 01's shape. Every other request goes to a real hub on an isolated HOME.",
+    "The dispatch is a stand-in: nothing leaves the machine. Fixture faults and fixture acts are named on their boards: no answer, a lost answer, a restart, a changed gh login, a moved folder, a refused key, a key store that is not safe, reads and a preview that get no answer, and his own acts outside HoldSpeak (he signs in to Atlassian again; he verifies the sender in SendGrid).",
     "The GitHub account (<code>kwork</code>, CONNECTED) and one Confluence account (SIGN IN) are overlaid on the Connections read; the Jira account is real (added through the real route, NEVER CHECKED).",
     "Proposal CSS: <code>harness/canvas.css</code>. Its repair block (the 12 px floor, the 44 px narrow target for gadget controls) names each library file the build moves it into.",
 ]
@@ -179,12 +202,14 @@ def main() -> None:
 <tr><td>Verbs</td><td><code>Send</code>, <code>Send again</code>, <code>Retry</code> (a lost answer only, the same key), <code>Discard</code> → <code>Discard?</code>, <code>Check &lt;target&gt;</code></td></tr>
 <tr><td>SENT, per channel</td><td><code>SAVED</code>, <code>POSTED</code>, <code>COMMENTED</code>, <code>BLOG POSTED</code>, <code>ACCEPTED BY SENDGRID</code>; manual <code>DELIVERED</code></td></tr>
 <tr><td>Outcomes</td><td><code>REFUSED · &lt;reason&gt; · NOTHING SENT</code>; <code>FAILED · &lt;reason&gt; · NOTHING SENT</code>; <code>RESULT UNKNOWN · &lt;reason&gt;</code>; <code>NO ANSWER · RESULT UNKNOWN</code></td></tr>
-<tr><td>History and list</td><td>head <code>DELIVERY N · UNKNOWN M</code>; list chips <code>PREPARED ×K</code>, <code>UNKNOWN ×M</code>, <code>DELIVERY ×N</code>; no chip at zero</td></tr>
+<tr><td>Result, where he looks</td><td>a destination row: <code>✓ SAVED 17:20</code>, <code>LAST SEND UNKNOWN</code>, <code>LAST SEND FAILED</code>; a prepared row that ended stays as its result, <code>DISCARDED</code> included</td></tr>
+<tr><td>Read failures</td><td><code>CANNOT READ DESTINATIONS</code> / <code>SENDS</code> / <code>HISTORY</code> + <code>Retry</code>; <code>NO PREVIEW · NO ANSWER</code> + <code>Retry</code></td></tr>
+<tr><td>History and list</td><td>story 01's one table; head <code>DELIVERY N</code> (delivered rows); the UNKNOWN row as story 01 renders it (<code>RESULT UNKNOWN · CHECK &lt;destination&gt;</code>); list chips <code>PREPARED ×K</code>, <code>RESULT UNKNOWN ×M</code>, <code>DELIVERY ×N</code>; no chip at zero</td></tr>
 </table>"""
     send_q = [
         "<b>The pick:</b> picking a destination opens its preview and Send in place, under that row (no popover, no modal)? <b>Recommended: yes.</b>",
-        "<b>The record words:</b> <code>DELIVERY N</code> (history head) and <code>DELIVERY ×N</code> (list chip), replacing the ratified <code>DELIVERED ×N</code> (Phase 9 Q2)? An email that SendGrid accepted is not delivered, and this history holds such rows. <b>Recommended: yes.</b>",
-        "<b>Prepared sends:</b> they sit first in SEND, open, with a <code>PREPARED ×K</code> chip on the update list? <b>Recommended: yes.</b>",
+        "<b>The record word:</b> story 01's face today (boards 0a, 0b) reads <code>DELIVERED ×N</code> and already keeps UNKNOWN apart (<code>RESULT UNKNOWN ×M</code>). Change the word to <code>DELIVERY ×N</code> / <code>DELIVERY N</code>, with the same counts? The reason: the record now mixes channels, and a provider's acceptance (ACCEPTED BY SENDGRID) is not a delivery. <b>Recommended: yes.</b>",
+        "<b>Prepared sends:</b> first in SEND, with a <code>PREPARED ×K</code> chip on the update list; ONE preview open (the first), each other one a click away with its Send and Discard; a prepared send that ended stays as its result? <b>Recommended: yes</b> (Codex Astra r1: first and chip yes; not all previews forced open).",
     ]
     (SEND / "index.html").write_text(page(
         "Send well canvas",
@@ -202,7 +227,7 @@ def main() -> None:
 </table>"""
     dest_q = [
         "<b>The place:</b> destinations live in Settings → Connections, in a Destinations group under Tools? <b>Recommended: yes.</b>",
-        "<b>The Room's verb:</b> <code>Add destination</code> in the Room opens Settings there, and does not add a destination in the Room? <b>Recommended: yes.</b>",
+        "<b>The Room's verb:</b> <code>Add destination</code> in the Room opens Settings AT the group (board 1, in view with the form open), and the Room shows the new destination when he comes back, with no reload (canvas A board 2)? <b>Recommended: yes.</b>",
         "<b>The name:</b> a new destination's name fills from its target (<code>Folder Payments</code>, <code>Jira PAY-118</code>) and stays editable? <b>Recommended: yes.</b>",
     ]
     dest_limits = LIMITS_COMMON + [

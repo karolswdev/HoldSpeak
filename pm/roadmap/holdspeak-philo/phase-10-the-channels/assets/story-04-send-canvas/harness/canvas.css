@@ -59,6 +59,15 @@
 [data-p10] .p10-secret .gadget-secret { padding: 4px 0; }
 [data-p10] .surface-ledger-open { min-width: 0; }
 
+/* A literal (a path, a message id, an address, a repository) keeps its exact
+   spelling: the token species uppercases its text (surface.css). */
+html body [data-p10] .surface-token.p10-literal { text-transform: none; }
+/* The Room's Add destination arrives at the group: it lands below the window
+   head, not under it. */
+[data-p10="destinations"] { scroll-margin-top: 8px; }
+/* The preview's verbs sit between its fields and its body. */
+[data-p10] .p10-preview .p10-verbs { margin: 4px 0 10px; }
+
 /* ── PROPOSED LIBRARY REPAIRS ───────────────────────────────────────────
  * The canvas carries the repairs its geometry needs; the story 04 build
  * moves each into the named product file. Each is the 12 px floor
