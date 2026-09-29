@@ -71,7 +71,8 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "channel.send", "channel.sends",
     }
     assert gw.OP_HTTP_ONLY == {"decision.status", "project.door.create",
-                               "project.door.count", "project.watch.update", "project.watch.baseline"}
+                               "project.door.count", "project.watch.update", "project.watch.baseline",
+                               "channel.save_email_key"}
     assert all(value["kind"] in {"tool", "resource"}
                for value in gw.OP_MCP_PROJECTIONS.values())
 

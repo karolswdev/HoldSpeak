@@ -1071,6 +1071,14 @@
       "consumers": []
     },
     {
+      "path": "/api/channels/email-keys/{key_ref}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.channels",
+      "consumers": []
+    },
+    {
       "path": "/api/channels/preview",
       "methods": [
         "POST"

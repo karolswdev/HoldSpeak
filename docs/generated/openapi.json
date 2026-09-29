@@ -6145,6 +6145,45 @@
         "summary": "Api Channel Check Destination"
       }
     },
+    "/api/channels/email-keys/{key_ref}": {
+      "put": {
+        "operationId": "api_channel_save_email_key_api_channels_email_keys__key_ref__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_ref",
+            "required": true,
+            "schema": {
+              "title": "Key Ref",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Save Email Key Api Channels Email Keys  Key Ref  Put"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Channel Save Email Key"
+      }
+    },
     "/api/channels/preview": {
       "post": {
         "operationId": "api_channel_preview_api_channels_preview_post",

@@ -141,7 +141,7 @@ The journal carries the destination's id (`destination:<id>`) and the payload di
 |---|---|---|---|---|
 | PHILO-10-01 | The Send contract, saved destinations and the file channel | done | [story-01-the-send-contract-and-the-file-channel](./story-01-the-send-contract-and-the-file-channel.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-10-02 | The GitHub and Atlassian channels (and the nudge) | in-progress | [story-02-the-github-and-atlassian-channels](./story-02-the-github-and-atlassian-channels.md) | [proof captures](./assets/story-02-proof/captures.md) |
-| PHILO-10-03 | The email channel — a provider interface | backlog | [story-03-the-email-channel](./story-03-the-email-channel.md) | — |
+| PHILO-10-03 | The email channel — a provider interface | in-progress | [story-03-the-email-channel](./story-03-the-email-channel.md) | — |
 | PHILO-10-04 | The Send face and the destinations setup (canvas first) | backlog | [story-04-the-send-face-and-the-destinations](./story-04-the-send-face-and-the-destinations.md) | — |
 | PHILO-10-05 | The atlas cases for Send | backlog | [story-05-the-atlas-cases-for-send](./story-05-the-atlas-cases-for-send.md) | — |
 | PHILO-10-06 | Prepare it cold, send it yourself | backlog | [story-06-prepare-it-cold-send-it-yourself](./story-06-prepare-it-cold-send-it-yourself.md) | — |
@@ -160,6 +160,16 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 01 lands first: the operation table, the record columns and the destinations table have one shipping owner. 02 and 03 each add one channel module and its manifest; they touch the send service only through the channel registry 01 defines. The story 04 canvases can be drawn while 01 is built. A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call (`docs/internal/ORCHESTRATION.md:64-67`). CI does not gate a merge (the owner, 2026-09-28; `../phase-9-the-room-on-the-contract/final-summary.md:146`).
 
 ## Where we are
+
+2026-09-29, story 03: Codex Astra r3 on #696 @53fb21d9 RATIFY-WITH-CONDITIONS (`checks/story-03-built-astra-r3.md`); its docs condition paid (the outside-channel BACKLOG row made precise). The story stays in-progress: criterion 2's displayed word (story 04) and criterion 7 (story 06) are OPEN.
+
+2026-09-29, story 03 ROUND FOUR (PR #696): Codex Astra r2 DO-NOT-RATIFY on one P2, paid — `channel.check_destination` is `blocking_io` (the email check reads the keychain), fenced over HTTP and MCP on a real hub. Criterion 2's displayed word (story 04) and criterion 7 (story 06) stay OPEN.
+
+2026-09-29, story 03 ROUND THREE (PR #696): merged with main `3965c5e1` (#695); the CLI seam and the email seam share one `build_gated_connector` authority path; the email send is `blocking_io` and a read answers during a slow send (HTTP and MCP, a real socket hub). Owed: Muad'Dib's full suite and the Codex Astra r2 check.
+
+2026-09-29, story 03 ROUND TWO (PR #696) on Codex Astra r1 DO-NOT-RATIFY (`checks/story-03-built-astra-r1.md`): the edge forces wire debug off locally; a failure after any written byte is UNKNOWN; the provider contract carries its own auth headers and interprets bounded response material (a Postmark-like test provider proves it). Criterion 2's displayed word and criterion 7 stay open (stories 04, 06). Owed: merge #695, then the CLI + email seams and the event loop checked together.
+
+2026-09-29, story 03 BUILT (PR "PHILO-10-03 — the email channel (a provider interface)"), in-progress for its real-account leg (Q6): one `EmailProvider` Protocol and one `EMAIL_PROVIDERS` row (SendGrid); the provider's request body frozen at prepare, the preview parsed from it, those bytes on the wire, their digest the `external.egress` child's admitted `payload_digest` (data class `email_message`, the send's principal, parent and broker); the key in the OS keychain behind a native-only allow-list, held by the transport, read only in the dispatch opener; redirects refused; every egress caller's native result keeps an exception's type only. `202` + `X-Message-Id` reads ACCEPTED BY SENDGRID; FAILED only on a pinned whole-request rejection; else UNKNOWN. Fences, twelve mutations, main-red runs: `assets/story-03-proof/captures.md`. The Room's history face still counts an email `sent` row under DELIVERED until story 04 builds the ratified words (DELIVERY ×N, ACCEPTED BY SENDGRID).
 
 2026-09-29, story 02: Codex Astra r4 on #695 @4716c010 RATIFY-WITH-CONDITIONS (`checks/story-02-built-astra-r4.md`); the one condition is Muad'Dib's full-suite result on the merge candidate. The story stays in-progress until the real-account leg (story 06).
 

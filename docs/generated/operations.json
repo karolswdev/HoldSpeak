@@ -4713,7 +4713,7 @@
     {
       "name": "channel.save_destination",
       "version": 1,
-      "description": "Save a destination you send to: a folder (an absolute path; HoldSpeak writes a new file there per send), a GitHub issue or pull request (a comment per send; the gh login is saved with it), one Jira work item (a comment per send) or a Confluence space (a blog post per send). Mark a folder synced if a cloud client syncs it. Give replaces to edit one: the old destination is parked and this one is new.",
+      "description": "Save a destination you send to: a folder (an absolute path; HoldSpeak writes a new file there per send), a GitHub issue or pull request (a comment per send; the gh login is saved with it), one Jira work item (a comment per send), a Confluence space (a blog post per send), or email through a provider (SendGrid): your verified sender, the name of the saved key, and the To and Cc addresses. Mark a folder synced if a cloud client syncs it. Give replaces to edit one: the old destination is parked and this one is new.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -4728,9 +4728,10 @@
               "file",
               "github",
               "jira",
-              "confluence"
+              "confluence",
+              "email"
             ],
-            "description": "The channel: file (a folder), github, jira or confluence."
+            "description": "The channel: file (a folder), github, jira, confluence or email."
           },
           "folder": {
             "type": [
@@ -4808,6 +4809,57 @@
             ],
             "description": "confluence: the space id (digits)."
           },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "email: the provider (sendgrid if not given)."
+          },
+          "from_email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "email: the sender address (a sender the provider verified)."
+          },
+          "from_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120,
+            "description": "email: the sender's name."
+          },
+          "key_ref": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "email: the name of the key saved with channel.save_email_key (the provider's name if not given). Never the key."
+          },
+          "to": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "description": "email: the To addresses (at least one)."
+          },
+          "cc": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "description": "email: the Cc addresses (To and Cc together: 20 at most)."
+          },
           "replaces": {
             "type": [
               "string",
@@ -4847,6 +4899,12 @@
         "jira_key_invalid",
         "atlassian_email_invalid",
         "confluence_space_invalid",
+        "email_provider_unknown",
+        "email_address_invalid",
+        "email_key_ref_invalid",
+        "email_recipients_missing",
+        "email_recipients_too_many",
+        "email_recipient_duplicate",
         "owner_principal_required"
       ],
       "completion": "synchronous; channel.destinations lists it",
@@ -4919,7 +4977,7 @@
     {
       "name": "channel.check_destination",
       "version": 1,
-      "description": "Check a saved destination: a folder still resolves to the saved path, exists and is writable; a GitHub, Jira or Confluence destination shows the stored state of its connection.",
+      "description": "Check a saved destination: a folder still resolves to the saved path, exists and is writable; a GitHub, Jira or Confluence destination shows the stored state of its connection; an email destination's key is in the OS keychain (no call to the provider).",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -4935,7 +4993,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "read",
-      "result": "{destination, check: {state: ready | changed | missing | not_writable | parked | connected | never_checked | owner_action_required | unavailable | degraded, resolved}}",
+      "result": "{destination, check: {state: ready | changed | missing | not_writable | parked | connected | never_checked | owner_action_required | unavailable | degraded | email_key_missing | email_key_store_not_native | email_key_store_locked, resolved}}",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
@@ -4949,7 +5007,7 @@
       ],
       "held": [],
       "owner_only": false,
-      "blocking_io": false,
+      "blocking_io": true,
       "owner_press": false,
       "admission": {
         "rule": "exempt",
@@ -5121,7 +5179,7 @@
     {
       "name": "channel.send",
       "version": 1,
-      "description": "The owner's Send: send a prepared send (send_id), or send a published update to a saved destination with the digest of the preview he saw (update_id, destination_id, preview_digest). The answer is the channel's proof (a folder: the file's path, sha256 and size, read back; GitHub: the comment URL; Jira and Confluence: the id acli gives), a known failure with its code, or unknown. HoldSpeak never sends again by itself: a repeat of the same command_id answers the first result. Only the owner sends; an agent prepares.",
+      "description": "The owner's Send: send a prepared send (send_id), or send a published update to a saved destination with the digest of the preview he saw (update_id, destination_id, preview_digest). The answer is the channel's proof (a folder: the file's path, sha256 and size, read back; GitHub: the comment URL; Jira and Confluence: the id acli gives; email: the provider's message id, ACCEPTED BY SENDGRID -- accepted for processing, not delivered), a known failure with its code, or unknown. HoldSpeak never sends again by itself: a repeat of the same command_id answers the first result. Only the owner sends; an agent prepares.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -5184,6 +5242,11 @@
         "github_identity_changed",
         "github_not_logged_in",
         "github_identity_unverified",
+        "email_provider_unknown",
+        "email_key_missing",
+        "email_key_store_not_native",
+        "email_key_store_locked",
+        "email_recipients_too_many",
         "idempotency_conflict"
       ],
       "completion": "synchronous; channel.sends and project.list_updates (deliveries) show it",
@@ -5247,6 +5310,68 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "channel.save_email_key",
+      "version": 1,
+      "description": "Save your email provider's key (a SendGrid API key) in the OS keychain under a name; an email destination names that key. The key is sent in the request body, is never an argument, and is never shown again.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "key_ref": {
+            "type": "string",
+            "description": "The key's name (from the path)."
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional: the provider (sendgrid)."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "key_ref"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "{key_ref, provider, saved} and the receipt (never the key)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "owner_required",
+        "email_key_ref_invalid",
+        "email_key_invalid",
+        "email_provider_unknown",
+        "email_key_store_not_native",
+        "email_key_store_locked"
+      ],
+      "completion": "synchronous; channel.check_destination of an email destination answers ready",
+      "exposure": [
+        "http:PUT /api/channels/email-keys/{key_ref}"
+      ],
+      "held": [
+        "api_key"
+      ],
+      "owner_only": true,
+      "blocking_io": true,
+      "owner_press": true,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Config: the owner's email key in the OS keychain (#694's table: config, his press, HTTP only, in no palette). The key is held by the transport, never an argument, never journaled.",
         "arguments": [],
         "enforced": true
       }

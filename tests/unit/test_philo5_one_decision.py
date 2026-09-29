@@ -251,6 +251,8 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "channel.destinations", "channel.save_destination", "channel.remove_destination",
         "channel.check_destination", "channel.preview", "channel.prepare", "channel.discard",
         "channel.send", "channel.sends",
+        # PHILO-10-03: the email key (HTTP only; the key is a held input).
+        "channel.save_email_key",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

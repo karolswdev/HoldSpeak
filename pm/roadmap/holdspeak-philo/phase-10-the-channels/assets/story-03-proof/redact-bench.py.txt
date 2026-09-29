@@ -1,0 +1,20 @@
+"""PHILO-10-03 timing gate: the worst case of the email error redaction (story 02's GATE 1 shape).
+
+SendGrid's error excerpt is bounded at the opener (64 KiB read, 10 errors, 500 characters each), then
+cut to ERROR_LIMIT (240) BEFORE the excerpt scan against the frozen request (at most 1 MB: the
+email limit). Worst case: every 10-character window of the error is absent from a 1 MB body.
+"""
+import time
+
+from holdspeak.services.channel_contract import ERROR_LIMIT, redact
+from holdspeak.services.channel_email import SendGridProvider
+
+body = ("a" * (SendGridProvider.limits.max_bytes - 1)).encode()
+error = "; ".join("error %03d: the from address is not verified " % i + "z" * 400 for i in range(10))
+worst = 0.0
+for _ in range(5):
+    started = time.perf_counter()
+    redact(" ".join(error.split())[:ERROR_LIMIT], body)
+    worst = max(worst, time.perf_counter() - started)
+print(f"email redaction worst of 5 over a {len(body)} byte body: {worst:.3f} s (gate: < 1.0 s)")
+raise SystemExit(0 if worst < 1.0 else 1)

@@ -58,15 +58,16 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
     version=1,
     description="Save a destination you send to: a folder (an absolute path; HoldSpeak writes a new file there per "
                 "send), a GitHub issue or pull request (a comment per send; the gh login is saved with it), one "
-                "Jira work item (a comment per send) or a Confluence space (a blog post per send). Mark a folder "
-                "synced if a cloud client syncs it. Give replaces to edit one: the old destination is parked and "
-                "this one is new.",
+                "Jira work item (a comment per send), a Confluence space (a blog post per send), or email through "
+                "a provider (SendGrid): your verified sender, the name of the saved key, and the To and Cc "
+                "addresses. Mark a folder synced if a cloud client syncs it. Give replaces to edit one: the old "
+                "destination is parked and this one is new.",
     args_schema={
         "type": "object",
         "properties": {
             "name": {"type": "string", "maxLength": 120, "description": "Your name for it (120 characters at most)."},
-            "channel": {"type": "string", "enum": ["file", "github", "jira", "confluence"],
-                        "description": "The channel: file (a folder), github, jira or confluence."},
+            "channel": {"type": "string", "enum": ["file", "github", "jira", "confluence", "email"],
+                        "description": "The channel: file (a folder), github, jira, confluence or email."},
             "folder": {"type": ["string", "null"], "description": "file: the absolute folder path."},
             "synced": {"type": ["boolean", "null"],
                        "description": "Optional, file: a cloud client syncs this folder (the badge says cloud)."},
@@ -79,6 +80,17 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
             "email": {"type": ["string", "null"], "description": "jira, confluence: the email of the acli account."},
             "key": {"type": ["string", "null"], "description": "jira: ONE work item key, like ABC-123."},
             "space_id": {"type": ["string", "null"], "description": "confluence: the space id (digits)."},
+            "provider": {"type": ["string", "null"], "description": "email: the provider (sendgrid if not given)."},
+            "from_email": {"type": ["string", "null"],
+                           "description": "email: the sender address (a sender the provider verified)."},
+            "from_name": {"type": ["string", "null"], "maxLength": 120, "description": "email: the sender's name."},
+            "key_ref": {"type": ["string", "null"], "description": "email: the name of the key saved with "
+                                                                  "channel.save_email_key (the provider's name if "
+                                                                  "not given). Never the key."},
+            "to": {"type": ["array", "null"], "items": {"type": "string"}, "maxItems": 20,
+                   "description": "email: the To addresses (at least one)."},
+            "cc": {"type": ["array", "null"], "items": {"type": "string"}, "maxItems": 20,
+                   "description": "email: the Cc addresses (To and Cc together: 20 at most)."},
             "replaces": {"type": ["string", "null"],
                          "description": "Optional. Edit: the destination id this one replaces (it is parked)."},
             "command_id": _COMMAND_ID,
@@ -92,7 +104,10 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
     refusals=_CONTRACT_REFUSALS + ("folder_not_absolute", "folder_missing", "destination_name_invalid",
                                    "destination_parked", "channel_unknown", "github_target_invalid",
                                    "github_not_logged_in", "jira_key_not_single", "jira_key_invalid",
-                                   "atlassian_email_invalid", "confluence_space_invalid", "owner_principal_required"),
+                                   "atlassian_email_invalid", "confluence_space_invalid", "email_provider_unknown",
+                                   "email_address_invalid", "email_key_ref_invalid", "email_recipients_missing",
+                                   "email_recipients_too_many", "email_recipient_duplicate",
+                                   "owner_principal_required"),
     completion="synchronous; channel.destinations lists it",
     exposure=("http:POST /api/channels/destinations", "mcp:channel.save_destination"),
     service="channel_service",
@@ -130,7 +145,8 @@ CHANNEL_CHECK_DESTINATION = OperationDescriptor(
     name="channel.check_destination",
     version=1,
     description="Check a saved destination: a folder still resolves to the saved path, exists and is writable; a "
-                "GitHub, Jira or Confluence destination shows the stored state of its connection.",
+                "GitHub, Jira or Confluence destination shows the stored state of its connection; an email "
+                "destination's key is in the OS keychain (no call to the provider).",
     args_schema={
         "type": "object",
         "properties": {"destination_id": _DESTINATION_ID},
@@ -140,12 +156,14 @@ CHANNEL_CHECK_DESTINATION = OperationDescriptor(
     principal=_ROOM_PRINCIPAL,
     effect="read",
     result="{destination, check: {state: ready | changed | missing | not_writable | parked | connected | "
-           "never_checked | owner_action_required | unavailable | degraded, resolved}}",
+           "never_checked | owner_action_required | unavailable | degraded | email_key_missing | "
+           "email_key_store_not_native | email_key_store_locked, resolved}}",
     refusals=_CONTRACT_REFUSALS + ("destination_not_saved",),
     completion="synchronous",
     exposure=("http:POST /api/channels/destinations/{destination_id}/check", "mcp:channel.check_destination"),
     service="channel_service",
     method="check_destination",
+    blocking_io=True,  # email: the OS keychain read (it may wait on the owner's unlock); Codex Astra r2 on #696
     admission=Admission("exempt", "A folder: a local check, no egress (the phase's table). A remote channel: the "
                                   "stored connection state, no probe (connection.recheck probes, admitted)."),
 )
@@ -229,7 +247,8 @@ CHANNEL_SEND = OperationDescriptor(
     description="The owner's Send: send a prepared send (send_id), or send a published update to a saved "
                 "destination with the digest of the preview he saw (update_id, destination_id, preview_digest). "
                 "The answer is the channel's proof (a folder: the file's path, sha256 and size, read back; GitHub: "
-                "the comment URL; Jira and Confluence: the id acli gives), a known failure with its code, or "
+                "the comment URL; Jira and Confluence: the id acli gives; email: the provider's message id, "
+                "ACCEPTED BY SENDGRID -- accepted for processing, not delivered), a known failure with its code, or "
                 "unknown. HoldSpeak never sends again by itself: a repeat of the same command_id answers the first "
                 "result. Only the owner sends; an agent prepares.",
     args_schema={
@@ -253,12 +272,14 @@ CHANNEL_SEND = OperationDescriptor(
                                    "destination_parked", "destination_changed", "preview_changed", "payload_changed",
                                    "payload_too_large:<channel>", "send_already_settled", "update_not_published",
                                    "path_outside_folder", "github_identity_changed", "github_not_logged_in",
-                                   "github_identity_unverified", "idempotency_conflict"),
+                                   "github_identity_unverified", "email_provider_unknown", "email_key_missing",
+                                   "email_key_store_not_native", "email_key_store_locked",
+                                   "email_recipients_too_many", "idempotency_conflict"),
     completion="synchronous; channel.sends and project.list_updates (deliveries) show it",
     exposure=("http:POST /api/channels/send", "mcp:channel.send"),
     service="channel_service",
     method="send",
-    blocking_io=True,  # gh / acli children
+    blocking_io=True,  # gh / acli children; the email egress (a SendGrid call up to 30 s)
     owner_press=True,
     admission=Admission("admitted", "Crosses egress or files (XI.1): one terminal receipt -- succeeded (sent), "
                                     "failed, indeterminate (unknown), or refused before the dispatch boundary. "
@@ -290,8 +311,42 @@ CHANNEL_SENDS = OperationDescriptor(
     admission=_READ,
 )
 
+CHANNEL_SAVE_EMAIL_KEY = OperationDescriptor(
+    name="channel.save_email_key",
+    version=1,
+    description="Save your email provider's key (a SendGrid API key) in the OS keychain under a name; an email "
+                "destination names that key. The key is sent in the request body, is never an argument, and is "
+                "never shown again.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "key_ref": {"type": "string", "description": "The key's name (from the path)."},
+            "provider": {"type": ["string", "null"], "description": "Optional: the provider (sendgrid)."},
+            "command_id": _COMMAND_ID,
+        },
+        "required": ["key_ref"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="{key_ref, provider, saved} and the receipt (never the key)",
+    refusals=_CONTRACT_REFUSALS + ("owner_required", "email_key_ref_invalid", "email_key_invalid",
+                                   "email_provider_unknown", "email_key_store_not_native", "email_key_store_locked"),
+    completion="synchronous; channel.check_destination of an email destination answers ready",
+    exposure=("http:PUT /api/channels/email-keys/{key_ref}",),
+    service="channel_service",
+    method="save_email_key",
+    held=("api_key",),
+    owner_only=True,
+    owner_press=True,
+    blocking_io=True,  # the OS keychain (it may wait on the owner's unlock)
+    admission=Admission("admitted", "Config: the owner's email key in the OS keychain (#694's table: config, "
+                                    "his press, HTTP only, in no palette). The key is held by the transport, "
+                                    "never an argument, never journaled."),
+)
+
 #: PHILO-10-01's rows, in export order.
 CHANNEL_OPERATIONS: tuple[OperationDescriptor, ...] = (
     CHANNEL_DESTINATIONS, CHANNEL_SAVE_DESTINATION, CHANNEL_REMOVE_DESTINATION, CHANNEL_CHECK_DESTINATION,
-    CHANNEL_PREVIEW, CHANNEL_PREPARE, CHANNEL_DISCARD, CHANNEL_SEND, CHANNEL_SENDS,
+    CHANNEL_PREVIEW, CHANNEL_PREPARE, CHANNEL_DISCARD, CHANNEL_SEND, CHANNEL_SENDS, CHANNEL_SAVE_EMAIL_KEY,
 )

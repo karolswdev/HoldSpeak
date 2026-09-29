@@ -356,3 +356,26 @@ def channel(name: str) -> Any:
     if found is None:
         raise ValidationError(f"Unknown channel: {name}", code="channel_unknown")
     return found
+
+
+def serialize_for(destination: Mapping[str, Any], document: Document) -> bytes:
+    """The exact transport bytes of *document* for *destination* (the one byte contract).
+
+    PHILO-10-03: an ``addressed`` channel (email) serializes per destination:
+    its bytes name the frozen sender and recipients. Every other channel's
+    bytes are the document's alone.
+    """
+    chan = channel(destination["channel"])
+    if getattr(chan, "addressed", False):
+        return chan.serialize(document, destination)
+    return chan.serialize(document)
+
+
+def preview_for(channel_name: str, payload: bytes, account_json: Any = None) -> dict[str, Any]:
+    """The readable preview, derived from the frozen bytes (an addressed channel reads its account's provider)."""
+    import json
+
+    chan = channel(channel_name)
+    if getattr(chan, "addressed", False):
+        return chan.preview(payload, json.loads(account_json or "{}"))
+    return chan.preview(payload)
