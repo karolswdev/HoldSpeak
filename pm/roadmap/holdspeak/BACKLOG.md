@@ -79,6 +79,13 @@ The PHILO-8 delete fences now run with reduced motion (the product's own
 still mode) so they test the delete, not the GPU. A product fix (for example,
 fall back to the still atmosphere when frames are slow) is not scheduled.
 
+## The real Door → watch → steward path makes no nudge
+
+**2026-09-28, found by Codex Astra (counsel on PR #695, `pm/roadmap/holdspeak-philo/phase-10-the-channels/checks/story-02-built-astra-r1.md` finding 3). Inherited from main; not a PHILO-10-02 regression.** The watch normalizer keeps only `id`, `title`, `url`, `updated_at` and a few gh fields (`holdspeak/services/reaction_service.py:44-60`, `_normalize_entity`). It drops `number` and `createdAt`. The nudge producer needs both (`holdspeak/services/project_steward_service.py`, `_effect_github_comment`: the PR number, and the created time for the wait in days), so it skips every PR. A four-day-old waiting PR through the real Door → watch → steward path yields no nudge (Codex's walk, `/private/tmp/astra-pr695-XRIaF0/walk-nudge-producer-r2/`). Every nudge fence seeds its step (`tests/unit/test_philo5_the_loop_r2.py:341`). PHILO-10-02 claims only the send of a nudge that exists.
+
+- **Owner:** Muad'Dib's lane (a PHILO story: keep `number` and `createdAt` in the normalized gh entity, and fence the producer through the real Door → watch → steward path, not a seeded step).
+- **Home:** the next PHILO phase that touches the steward's nudges, or a repair story in PHILO-10 if the owner wants the nudge usable before the channels close. Muad'Dib rules which.
+
 ## Earlier backlog record
 
 The parking lot so good ideas do not get lost between phases. Each entry is a

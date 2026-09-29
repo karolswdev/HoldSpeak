@@ -95,9 +95,6 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         return bool(store.get("enabled", False))
 
     # ── POST /api/mcp ──────────────────────────────────────────────
-    #: The tools whose call waits on the outside (a CLI, a file): run off the loop.
-    _DISPATCHING_TOOLS = frozenset({"channel.send", "nudge.send"})
-
     @router.post("/api/mcp")
     async def mcp_http_endpoint(request: Request) -> JSONResponse:
         """Streamable HTTP transport for MCP JSON-RPC.
@@ -204,10 +201,12 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 _caller.reset(caller_token)
                 _caller_identity.reset(identity_token)
 
-        # PHILO-10-02 GATE 2: a tool that dispatches to the outside (a Send, a
-        # nudge) runs off the event loop, so the hub answers during it.
-        params = body.get("params") if isinstance(body.get("params"), dict) else {}
-        if body.get("method") == "tools/call" and params.get("name") in _DISPATCHING_TOOLS:
+        # PHILO-10-02 GATE 2 (round two, Codex Astra r1 finding 2): every tool
+        # call runs OFF the event loop. Any tool may reach a CLI or the network
+        # (a Send, a destination's identity read, a recheck), and none needs the
+        # loop (the async tools refuse to run inside one: mcp/tools.py `_run`),
+        # so the rule is derived, not a hand list. Protocol messages stay inline.
+        if body.get("method") == "tools/call":
             from starlette.concurrency import run_in_threadpool
 
             response = await run_in_threadpool(handle)

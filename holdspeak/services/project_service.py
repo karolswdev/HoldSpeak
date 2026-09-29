@@ -1913,6 +1913,8 @@ class ProjectService:
                 nudge_by_login[login] = {
                     "step_id": step["id"],
                     "state": step["state"],
+                    # PHILO-10-02: the card of an UNKNOWN step names the PR to check, after a reload too.
+                    "pr_number": int(parts[-2]) if parts[-2].isdigit() else None,
                     "sent_at": step.get("completed_at") if step["state"] == "sent" else None,
                 }
 

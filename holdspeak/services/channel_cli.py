@@ -538,3 +538,7 @@ def _need(seam: Optional[Seam]) -> Seam:
 CLI_CHANNELS: dict[str, CliChannel] = {
     "github": GitHubChannel(), "jira": JiraChannel(), "confluence": ConfluenceChannel(),
 }
+
+from .channel_contract import CHANNELS  # noqa: E402
+
+CHANNELS.update(CLI_CHANNELS)

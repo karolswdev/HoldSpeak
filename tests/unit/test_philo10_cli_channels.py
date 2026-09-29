@@ -729,3 +729,56 @@ def test_a_real_kill_during_a_gh_create_ends_unknown_once_and_the_replay_never_r
         assert history_rows == [{"outcome": "unknown"}]
     finally:
         second.kill()
+
+
+# ── GATE 2, round two: every call that can run a CLI answers off the loop ──
+
+_SLOW_GH = """#!/bin/sh
+# A slow fake gh (1.5 s at the process edge, no account).
+sleep 1.5
+if [ "$1" = "api" ] && [ "$2" = "user" ]; then echo '{"login":"octo-owner"}'; exit 0; fi
+if [ "$1" = "auth" ] && [ "$2" = "status" ]; then echo "Logged in to github.com account octo-owner"; exit 0; fi
+exit 1
+"""
+
+
+@pytest.mark.timeout(240)
+@pytest.mark.parametrize("call", ["mcp-save-destination", "http-save-destination", "mcp-recheck", "http-recheck"])
+def test_gate2_a_slow_cli_read_in_setup_or_recheck_never_blocks_the_hub(tmp_path: Path, call: str) -> None:
+    """Codex Astra r1 finding 2: MCP channel.save_destination's identity read blocked a read 1.73 s."""
+    from test_philo10_send_restart import HubProcess
+
+    home, bin_dir = tmp_path / "home", tmp_path / "bin"
+    home.mkdir()
+    bin_dir.mkdir()
+    fake = bin_dir / "gh"
+    fake.write_text(_SLOW_GH)
+    fake.chmod(0o755)
+    hub = HubProcess(home, extra_env={"PATH": f"{bin_dir}:{os.environ.get('PATH', '')}"})
+    try:
+        destination = {"name": "Scratch issue", "channel": "github", "repo": "acme/scratch", "kind": "issue",
+                       "number": 1}
+
+        def slow() -> Any:
+            if call == "http-save-destination":
+                return hub.call("POST", "/api/channels/destinations", destination)
+            if call == "http-recheck":
+                return hub.call("POST", "/api/connections/github/recheck", {})
+            name, args = (("channel.save_destination", destination) if call == "mcp-save-destination"
+                          else ("connection.recheck", {"provider_id": "github"}))
+            return hub.call("POST", "/api/mcp", {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                                                 "params": {"name": name, "arguments": args}})
+
+        thread, answer = in_thread(slow)
+        time.sleep(0.4)  # the call is inside its 1.5 s gh read
+        started = time.perf_counter()
+        status, _listed = hub.call("GET", "/api/channels/destinations")
+        read = time.perf_counter() - started
+        thread.join(30)
+        assert status == 200
+        assert answer and answer[0][0] == 200, answer
+        if call.startswith("mcp"):
+            assert answer[0][1]["result"]["isError"] is False, answer
+        assert read < 0.5, f"{call}: the read waited {read:.3f} s during the slow gh call"
+    finally:
+        hub.kill()

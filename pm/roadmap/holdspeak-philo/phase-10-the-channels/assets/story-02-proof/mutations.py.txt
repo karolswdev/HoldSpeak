@@ -28,6 +28,20 @@ MUTATIONS = [
      "            response = await run_in_threadpool(handle)",
      "            response = handle()",
      [F + "test_gate2_the_hub_answers_a_read_during_a_slow_send[mcp]"]),
+    ("G2c (round two) MCP tool calls on the event loop again (setup's identity read)", "holdspeak/web/routes/mcp_http.py",
+     "        if body.get(\"method\") == \"tools/call\":\n            from starlette.concurrency import run_in_threadpool",
+     "        if False:\n            from starlette.concurrency import run_in_threadpool",
+     [F + "test_gate2_a_slow_cli_read_in_setup_or_recheck_never_blocks_the_hub[mcp-save-destination]",
+      F + "test_gate2_a_slow_cli_read_in_setup_or_recheck_never_blocks_the_hub[mcp-recheck]"]),
+    ("G2d (round two) the HTTP recheck on the event loop", "holdspeak/web/routes/connections.py",
+     "            result, kernel = await run_in_threadpool(\n                ops().invoke_receipted, p, \"connection.recheck\"",
+     "            result, kernel = (lambda f, *a: f(*a))(\n                ops().invoke_receipted, p, \"connection.recheck\"",
+     [F + "test_gate2_a_slow_cli_read_in_setup_or_recheck_never_blocks_the_hub[http-recheck]"]),
+    ("W1 (round two) the nudge card starts open whatever its step's persisted state",
+     "web/src/features/project-room/ProjectRoomCore.tsx",
+     "useReducer(nudgeCardReducer, initialNudgeCard(persistedState, defaultText, prNumber))",
+     "useReducer(nudgeCardReducer, { phase: \"open\", text: defaultText, busy: false } as NudgeCardState)",
+     ["vitest:src/features/project-room/__tests__/nudgeUnknown10.test.tsx"]),
     ("M1 the CLI children unparented", CLI,
      "principal=seam.principal, parent_operation_id=seam.parent_operation_id, broker=seam.broker)",
      "principal=seam.principal, parent_operation_id=\"\", broker=seam.broker)",
@@ -124,12 +138,17 @@ for name, path, old, new, fences in MUTATIONS:
         mutated = mutated.replace(before, after)
     try:
         file.write_text(mutated)
-        run = subprocess.run([sys.executable, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *fences],
-                             capture_output=True, text=True)
+        if fences[0].startswith("vitest:"):
+            run = subprocess.run(["npx", "vitest", "run", *(f[len("vitest:"):] for f in fences)],
+                                 capture_output=True, text=True, cwd="web")
+        else:
+            run = subprocess.run([sys.executable, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *fences],
+                                 capture_output=True, text=True)
     finally:
         file.write_text(original)
     tail = [line for line in run.stdout.splitlines() if line.strip()][-1:]
-    why = [line.strip()[:160] for line in run.stdout.splitlines() if line.startswith("E  ")][:1]
+    why = [line.strip()[:160] for line in run.stdout.splitlines()
+           if line.startswith("E  ") or line.strip().startswith(("×", "AssertionError"))][:1]
     red = run.returncode != 0
     caught += red
     print(f"{'CAUGHT' if red else 'MISSED'} {name}: rc={run.returncode} {tail[0] if tail else ''}")

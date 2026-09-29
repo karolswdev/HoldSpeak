@@ -8082,6 +8082,7 @@
         "tests/e2e/test_hs169_door_glass.py",
         "tests/e2e/test_philo9_b1_connections_glass.py",
         "tests/mcp/test_hs168_connection_tools.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo9_b1_connections.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/web/test_hs168_connections_routes.py"
@@ -8146,13 +8147,13 @@
             "kernel_fields",
             "kernel_refusal",
             "ops",
-            "ops().invoke_receipted",
             "principal",
             "raw_bytes.strip",
             "refusal_fields",
             "refuse_identifiable",
             "request.body",
-            "router.post"
+            "router.post",
+            "run_in_threadpool"
           ],
           "body_access_keys": [
             "ref"
@@ -8165,6 +8166,7 @@
         "tests/e2e/test_hs168_connections_glass.py",
         "tests/e2e/test_hs169_door_glass.py",
         "tests/e2e/test_philo9_b1_connections_glass.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo9_b1_connections.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/web/test_hs168_connections_routes.py"
@@ -19922,7 +19924,7 @@
             "POST"
           ],
           "symbol": "mcp_http_endpoint",
-          "line": 102,
+          "line": 99,
           "parameters": [
             {
               "name": "request",
@@ -19956,7 +19958,6 @@
             "handle_message_for_principal",
             "is_loopback_host",
             "isinstance",
-            "params.get",
             "request.headers.get",
             "request.json",
             "request.query_params.get",
@@ -19964,8 +19965,7 @@
             "run_in_threadpool"
           ],
           "body_access_keys": [
-            "method",
-            "params"
+            "method"
           ],
           "raw_request": true,
           "docstring": "Streamable HTTP transport for MCP JSON-RPC.\n\nLong-running contract (MCP-003): project.run_steward returns\nrun_id promptly; the client polls project.get_steward_run(run_id).\nTerminal states: completed, failed, cancelled.  A credential\nexpiring mid-run returns 403 on the poll; the run continues on\nthe hub."
@@ -32885,7 +32885,7 @@
             "GET"
           ],
           "symbol": "confluence_connections",
-          "line": 451,
+          "line": 454,
           "parameters": [
             {
               "name": "request",
@@ -32942,7 +32942,7 @@
             "POST"
           ],
           "symbol": "confluence_connection_recheck",
-          "line": 471,
+          "line": 474,
           "parameters": [
             {
               "name": "ref",
@@ -33003,7 +33003,7 @@
             "GET"
           ],
           "symbol": "confluence_discover",
-          "line": 494,
+          "line": 497,
           "parameters": [
             {
               "name": "request",
@@ -33078,7 +33078,7 @@
             "POST"
           ],
           "symbol": "confluence_validate_scope",
-          "line": 537,
+          "line": 540,
           "parameters": [
             {
               "name": "request",
@@ -33210,10 +33210,10 @@
           ],
           "calls": [
             "JSONResponse",
-            "adapter.connection_status",
             "error_500",
             "principal",
-            "router.post"
+            "router.post",
+            "run_in_threadpool"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -33252,7 +33252,7 @@
             "GET"
           ],
           "symbol": "github_discover",
-          "line": 153,
+          "line": 156,
           "parameters": [
             {
               "name": "request",
@@ -33320,7 +33320,7 @@
             "POST"
           ],
           "symbol": "github_validate_repo",
-          "line": 181,
+          "line": 184,
           "parameters": [
             {
               "name": "request",
@@ -33383,7 +33383,7 @@
             "GET"
           ],
           "symbol": "jira_connections",
-          "line": 233,
+          "line": 236,
           "parameters": [
             {
               "name": "request",
@@ -33451,7 +33451,7 @@
             "POST"
           ],
           "symbol": "jira_add_connection",
-          "line": 254,
+          "line": 257,
           "parameters": [
             {
               "name": "request",
@@ -33521,7 +33521,7 @@
             "POST"
           ],
           "symbol": "jira_connection_recheck",
-          "line": 286,
+          "line": 289,
           "parameters": [
             {
               "name": "ref",
@@ -33590,7 +33590,7 @@
             "GET"
           ],
           "symbol": "jira_discover",
-          "line": 309,
+          "line": 312,
           "parameters": [
             {
               "name": "request",
@@ -33672,7 +33672,7 @@
             "POST"
           ],
           "symbol": "jira_search",
-          "line": 354,
+          "line": 357,
           "parameters": [
             {
               "name": "request",
@@ -33738,7 +33738,7 @@
             "POST"
           ],
           "symbol": "jira_validate_scope",
-          "line": 392,
+          "line": 395,
           "parameters": [
             {
               "name": "request",
@@ -36108,7 +36108,7 @@
             "GET"
           ],
           "symbol": "get_remote_settings",
-          "line": 227,
+          "line": 226,
           "parameters": [
             {
               "name": "request",
@@ -36196,7 +36196,7 @@
             "PUT"
           ],
           "symbol": "update_remote_settings",
-          "line": 291,
+          "line": 290,
           "parameters": [
             {
               "name": "request",
@@ -36276,7 +36276,7 @@
             "POST"
           ],
           "symbol": "issue_credential",
-          "line": 313,
+          "line": 312,
           "parameters": [
             {
               "name": "request",
@@ -36362,7 +36362,7 @@
             "DELETE"
           ],
           "symbol": "revoke_credential",
-          "line": 359,
+          "line": 358,
           "parameters": [
             {
               "name": "request",
@@ -36432,7 +36432,7 @@
             "DELETE"
           ],
           "symbol": "revoke_delegation",
-          "line": 430,
+          "line": 429,
           "parameters": [
             {
               "name": "request",
@@ -36503,7 +36503,7 @@
             "PUT"
           ],
           "symbol": "grant_delegation",
-          "line": 417,
+          "line": 416,
           "parameters": [
             {
               "name": "request",
@@ -36574,7 +36574,7 @@
             "DELETE"
           ],
           "symbol": "revoke_project_delegation",
-          "line": 465,
+          "line": 464,
           "parameters": [
             {
               "name": "request",
@@ -36647,7 +36647,7 @@
             "PUT"
           ],
           "symbol": "grant_project_delegation",
-          "line": 453,
+          "line": 452,
           "parameters": [
             {
               "name": "request",
@@ -42328,7 +42328,7 @@
             "POST"
           ],
           "symbol": "evaluate_watch",
-          "line": 573,
+          "line": 576,
           "parameters": [
             {
               "name": "watch_id",

@@ -347,9 +347,8 @@ class FileChannel:
 #: channels (``channel_cli.py``); story 03 adds email.
 CHANNELS: dict[str, Any] = {"file": FileChannel()}
 
-from .channel_cli import CLI_CHANNELS  # noqa: E402  (its classes import the names above)
-
-CHANNELS.update(CLI_CHANNELS)
+# The CLI channels register themselves at the end of their module (either import order works).
+from . import channel_cli  # noqa: E402,F401
 
 
 def channel(name: str) -> Any:
