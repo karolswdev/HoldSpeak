@@ -1296,16 +1296,34 @@ class ThreadService:
                             turn_operation_id, thread_id, tc_dict,
                         )
                     except ValueError as exc:
-                        # Unknown tool (fail-closed classification)
+                        # Unknown tool (fail-closed classification), or -- #694,
+                        # Codex Astra counsel r5 -- a known tool the owner's
+                        # ruling keeps for his press: that refusal keeps its
+                        # class and its named reason in the persisted response.
+                        from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK, call_class
+
+                        refused_class = ""
+                        if name in TOOL_AUTHORITY:
+                            try:
+                                parsed = json.loads(args_str) if args_str else {}
+                            except (json.JSONDecodeError, TypeError):
+                                parsed = {}
+                            refused_class = call_class(name, parsed if isinstance(parsed, dict) else {})
+                            if refused_class == WORK:
+                                refused_class = ""
                         self._threads.append_part(
                             assistant_msg_id, kind="tool_call",
                             tool_call_id=call_id,
                             meta_json=json.dumps(
                                 {"id": call_id, "name": name, "arguments": args_str,
-                                 "class": "unknown", "state": "error"},
+                                 "class": refused_class or "unknown", "state": "error"},
                                 separators=(",", ":")),
                         )
-                        err_text = json.dumps({"error": "tool_admission_failed" if interview else "tool_unknown", "name": name, **({"detail": str(exc)} if interview else {})})
+                        if refused_class:
+                            err_text = json.dumps({"error": "tool_denied", "name": name, "class": refused_class,
+                                                   "reason": str(exc), "owner_press_required": True})
+                        else:
+                            err_text = json.dumps({"error": "tool_admission_failed" if interview else "tool_unknown", "name": name, **({"detail": str(exc)} if interview else {})})
                         tool_msg = self._threads.append_message(
                             thread_id, role="tool", parent_id=assistant_msg_id,
                         )
@@ -1321,7 +1339,7 @@ class ThreadService:
                             "role": "tool", "tool_call_id": call_id,
                             "content": err_text,
                         })
-                        error_code = "tool_unknown"
+                        error_code = "tool_denied" if refused_class else "tool_unknown"
                         continue
 
                     # -- HS-153-03: compute default_decision from guardrail --

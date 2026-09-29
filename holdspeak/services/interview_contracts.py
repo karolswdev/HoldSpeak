@@ -31,12 +31,15 @@ DECISION_READS = frozenset({
 
 SECTIONS = (
     InterviewSection("goals", "Goals", "What should improve, and what would count as progress?", PROJECT_READS),
+    # #694 (the owner's ruling; Muad'Dib's prepare-then-press): the interview
+    # DRAFTS a setup with the owner; project.setup.finalize commits it and is
+    # CONFIG, his press on the setup face (mcp/tool_authority.py).
     InterviewSection("projects", "Projects", "Identify existing projects, their outcomes, and evidence gaps.", PROJECT_READS | frozenset({
         "connection.list", "provider.list", "project.setup.start",
         "project.setup.resume", "project.setup.answer", "project.setup.suggest",
         "project.setup.select_proposal", "project.setup.deselect_proposal",
         "project.setup.test_proposal", "project.setup.clarify_repo_scope",
-        "project.setup.clarify_jira_scope", "project.setup.finalize",
+        "project.setup.clarify_jira_scope",
     })),
     InterviewSection("attention", "What matters", "Discover meaningful changes and sources of unnecessary noise.", PROJECT_READS | DECISION_READS),
     InterviewSection("cadences", "Cadences", "Explore recurring preparation, reviews, outputs, and frequency.", PROJECT_READS | frozenset({"cadence.status", "cadence.loops"})),

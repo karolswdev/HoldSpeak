@@ -164,6 +164,10 @@ class OperationDescriptor:
     #: read. A transport that touches the filesystem for the operation calls
     #: ``authorize`` first.
     owner_only: bool = False
+    #: The owner's own press decides it (#694, Codex Astra counsel r1): an agent
+    #: is refused, and the MCP authority table (``mcp/tool_authority.py``)
+    #: classes its tool egress, authority or config, so no thread offers it.
+    owner_press: bool = False
     #: Article XI admission (PHILO-7-01 declares it for the desk slice; story
     #: 02 enforces it). ``None``: not yet declared for this operation.
     admission: Optional[Admission] = None
@@ -191,6 +195,7 @@ class OperationDescriptor:
             "exposure": list(self.exposure),
             "held": list(self.held),
             "owner_only": self.owner_only,
+            "owner_press": self.owner_press,
             "admission": self.admission.export() if self.admission is not None else None,
         }
 

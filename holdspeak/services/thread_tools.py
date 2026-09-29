@@ -25,7 +25,7 @@ from ..principals import Principal, PrincipalKind
 # Classes: evidence_read, candidate_builder, effect_proposal
 # Sensitive: True for all people.* tools
 
-_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
+_ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     # --- desk family (main catalogue) ---
     "desk.list":          ("evidence_read",     False),
     "desk.get":           ("evidence_read",     False),
@@ -88,7 +88,6 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "proposal.dismiss":        ("effect_proposal",   False),
     # --- reviewer nudge (HS-173-04) ---
     "steward.nudges":          ("evidence_read",     False),
-    "nudge.send":              ("effect_proposal",   False),
     "nudge.dismiss":           ("effect_proposal",   False),
     # --- monday brief ---
     "monday_brief.get":       ("evidence_read",     False),
@@ -120,7 +119,6 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "concierge.download": ("effect_proposal", False),
     "desk.needs_you":     ("evidence_read",   False),
     "meeting.run_intelligence": ("effect_proposal", False),
-    "meeting.import": ("effect_proposal", False),  # PHILO-5-02: the MCP import intake
     # --- coder family ---
     "coder.list":   ("evidence_read",     False),
     "coder.get":    ("evidence_read",     False),
@@ -243,53 +241,42 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "provider.confluence_connections": ("evidence_read", False),
     "provider.confluence_discover": ("evidence_read", False),
     "provider.confluence_validate_space": ("evidence_read", False),
-    "project.accept_review": ("effect_proposal", False),
-    "project.archive": ("effect_proposal", False),
-    "project.configure_steward": ("effect_proposal", False),
     "project.create": ("effect_proposal", False),
-    "project.decide_proposal": ("effect_proposal", False),
     "project.draft_update": ("effect_proposal", False),
-    "project.link": ("effect_proposal", False),
     "project.open_review": ("effect_proposal", False),
     "project.publish_update": ("effect_proposal", False),
     "project.restore": ("effect_proposal", False),
     "project.run_steward": ("effect_proposal", False),
-    "project.steward.trigger": ("effect_proposal", False),  # HS-167-02: desk-wide trigger, same class as run_steward
     "project.setup.answer": ("effect_proposal", False),
     "project.setup.finalize": ("effect_proposal", False),
     "project.setup.clarify_jira_scope": ("effect_proposal", False),  # HS-166
     "project.setup.start": ("effect_proposal", False),
     "project.setup.suggest": ("effect_proposal", False),
     "project.stop_steward": ("effect_proposal", False),
-    "project.unlink": ("effect_proposal", False),
     "project.update": ("effect_proposal", False),
     "project.update_draft": ("effect_proposal", False),
-    "project.watch.evaluate": ("effect_proposal", False),
-    "project.watch.pause": ("effect_proposal", False),
-    "project.watch.resume": ("effect_proposal", False),
-    "project.watch.retire": ("effect_proposal", False),
-    "project.watch.set_rules": ("effect_proposal", False),
-    "project.watch.test": ("effect_proposal", False),
     # PHILO-9-01: the Room's item and resource tools (MCP-only, in no thread palette).
     "project.item.list": ("evidence_read", False),
     "project.resource.list": ("evidence_read", False),
     "project.item.create": ("effect_proposal", False),
     "project.item.update": ("effect_proposal", False),
     "project.item.transition": ("effect_proposal", False),
-    "project.resource.add": ("effect_proposal", False),
-    "project.resource.remove": ("effect_proposal", False),
     # HS-172-06: suggested source tools
     "project.suggested_sources":         ("evidence_read",     False),
-    "project.add_suggested_source":      ("effect_proposal",   False),
     "project.dismiss_suggested_source":  ("effect_proposal",   False),
     # HS-168-02: connection tools (reads only -- no state mutation)
     "connection.list": ("evidence_read", False),
-    "connection.recheck": ("evidence_read", False),
     # HS-171-02: heartbeat family
     "heartbeat.status": ("evidence_read", False),
     "heartbeat.run_now": ("effect_proposal", False),
     "heartbeat.set": ("effect_proposal", False),
     "heartbeat.notify_test": ("effect_proposal", False),
+    # PHILO-10-01: the channel family.
+    "channel.destinations": ("evidence_read", False),
+    "channel.check_destination": ("evidence_read", False),
+    "channel.preview": ("evidence_read", False),
+    "channel.sends": ("evidence_read", False),
+    "channel.prepare": ("effect_proposal", False),
     "project.setup.select_proposal": ("effect_proposal", False),
     "project.setup.deselect_proposal": ("effect_proposal", False),
     "project.setup.test_proposal": ("effect_proposal", False),
@@ -305,9 +292,46 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "practice_recipe.list": ("evidence_read", False),
     "practice_recipe.get": ("evidence_read", False),
     "practice_recipe.compile": ("evidence_read", False),
+    # Rows whose tools a thread may or may not offer: the owner's authority
+    # table (holdspeak/mcp/tool_authority.py) decides, below (#694).
+    "project.accept_review": ("effect_proposal", False),
+    "project.archive": ("effect_proposal", False),
+    "project.configure_steward": ("effect_proposal", False),
+    "project.decide_proposal": ("effect_proposal", False),
+    "project.link": ("effect_proposal", False),
+    "project.unlink": ("effect_proposal", False),
+    "project.steward.trigger": ("effect_proposal", False),
+    "project.watch.evaluate": ("effect_proposal", False),
+    "project.watch.pause": ("effect_proposal", False),
+    "project.watch.resume": ("effect_proposal", False),
+    "project.watch.retire": ("effect_proposal", False),
+    "project.watch.set_rules": ("effect_proposal", False),
+    "project.watch.test": ("effect_proposal", False),
+    "project.resource.add": ("effect_proposal", False),
+    "project.resource.remove": ("effect_proposal", False),
+    "project.add_suggested_source": ("effect_proposal", False),
+    "connection.recheck": ("evidence_read", False),
+    "meeting.import": ("effect_proposal", False),
+    "nudge.send": ("effect_proposal", False),
+    "channel.save_destination": ("effect_proposal", False),
+    "channel.remove_destination": ("effect_proposal", False),
+    "channel.discard": ("effect_proposal", False),
+    "channel.send": ("effect_proposal", False),
+    "project.mark_update_delivered": ("effect_proposal", False),
 }
 
 # Public accessors
+#: #694, the owner's ruling (2026-09-29): a thread acting as him does WORK;
+#: never egress, authority or config without his press. The one declared
+#: table over the whole MCP dispatch set decides (``mcp/tool_authority.py``):
+#: an excluded tool is in no palette, in no mode, and :func:`tool_class`
+#: refuses it by name.
+from ..mcp.tool_authority import THREAD_EXCLUDED as EXCLUDED_TOOLS  # noqa: E402
+
+_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
+    name: entry for name, entry in _ALL_TOOL_CLASSES.items() if name not in EXCLUDED_TOOLS
+}
+
 TOOL_NAMES: frozenset[str] = frozenset(_TOOL_CLASSES)
 
 # HS-152-03: the palette a chat turn OFFERS the model.  ``TOOL_NAMES`` stays
@@ -340,6 +364,8 @@ assert CHAT_PALETTE <= TOOL_NAMES, sorted(CHAT_PALETTE - TOOL_NAMES)
 
 def tool_class(name: str) -> str:
     """Return the tool's class or raise ValueError (fail-closed)."""
+    if name in EXCLUDED_TOOLS:
+        raise ValueError(f"{name} is egress, authority or config: the owner's press, never a model's")
     entry = _TOOL_CLASSES.get(name)
     if entry is None:
         raise ValueError(f"Unclassified tool: {name}")
@@ -570,6 +596,16 @@ class ThreadToolExecutor:
                 args = json.loads(args)
             except (json.JSONDecodeError, TypeError):
                 args = {}
+
+        # #694 (Codex Astra counsel r4): a mixed-purpose tool's class is its
+        # call's -- a schedule or a delegation in the payload is authority.
+        from ..mcp.tool_authority import WORK, call_class
+
+        if name in _TOOL_CLASSES and isinstance(args, dict) and call_class(name, args) != WORK:
+            raise ValueError(
+                f"{name} with these arguments creates or changes a schedule or a delegation: "
+                "authority, the owner's press, never a model's"
+            )
 
         # Fail closed on unclassified tool
         cls = tool_class(name)
@@ -820,6 +856,7 @@ class ThreadToolExecutor:
 
 
 __all__ = [
+    "EXCLUDED_TOOLS",
     "TOOL_NAMES",
     "TOOL_RESULT_BYTE_CAP",
     "ThreadToolExecutor",

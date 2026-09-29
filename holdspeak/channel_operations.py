@@ -97,6 +97,7 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
     exposure=("http:POST /api/channels/destinations", "mcp:channel.save_destination"),
     service="channel_service",
     method="save_destination",
+    owner_press=True,
     admission=Admission("admitted", "Changes where the owner's documents may go: the allow-list (XI.1). "
                                     "The owner's; Edit parks the old row."),
 )
@@ -120,6 +121,7 @@ CHANNEL_REMOVE_DESTINATION = OperationDescriptor(
     exposure=("http:DELETE /api/channels/destinations/{destination_id}", "mcp:channel.remove_destination"),
     service="channel_service",
     method="remove_destination",
+    owner_press=True,
     admission=Admission("admitted", "Changes the allow-list (XI.1); Remove parks, never deletes."),
 )
 
@@ -214,6 +216,7 @@ CHANNEL_DISCARD = OperationDescriptor(
     exposure=("http:POST /api/channels/sends/{send_id}/discard", "mcp:channel.discard"),
     service="channel_service",
     method="discard",
+    owner_press=True,
     admission=Admission("admitted", "Decides a prepared send (prepared -> discarded, one conditional write). "
                                     "The owner's."),
 )
@@ -254,6 +257,7 @@ CHANNEL_SEND = OperationDescriptor(
     exposure=("http:POST /api/channels/send", "mcp:channel.send"),
     service="channel_service",
     method="send",
+    owner_press=True,
     admission=Admission("admitted", "Crosses egress or files (XI.1): one terminal receipt -- succeeded (sent), "
                                     "failed, indeterminate (unknown), or refused before the dispatch boundary. "
                                     "The owner's press ('You, every time')."),

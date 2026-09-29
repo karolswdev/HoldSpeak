@@ -662,7 +662,11 @@ def test_new_tools_are_classified_and_outside_the_chat_palette() -> None:
 
     names = {t["name"] for t in TOOLS}
     assert {"meeting.import", "monday_brief.shelf", "monday_brief.shelf_read"} <= names
-    assert tool_class("meeting.import") == "effect_proposal"
+    # #694 (the owner's ruling): meeting.import is AUTHORITY (the hub's file
+    # custody of a path on his disk), so it is never a thread tool.
+    from holdspeak.services.thread_tools import EXCLUDED_TOOLS
+
+    assert "meeting.import" in EXCLUDED_TOOLS
     assert tool_class("monday_brief.shelf") == "effect_proposal"
     assert tool_class("monday_brief.shelf_read") == "evidence_read"
     # As monday_brief.generate: classified, not offered to a chat turn.
