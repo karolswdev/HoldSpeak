@@ -116,11 +116,22 @@ export const SENT_WORD: Record<Channel | "manual", string> = {
 export const sentWord = (channel: string): string =>
   SENT_WORD[channel as Channel] ?? channel.toUpperCase();
 
+/* The words below cover EVERY code the channel services can emit: the fence
+ * tests/unit/test_philo10_face_words.py derives the codes from the services'
+ * source and declarations (tests/unit/_philo10_codes.py) and fails on any code
+ * with no word here (PHILO-10-05, Muad'Dib's ruling on #698: no raw code on the
+ * face). A code with a variable part (an errno, an exception, an HTTP status)
+ * takes its word by prefix. */
+
 /** Refusals (before the boundary: nothing ran). */
 const REFUSED: Record<string, string> = {
   github_identity_changed: "GITHUB ACCOUNT CHANGED",
+  github_identity_unverified: "GITHUB ACCOUNT NOT VERIFIED",
   github_not_logged_in: "GITHUB NOT SIGNED IN",
   github_target_invalid: "REPOSITORY NOT VALID",
+  github_cli_missing: "GH NOT INSTALLED",
+  jira_cli_missing: "ACLI NOT INSTALLED",
+  confluence_cli_missing: "ACLI NOT INSTALLED",
   atlassian_not_signed_in: "NOT SIGNED IN",
   atlassian_not_logged_in: "NOT SIGNED IN",
   atlassian_email_invalid: "ADDRESS NOT VALID",
@@ -131,8 +142,16 @@ const REFUSED: Record<string, string> = {
   destination_parked: "DESTINATION PARKED",
   destination_not_saved: "DESTINATION NOT SAVED",
   destination_name_invalid: "NAME MISSING",
+  document_unknown: "NO DOCUMENT",
+  email_address_invalid: "ADDRESS NOT VALID",
+  email_key_invalid: "KEY NOT VALID",
   email_key_missing: "NO SENDGRID KEY",
+  email_key_ref_invalid: "KEY NAME NOT VALID",
+  email_key_store_locked: "KEY STORE LOCKED",
   email_key_store_not_native: "NO SAFE KEY STORE",
+  email_provider_unknown: "PROVIDER NOT KNOWN",
+  email_recipient_duplicate: "ADDRESS TWICE",
+  email_recipients_missing: "NO RECIPIENT",
   email_recipients_too_many: "TOO MANY RECIPIENTS",
   jira_key_not_single: "ONE KEY ONLY",
   jira_key_invalid: "KEY NOT VALID",
@@ -141,24 +160,46 @@ const REFUSED: Record<string, string> = {
   address_invalid: "ADDRESS NOT VALID",
   channel_unknown: "CHANNEL NOT READY",
   invalid_arguments: "NOT VALID",
+  validation_error: "NOT VALID",
   preview_changed: "PREVIEW CHANGED",
   payload_changed: "PREVIEW CHANGED",
   send_already_settled: "ALREADY DONE",
+  operation_ended_before_dispatch: "SEND ENDED",
   path_outside_folder: "PATH NOT IN FOLDER",
+  name_exhausted: "NO FREE FILE NAME",
   no_answer: "NO ANSWER",
   lock_timeout: "LOCK TIMEOUT",
+  not_found: "NOT FOUND",
+  owner_required: "OWNER ONLY",
+  authority_in_arguments: "NOT VALID",
+  unknown_operation: "NOT VALID",
 };
+/** A refusal code with a variable part: its word by prefix. */
+const REFUSED_PREFIX: [string, string][] = [
+  ["payload_too_large:", "TOO LARGE"],
+];
+
 /** Failures (a KNOWN non-delivery). */
 const FAILED: Record<string, string> = {
   permission_denied: "NO PERMISSION",
   no_space: "NO SPACE",
   name_taken: "NAME TAKEN",
   not_written: "FILE NOT WRITTEN",
-  github_issue_not_found: "ISSUE NOT FOUND",
-  github_no_permission: "NO PERMISSION",
+  github_target_not_found: "ISSUE NOT FOUND",
+  github_repository_not_found: "REPOSITORY NOT FOUND",
+  github_permission_denied: "NO PERMISSION",
+  github_not_authenticated: "GITHUB NOT SIGNED IN",
+  github_cli_missing: "GH NOT INSTALLED",
+  github_cli_not_started: "GH DID NOT START",
   jira_not_found: "WORK ITEM NOT FOUND",
-  jira_cannot_edit: "CANNOT COMMENT",
+  jira_cannot_be_edited: "CANNOT COMMENT",
+  jira_cli_missing: "ACLI NOT INSTALLED",
+  jira_cli_not_started: "ACLI DID NOT START",
   confluence_space_not_found: "SPACE NOT FOUND",
+  confluence_permission_denied: "NO PERMISSION",
+  confluence_cli_missing: "ACLI NOT INSTALLED",
+  confluence_cli_not_started: "ACLI DID NOT START",
+  atlassian_unauthorized: "NOT SIGNED IN",
   atlassian_not_logged_in: "NOT SIGNED IN",
   atlassian_identity_unverified: "ACCOUNT NOT VERIFIED",
   atlassian_switch_failed: "ACCOUNT SWITCH FAILED",
@@ -166,11 +207,34 @@ const FAILED: Record<string, string> = {
   sendgrid_forbidden: "SENDGRID REFUSED",
   api_key_invalid: "SENDGRID KEY NOT VALID",
   rate_limited: "RATE LIMITED",
+  invalid_request: "REQUEST NOT VALID",
+  payload_too_large: "TOO LARGE",
+  payload_changed: "PREVIEW CHANGED",
+  plan_refused: "COMMAND NOT VALID",
+  subprocess_refused: "COMMAND NOT PERMITTED",
+  egress_refused: "SEND NOT PERMITTED",
+  email_provider_unknown: "PROVIDER NOT KNOWN",
+  email_key_missing: "NO SENDGRID KEY",
+  email_key_store_locked: "KEY STORE LOCKED",
+  email_key_store_not_native: "NO SAFE KEY STORE",
+  url_not_admitted: "ADDRESS NOT PERMITTED",
+  connect_refused: "CONNECTION REFUSED",
+  dns_failed: "HOST NOT FOUND",
+  tls_failed: "SECURE CONNECTION FAILED",
+  timeout: "TIMED OUT",
+  transport_error: "CONNECTION FAILED",
 };
+/** A failure code with a variable part: its word by prefix (none today). */
+const FAILED_PREFIX: [string, string][] = [
+];
+
 /** UNKNOWN reasons: HoldSpeak cannot know. */
 const UNKNOWN: Record<string, string> = {
   no_answer: "NO ANSWER",
   interrupted: "INTERRUPTED",
+  github_interrupted: "INTERRUPTED",
+  jira_interrupted: "INTERRUPTED",
+  confluence_interrupted: "INTERRUPTED",
   reaped: "TIMED OUT",
   timeout: "TIMED OUT",
   redirect_refused: "REDIRECT",
@@ -178,17 +242,41 @@ const UNKNOWN: Record<string, string> = {
   read_back_mismatch: "READ BACK NOT EQUAL",
   missing_after_write: "FILE MISSING",
   read_back_failed: "READ BACK FAILED",
+  accepted_without_message_id: "NO MESSAGE ID",
+  github_no_proof: "NO PROOF",
+  jira_no_proof: "NO PROOF",
+  confluence_no_proof: "NO PROOF",
+  email_key_missing: "NO SENDGRID KEY",
+  email_key_store_locked: "KEY STORE LOCKED",
+  email_key_store_not_native: "NO SAFE KEY STORE",
+  url_not_admitted: "ADDRESS NOT PERMITTED",
+  connect_refused: "CONNECTION REFUSED",
+  dns_failed: "HOST NOT FOUND",
+  tls_failed: "SECURE CONNECTION FAILED",
+  transport_error: "CONNECTION FAILED",
 };
-const word = (table: Record<string, string>, code: string) =>
-  table[code] ?? code.toUpperCase().replace(/[_:]/g, " ");
+/** An UNKNOWN code with a variable part: the file channel's unpinned OS
+ *  errors (`create_<errno>`, `write_<errno>`), an effect that raised, a CLI's
+ *  unpinned exit, an unpinned HTTP status. */
+const UNKNOWN_PREFIX: [string, string][] = [
+  ["create_", "FILE NOT CONFIRMED"],
+  ["write_", "FILE NOT CONFIRMED"],
+  ["dispatch_", "NO ANSWER"],
+  ["recover_", "NO ANSWER"],
+  ["github_exit_", "NO CLEAR ANSWER"],
+  ["jira_exit_", "NO CLEAR ANSWER"],
+  ["confluence_exit_", "NO CLEAR ANSWER"],
+  ["unpinned_", "NO CLEAR ANSWER"],
+];
+
+const byPrefix = (table: [string, string][], code: string) => table.find(([p]) => code.startsWith(p))?.[1];
+const word = (table: Record<string, string>, prefixes: [string, string][], code: string) =>
+  table[code] ?? byPrefix(prefixes, code) ?? code.toUpperCase().replace(/[_:]/g, " ");
 /** A refusal's word: the channel words above, then the library's refusal
  *  words (the Room's one table: `desk/surface/egress.ts`). */
-export const refusedWord = (c: string) => REFUSED[c] ?? refusalWord(c);
-export const failedWord = (c: string) => word(FAILED, c);
-/** The file channel's unpinned OS errors (`create_<errno>`, `write_<errno>`)
- *  and an effect that raised: HoldSpeak cannot confirm the file. */
-export const unknownWord = (c: string) =>
-  /^(create|write)_/.test(c) ? "FILE NOT CONFIRMED" : /^(dispatch|recover)_/.test(c) ? "NO ANSWER" : word(UNKNOWN, c);
+export const refusedWord = (c: string) => REFUSED[c] ?? byPrefix(REFUSED_PREFIX, c) ?? refusalWord(c);
+export const failedWord = (c: string) => word(FAILED, FAILED_PREFIX, c);
+export const unknownWord = (c: string) => word(UNKNOWN, UNKNOWN_PREFIX, c);
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 export function stamp(iso: string | null | undefined): string {

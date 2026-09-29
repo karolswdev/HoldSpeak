@@ -1,0 +1,1396 @@
+{
+  "id": "obs-20260929T155315Z-case.p10.send.unknown_after_restart-muaddib-1440",
+  "run_id": "20260929T155315Z-case.p10.send.unknown_after_restart-muaddib-1440",
+  "case_id": "case.p10.send.unknown_after_restart",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase10.json",
+  "job": "p10",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p10_send_face",
+  "provenance": {
+    "revision": "08276df1116ccfdbcb213c97496a3159c3e2483c",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "daaf6d6829b6a8f1db43699d64e6f0ee73e33a225757ea7eed19b78f760c906d",
+      "assets": [
+        "index-XLByuAU4.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50545",
+      "port": 50545,
+      "pid": 24465,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-cewn85mx",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-cewn85mx/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo10_atlas/gh-held.json": "ab3551e6f76d84db62b86b48fdf2cc6222932259aa611a3f62a2592820a6dc2a"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:53:15.793090+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "the CLI process edge: gh-held.json",
+        "substitute": "cli_runner",
+        "installed_sha256": "ab3551e6f76d84db62b86b48fdf2cc6222932259aa611a3f62a2592820a6dc2a"
+      }
+    ],
+    "restarts": [
+      {
+        "kind": "cli",
+        "action": "restart_hub",
+        "adapter": "process",
+        "stopped_pid": 24465,
+        "started_pid": 24746,
+        "downtime_s": 2.04,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-cewn85mx/.local/share/holdspeak/holdspeak.db",
+        "port": 50545,
+        "hub_identity": {
+          "url": "http://127.0.0.1:50545",
+          "port": 50545,
+          "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-cewn85mx/.local/share/holdspeak/holdspeak.db",
+          "stopped_pid": 24465,
+          "started_pid": 24746
+        },
+        "meeting_before": {
+          "meeting_id": null,
+          "summary": null,
+          "run_receipt": null,
+          "transcription_status": null,
+          "payload": {}
+        },
+        "meeting_after": {
+          "meeting_id": null,
+          "summary": null,
+          "run_receipt": null,
+          "transcription_status": null,
+          "payload": {}
+        },
+        "summary_retained": false,
+        "receipt_retained": false,
+        "meeting_identity_retained": false,
+        "page_reloaded": true
+      }
+    ],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase10.json",
+      "sha256": "3962ed15649aedfa7eef420002bdc7575fd5eb50f18642ddd2fddd163835ccef",
+      "version": "phase10-send"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDING runner at the CLI channels' process edge (no real gh or acli)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": "ab3551e6f76d84db62b86b48fdf2cc6222932259aa611a3f62a2592820a6dc2a"
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-29T09:53:21.637144"
+        }
+      },
+      "response_sha256": "19300ec397cc9903a4def69b3927bd4a7521687b775e7a508e8e4d8b201fb482"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "boundary",
+      "label": "the CLI process edge: gh-held.json",
+      "substitute": "cli_runner",
+      "adapter": "cli-process-edge",
+      "installed_sha256": "ab3551e6f76d84db62b86b48fdf2cc6222932259aa611a3f62a2592820a6dc2a",
+      "seam": "holdspeak.services.channel_cli.CLI_RUNNER"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-a524bfd94bb5",
+          "name": "Atlas send ledger",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-09-29T09:53:21.713178",
+          "updated_at": "2026-09-29T09:53:21.713178",
+          "result_kind": "created",
+          "project_id": "proj-a524bfd94bb5",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-a524bfd94bb5"
+          ]
+        }
+      },
+      "response_sha256": "9ab4b11fc580719027e79f5e97d4da7f561fe641c348a7791a4da8bd8214b253",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-a524bfd94bb5"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects/proj-a524bfd94bb5/updates/draft",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_71625fc54ab544d885153451de99db75",
+          "project_id": "proj-a524bfd94bb5",
+          "project_revision": 1,
+          "review_id": null,
+          "lifecycle": "draft",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-09-29T15:53:21+00:00",
+          "updated_at": "2026-09-29T15:53:21+00:00",
+          "published_at": null,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generatorHost": null,
+          "generatorModel": null
+        }
+      },
+      "response_sha256": "fffef1f343c1b8baf07a35038f96330ac8374b1e73bce8309a8e457ce46d2ff7",
+      "captured": {
+        "name": "update_id",
+        "path": "update.id",
+        "value": "pupd_71625fc54ab544d885153451de99db75"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/updates/pupd_71625fc54ab544d885153451de99db75/publish",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_71625fc54ab544d885153451de99db75",
+          "project_id": "proj-a524bfd94bb5",
+          "project_revision": 2,
+          "review_id": null,
+          "lifecycle": "published",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-09-29T15:53:21+00:00",
+          "updated_at": "2026-09-29T15:53:21+00:00",
+          "published_at": "2026-09-29T15:53:21+00:00",
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "result_kind": "updated",
+          "changed_refs": [
+            "project:proj-a524bfd94bb5"
+          ],
+          "generatorHost": null,
+          "generatorModel": null
+        },
+        "operation_id": "op_b04833b7ca9b4079bf2ac0383b9a72bf",
+        "receipt": {
+          "receipt_id": "rcpt_2eb5e177609d4759b86a1a506960a161",
+          "operation_id": "op_b04833b7ca9b4079bf2ac0383b9a72bf",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project_update:pupd_71625fc54ab544d885153451de99db75",
+          "created_at": 1790697201.722881,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project_update:pupd_71625fc54ab544d885153451de99db75"
+        }
+      },
+      "response_sha256": "8edcf4e585c5c7b75db9b7bd403060b6ea4c9d026ad0ba6bff5344b7c71f0b37"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/destinations",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "destination": {
+          "id": "chd_e90b6869af4ca2b100d14661",
+          "name": "Issue42",
+          "channel": "github",
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017",
+          "synced": false,
+          "state": "active",
+          "badge": "cloud",
+          "created_at": "2026-09-29T15:53:21+00:00",
+          "parked_at": null,
+          "connection": {
+            "id": "wpc_github",
+            "state": "never_checked",
+            "last_checked_at": null
+          }
+        },
+        "replaced": null,
+        "operation_id": "op_1b02ae2776bb49bcbbc64783fe1a110f",
+        "receipt": {
+          "receipt_id": "rcpt_c5e914261d424e5891f303b236293bb6",
+          "operation_id": "op_1b02ae2776bb49bcbbc64783fe1a110f",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_destination:chd_e90b6869af4ca2b100d14661",
+          "created_at": 1790697201.729255,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_destination"
+        }
+      },
+      "response_sha256": "c781b839cee49454c2d34f9485ec887d0a79587fb51da7313f31ab42c64e9276",
+      "captured": {
+        "name": "gh_id",
+        "path": "destination.id",
+        "value": "chd_e90b6869af4ca2b100d14661"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-project.open.proj-a524bfd94bb5']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=room-body]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=updates-verb]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=update-list]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=update-list-item] [data-update-id='pupd_71625fc54ab544d885153451de99db75']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=send-well]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=destination-row]:has([data-destination='Issue42'])",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=destination-row]:has([data-destination='Issue42'])",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=send-open][data-destination='Issue42'] [data-testid=send-preview]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "scroll_into_view",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=send-open][data-destination='Issue42'] [data-testid=send-verbs]",
+      "block": "center",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=send-open][data-destination='Issue42'] [data-testid=send-verb]",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/channels/sends?update_id=pupd_71625fc54ab544d885153451de99db75",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "sends.0.state",
+        "value": "dispatching"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "sends.0.state equals the declared value"
+    },
+    {
+      "kind": "cli",
+      "action": "restart_hub",
+      "adapter": "process",
+      "stopped_pid": 24465,
+      "started_pid": 24746,
+      "downtime_s": 2.04,
+      "same_db_path": true,
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-cewn85mx/.local/share/holdspeak/holdspeak.db",
+      "port": 50545,
+      "hub_identity": {
+        "url": "http://127.0.0.1:50545",
+        "port": 50545,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-cewn85mx/.local/share/holdspeak/holdspeak.db",
+        "stopped_pid": 24465,
+        "started_pid": 24746
+      },
+      "meeting_before": {
+        "meeting_id": null,
+        "summary": null,
+        "run_receipt": null,
+        "transcription_status": null,
+        "payload": {}
+      },
+      "meeting_after": {
+        "meeting_id": null,
+        "summary": null,
+        "run_receipt": null,
+        "transcription_status": null,
+        "payload": {}
+      },
+      "summary_retained": false,
+      "receipt_retained": false,
+      "meeting_identity_retained": false,
+      "page_reloaded": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-project.open.proj-a524bfd94bb5']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=room-body]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=updates-verb]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=update-list]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-cewn85mx",
+    "project_id": "proj-a524bfd94bb5",
+    "update_id": "pupd_71625fc54ab544d885153451de99db75",
+    "gh_id": "chd_e90b6869af4ca2b100d14661"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=update-list-item] [data-update-id='pupd_71625fc54ab544d885153451de99db75']",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "scroll_into_view",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=delivery-history]",
+        "block": "center",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "\u26a0\nRESULT UNKNOWN \u00b7 CHECK Issue42\nINTERRUPTED\nCheck\nSEP 29 09:53"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "surface-ledger-rows",
+        "data-testid": "delivery-history"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 39,
+        "y": 365,
+        "w": 770,
+        "h": 28
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "a50f8d007a273fb54a8cf3f6a8e73dd005987e5fc2e93711d6306909b1b93ed1",
+      "after": "cb7ecc794a75b3a7aaae508521760d25918353624259bd9f4edcdec277254e54"
+    },
+    "document_text_len": {
+      "before": 572,
+      "after": 1015
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=delivery-history]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:50545/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "a50f8d007a273fb54a8cf3f6a8e73dd005987e5fc2e93711d6306909b1b93ed1",
+    "document_text_len": 572,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?update_id=pupd_71625fc54ab544d885153451de99db75",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_5f3419f19bce005cf15780fa",
+              "document_ref": "project_update:pupd_71625fc54ab544d885153451de99db75",
+              "destination_id": "chd_e90b6869af4ca2b100d14661",
+              "destination_name": "Issue42",
+              "channel": "github",
+              "badge": "cloud",
+              "account": {
+                "host": "github.com",
+                "login": "octo-owner"
+              },
+              "target": {
+                "host": "github.com",
+                "kind": "issue",
+                "number": 42,
+                "repo": "acme/payments"
+              },
+              "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017",
+              "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "size": 286,
+              "preview": {
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": null,
+              "send_operation_id": "op_53ab1b8b2bb547b98fba410029b1d547",
+              "state": "unknown",
+              "reason": "interrupted",
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-09-29T15:53:25.055800+00:00",
+              "dispatch_started_at": "2026-09-29T15:53:25.055800+00:00",
+              "settled_at": "2026-09-29T15:53:26+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "801a48b5964f8c7931c7b52551f04c59002c2b3ecc8a0bc97b5e2997f894cbdd"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-a524bfd94bb5/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_71625fc54ab544d885153451de99db75",
+              "project_id": "proj-a524bfd94bb5",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-09-29T15:53:21+00:00",
+              "updated_at": "2026-09-29T15:53:21+00:00",
+              "published_at": "2026-09-29T15:53:21+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [
+                {
+                  "id": "pdel_5f3419f19bce005c",
+                  "update_id": "pupd_71625fc54ab544d885153451de99db75",
+                  "project_id": "proj-a524bfd94bb5",
+                  "delivered_at": "2026-09-29T15:53:25.055800+00:00",
+                  "delivered_to": "Issue42",
+                  "operation_id": "op_53ab1b8b2bb547b98fba410029b1d547",
+                  "channel": "github",
+                  "send_id": "chs_5f3419f19bce005cf15780fa",
+                  "outcome": "unknown",
+                  "proof_json": null
+                }
+              ],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "81c5e7db629c029ac60e154a7e76f395ffb25a6adc5f49063989431e4aae3d04"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 24465,
+        "at": "2026-09-29T15:53:21.728848+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 24465,
+        "at": "2026-09-29T15:53:25.055622+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "issue",
+          "comment",
+          "42",
+          "--repo",
+          "acme/payments",
+          "--body-file",
+          "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/holdspeak-send-s5d6d9sc/payload.md"
+        ],
+        "body_sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "pid": 24465,
+        "at": "2026-09-29T15:53:25.058945+00:00",
+        "answer": 1,
+        "hold": true
+      }
+    ],
+    "at_utc": "2026-09-29T15:53:31.300285+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=delivery-history]",
+    "target_present": true,
+    "text": "\u26a0\nRESULT UNKNOWN \u00b7 CHECK Issue42\nINTERRUPTED\nCheck\nSEP 29 09:53",
+    "attrs": {
+      "class": "surface-ledger-rows",
+      "data-testid": "delivery-history"
+    },
+    "rect": {
+      "x": 39,
+      "y": 365,
+      "w": 770,
+      "h": 28
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 39,
+        "y": 365,
+        "w": 770,
+        "h": 28
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 41,
+          "y": 367,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 41,
+          "y": 379,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 41,
+          "y": 391,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 424,
+          "y": 367,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 424,
+          "y": 379,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary"
+        },
+        {
+          "x": 424,
+          "y": 391,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 807,
+          "y": 367,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 807,
+          "y": 379,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 807,
+          "y": 391,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:50545/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "cb7ecc794a75b3a7aaae508521760d25918353624259bd9f4edcdec277254e54",
+    "document_text_len": 1015,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?update_id=pupd_71625fc54ab544d885153451de99db75",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_5f3419f19bce005cf15780fa",
+              "document_ref": "project_update:pupd_71625fc54ab544d885153451de99db75",
+              "destination_id": "chd_e90b6869af4ca2b100d14661",
+              "destination_name": "Issue42",
+              "channel": "github",
+              "badge": "cloud",
+              "account": {
+                "host": "github.com",
+                "login": "octo-owner"
+              },
+              "target": {
+                "host": "github.com",
+                "kind": "issue",
+                "number": 42,
+                "repo": "acme/payments"
+              },
+              "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017",
+              "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "size": 286,
+              "preview": {
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": null,
+              "send_operation_id": "op_53ab1b8b2bb547b98fba410029b1d547",
+              "state": "unknown",
+              "reason": "interrupted",
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-09-29T15:53:25.055800+00:00",
+              "dispatch_started_at": "2026-09-29T15:53:25.055800+00:00",
+              "settled_at": "2026-09-29T15:53:26+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "801a48b5964f8c7931c7b52551f04c59002c2b3ecc8a0bc97b5e2997f894cbdd"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-a524bfd94bb5/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_71625fc54ab544d885153451de99db75",
+              "project_id": "proj-a524bfd94bb5",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-09-29T15:53:21+00:00",
+              "updated_at": "2026-09-29T15:53:21+00:00",
+              "published_at": "2026-09-29T15:53:21+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [
+                {
+                  "id": "pdel_5f3419f19bce005c",
+                  "update_id": "pupd_71625fc54ab544d885153451de99db75",
+                  "project_id": "proj-a524bfd94bb5",
+                  "delivered_at": "2026-09-29T15:53:25.055800+00:00",
+                  "delivered_to": "Issue42",
+                  "operation_id": "op_53ab1b8b2bb547b98fba410029b1d547",
+                  "channel": "github",
+                  "send_id": "chs_5f3419f19bce005cf15780fa",
+                  "outcome": "unknown",
+                  "proof_json": null
+                }
+              ],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "81c5e7db629c029ac60e154a7e76f395ffb25a6adc5f49063989431e4aae3d04"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 24465,
+        "at": "2026-09-29T15:53:21.728848+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 24465,
+        "at": "2026-09-29T15:53:25.055622+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "issue",
+          "comment",
+          "42",
+          "--repo",
+          "acme/payments",
+          "--body-file",
+          "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/holdspeak-send-s5d6d9sc/payload.md"
+        ],
+        "body_sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "pid": 24465,
+        "at": "2026-09-29T15:53:25.058945+00:00",
+        "answer": 1,
+        "hold": true
+      }
+    ],
+    "at_utc": "2026-09-29T15:53:32.731682+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=delivery-history]",
+    "target_present": true,
+    "text": "\u26a0\nRESULT UNKNOWN \u00b7 CHECK Issue42\nINTERRUPTED\nCheck\nSEP 29 09:53",
+    "attrs": {
+      "class": "surface-ledger-rows",
+      "data-testid": "delivery-history"
+    },
+    "rect": {
+      "x": 39,
+      "y": 365,
+      "w": 770,
+      "h": 28
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 39,
+        "y": 365,
+        "w": 770,
+        "h": 28
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 41,
+          "y": 367,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 41,
+          "y": 379,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 41,
+          "y": 391,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 424,
+          "y": 367,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 424,
+          "y": 379,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary"
+        },
+        {
+          "x": 424,
+          "y": 391,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 807,
+          "y": 367,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 807,
+          "y": 379,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 807,
+          "y": 391,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:50545/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "cb7ecc794a75b3a7aaae508521760d25918353624259bd9f4edcdec277254e54",
+    "document_text_len": 1015,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?update_id=pupd_71625fc54ab544d885153451de99db75",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_5f3419f19bce005cf15780fa",
+              "document_ref": "project_update:pupd_71625fc54ab544d885153451de99db75",
+              "destination_id": "chd_e90b6869af4ca2b100d14661",
+              "destination_name": "Issue42",
+              "channel": "github",
+              "badge": "cloud",
+              "account": {
+                "host": "github.com",
+                "login": "octo-owner"
+              },
+              "target": {
+                "host": "github.com",
+                "kind": "issue",
+                "number": 42,
+                "repo": "acme/payments"
+              },
+              "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017",
+              "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "size": 286,
+              "preview": {
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": null,
+              "send_operation_id": "op_53ab1b8b2bb547b98fba410029b1d547",
+              "state": "unknown",
+              "reason": "interrupted",
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-09-29T15:53:25.055800+00:00",
+              "dispatch_started_at": "2026-09-29T15:53:25.055800+00:00",
+              "settled_at": "2026-09-29T15:53:26+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "801a48b5964f8c7931c7b52551f04c59002c2b3ecc8a0bc97b5e2997f894cbdd"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-a524bfd94bb5/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_71625fc54ab544d885153451de99db75",
+              "project_id": "proj-a524bfd94bb5",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-09-29T15:53:21+00:00",
+              "updated_at": "2026-09-29T15:53:21+00:00",
+              "published_at": "2026-09-29T15:53:21+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [
+                {
+                  "id": "pdel_5f3419f19bce005c",
+                  "update_id": "pupd_71625fc54ab544d885153451de99db75",
+                  "project_id": "proj-a524bfd94bb5",
+                  "delivered_at": "2026-09-29T15:53:25.055800+00:00",
+                  "delivered_to": "Issue42",
+                  "operation_id": "op_53ab1b8b2bb547b98fba410029b1d547",
+                  "channel": "github",
+                  "send_id": "chs_5f3419f19bce005cf15780fa",
+                  "outcome": "unknown",
+                  "proof_json": null
+                }
+              ],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "81c5e7db629c029ac60e154a7e76f395ffb25a6adc5f49063989431e4aae3d04"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 24465,
+        "at": "2026-09-29T15:53:21.728848+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 24465,
+        "at": "2026-09-29T15:53:25.055622+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "issue",
+          "comment",
+          "42",
+          "--repo",
+          "acme/payments",
+          "--body-file",
+          "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/holdspeak-send-s5d6d9sc/payload.md"
+        ],
+        "body_sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "pid": 24465,
+        "at": "2026-09-29T15:53:25.058945+00:00",
+        "answer": 1,
+        "hold": true
+      }
+    ],
+    "at_utc": "2026-09-29T15:53:32.600752+00:00",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'INTERRUPTED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 365, 'w': 770, 'h': 28} | readable_text: 'RESULT UNKNOWN' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 365, 'w': 770, 'h': 28} | protocol_reads: GET /api/channels/sends?update_id=pupd_71625fc54ab544d885153451de99db75 answered 200 with 1 row(s) {'state': 'unknown', 'reason': 'interrupted'}; GET /api/projects/proj-a524bfd94bb5/updates answered 200 with 1 row(s) {'id': 'pupd_71625fc54ab544d885153451de99db75', 'deliveries.0.outcome': 'unknown'} | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [24465]; 3 call(s) in all), wanted 1",
+    "elapsed_s": 1.192
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'INTERRUPTED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 365, 'w': 770, 'h': 28} | readable_text: 'RESULT UNKNOWN' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 365, 'w': 770, 'h': 28} | protocol_reads: GET /api/channels/sends?update_id=pupd_71625fc54ab544d885153451de99db75 answered 200 with 1 row(s) {'state': 'unknown', 'reason': 'interrupted'}; GET /api/projects/proj-a524bfd94bb5/updates answered 200 with 1 row(s) {'id': 'pupd_71625fc54ab544d885153451de99db75', 'deliveries.0.outcome': 'unknown'} | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [24465]; 3 call(s) in all), wanted 1",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.323,
+    "first_satisfied_at_s": 1.192,
+    "completion_bound_s": 40.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: readable_text: 'INTERRUPTED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 365, 'w': 770, 'h': 28} | readable_text: 'RESULT UNKNOWN' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 365, 'w': 770, 'h': 28} | protocol_reads: GET /api/channels/sends?update_id=pupd_71625fc54ab544d885153451de99db75 answered 200 with 1 row(s) {'state': 'unknown', 'reason': 'interrupted'}; GET /api/projects/proj-a524bfd94bb5/updates answered 200 with 1 row(s) {'id': 'pupd_71625fc54ab544d885153451de99db75', 'deliveries.0.outcome': 'unknown'} | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [24465]; 3 call(s) in all), wanted 1"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:50545) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:50545) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/channels/destinations",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/connections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-a524bfd94bb5/updates",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/p10-final/case.p10.send.unknown_after_restart--1440/20260929T155315Z-case.p10.send.unknown_after_restart-muaddib-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/p10-final/case.p10.send.unknown_after_restart--1440/20260929T155315Z-case.p10.send.unknown_after_restart-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-cewn85mx/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-cewn85mx/.config/holdspeak/config.json",
+    "CLI_RUNNER ab3551e6f76d84db62b86b48fdf2cc6222932259aa611a3f62a2592820a6dc2a",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDING runner at the CLI channels' process edge (no real gh or acli)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50545"
+  ],
+  "duration_s": 17.358
+}

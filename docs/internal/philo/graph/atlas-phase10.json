@@ -2,7 +2,7 @@
   "schema_version": 1,
   "atlas_version": "phase10-send",
   "extends": "docs/internal/philo/graph/atlas.json",
-  "source_commit": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+  "source_commit": "08276df1116ccfdbcb213c97496a3159c3e2483c",
   "cases": [
     {
       "id": "case.p10.send.no_destination",
@@ -2632,6 +2632,10 @@
             },
             {
               "kind": "readable_text",
+              "value": "ISSUE NOT FOUND"
+            },
+            {
+              "kind": "readable_text",
               "value": "NOTHING SENT"
             },
             {
@@ -2682,7 +2686,7 @@
             "path": "/api/projects/{project_id}/updates"
           }
         ],
-        "words": "the owner presses Send on the GitHub issue and gh answers the pinned 'could not resolve to an issue': FAILED (a known non-delivery), the owner's failed receipt; the row reads FAILED with the channel's reason and NOTHING SENT, readable in the viewport; the hub holds one failed send and no history row; ONE gh create. New (no red claimed): the Send is a new capability (Phase 10); on the pre-Phase-10 main the case fails (no SEND well)."
+        "words": "the owner presses Send on the GitHub issue and gh answers the pinned 'could not resolve to an issue': FAILED (a known non-delivery), the owner's failed receipt; the row reads FAILED \u00b7 ISSUE NOT FOUND \u00b7 NOTHING SENT (the channel's reason in a plain word, never the raw code), readable in the viewport; the hub holds one failed send and no history row; ONE gh create. New (no red claimed): the Send is a new capability (Phase 10); on the pre-Phase-10 main the case fails (no SEND well)."
       },
       "completion_bound_s": 30,
       "viewports": [

@@ -161,6 +161,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-29, story 05 round two (PR #698, Muad'Dib's ruling): the census's raw-code finding paid in the PR — every code the channel services emit (derived from their source and declarations) has a plain face word, fenced as a class; FAILED · ISSUE NOT FOUND · NOTHING SENT through the real producer at 1440 and 393 (red on main); Phase 10 atlas 42/42 on the new bundle. The needs-him destination row stays in the BACKLOG.
+
 2026-09-29, story 05 DONE on the lane (branch `feat/philo-10-05`): `atlas-phase10.json` — 15 face cases at 1440 and 393 (every matrix state; Manual is Phase 9's) and 12 `.op` twins reading the kernel receipt, with the transitions (restart during dispatching, replay, destination changed, Send and Discard, away and back); 42/42 pass on main `dce3afa9`, 0/42 on the pre-Phase-10 main `98ea2cfa`; the rig gains a recording runner at the CLI process edge. Phase 7–9 atlas: 0 pass→not-pass; base: one inherited s5 row (BACKLOG). Owed: the Codex Astra check, Muad'Dib's full suite.
 
 2026-09-29, story 04: the full suite's three branch-new reds on effd25f8 paid (the effect-fence classification, the atlas re-anchor, the UX ratchet by fixing the face).

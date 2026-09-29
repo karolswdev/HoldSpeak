@@ -23,6 +23,16 @@
 - **Proof scripts** (`assets/story-05-proof/`): `rig_run.py` (one hub, one HOME, one run directory `<case>--<width>/<run id>` per run, reuse refused), `retain.py` (the copier: keyed by case × width × run; refuses a label that exists, two rows sharing a directory, a directory that is not `<case>--<width>/<run id>` of its row, an observation of another case, width or verdict — all BEFORE it writes anything), `rig_phase.sh`, `batch.sh` (+ its log `batch1.log`), `equivalence.py`, `base_diff.py`, `mutations.py` (14), `fences.sh`, `exit_combos.sh`, `docs_nav.sh`.
 - **Retained runs** `assets/story-05-shots/<label>/`: `p10-merged` (42, with shots), `red-98ea2cfa` (42), `p789-merged` (97, with shots), `p789-dce3afa9` (97, observations only), `base-merged` and `base-dce3afa9` (194 each, observations only), `serial-merged` (6), `s5-{merged,dce3afa9}-a{1,2,3}` (1 each).
 
+## Round two — Muad'Dib's ruling on #698: the face words, closed as a class
+
+The census found seven codes the services emit that the face showed as raw capitals (for example `github_target_not_found` as "GITHUB TARGET NOT FOUND"). Ruled: fix it in this PR, close the class.
+
+- **The derivation** (`tests/unit/_philo10_codes.py`), never a hand list: by AST over the channel modules (`channel_contract`, `channel_cli`, `channel_email`, `channel_service`, `kernel/channel_send`, the restart's row reason in `steward_contract`) — `ChannelRefused(code)`, `ValidationError(code=)`, `Outcome("failed"|"unknown", code)`, the `PINNED` / `FAILED_ON_CREATE` tables, a `pinned()` override's answers, `reason = a if .. else b`, the email transport's `_classify` and `EmailKeyError` / `EmailTransportError` codes, the kernel's row reasons; f-string codes as prefixes (`create_`, `github_exit_`, `unpinned_`, `payload_too_large:`); plus every `channel.*` operation's declared `refusals`. A code passed through a variable is followed by a declared FLOWS table; a NEW variable site fails the fence until it is followed. 98 codes; the census's seven were among 50 with no word.
+- **The words** (`web/src/features/channels/channels.ts`): REFUSED / FAILED / UNKNOWN tables complete, and prefix tables for the variable codes; `refusedWord`, `failedWord`, `unknownWord` read them. The three dead keys (`github_issue_not_found`, `github_no_permission`, `jira_cannot_edit`: no service emits them) are gone. Plain ASD-STE100 words in capitals, e.g. **FAILED · ISSUE NOT FOUND · NOTHING SENT**, **RESULT UNKNOWN · NO CLEAR ANSWER**, **REFUSED · TOO LARGE**.
+- **The fence** `tests/unit/test_philo10_face_words.py` (9): every emitted code has a word; every variable site is followed; the derivation sees a code from each source; the word functions read these tables; every word is plain capitals; the census's codes have their words. `assets/story-05-proof/face_words_mutations.sh`: 3 mutations (a word dropped, a new refusal code, a new variable site), 3 red.
+- **Through the real producer at 1440 and 393:** `case.p10.send.failed` now also reads **ISSUE NOT FOUND** (gh's pinned "could not resolve to an issue" at the recording runner → `github_target_not_found` → the face). `words-merged`: 3/3 pass (both widths and the twin). Red on main `dce3afa9` (its own bundle): `words-red-dce3afa9` 0/2, "'ISSUE NOT FOUND' NOT in observe_at text". The whole Phase 10 file again on the new bundle: `p10-final` **42/42**.
+- **Vitest** `src/features/channels`: 16/16. The needs-him destination row keeps its BACKLOG row (no fence built: it needs the connection check's runner answering "needs him" in a hub).
+
 ## The counts
 
 | Label | Product | Runs | Verdicts |
@@ -145,7 +155,7 @@ Key: **ATLAS** = an atlas case (this story's `atlas-phase10.json` unless named);
 | Sending | ATLAS `sending` |
 | SENT | ATLAS `sent(.op)` (SAVED), `github_posted(.op)` (POSTED), `receipt_after_return`. Email's ACCEPTED BY SENDGRID, Jira COMMENTED, Confluence BLOG POSTED: GLASS (`excluded.p10.other_channels`) |
 | REFUSED | ATLAS `refused(.op)` (DESTINATION PARKED, NOTHING SENT) |
-| FAILED | ATLAS `failed(.op)`. The face shows "GITHUB TARGET NOT FOUND", not "ISSUE NOT FOUND": the FAILED word table misses the service's codes (BACKLOG "PHILO-10-05 follow-ups") |
+| FAILED | ATLAS `failed(.op)`: FAILED · ISSUE NOT FOUND · NOTHING SENT (round two; the class fenced by `tests/unit/test_philo10_face_words.py`) |
 | UNKNOWN | ATLAS `unknown(.op)` (Check acme/payments #42; the verb renders only for an UNKNOWN latest send) |
 | UNKNOWN after a restart | ATLAS `unknown_after_restart` |
 | DESTINATION CHANGED | ATLAS `destination_changed(.op)` |
@@ -155,8 +165,8 @@ Key: **ATLAS** = an atlas case (this story's `atlas-phase10.json` unless named);
 
 ### Gaps and notes from the census
 
-- **No fence found:** a destination row in the needs-him state (`owner_action_required`). Reported, not built here.
-- **Face words:** the FAILED table (`web/src/features/channels/channels.ts`) misses `github_target_not_found`, `github_repository_not_found`, `github_permission_denied`, `github_not_authenticated`, `jira_cannot_be_edited`, `atlassian_unauthorized`, `confluence_permission_denied`; they render as the code in capitals. BACKLOG row.
+- **No fence found:** a destination row in the needs-him state (`owner_action_required`). Reported, BACKLOG row.
+- **Face words:** the FAILED table missed seven service codes (the code showed in capitals). PAID in round two (above).
 - **Seen in a run:** after another hand's send, the DELIVERY history of an open update stays without its row until the update opens again (the hub holds it). BACKLOG row (low).
 
 ## Laws kept (the Phase 8 and 9 lessons)
@@ -360,4 +370,208 @@ rc=0  python3 scripts/check_doc_coverage.py --check
 OpenAPI: 580 paths
 rc=0  .venv/bin/python scripts/philo_openapi_reference.py --check
 checks failed: 0
+```
+
+### Captured run — 2026-09-29T15:54:32Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-proof/fences.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 713493fdb0d0e4e731a5ef8eb3a6aec67021ce8a
+
+```text
+HEAD = 08276df1116ccfdbcb213c97496a3159c3e2483c
+........................................................................ [ 98%]
+....                                                                     [100%]
+364 passed in 11.92s
+baseline (unmutated): 57 passed in 0.64s
+m1   RED    ['test_the_general_fences_hold_for_the_phase10_file[test_every_case_reference_inside_the_atl', 'test_the_counts_over_every_atlas_file']
+m2   RED    ['test_the_general_fences_hold_for_the_phase10_file[test_face_cases_carry_both_ruled_viewpor', 'test_every_matrix_state_and_transition_has_its_case']
+m3   RED    ['test_every_face_case_reads_its_hub_outcome_in_the_same_observation']
+m4   RED    ['test_every_admitted_write_twin_reads_its_kernel_receipt_with_its_actor']
+m5   RED    ['test_one_dispatch_is_counted_at_the_runner_where_the_runner_answers_a_send']
+m6   RED    ['test_one_dispatch_is_counted_at_the_runner_where_the_runner_answers_a_send']
+m7   RED    ['test_the_pairs_read_the_same_values']
+m8   RED    ['test_a_timed_window_is_one_gesture']
+m9   RED    ['test_no_trigger_is_optional_and_no_optional_step_is_the_outcome']
+m10  RED    ['test_every_face_case_without_a_twin_is_excluded_with_a_reason']
+m11  RED    ['test_the_counts_over_every_atlas_file', 'test_every_matrix_state_and_transition_has_its_case']
+m12  RED    ['test_the_general_fences_hold_for_the_phase10_file[test_every_desk_face_case_crosses_the_ga']
+m13  RED    ['test_every_api_step_exists_in_the_generated_openapi']
+m14  RED    ['test_the_pairs_read_the_same_values']
+14 mutations: 14 red, 0 missed
+fences exit 0; mutations exit 0
+```
+
+### Captured run — 2026-09-29T15:55:00Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-proof/face_words_mutations.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 713493fdb0d0e4e731a5ef8eb3a6aec67021ce8a
+
+```text
+9 passed in 0.45s
+baseline exit 0
+2 failed, 7 passed in 0.49s
+m1 RED (a FAILED word dropped)
+1 failed, 8 passed in 0.50s
+m2 RED (a new refusal code with no word)
+1 failed, 8 passed in 0.48s
+m3 RED (a code through a new variable site)
+3 mutations: 3 red, 0 missed
+```
+
+### Captured run — 2026-09-29T15:55:03Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-proof/exit_combos.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 713493fdb0d0e4e731a5ef8eb3a6aec67021ce8a
+
+```text
+fences.sh A=0 B=0 -> exit 0 (wanted 0): ok
+fences.sh A=0 B=1 -> exit 1 (wanted nonzero): ok
+fences.sh A=1 B=0 -> exit 1 (wanted nonzero): ok
+fences.sh A=1 B=1 -> exit 1 (wanted nonzero): ok
+rig_phase.sh A=0 B=0 -> exit 0 (wanted 0): ok
+rig_phase.sh A=0 B=1 -> exit 1 (wanted nonzero): ok
+rig_phase.sh A=1 B=0 -> exit 1 (wanted nonzero): ok
+rig_phase.sh A=1 B=1 -> exit 1 (wanted nonzero): ok
+0 wrong
+```
+
+### Captured run — 2026-09-29T15:55:04Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-proof/docs_nav.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 713493fdb0d0e4e731a5ef8eb3a6aec67021ce8a
+
+```text
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.003s
+
+OK
+rc=0  python3 -m unittest discover -s tests/unit -p test_docs_navigation.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+rc=0  python3 scripts/check_docs.py
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+rc=0  python3 scripts/check_docs.py docs/internal/philo/DELIVERY_ROADMAP.md docs/internal/philo/DESIGN_SPECIFICATION.md docs/internal/philo/EXTERNAL_RESEARCH.md docs/internal/philo/INITIAL_PLAN.md docs/internal/philo/initial-findings.md docs/internal/philo/README.md docs/internal/philo/SOURCE_HIERARCHY.md docs/internal/philo/source-checklist.md docs/internal/philo/SRS.md docs/internal/philo/adr/capability-evidence-ownership.md docs/internal/philo/adr/desktop-host.md docs/internal/philo/checks/accuracy-luna.md docs/internal/philo/checks/baseline-failures.md docs/internal/philo/checks/luna-audits.md docs/internal/philo/checks/plan-astra-response.md docs/internal/philo/checks/plan-muaddib-round2.md docs/internal/philo/checks/plan-muaddib.md docs/internal/philo/visuals/README.md docs/internal/philo/desktop-prototypes/README.md agent/skills/holdspeak-api-client/SKILL.md agent/skills/holdspeak-capability-verifier/SKILL.md agent/skills/holdspeak-connector-author/SKILL.md agent/skills/holdspeak-desk/SKILL.md agent/skills/holdspeak-dictation/SKILL.md agent/skills/holdspeak-doc-maintainer/SKILL.md agent/skills/holdspeak-kernel/SKILL.md agent/skills/holdspeak-meetings/SKILL.md agent/skills/holdspeak-model-routing/SKILL.md agent/skills/holdspeak-plugin-author/SKILL.md agent/skills/holdspeak-release-auditor/SKILL.md agent/skills/holdspeak-repo-navigator/SKILL.md agent/skills/holdspeak-security-review/SKILL.md agent/skills/holdspeak-troubleshooter/SKILL.md
+Repository census: 5 outputs verified.
+rc=0  python3 scripts/philo_repository_census.py --check
+API reference checked
+rc=0  python3 scripts/philo_api_reference.py --check
+Boundary candidate census checked
+rc=0  python3 scripts/philo_boundary_census.py --check
+Doctor reference: 41 check functions
+rc=0  python3 scripts/philo_doctor_reference.py --check
+Configuration declaration reference is current
+rc=0  python3 scripts/philo_config_reference.py --check
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+rc=0  python3 scripts/philo_graph_reference.py --check
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+rc=0  python3 scripts/validate_architecture.py
+Architecture documentation checked (10 outputs).
+rc=0  python3 scripts/generate_capability_docs.py --check
+Documentation coverage checked.
+rc=0  python3 scripts/check_doc_coverage.py --check
+OpenAPI: 580 paths
+rc=0  .venv/bin/python scripts/philo_openapi_reference.py --check
+checks failed: 0
+```
+
+### Captured run — 2026-09-29T15:55:22Z
+
+- **Command:** `.venv/bin/python pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-proof/equivalence.py p10-final`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 713493fdb0d0e4e731a5ef8eb3a6aec67021ce8a
+
+```text
+EQUAL case.p10.send.destination_changed: verdicts ['pass', 'pass', 'pass']
+      1440: shared {'outcome': 'destination_parked', 'receipt.state': 'refused', 'receipt.actor_kind': 'owner'}
+      393: shared {'outcome': 'destination_parked', 'receipt.state': 'refused', 'receipt.actor_kind': 'owner'}
+      1440 rows: shared {'rows': [('sends', 'file', 'prepared', 'owner')]}
+      393 rows: shared {'rows': [('sends', 'file', 'prepared', 'owner')]}
+EQUAL case.p10.send.destinations_listed: verdicts ['pass', 'pass', 'pass']
+      1440: shared {'gh_creates': 0}
+      393: shared {'gh_creates': 0}
+      1440 rows: shared {'rows': [('destinations', 'file', 'active', None), ('destinations', 'github', 'active', None)]}
+      393 rows: shared {'rows': [('destinations', 'file', 'active', None), ('destinations', 'github', 'active', None)]}
+EQUAL case.p10.send.discard_after_send: verdicts ['pass', 'pass', 'pass']
+      1440: shared {'outcome': 'send_already_settled', 'receipt.state': 'refused', 'receipt.actor_kind': 'owner'}
+      393: shared {'outcome': 'send_already_settled', 'receipt.state': 'refused', 'receipt.actor_kind': 'owner'}
+      1440 rows: shared {'rows': [('sends', 'file', 'sent', 'owner')]}
+      393 rows: shared {'rows': [('sends', 'file', 'sent', 'owner')]}
+EQUAL case.p10.send.failed: verdicts ['pass', 'pass', 'pass']
+      1440: shared {'outcome': 'failed', 'send.state': 'failed', 'send.reason': 'github_target_not_found', 'channel': 'github', 'receipt.state': 'failed', 'receipt.actor_kind': 'owner', 'gh_creates': 1}
+      393: shared {'outcome': 'failed', 'send.state': 'failed', 'send.reason': 'github_target_not_found', 'channel': 'github', 'receipt.state': 'failed', 'receipt.actor_kind': 'owner', 'gh_creates': 1}
+      1440 rows: shared {'rows': [('sends', 'github', 'failed', 'owner')]}
+      393 rows: shared {'rows': [('sends', 'github', 'failed', 'owner')]}
+EQUAL case.p10.send.github_posted: verdicts ['pass', 'pass', 'pass']
+      1440: shared {'outcome': 'sent', 'send.state': 'sent', 'channel': 'github', 'receipt.state': 'succeeded', 'receipt.actor_kind': 'owner', 'gh_creates': 1}
+      393: shared {'outcome': 'sent', 'send.state': 'sent', 'channel': 'github', 'receipt.state': 'succeeded', 'receipt.actor_kind': 'owner', 'gh_creates': 1}
+EQUAL case.p10.send.prepared: verdicts ['pass', 'pass', 'pass']
+      1440: shared {}
+      393: shared {}
+      1440 rows: shared {'rows': [('sends', 'file', 'prepared', 'owner')]}
+      393 rows: shared {'rows': [('sends', 'file', 'prepared', 'owner')]}
+EQUAL case.p10.send.refused: verdicts ['pass', 'pass', 'pass']
+      1440: shared {'outcome': 'destination_parked', 'receipt.state': 'refused', 'receipt.actor_kind': 'owner'}
+      393: shared {'outcome': 'destination_parked', 'receipt.state': 'refused', 'receipt.actor_kind': 'owner'}
+EQUAL case.p10.send.sent: verdicts ['pass', 'pass', 'pass']
+      1440: shared {'outcome': 'sent', 'send.state': 'sent', 'channel': 'file', 'receipt.state': 'succeeded', 'receipt.actor_kind': 'owner'}
+      393: shared {'outcome': 'sent', 'send.state': 'sent', 'channel': 'file', 'receipt.state': 'succeeded', 'receipt.actor_kind': 'owner'}
+      1440 rows: shared {'rows': [('sends', 'file', 'sent', 'owner')]}
+      393 rows: shared {'rows': [('sends', 'file', 'sent', 'owner')]}
+EQUAL case.p10.send.several: verdicts ['pass', 'pass', 'pass']
+      1440: shared {'outcome': 'sent', 'send.state': 'sent', 'channel': 'file', 'receipt.state': 'succeeded', 'receipt.actor_kind': 'owner'}
+      393: shared {'outcome': 'sent', 'send.state': 'sent', 'channel': 'file', 'receipt.state': 'succeeded', 'receipt.actor_kind': 'owner'}
+      1440 rows: shared {'rows': [('sends', 'file', 'sent', 'owner'), ('sends', 'file', 'sent', 'owner')]}
+      393 rows: shared {'rows': [('sends', 'file', 'sent', 'owner'), ('sends', 'file', 'sent', 'owner')]}
+EQUAL case.p10.send.unknown: verdicts ['pass', 'pass', 'pass']
+      1440: shared {'outcome': 'unknown', 'send.state': 'unknown', 'send.reason': 'github_exit_1', 'channel': 'github', 'receipt.state': 'indeterminate', 'receipt.actor_kind': 'owner', 'gh_creates': 1}
+      393: shared {'outcome': 'unknown', 'send.state': 'unknown', 'send.reason': 'github_exit_1', 'channel': 'github', 'receipt.state': 'indeterminate', 'receipt.actor_kind': 'owner', 'gh_creates': 1}
+10 pairs; 0 not equal
+```
+
+### Captured run — 2026-09-29T15:55:23Z
+
+- **Command:** `.venv/bin/python scripts/check_web_baseline.py --run`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 713493fdb0d0e4e731a5ef8eb3a6aec67021ce8a
+
+```text
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (5):
+  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+Suite totals: 2966 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
 ```

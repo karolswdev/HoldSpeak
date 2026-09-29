@@ -17,7 +17,7 @@ if [[ -n $ROOT ]]; then
   # KEEP_RIG=1: the export's OWN rig (a "before" run of the rig change).
   [[ -z $KEEP_RIG ]] && cp scripts/graph_walk.py $ROOT/scripts/
   mkdir -p $ROOT/tests/fixtures/philo10_atlas && cp tests/fixtures/philo10_atlas/*.json $ROOT/tests/fixtures/philo10_atlas/
-  for f in "$@"; do cp $f $ROOT/$f; done
+  for f in "$@"; do [[ $f == *.json ]] && cp $f $ROOT/$f; done
 else
   (cd web && npm run build 2>&1 | tail -1)
 fi

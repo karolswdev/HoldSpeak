@@ -384,11 +384,12 @@ CASES.append(op_case(
 # 8. FAILED: a pinned known non-delivery (+ .op)
 CASES.append(face_case(
     "case.p10.send.failed",
-    "the owner presses Send on the GitHub issue and gh answers the pinned 'could not resolve to an issue': FAILED (a known non-delivery), the owner's failed receipt; the row reads FAILED with the channel's reason and NOTHING SENT, readable in the viewport; the hub holds one failed send and no history row; ONE gh create. " + NEW,
+    "the owner presses Send on the GitHub issue and gh answers the pinned 'could not resolve to an issue': FAILED (a known non-delivery), the owner's failed receipt; the row reads FAILED · ISSUE NOT FOUND · NOTHING SENT (the channel's reason in a plain word, never the raw code), readable in the viewport; the hub holds one failed send and no history row; ONE gh create. " + NEW,
     [runner("gh-not-found.json")] + PUBLISHED + [gh_dest(), RELOAD] + ROOM + [OPEN_UPDATE, WELL] + pick(GH), press(GH),
     [{"kind": "protocol_status", "method": "POST", "path": "/api/channels/send", "status": 200,
       "body_fields": {"outcome": "failed", "send.reason": "github_target_not_found", "receipt.state": "failed"}},
      {"kind": "readable_text", "value": "FAILED"},
+     {"kind": "readable_text", "value": "ISSUE NOT FOUND"},
      {"kind": "readable_text", "value": "NOTHING SENT"},
      {"kind": "protocol_reads", "expect": [sends_rows(1, state="failed", reason="github_target_not_found"),
                                            {"status": 200, "row": {"path": "updates", "match": {"id": "{update_id}", "deliveries": []}}}]},
