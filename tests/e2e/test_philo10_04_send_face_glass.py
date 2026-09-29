@@ -873,7 +873,7 @@ import subprocess  # noqa: E402
 import sys  # noqa: E402
 import threading  # noqa: E402
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "unit"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "unit"))  # story 02 and 01 rigs
 from _philo10_cli import EMAIL as ACLI_EMAIL, SITE as ACLI_SITE, Canned  # noqa: E402
 
 GH_LOGIN = "octo-owner"
@@ -1223,3 +1223,80 @@ class TestSendChannelsGlass(_Rig):
                 assert not errors, errors
             finally:
                 browser.close()
+
+
+# ── Board 25: UNKNOWN after a restart -- a REAL hub process killed mid-send ──
+#
+# Story 01's restart rig (tests/unit/test_philo10_send_restart.py HubProcess):
+# the hub is a PROCESS on an isolated HOME; its file dispatch writes the file
+# and then holds; the owner's press comes from the Room's own Send; the hub is
+# killed with SIGKILL; a second hub on the same HOME runs the startup recovery.
+
+@pytest.mark.e2e
+@pytest.mark.timeout(600)
+@pytest.mark.parametrize("width", WIDTHS)
+def test_board_25_unknown_after_a_real_restart(tmp_path: Path, width: int) -> None:
+    from playwright.sync_api import sync_playwright
+    from test_philo10_send_restart import TOKEN as HUB_TOKEN, HubProcess, _rows, _until
+
+    _ensure_build()
+    home, folder = tmp_path / "home", tmp_path / "Payments"
+    home.mkdir()
+    folder.mkdir()
+    shots = Boards(SHOTS, width, UP)
+    first = HubProcess(home, hold="after")
+    second = None
+    try:
+        call = first.call
+        assert call("PUT", "/api/setup/onboarding", {"disposition": "completed"})[0] == 200
+        pid = call("POST", "/api/projects", {"name": NAME})[1]["project"]["id"]
+        uid = call("POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"})[1]["update"]["id"]
+        assert call("POST", f"/api/updates/{uid}/publish", {})[0] == 200
+        assert call("POST", "/api/channels/destinations",
+                    {"name": "Folder Payments", "channel": "file", "folder": str(folder)})[0] == 200
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1)
+            page = ctx.new_page()
+            page.set_default_timeout(45_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            rig = _Rig()
+
+            def room(url: str) -> None:
+                page.goto(f"{url}/?token={HUB_TOKEN}", wait_until="load")
+                rig._room(page, pid)
+                rig._updates(page)
+                rig._open_update(page, uid)
+
+            try:
+                room(first.url)
+                rig._pick(page, "Folder Payments")
+                page.locator(f"{rig._open_sel('Folder Payments')} [data-testid=send-verb]").click()
+                row = _until(lambda: next(iter(_rows(home, "SELECT * FROM channel_sends WHERE state='dispatching'")), None))
+                _until(lambda: list(folder.iterdir()))  # the file is written; the dispatch holds
+                first.kill()
+                second = HubProcess(home)
+                room(second.url)
+                [settled] = _rows(home, "SELECT * FROM channel_sends WHERE id=?", row["id"])
+                page.locator("[data-testid=delivery-row]").first.wait_for(timeout=T)
+                page.wait_for_timeout(600)
+                f = shots.shoot(page, "25-unknown-after-restart",
+                                [rig._row("Folder Payments") + " [data-testid=send-last-unknown]",
+                                 "[data-testid=delivery-history] > li:first-child > [data-testid=delivery-row]"])
+                assert (settled["state"], settled["reason"]) == ("unknown", "interrupted"), settled
+                assert f["history"] == [f["history"][0]] and f["history"][0].startswith(
+                    "⚠ RESULT UNKNOWN · CHECK Folder Payments INTERRUPTED"), f["history"]
+                assert f["history_outcomes"] == ["unknown"] and f["history_head"] == "DELIVERY"
+                assert any("LAST SEND UNKNOWN" in c for c in f["last_chips"]), f["last_chips"]
+                assert len(list(folder.iterdir())) == 1  # never sent again
+                shots.write("send-face-restart", {"settled": {k: settled[k] for k in ("state", "reason", "proof_json")}})
+                shots.assert_clean()
+                assert not errors, errors
+            finally:
+                browser.close()
+    finally:
+        if second is not None:
+            second.kill()
+        if first.proc.poll() is None:
+            first.kill()

@@ -36,6 +36,7 @@ PROVISIONAL: 2–3 engineering days (canvases included).
 
 ## Notes
 
+- 2026-09-29 — board 25 fenced: a real hub process killed mid-send, a second hub on the same HOME, the Room shows UNKNOWN · INTERRUPTED and never sends again (both widths).
 - 2026-09-29 — board 14 as ratified (Muad'Dib's ruling): the Atlassian channels check sign-in before the boundary → REFUSED NOT SIGNED IN, nothing sent; a follow-up fix to story 02 carried here (noted in `assets/story-02-proof/captures.md`); red on the story 02 wire, green now.
 - 2026-09-29 — story 02 merged in (main 3965c5e1): the GitHub, Jira and Confluence boards (7, 9–15, 20, B4–B6, B9, B10) and SENDING (8, 26b, 26c, 27) fenced on story 02's real channels with the process edge canned; glass 16/16 at both widths, every board measured. Board 14 reads FAILED · NOT SIGNED IN (story 02 records a signed-out switch as a known non-delivery). Owed: the email boards (16–19, B7, B8 save, B11) with story 03 (#696).
 - 2026-09-29 — round two: Codex Astra r1 on #697 DO-NOT-RATIFY (`checks/story-04-built-astra-r1.md`) paid — a returned send record joins the one result source (a failed read never hides a known FAILED); a failed Remove stays open, named, with Retry; `dispatch_seq` allocated inside the boundary transaction orders "latest" (the equal-clock sequence fenced); B10's Checked time restored; the armed boards measured. Glass 10/10 at both widths; each fix red on the old face first (`assets/story-04-proof/captures.md`).

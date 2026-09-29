@@ -37,7 +37,7 @@ Built to the owner's ratified canvases (`../story-04-send-canvas/`, `../story-04
 | 13 Confluence picked (SPACE, TITLE, ACCOUNT); 14 the account signed out: **REFUSED · NOT SIGNED IN · NOTHING SENT** as ratified (the wire now checks sign-in before the boundary: no row crosses it, no create); 15 BLOG POSTED + the post link; the remote history rows | story 02 Confluence channel + the pre-boundary sign-in check, canned `acli` | built + fenced (`14-refused-confluence-sign-in`); red on the story 02 wire first |
 | 16–19 email (ACCEPTED BY SENDGRID, SENDER NOT VERIFIED), B7 KEY NOT SAVED, B11 SENDER NOT VERIFIED | story 03 | face built; NOT fenced: owed when #696 merges |
 | 8 SENDING (a create held at the process edge; Send busy and disabled, one create for a double click); 26b a prepared send running survives Back → return (stored `dispatching`); 26c its destination: SENDING, Send disabled; 27 released → POSTED stays as its result | story 02 off-loop dispatch, canned `gh` held on an Event | built + fenced |
-| 25 UNKNOWN after a restart | story 01 recovery | face renders any UNKNOWN row (fenced by `11`); the restart itself is story 01's unit fence, not re-shot here |
+| 25 UNKNOWN after a restart: a REAL hub process killed with SIGKILL mid-send (the file written, the dispatch held), a second hub on the same HOME: LAST SEND UNKNOWN, ⚠ RESULT UNKNOWN · CHECK Folder Payments · INTERRUPTED, one file, never sent again | story 01's restart rig (`HubProcess`), the Room's own Send | built + fenced (`25-unknown-after-restart`) |
 
 ## Limits
 
@@ -361,4 +361,17 @@ FAILED tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test
 ```text
 ....                                                                     [100%]
 148 passed in 255.30s (0:04:15)
+```
+
+### Captured run — 2026-09-29T07:02:06Z
+
+- **Command:** `bash -c set -o pipefail; H=$(mktemp -d); trap "rm -rf $H" EXIT INT TERM; HOLDSPEAK_EVIDENCE_WRITE=1 HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm .venv/bin/python -m pytest -q -n 2 --basetemp=$H/pt tests/e2e/test_philo10_04_send_face_glass.py -k board_25 -rA 2>&1 | grep -E "^(PASSED|FAILED)|passed|failed"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 4e9ad95c988eb4daa6393242f9969da46f9552b5
+
+```text
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::test_board_25_unknown_after_a_real_restart[393]
+PASSED tests/e2e/test_philo10_04_send_face_glass.py::test_board_25_unknown_after_a_real_restart[1440]
+2 passed in 18.78s
 ```
