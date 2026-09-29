@@ -270,8 +270,14 @@ def test_an_absence_needs_a_scope_that_exists(negatives):
 def test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires():
     """(4) A typo must not become a silent no-op that 'passed'."""
     # PHILO-7-03 added `focus` (keyboard travel to a Floor world chip).
+    # PHILO-10-05 added `scroll_into_view` (the owner seats Send before he presses).
     assert UI_ACTIONS == {"goto", "reload", "click", "click_role", "fill",
-                          "press", "wait_for", "focus"}
+                          "press", "wait_for", "focus", "scroll_into_view"}
+    # PHILO-10-05: a malformed seat blocks by name, before any page is reached.
+    for bad in ({"selector": "#a", "block": "middle"}, {"block": "start"}):
+        with pytest.raises(Blocked) as raised:
+            run_step({"kind": "ui", "action": "scroll_into_view", **bad}, page=None, hub=None, provenance={})
+        assert "scroll_into_view" in str(raised.value) and "nothing was fired" in str(raised.value)
     for action in ("tap", "doubleclick", None):
         with pytest.raises(Blocked) as raised:
             # page=None: reaching the page at all would raise AttributeError,

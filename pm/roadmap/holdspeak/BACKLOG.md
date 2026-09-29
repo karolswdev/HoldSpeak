@@ -1376,6 +1376,13 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 | The real-pointer passes in `tests/e2e/test_philo9_04_desk_debts_glass.py` run about 15× slower with motion on: 5.65 s against 0.38 s per nine-point sample under reduced motion (Codex Astra's measure). Run the rig's pointer passes with reduced motion (`reduced_motion="reduce"` on the browser context) wherever motion is not what the test proves, then lower the `timeout(900)` on the Launch-submenu fence and the `timeout(600)` on the sort-Button and row-menu fences. | test speed (Tenet 3) | `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/checks/story-04-built-astra-r2.md` | UNASSIGNED |
 | At 393 the open row menu covers the dock (the keep-in-view rule keeps it inside the viewport, not above the dock). Stated as a limit on the ratified canvas (`assets/story-04-list-canvas/README.md` "Limits"). | face | the ratified canvas | recorded; no action |
 
+## PHILO-10-05 follow-ups — 2026-09-29 (the Fedaykin lane, `pm/roadmap/holdspeak-philo/phase-10-the-channels/evidence-story-05.md`)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| No fence shows a destination row whose account needs the owner (`owner_action_required`, the Phase 9 B1 word on a Send destination row). `accountChip` maps it (`web/src/features/channels/SendWell.tsx`); no glass board, vitest or atlas case asserts it. Making it through the real producer needs the connection check's gh/acli runner to answer "needs him" in a hub (the glass `_boot(gh_runner=)` seam). | face fence (gap) | PHILO-10-05 census | the next PHILO-10 face repair, or story 06 |
+| The DELIVERY history of an open update is read when the update opens and after the owner's own press, not after another hand's send (seen in `case.p10.send.discard_after_send`: the send made on the hub shows as SAVED on the prepared row, while DELIVERY stays without its row until the update opens again). Not a lost record: the hub holds the row. | face freshness (low) | PHILO-10-05 atlas run | unassigned |
+
 ## PHILO-9-05 follow-ups — 2026-09-28 (the Fedaykin lane, `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/evidence-story-05.md`; Codex Astra r1 finding 4)
 
 | Item | Kind | Source | Home |

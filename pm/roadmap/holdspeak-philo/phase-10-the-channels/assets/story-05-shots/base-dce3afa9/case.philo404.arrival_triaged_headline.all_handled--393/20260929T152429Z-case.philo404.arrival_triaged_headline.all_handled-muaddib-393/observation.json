@@ -1,0 +1,1166 @@
+{
+  "id": "obs-20260929T152429Z-case.philo404.arrival_triaged_headline.all_handled-muaddib-393",
+  "run_id": "20260929T152429Z-case.philo404.arrival_triaged_headline.all_handled-muaddib-393",
+  "case_id": "case.philo404.arrival_triaged_headline.all_handled",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.face.arrival_brief_generate",
+    "edge.route.brief_generate",
+    "edge.route.brief_item_shelf"
+  ],
+  "state_id": "state.briefs.populated",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:62399",
+      "port": 62399,
+      "pid": 2851,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-gfegda52",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-gfegda52/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:24:30.105577+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "65f0da5833e79fa1a23f7332599aac3941729313c1c6e99f1df82c64029609d6",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_a8411a645ef3",
+          "title": "Graph walk triage headline Ack",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-29T15:24:35Z",
+          "updated_at": "2026-09-29T15:24:35Z",
+          "deleted": false
+        },
+        "operation_id": "op_d60589ea726847f9a5f20c77774d8a57",
+        "receipt": {
+          "receipt_id": "rcpt_db5d191c4a5f4051b79d96e947c1db08",
+          "operation_id": "op_d60589ea726847f9a5f20c77774d8a57",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_a8411a645ef3",
+          "created_at": 1790695475.477165,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_a8411a645ef3"
+        }
+      },
+      "response_sha256": "2de489284be7a37a5b026fe9d954f2632749cf9e74eed66df2bdba1158e85485"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_19d610f6aa1b",
+          "title": "Graph walk triage headline Defer",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-29T15:24:35Z",
+          "updated_at": "2026-09-29T15:24:35Z",
+          "deleted": false
+        },
+        "operation_id": "op_74e32adfa73e4f4c9a46169fc73375bb",
+        "receipt": {
+          "receipt_id": "rcpt_859078475ff944f486e06e9f47492f95",
+          "operation_id": "op_74e32adfa73e4f4c9a46169fc73375bb",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_19d610f6aa1b",
+          "created_at": 1790695475.501579,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_19d610f6aa1b"
+        }
+      },
+      "response_sha256": "bfe8e662a2175a1444c40f6d423b3c76949fa8a37308d6c230f6e7e4ac277cc2"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-generate]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-row]",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:24:39.315020",
+        "headline": "2 decisions waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+              "section": "decisions",
+              "text": "Review decision: Graph walk triage headline Ack",
+              "detail": null,
+              "source_ref": "decision:decision_a8411a645ef3",
+              "priority": 200,
+              "created_at": "2026-09-29T15:24:35Z"
+            },
+            {
+              "id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+              "section": "decisions",
+              "text": "Review decision: Graph walk triage headline Defer",
+              "detail": null,
+              "source_ref": "decision:decision_19d610f6aa1b",
+              "priority": 200,
+              "created_at": "2026-09-29T15:24:35Z"
+            }
+          ]
+        },
+        "generated_at": "2026-09-29T09:24:39.315020",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 28 \u2013 29",
+        "generated_label": "GENERATED SEP 29 09:24",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "85babc354a36f6d6865eb4076718c51fd6293c997e6e0f1660ef7bb6325bcf1e",
+      "captured": {
+        "name": "first_brief_id",
+        "path": "id",
+        "value": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:24:39.315020",
+        "headline": "2 decisions waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+              "section": "decisions",
+              "text": "Review decision: Graph walk triage headline Ack",
+              "detail": null,
+              "source_ref": "decision:decision_a8411a645ef3",
+              "priority": 200,
+              "created_at": "2026-09-29T15:24:35Z"
+            },
+            {
+              "id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+              "section": "decisions",
+              "text": "Review decision: Graph walk triage headline Defer",
+              "detail": null,
+              "source_ref": "decision:decision_19d610f6aa1b",
+              "priority": 200,
+              "created_at": "2026-09-29T15:24:35Z"
+            }
+          ]
+        },
+        "generated_at": "2026-09-29T09:24:39.315020",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 28 \u2013 29",
+        "generated_label": "GENERATED SEP 29 09:24",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "85babc354a36f6d6865eb4076718c51fd6293c997e6e0f1660ef7bb6325bcf1e",
+      "captured": {
+        "name": "first_headline",
+        "path": "headline",
+        "value": "2 decisions waiting."
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-row]:has-text('Review decision: Graph walk triage headline Ack') button:has-text('Ack')",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/brief/latest",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/headline",
+        "value": "2 decisions waiting."
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/headline equals the declared value"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "two proposed desk decisions are created through POST /api/decisions, so the real brief producer returns two Arrival rows",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "first_brief_id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+    "first_headline": "2 decisions waiting."
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-brief-row]:has-text('Review decision: Graph walk triage headline Defer') button:has-text('Defer')",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "ALL 2 HANDLED"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "surface-receipt-line",
+        "data-testid": "arrival-brief-handled"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 12,
+        "y": 371,
+        "w": 369,
+        "h": 18
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "aac37a8ad9d51a96667ceb94acb7dbbf00563fc016b51cefbc58c0fb3c7629a9",
+      "after": "b07bea97a931a64d2b939699dde91d6be4d64dc7502d43da29d80e83c09a319e"
+    },
+    "document_text_len": {
+      "before": 387,
+      "after": 344
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "payload": {
+            "id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+            "period_start": "2026-09-28T17:00:00",
+            "period_end": "2026-09-29T09:24:39.315020",
+            "headline": "2 decisions waiting.",
+            "sections": {
+              "this_week": [],
+              "changed": [],
+              "broke": [],
+              "waiting": [],
+              "decisions": [
+                {
+                  "id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+                  "section": "decisions",
+                  "text": "Review decision: Graph walk triage headline Ack",
+                  "detail": null,
+                  "source_ref": "decision:decision_a8411a645ef3",
+                  "priority": 200,
+                  "created_at": "2026-09-29T15:24:35Z"
+                },
+                {
+                  "id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+                  "section": "decisions",
+                  "text": "Review decision: Graph walk triage headline Defer",
+                  "detail": null,
+                  "source_ref": "decision:decision_19d610f6aa1b",
+                  "priority": 200,
+                  "created_at": "2026-09-29T15:24:35Z"
+                }
+              ]
+            },
+            "generated_at": "2026-09-29T09:24:39.315020",
+            "is_empty": false,
+            "shelf": {
+              "brief-item-863ed16c188d48c98154ee4d62a597a9": "acknowledged"
+            },
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_label": "SEP 28 \u2013 29",
+            "generated_label": "GENERATED SEP 29 09:24",
+            "person_sections_state": "unavailable"
+          },
+          "body_sha256": "ec24d953e4329b2c9d0ed3798cd21fabb28f3380b42f9da7ceb9101badc16346"
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/shelf",
+          "status": 200,
+          "payload": {
+            "brief-item-863ed16c188d48c98154ee4d62a597a9": "acknowledged"
+          },
+          "body_sha256": "b9b5c3df78bed662e0bb2b3c0f84def98a62cfdad5186226f795bd4170f662e4"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "payload": {
+            "id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+            "period_start": "2026-09-28T17:00:00",
+            "period_end": "2026-09-29T09:24:39.315020",
+            "headline": "2 decisions waiting.",
+            "sections": {
+              "this_week": [],
+              "changed": [],
+              "broke": [],
+              "waiting": [],
+              "decisions": [
+                {
+                  "id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+                  "section": "decisions",
+                  "text": "Review decision: Graph walk triage headline Ack",
+                  "detail": null,
+                  "source_ref": "decision:decision_a8411a645ef3",
+                  "priority": 200,
+                  "created_at": "2026-09-29T15:24:35Z"
+                },
+                {
+                  "id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+                  "section": "decisions",
+                  "text": "Review decision: Graph walk triage headline Defer",
+                  "detail": null,
+                  "source_ref": "decision:decision_19d610f6aa1b",
+                  "priority": 200,
+                  "created_at": "2026-09-29T15:24:35Z"
+                }
+              ]
+            },
+            "generated_at": "2026-09-29T09:24:39.315020",
+            "is_empty": false,
+            "shelf": {
+              "brief-item-863ed16c188d48c98154ee4d62a597a9": "acknowledged",
+              "brief-item-44ae97f24d4549cbbcc194b9912b756e": "deferred"
+            },
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_label": "SEP 28 \u2013 29",
+            "generated_label": "GENERATED SEP 29 09:24",
+            "person_sections_state": "unavailable"
+          },
+          "body_sha256": "df116e5b28093b8c2cf9e611cbaeddbd23e2e1caf098ffa2e2701793937e105e"
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/shelf",
+          "status": 200,
+          "payload": {
+            "brief-item-863ed16c188d48c98154ee4d62a597a9": "acknowledged",
+            "brief-item-44ae97f24d4549cbbcc194b9912b756e": "deferred"
+          },
+          "body_sha256": "8baeddd7dbe6347acf5886ac6c1a9a7812aa457b2c4b510fa8a27954d0de6cf6"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=arrival-brief-handled]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 130,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n09:24 AM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:62399/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "aac37a8ad9d51a96667ceb94acb7dbbf00563fc016b51cefbc58c0fb3c7629a9",
+    "document_text_len": 387,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "period_start": "2026-09-28T17:00:00",
+          "period_end": "2026-09-29T09:24:39.315020",
+          "headline": "2 decisions waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+                "section": "decisions",
+                "text": "Review decision: Graph walk triage headline Ack",
+                "detail": null,
+                "source_ref": "decision:decision_a8411a645ef3",
+                "priority": 200,
+                "created_at": "2026-09-29T15:24:35Z"
+              },
+              {
+                "id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+                "section": "decisions",
+                "text": "Review decision: Graph walk triage headline Defer",
+                "detail": null,
+                "source_ref": "decision:decision_19d610f6aa1b",
+                "priority": 200,
+                "created_at": "2026-09-29T15:24:35Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-29T09:24:39.315020",
+          "is_empty": false,
+          "shelf": {
+            "brief-item-863ed16c188d48c98154ee4d62a597a9": "acknowledged"
+          },
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 28 \u2013 29",
+          "generated_label": "GENERATED SEP 29 09:24",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "ec24d953e4329b2c9d0ed3798cd21fabb28f3380b42f9da7ceb9101badc16346"
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/shelf",
+        "status": 200,
+        "payload": {
+          "brief-item-863ed16c188d48c98154ee4d62a597a9": "acknowledged"
+        },
+        "body_sha256": "b9b5c3df78bed662e0bb2b3c0f84def98a62cfdad5186226f795bd4170f662e4"
+      }
+    ],
+    "at_utc": "2026-09-29T15:24:39.971057+00:00",
+    "brief_db": {
+      "brief": {
+        "id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:24:39.315020",
+        "headline": "2 decisions waiting.",
+        "generated_at": "2026-09-29T09:24:39.315020",
+        "spoken": 0,
+        "disposition": null
+      },
+      "items": [
+        {
+          "id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+          "brief_id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "section": "decisions",
+          "text": "Review decision: Graph walk triage headline Defer",
+          "detail": null,
+          "source_ref": "decision:decision_19d610f6aa1b",
+          "priority": 200,
+          "created_at": "2026-09-29T15:24:35Z"
+        },
+        {
+          "id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+          "brief_id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "section": "decisions",
+          "text": "Review decision: Graph walk triage headline Ack",
+          "detail": null,
+          "source_ref": "decision:decision_a8411a645ef3",
+          "priority": 200,
+          "created_at": "2026-09-29T15:24:35Z"
+        }
+      ],
+      "shelf": [
+        {
+          "item_id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+          "brief_id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "state": "acknowledged",
+          "updated_at": "2026-09-29 15:24:39"
+        }
+      ]
+    }
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-brief-handled]",
+    "target_present": true,
+    "text": "ALL 2 HANDLED",
+    "attrs": {
+      "class": "surface-receipt-line",
+      "data-testid": "arrival-brief-handled"
+    },
+    "rect": {
+      "x": 12,
+      "y": 371,
+      "w": 369,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 371,
+        "w": 369,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 373,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 14,
+          "y": 380,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 14,
+          "y": 387,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 197,
+          "y": 373,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 197,
+          "y": 380,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 197,
+          "y": 387,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 379,
+          "y": 373,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 379,
+          "y": 380,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 379,
+          "y": 387,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 73,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n09:24 AM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:62399/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "b07bea97a931a64d2b939699dde91d6be4d64dc7502d43da29d80e83c09a319e",
+    "document_text_len": 344,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "period_start": "2026-09-28T17:00:00",
+          "period_end": "2026-09-29T09:24:39.315020",
+          "headline": "2 decisions waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+                "section": "decisions",
+                "text": "Review decision: Graph walk triage headline Ack",
+                "detail": null,
+                "source_ref": "decision:decision_a8411a645ef3",
+                "priority": 200,
+                "created_at": "2026-09-29T15:24:35Z"
+              },
+              {
+                "id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+                "section": "decisions",
+                "text": "Review decision: Graph walk triage headline Defer",
+                "detail": null,
+                "source_ref": "decision:decision_19d610f6aa1b",
+                "priority": 200,
+                "created_at": "2026-09-29T15:24:35Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-29T09:24:39.315020",
+          "is_empty": false,
+          "shelf": {
+            "brief-item-863ed16c188d48c98154ee4d62a597a9": "acknowledged",
+            "brief-item-44ae97f24d4549cbbcc194b9912b756e": "deferred"
+          },
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 28 \u2013 29",
+          "generated_label": "GENERATED SEP 29 09:24",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "df116e5b28093b8c2cf9e611cbaeddbd23e2e1caf098ffa2e2701793937e105e"
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/shelf",
+        "status": 200,
+        "payload": {
+          "brief-item-863ed16c188d48c98154ee4d62a597a9": "acknowledged",
+          "brief-item-44ae97f24d4549cbbcc194b9912b756e": "deferred"
+        },
+        "body_sha256": "8baeddd7dbe6347acf5886ac6c1a9a7812aa457b2c4b510fa8a27954d0de6cf6"
+      }
+    ],
+    "at_utc": "2026-09-29T15:24:41.076812+00:00",
+    "brief_db": {
+      "brief": {
+        "id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:24:39.315020",
+        "headline": "2 decisions waiting.",
+        "generated_at": "2026-09-29T09:24:39.315020",
+        "spoken": 0,
+        "disposition": null
+      },
+      "items": [
+        {
+          "id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+          "brief_id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "section": "decisions",
+          "text": "Review decision: Graph walk triage headline Defer",
+          "detail": null,
+          "source_ref": "decision:decision_19d610f6aa1b",
+          "priority": 200,
+          "created_at": "2026-09-29T15:24:35Z"
+        },
+        {
+          "id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+          "brief_id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "section": "decisions",
+          "text": "Review decision: Graph walk triage headline Ack",
+          "detail": null,
+          "source_ref": "decision:decision_a8411a645ef3",
+          "priority": 200,
+          "created_at": "2026-09-29T15:24:35Z"
+        }
+      ],
+      "shelf": [
+        {
+          "item_id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+          "brief_id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "state": "deferred",
+          "updated_at": "2026-09-29 15:24:40"
+        },
+        {
+          "item_id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+          "brief_id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "state": "acknowledged",
+          "updated_at": "2026-09-29 15:24:39"
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-44ae97f24d4549cbbcc194b9912b756e/shelf",
+      "status": 200,
+      "body_sha256": "7fab5d4ec842563ef3698083e8fdf275d837f9d43b7dcaea6b2eee224609306a",
+      "body": {
+        "item_id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+        "state": "deferred"
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:62399) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-brief-handled]",
+    "target_present": true,
+    "text": "ALL 2 HANDLED",
+    "attrs": {
+      "class": "surface-receipt-line",
+      "data-testid": "arrival-brief-handled"
+    },
+    "rect": {
+      "x": 12,
+      "y": 371,
+      "w": 369,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 371,
+        "w": 369,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 373,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 14,
+          "y": 380,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 14,
+          "y": 387,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 197,
+          "y": 373,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 197,
+          "y": 380,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 197,
+          "y": 387,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 379,
+          "y": 373,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 379,
+          "y": 380,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        },
+        {
+          "x": 379,
+          "y": 387,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.surface-receipt-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 73,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n09:24 AM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:62399/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "b07bea97a931a64d2b939699dde91d6be4d64dc7502d43da29d80e83c09a319e",
+    "document_text_len": 344,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "period_start": "2026-09-28T17:00:00",
+          "period_end": "2026-09-29T09:24:39.315020",
+          "headline": "2 decisions waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+                "section": "decisions",
+                "text": "Review decision: Graph walk triage headline Ack",
+                "detail": null,
+                "source_ref": "decision:decision_a8411a645ef3",
+                "priority": 200,
+                "created_at": "2026-09-29T15:24:35Z"
+              },
+              {
+                "id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+                "section": "decisions",
+                "text": "Review decision: Graph walk triage headline Defer",
+                "detail": null,
+                "source_ref": "decision:decision_19d610f6aa1b",
+                "priority": 200,
+                "created_at": "2026-09-29T15:24:35Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-29T09:24:39.315020",
+          "is_empty": false,
+          "shelf": {
+            "brief-item-863ed16c188d48c98154ee4d62a597a9": "acknowledged",
+            "brief-item-44ae97f24d4549cbbcc194b9912b756e": "deferred"
+          },
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 28 \u2013 29",
+          "generated_label": "GENERATED SEP 29 09:24",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "df116e5b28093b8c2cf9e611cbaeddbd23e2e1caf098ffa2e2701793937e105e"
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/shelf",
+        "status": 200,
+        "payload": {
+          "brief-item-863ed16c188d48c98154ee4d62a597a9": "acknowledged",
+          "brief-item-44ae97f24d4549cbbcc194b9912b756e": "deferred"
+        },
+        "body_sha256": "8baeddd7dbe6347acf5886ac6c1a9a7812aa457b2c4b510fa8a27954d0de6cf6"
+      }
+    ],
+    "at_utc": "2026-09-29T15:24:40.939873+00:00",
+    "brief_db": {
+      "brief": {
+        "id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:24:39.315020",
+        "headline": "2 decisions waiting.",
+        "generated_at": "2026-09-29T09:24:39.315020",
+        "spoken": 0,
+        "disposition": null
+      },
+      "items": [
+        {
+          "id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+          "brief_id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "section": "decisions",
+          "text": "Review decision: Graph walk triage headline Defer",
+          "detail": null,
+          "source_ref": "decision:decision_19d610f6aa1b",
+          "priority": 200,
+          "created_at": "2026-09-29T15:24:35Z"
+        },
+        {
+          "id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+          "brief_id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "section": "decisions",
+          "text": "Review decision: Graph walk triage headline Ack",
+          "detail": null,
+          "source_ref": "decision:decision_a8411a645ef3",
+          "priority": 200,
+          "created_at": "2026-09-29T15:24:35Z"
+        }
+      ],
+      "shelf": [
+        {
+          "item_id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+          "brief_id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "state": "deferred",
+          "updated_at": "2026-09-29 15:24:40"
+        },
+        {
+          "item_id": "brief-item-863ed16c188d48c98154ee4d62a597a9",
+          "brief_id": "brief-dc1b27b4cde549c9b62a6dc8bfe19bc1",
+          "state": "acknowledged",
+          "updated_at": "2026-09-29 15:24:39"
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-44ae97f24d4549cbbcc194b9912b756e/shelf",
+      "status": 200,
+      "body_sha256": "7fab5d4ec842563ef3698083e8fdf275d837f9d43b7dcaea6b2eee224609306a",
+      "body": {
+        "item_id": "brief-item-44ae97f24d4549cbbcc194b9912b756e",
+        "state": "deferred"
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:62399) non-GET response after the click"
+    },
+    "predicate_satisfied": true,
+    "reading": "'ALL 2 HANDLED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 371, 'w': 369, 'h': 18}",
+    "elapsed_s": 0.93
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'ALL 2 HANDLED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 371, 'w': 369, 'h': 18}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.065,
+    "first_satisfied_at_s": 0.93,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'ALL 2 HANDLED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 371, 'w': 369, 'h': 18}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:62399) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-44ae97f24d4549cbbcc194b9912b756e/shelf",
+      "status": 200,
+      "body_sha256": "7fab5d4ec842563ef3698083e8fdf275d837f9d43b7dcaea6b2eee224609306a",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:62399) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:62399) non-GET response after the click",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/brief/items/brief-item-44ae97f24d4549cbbcc194b9912b756e/shelf",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/base-dce3afa9/case.philo404.arrival_triaged_headline.all_handled--393/20260929T152429Z-case.philo404.arrival_triaged_headline.all_handled-muaddib-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/base-dce3afa9/case.philo404.arrival_triaged_headline.all_handled--393/20260929T152429Z-case.philo404.arrival_triaged_headline.all_handled-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-gfegda52/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-gfegda52/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:62399"
+  ],
+  "duration_s": 11.278
+}

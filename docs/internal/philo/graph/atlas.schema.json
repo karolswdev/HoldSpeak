@@ -88,7 +88,8 @@
               "a4",
               "p7",
               "p8",
-              "p9"
+              "p9",
+              "p10"
             ]
           },
           "words": {
@@ -389,7 +390,8 @@
                 "fill",
                 "press",
                 "wait_for",
-                "focus"
+                "focus",
+                "scroll_into_view"
               ],
               "description": "One of the actions scripts/graph_walk.py::_ui_step implements."
             },
@@ -430,6 +432,10 @@
             "state": {
               "type": "string",
               "minLength": 1
+            },
+            "block": {
+              "enum": ["start", "center", "end"],
+              "description": "PHILO-10-05: scroll_into_view only -- where the control or section is seated."
             },
             "wait_until": {
               "type": "string",
@@ -528,7 +534,8 @@
                       "click",
                       "fill",
                       "wait_for",
-                      "focus"
+                      "focus",
+                      "scroll_into_view"
                     ]
                   }
                 },
@@ -1362,7 +1369,8 @@
                 "a4",
                 "p7",
                 "p8",
-                "p9"
+                "p9",
+                "p10"
               ]
             },
             "edge_ids": {

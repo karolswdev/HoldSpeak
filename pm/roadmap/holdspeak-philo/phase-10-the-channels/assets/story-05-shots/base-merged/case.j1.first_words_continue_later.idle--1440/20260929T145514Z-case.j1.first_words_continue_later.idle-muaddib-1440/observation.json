@@ -1,0 +1,713 @@
+{
+  "id": "obs-20260929T145514Z-case.j1.first_words_continue_later.idle-muaddib-1440",
+  "run_id": "20260929T145514Z-case.j1.first_words_continue_later.idle-muaddib-1440",
+  "case_id": "case.j1.first_words_continue_later.idle",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j1",
+  "edge_ids": [
+    "edge.face.first_words_continue_later"
+  ],
+  "state_id": "state.first_value.continue_later",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64612",
+      "port": 64612,
+      "pid": 64535,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5ul6bu_y",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5ul6bu_y/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T14:55:15.209491+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "5f52df14226b6f0fa338f6a8fd3f8dfe7b55276567321ad09f69177c357f08ba",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "the first screen is the voice-typing gate",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "no draft text",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-first-value]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "chair-first-value"
+      },
+      "adapter": "observation",
+      "waited_s": 3.36,
+      "holds": true,
+      "reading": "data-testid='chair-first-value', wanted 'chair-first-value'"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5ul6bu_y"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click_role",
+    "adapter": "ui-pointer",
+    "name": "Continue later",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "1 need you\nNO CALENDAR Connect calendar"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "arrival-headline",
+        "data-testid": "arrival-headline"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 256,
+        "y": 70,
+        "w": 928,
+        "h": 58
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus_label": {
+      "before": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep",
+      "after": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,"
+    },
+    "document_text_sha256": {
+      "before": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5",
+      "after": "3d30fc7bb1454cee45463fd93e483c75aaa8578224330d437415d9026486fe8b"
+    },
+    "document_text_len": {
+      "before": 120,
+      "after": 359
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+          "value": ""
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=arrival-headline]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [
+      {
+        "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep",
+    "url": "http://127.0.0.1:64612/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5",
+    "document_text_len": 120,
+    "replay_identity": null,
+    "at_utc": "2026-09-29T14:55:21.792905+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-headline]",
+    "target_present": true,
+    "text": "1 need you\nNO CALENDAR Connect calendar",
+    "attrs": {
+      "class": "arrival-headline",
+      "data-testid": "arrival-headline"
+    },
+    "rect": {
+      "x": 256,
+      "y": 70,
+      "w": 928,
+      "h": 58
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 256,
+        "y": 70,
+        "w": 928,
+        "h": 58
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 258,
+          "y": 72,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div.arrival-headline > h1.arrival-display.arrival-display--accent"
+        },
+        {
+          "x": 258,
+          "y": 99,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div.arrival-headline > h1.arrival-display.arrival-display--accent"
+        },
+        {
+          "x": 258,
+          "y": 126,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div.arrival-headline > div.arrival-head-tokens > span.arrival-next"
+        },
+        {
+          "x": 720,
+          "y": 72,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div.arrival-headline > h1.arrival-display.arrival-display--accent"
+        },
+        {
+          "x": 720,
+          "y": 99,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div.arrival-headline > h1.arrival-display.arrival-display--accent"
+        },
+        {
+          "x": 720,
+          "y": 126,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div.arrival-headline > div.arrival-head-tokens"
+        },
+        {
+          "x": 1182,
+          "y": 72,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div.arrival-headline > h1.arrival-display.arrival-display--accent"
+        },
+        {
+          "x": 1182,
+          "y": 99,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div.arrival-headline > h1.arrival-display.arrival-display--accent"
+        },
+        {
+          "x": 1182,
+          "y": 126,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div.arrival-headline > div.arrival-head-tokens"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:64612/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "3d30fc7bb1454cee45463fd93e483c75aaa8578224330d437415d9026486fe8b",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "at_utc": "2026-09-29T14:55:24.727732+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/desk/seed",
+      "status": 200,
+      "body_sha256": "e0e9140b41a501956294d5e90b8903ab76537b011b6d60e9cefd01ccddb1c267",
+      "body": {
+        "success": true,
+        "manifest": "fresh-desk",
+        "applied": {
+          "directories": 6,
+          "notes": 10,
+          "kbs": 1,
+          "recipes": 4
+        },
+        "profiles_seeded": 0,
+        "profiles_adopted": {},
+        "workbenches_seeded": 0,
+        "filed": 6,
+        "total": 21
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64612) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-headline]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [
+      {
+        "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep",
+    "url": "http://127.0.0.1:64612/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5",
+    "document_text_len": 120,
+    "replay_identity": null,
+    "at_utc": "2026-09-29T14:55:22.856106+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/desk/seed",
+      "status": 200,
+      "body_sha256": "e0e9140b41a501956294d5e90b8903ab76537b011b6d60e9cefd01ccddb1c267",
+      "body": {
+        "success": true,
+        "manifest": "fresh-desk",
+        "applied": {
+          "directories": 6,
+          "notes": 10,
+          "kbs": 1,
+          "recipes": 4
+        },
+        "profiles_seeded": 0,
+        "profiles_adopted": {},
+        "workbenches_seeded": 0,
+        "filed": 6,
+        "total": 21
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64612) non-GET response after the click"
+    },
+    "predicate_satisfied": false,
+    "reading": "BLOCKED: observe_at not present ('[data-testid=arrival-headline]'); no element carries 'data-testid'",
+    "elapsed_s": 0.956
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "data-testid='arrival-headline', wanted 'arrival-headline'",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 2.826,
+    "first_satisfied_at_s": 2.575,
+    "completion_bound_s": 20.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: data-testid='arrival-headline', wanted 'arrival-headline'"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:64612) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/desk/seed",
+      "status": 200,
+      "body_sha256": "e0e9140b41a501956294d5e90b8903ab76537b011b6d60e9cefd01ccddb1c267",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64612) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:64612) non-GET response after the click",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/desk/seed",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "PUT",
+        "path": "/api/setup/onboarding",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/base-merged/case.j1.first_words_continue_later.idle--1440/20260929T145514Z-case.j1.first_words_continue_later.idle-muaddib-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-10-05/.tmp/p10s05/base-merged/case.j1.first_words_continue_later.idle--1440/20260929T145514Z-case.j1.first_words_continue_later.idle-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5ul6bu_y/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5ul6bu_y/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64612"
+  ],
+  "duration_s": 10.057
+}

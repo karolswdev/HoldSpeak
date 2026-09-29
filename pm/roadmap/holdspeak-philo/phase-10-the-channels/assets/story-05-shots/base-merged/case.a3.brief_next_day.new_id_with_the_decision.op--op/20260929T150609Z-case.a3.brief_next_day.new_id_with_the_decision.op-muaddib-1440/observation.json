@@ -1,0 +1,1916 @@
+{
+  "id": "obs-20260929T150609Z-case.a3.brief_next_day.new_id_with_the_decision.op-muaddib-1440",
+  "run_id": "20260929T150609Z-case.a3.brief_next_day.new_id_with_the_decision.op-muaddib-1440",
+  "case_id": "case.a3.brief_next_day.new_id_with_the_decision.op",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "a3",
+  "edge_ids": [
+    "edge.face.arrival_generate",
+    "edge.route.brief_generate",
+    "edge.route.brief_latest"
+  ],
+  "state_id": "state.briefs.next_day_window",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:53823",
+      "port": 53823,
+      "pid": 79093,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fr94s_cq",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fr94s_cq/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:06:09.241488+00:00",
+      "mechanism": "advance only the producer clock in the owning hub HOME",
+      "scheduler_thread": false,
+      "clock": "clock.python_wall",
+      "adapter": "producer-clock",
+      "producer_clock_file": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fr94s_cq/graph-walk-producer-clock.json",
+      "advance_days": 1,
+      "machine_clock_moved": false,
+      "producer_clock_reads": [
+        "advance_days=0 now=2026-09-29T09:06:10",
+        "advance_days=1 now=2026-09-30T09:06:10"
+      ]
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "65f0da5833e79fa1a23f7332599aac3941729313c1c6e99f1df82c64029609d6",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the brief producer clock seam (wall clock + the run's offset file)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "brief.generate",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.generate",
+          "arguments": {}
+        }
+      },
+      "response": {
+        "generated_at": "2026-09-29T09:06:10.783093",
+        "headline": "No changes",
+        "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+        "is_empty": true,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-29T09:06:10.783093",
+        "period_start": "2026-09-28T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "domain_response": {
+        "generated_at": "2026-09-29T09:06:10.783093",
+        "headline": "No changes",
+        "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+        "is_empty": true,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-29T09:06:10.783093",
+        "period_start": "2026-09-28T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-29T09:06:10.783093\", \"headline\": \"No changes\", \"id\": \"brief-92d4c1052e104ab4ab696034fbad28d6\", \"is_empty\": true, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-29T09:06:10.783093\", \"period_start\": \"2026-09-28T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.038,
+      "captured": {
+        "name": "first_brief_id",
+        "path": "id",
+        "value": "brief-92d4c1052e104ab4ab696034fbad28d6"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.create",
+      "args": {
+        "title": "Graph walk next-day decision A3",
+        "status": "proposed"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "decisions",
+            "data": {
+              "title": "Graph walk next-day decision A3",
+              "status": "proposed"
+            }
+          }
+        }
+      },
+      "response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "",
+        "created_at": "2026-09-29T15:06:10Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "",
+        "deleted": false,
+        "id": "decision_61c1fb1555c4",
+        "operation_id": "op_065459cc825d4da282dd72f5421cc05e",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790694370.8160388,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_065459cc825d4da282dd72f5421cc05e",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_4c421395121d41b288f4a0bd607ebb1f",
+          "result_ref": "decision:decision_61c1fb1555c4",
+          "state": "succeeded",
+          "target_ref": "decision:decision_61c1fb1555c4"
+        },
+        "status": "proposed",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Graph walk next-day decision A3",
+        "updated_at": "2026-09-29T15:06:10Z"
+      },
+      "domain_response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "",
+        "created_at": "2026-09-29T15:06:10Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "",
+        "deleted": false,
+        "id": "decision_61c1fb1555c4",
+        "operation_id": "op_065459cc825d4da282dd72f5421cc05e",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790694370.8160388,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_065459cc825d4da282dd72f5421cc05e",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_4c421395121d41b288f4a0bd607ebb1f",
+          "result_ref": "decision:decision_61c1fb1555c4",
+          "state": "succeeded",
+          "target_ref": "decision:decision_61c1fb1555c4"
+        },
+        "status": "proposed",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Graph walk next-day decision A3",
+        "updated_at": "2026-09-29T15:06:10Z"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"\", \"created_at\": \"2026-09-29T15:06:10Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"\", \"deleted\": false, \"id\": \"decision_61c1fb1555c4\", \"operation_id\": \"op_065459cc825d4da282dd72f5421cc05e\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790694370.8160388, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_065459cc825d4da282dd72f5421cc05e\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_4c421395121d41b288f4a0bd607ebb1f\", \"result_ref\": \"decision:decision_61c1fb1555c4\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_61c1fb1555c4\"}, \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Graph walk next-day decision A3\", \"updated_at\": \"2026-09-29T15:06:10Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003,
+      "captured": {
+        "name": "decision_id",
+        "path": "id",
+        "value": "decision_61c1fb1555c4"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "brief.generate",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.generate",
+          "arguments": {}
+        }
+      },
+      "response": {
+        "generated_at": "2026-09-29T09:06:10.783093",
+        "headline": "No changes",
+        "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+        "is_empty": true,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-29T09:06:10.783093",
+        "period_start": "2026-09-28T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "domain_response": {
+        "generated_at": "2026-09-29T09:06:10.783093",
+        "headline": "No changes",
+        "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+        "is_empty": true,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-29T09:06:10.783093",
+        "period_start": "2026-09-28T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-29T09:06:10.783093\", \"headline\": \"No changes\", \"id\": \"brief-92d4c1052e104ab4ab696034fbad28d6\", \"is_empty\": true, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-29T09:06:10.783093\", \"period_start\": \"2026-09-28T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "brief.latest",
+        "args": {}
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "sections.decisions",
+        "value": []
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "sections.decisions equals the declared value"
+    },
+    {
+      "kind": "clock",
+      "adapter": "producer-clock",
+      "clock": "clock.python_wall",
+      "advance_days": 1,
+      "advance_days_total": 1,
+      "done": true
+    }
+  ],
+  "preconditions": [],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fr94s_cq",
+    "first_brief_id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+    "decision_id": "decision_61c1fb1555c4"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "brief.generate",
+    "args": {},
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "method": "tools/call",
+      "params": {
+        "name": "monday_brief.generate",
+        "arguments": {}
+      }
+    },
+    "response": {
+      "generated_at": "2026-09-30T09:06:10.827310",
+      "headline": "1 decision waiting.",
+      "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+      "is_empty": false,
+      "ledger": {
+        "operations": 0,
+        "since": null
+      },
+      "period_end": "2026-09-30T09:06:10.827310",
+      "period_start": "2026-09-29T17:00:00",
+      "person_sections_state": "unavailable",
+      "sections": {
+        "broke": [],
+        "changed": [],
+        "decisions": [
+          {
+            "created_at": "2026-09-29T15:06:10Z",
+            "detail": null,
+            "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+            "priority": 200,
+            "section": "decisions",
+            "source_ref": "decision:decision_61c1fb1555c4",
+            "text": "Review decision: Graph walk next-day decision A3"
+          }
+        ],
+        "this_week": [],
+        "waiting": []
+      },
+      "shelf": {}
+    },
+    "domain_response": {
+      "generated_at": "2026-09-30T09:06:10.827310",
+      "headline": "1 decision waiting.",
+      "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+      "is_empty": false,
+      "ledger": {
+        "operations": 0,
+        "since": null
+      },
+      "period_end": "2026-09-30T09:06:10.827310",
+      "period_start": "2026-09-29T17:00:00",
+      "person_sections_state": "unavailable",
+      "sections": {
+        "broke": [],
+        "changed": [],
+        "decisions": [
+          {
+            "created_at": "2026-09-29T15:06:10Z",
+            "detail": null,
+            "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+            "priority": 200,
+            "section": "decisions",
+            "source_ref": "decision:decision_61c1fb1555c4",
+            "text": "Review decision: Graph walk next-day decision A3"
+          }
+        ],
+        "this_week": [],
+        "waiting": []
+      },
+      "shelf": {}
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"generated_at\": \"2026-09-30T09:06:10.827310\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-8c8340bde1a249c3bf164733ced0d928\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-30T09:06:10.827310\", \"period_start\": \"2026-09-29T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:06:10Z\", \"detail\": null, \"id\": \"brief-item-e18e1222173b4c0697082838c14680cc\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_61c1fb1555c4\", \"text\": \"Review decision: Graph walk next-day decision A3\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.029
+  },
+  "diff": {
+    "op_digest": {
+      "before": "1c90add562cc0d9c92d3491b89b7cda841fa87fe4c158b2a91289d968cad38f8",
+      "after": "d3a689a962372d73fad330c60bb718b9805337df83897c0819933fb37c4dfc33"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "tools/call",
+            "params": {
+              "name": "monday_brief.get",
+              "arguments": {
+                "generate": false
+              }
+            }
+          },
+          "response": {
+            "generated_at": "2026-09-29T09:06:10.783093",
+            "headline": "No changes",
+            "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+            "is_empty": true,
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_end": "2026-09-29T09:06:10.783093",
+            "period_start": "2026-09-28T17:00:00",
+            "person_sections_state": "unavailable",
+            "sections": {
+              "broke": [],
+              "changed": [],
+              "decisions": [],
+              "this_week": [],
+              "waiting": []
+            },
+            "shelf": {}
+          },
+          "domain_response": {
+            "generated_at": "2026-09-29T09:06:10.783093",
+            "headline": "No changes",
+            "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+            "is_empty": true,
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_end": "2026-09-29T09:06:10.783093",
+            "period_start": "2026-09-28T17:00:00",
+            "person_sections_state": "unavailable",
+            "sections": {
+              "broke": [],
+              "changed": [],
+              "decisions": [],
+              "this_week": [],
+              "waiting": []
+            },
+            "shelf": {}
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"generated_at\": \"2026-09-29T09:06:10.783093\", \"headline\": \"No changes\", \"id\": \"brief-92d4c1052e104ab4ab696034fbad28d6\", \"is_empty\": true, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-29T09:06:10.783093\", \"period_start\": \"2026-09-28T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        },
+        {
+          "kind": "op",
+          "name": "decision.read",
+          "args": {
+            "decision_id": "decision_61c1fb1555c4"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "method": "tools/call",
+            "params": {
+              "name": "desk.get",
+              "arguments": {
+                "kind": "decisions",
+                "id": "decision_61c1fb1555c4"
+              }
+            }
+          },
+          "response": {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "",
+            "created_at": "2026-09-29T15:06:10Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "",
+            "deleted": false,
+            "id": "decision_61c1fb1555c4",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Graph walk next-day decision A3",
+            "updated_at": "2026-09-29T15:06:10Z"
+          },
+          "domain_response": {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "",
+            "created_at": "2026-09-29T15:06:10Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "",
+            "deleted": false,
+            "id": "decision_61c1fb1555c4",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Graph walk next-day decision A3",
+            "updated_at": "2026-09-29T15:06:10Z"
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"\", \"created_at\": \"2026-09-29T15:06:10Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"\", \"deleted\": false, \"id\": \"decision_61c1fb1555c4\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Graph walk next-day decision A3\", \"updated_at\": \"2026-09-29T15:06:10Z\"}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 13,
+            "method": "tools/call",
+            "params": {
+              "name": "monday_brief.get",
+              "arguments": {
+                "generate": false
+              }
+            }
+          },
+          "response": {
+            "generated_at": "2026-09-30T09:06:10.827310",
+            "headline": "1 decision waiting.",
+            "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+            "is_empty": false,
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_end": "2026-09-30T09:06:10.827310",
+            "period_start": "2026-09-29T17:00:00",
+            "person_sections_state": "unavailable",
+            "sections": {
+              "broke": [],
+              "changed": [],
+              "decisions": [
+                {
+                  "created_at": "2026-09-29T15:06:10Z",
+                  "detail": null,
+                  "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+                  "priority": 200,
+                  "section": "decisions",
+                  "source_ref": "decision:decision_61c1fb1555c4",
+                  "text": "Review decision: Graph walk next-day decision A3"
+                }
+              ],
+              "this_week": [],
+              "waiting": []
+            },
+            "shelf": {}
+          },
+          "domain_response": {
+            "generated_at": "2026-09-30T09:06:10.827310",
+            "headline": "1 decision waiting.",
+            "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+            "is_empty": false,
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_end": "2026-09-30T09:06:10.827310",
+            "period_start": "2026-09-29T17:00:00",
+            "person_sections_state": "unavailable",
+            "sections": {
+              "broke": [],
+              "changed": [],
+              "decisions": [
+                {
+                  "created_at": "2026-09-29T15:06:10Z",
+                  "detail": null,
+                  "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+                  "priority": 200,
+                  "section": "decisions",
+                  "source_ref": "decision:decision_61c1fb1555c4",
+                  "text": "Review decision: Graph walk next-day decision A3"
+                }
+              ],
+              "this_week": [],
+              "waiting": []
+            },
+            "shelf": {}
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 13,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"generated_at\": \"2026-09-30T09:06:10.827310\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-8c8340bde1a249c3bf164733ced0d928\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-30T09:06:10.827310\", \"period_start\": \"2026-09-29T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:06:10Z\", \"detail\": null, \"id\": \"brief-item-e18e1222173b4c0697082838c14680cc\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_61c1fb1555c4\", \"text\": \"Review decision: Graph walk next-day decision A3\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        },
+        {
+          "kind": "op",
+          "name": "decision.read",
+          "args": {
+            "decision_id": "decision_61c1fb1555c4"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 14,
+            "method": "tools/call",
+            "params": {
+              "name": "desk.get",
+              "arguments": {
+                "kind": "decisions",
+                "id": "decision_61c1fb1555c4"
+              }
+            }
+          },
+          "response": {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "",
+            "created_at": "2026-09-29T15:06:10Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "",
+            "deleted": false,
+            "id": "decision_61c1fb1555c4",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Graph walk next-day decision A3",
+            "updated_at": "2026-09-29T15:06:10Z"
+          },
+          "domain_response": {
+            "alternatives": [],
+            "consequences_markdown": "",
+            "context_markdown": "",
+            "created_at": "2026-09-29T15:06:10Z",
+            "decided_at": null,
+            "deciders": [],
+            "decision_markdown": "",
+            "deleted": false,
+            "id": "decision_61c1fb1555c4",
+            "status": "proposed",
+            "superseded_by": null,
+            "tags": [],
+            "title": "Graph walk next-day decision A3",
+            "updated_at": "2026-09-29T15:06:10Z"
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 14,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"\", \"created_at\": \"2026-09-29T15:06:10Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"\", \"deleted\": false, \"id\": \"decision_61c1fb1555c4\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Graph walk next-day decision A3\", \"updated_at\": \"2026-09-29T15:06:10Z\"}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:53823",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "brief.latest",
+      "args": {}
+    },
+    "op": {
+      "name": "brief.latest",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.get",
+          "arguments": {
+            "generate": false
+          }
+        }
+      },
+      "response": {
+        "generated_at": "2026-09-29T09:06:10.783093",
+        "headline": "No changes",
+        "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+        "is_empty": true,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-29T09:06:10.783093",
+        "period_start": "2026-09-28T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "domain_response": {
+        "generated_at": "2026-09-29T09:06:10.783093",
+        "headline": "No changes",
+        "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+        "is_empty": true,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-29T09:06:10.783093",
+        "period_start": "2026-09-28T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-29T09:06:10.783093\", \"headline\": \"No changes\", \"id\": \"brief-92d4c1052e104ab4ab696034fbad28d6\", \"is_empty\": true, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-29T09:06:10.783093\", \"period_start\": \"2026-09-28T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "1c90add562cc0d9c92d3491b89b7cda841fa87fe4c158b2a91289d968cad38f8",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "brief.latest",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "method": "tools/call",
+          "params": {
+            "name": "monday_brief.get",
+            "arguments": {
+              "generate": false
+            }
+          }
+        },
+        "response": {
+          "generated_at": "2026-09-29T09:06:10.783093",
+          "headline": "No changes",
+          "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+          "is_empty": true,
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_end": "2026-09-29T09:06:10.783093",
+          "period_start": "2026-09-28T17:00:00",
+          "person_sections_state": "unavailable",
+          "sections": {
+            "broke": [],
+            "changed": [],
+            "decisions": [],
+            "this_week": [],
+            "waiting": []
+          },
+          "shelf": {}
+        },
+        "domain_response": {
+          "generated_at": "2026-09-29T09:06:10.783093",
+          "headline": "No changes",
+          "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+          "is_empty": true,
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_end": "2026-09-29T09:06:10.783093",
+          "period_start": "2026-09-28T17:00:00",
+          "person_sections_state": "unavailable",
+          "sections": {
+            "broke": [],
+            "changed": [],
+            "decisions": [],
+            "this_week": [],
+            "waiting": []
+          },
+          "shelf": {}
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"generated_at\": \"2026-09-29T09:06:10.783093\", \"headline\": \"No changes\", \"id\": \"brief-92d4c1052e104ab4ab696034fbad28d6\", \"is_empty\": true, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-29T09:06:10.783093\", \"period_start\": \"2026-09-28T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      },
+      {
+        "kind": "op",
+        "name": "decision.read",
+        "args": {
+          "decision_id": "decision_61c1fb1555c4"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.get",
+            "arguments": {
+              "kind": "decisions",
+              "id": "decision_61c1fb1555c4"
+            }
+          }
+        },
+        "response": {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "",
+          "created_at": "2026-09-29T15:06:10Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "",
+          "deleted": false,
+          "id": "decision_61c1fb1555c4",
+          "status": "proposed",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Graph walk next-day decision A3",
+          "updated_at": "2026-09-29T15:06:10Z"
+        },
+        "domain_response": {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "",
+          "created_at": "2026-09-29T15:06:10Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "",
+          "deleted": false,
+          "id": "decision_61c1fb1555c4",
+          "status": "proposed",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Graph walk next-day decision A3",
+          "updated_at": "2026-09-29T15:06:10Z"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"\", \"created_at\": \"2026-09-29T15:06:10Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"\", \"deleted\": false, \"id\": \"decision_61c1fb1555c4\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Graph walk next-day decision A3\", \"updated_at\": \"2026-09-29T15:06:10Z\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-29T15:06:10.823438+00:00",
+    "brief_db": {
+      "brief": {
+        "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:06:10.783093",
+        "headline": "No changes",
+        "generated_at": "2026-09-29T09:06:10.783093",
+        "spoken": 0,
+        "disposition": null
+      },
+      "items": [],
+      "shelf": []
+    }
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:53823",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "brief.latest",
+      "args": {}
+    },
+    "op": {
+      "name": "brief.latest",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 12,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.get",
+          "arguments": {
+            "generate": false
+          }
+        }
+      },
+      "response": {
+        "generated_at": "2026-09-30T09:06:10.827310",
+        "headline": "1 decision waiting.",
+        "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+        "is_empty": false,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-30T09:06:10.827310",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:06:10Z",
+              "detail": null,
+              "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_61c1fb1555c4",
+              "text": "Review decision: Graph walk next-day decision A3"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "domain_response": {
+        "generated_at": "2026-09-30T09:06:10.827310",
+        "headline": "1 decision waiting.",
+        "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+        "is_empty": false,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-30T09:06:10.827310",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:06:10Z",
+              "detail": null,
+              "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_61c1fb1555c4",
+              "text": "Review decision: Graph walk next-day decision A3"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 12,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-30T09:06:10.827310\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-8c8340bde1a249c3bf164733ced0d928\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-30T09:06:10.827310\", \"period_start\": \"2026-09-29T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:06:10Z\", \"detail\": null, \"id\": \"brief-item-e18e1222173b4c0697082838c14680cc\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_61c1fb1555c4\", \"text\": \"Review decision: Graph walk next-day decision A3\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "d3a689a962372d73fad330c60bb718b9805337df83897c0819933fb37c4dfc33",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "brief.latest",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 13,
+          "method": "tools/call",
+          "params": {
+            "name": "monday_brief.get",
+            "arguments": {
+              "generate": false
+            }
+          }
+        },
+        "response": {
+          "generated_at": "2026-09-30T09:06:10.827310",
+          "headline": "1 decision waiting.",
+          "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+          "is_empty": false,
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_end": "2026-09-30T09:06:10.827310",
+          "period_start": "2026-09-29T17:00:00",
+          "person_sections_state": "unavailable",
+          "sections": {
+            "broke": [],
+            "changed": [],
+            "decisions": [
+              {
+                "created_at": "2026-09-29T15:06:10Z",
+                "detail": null,
+                "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+                "priority": 200,
+                "section": "decisions",
+                "source_ref": "decision:decision_61c1fb1555c4",
+                "text": "Review decision: Graph walk next-day decision A3"
+              }
+            ],
+            "this_week": [],
+            "waiting": []
+          },
+          "shelf": {}
+        },
+        "domain_response": {
+          "generated_at": "2026-09-30T09:06:10.827310",
+          "headline": "1 decision waiting.",
+          "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+          "is_empty": false,
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_end": "2026-09-30T09:06:10.827310",
+          "period_start": "2026-09-29T17:00:00",
+          "person_sections_state": "unavailable",
+          "sections": {
+            "broke": [],
+            "changed": [],
+            "decisions": [
+              {
+                "created_at": "2026-09-29T15:06:10Z",
+                "detail": null,
+                "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+                "priority": 200,
+                "section": "decisions",
+                "source_ref": "decision:decision_61c1fb1555c4",
+                "text": "Review decision: Graph walk next-day decision A3"
+              }
+            ],
+            "this_week": [],
+            "waiting": []
+          },
+          "shelf": {}
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 13,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"generated_at\": \"2026-09-30T09:06:10.827310\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-8c8340bde1a249c3bf164733ced0d928\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-30T09:06:10.827310\", \"period_start\": \"2026-09-29T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:06:10Z\", \"detail\": null, \"id\": \"brief-item-e18e1222173b4c0697082838c14680cc\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_61c1fb1555c4\", \"text\": \"Review decision: Graph walk next-day decision A3\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      },
+      {
+        "kind": "op",
+        "name": "decision.read",
+        "args": {
+          "decision_id": "decision_61c1fb1555c4"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 14,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.get",
+            "arguments": {
+              "kind": "decisions",
+              "id": "decision_61c1fb1555c4"
+            }
+          }
+        },
+        "response": {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "",
+          "created_at": "2026-09-29T15:06:10Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "",
+          "deleted": false,
+          "id": "decision_61c1fb1555c4",
+          "status": "proposed",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Graph walk next-day decision A3",
+          "updated_at": "2026-09-29T15:06:10Z"
+        },
+        "domain_response": {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "",
+          "created_at": "2026-09-29T15:06:10Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "",
+          "deleted": false,
+          "id": "decision_61c1fb1555c4",
+          "status": "proposed",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Graph walk next-day decision A3",
+          "updated_at": "2026-09-29T15:06:10Z"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 14,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"\", \"created_at\": \"2026-09-29T15:06:10Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"\", \"deleted\": false, \"id\": \"decision_61c1fb1555c4\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Graph walk next-day decision A3\", \"updated_at\": \"2026-09-29T15:06:10Z\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-29T15:06:11.775854+00:00",
+    "brief_db": {
+      "brief": {
+        "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:06:10.783093",
+        "headline": "No changes",
+        "generated_at": "2026-09-29T09:06:10.783093",
+        "spoken": 0,
+        "disposition": null
+      },
+      "items": [],
+      "shelf": []
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "brief.generate",
+      "body_sha256": "70b896a1c8825cedfc3d9b7ac07e997c356c3582ae8a35fc7af7e2a45535b3cc",
+      "body": {
+        "generated_at": "2026-09-30T09:06:10.827310",
+        "headline": "1 decision waiting.",
+        "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+        "is_empty": false,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-30T09:06:10.827310",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:06:10Z",
+              "detail": null,
+              "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_61c1fb1555c4",
+              "text": "Review decision: Graph walk next-day decision A3"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-30T09:06:10.827310\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-8c8340bde1a249c3bf164733ced0d928\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-30T09:06:10.827310\", \"period_start\": \"2026-09-29T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:06:10Z\", \"detail\": null, \"id\": \"brief-item-e18e1222173b4c0697082838c14680cc\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_61c1fb1555c4\", \"text\": \"Review decision: Graph walk next-day decision A3\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "brief.generate",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.generate",
+          "arguments": {}
+        }
+      },
+      "response": {
+        "generated_at": "2026-09-30T09:06:10.827310",
+        "headline": "1 decision waiting.",
+        "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+        "is_empty": false,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-30T09:06:10.827310",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:06:10Z",
+              "detail": null,
+              "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_61c1fb1555c4",
+              "text": "Review decision: Graph walk next-day decision A3"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "domain_response": {
+        "generated_at": "2026-09-30T09:06:10.827310",
+        "headline": "1 decision waiting.",
+        "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+        "is_empty": false,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-30T09:06:10.827310",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:06:10Z",
+              "detail": null,
+              "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_61c1fb1555c4",
+              "text": "Review decision: Graph walk next-day decision A3"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-30T09:06:10.827310\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-8c8340bde1a249c3bf164733ced0d928\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-30T09:06:10.827310\", \"period_start\": \"2026-09-29T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:06:10Z\", \"detail\": null, \"id\": \"brief-item-e18e1222173b4c0697082838c14680cc\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_61c1fb1555c4\", \"text\": \"Review decision: Graph walk next-day decision A3\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.029
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:53823",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "brief.latest",
+      "args": {}
+    },
+    "op": {
+      "name": "brief.latest",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.get",
+          "arguments": {
+            "generate": false
+          }
+        }
+      },
+      "response": {
+        "generated_at": "2026-09-30T09:06:10.827310",
+        "headline": "1 decision waiting.",
+        "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+        "is_empty": false,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-30T09:06:10.827310",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:06:10Z",
+              "detail": null,
+              "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_61c1fb1555c4",
+              "text": "Review decision: Graph walk next-day decision A3"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "domain_response": {
+        "generated_at": "2026-09-30T09:06:10.827310",
+        "headline": "1 decision waiting.",
+        "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+        "is_empty": false,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-30T09:06:10.827310",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:06:10Z",
+              "detail": null,
+              "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_61c1fb1555c4",
+              "text": "Review decision: Graph walk next-day decision A3"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-30T09:06:10.827310\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-8c8340bde1a249c3bf164733ced0d928\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-30T09:06:10.827310\", \"period_start\": \"2026-09-29T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:06:10Z\", \"detail\": null, \"id\": \"brief-item-e18e1222173b4c0697082838c14680cc\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_61c1fb1555c4\", \"text\": \"Review decision: Graph walk next-day decision A3\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    "op_digest": "d3a689a962372d73fad330c60bb718b9805337df83897c0819933fb37c4dfc33",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "brief.latest",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "method": "tools/call",
+          "params": {
+            "name": "monday_brief.get",
+            "arguments": {
+              "generate": false
+            }
+          }
+        },
+        "response": {
+          "generated_at": "2026-09-30T09:06:10.827310",
+          "headline": "1 decision waiting.",
+          "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+          "is_empty": false,
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_end": "2026-09-30T09:06:10.827310",
+          "period_start": "2026-09-29T17:00:00",
+          "person_sections_state": "unavailable",
+          "sections": {
+            "broke": [],
+            "changed": [],
+            "decisions": [
+              {
+                "created_at": "2026-09-29T15:06:10Z",
+                "detail": null,
+                "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+                "priority": 200,
+                "section": "decisions",
+                "source_ref": "decision:decision_61c1fb1555c4",
+                "text": "Review decision: Graph walk next-day decision A3"
+              }
+            ],
+            "this_week": [],
+            "waiting": []
+          },
+          "shelf": {}
+        },
+        "domain_response": {
+          "generated_at": "2026-09-30T09:06:10.827310",
+          "headline": "1 decision waiting.",
+          "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+          "is_empty": false,
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_end": "2026-09-30T09:06:10.827310",
+          "period_start": "2026-09-29T17:00:00",
+          "person_sections_state": "unavailable",
+          "sections": {
+            "broke": [],
+            "changed": [],
+            "decisions": [
+              {
+                "created_at": "2026-09-29T15:06:10Z",
+                "detail": null,
+                "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+                "priority": 200,
+                "section": "decisions",
+                "source_ref": "decision:decision_61c1fb1555c4",
+                "text": "Review decision: Graph walk next-day decision A3"
+              }
+            ],
+            "this_week": [],
+            "waiting": []
+          },
+          "shelf": {}
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"generated_at\": \"2026-09-30T09:06:10.827310\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-8c8340bde1a249c3bf164733ced0d928\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-30T09:06:10.827310\", \"period_start\": \"2026-09-29T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:06:10Z\", \"detail\": null, \"id\": \"brief-item-e18e1222173b4c0697082838c14680cc\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_61c1fb1555c4\", \"text\": \"Review decision: Graph walk next-day decision A3\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      },
+      {
+        "kind": "op",
+        "name": "decision.read",
+        "args": {
+          "decision_id": "decision_61c1fb1555c4"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 11,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.get",
+            "arguments": {
+              "kind": "decisions",
+              "id": "decision_61c1fb1555c4"
+            }
+          }
+        },
+        "response": {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "",
+          "created_at": "2026-09-29T15:06:10Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "",
+          "deleted": false,
+          "id": "decision_61c1fb1555c4",
+          "status": "proposed",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Graph walk next-day decision A3",
+          "updated_at": "2026-09-29T15:06:10Z"
+        },
+        "domain_response": {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "",
+          "created_at": "2026-09-29T15:06:10Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "",
+          "deleted": false,
+          "id": "decision_61c1fb1555c4",
+          "status": "proposed",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Graph walk next-day decision A3",
+          "updated_at": "2026-09-29T15:06:10Z"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 11,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"\", \"created_at\": \"2026-09-29T15:06:10Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"\", \"deleted\": false, \"id\": \"decision_61c1fb1555c4\", \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Graph walk next-day decision A3\", \"updated_at\": \"2026-09-29T15:06:10Z\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "at_utc": "2026-09-29T15:06:11.767988+00:00",
+    "brief_db": {
+      "brief": {
+        "id": "brief-92d4c1052e104ab4ab696034fbad28d6",
+        "period_start": "2026-09-28T17:00:00",
+        "period_end": "2026-09-29T09:06:10.783093",
+        "headline": "No changes",
+        "generated_at": "2026-09-29T09:06:10.783093",
+        "spoken": 0,
+        "disposition": null
+      },
+      "items": [],
+      "shelf": []
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "brief.generate",
+      "body_sha256": "70b896a1c8825cedfc3d9b7ac07e997c356c3582ae8a35fc7af7e2a45535b3cc",
+      "body": {
+        "generated_at": "2026-09-30T09:06:10.827310",
+        "headline": "1 decision waiting.",
+        "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+        "is_empty": false,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-30T09:06:10.827310",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:06:10Z",
+              "detail": null,
+              "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_61c1fb1555c4",
+              "text": "Review decision: Graph walk next-day decision A3"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-30T09:06:10.827310\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-8c8340bde1a249c3bf164733ced0d928\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-30T09:06:10.827310\", \"period_start\": \"2026-09-29T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:06:10Z\", \"detail\": null, \"id\": \"brief-item-e18e1222173b4c0697082838c14680cc\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_61c1fb1555c4\", \"text\": \"Review decision: Graph walk next-day decision A3\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "brief.generate",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.generate",
+          "arguments": {}
+        }
+      },
+      "response": {
+        "generated_at": "2026-09-30T09:06:10.827310",
+        "headline": "1 decision waiting.",
+        "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+        "is_empty": false,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-30T09:06:10.827310",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:06:10Z",
+              "detail": null,
+              "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_61c1fb1555c4",
+              "text": "Review decision: Graph walk next-day decision A3"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "domain_response": {
+        "generated_at": "2026-09-30T09:06:10.827310",
+        "headline": "1 decision waiting.",
+        "id": "brief-8c8340bde1a249c3bf164733ced0d928",
+        "is_empty": false,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-30T09:06:10.827310",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:06:10Z",
+              "detail": null,
+              "id": "brief-item-e18e1222173b4c0697082838c14680cc",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_61c1fb1555c4",
+              "text": "Review decision: Graph walk next-day decision A3"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-30T09:06:10.827310\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-8c8340bde1a249c3bf164733ced0d928\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-30T09:06:10.827310\", \"period_start\": \"2026-09-29T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:06:10Z\", \"detail\": null, \"id\": \"brief-item-e18e1222173b4c0697082838c14680cc\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_61c1fb1555c4\", \"text\": \"Review decision: Graph walk next-day decision A3\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.029
+    },
+    "predicate_satisfied": true,
+    "reading": "sections.decisions is non-empty",
+    "elapsed_s": 0.945
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "sections.decisions is non-empty",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 0.952,
+    "first_satisfied_at_s": 0.945,
+    "completion_bound_s": 120.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: sections.decisions is non-empty"
+  ],
+  "complete": true,
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fr94s_cq/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fr94s_cq/.config/holdspeak/config.json",
+    "PRODUCER_CLOCK /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fr94s_cq/graph-walk-producer-clock.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the brief producer clock seam (wall clock + the run's offset file)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:53823",
+    "PRODUCER_CLOCK_READ advance_days=0 now=2026-09-29T09:06:10",
+    "PRODUCER_CLOCK_READ advance_days=1 now=2026-09-30T09:06:10"
+  ],
+  "duration_s": 2.707
+}

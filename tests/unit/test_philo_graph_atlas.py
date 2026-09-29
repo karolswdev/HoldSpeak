@@ -484,7 +484,9 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
     # receipts, three note siblings). PHILO-8-03 adds 5 (atlas-phase8.json:
     # two zones, the rename, the taken name, the list delete, two deletes).
     # PHILO-9-05 adds 1 (atlas-phase9.json: the Room's mark delivered).
-    assert len(siblings) == 45
+    # PHILO-10-05 adds 12 (atlas-phase10.json: the Send's durable outcomes and
+    # its transitions -- replay, Send and Discard in both orders).
+    assert len(siblings) == 57
     sibling_ids = {case["id"] for case in siblings}
     assert READ_REFUSAL_SIBLINGS <= sibling_ids
     mutating = {
@@ -499,6 +501,8 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
         'zone.update',
         # PHILO-9-05: the Room's delivery record.
         'project.mark_update_delivered',
+        # PHILO-10-05: the Send's admitted writes.
+        'channel.save_destination', 'channel.prepare', 'channel.send', 'channel.discard',
     }
     readable = {
         'decision.read', 'decision.list', 'meeting.list', 'meeting.read',
@@ -508,6 +512,8 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
         'kb.read', 'kb.list', 'kb.members', 'kernel.receipt.read',
         # PHILO-9-05: the Room's update list.
         'project.list_updates',
+        # PHILO-10-05: the Send's reads.
+        'channel.destinations', 'channel.sends',
     }
     problems: list[str] = []
     for case in siblings:
@@ -518,8 +524,13 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
             continue
         if observation.get('name') not in readable:
             problems.append(f"{case['id']}: observation re-fires {observation.get('name')!r}")
-        predicate_kind = (expected.get('predicate') or {}).get('kind')
-        if predicate_kind not in {'op_field', 'op_refusal', 'op_facts'}:
+        predicate = expected.get('predicate') or {}
+        predicate_kind = predicate.get('kind')
+        # PHILO-10-05: an op predicate, or all_of an op_facts and the
+        # recording runner's count (cli_calls): both hub-side, never a face.
+        parts = [p.get('kind') for p in predicate.get('predicates', [])] if predicate_kind == 'all_of' else []
+        if predicate_kind not in {'op_field', 'op_refusal', 'op_facts'} and not (
+                parts and 'op_facts' in parts and set(parts) <= {'op_facts', 'cli_calls'}):
             problems.append(f"{case['id']}: predicate is not an op predicate")
         for read in expected.get('reads', []):
             if read.get('kind') != 'op' or read.get('name') not in readable:

@@ -1,0 +1,1410 @@
+{
+  "id": "obs-20260929T152231Z-case.j10.brief_item_shelf.acknowledged.op-muaddib-1440",
+  "run_id": "20260929T152231Z-case.j10.brief_item_shelf.acknowledged.op-muaddib-1440",
+  "case_id": "case.j10.brief_item_shelf.acknowledged.op",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.route.brief_item_shelf"
+  ],
+  "state_id": "state.briefs.item.acknowledged",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:61121",
+      "port": 61121,
+      "pid": 99285,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-hmb7d1ng",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-hmb7d1ng/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:22:31.201430+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "5f52df14226b6f0fa338f6a8fd3f8dfe7b55276567321ad09f69177c357f08ba",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.create",
+      "args": {
+        "title": "Graph walk brief material J10",
+        "status": "proposed"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "decisions",
+            "data": {
+              "title": "Graph walk brief material J10",
+              "status": "proposed"
+            }
+          }
+        }
+      },
+      "response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "",
+        "created_at": "2026-09-29T15:22:32Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "",
+        "deleted": false,
+        "id": "decision_5521606193ab",
+        "operation_id": "op_6f9675b7b5d54123a159e72afe6959ae",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695352.763402,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_6f9675b7b5d54123a159e72afe6959ae",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_d1225599363e4ff394fa2eaa57474ade",
+          "result_ref": "decision:decision_5521606193ab",
+          "state": "succeeded",
+          "target_ref": "decision:decision_5521606193ab"
+        },
+        "status": "proposed",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Graph walk brief material J10",
+        "updated_at": "2026-09-29T15:22:32Z"
+      },
+      "domain_response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "",
+        "created_at": "2026-09-29T15:22:32Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "",
+        "deleted": false,
+        "id": "decision_5521606193ab",
+        "operation_id": "op_6f9675b7b5d54123a159e72afe6959ae",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790695352.763402,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_6f9675b7b5d54123a159e72afe6959ae",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_d1225599363e4ff394fa2eaa57474ade",
+          "result_ref": "decision:decision_5521606193ab",
+          "state": "succeeded",
+          "target_ref": "decision:decision_5521606193ab"
+        },
+        "status": "proposed",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Graph walk brief material J10",
+        "updated_at": "2026-09-29T15:22:32Z"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"\", \"created_at\": \"2026-09-29T15:22:32Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"\", \"deleted\": false, \"id\": \"decision_5521606193ab\", \"operation_id\": \"op_6f9675b7b5d54123a159e72afe6959ae\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790695352.763402, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_6f9675b7b5d54123a159e72afe6959ae\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_d1225599363e4ff394fa2eaa57474ade\", \"result_ref\": \"decision:decision_5521606193ab\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_5521606193ab\"}, \"status\": \"proposed\", \"superseded_by\": null, \"tags\": [], \"title\": \"Graph walk brief material J10\", \"updated_at\": \"2026-09-29T15:22:32Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.013,
+      "captured": {
+        "name": "decision_id",
+        "path": "id",
+        "value": "decision_5521606193ab"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "brief.generate",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.generate",
+          "arguments": {}
+        }
+      },
+      "response": {
+        "generated_at": "2026-09-29T09:22:32.765293",
+        "headline": "1 decision waiting.",
+        "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+        "is_empty": false,
+        "ledger": {
+          "operations": 1,
+          "since": "1790695352.762912"
+        },
+        "period_end": "2026-09-29T09:22:32.765293",
+        "period_start": "2026-09-28T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:22:32Z",
+              "detail": null,
+              "id": "brief-item-91bb05668b77434c865b484927dcc580",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_5521606193ab",
+              "text": "Review decision: Graph walk brief material J10"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "domain_response": {
+        "generated_at": "2026-09-29T09:22:32.765293",
+        "headline": "1 decision waiting.",
+        "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+        "is_empty": false,
+        "ledger": {
+          "operations": 1,
+          "since": "1790695352.762912"
+        },
+        "period_end": "2026-09-29T09:22:32.765293",
+        "period_start": "2026-09-28T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:22:32Z",
+              "detail": null,
+              "id": "brief-item-91bb05668b77434c865b484927dcc580",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_5521606193ab",
+              "text": "Review decision: Graph walk brief material J10"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-29T09:22:32.765293\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-7d619e1e070641ff9f2ac878b1de1867\", \"is_empty\": false, \"ledger\": {\"operations\": 1, \"since\": \"1790695352.762912\"}, \"period_end\": \"2026-09-29T09:22:32.765293\", \"period_start\": \"2026-09-28T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:22:32Z\", \"detail\": null, \"id\": \"brief-item-91bb05668b77434c865b484927dcc580\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_5521606193ab\", \"text\": \"Review decision: Graph walk brief material J10\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.034
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "brief.latest",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.get",
+          "arguments": {
+            "generate": false
+          }
+        }
+      },
+      "response": {
+        "generated_at": "2026-09-29T09:22:32.765293",
+        "headline": "1 decision waiting.",
+        "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+        "is_empty": false,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-29T09:22:32.765293",
+        "period_start": "2026-09-28T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:22:32Z",
+              "detail": null,
+              "id": "brief-item-91bb05668b77434c865b484927dcc580",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_5521606193ab",
+              "text": "Review decision: Graph walk brief material J10"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "domain_response": {
+        "generated_at": "2026-09-29T09:22:32.765293",
+        "headline": "1 decision waiting.",
+        "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+        "is_empty": false,
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_end": "2026-09-29T09:22:32.765293",
+        "period_start": "2026-09-28T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-09-29T15:22:32Z",
+              "detail": null,
+              "id": "brief-item-91bb05668b77434c865b484927dcc580",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_5521606193ab",
+              "text": "Review decision: Graph walk brief material J10"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-29T09:22:32.765293\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-7d619e1e070641ff9f2ac878b1de1867\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-29T09:22:32.765293\", \"period_start\": \"2026-09-28T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:22:32Z\", \"detail\": null, \"id\": \"brief-item-91bb05668b77434c865b484927dcc580\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_5521606193ab\", \"text\": \"Review decision: Graph walk brief material J10\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001,
+      "captured": {
+        "name": "item_id",
+        "path": "sections.decisions.0.id",
+        "value": "brief-item-91bb05668b77434c865b484927dcc580"
+      }
+    }
+  ],
+  "preconditions": [],
+  "variables": {
+    "decision_id": "decision_5521606193ab",
+    "item_id": "brief-item-91bb05668b77434c865b484927dcc580"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "brief.shelf.write",
+    "args": {
+      "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+      "state": "acknowledged"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 7,
+      "method": "tools/call",
+      "params": {
+        "name": "monday_brief.shelf",
+        "arguments": {
+          "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+          "state": "acknowledged"
+        }
+      }
+    },
+    "response": {
+      "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+      "state": "acknowledged"
+    },
+    "domain_response": {
+      "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+      "state": "acknowledged"
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 7,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"item_id\": \"brief-item-91bb05668b77434c865b484927dcc580\", \"state\": \"acknowledged\"}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.001
+  },
+  "diff": {
+    "op_digest": {
+      "before": "8ea86bafeef8c0becd3812e2539cee8c0d9a3925842c8ad5822d14b76caa2d46",
+      "after": "fbb27ba22ebb1f3e1e4dcfb412516512664a360a3b44bcff6c34ceef37fa44ae"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "tools/call",
+            "params": {
+              "name": "monday_brief.get",
+              "arguments": {
+                "generate": false
+              }
+            }
+          },
+          "response": {
+            "generated_at": "2026-09-29T09:22:32.765293",
+            "headline": "1 decision waiting.",
+            "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+            "is_empty": false,
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_end": "2026-09-29T09:22:32.765293",
+            "period_start": "2026-09-28T17:00:00",
+            "person_sections_state": "unavailable",
+            "sections": {
+              "broke": [],
+              "changed": [],
+              "decisions": [
+                {
+                  "created_at": "2026-09-29T15:22:32Z",
+                  "detail": null,
+                  "id": "brief-item-91bb05668b77434c865b484927dcc580",
+                  "priority": 200,
+                  "section": "decisions",
+                  "source_ref": "decision:decision_5521606193ab",
+                  "text": "Review decision: Graph walk brief material J10"
+                }
+              ],
+              "this_week": [],
+              "waiting": []
+            },
+            "shelf": {}
+          },
+          "domain_response": {
+            "generated_at": "2026-09-29T09:22:32.765293",
+            "headline": "1 decision waiting.",
+            "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+            "is_empty": false,
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_end": "2026-09-29T09:22:32.765293",
+            "period_start": "2026-09-28T17:00:00",
+            "person_sections_state": "unavailable",
+            "sections": {
+              "broke": [],
+              "changed": [],
+              "decisions": [
+                {
+                  "created_at": "2026-09-29T15:22:32Z",
+                  "detail": null,
+                  "id": "brief-item-91bb05668b77434c865b484927dcc580",
+                  "priority": 200,
+                  "section": "decisions",
+                  "source_ref": "decision:decision_5521606193ab",
+                  "text": "Review decision: Graph walk brief material J10"
+                }
+              ],
+              "this_week": [],
+              "waiting": []
+            },
+            "shelf": {}
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"generated_at\": \"2026-09-29T09:22:32.765293\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-7d619e1e070641ff9f2ac878b1de1867\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-29T09:22:32.765293\", \"period_start\": \"2026-09-28T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:22:32Z\", \"detail\": null, \"id\": \"brief-item-91bb05668b77434c865b484927dcc580\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_5521606193ab\", \"text\": \"Review decision: Graph walk brief material J10\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        },
+        {
+          "kind": "op",
+          "name": "brief.shelf.read",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "tools/call",
+            "params": {
+              "name": "monday_brief.shelf_read",
+              "arguments": {}
+            }
+          },
+          "response": {},
+          "domain_response": {},
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 12,
+            "method": "tools/call",
+            "params": {
+              "name": "monday_brief.get",
+              "arguments": {
+                "generate": false
+              }
+            }
+          },
+          "response": {
+            "generated_at": "2026-09-29T09:22:32.765293",
+            "headline": "1 decision waiting.",
+            "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+            "is_empty": false,
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_end": "2026-09-29T09:22:32.765293",
+            "period_start": "2026-09-28T17:00:00",
+            "person_sections_state": "unavailable",
+            "sections": {
+              "broke": [],
+              "changed": [],
+              "decisions": [
+                {
+                  "created_at": "2026-09-29T15:22:32Z",
+                  "detail": null,
+                  "id": "brief-item-91bb05668b77434c865b484927dcc580",
+                  "priority": 200,
+                  "section": "decisions",
+                  "source_ref": "decision:decision_5521606193ab",
+                  "text": "Review decision: Graph walk brief material J10"
+                }
+              ],
+              "this_week": [],
+              "waiting": []
+            },
+            "shelf": {
+              "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+            }
+          },
+          "domain_response": {
+            "generated_at": "2026-09-29T09:22:32.765293",
+            "headline": "1 decision waiting.",
+            "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+            "is_empty": false,
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_end": "2026-09-29T09:22:32.765293",
+            "period_start": "2026-09-28T17:00:00",
+            "person_sections_state": "unavailable",
+            "sections": {
+              "broke": [],
+              "changed": [],
+              "decisions": [
+                {
+                  "created_at": "2026-09-29T15:22:32Z",
+                  "detail": null,
+                  "id": "brief-item-91bb05668b77434c865b484927dcc580",
+                  "priority": 200,
+                  "section": "decisions",
+                  "source_ref": "decision:decision_5521606193ab",
+                  "text": "Review decision: Graph walk brief material J10"
+                }
+              ],
+              "this_week": [],
+              "waiting": []
+            },
+            "shelf": {
+              "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+            }
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 12,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"generated_at\": \"2026-09-29T09:22:32.765293\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-7d619e1e070641ff9f2ac878b1de1867\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-29T09:22:32.765293\", \"period_start\": \"2026-09-28T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:22:32Z\", \"detail\": null, \"id\": \"brief-item-91bb05668b77434c865b484927dcc580\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_5521606193ab\", \"text\": \"Review decision: Graph walk brief material J10\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {\"brief-item-91bb05668b77434c865b484927dcc580\": \"acknowledged\"}}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        },
+        {
+          "kind": "op",
+          "name": "brief.shelf.read",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 13,
+            "method": "tools/call",
+            "params": {
+              "name": "monday_brief.shelf_read",
+              "arguments": {}
+            }
+          },
+          "response": {
+            "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+          },
+          "domain_response": {
+            "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 13,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"brief-item-91bb05668b77434c865b484927dcc580\": \"acknowledged\"}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:61121",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "brief.shelf.read",
+      "args": {}
+    },
+    "op": {
+      "name": "brief.shelf.read",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.shelf_read",
+          "arguments": {}
+        }
+      },
+      "response": {},
+      "domain_response": {},
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "8ea86bafeef8c0becd3812e2539cee8c0d9a3925842c8ad5822d14b76caa2d46",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "brief.latest",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 5,
+          "method": "tools/call",
+          "params": {
+            "name": "monday_brief.get",
+            "arguments": {
+              "generate": false
+            }
+          }
+        },
+        "response": {
+          "generated_at": "2026-09-29T09:22:32.765293",
+          "headline": "1 decision waiting.",
+          "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+          "is_empty": false,
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_end": "2026-09-29T09:22:32.765293",
+          "period_start": "2026-09-28T17:00:00",
+          "person_sections_state": "unavailable",
+          "sections": {
+            "broke": [],
+            "changed": [],
+            "decisions": [
+              {
+                "created_at": "2026-09-29T15:22:32Z",
+                "detail": null,
+                "id": "brief-item-91bb05668b77434c865b484927dcc580",
+                "priority": 200,
+                "section": "decisions",
+                "source_ref": "decision:decision_5521606193ab",
+                "text": "Review decision: Graph walk brief material J10"
+              }
+            ],
+            "this_week": [],
+            "waiting": []
+          },
+          "shelf": {}
+        },
+        "domain_response": {
+          "generated_at": "2026-09-29T09:22:32.765293",
+          "headline": "1 decision waiting.",
+          "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+          "is_empty": false,
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_end": "2026-09-29T09:22:32.765293",
+          "period_start": "2026-09-28T17:00:00",
+          "person_sections_state": "unavailable",
+          "sections": {
+            "broke": [],
+            "changed": [],
+            "decisions": [
+              {
+                "created_at": "2026-09-29T15:22:32Z",
+                "detail": null,
+                "id": "brief-item-91bb05668b77434c865b484927dcc580",
+                "priority": 200,
+                "section": "decisions",
+                "source_ref": "decision:decision_5521606193ab",
+                "text": "Review decision: Graph walk brief material J10"
+              }
+            ],
+            "this_week": [],
+            "waiting": []
+          },
+          "shelf": {}
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 5,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"generated_at\": \"2026-09-29T09:22:32.765293\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-7d619e1e070641ff9f2ac878b1de1867\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-29T09:22:32.765293\", \"period_start\": \"2026-09-28T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:22:32Z\", \"detail\": null, \"id\": \"brief-item-91bb05668b77434c865b484927dcc580\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_5521606193ab\", \"text\": \"Review decision: Graph walk brief material J10\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      },
+      {
+        "kind": "op",
+        "name": "brief.shelf.read",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "method": "tools/call",
+          "params": {
+            "name": "monday_brief.shelf_read",
+            "arguments": {}
+          }
+        },
+        "response": {},
+        "domain_response": {},
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-29T15:22:32.803967+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:61121",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "brief.shelf.read",
+      "args": {}
+    },
+    "op": {
+      "name": "brief.shelf.read",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 11,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.shelf_read",
+          "arguments": {}
+        }
+      },
+      "response": {
+        "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+      },
+      "domain_response": {
+        "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 11,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"brief-item-91bb05668b77434c865b484927dcc580\": \"acknowledged\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "fbb27ba22ebb1f3e1e4dcfb412516512664a360a3b44bcff6c34ceef37fa44ae",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "brief.latest",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 12,
+          "method": "tools/call",
+          "params": {
+            "name": "monday_brief.get",
+            "arguments": {
+              "generate": false
+            }
+          }
+        },
+        "response": {
+          "generated_at": "2026-09-29T09:22:32.765293",
+          "headline": "1 decision waiting.",
+          "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+          "is_empty": false,
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_end": "2026-09-29T09:22:32.765293",
+          "period_start": "2026-09-28T17:00:00",
+          "person_sections_state": "unavailable",
+          "sections": {
+            "broke": [],
+            "changed": [],
+            "decisions": [
+              {
+                "created_at": "2026-09-29T15:22:32Z",
+                "detail": null,
+                "id": "brief-item-91bb05668b77434c865b484927dcc580",
+                "priority": 200,
+                "section": "decisions",
+                "source_ref": "decision:decision_5521606193ab",
+                "text": "Review decision: Graph walk brief material J10"
+              }
+            ],
+            "this_week": [],
+            "waiting": []
+          },
+          "shelf": {
+            "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+          }
+        },
+        "domain_response": {
+          "generated_at": "2026-09-29T09:22:32.765293",
+          "headline": "1 decision waiting.",
+          "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+          "is_empty": false,
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_end": "2026-09-29T09:22:32.765293",
+          "period_start": "2026-09-28T17:00:00",
+          "person_sections_state": "unavailable",
+          "sections": {
+            "broke": [],
+            "changed": [],
+            "decisions": [
+              {
+                "created_at": "2026-09-29T15:22:32Z",
+                "detail": null,
+                "id": "brief-item-91bb05668b77434c865b484927dcc580",
+                "priority": 200,
+                "section": "decisions",
+                "source_ref": "decision:decision_5521606193ab",
+                "text": "Review decision: Graph walk brief material J10"
+              }
+            ],
+            "this_week": [],
+            "waiting": []
+          },
+          "shelf": {
+            "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+          }
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 12,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"generated_at\": \"2026-09-29T09:22:32.765293\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-7d619e1e070641ff9f2ac878b1de1867\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-29T09:22:32.765293\", \"period_start\": \"2026-09-28T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:22:32Z\", \"detail\": null, \"id\": \"brief-item-91bb05668b77434c865b484927dcc580\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_5521606193ab\", \"text\": \"Review decision: Graph walk brief material J10\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {\"brief-item-91bb05668b77434c865b484927dcc580\": \"acknowledged\"}}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      },
+      {
+        "kind": "op",
+        "name": "brief.shelf.read",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 13,
+          "method": "tools/call",
+          "params": {
+            "name": "monday_brief.shelf_read",
+            "arguments": {}
+          }
+        },
+        "response": {
+          "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+        },
+        "domain_response": {
+          "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 13,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"brief-item-91bb05668b77434c865b484927dcc580\": \"acknowledged\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "at_utc": "2026-09-29T15:22:33.730465+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "brief.shelf.write",
+      "body_sha256": "f47d27ac5a5f136c348ac70221084763e2d95646cad76578cc5834b3d5fef1ee",
+      "body": {
+        "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+        "state": "acknowledged"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"item_id\": \"brief-item-91bb05668b77434c865b484927dcc580\", \"state\": \"acknowledged\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "brief.shelf.write",
+      "args": {
+        "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+        "state": "acknowledged"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.shelf",
+          "arguments": {
+            "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+            "state": "acknowledged"
+          }
+        }
+      },
+      "response": {
+        "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+        "state": "acknowledged"
+      },
+      "domain_response": {
+        "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+        "state": "acknowledged"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"item_id\": \"brief-item-91bb05668b77434c865b484927dcc580\", \"state\": \"acknowledged\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:61121",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "brief.shelf.read",
+      "args": {}
+    },
+    "op": {
+      "name": "brief.shelf.read",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.shelf_read",
+          "arguments": {}
+        }
+      },
+      "response": {
+        "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+      },
+      "domain_response": {
+        "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"brief-item-91bb05668b77434c865b484927dcc580\": \"acknowledged\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.005
+    },
+    "op_digest": "fbb27ba22ebb1f3e1e4dcfb412516512664a360a3b44bcff6c34ceef37fa44ae",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "brief.latest",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "method": "tools/call",
+          "params": {
+            "name": "monday_brief.get",
+            "arguments": {
+              "generate": false
+            }
+          }
+        },
+        "response": {
+          "generated_at": "2026-09-29T09:22:32.765293",
+          "headline": "1 decision waiting.",
+          "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+          "is_empty": false,
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_end": "2026-09-29T09:22:32.765293",
+          "period_start": "2026-09-28T17:00:00",
+          "person_sections_state": "unavailable",
+          "sections": {
+            "broke": [],
+            "changed": [],
+            "decisions": [
+              {
+                "created_at": "2026-09-29T15:22:32Z",
+                "detail": null,
+                "id": "brief-item-91bb05668b77434c865b484927dcc580",
+                "priority": 200,
+                "section": "decisions",
+                "source_ref": "decision:decision_5521606193ab",
+                "text": "Review decision: Graph walk brief material J10"
+              }
+            ],
+            "this_week": [],
+            "waiting": []
+          },
+          "shelf": {
+            "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+          }
+        },
+        "domain_response": {
+          "generated_at": "2026-09-29T09:22:32.765293",
+          "headline": "1 decision waiting.",
+          "id": "brief-7d619e1e070641ff9f2ac878b1de1867",
+          "is_empty": false,
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_end": "2026-09-29T09:22:32.765293",
+          "period_start": "2026-09-28T17:00:00",
+          "person_sections_state": "unavailable",
+          "sections": {
+            "broke": [],
+            "changed": [],
+            "decisions": [
+              {
+                "created_at": "2026-09-29T15:22:32Z",
+                "detail": null,
+                "id": "brief-item-91bb05668b77434c865b484927dcc580",
+                "priority": 200,
+                "section": "decisions",
+                "source_ref": "decision:decision_5521606193ab",
+                "text": "Review decision: Graph walk brief material J10"
+              }
+            ],
+            "this_week": [],
+            "waiting": []
+          },
+          "shelf": {
+            "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+          }
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"generated_at\": \"2026-09-29T09:22:32.765293\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-7d619e1e070641ff9f2ac878b1de1867\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-09-29T09:22:32.765293\", \"period_start\": \"2026-09-28T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-09-29T15:22:32Z\", \"detail\": null, \"id\": \"brief-item-91bb05668b77434c865b484927dcc580\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_5521606193ab\", \"text\": \"Review decision: Graph walk brief material J10\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {\"brief-item-91bb05668b77434c865b484927dcc580\": \"acknowledged\"}}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.003
+      },
+      {
+        "kind": "op",
+        "name": "brief.shelf.read",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "method": "tools/call",
+          "params": {
+            "name": "monday_brief.shelf_read",
+            "arguments": {}
+          }
+        },
+        "response": {
+          "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+        },
+        "domain_response": {
+          "brief-item-91bb05668b77434c865b484927dcc580": "acknowledged"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"brief-item-91bb05668b77434c865b484927dcc580\": \"acknowledged\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "at_utc": "2026-09-29T15:22:33.723732+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "brief.shelf.write",
+      "body_sha256": "f47d27ac5a5f136c348ac70221084763e2d95646cad76578cc5834b3d5fef1ee",
+      "body": {
+        "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+        "state": "acknowledged"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"item_id\": \"brief-item-91bb05668b77434c865b484927dcc580\", \"state\": \"acknowledged\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "brief.shelf.write",
+      "args": {
+        "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+        "state": "acknowledged"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.shelf",
+          "arguments": {
+            "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+            "state": "acknowledged"
+          }
+        }
+      },
+      "response": {
+        "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+        "state": "acknowledged"
+      },
+      "domain_response": {
+        "item_id": "brief-item-91bb05668b77434c865b484927dcc580",
+        "state": "acknowledged"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"item_id\": \"brief-item-91bb05668b77434c865b484927dcc580\", \"state\": \"acknowledged\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "predicate_satisfied": true,
+    "reading": "/brief-item-91bb05668b77434c865b484927dcc580 equals the declared value",
+    "elapsed_s": 0.92
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "/brief-item-91bb05668b77434c865b484927dcc580 equals the declared value",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 0.926,
+    "first_satisfied_at_s": 0.92,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: /brief-item-91bb05668b77434c865b484927dcc580 equals the declared value"
+  ],
+  "complete": true,
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-hmb7d1ng/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-hmb7d1ng/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:61121"
+  ],
+  "duration_s": 2.718
+}

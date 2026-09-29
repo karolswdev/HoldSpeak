@@ -1,0 +1,1822 @@
+{
+  "id": "obs-20260929T150213Z-case.j6.route_intelligence_run.refusal.op-muaddib-1440",
+  "run_id": "20260929T150213Z-case.j6.route_intelligence_run.refusal.op-muaddib-1440",
+  "case_id": "case.j6.route_intelligence_run.refusal.op",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.route.meeting_intelligence_run"
+  ],
+  "state_id": "state.engines.assignment_missing",
+  "provenance": {
+    "revision": "dce3afa91ff636a3cb6c571343bc637fcac97034",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "af4882b30a3a096368b1ee06456daf71c1c6237c530ce38d5f252082253b68b2",
+      "assets": [
+        "index-bg8M0fHI.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:51324",
+      "port": 51324,
+      "pid": 73225,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0inmwgpd",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0inmwgpd/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo5_empty.vtt": "8eb5aec53542eaedb7502b22fb677161abba1e265b1338f1af1369a1f689837c"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-29T15:02:13.303497+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "5f52df14226b6f0fa338f6a8fd3f8dfe7b55276567321ad09f69177c357f08ba",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.import",
+      "args": {
+        "path": "/Users/karol/dev/tools/wt-philo-10-05/tests/fixtures/philo5_empty.vtt",
+        "title": "Architecture boundary review \u2014 empty transcript"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.import",
+          "arguments": {
+            "path": "/Users/karol/dev/tools/wt-philo-10-05/tests/fixtures/philo5_empty.vtt",
+            "title": "Architecture boundary review \u2014 empty transcript"
+          }
+        }
+      },
+      "response": {
+        "meeting_id": "fb12a1ca",
+        "transcription_status": "importing"
+      },
+      "domain_response": {
+        "meeting_id": "fb12a1ca",
+        "transcription_status": "importing"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"meeting_id\": \"fb12a1ca\", \"transcription_status\": \"importing\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.008,
+      "fixture": {
+        "path": "tests/fixtures/philo5_empty.vtt",
+        "sha256": "8eb5aec53542eaedb7502b22fb677161abba1e265b1338f1af1369a1f689837c"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "fb12a1ca"
+      }
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "fb12a1ca"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "intel_status.state",
+        "value": "import_failed"
+      },
+      "adapter": "observation",
+      "waited_s": 0.31,
+      "holds": true,
+      "reading": "intel_status.state equals the declared value"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "fb12a1ca"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "segments",
+        "value": []
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "segments equals the declared value"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.list",
+        "args": {}
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "meetings",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "meetings is non-empty"
+    }
+  ],
+  "preconditions": [],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0inmwgpd",
+    "meeting_id": "fb12a1ca"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "meeting.summary.run",
+    "args": {
+      "meeting_id": "fb12a1ca",
+      "expected_selection_hash": ""
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "method": "tools/call",
+      "params": {
+        "name": "meeting.run_intelligence",
+        "arguments": {
+          "meeting_id": "fb12a1ca",
+          "expected_selection_hash": ""
+        }
+      }
+    },
+    "response": null,
+    "domain_response": null,
+    "refusal": {
+      "code": "empty",
+      "current_planned_route": {
+        "legs": [],
+        "reason_code": "no assignment",
+        "selection_hash": null,
+        "status": "unavailable"
+      },
+      "error": "Meeting has no transcript",
+      "last_refusal": null,
+      "planned_route": {
+        "legs": [],
+        "reason_code": "no assignment",
+        "selection_hash": null,
+        "status": "unavailable"
+      },
+      "run_receipt": null
+    },
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"code\": \"empty\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"Meeting has no transcript\", \"last_refusal\": null, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": null}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "elapsed_s": 0.002,
+    "named_refusal": {
+      "code": "empty",
+      "current_planned_route": {
+        "legs": [],
+        "reason_code": "no assignment",
+        "selection_hash": null,
+        "status": "unavailable"
+      },
+      "error": "Meeting has no transcript",
+      "last_refusal": null,
+      "planned_route": {
+        "legs": [],
+        "reason_code": "no assignment",
+        "selection_hash": null,
+        "status": "unavailable"
+      },
+      "run_receipt": null
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": null,
+      "after": "6d6a4e2ae480857d4ec0acb82c41684a4f457e7997b9a3946de4444c710820ba"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "fb12a1ca"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "tools/call",
+            "params": {
+              "name": "meeting.get",
+              "arguments": {
+                "meeting_id": "fb12a1ca"
+              }
+            }
+          },
+          "response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 0.315178,
+            "ended_at": null,
+            "formatted_duration": "00:00",
+            "id": "fb12a1ca",
+            "intel": null,
+            "intel_job": null,
+            "intel_model_host": null,
+            "intel_status": {
+              "completed_at": null,
+              "detail": "NO TRANSCRIPT LINES",
+              "requested_at": null,
+              "state": "import_failed"
+            },
+            "last_refusal": null,
+            "mic_label": "Me",
+            "planned_route": {
+              "legs": [],
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "status": "unavailable"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": null,
+            "segments": [],
+            "started_at": "2026-09-29T09:02:15.360260",
+            "sync_modified_at": "2026-09-29T09:02:15.363527",
+            "tags": [],
+            "title": "Architecture boundary review \u2014 empty transcript",
+            "transcriptWords": null,
+            "transcription_status": "active",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "domain_response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 0.315178,
+            "ended_at": null,
+            "formatted_duration": "00:00",
+            "id": "fb12a1ca",
+            "intel": null,
+            "intel_job": null,
+            "intel_model_host": null,
+            "intel_status": {
+              "completed_at": null,
+              "detail": "NO TRANSCRIPT LINES",
+              "requested_at": null,
+              "state": "import_failed"
+            },
+            "last_refusal": null,
+            "mic_label": "Me",
+            "planned_route": {
+              "legs": [],
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "status": "unavailable"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": null,
+            "segments": [],
+            "started_at": "2026-09-29T09:02:15.360260",
+            "sync_modified_at": "2026-09-29T09:02:15.363527",
+            "tags": [],
+            "title": "Architecture boundary review \u2014 empty transcript",
+            "transcriptWords": null,
+            "transcription_status": "active",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 0.315178, \"ended_at\": null, \"formatted_duration\": \"00:00\", \"id\": \"fb12a1ca\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"NO TRANSCRIPT LINES\", \"requested_at\": null, \"state\": \"import_failed\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [], \"started_at\": \"2026-09-29T09:02:15.360260\", \"sync_modified_at\": \"2026-09-29T09:02:15.363527\", \"tags\": [], \"title\": \"Architecture boundary review \\u2014 empty transcript\", \"transcriptWords\": null, \"transcription_status\": \"active\", \"transcription_status_detail\": null, \"web_url\": null}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        },
+        {
+          "kind": "op",
+          "name": "meeting.list",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "method": "tools/call",
+            "params": {
+              "name": "meeting.list",
+              "arguments": {}
+            }
+          },
+          "response": {
+            "meetings": [
+              {
+                "action_item_count": 0,
+                "calendar_event_id": null,
+                "capture_checkpoint_seconds": 0.0,
+                "capture_failure": null,
+                "capture_status": "finalized",
+                "duration_seconds": 0.0,
+                "ended_at": null,
+                "id": "fb12a1ca",
+                "intel_duration_s": null,
+                "intel_job": null,
+                "intel_model_host": null,
+                "intel_status": "import_failed",
+                "intel_status_detail": "NO TRANSCRIPT LINES",
+                "last_refusal": null,
+                "needs_you_count": 0,
+                "planned_route": {
+                  "legs": [],
+                  "reason_code": "no assignment",
+                  "selection_hash": null,
+                  "status": "unavailable"
+                },
+                "provenance": "desktop",
+                "run_receipt": null,
+                "segment_count": 0,
+                "started_at": "2026-09-29T09:02:15.360260",
+                "tags": [],
+                "title": "Architecture boundary review \u2014 empty transcript",
+                "transcriptWords": null
+              }
+            ],
+            "next_cursor": null,
+            "total": 1
+          },
+          "domain_response": {
+            "meetings": [
+              {
+                "action_item_count": 0,
+                "calendar_event_id": null,
+                "capture_checkpoint_seconds": 0.0,
+                "capture_failure": null,
+                "capture_status": "finalized",
+                "duration_seconds": 0.0,
+                "ended_at": null,
+                "id": "fb12a1ca",
+                "intel_duration_s": null,
+                "intel_job": null,
+                "intel_model_host": null,
+                "intel_status": "import_failed",
+                "intel_status_detail": "NO TRANSCRIPT LINES",
+                "last_refusal": null,
+                "needs_you_count": 0,
+                "planned_route": {
+                  "legs": [],
+                  "reason_code": "no assignment",
+                  "selection_hash": null,
+                  "status": "unavailable"
+                },
+                "provenance": "desktop",
+                "run_receipt": null,
+                "segment_count": 0,
+                "started_at": "2026-09-29T09:02:15.360260",
+                "tags": [],
+                "title": "Architecture boundary review \u2014 empty transcript",
+                "transcriptWords": null
+              }
+            ],
+            "next_cursor": null,
+            "total": 1
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"meetings\": [{\"action_item_count\": 0, \"calendar_event_id\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"duration_seconds\": 0.0, \"ended_at\": null, \"id\": \"fb12a1ca\", \"intel_duration_s\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": \"import_failed\", \"intel_status_detail\": \"NO TRANSCRIPT LINES\", \"last_refusal\": null, \"needs_you_count\": 0, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"run_receipt\": null, \"segment_count\": 0, \"started_at\": \"2026-09-29T09:02:15.360260\", \"tags\": [], \"title\": \"Architecture boundary review \\u2014 empty transcript\", \"transcriptWords\": null}], \"next_cursor\": null, \"total\": 1}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "fb12a1ca"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 11,
+            "method": "tools/call",
+            "params": {
+              "name": "meeting.get",
+              "arguments": {
+                "meeting_id": "fb12a1ca"
+              }
+            }
+          },
+          "response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 1.237717,
+            "ended_at": null,
+            "formatted_duration": "00:01",
+            "id": "fb12a1ca",
+            "intel": null,
+            "intel_job": null,
+            "intel_model_host": null,
+            "intel_status": {
+              "completed_at": null,
+              "detail": "NO TRANSCRIPT LINES",
+              "requested_at": null,
+              "state": "import_failed"
+            },
+            "last_refusal": null,
+            "mic_label": "Me",
+            "planned_route": {
+              "legs": [],
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "status": "unavailable"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": null,
+            "segments": [],
+            "started_at": "2026-09-29T09:02:15.360260",
+            "sync_modified_at": "2026-09-29T09:02:15.363527",
+            "tags": [],
+            "title": "Architecture boundary review \u2014 empty transcript",
+            "transcriptWords": null,
+            "transcription_status": "active",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "domain_response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 1.237717,
+            "ended_at": null,
+            "formatted_duration": "00:01",
+            "id": "fb12a1ca",
+            "intel": null,
+            "intel_job": null,
+            "intel_model_host": null,
+            "intel_status": {
+              "completed_at": null,
+              "detail": "NO TRANSCRIPT LINES",
+              "requested_at": null,
+              "state": "import_failed"
+            },
+            "last_refusal": null,
+            "mic_label": "Me",
+            "planned_route": {
+              "legs": [],
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "status": "unavailable"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": null,
+            "segments": [],
+            "started_at": "2026-09-29T09:02:15.360260",
+            "sync_modified_at": "2026-09-29T09:02:15.363527",
+            "tags": [],
+            "title": "Architecture boundary review \u2014 empty transcript",
+            "transcriptWords": null,
+            "transcription_status": "active",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 11,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 1.237717, \"ended_at\": null, \"formatted_duration\": \"00:01\", \"id\": \"fb12a1ca\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"NO TRANSCRIPT LINES\", \"requested_at\": null, \"state\": \"import_failed\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [], \"started_at\": \"2026-09-29T09:02:15.360260\", \"sync_modified_at\": \"2026-09-29T09:02:15.363527\", \"tags\": [], \"title\": \"Architecture boundary review \\u2014 empty transcript\", \"transcriptWords\": null, \"transcription_status\": \"active\", \"transcription_status_detail\": null, \"web_url\": null}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        },
+        {
+          "kind": "op",
+          "name": "meeting.list",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 12,
+            "method": "tools/call",
+            "params": {
+              "name": "meeting.list",
+              "arguments": {}
+            }
+          },
+          "response": {
+            "meetings": [
+              {
+                "action_item_count": 0,
+                "calendar_event_id": null,
+                "capture_checkpoint_seconds": 0.0,
+                "capture_failure": null,
+                "capture_status": "finalized",
+                "duration_seconds": 0.0,
+                "ended_at": null,
+                "id": "fb12a1ca",
+                "intel_duration_s": null,
+                "intel_job": null,
+                "intel_model_host": null,
+                "intel_status": "import_failed",
+                "intel_status_detail": "NO TRANSCRIPT LINES",
+                "last_refusal": null,
+                "needs_you_count": 0,
+                "planned_route": {
+                  "legs": [],
+                  "reason_code": "no assignment",
+                  "selection_hash": null,
+                  "status": "unavailable"
+                },
+                "provenance": "desktop",
+                "run_receipt": null,
+                "segment_count": 0,
+                "started_at": "2026-09-29T09:02:15.360260",
+                "tags": [],
+                "title": "Architecture boundary review \u2014 empty transcript",
+                "transcriptWords": null
+              }
+            ],
+            "next_cursor": null,
+            "total": 1
+          },
+          "domain_response": {
+            "meetings": [
+              {
+                "action_item_count": 0,
+                "calendar_event_id": null,
+                "capture_checkpoint_seconds": 0.0,
+                "capture_failure": null,
+                "capture_status": "finalized",
+                "duration_seconds": 0.0,
+                "ended_at": null,
+                "id": "fb12a1ca",
+                "intel_duration_s": null,
+                "intel_job": null,
+                "intel_model_host": null,
+                "intel_status": "import_failed",
+                "intel_status_detail": "NO TRANSCRIPT LINES",
+                "last_refusal": null,
+                "needs_you_count": 0,
+                "planned_route": {
+                  "legs": [],
+                  "reason_code": "no assignment",
+                  "selection_hash": null,
+                  "status": "unavailable"
+                },
+                "provenance": "desktop",
+                "run_receipt": null,
+                "segment_count": 0,
+                "started_at": "2026-09-29T09:02:15.360260",
+                "tags": [],
+                "title": "Architecture boundary review \u2014 empty transcript",
+                "transcriptWords": null
+              }
+            ],
+            "next_cursor": null,
+            "total": 1
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 12,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"meetings\": [{\"action_item_count\": 0, \"calendar_event_id\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"duration_seconds\": 0.0, \"ended_at\": null, \"id\": \"fb12a1ca\", \"intel_duration_s\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": \"import_failed\", \"intel_status_detail\": \"NO TRANSCRIPT LINES\", \"last_refusal\": null, \"needs_you_count\": 0, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"run_receipt\": null, \"segment_count\": 0, \"started_at\": \"2026-09-29T09:02:15.360260\", \"tags\": [], \"title\": \"Architecture boundary review \\u2014 empty transcript\", \"transcriptWords\": null}], \"next_cursor\": null, \"total\": 1}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:51324",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "fb12a1ca"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.get",
+            "arguments": {
+              "meeting_id": "fb12a1ca"
+            }
+          }
+        },
+        "response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 0.315178,
+          "ended_at": null,
+          "formatted_duration": "00:00",
+          "id": "fb12a1ca",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "NO TRANSCRIPT LINES",
+            "requested_at": null,
+            "state": "import_failed"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [],
+          "started_at": "2026-09-29T09:02:15.360260",
+          "sync_modified_at": "2026-09-29T09:02:15.363527",
+          "tags": [],
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "transcriptWords": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "domain_response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 0.315178,
+          "ended_at": null,
+          "formatted_duration": "00:00",
+          "id": "fb12a1ca",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "NO TRANSCRIPT LINES",
+            "requested_at": null,
+            "state": "import_failed"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [],
+          "started_at": "2026-09-29T09:02:15.360260",
+          "sync_modified_at": "2026-09-29T09:02:15.363527",
+          "tags": [],
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "transcriptWords": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 0.315178, \"ended_at\": null, \"formatted_duration\": \"00:00\", \"id\": \"fb12a1ca\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"NO TRANSCRIPT LINES\", \"requested_at\": null, \"state\": \"import_failed\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [], \"started_at\": \"2026-09-29T09:02:15.360260\", \"sync_modified_at\": \"2026-09-29T09:02:15.363527\", \"tags\": [], \"title\": \"Architecture boundary review \\u2014 empty transcript\", \"transcriptWords\": null, \"transcription_status\": \"active\", \"transcription_status_detail\": null, \"web_url\": null}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      },
+      {
+        "kind": "op",
+        "name": "meeting.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.list",
+            "arguments": {}
+          }
+        },
+        "response": {
+          "meetings": [
+            {
+              "action_item_count": 0,
+              "calendar_event_id": null,
+              "capture_checkpoint_seconds": 0.0,
+              "capture_failure": null,
+              "capture_status": "finalized",
+              "duration_seconds": 0.0,
+              "ended_at": null,
+              "id": "fb12a1ca",
+              "intel_duration_s": null,
+              "intel_job": null,
+              "intel_model_host": null,
+              "intel_status": "import_failed",
+              "intel_status_detail": "NO TRANSCRIPT LINES",
+              "last_refusal": null,
+              "needs_you_count": 0,
+              "planned_route": {
+                "legs": [],
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "status": "unavailable"
+              },
+              "provenance": "desktop",
+              "run_receipt": null,
+              "segment_count": 0,
+              "started_at": "2026-09-29T09:02:15.360260",
+              "tags": [],
+              "title": "Architecture boundary review \u2014 empty transcript",
+              "transcriptWords": null
+            }
+          ],
+          "next_cursor": null,
+          "total": 1
+        },
+        "domain_response": {
+          "meetings": [
+            {
+              "action_item_count": 0,
+              "calendar_event_id": null,
+              "capture_checkpoint_seconds": 0.0,
+              "capture_failure": null,
+              "capture_status": "finalized",
+              "duration_seconds": 0.0,
+              "ended_at": null,
+              "id": "fb12a1ca",
+              "intel_duration_s": null,
+              "intel_job": null,
+              "intel_model_host": null,
+              "intel_status": "import_failed",
+              "intel_status_detail": "NO TRANSCRIPT LINES",
+              "last_refusal": null,
+              "needs_you_count": 0,
+              "planned_route": {
+                "legs": [],
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "status": "unavailable"
+              },
+              "provenance": "desktop",
+              "run_receipt": null,
+              "segment_count": 0,
+              "started_at": "2026-09-29T09:02:15.360260",
+              "tags": [],
+              "title": "Architecture boundary review \u2014 empty transcript",
+              "transcriptWords": null
+            }
+          ],
+          "next_cursor": null,
+          "total": 1
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"meetings\": [{\"action_item_count\": 0, \"calendar_event_id\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"duration_seconds\": 0.0, \"ended_at\": null, \"id\": \"fb12a1ca\", \"intel_duration_s\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": \"import_failed\", \"intel_status_detail\": \"NO TRANSCRIPT LINES\", \"last_refusal\": null, \"needs_you_count\": 0, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"run_receipt\": null, \"segment_count\": 0, \"started_at\": \"2026-09-29T09:02:15.360260\", \"tags\": [], \"title\": \"Architecture boundary review \\u2014 empty transcript\", \"transcriptWords\": null}], \"next_cursor\": null, \"total\": 1}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "at_utc": "2026-09-29T15:02:15.677866+00:00"
+  },
+  "after": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:51324",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "fb12a1ca"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 11,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.get",
+            "arguments": {
+              "meeting_id": "fb12a1ca"
+            }
+          }
+        },
+        "response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 1.237717,
+          "ended_at": null,
+          "formatted_duration": "00:01",
+          "id": "fb12a1ca",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "NO TRANSCRIPT LINES",
+            "requested_at": null,
+            "state": "import_failed"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [],
+          "started_at": "2026-09-29T09:02:15.360260",
+          "sync_modified_at": "2026-09-29T09:02:15.363527",
+          "tags": [],
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "transcriptWords": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "domain_response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 1.237717,
+          "ended_at": null,
+          "formatted_duration": "00:01",
+          "id": "fb12a1ca",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "NO TRANSCRIPT LINES",
+            "requested_at": null,
+            "state": "import_failed"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [],
+          "started_at": "2026-09-29T09:02:15.360260",
+          "sync_modified_at": "2026-09-29T09:02:15.363527",
+          "tags": [],
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "transcriptWords": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 11,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 1.237717, \"ended_at\": null, \"formatted_duration\": \"00:01\", \"id\": \"fb12a1ca\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"NO TRANSCRIPT LINES\", \"requested_at\": null, \"state\": \"import_failed\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [], \"started_at\": \"2026-09-29T09:02:15.360260\", \"sync_modified_at\": \"2026-09-29T09:02:15.363527\", \"tags\": [], \"title\": \"Architecture boundary review \\u2014 empty transcript\", \"transcriptWords\": null, \"transcription_status\": \"active\", \"transcription_status_detail\": null, \"web_url\": null}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      },
+      {
+        "kind": "op",
+        "name": "meeting.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 12,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.list",
+            "arguments": {}
+          }
+        },
+        "response": {
+          "meetings": [
+            {
+              "action_item_count": 0,
+              "calendar_event_id": null,
+              "capture_checkpoint_seconds": 0.0,
+              "capture_failure": null,
+              "capture_status": "finalized",
+              "duration_seconds": 0.0,
+              "ended_at": null,
+              "id": "fb12a1ca",
+              "intel_duration_s": null,
+              "intel_job": null,
+              "intel_model_host": null,
+              "intel_status": "import_failed",
+              "intel_status_detail": "NO TRANSCRIPT LINES",
+              "last_refusal": null,
+              "needs_you_count": 0,
+              "planned_route": {
+                "legs": [],
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "status": "unavailable"
+              },
+              "provenance": "desktop",
+              "run_receipt": null,
+              "segment_count": 0,
+              "started_at": "2026-09-29T09:02:15.360260",
+              "tags": [],
+              "title": "Architecture boundary review \u2014 empty transcript",
+              "transcriptWords": null
+            }
+          ],
+          "next_cursor": null,
+          "total": 1
+        },
+        "domain_response": {
+          "meetings": [
+            {
+              "action_item_count": 0,
+              "calendar_event_id": null,
+              "capture_checkpoint_seconds": 0.0,
+              "capture_failure": null,
+              "capture_status": "finalized",
+              "duration_seconds": 0.0,
+              "ended_at": null,
+              "id": "fb12a1ca",
+              "intel_duration_s": null,
+              "intel_job": null,
+              "intel_model_host": null,
+              "intel_status": "import_failed",
+              "intel_status_detail": "NO TRANSCRIPT LINES",
+              "last_refusal": null,
+              "needs_you_count": 0,
+              "planned_route": {
+                "legs": [],
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "status": "unavailable"
+              },
+              "provenance": "desktop",
+              "run_receipt": null,
+              "segment_count": 0,
+              "started_at": "2026-09-29T09:02:15.360260",
+              "tags": [],
+              "title": "Architecture boundary review \u2014 empty transcript",
+              "transcriptWords": null
+            }
+          ],
+          "next_cursor": null,
+          "total": 1
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 12,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"meetings\": [{\"action_item_count\": 0, \"calendar_event_id\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"duration_seconds\": 0.0, \"ended_at\": null, \"id\": \"fb12a1ca\", \"intel_duration_s\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": \"import_failed\", \"intel_status_detail\": \"NO TRANSCRIPT LINES\", \"last_refusal\": null, \"needs_you_count\": 0, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"run_receipt\": null, \"segment_count\": 0, \"started_at\": \"2026-09-29T09:02:15.360260\", \"tags\": [], \"title\": \"Architecture boundary review \\u2014 empty transcript\", \"transcriptWords\": null}], \"next_cursor\": null, \"total\": 1}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "at_utc": "2026-09-29T15:02:16.600785+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "meeting.summary.run",
+      "body_sha256": "2f47a1e64e2979ced4bf46ad8849d2106c39b8cc2355d660360dc99b03ffb89c",
+      "body": {
+        "code": "empty",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "Meeting has no transcript",
+        "last_refusal": null,
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": null
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"empty\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"Meeting has no transcript\", \"last_refusal\": null, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": null}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.summary.run",
+      "args": {
+        "meeting_id": "fb12a1ca",
+        "expected_selection_hash": ""
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.run_intelligence",
+          "arguments": {
+            "meeting_id": "fb12a1ca",
+            "expected_selection_hash": ""
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "empty",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "Meeting has no transcript",
+        "last_refusal": null,
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": null
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"empty\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"Meeting has no transcript\", \"last_refusal\": null, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": null}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "code": "empty",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "Meeting has no transcript",
+        "last_refusal": null,
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": null
+      }
+    },
+    "op": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.summary.run",
+      "args": {
+        "meeting_id": "fb12a1ca",
+        "expected_selection_hash": ""
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.run_intelligence",
+          "arguments": {
+            "meeting_id": "fb12a1ca",
+            "expected_selection_hash": ""
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "empty",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "Meeting has no transcript",
+        "last_refusal": null,
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": null
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"empty\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"Meeting has no transcript\", \"last_refusal\": null, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": null}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "code": "empty",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "Meeting has no transcript",
+        "last_refusal": null,
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": null
+      }
+    },
+    "op_digest": "6d6a4e2ae480857d4ec0acb82c41684a4f457e7997b9a3946de4444c710820ba"
+  },
+  "initial_feedback": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:51324",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "fb12a1ca"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.get",
+            "arguments": {
+              "meeting_id": "fb12a1ca"
+            }
+          }
+        },
+        "response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 1.231694,
+          "ended_at": null,
+          "formatted_duration": "00:01",
+          "id": "fb12a1ca",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "NO TRANSCRIPT LINES",
+            "requested_at": null,
+            "state": "import_failed"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [],
+          "started_at": "2026-09-29T09:02:15.360260",
+          "sync_modified_at": "2026-09-29T09:02:15.363527",
+          "tags": [],
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "transcriptWords": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "domain_response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 1.231694,
+          "ended_at": null,
+          "formatted_duration": "00:01",
+          "id": "fb12a1ca",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "NO TRANSCRIPT LINES",
+            "requested_at": null,
+            "state": "import_failed"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [],
+          "started_at": "2026-09-29T09:02:15.360260",
+          "sync_modified_at": "2026-09-29T09:02:15.363527",
+          "tags": [],
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "transcriptWords": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 1.231694, \"ended_at\": null, \"formatted_duration\": \"00:01\", \"id\": \"fb12a1ca\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"NO TRANSCRIPT LINES\", \"requested_at\": null, \"state\": \"import_failed\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [], \"started_at\": \"2026-09-29T09:02:15.360260\", \"sync_modified_at\": \"2026-09-29T09:02:15.363527\", \"tags\": [], \"title\": \"Architecture boundary review \\u2014 empty transcript\", \"transcriptWords\": null, \"transcription_status\": \"active\", \"transcription_status_detail\": null, \"web_url\": null}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.004
+      },
+      {
+        "kind": "op",
+        "name": "meeting.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.list",
+            "arguments": {}
+          }
+        },
+        "response": {
+          "meetings": [
+            {
+              "action_item_count": 0,
+              "calendar_event_id": null,
+              "capture_checkpoint_seconds": 0.0,
+              "capture_failure": null,
+              "capture_status": "finalized",
+              "duration_seconds": 0.0,
+              "ended_at": null,
+              "id": "fb12a1ca",
+              "intel_duration_s": null,
+              "intel_job": null,
+              "intel_model_host": null,
+              "intel_status": "import_failed",
+              "intel_status_detail": "NO TRANSCRIPT LINES",
+              "last_refusal": null,
+              "needs_you_count": 0,
+              "planned_route": {
+                "legs": [],
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "status": "unavailable"
+              },
+              "provenance": "desktop",
+              "run_receipt": null,
+              "segment_count": 0,
+              "started_at": "2026-09-29T09:02:15.360260",
+              "tags": [],
+              "title": "Architecture boundary review \u2014 empty transcript",
+              "transcriptWords": null
+            }
+          ],
+          "next_cursor": null,
+          "total": 1
+        },
+        "domain_response": {
+          "meetings": [
+            {
+              "action_item_count": 0,
+              "calendar_event_id": null,
+              "capture_checkpoint_seconds": 0.0,
+              "capture_failure": null,
+              "capture_status": "finalized",
+              "duration_seconds": 0.0,
+              "ended_at": null,
+              "id": "fb12a1ca",
+              "intel_duration_s": null,
+              "intel_job": null,
+              "intel_model_host": null,
+              "intel_status": "import_failed",
+              "intel_status_detail": "NO TRANSCRIPT LINES",
+              "last_refusal": null,
+              "needs_you_count": 0,
+              "planned_route": {
+                "legs": [],
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "status": "unavailable"
+              },
+              "provenance": "desktop",
+              "run_receipt": null,
+              "segment_count": 0,
+              "started_at": "2026-09-29T09:02:15.360260",
+              "tags": [],
+              "title": "Architecture boundary review \u2014 empty transcript",
+              "transcriptWords": null
+            }
+          ],
+          "next_cursor": null,
+          "total": 1
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 10,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"meetings\": [{\"action_item_count\": 0, \"calendar_event_id\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"duration_seconds\": 0.0, \"ended_at\": null, \"id\": \"fb12a1ca\", \"intel_duration_s\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": \"import_failed\", \"intel_status_detail\": \"NO TRANSCRIPT LINES\", \"last_refusal\": null, \"needs_you_count\": 0, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"run_receipt\": null, \"segment_count\": 0, \"started_at\": \"2026-09-29T09:02:15.360260\", \"tags\": [], \"title\": \"Architecture boundary review \\u2014 empty transcript\", \"transcriptWords\": null}], \"next_cursor\": null, \"total\": 1}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.003
+      }
+    ],
+    "at_utc": "2026-09-29T15:02:16.595573+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "meeting.summary.run",
+      "body_sha256": "2f47a1e64e2979ced4bf46ad8849d2106c39b8cc2355d660360dc99b03ffb89c",
+      "body": {
+        "code": "empty",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "Meeting has no transcript",
+        "last_refusal": null,
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": null
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"empty\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"Meeting has no transcript\", \"last_refusal\": null, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": null}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.summary.run",
+      "args": {
+        "meeting_id": "fb12a1ca",
+        "expected_selection_hash": ""
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.run_intelligence",
+          "arguments": {
+            "meeting_id": "fb12a1ca",
+            "expected_selection_hash": ""
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "empty",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "Meeting has no transcript",
+        "last_refusal": null,
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": null
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"empty\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"Meeting has no transcript\", \"last_refusal\": null, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": null}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "code": "empty",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "Meeting has no transcript",
+        "last_refusal": null,
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": null
+      }
+    },
+    "op": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.summary.run",
+      "args": {
+        "meeting_id": "fb12a1ca",
+        "expected_selection_hash": ""
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.run_intelligence",
+          "arguments": {
+            "meeting_id": "fb12a1ca",
+            "expected_selection_hash": ""
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "empty",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "Meeting has no transcript",
+        "last_refusal": null,
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": null
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"empty\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"Meeting has no transcript\", \"last_refusal\": null, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": null}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "code": "empty",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "Meeting has no transcript",
+        "last_refusal": null,
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": null
+      }
+    },
+    "op_digest": "6d6a4e2ae480857d4ec0acb82c41684a4f457e7997b9a3946de4444c710820ba",
+    "predicate_satisfied": true,
+    "reading": "operation refused by name 'empty': Meeting has no transcript",
+    "elapsed_s": 0.917
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "operation refused by name 'empty': Meeting has no transcript",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 0.923,
+    "first_satisfied_at_s": 0.917,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: operation refused by name 'empty': Meeting has no transcript"
+  ],
+  "complete": true,
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0inmwgpd/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0inmwgpd/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:51324",
+    "meeting import fb12a1ca failed: No cues could be parsed from tmp28usdbmf.vtt. The file has a WEBVTT header but no readable cue blocks \u2014 nothing was imported."
+  ],
+  "duration_s": 3.464
+}
