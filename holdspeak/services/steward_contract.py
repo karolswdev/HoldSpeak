@@ -671,6 +671,7 @@ class StewardContract:
         queued run whose worker never started are both covered. Existing
         winners are kept; a repeat is a no-op; nothing is replayed.
         """
+        from holdspeak.kernel.channel_send import channel_send_ended_effect
         from holdspeak.kernel.desk_broker import journal_receipt
         from holdspeak.kernel.model import KernelRefused
         from holdspeak.kernel.runtime import _configure
@@ -685,12 +686,21 @@ class StewardContract:
         closed = 0
         for operation in pending:
             reason = ("hub_restart_during_steward" if operation["name"] in rooms.STEWARD_OPERATIONS
+                      else "hub_restart_during_send" if operation["name"] == "channel.send"
                       else "hub_restart_during_decision")
             run = self._run_for_operation(str(operation["operation_id"]))
+            # PHILO-10-01 (design section 4a): a send caught by the restart
+            # settles its row (unknown, interrupted) and its history row in the
+            # receipt's transaction; one that never crossed its boundary moves
+            # nothing and its receipt says so.
+            send_effect = channel_send_ended_effect(store, operation, reason, row_reason="interrupted",
+                                                    before="hub_restart_before_dispatch")
 
-            def effect(conn: Any, run: Optional[dict[str, Any]] = run) -> None:
+            def effect(conn: Any, run: Optional[dict[str, Any]] = run, send_effect: Any = send_effect) -> Any:
+                if send_effect is not None:
+                    return send_effect(conn)
                 if run is None:
-                    return
+                    return None
                 current = self._db.steward_runs.get_run_in_transaction(conn, run["id"])
                 if current is None or current.get("state") in _TERMINAL_RUN_STATES:
                     return
@@ -706,7 +716,7 @@ class StewardContract:
                     f"steward_run:{run['id']}" if run else "", strict=True, warrant_revoked=1, effect=effect)
             except KernelRefused:
                 continue
-            journal_receipt(store, ended, reason)
+            journal_receipt(store, ended, str((_receipt or {}).get("outcome") or reason))
             closed += 1
         legacy = self.recover_on_startup()  # an old unlinked run: interrupted as legacy work
         return {"operations": closed, "legacy_runs": len(legacy)}

@@ -771,6 +771,7 @@ class MeetingWebServer:
             build_project_door_router,
             build_project_setup_router,
             build_project_updates_router,
+            build_channels_router,
             build_project_briefs_router,
             build_providers_router,
             build_connections_router,
@@ -1256,6 +1257,7 @@ class MeetingWebServer:
         app.include_router(build_project_door_router(web_ctx))
         app.include_router(build_project_setup_router(web_ctx))
         app.include_router(build_project_updates_router(web_ctx))
+        app.include_router(build_channels_router(web_ctx))  # PHILO-10-01: the Send
         app.include_router(build_project_briefs_router(web_ctx))
         app.include_router(build_providers_router(web_ctx))
         app.include_router(build_connections_router(web_ctx))

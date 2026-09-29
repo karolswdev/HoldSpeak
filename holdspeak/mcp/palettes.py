@@ -15,8 +15,13 @@ def _lazy_project_palette() -> frozenset[str]:
     its own operation's receipt; the kernel's read scope refuses another
     principal's (``holdspeak/kernel/broker.py``). Palettes only gain tools.
     """
+    from holdspeak.mcp.families.channel import CHANNEL_TOOLS
     from holdspeak.mcp.families.project import PROJECT_PALETTE
-    return PROJECT_PALETTE | {"kernel.receipt"}
+
+    # PHILO-10-01: the Send's tools join PROJECT (palettes only gain tools): a
+    # connected agent prepares a send and reads what was sent; its send is
+    # refused owner_principal_required with a receipt by the kernel.
+    return PROJECT_PALETTE | {"kernel.receipt"} | CHANNEL_TOOLS
 
 
 def _lazy_heartbeat_names() -> frozenset[str]:

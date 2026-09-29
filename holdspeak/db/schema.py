@@ -4180,10 +4180,66 @@ CREATE TABLE IF NOT EXISTS project_update_deliveries (
     project_id TEXT NOT NULL,
     delivered_at TEXT NOT NULL,
     delivered_to TEXT,
-    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id)
+    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+    -- PHILO-10-01 (additive): how it left.  'manual' is the copy and confirm
+    -- above; a channel send writes its row when it settles sent or unknown,
+    -- in the settle transaction.  outcome: confirmed (manual), sent, unknown.
+    channel TEXT NOT NULL DEFAULT 'manual',
+    send_id TEXT,
+    outcome TEXT NOT NULL DEFAULT 'confirmed',
+    proof_json TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_project_update_deliveries_update
     ON project_update_deliveries(update_id);
+
+-- PHILO-10-01: the saved destinations (design/send-lifecycle.md section 1).
+-- No secret.  A row never changes its target: Edit parks the old row and makes
+-- a new one; Remove parks the row.  target_digest = sha256 of channel +
+-- account + target_json (canonical JSON).
+CREATE TABLE IF NOT EXISTS channel_destinations (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    channel TEXT NOT NULL,
+    account_json TEXT NOT NULL DEFAULT '{}',
+    target_json TEXT NOT NULL,
+    target_digest TEXT NOT NULL,
+    synced INTEGER NOT NULL DEFAULT 0,
+    state TEXT NOT NULL DEFAULT 'active',
+    created_at TEXT NOT NULL,
+    parked_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_channel_destinations_state
+    ON channel_destinations(state, created_at);
+
+-- PHILO-10-01: one row per send, from prepare to its end.  States: prepared ->
+-- dispatching -> sent | failed | unknown; prepared -> discarded.  The frozen
+-- target and the exact transport bytes (payload) with their digest.  The
+-- dispatch boundary (state dispatching + send_operation_id) commits BEFORE any
+-- effect; recovery never dispatches again.
+CREATE TABLE IF NOT EXISTS channel_sends (
+    id TEXT PRIMARY KEY,
+    document_ref TEXT NOT NULL,
+    destination_id TEXT NOT NULL REFERENCES channel_destinations(id),
+    channel TEXT NOT NULL,
+    account_json TEXT NOT NULL DEFAULT '{}',
+    target_json TEXT NOT NULL,
+    target_digest TEXT NOT NULL,
+    payload BLOB NOT NULL,
+    payload_digest TEXT NOT NULL,
+    prepared_by_kind TEXT NOT NULL DEFAULT '',
+    prepared_by_identity TEXT NOT NULL DEFAULT '',
+    prepare_operation_id TEXT UNIQUE,
+    send_operation_id TEXT UNIQUE,
+    state TEXT NOT NULL,
+    proof_json TEXT,
+    reason TEXT,
+    file_path TEXT,
+    created_at TEXT NOT NULL,
+    dispatch_started_at TEXT,
+    settled_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_channel_sends_document
+    ON channel_sends(document_ref, created_at);
 
 -- HS-163-01: Steward policy — per-Project: eligible effect kinds, YOLO flags,
 -- bounds (retry counts, per-run action caps, cooldowns per STW-008).

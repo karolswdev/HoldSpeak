@@ -183,7 +183,8 @@ def _broker(database: Any) -> Any:
 
 def target_for(name: str, args: Mapping[str, Any]) -> str:
     """The operation's journal-safe target: what it acts on."""
-    for key, kind in (("run_id", "steward_run"), ("update_id", "project_update"), ("watch_id", "watch"),
+    for key, kind in (("send_id", "channel_send"), ("run_id", "steward_run"), ("update_id", "project_update"),
+                      ("destination_id", "channel_destination"), ("watch_id", "watch"),
                       ("step_id", "steward_step"), ("project_id", "project")):
         if args.get(key):
             return target_ref(kind, args.get(key))
@@ -388,6 +389,11 @@ def _replayed(broker: Any, principal: Any, name: str, operation_id: str, payload
         if state in FINAL_STATES:
             receipt = broker.store.receipt(operation_id)
             if state != "succeeded":
+                if (name in rooms.SETTLED_ROW_REPLAY and state in {"indeterminate", "failed"}
+                        and _settled_row(broker, operation_id)):
+                    # PHILO-10-01 (design section 4a, seam 3): a send that ended
+                    # UNKNOWN or FAILED answers its settled row, not a refusal.
+                    return _answer(broker, principal, name, operation, target, payload, call, receipt)
                 raise _refused(name, broker, operation_id, receipt)
             return _answer(broker, principal, name, operation, target, payload, call, receipt)
         if name in rooms.ASYNC_OPERATIONS and state == "claimed" and _durable(broker, name, operation_id):
@@ -491,6 +497,13 @@ def _recorded_answer(broker: Any, name: str, payload: Mapping[str, Any]) -> Any:
         row = conn.execute("SELECT result_json FROM project_commands WHERE id=? AND command_kind=? AND status='completed'",
                            (str(command_id), kind)).fetchone()
     return json.loads(row[0]) if row is not None and row[0] else _NO_RESULT
+
+
+def _settled_row(broker: Any, operation_id: str) -> bool:
+    """A ``channel_sends`` row of this send operation that settled (sent, failed, unknown)."""
+    with broker.store._connection() as conn:
+        return conn.execute("SELECT 1 FROM channel_sends WHERE send_operation_id=? AND state IN "
+                            "('sent','failed','unknown')", (operation_id,)).fetchone() is not None
 
 
 def _durable(broker: Any, name: str, operation_id: str) -> bool:

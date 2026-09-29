@@ -718,8 +718,12 @@ _PALETTE_REFUSED = "mcp_palette_refused"
 
 def _tool_operation(name: str, args: Any) -> tuple[str | None, Any]:
     """The operation an MCP call names, and its raw operation payload, when identifiable."""
+    from holdspeak.mcp.families.channel import TOOL_OPERATIONS as _CHANNEL_TOOL_OPERATIONS
     from holdspeak.mcp.families.project import TOOL_OPERATIONS as _ROOM_TOOL_OPERATIONS
 
+    if name in _CHANNEL_TOOL_OPERATIONS:
+        # PHILO-10-01: the Send's tools name their declared operation.
+        return _CHANNEL_TOOL_OPERATIONS[name], (dict(args) if isinstance(args, dict) else None)
     if name in _ROOM_TOOL_OPERATIONS:
         # PHILO-9-02: the Room's tools name their declared operation too (a
         # palette refusal of an ADMITTED one leaves its refusal receipt).

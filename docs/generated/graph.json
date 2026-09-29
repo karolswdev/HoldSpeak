@@ -14,7 +14,7 @@
   },
   {
    "path": "docs/generated/openapi.json",
-   "sha256": "f0352c97e25d58eaeb80a7f9ca18d038f0c101431013006ea766f427b8471b88"
+   "sha256": "7a4dfcc5a6bfbbd5fda0d94175b7ecd9b57a0b6e462d5a5b77cfb30b7d6cdc84"
   },
   {
    "path": "docs/internal/philo/data/desk.json",
@@ -34,7 +34,7 @@
   },
   {
    "path": "docs/internal/philo/graph/atlas.json",
-   "sha256": "3de39523ea840ad021df11bf7266c7c5455ab29a26b0b2797ba02d5b92e29f48"
+   "sha256": "5e6305af7fd041679468ea4bffa740b6233cc67c141928c55ad4a566fd4344f6"
   },
   {
    "path": "docs/internal/philo/graph/council-resolutions.json",
@@ -50,7 +50,7 @@
   },
   {
    "path": "docs/internal/philo/graph/static-astra.json",
-   "sha256": "866e7a3d957eca18f6a99d9c91d56866d027342ee61f58bbd02893e054633d0e"
+   "sha256": "d7096c689bc2976ce947339e9681190d3e871fe2ad46a836b848d2fa66b2e50e"
   },
   {
    "path": "docs/internal/philo/graph/static-muaddib.json",
@@ -117434,7 +117434,7 @@
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
      "path": "holdspeak/runtime/composition.py",
-     "line": 187,
+     "line": 188,
      "symbol": "source_census",
      "claim": "Source emits frame desk_changed; RuntimeBus.tsx routes listeners by frame.type. Dynamic payload content and subscriber outcome not traced by this census."
     }

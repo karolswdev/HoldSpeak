@@ -2068,6 +2068,8 @@ DESK_ID_ARGUMENT: Mapping[str, str] = MappingProxyType({
 # PHILO-9-02: the steward and the connectors (carved beside this module; it
 # imports the shared pieces above, so the import sits after them).
 from holdspeak.room_operations import STEWARD_CONNECTOR_OPERATIONS  # noqa: E402
+# PHILO-10-01: the Send (the channels' contract).
+from holdspeak.channel_operations import CHANNEL_OPERATIONS  # noqa: E402
 
 #: The whole catalogue, in export order.
 DESCRIPTORS: tuple[OperationDescriptor, ...] = (
@@ -2081,7 +2083,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     ZONE_FILE, ZONE_UNFILE, ZONE_MEMBERS, KB_MEMBER_ADD, KB_MEMBER_REMOVE, KB_MEMBERS,
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ,
-) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS
+) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))

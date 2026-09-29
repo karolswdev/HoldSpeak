@@ -505,6 +505,10 @@ class UpdateDeliveriesRepository(BaseRepository):
         delivered_to: Optional[str] = None,
         delivered_at: Optional[str] = None,
         delivery_id: Optional[str] = None,
+        channel: str = "manual",
+        send_id: Optional[str] = None,
+        outcome: str = "confirmed",
+        proof_json: Optional[str] = None,
     ) -> dict[str, Any]:
         """Append one delivery row on a caller-owned connection.
 
@@ -529,14 +533,19 @@ class UpdateDeliveriesRepository(BaseRepository):
         to = None if delivered_to is None else (str(delivered_to).strip() or None)
         conn.execute(
             """INSERT INTO project_update_deliveries
-               (id, update_id, project_id, delivered_at, delivered_to, operation_id)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (new_id, clean_id, row[0], when, to, str(operation_id)),
+               (id, update_id, project_id, delivered_at, delivered_to, operation_id,
+                channel, send_id, outcome, proof_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (new_id, clean_id, row[0], when, to, str(operation_id), channel, send_id, outcome, proof_json),
         )
-        return {
+        written = {
             "id": new_id, "update_id": clean_id, "project_id": row[0],
             "delivered_at": when, "delivered_to": to, "operation_id": str(operation_id),
         }
+        if channel != "manual":
+            # PHILO-10-01: a channel send's row names how it left and its proof.
+            written.update({"channel": channel, "send_id": send_id, "outcome": outcome, "proof_json": proof_json})
+        return written
 
     def list_for_update(self, update_id: str) -> list[dict[str, Any]]:
         """Every delivery of one update, oldest first."""
@@ -551,7 +560,8 @@ class UpdateDeliveriesRepository(BaseRepository):
         marks = ",".join("?" for _ in ids)
         with self._connection() as conn:
             rows = conn.execute(
-                f"SELECT id, update_id, project_id, delivered_at, delivered_to, operation_id "
+                f"SELECT id, update_id, project_id, delivered_at, delivered_to, operation_id, "
+                f"channel, send_id, outcome, proof_json "
                 f"FROM project_update_deliveries WHERE update_id IN ({marks}) "
                 f"ORDER BY delivered_at ASC, rowid ASC",
                 tuple(ids),

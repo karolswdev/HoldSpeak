@@ -6011,6 +6011,293 @@
         "summary": "Run"
       }
     },
+    "/api/channels/destinations": {
+      "get": {
+        "operationId": "api_channel_destinations_api_channels_destinations_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_parked",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Parked",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Destinations Api Channels Destinations Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Channel Destinations"
+      },
+      "post": {
+        "operationId": "api_channel_save_destination_api_channels_destinations_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Save Destination Api Channels Destinations Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Channel Save Destination"
+      }
+    },
+    "/api/channels/destinations/{destination_id}": {
+      "delete": {
+        "operationId": "api_channel_remove_destination_api_channels_destinations__destination_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "destination_id",
+            "required": true,
+            "schema": {
+              "title": "Destination Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Remove Destination Api Channels Destinations  Destination Id  Delete"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Channel Remove Destination"
+      }
+    },
+    "/api/channels/destinations/{destination_id}/check": {
+      "post": {
+        "operationId": "api_channel_check_destination_api_channels_destinations__destination_id__check_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "destination_id",
+            "required": true,
+            "schema": {
+              "title": "Destination Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Check Destination Api Channels Destinations  Destination Id  Check Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Channel Check Destination"
+      }
+    },
+    "/api/channels/preview": {
+      "post": {
+        "operationId": "api_channel_preview_api_channels_preview_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Preview Api Channels Preview Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Channel Preview"
+      }
+    },
+    "/api/channels/send": {
+      "post": {
+        "operationId": "api_channel_send_api_channels_send_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Send Api Channels Send Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Channel Send"
+      }
+    },
+    "/api/channels/sends": {
+      "get": {
+        "operationId": "api_channel_sends_api_channels_sends_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "update_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Update Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "send_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Send Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Sends Api Channels Sends Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Channel Sends"
+      },
+      "post": {
+        "operationId": "api_channel_prepare_api_channels_sends_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Prepare Api Channels Sends Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Channel Prepare"
+      }
+    },
+    "/api/channels/sends/{send_id}/discard": {
+      "post": {
+        "operationId": "api_channel_discard_api_channels_sends__send_id__discard_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "send_id",
+            "required": true,
+            "schema": {
+              "title": "Send Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Discard Api Channels Sends  Send Id  Discard Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Channel Discard"
+      }
+    },
     "/api/coders/clear-stale": {
       "post": {
         "description": "Clear all non-pinned waiting sessions older than the threshold.",

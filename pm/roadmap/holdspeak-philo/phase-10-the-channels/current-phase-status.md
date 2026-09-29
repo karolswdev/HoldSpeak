@@ -139,7 +139,7 @@ The journal carries the destination's id (`destination:<id>`) and the payload di
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-10-01 | The Send contract, saved destinations and the file channel | backlog | [story-01-the-send-contract-and-the-file-channel](./story-01-the-send-contract-and-the-file-channel.md) | — |
+| PHILO-10-01 | The Send contract, saved destinations and the file channel | done | [story-01-the-send-contract-and-the-file-channel](./story-01-the-send-contract-and-the-file-channel.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-10-02 | The GitHub and Atlassian channels (and the nudge) | backlog | [story-02-the-github-and-atlassian-channels](./story-02-the-github-and-atlassian-channels.md) | — |
 | PHILO-10-03 | The email channel — a provider interface | backlog | [story-03-the-email-channel](./story-03-the-email-channel.md) | — |
 | PHILO-10-04 | The Send face and the destinations setup (canvas first) | backlog | [story-04-the-send-face-and-the-destinations](./story-04-the-send-face-and-the-destinations.md) | — |
@@ -161,7 +161,15 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-28, the story 04 canvases, ROUND TWO (PR #693): Codex Astra r1 DO-NOT-RATIFY (`checks/canvases-astra-r1.md`) paid on the canvases — a result that outlives its row (failed, discarded, refused), the setup loop with direct arrival and no reload, every board's named state asserted on screen and no byte-identical boards, the history on story 01's one table (`outcome`, `channel`), COMMENTED, BLOG POSTED, the Confluence form, named read, preview and key-save failures, the email Check on the sender, the file name minted once, literal case. A2 asked against story 01's face; A3 as Codex Astra qualified it. Owed: the Codex Astra r2 check; the owner's ratification. Nothing is built.
+
 2026-09-28, the story 04 canvases DRAWN (for the owner's ratification): canvas A, the SEND well (`assets/story-04-send-canvas/`, 29 boards, the whole state/width matrix), and canvas B, the Destinations group in Settings → Connections (`assets/story-04-destinations-canvas/`, 12 boards), both at 1440 and 393 on the product app and a real hub, the unbuilt wire stated in `harness/shim.ts`. Six owner questions (three per canvas, each with a recommendation; A2 asks to replace the ratified `DELIVERED ×N` with `DELIVERY ×N`). Owed: the Codex Astra check of the canvases; the owner's ratification. Nothing is built.
+
+2026-09-28, story 01: Codex Astra r2 on #692 RATIFY-WITH-CONDITIONS (`checks/story-01-built-astra-r2.md`); its two conditions are story 02's GATES 1 (the redactor's cost and named codes) and 2 (the dispatch off the event loop). Owed: Muad'Dib's full suite, then merge.
+
+2026-09-28, story 01 ROUND TWO (PR #692): Codex Astra r1 DO-NOT-RATIFY paid — the Room's face no longer shows an UNKNOWN send as delivered (fenced as rendered at 1440 and 393, red on the old face); the destination is re-checked inside the boundary transaction (Remove-vs-Send fenced both ways); the redactor removes payload excerpts and secrets; the CLI seam, its outcome clauses and the steward's prepare moved to story 02. 18/18 mutations caught. Owed: Codex Astra r2 on the PR; Muad'Dib's full suite before merge.
+
+2026-09-28, story 01 BUILT (branch `feat/philo-10-01`): the Send contract on the one declared contract (nine `channel.*` operations over HTTP, MCP and the rig), `channel_destinations` + `channel_sends` + the additive history columns, prepare and press, the durable dispatch boundary with recovery across take-over, the reaper and a restart (R1–R6, both forms), and the file channel; 16/16 mutations caught. Owed: the Codex Astra check of the built PR; stories 02–06. The CLI seam's plumbing (principal, parent, broker) moves to story 02 with its first user.
 
 2026-09-28, round four: **RATIFIED by the owner ("Ratify, build it")**, with Q1 ruled against Mail.app ("it wouldn’t work on non-Macs") for a declared email provider interface, SendGrid first; Q3 "Blog post"; Q6 "Scratch targets you name". Story 03 is redrawn, the design gains section 8, the Mail.app material is parked (BACKLOG "Mail.app draft channel"). Owed: the Codex Astra check of the email delta; the story 04 canvases before the face build. Nothing is built.
 
@@ -205,6 +213,7 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Decisions made (this phase)
 
+- 2026-09-28 — story 01 round two (Codex Astra r1 on #692, DO-NOT-RATIFY, `checks/story-01-built-astra-r1.md`): the CLI seam (manifest + plan + interpret; the owner principal, the parent and the broker through `build_gated_connector` → `run_subprocess_operation`) and the CLI outcome clauses move from story 01 to story 02, built with their first user (Tenet 1); **the steward's prepare (Q5) is story 02's**; the kernel line budget stays red at 432 (main 426; story 01's six lines, the rest inherited), the fence not weakened; an UNKNOWN send is shown as `⚠ RESULT UNKNOWN · CHECK <destination>` on the existing Room face and is not counted as delivered (a small change on a ratified species, for the owner's canvas review in story 04) — Muad'Dib's lane.
 - 2026-09-28 — the owner: "explore #2"; Payload "Any document; updates first"; Channels "File system", "gh + acli", "Email" (Slack not picked); Who sends "You, every time"; Destinations "Saved destinations" (AskUserQuestion).
 - 2026-09-28 — round five: Codex Astra r3 RATIFY-WITH-CONDITIONS on the email delta, recorded before story 03's brief (design sections 3, 4, 4a, 6, 8) — Fedaykin docs lane for Muad'Dib.
 - 2026-09-28 — **the owner: "Ratify, build it (Recommended)"**; Q1 "Nah man. Not mail.app since it wouldn’t work on non-Macs. Let’s have it declare an interface that would allow us to plug it into major providers like sendgrid and so on."; Q3 "Blog post (Recommended)"; Q6 "Scratch targets you name (Recommended)"; the defaults Q2, Q4, Q5 stand (AskUserQuestion). Round four records it: story 03 redrawn, Mail.app parked, design section 8 — Fedaykin docs lane for Muad'Dib.

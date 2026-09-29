@@ -157,18 +157,22 @@ def claim_refusal(store: Any, operation: Mapping[str, Any], reason: str) -> dict
 
 def reap(store: Any, operation: Mapping[str, Any], state: str, reason: str) -> bool:
     """T7: False when a winner already moved it (today's ``continue``)."""
+    from .channel_send import channel_send_ended_effect
     from .project import steward_run_ended_effect
 
+    # PHILO-10-01 (design section 4a, seam 1): a reaped send settles its row
+    # and its history row in this same transaction.
+    effect = steward_run_ended_effect(operation, reason) or channel_send_ended_effect(store, operation, reason)
     try:
-        ended, _receipt = store.transition_and_receipt(
+        ended, receipt = store.transition_and_receipt(
             operation["operation_id"], int(operation["revision"]), state, reason, strict=True, warrant_revoked=1,
-            effect=steward_run_ended_effect(operation, reason),
+            effect=effect,
         )
     except KernelRefused as exc:
         if exc.reason in STRICT_CONFLICTS:
             return False
         raise
-    journal_receipt(store, ended, reason)
+    journal_receipt(store, ended, str((receipt or {}).get("outcome") or reason))
     return True
 
 
