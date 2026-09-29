@@ -224,3 +224,11 @@ VERDICT: baseline-subset, zero branch-new
 - `tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase10.json]` — BRANCH-NEW, mine: channel_service.py grew four lines, and `def send` / `def discard` moved (396 → 400, 376 → 380). Paid: `add_resend_cases.py` anchors every state source again from the tree (it also moved the graph_walk.py anchor 2744 when the rig grew). Green in the capture above.
 - `tests/unit/test_one_path_cardinality.py::test_cancellation_after_provider_return_is_one_child_one_receipt_one_physical_attempt` — NOT branch-new: serial, isolated HOME, 3/3 pass on this branch and 3/3 pass on an export of origin/main 05d01ffb. The test drives decision promotion's inference runner (no channel code). A load flake of the parallel full run.
 - CI "DeskOS Web Quality", `web/src/desk/chair/arrivalAttention.test.tsx:119` (17 rows expected after Show all, 5 got) — NOT branch-new: the branch touches no file under `web/src/desk/chair/` and nothing it imports; 3/3 pass on this branch and 3/3 on the 05d01ffb export (with its own node_modules copy); the same job was green on main's last three completed runs (98ea2cfa, 920e6189, 14866bc7); main's run at 05d01ffb is still queued, so CI inheritance is not proved. The CI log shows the test took 717 ms (a loaded runner): a timing flake, not paid here.
+
+## Round two: Codex check and the orchestrator's full suite (2026-09-29)
+
+- Codex Astra counsel r2 on head `90fa3888c`: **RATIFY-WITH-CONDITIONS** (`checks/story-07-built-astra-r2.md`). Its one condition, "wait for CI before merge", is superseded by the owner's ruling of 2026-09-28: CI does not gate merges. Merge rests on scoped proof, the Codex check and the orchestrator's full suite.
+- Orchestrator full suite on `90fa3888c` (isolated HOME, `-n auto`): 3 failed, 13440 passed, 117 skipped, 4 xfailed. All three failures are load flakes:
+  - `tests/e2e/test_hs176_journal_glass.py::test_journal_filtered[393-852]` and `tests/e2e/test_hs176_loop_glass.py::test_speak_loop_1440`: pass on a serial rerun (3 passed in 18.74s).
+  - `tests/unit/test_one_path_cardinality.py::test_cancellation_after_provider_return_is_one_child_one_receipt_one_physical_attempt`: classified in round one (3/3 serial on the branch and on `05d01ffb`).
+- Zero branch-new failures.
