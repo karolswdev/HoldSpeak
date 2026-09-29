@@ -1235,7 +1235,7 @@ VERDICT: baseline-subset, zero branch-new
 
 ## #694 merged in (main 84657927)
 
-- **One owner-press source.** The branch's `OWNER_PRESS` set is gone. The kernel's steward-child refusal (`kernel/project_codec.py`) reads `kernel/channel_send.owner_press_operations()`, which is derived from the descriptors' `owner_press` flag (#694), the same flag the MCP authority table and the thread gate read. A steward run's child that is any owner press (`channel.send`, `channel.discard`, `channel.save_destination`, `channel.remove_destination`, `project.mark_update_delivered`, `nudge.send`) is refused `owner_principal_required` (mutations M12, M12b).
+- **One owner-press source.** The branch's `OWNER_PRESS` set is gone. The kernel's steward-child refusal (`kernel/project_codec.py`) reads `kernel/channel_send.owner_press_operations()`, which is derived from the descriptors' `owner_press` flag (#694), the same flag the MCP authority table and the thread gate read. A steward run's child that is any owner press (`channel.send`, `channel.discard`, `channel.save_destination`, `channel.remove_destination`, `project.mark_update_delivered`, `nudge.send`) is refused with a receipt (mutations M12, M12b). The code depends on the run's actor. An owner-started or agent run's child press is refused `owner_principal_required`. A SCHEDULED steward's `nudge.send` is refused earlier, `declared_capability_required`, because the scheduler may submit only the steward's own children (`kernel/project.py` `scheduler_may_submit`); its `channel.send` / `channel.discard` reach the codec and are refused `owner_principal_required` (Codex Astra r4 finding 2).
 - **`blocking_io` stays on the descriptor, one source; a census ties it to the authority table.** The two axes differ: `connection.recheck` is `work` yet runs gh; `channel.discard` is `egress` yet writes only the database. So neither can be derived from the other. The fence `test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table` asserts:
   - the blocking set is exactly `channel.send`, `channel.save_destination`, `nudge.send`, `connection.recheck`;
   - every blocking operation has an authority row;
@@ -1526,3 +1526,8 @@ CAUGHT M18 the file mode not private: rc=1 1 failed in 1.37s
     first assertion: E       assert 420 == 384
 31/31 mutations caught
 ```
+
+
+## Codex Astra r4 (`checks/story-02-built-astra-r4.md`): RATIFY-WITH-CONDITIONS
+
+No product change requested. The one condition is Muad'Dib's full-suite result on the merge candidate `4716c010`, owed before merge. The refusal-code wording above is qualified per finding 2. The PR description is refreshed to the current build.
