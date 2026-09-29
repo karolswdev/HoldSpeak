@@ -11,6 +11,11 @@ filing, preparing a send); it may NEVER, without his press:
 * ``config``    -- anything that changes the system itself (models, endpoints,
   assignments, setup, the default context, connections, watches, settings).
 
+A setup follows Send's prepare-then-press (Muad'Dib's ruling on #694): the
+steps that draft it (start, answer, suggest, select, test, clarify) write only
+the setup session and are work; ``project.setup.finalize`` commits it into the
+system and is config.
+
 Everything else is ``work`` and stays with the thread's posture (yolo too).
 Reads of his connected providers and model calls on his assigned routes are
 work: nothing of his is posted. A steward run is work: it acts inside the
@@ -220,11 +225,11 @@ TOOL_AUTHORITY: dict[str, str] = {
     "project.stop_steward": WORK,
     "project.get_steward_run": WORK,
     "project.steward.trigger": WORK,
-    "project.setup.start": CONFIG,  # the setup interview (sources, watches, a new project)
+    "project.setup.start": WORK,  # drafts the setup: writes only its own session (the prepare)
     "project.setup.resume": WORK,
-    "project.setup.answer": CONFIG,  # the setup interview (sources, watches, a new project)
-    "project.setup.suggest": CONFIG,  # the setup interview (sources, watches, a new project)
-    "project.setup.finalize": CONFIG,  # the setup interview (sources, watches, a new project)
+    "project.setup.answer": WORK,  # drafts the setup: writes only its own session (the prepare)
+    "project.setup.suggest": WORK,  # drafts the setup: writes only its own session (the prepare)
+    "project.setup.finalize": CONFIG,  # commits the setup: creates the project, arms its watches (the press)
     "provider.list": WORK,
     "provider.github_connection": WORK,
     "provider.github_discover": WORK,
@@ -238,7 +243,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "provider.confluence_connections": WORK,
     "provider.confluence_discover": WORK,
     "provider.confluence_validate_space": WORK,
-    "project.setup.clarify_jira_scope": CONFIG,  # the setup interview (sources, watches, a new project)
+    "project.setup.clarify_jira_scope": WORK,  # drafts the setup: writes only its own session (the prepare)
     "project.watch.inspect": WORK,
     "project.watch.test": WORK,
     "project.watch.evaluate": WORK,
@@ -251,10 +256,10 @@ TOOL_AUTHORITY: dict[str, str] = {
     "project.dismiss_suggested_source": WORK,
     "connection.list": WORK,
     "connection.recheck": WORK,
-    "project.setup.select_proposal": CONFIG,  # the setup interview (sources, watches, a new project)
-    "project.setup.deselect_proposal": CONFIG,  # the setup interview (sources, watches, a new project)
-    "project.setup.test_proposal": CONFIG,  # the setup interview (sources, watches, a new project)
-    "project.setup.clarify_repo_scope": CONFIG,  # the setup interview (sources, watches, a new project)
+    "project.setup.select_proposal": WORK,  # drafts the setup: writes only its own session (the prepare)
+    "project.setup.deselect_proposal": WORK,  # drafts the setup: writes only its own session (the prepare)
+    "project.setup.test_proposal": WORK,  # drafts the setup: writes only its own session (the prepare)
+    "project.setup.clarify_repo_scope": WORK,  # drafts the setup: writes only its own session (the prepare)
     "channel.destinations": WORK,
     "channel.save_destination": AUTHORITY,  # the egress allow-list: where documents may go
     "channel.remove_destination": AUTHORITY,  # the egress allow-list: where documents may go

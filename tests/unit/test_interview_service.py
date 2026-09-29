@@ -96,9 +96,11 @@ def test_manual_trial_removes_setup_effects_from_palette(rig):
     fact(rig)
     command(rig, {"kind": "section", "section": "projects"})
     suggestion(rig)
-    # #694, the owner's ruling (2026-09-29): setup is CONFIG, never in a
-    # thread palette -- the projects section no longer offers it at all.
-    assert "project.setup.finalize" not in palette_for(rig[0], rig[1])
+    # #694 (prepare-then-press): the section drafts a setup; finalize, the
+    # commit, is CONFIG and never in a thread palette.
+    palette = palette_for(rig[0], rig[1])
+    assert "project.setup.start" in palette
+    assert "project.setup.finalize" not in palette
     command(rig, {"kind": "disposition", "suggestion_id": "brief", "disposition": "try"})
     palette = palette_for(rig[0], rig[1])
     assert "project.get_room" in palette
@@ -202,9 +204,11 @@ def test_context_compaction_keeps_domain_evidence_failures_and_complete_call_pai
     assert ThreadService._interview_exchange_history(domain + first_write + failure + latest) == domain + failure + latest
 
 
-@pytest.mark.skip(reason="QUARANTINED #694: the owner's ruling (2026-09-29) makes setup CONFIG, so the "
-                         "Interview's projects section no longer offers project.setup.*; the continuation it "
-                         "guards is unreachable. BACKLOG row 'Interview setup continuation after #694'.")
+@pytest.mark.skip(reason="QUARANTINED #694: the test drives project.setup.finalize through the thread's "
+                         "bound dispatch to assert the continuation refusal; finalize is CONFIG (the owner's "
+                         "press), no longer in the section, so the call is refused as unavailable before the "
+                         "continuation check. The drafting half (start/resume reuse) is unchanged. BACKLOG row "
+                         "'Interview setup continuation after #694'.")
 def test_setup_continuation_reuses_live_session_and_replaces_expired_session(rig):
     db, tid, svc = rig
     command(rig, {"kind": "section", "section": "projects"})

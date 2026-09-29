@@ -361,9 +361,10 @@ class TestClassificationCensus:
         "egress": {"channel.send", "nudge.send"},
         "authority": {"project.archive", "project.configure_steward"},
         "config": {"model_library.define_endpoint", "inference_assignment.set", "inference_assignment.clear",
-                   "project.setup.start", "thought.replace_default_context", "settings.update",
+                   "project.setup.finalize", "thought.replace_default_context", "settings.update",
                    "provider.jira_add_connection"},
-        "work": {"people.note.create", "desk.create", "project.draft_update", "zone.file", "channel.prepare"},
+        "work": {"people.note.create", "desk.create", "project.draft_update", "zone.file", "channel.prepare",
+                 "project.setup.start", "project.setup.answer"},  # a setup's drafting (prepare-then-press)
     }
 
     def test_the_rulings_examples_are_in_their_class(self) -> None:

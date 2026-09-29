@@ -242,7 +242,6 @@ _CONFIG_ARGS: dict[str, dict[str, Any]] = {
     "inference_assignment.clear": {"command_id": "p694-clear", "expected_revision": 1,
                                    "scope": {"kind": "capability", "capability_id": "chat.turn"},
                                    "capability_id": "chat.turn"},
-    "project.setup.start": {},
     "thought.replace_default_context": {"request_id": "p694-default-context", "expected_revision": 0, "refs": []},
 }
 
@@ -285,3 +284,41 @@ def test_a_yolo_thread_cannot_change_the_system(hub: Any, monkeypatch: pytest.Mo
     assert _heads(h) == heads, "the model changed a model assignment as the owner"
     assert ops(h, tool) == [], ops(h, tool)
     assert all(tool not in palette for palette in model.palettes), model.palettes
+
+
+def test_a_yolo_thread_drafts_a_setup_but_never_commits_it(hub: Any) -> None:
+    """Muad'Dib's ruling on #694 (Send's prepare-then-press for setup): a
+    thread may DRAFT a setup (project.setup.start writes only its session);
+    project.setup.finalize commits it into the system and is never offered."""
+    from holdspeak.config import Config
+    from holdspeak.mcp.tools import dispatch
+
+    cfg = Config.load()
+    cfg.control_mode = "yolo"
+    cfg.save()
+    h = hub()
+    mode = h.client.post("/api/recipes", json={"name": "Setup mode", "kind": "mode",
+                                               "tools": ["project.setup.start", "project.setup.finalize"]})
+    assert mode.status_code == 201, mode.text
+
+    # The draft: the model starts a setup session.
+    drafting = h.client.post("/api/threads", json={"title": "Draft", "recipe_id": mode.json()["recipe"]["id"]})
+    model = _ModelThatSends(tool="project.setup.start", arguments={})
+    _assign_model(h, model)
+    before = _counts(h)
+    _run_turn(h, drafting.json()["id"])
+    assert any("project.setup.start" in palette for palette in model.palettes), model.palettes
+    assert _counts(h)["project_setup_sessions"] == before["project_setup_sessions"] + 1, "the draft did not happen"
+
+    # The commit: an owner-started session the model tries to finalize.
+    session = dispatch("project.setup.start", {}, OWNER)
+    committing = h.client.post("/api/threads", json={"title": "Commit", "recipe_id": mode.json()["recipe"]["id"]})
+    model = _ModelThatSends(tool="project.setup.finalize", arguments={"session_id": session["id"]})
+    from holdspeak.kernel.runtime import _service
+
+    _service().inference_runner._engine_factory = lambda _rev, **_kw: model
+    projects = h.client.get("/api/projects").json()["projects"]
+    _run_turn(h, committing.json()["id"])
+    assert all("project.setup.finalize" not in palette for palette in model.palettes), model.palettes
+    assert h.client.get("/api/projects").json()["projects"] == projects, "the model committed a setup as the owner"
+    assert ops(h, "project.setup.finalize") == []
