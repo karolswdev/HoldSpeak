@@ -164,6 +164,11 @@ class OperationDescriptor:
     #: read. A transport that touches the filesystem for the operation calls
     #: ``authorize`` first.
     owner_only: bool = False
+    #: PHILO-10-02: the operation may run a subprocess or reach the network (a
+    #: CLI send, an identity read, a probe). A transport runs it OFF the event
+    #: loop (the threadpool), so the hub answers during it; every other
+    #: operation keeps the loop's one-at-a-time order (the settings writes).
+    blocking_io: bool = False
     #: The owner's own press decides it (#694, Codex Astra counsel r1): an agent
     #: is refused, and the MCP authority table (``mcp/tool_authority.py``)
     #: classes its tool egress, authority or config, so no thread offers it.
@@ -195,6 +200,7 @@ class OperationDescriptor:
             "exposure": list(self.exposure),
             "held": list(self.held),
             "owner_only": self.owner_only,
+            "blocking_io": self.blocking_io,
             "owner_press": self.owner_press,
             "admission": self.admission.export() if self.admission is not None else None,
         }

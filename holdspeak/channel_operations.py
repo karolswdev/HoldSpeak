@@ -30,8 +30,9 @@ _OWNER_ONLY = "owner_principal_required: only the owner sends; an agent prepares
 CHANNEL_DESTINATIONS = OperationDescriptor(
     name="channel.destinations",
     version=1,
-    description="Where can I send? List your saved destinations (a folder today): each with its name, channel, "
-                "target, badge (local, or cloud for a folder you marked synced) and state.",
+    description="Where can I send? List your saved destinations (a folder, a GitHub issue or pull request, a Jira "
+                "work item, a Confluence space): each with its name, channel, account, target, badge (local, or "
+                "cloud), state, and the state of its connection.",
     args_schema={
         "type": "object",
         "properties": {
@@ -42,7 +43,8 @@ CHANNEL_DESTINATIONS = OperationDescriptor(
     },
     principal=_ROOM_PRINCIPAL,
     effect="read",
-    result="{destinations: [{id, name, channel, account, target, target_digest, synced, state, badge, created_at, parked_at}]}",
+    result="{destinations: [{id, name, channel, account, target, target_digest, synced, state, badge, created_at, "
+           "parked_at, connection: {id, state, last_checked_at} or null for a folder}]}",
     refusals=_CONTRACT_REFUSALS,
     completion="synchronous",
     exposure=("http:GET /api/channels/destinations", "mcp:channel.destinations"),
@@ -55,16 +57,28 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
     name="channel.save_destination",
     version=1,
     description="Save a destination you send to: a folder (an absolute path; HoldSpeak writes a new file there per "
-                "send). Mark it synced if a cloud client syncs that folder. Give replaces to edit one: the old "
-                "destination is parked and this one is new.",
+                "send), a GitHub issue or pull request (a comment per send; the gh login is saved with it), one "
+                "Jira work item (a comment per send) or a Confluence space (a blog post per send). Mark a folder "
+                "synced if a cloud client syncs it. Give replaces to edit one: the old destination is parked and "
+                "this one is new.",
     args_schema={
         "type": "object",
         "properties": {
             "name": {"type": "string", "maxLength": 120, "description": "Your name for it (120 characters at most)."},
-            "channel": {"type": "string", "enum": ["file"], "description": "The channel: file (a folder)."},
+            "channel": {"type": "string", "enum": ["file", "github", "jira", "confluence"],
+                        "description": "The channel: file (a folder), github, jira or confluence."},
             "folder": {"type": ["string", "null"], "description": "file: the absolute folder path."},
             "synced": {"type": ["boolean", "null"],
                        "description": "Optional, file: a cloud client syncs this folder (the badge says cloud)."},
+            "host": {"type": ["string", "null"], "description": "github: the host (github.com if not given)."},
+            "repo": {"type": ["string", "null"], "description": "github: owner/repo."},
+            "kind": {"type": ["string", "null"], "enum": ["issue", "pr", None],
+                     "description": "github: issue or pr (a pull request)."},
+            "number": {"type": ["integer", "null"], "minimum": 1, "description": "github: the issue or pull request number."},
+            "site": {"type": ["string", "null"], "description": "jira, confluence: the Atlassian site (name.atlassian.net)."},
+            "email": {"type": ["string", "null"], "description": "jira, confluence: the email of the acli account."},
+            "key": {"type": ["string", "null"], "description": "jira: ONE work item key, like ABC-123."},
+            "space_id": {"type": ["string", "null"], "description": "confluence: the space id (digits)."},
             "replaces": {"type": ["string", "null"],
                          "description": "Optional. Edit: the destination id this one replaces (it is parked)."},
             "command_id": _COMMAND_ID,
@@ -76,11 +90,14 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
     effect="write",
     result="{destination: {...as channel.destinations}, replaced} and the receipt",
     refusals=_CONTRACT_REFUSALS + ("folder_not_absolute", "folder_missing", "destination_name_invalid",
-                                   "destination_parked", "channel_unknown", "owner_principal_required"),
+                                   "destination_parked", "channel_unknown", "github_target_invalid",
+                                   "github_not_logged_in", "jira_key_not_single", "jira_key_invalid",
+                                   "atlassian_email_invalid", "confluence_space_invalid", "owner_principal_required"),
     completion="synchronous; channel.destinations lists it",
     exposure=("http:POST /api/channels/destinations", "mcp:channel.save_destination"),
     service="channel_service",
     method="save_destination",
+    blocking_io=True,  # GitHub: gh api user --hostname (the concrete login)
     owner_press=True,
     admission=Admission("admitted", "Changes where the owner's documents may go: the allow-list (XI.1). "
                                     "The owner's; Edit parks the old row."),
@@ -112,7 +129,8 @@ CHANNEL_REMOVE_DESTINATION = OperationDescriptor(
 CHANNEL_CHECK_DESTINATION = OperationDescriptor(
     name="channel.check_destination",
     version=1,
-    description="Check a saved destination: a folder still resolves to the saved path, exists and is writable.",
+    description="Check a saved destination: a folder still resolves to the saved path, exists and is writable; a "
+                "GitHub, Jira or Confluence destination shows the stored state of its connection.",
     args_schema={
         "type": "object",
         "properties": {"destination_id": _DESTINATION_ID},
@@ -121,14 +139,15 @@ CHANNEL_CHECK_DESTINATION = OperationDescriptor(
     },
     principal=_ROOM_PRINCIPAL,
     effect="read",
-    result="{destination, check: {state: ready | changed | missing | not_writable | parked, resolved}}",
+    result="{destination, check: {state: ready | changed | missing | not_writable | parked | connected | "
+           "never_checked | owner_action_required | unavailable | degraded, resolved}}",
     refusals=_CONTRACT_REFUSALS + ("destination_not_saved",),
     completion="synchronous",
     exposure=("http:POST /api/channels/destinations/{destination_id}/check", "mcp:channel.check_destination"),
     service="channel_service",
     method="check_destination",
-    admission=Admission("exempt", "A folder: a local check, no egress (the phase's table). The remote channels' "
-                                  "account probe is admitted egress; it arrives with them (story 02, 03)."),
+    admission=Admission("exempt", "A folder: a local check, no egress (the phase's table). A remote channel: the "
+                                  "stored connection state, no probe (connection.recheck probes, admitted)."),
 )
 
 CHANNEL_PREVIEW = OperationDescriptor(
@@ -144,7 +163,8 @@ CHANNEL_PREVIEW = OperationDescriptor(
     },
     principal=_ROOM_PRINCIPAL,
     effect="read",
-    result="{document_ref, title, destination_id, channel, badge, payload_digest, size, preview: {text}}",
+    result="{document_ref, title, destination_id, channel, badge, payload_digest, size, preview: {text} "
+           "(confluence: {title, text})}",
     refusals=_CONTRACT_REFUSALS + ("NotFound not_found: unknown update", "update_not_published",
                                    "destination_not_saved", "destination_parked", "payload_too_large:<channel>"),
     completion="synchronous",
@@ -208,9 +228,10 @@ CHANNEL_SEND = OperationDescriptor(
     version=1,
     description="The owner's Send: send a prepared send (send_id), or send a published update to a saved "
                 "destination with the digest of the preview he saw (update_id, destination_id, preview_digest). "
-                "The answer is the channel's proof (a folder: the file's path, sha256 and size, read back), a "
-                "known failure, or unknown. HoldSpeak never sends again by itself: a repeat of the same command_id "
-                "answers the first result. Only the owner sends; an agent prepares.",
+                "The answer is the channel's proof (a folder: the file's path, sha256 and size, read back; GitHub: "
+                "the comment URL; Jira and Confluence: the id acli gives), a known failure with its code, or "
+                "unknown. HoldSpeak never sends again by itself: a repeat of the same command_id answers the first "
+                "result. Only the owner sends; an agent prepares.",
     args_schema={
         "type": "object",
         "properties": {
@@ -231,11 +252,13 @@ CHANNEL_SEND = OperationDescriptor(
     refusals=_CONTRACT_REFUSALS + (_OWNER_ONLY, "NotFound not_found: unknown send", "destination_not_saved",
                                    "destination_parked", "destination_changed", "preview_changed", "payload_changed",
                                    "payload_too_large:<channel>", "send_already_settled", "update_not_published",
-                                   "path_outside_folder", "idempotency_conflict"),
+                                   "path_outside_folder", "github_identity_changed", "github_not_logged_in",
+                                   "github_identity_unverified", "idempotency_conflict"),
     completion="synchronous; channel.sends and project.list_updates (deliveries) show it",
     exposure=("http:POST /api/channels/send", "mcp:channel.send"),
     service="channel_service",
     method="send",
+    blocking_io=True,  # gh / acli children
     owner_press=True,
     admission=Admission("admitted", "Crosses egress or files (XI.1): one terminal receipt -- succeeded (sent), "
                                     "failed, indeterminate (unknown), or refused before the dispatch boundary. "

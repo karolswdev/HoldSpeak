@@ -205,6 +205,7 @@ def _route(
     manifest: WriteConnectorManifest,
     runner: Optional[SubprocessRunner],
     opener: Optional[Callable[[GatedOperation], Any]],
+    seam: Optional[Mapping[str, Any]] = None,
 ) -> Any:
     """Dispatch an op; subprocess authority is resolved only by the kernel."""
     if op.kind == "subprocess":
@@ -212,6 +213,7 @@ def _route(
             op.argv,
             runner=runner,
             allowed_argv_prefixes=manifest.allowed_argv_prefixes,
+            **dict(seam or {}),
             **dict(op.subprocess_kwargs),
         )
     if op.kind == "outbound":
@@ -241,6 +243,9 @@ def build_gated_connector(
     gate: Optional[PermissionGate] = None,
     runner: Optional[SubprocessRunner] = None,
     opener: Optional[Callable[[GatedOperation], Any]] = None,
+    principal: Any = None,
+    parent_operation_id: str = "",
+    broker: Any = None,
 ) -> Connector:
     """Wrap a side-effect plan in its typed subprocess or outbound authority path.
 
@@ -261,8 +266,20 @@ def build_gated_connector(
     spy with that same shape.
 
     Both operation families run **plan → kernel → interpret**.
+
+    PHILO-10-02 (design section 6): a connector used inside an admitted
+    operation passes the authenticated ``principal``, that operation as
+    ``parent_operation_id`` and its ``broker``; each subprocess it runs is
+    then a ``subprocess.exec`` CHILD of that operation, under that principal.
     """
     the_gate = gate if gate is not None else manifest.build_gate()
+    seam: dict[str, Any] = {}
+    if principal is not None:
+        seam["principal"] = principal
+    if parent_operation_id:
+        seam["parent_operation_id"] = str(parent_operation_id)
+    if broker is not None:
+        seam["broker"] = broker
 
     def _connector(proposal: Any) -> "dict[str, Any]":
         op = plan(proposal)
@@ -274,7 +291,7 @@ def build_gated_connector(
         # decision here in addition to kernel admission.
         try:
             raw = _route(
-                the_gate, op, manifest=manifest, runner=runner, opener=opener
+                the_gate, op, manifest=manifest, runner=runner, opener=opener, seam=seam
             )
         except (SubprocessOperationRefused, EgressOperationRefused) as exc:
             raise ConnectorOperationRefused(

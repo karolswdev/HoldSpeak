@@ -15,8 +15,9 @@
   user), its digest checked just before the command runs.
 * :data:`CHANNELS` -- the registry: a dict. The file channel is the one direct
   writer (the write manifest has no file kind, ``plugins/gated_connector.py``);
-  the CLI channels join it as a ``WriteConnectorManifest`` + ``plan`` +
-  ``interpret`` each (story 02). No framework, no discovery.
+  the CLI channels (GitHub, Jira, Confluence) join it as a
+  ``WriteConnectorManifest`` + ``plan`` + ``interpret`` each
+  (``channel_cli.py``, PHILO-10-02). No framework, no discovery.
 """
 from __future__ import annotations
 
@@ -34,9 +35,23 @@ from typing import Any, Iterator, Mapping, Optional
 from .errors import NotFound, ServiceError, ValidationError
 
 #: Size limits, refused by name before dispatch (section 3): ``payload_too_large:<channel>``.
-SIZE_LIMITS: dict[str, int] = {"file": 10 * 1024 * 1024}
+#: ``(limit, unit)``: GitHub and Jira count characters (the services' published
+#: limits; PROVISIONAL until the real-account leg pins them), the rest bytes.
+SIZE_LIMITS: dict[str, tuple[int, str]] = {
+    "file": (10 * 1024 * 1024, "bytes"),
+    "github": (65_536, "characters"),
+    "jira": (32_767, "characters"),
+    "confluence": (1_000_000, "bytes"),
+}
 #: An error text that reaches a receipt, a log or the face is cut to this many characters.
 ERROR_LIMIT = 240
+
+
+def payload_size(channel: str, payload: bytes) -> tuple[int, int, str]:
+    """``(size, limit, unit)`` of *payload* for *channel* (limit 0: no limit)."""
+    limit, unit = SIZE_LIMITS.get(channel, (0, "bytes"))
+    size = len(payload.decode("utf-8", errors="replace")) if unit == "characters" else len(payload)
+    return size, limit, unit
 
 
 class ChannelRefused(ServiceError):
@@ -60,9 +75,15 @@ class Document:
 
 @dataclass(frozen=True)
 class Outcome:
+    """A settled send. ``reason`` is a FIXED, named code (GATE 1): it is chosen
+    from the raw native answer by the channel's pinned list and is never passed
+    through :func:`redact`, so the diagnosis survives when the text is redacted.
+    ``detail`` is the only free text, and it is always redacted."""
+
     state: str  # sent | failed | unknown
     reason: Optional[str] = None
     proof: Mapping[str, Any] = field(default_factory=dict)
+    detail: Optional[str] = None
 
     def kernel_end(self) -> tuple[str, str]:
         """The kernel's terminal state and receipt outcome: the kernel state follows the row."""
@@ -72,6 +93,12 @@ class Outcome:
             return "failed", str(self.reason or "failed")
         return "indeterminate", str(self.reason or "unknown")
 
+    def record(self) -> Optional[dict[str, Any]]:
+        """What the row keeps as ``proof_json``: the proof, or the redacted detail of a failure."""
+        if self.proof:
+            return dict(self.proof)
+        return {"error": self.detail} if self.detail else None
+
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -79,8 +106,12 @@ def sha256(data: bytes) -> str:
 
 #: A run of this many characters shared with the payload is an excerpt of it.
 EXCERPT_MIN = 10
-#: What a scan of an error reads (the rest is cut anyway): bounds the work for a 10 MB payload.
-_SCAN_LIMIT = 2000
+#: GATE 1 (Codex Astra r2 on #692): the most payload the excerpt scan reads.
+#: Every CLI channel's own limit is below it (GitHub 65,536 characters, Jira
+#: 32,767, Confluence 1 MB), so a CLI payload is always scanned whole. A larger
+#: payload (only the file channel, whose errors are fixed OS codes) is not
+#: scanned: its error text is withheld whole -- fail closed, never a leak.
+REDACT_SCAN_LIMIT = 1024 * 1024
 #: Secret shapes a CLI may echo (tokens, keys, bearer headers, key=value pairs).
 _SECRET = re.compile(
     r"(?i)(bearer\s+\S+|(?:token|password|passwd|secret|api[_-]?key|authorization)\s*[=:]\s*(?:bearer\s+)?\S+"
@@ -94,18 +125,31 @@ def redact(text: Any, payload: bytes = b"", secrets: Any = ()) -> str:
 
     Any run of ``EXCERPT_MIN`` or more characters that also occurs in the
     payload is replaced (an excerpt, not only a whole line); each known
-    secret value and each secret-shaped token is replaced too. Then the cut.
+    secret value and each secret-shaped token is replaced too.
+
+    The cost is bounded (GATE 1): the text is cut to ``ERROR_LIMIT`` BEFORE
+    the scan (at most 231 windows, each one C-speed ``in`` over at most
+    ``REDACT_SCAN_LIMIT`` of payload); a payload over that limit withholds the
+    text whole. A named code (``Outcome.reason``, a refusal code) never passes
+    through here, so a redaction never erases the diagnosis.
     """
-    raw = " ".join(str(text or "")[:_SCAN_LIMIT].split())
+    raw = " ".join(" ".join(str(text or "").split())[:ERROR_LIMIT].split())
     for value in secrets or ():
         if value and len(str(value)) >= 4:
             raw = raw.replace(str(value), REDACTED)
     raw = _SECRET.sub(REDACTED, raw)
+    if payload and len(payload) > REDACT_SCAN_LIMIT:
+        return REDACTED if raw else ""
     body = " ".join(payload.decode("utf-8", errors="replace").split()) if payload else ""
     if body and len(raw) >= EXCERPT_MIN:
         covered = [False] * len(raw)
+        seen: dict[str, bool] = {}
         for i in range(len(raw) - EXCERPT_MIN + 1):
-            if raw[i:i + EXCERPT_MIN] in body:
+            window = raw[i:i + EXCERPT_MIN]
+            found = seen.get(window)
+            if found is None:
+                found = seen[window] = window in body
+            if found:
                 for j in range(i, i + EXCERPT_MIN):
                     covered[j] = True
         out: list[str] = []
@@ -226,7 +270,7 @@ class FileChannel:
 
     # -- before the boundary -------------------------------------------------
 
-    def check_before_dispatch(self, target: Mapping[str, Any]) -> str:
+    def check_before_dispatch(self, target: Mapping[str, Any], **_: Any) -> str:
         """The folder resolved again: a different resolved path is ``destination_changed``."""
         frozen = str(target.get("folder") or "")
         real = os.path.realpath(frozen)
@@ -255,7 +299,7 @@ class FileChannel:
 
     # -- the effect (after the boundary committed) ------------------------------
 
-    def dispatch(self, row: Mapping[str, Any]) -> Outcome:
+    def dispatch(self, row: Mapping[str, Any], seam: Any = None) -> Outcome:
         path, payload, digest = str(row["file_path"]), bytes(row["payload"]), str(row["payload_digest"])
         flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
         try:
@@ -299,8 +343,12 @@ class FileChannel:
         return self.read_back(path, str(row["payload_digest"]))
 
 
-#: THE registry: channel name -> its implementation. Story 02 and 03 add rows.
+#: THE registry: channel name -> its implementation. Story 02 adds the CLI
+#: channels (``channel_cli.py``); story 03 adds email.
 CHANNELS: dict[str, Any] = {"file": FileChannel()}
+
+# The CLI channels register themselves at the end of their module (either import order works).
+from . import channel_cli  # noqa: E402,F401
 
 
 def channel(name: str) -> Any:

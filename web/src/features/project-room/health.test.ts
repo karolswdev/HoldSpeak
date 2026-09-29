@@ -159,6 +159,18 @@ describe("resolveHealthRows", () => {
 /* ── nudgeCardReducer ── */
 
 describe("nudgeCardReducer", () => {
+  it("PHILO-10-02 F4: an unknown answer is its own terminal phase, never failed and never open again", () => {
+    const state = nudgeCardReducer(
+      { phase: "open", text: "msg", busy: true },
+      { type: "unknown", prNumber: 612 },
+    );
+    expect(state).toEqual({ phase: "unknown", prNumber: 612 });
+    // Send is only possible from open or failed: nothing moves an unknown card back.
+    expect(nudgeCardReducer(state, { type: "sending" })).toBe(state);
+    expect(nudgeCardReducer(state, { type: "setText", text: "again" })).toBe(state);
+    expect(nudgeCardReducer(state, { type: "failed", reason: "x" })).toBe(state);
+  });
+
   it("starts closed", () => {
     const state: NudgeCardState = { phase: "closed" };
     expect(state.phase).toBe("closed");

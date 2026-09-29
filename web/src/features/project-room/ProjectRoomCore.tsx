@@ -63,9 +63,10 @@ import type {
   RoomSuggestedSourceItem,
   RoomHealthPerson,
   NudgeCardState,
+  NudgeLocal,
   NudgeCardAction,
 } from "./model";
-import { lifecycleLabel, resolveHealthRows, nudgeCardReducer, formatDays, healthReasonWords, needsYouWhyWords } from "./model";
+import { lifecycleLabel, resolveHealthRows, nudgeCardReducer, initialNudgeCard, formatDays, healthReasonWords, needsYouWhyWords } from "./model";
 import { StringGadget, CycleGadget } from "../../desk/surface/gadgets";
 import { egressFor, egressForEvent, receiptFace, receiptLabel, refusalWord } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
@@ -420,16 +421,24 @@ function NudgeCard({
   nudgeItem,
   onReload,
   onSent,
+  persistedState,
+  local,
+  onLocal,
 }: {
   person: RoomHealthPerson | undefined;
   needsYouItem: RoomNeedsYouItem;
   nudgeItem: api.NudgeItem | undefined;
   onReload: () => void;
   onSent?: () => void;
+  /** The step's persisted state (the wire). */
+  persistedState?: string | null;
+  /** The Room's own state of a Send it pressed (outlives this card: the card can close mid-send). */
+  local?: NudgeLocal;
+  onLocal?: (next: NudgeLocal) => void;
 }) {
   const displayName = person?.displayName || needsYouItem.title;
   // Bind PR from the nudge step (the wire's authoritative source)
-  const prNumber = nudgeItem?.pr_number ?? person?.prs?.[0]?.number ?? 0;
+  const prNumber = nudgeItem?.pr_number ?? person?.nudge?.prNumber ?? person?.prs?.[0]?.number ?? 0;
   const prTitle = nudgeItem?.pr_title ?? person?.prs?.[0]?.title ?? "";
   const prUrl = nudgeItem?.pr_url ?? person?.prs?.[0]?.url ?? "";
   const stepId = nudgeItem?.step_id ?? person?.nudge?.stepId ?? "";
@@ -438,13 +447,19 @@ function NudgeCard({
     || person?.nudge?.text
     || `This PR has been waiting for review for ${waitDays} days. Flagged by HoldSpeak.`;
 
-  // The card starts open (it mounts when the user clicks Nudge)
-  const [card, dispatch] = useReducer(nudgeCardReducer, { phase: "open", text: defaultText, busy: false } as NudgeCardState);
+  // PHILO-10-02: the card starts from the step's persisted state, never blindly open.
+  // The parent keys this card by the live state, so a late answer re-seeds the CURRENT card.
+  const [card, dispatch] = useReducer(nudgeCardReducer, initialNudgeCard(
+    local?.state ?? persistedState, defaultText, prNumber,
+    { displayName, sentAt: local?.sentAt, reason: local?.reason, text: local?.text }));
 
   const handleSend = async () => {
     if (card.phase !== "open" && card.phase !== "failed") return;
+    if (card.phase === "open" && card.busy) return;
     if (!stepId) return;
     dispatch({ type: "sending" });
+    const submitted = card.text;
+    onLocal?.({ state: "pending", text: submitted });
     try {
       const result = await api.sendNudge(stepId, card.text);
       if (result.success) {
@@ -458,11 +473,19 @@ function NudgeCard({
         });
         // The receipt row stays visible; notify parent for cooldown token.
         onSent?.();
+        onLocal?.({ state: "sent", sentAt });
+      } else if (result.outcome === "unknown") {
+        // PHILO-10-02 (F4): not known to be posted, not known to be lost.
+        dispatch({ type: "unknown", prNumber });
+        onLocal?.({ state: "unknown" });
       } else {
-        dispatch({ type: "failed", reason: String(result.message || "Send failed") });
+        const reason = String(result.message || "Send failed");
+        dispatch({ type: "failed", reason });
+        onLocal?.({ state: "failed", reason, text: submitted });
       }
     } catch (err) {
       dispatch({ type: "failed", reason: String(err) });
+      onLocal?.({ state: "failed", reason: String(err), text: submitted });
     }
   };
 
@@ -493,6 +516,29 @@ function NudgeCard({
               </span>
             ) : null}
             <span className="surface-token">{formatTimeShort(card.sentAt)}</span>
+            <EgressChip label="GITHUB.COM" scope="cloud" />
+          </>
+        }
+      />
+    );
+  }
+
+  // PHILO-10-02 (F4): the result is unknown -- no Send verb; check the pull request.
+  if (card.phase === "unknown") {
+    return (
+      <SurfaceLedgerRow
+        data-testid="nudge-unknown-row"
+        lead={<StateChip state="warning" label="" icon={"●"} />}
+        primary={<span className="surface-primary">RESULT UNKNOWN</span>}
+        wrap
+        cells={
+          <>
+            <span className="room-nudge-receipt-name">{displayName}</span>
+            <span className="surface-token">
+              {prUrl ? (
+                <a href={prUrl} target="_blank" rel="noopener noreferrer" className="room-nudge-pr-link">CHECK #{card.prNumber}</a>
+              ) : `CHECK #${card.prNumber}`}
+            </span>
             <EgressChip label="GITHUB.COM" scope="cloud" />
           </>
         }
@@ -762,6 +808,9 @@ function NeedsYouSection({
   // HS-173-04: track locally sent nudges so the row shows NUDGED JUST NOW
   // immediately without waiting for a reload.
   const [sentNudgeRelIds, setSentNudgeRelIds] = useState<Set<string>>(new Set());
+  // PHILO-10-02: the Room's own state of each Send it pressed (pending, unknown, failed, sent)
+  // survives closing and reopening the card, and a late answer reaches the current card.
+  const [localNudges, setLocalNudges] = useState<Record<string, NudgeLocal>>({});
 
   const reviewAction = pendingCount > 0 ? (
     <Button dense variant="ghost" loading={reviewCtrl.loading} onClick={() => void reviewCtrl.enterReview()} data-testid="review-verb" data-verb="review">
@@ -860,11 +909,15 @@ function NeedsYouSection({
                   />
                   {isNudgeOpen ? (
                     <NudgeCard
+                      key={`${relId}:${localNudges[relId]?.state ?? person?.nudge?.state ?? matchedNudge?.state ?? ""}`}
                       person={person}
                       needsYouItem={item}
                       nudgeItem={matchedNudge}
                       onReload={() => { setOpenNudge(null); void ctrl.load(); }}
                       onSent={() => setSentNudgeRelIds((prev) => new Set([...prev, relId]))}
+                      persistedState={person?.nudge?.state ?? matchedNudge?.state}
+                      local={localNudges[relId]}
+                      onLocal={(next) => setLocalNudges((prev) => ({ ...prev, [relId]: next }))}
                     />
                   ) : null}
                 </React.Fragment>

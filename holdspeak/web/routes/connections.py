@@ -82,8 +82,11 @@ def build_connections_router(ctx: WebContext) -> APIRouter:
                      "message": "Connections service not configured"},
                     status_code=503,
                 )
-            result, kernel = ops().invoke_receipted(p, "connection.recheck",
-                                                    {"provider_id": provider, "ref": body.get("ref")})
+            from starlette.concurrency import run_in_threadpool
+
+            # PHILO-10-02: the probe runs gh/acli -- off the event loop.
+            result, kernel = await run_in_threadpool(
+                ops().invoke_receipted, p, "connection.recheck", {"provider_id": provider, "ref": body.get("ref")})
             return JSONResponse({**result, **kernel_fields(kernel)} if isinstance(result, dict) else result)
         except OperationRefused as exc:
             return JSONResponse({"code": "invalid_arguments", "message": exc.detail, **refusal_fields(exc)},

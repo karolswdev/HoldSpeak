@@ -406,7 +406,7 @@ def test_an_oversize_payload_is_refused_by_name(hub: Hub, tmp_path: Path, monkey
     _pid, update = room(hub)
     dest = destination(hub, folder)
     prepared = prepare(hub, update, dest)["send"]
-    monkeypatch.setitem(channel_contract.SIZE_LIMITS, "file", 10)
+    monkeypatch.setitem(channel_contract.SIZE_LIMITS, "file", (10, "bytes"))
     _refused(hub, hub.client.post("/api/channels/sends", json={"update_id": update, "destination_id": dest}),
              "payload_too_large:file", "channel.prepare")
     _refused(hub, send(hub, {"send_id": prepared["id"]}), "payload_too_large:file", "channel.send")

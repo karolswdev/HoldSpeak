@@ -223,8 +223,11 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
         if refused is not None:
             return refused
         try:
-            result, kernel = ops().invoke_receipted(p, "nudge.send", {"step_id": step_id,
-                                                                      "text": str(body.get("text", "") or "")})
+            from starlette.concurrency import run_in_threadpool
+
+            # PHILO-10-02 GATE 2: the gh child runs off the event loop.
+            result, kernel = await run_in_threadpool(
+                ops().invoke_receipted, p, "nudge.send", {"step_id": step_id, "text": str(body.get("text", "") or "")})
             return JSONResponse({"success": True, **result, **kernel_fields(kernel)})
         except OperationRefused as exc:
             return JSONResponse({"success": False, "code": "invalid_arguments", "message": exc.detail,

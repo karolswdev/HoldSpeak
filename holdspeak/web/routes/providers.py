@@ -142,7 +142,10 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
                      "message": "GitHub provider is not configured"},
                     status_code=404,
                 )
-            result = adapter.connection_status(principal(request))
+            from starlette.concurrency import run_in_threadpool
+
+            # PHILO-10-02: the probe runs gh -- off the event loop.
+            result = await run_in_threadpool(adapter.connection_status, principal(request))
             return JSONResponse(result)
         except Exception as exc:
             return error_500(exc, log, "Failed to recheck GitHub connection")

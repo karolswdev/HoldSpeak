@@ -65,6 +65,8 @@ class ProjectCodec:
             raise KernelRefused("project_operation_service_required", provenance=target)
         payload = request.arguments.get("payload") or {}
         context = rooms.current_steward_context()
+        if context and request.parent_operation_id == str(context.get("operation_id") or "") and self.name in rooms.owner_press_operations():
+            raise KernelRefused(rooms.OWNER_REQUIRED, provenance=target)  # PHILO-10-02 (Q5): the steward never presses
         if principal.kind is PrincipalKind.OWNER:
             if context and request.parent_operation_id == str(context.get("operation_id") or ""):
                 return _steward_basis(admission, context)

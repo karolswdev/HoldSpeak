@@ -6,6 +6,7 @@ from holdspeak.services.observer import NullObserver, PipelineObserver, observe_
 import hashlib
 import json
 import re
+import threading
 from copy import deepcopy
 from dataclasses import replace
 from typing import Any, Callable
@@ -17,6 +18,11 @@ from holdspeak.principals import Principal
 from holdspeak.services.errors import ConflictError, ValidationError
 
 SettingsApplied = Callable[[Config], None]
+#: PHILO-10-02 round three (Codex Astra r2 finding 1): ONE settings write at a time
+#: in this process -- the revision check, the read, the merge and the write are
+#: one transaction, whatever thread a transport runs it on.
+_SETTINGS_WRITE = threading.Lock()
+
 _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
 _GITHUB_REPO_RE = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
 SECRET_PATHS = {
@@ -302,16 +308,17 @@ class SettingsService:
         # before — the guard is opt-in per writer.
         patch = dict(patch)
         expected = patch.pop(REVISION_KEY, None)
-        if expected is not None:
-            current_revision = settings_revision(Config.load())
-            if str(expected) != current_revision:
-                raise ConflictError(
-                    "Settings changed in another surface since you loaded them. "
-                    "Reload and reapply your edit.",
-                    code="settings_stale",
-                    context={"revision": current_revision},
-                )
-        result = self._update(patch)
+        with _SETTINGS_WRITE:
+            if expected is not None:
+                current_revision = settings_revision(Config.load())
+                if str(expected) != current_revision:
+                    raise ConflictError(
+                        "Settings changed in another surface since you loaded them. "
+                        "Reload and reapply your edit.",
+                        code="settings_stale",
+                        context={"revision": current_revision},
+                    )
+            result = self._update(patch)
         if result.get("success") is False:
             raise ValidationError(str(result["error"]))
         return result

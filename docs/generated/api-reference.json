@@ -5644,7 +5644,7 @@
             "GET"
           ],
           "symbol": "api_channel_destinations",
-          "line": 73,
+          "line": 85,
           "parameters": [
             {
               "name": "request",
@@ -5670,6 +5670,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo10_01_unknown_send_face.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py"
       ],
@@ -5703,7 +5704,7 @@
             "POST"
           ],
           "symbol": "api_channel_save_destination",
-          "line": 77,
+          "line": 89,
           "parameters": [
             {
               "name": "request",
@@ -5726,6 +5727,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo10_01_unknown_send_face.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py"
       ],
@@ -5757,7 +5759,7 @@
             "DELETE"
           ],
           "symbol": "api_channel_remove_destination",
-          "line": 82,
+          "line": 94,
           "parameters": [
             {
               "name": "destination_id",
@@ -5814,7 +5816,7 @@
             "POST"
           ],
           "symbol": "api_channel_check_destination",
-          "line": 91,
+          "line": 103,
           "parameters": [
             {
               "name": "destination_id",
@@ -5871,7 +5873,7 @@
             "POST"
           ],
           "symbol": "api_channel_preview",
-          "line": 95,
+          "line": 107,
           "parameters": [
             {
               "name": "request",
@@ -5926,7 +5928,7 @@
             "POST"
           ],
           "symbol": "api_channel_send",
-          "line": 114,
+          "line": 126,
           "parameters": [
             {
               "name": "request",
@@ -5949,6 +5951,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo10_01_unknown_send_face.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py"
       ],
@@ -5982,7 +5985,7 @@
             "GET"
           ],
           "symbol": "api_channel_sends",
-          "line": 119,
+          "line": 131,
           "parameters": [
             {
               "name": "request",
@@ -6012,6 +6015,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo10_01_unknown_send_face.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py"
       ],
@@ -6045,7 +6049,7 @@
             "POST"
           ],
           "symbol": "api_channel_prepare",
-          "line": 100,
+          "line": 112,
           "parameters": [
             {
               "name": "request",
@@ -6068,6 +6072,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo10_01_unknown_send_face.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py"
       ],
@@ -6099,7 +6104,7 @@
             "POST"
           ],
           "symbol": "api_channel_discard",
-          "line": 105,
+          "line": 117,
           "parameters": [
             {
               "name": "send_id",
@@ -8077,6 +8082,7 @@
         "tests/e2e/test_hs169_door_glass.py",
         "tests/e2e/test_philo9_b1_connections_glass.py",
         "tests/mcp/test_hs168_connection_tools.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo9_b1_connections.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/web/test_hs168_connections_routes.py"
@@ -8141,13 +8147,13 @@
             "kernel_fields",
             "kernel_refusal",
             "ops",
-            "ops().invoke_receipted",
             "principal",
             "raw_bytes.strip",
             "refusal_fields",
             "refuse_identifiable",
             "request.body",
-            "router.post"
+            "router.post",
+            "run_in_threadpool"
           ],
           "body_access_keys": [
             "ref"
@@ -8160,6 +8166,7 @@
         "tests/e2e/test_hs168_connections_glass.py",
         "tests/e2e/test_hs169_door_glass.py",
         "tests/e2e/test_philo9_b1_connections_glass.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo9_b1_connections.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/web/test_hs168_connections_routes.py"
@@ -19917,7 +19924,7 @@
             "POST"
           ],
           "symbol": "mcp_http_endpoint",
-          "line": 99,
+          "line": 105,
           "parameters": [
             {
               "name": "request",
@@ -19935,6 +19942,7 @@
           "calls": [
             "JSONResponse",
             "Response",
+            "_blocking_io_tools",
             "_caller.reset",
             "_caller.set",
             "_caller_identity.reset",
@@ -19943,18 +19951,25 @@
             "_origin.reset",
             "_origin.set",
             "_remote_enabled",
+            "body.get",
             "credential_store.derive_credential",
             "extract_request_token",
             "getattr",
+            "handle",
             "handle_message_for_principal",
             "is_loopback_host",
             "isinstance",
+            "params.get",
             "request.headers.get",
             "request.json",
             "request.query_params.get",
-            "router.post"
+            "router.post",
+            "run_in_threadpool"
           ],
-          "body_access_keys": [],
+          "body_access_keys": [
+            "method",
+            "params"
+          ],
           "raw_request": true,
           "docstring": "Streamable HTTP transport for MCP JSON-RPC.\n\nLong-running contract (MCP-003): project.run_steward returns\nrun_id promptly; the client polls project.get_steward_run(run_id).\nTerminal states: completed, failed, cancelled.  A credential\nexpiring mid-run returns 403 on the poll; the run continues on\nthe hub."
         }
@@ -25046,7 +25061,7 @@
             "POST"
           ],
           "symbol": "api_dismiss_nudge",
-          "line": 243,
+          "line": 246,
           "parameters": [
             {
               "name": "step_id",
@@ -25075,6 +25090,7 @@
         }
       ],
       "test_candidates": [
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_steward_admission.py"
@@ -25137,10 +25153,10 @@
             "kernel_fields",
             "kernel_refusal",
             "ops",
-            "ops().invoke_receipted",
             "principal",
             "refusal_fields",
             "router.post",
+            "run_in_threadpool",
             "str"
           ],
           "body_access_keys": [
@@ -25151,6 +25167,7 @@
         }
       ],
       "test_candidates": [
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_steward_admission.py"
@@ -27096,6 +27113,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -27222,6 +27240,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -27400,6 +27419,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -27516,6 +27536,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -27642,6 +27663,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -27755,6 +27777,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -27870,6 +27893,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -27991,6 +28015,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28109,6 +28134,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28231,6 +28257,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28345,6 +28372,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28477,6 +28505,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28591,6 +28620,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28712,6 +28742,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28793,6 +28824,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28923,6 +28955,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29049,6 +29082,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29177,6 +29211,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29307,6 +29342,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29430,6 +29466,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29556,6 +29593,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29682,6 +29720,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29803,6 +29842,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29918,6 +29958,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30036,6 +30077,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30153,6 +30195,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30281,6 +30324,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30409,6 +30453,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30536,6 +30581,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30617,6 +30663,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30698,6 +30745,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30779,6 +30827,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30860,6 +30909,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30976,6 +31026,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31091,6 +31142,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31206,6 +31258,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31321,6 +31374,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31445,6 +31499,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31567,6 +31622,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31691,6 +31747,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31807,6 +31864,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31936,6 +31994,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32058,6 +32117,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32171,6 +32231,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32293,6 +32354,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32422,6 +32484,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32540,6 +32603,7 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32871,7 +32935,7 @@
             "GET"
           ],
           "symbol": "confluence_connections",
-          "line": 451,
+          "line": 454,
           "parameters": [
             {
               "name": "request",
@@ -32928,7 +32992,7 @@
             "POST"
           ],
           "symbol": "confluence_connection_recheck",
-          "line": 471,
+          "line": 474,
           "parameters": [
             {
               "name": "ref",
@@ -32989,7 +33053,7 @@
             "GET"
           ],
           "symbol": "confluence_discover",
-          "line": 494,
+          "line": 497,
           "parameters": [
             {
               "name": "request",
@@ -33064,7 +33128,7 @@
             "POST"
           ],
           "symbol": "confluence_validate_scope",
-          "line": 537,
+          "line": 540,
           "parameters": [
             {
               "name": "request",
@@ -33196,10 +33260,10 @@
           ],
           "calls": [
             "JSONResponse",
-            "adapter.connection_status",
             "error_500",
             "principal",
-            "router.post"
+            "router.post",
+            "run_in_threadpool"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -33238,7 +33302,7 @@
             "GET"
           ],
           "symbol": "github_discover",
-          "line": 153,
+          "line": 156,
           "parameters": [
             {
               "name": "request",
@@ -33306,7 +33370,7 @@
             "POST"
           ],
           "symbol": "github_validate_repo",
-          "line": 181,
+          "line": 184,
           "parameters": [
             {
               "name": "request",
@@ -33369,7 +33433,7 @@
             "GET"
           ],
           "symbol": "jira_connections",
-          "line": 233,
+          "line": 236,
           "parameters": [
             {
               "name": "request",
@@ -33437,7 +33501,7 @@
             "POST"
           ],
           "symbol": "jira_add_connection",
-          "line": 254,
+          "line": 257,
           "parameters": [
             {
               "name": "request",
@@ -33507,7 +33571,7 @@
             "POST"
           ],
           "symbol": "jira_connection_recheck",
-          "line": 286,
+          "line": 289,
           "parameters": [
             {
               "name": "ref",
@@ -33576,7 +33640,7 @@
             "GET"
           ],
           "symbol": "jira_discover",
-          "line": 309,
+          "line": 312,
           "parameters": [
             {
               "name": "request",
@@ -33658,7 +33722,7 @@
             "POST"
           ],
           "symbol": "jira_search",
-          "line": 354,
+          "line": 357,
           "parameters": [
             {
               "name": "request",
@@ -33724,7 +33788,7 @@
             "POST"
           ],
           "symbol": "jira_validate_scope",
-          "line": 392,
+          "line": 395,
           "parameters": [
             {
               "name": "request",
@@ -36096,7 +36160,7 @@
             "GET"
           ],
           "symbol": "get_remote_settings",
-          "line": 213,
+          "line": 233,
           "parameters": [
             {
               "name": "request",
@@ -36184,7 +36248,7 @@
             "PUT"
           ],
           "symbol": "update_remote_settings",
-          "line": 277,
+          "line": 297,
           "parameters": [
             {
               "name": "request",
@@ -36264,7 +36328,7 @@
             "POST"
           ],
           "symbol": "issue_credential",
-          "line": 299,
+          "line": 319,
           "parameters": [
             {
               "name": "request",
@@ -36350,7 +36414,7 @@
             "DELETE"
           ],
           "symbol": "revoke_credential",
-          "line": 345,
+          "line": 365,
           "parameters": [
             {
               "name": "request",
@@ -36420,7 +36484,7 @@
             "DELETE"
           ],
           "symbol": "revoke_delegation",
-          "line": 416,
+          "line": 436,
           "parameters": [
             {
               "name": "request",
@@ -36491,7 +36555,7 @@
             "PUT"
           ],
           "symbol": "grant_delegation",
-          "line": 403,
+          "line": 423,
           "parameters": [
             {
               "name": "request",
@@ -36562,7 +36626,7 @@
             "DELETE"
           ],
           "symbol": "revoke_project_delegation",
-          "line": 451,
+          "line": 471,
           "parameters": [
             {
               "name": "request",
@@ -36635,7 +36699,7 @@
             "PUT"
           ],
           "symbol": "grant_project_delegation",
-          "line": 439,
+          "line": 459,
           "parameters": [
             {
               "name": "request",
@@ -41658,6 +41722,7 @@
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_phase200_claim_support.py",
         "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -41748,6 +41813,7 @@
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_phase200_claim_support.py",
         "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -41832,6 +41898,7 @@
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_phase200_claim_support.py",
         "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -41928,6 +41995,7 @@
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_phase200_claim_support.py",
         "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -42023,6 +42091,7 @@
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_phase200_claim_support.py",
         "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -42328,7 +42397,7 @@
             "POST"
           ],
           "symbol": "evaluate_watch",
-          "line": 573,
+          "line": 576,
           "parameters": [
             {
               "name": "watch_id",
