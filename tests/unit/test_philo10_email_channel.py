@@ -547,11 +547,19 @@ def test_c4_the_key_is_never_planning_material(hub: Hub, wire: Wire, monkeypatch
     seen: list[str] = []
     real = external_egress.EgressExecutionStore.bind
 
+    def reachable(value: Any, depth: int = 0) -> None:
+        """Everything the plan holds: values, and each function's closure cells and defaults, three levels down."""
+        if callable(value) and hasattr(value, "__code__") and depth < 3:
+            for cell in value.__closure__ or ():
+                reachable(getattr(cell, "cell_contents", None), depth + 1)
+            for default in (value.__defaults__ or ()) + tuple((value.__kwdefaults__ or {}).values()):
+                reachable(default, depth + 1)
+            return
+        seen.append(repr(value))
+
     def bind(self: Any, **kwargs: Any) -> Any:
-        sender = kwargs["sender"]
-        planned = sender.__closure__ or ()
-        seen.append(repr({k: v for k, v in kwargs.items() if k != "sender"}))
-        seen.extend(repr(getattr(cell, "cell_contents", None)) for cell in planned)
+        for value in kwargs.values():
+            reachable(value)
         return real(self, **kwargs)
 
     monkeypatch.setattr(external_egress.EgressExecutionStore, "bind", bind)
@@ -695,7 +703,7 @@ def test_the_destination_freezes_the_sender_and_refuses_bad_addresses_by_name(hu
         assert resp.json()["code"] == code, (extra, resp.text)
 
 
-def test_an_edited_sender_refuses_the_prepared_send_destination_changed(hub: Hub, wire: Wire) -> None:
+def test_an_edited_sender_parks_the_destination_and_refuses_the_prepared_send(hub: Hub, wire: Wire) -> None:
     update, dest = ready(hub)
     prepared = prepare(hub, update, dest)["send"]
     edited = hub.client.post("/api/channels/destinations", json={
@@ -770,3 +778,161 @@ def test_c6_a_second_provider_plugs_in_with_one_class_and_one_row(
     full = native(hub, child["operation_id"])["canonical"]
     assert (full["destination"], full["data_classes"]) == ("api.recording.test:443", ["email_message"])
     assert full["payload_digest"] == "sha256:" + result["send"]["payload_digest"]
+
+
+# ── R3: a REAL hub restart during an email send (a process killed with SIGKILL) ──
+
+_CHILD = r'''
+import json, sys, threading, time, urllib.request, urllib.response, http.client, io
+from unittest.mock import MagicMock
+import keyring
+from holdspeak.services import channel_email
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+token, hold, wire_log, key = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+memory = channel_email.MemoryEmailKeyStore()
+memory.put("sendgrid", key)
+channel_email.KEY_STORE = lambda: memory
+keyring.get_keyring = lambda: (_ for _ in ()).throw(AssertionError("real keychain"))
+forever = threading.Event()
+
+class Canned(urllib.request.BaseHandler):
+    def https_open(self, req):
+        if hold == "before":
+            forever.wait()
+        with open(wire_log, "a") as log:
+            log.write(json.dumps({"host": req.host, "sha": __import__("hashlib").sha256(req.data).hexdigest()}) + "\n")
+        if hold == "after":
+            forever.wait()
+        raw = http.client.parse_headers(io.BytesIO(b"X-Message-Id: sg-restart\r\n\r\n"))
+        resp = urllib.response.addinfourl(io.BytesIO(b""), raw, req.full_url, 202)
+        resp.msg = "canned"
+        return resp
+
+channel_email.HTTPS_HANDLER = Canned
+server = MeetingWebServer(
+    WebRuntimeCallbacks(on_bookmark=MagicMock(), on_stop=MagicMock(), get_state=MagicMock(return_value={})),
+    auth_token=token,
+)
+print("URL " + server.start(), flush=True)
+while True:
+    time.sleep(1)
+'''
+
+
+class _EmailHub:
+    TOKEN = "philo10-03-restart-token"
+
+    def __init__(self, home: Path, hold: str, wire_log: Path) -> None:
+        import os
+        import subprocess
+
+        env = dict(os.environ, HOME=str(home))
+        env.pop("HOLDSPEAK_ALLOW_REAL_HOME", None)
+        self.proc = subprocess.Popen([sys.executable, "-c", _CHILD, self.TOKEN, hold, str(wire_log), KEY],
+                                     cwd=str(Path(__file__).resolve().parents[2]), env=env,
+                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        lines: list[str] = []
+        for line in self.proc.stdout:  # type: ignore[union-attr]
+            lines.append(line)
+            if line.startswith("URL "):
+                self.url = line.split(" ", 1)[1].strip().rstrip("/")
+                break
+        else:  # pragma: no cover - the child died before serving
+            raise AssertionError("the hub process never served:\n" + "".join(lines[-40:]))
+        threading.Thread(target=lambda: [None for _ in self.proc.stdout], daemon=True).start()  # type: ignore[union-attr]
+
+    def call(self, method: str, path: str, body: Any = None, timeout: float = 60) -> tuple[int, Any]:
+        data = None if body is None else json.dumps(body).encode()
+        request = urllib.request.Request(self.url + path, data=data, method=method, headers={
+            "Authorization": f"Bearer {self.TOKEN}", "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as resp:
+                return resp.status, json.loads(resp.read() or b"null")
+        except urllib.error.HTTPError as exc:
+            return exc.code, json.loads(exc.read() or b"null")
+
+    def kill(self) -> None:
+        import signal
+
+        self.proc.send_signal(signal.SIGKILL)
+        self.proc.wait(timeout=30)
+
+
+def _rows(home: Path, sql: str, *args: Any) -> list[dict[str, Any]]:
+    import sqlite3
+
+    conn = sqlite3.connect(str(home / ".local" / "share" / "holdspeak" / "holdspeak.db"))
+    conn.row_factory = sqlite3.Row
+    try:
+        return [dict(r) for r in conn.execute(sql, args).fetchall()]
+    finally:
+        conn.close()
+
+
+def _until(check: Callable[[], Any], timeout: float = 30.0) -> Any:
+    import time
+
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        value = check()
+        if value:
+            return value
+        time.sleep(0.05)
+    raise AssertionError("condition never held")
+
+
+@pytest.mark.timeout(240)
+@pytest.mark.parametrize("hold", ["before", "after"], ids=["killed-before-the-wire", "killed-after-the-wire"])
+def test_c2_r3_a_restart_during_an_email_send_ends_unknown_once_and_never_sends_again(
+    tmp_path: Path, hold: str,
+) -> None:
+    home, wire_log = tmp_path / "home", tmp_path / "wire.jsonl"
+    home.mkdir()
+    first = _EmailHub(home, hold, wire_log)
+    try:
+        assert first.call("PUT", "/api/channels/email-keys/sendgrid", {"api_key": KEY})[0] == 200
+        _s, made = first.call("POST", "/api/projects", {"name": "Payments ledger cutover"})
+        _s, drafted = first.call("POST", f"/api/projects/{made['project']['id']}/updates/draft", {})
+        update = drafted["update"]["id"]
+        assert first.call("POST", f"/api/updates/{update}/publish", {})[0] == 200
+        status, saved = first.call("POST", "/api/channels/destinations", {
+            "name": "Priya by email", "channel": "email", "from_email": "karol@example.com",
+            "to": ["priya@example.com"]})
+        assert status == 200, saved
+        _s, preview = first.call("POST", "/api/channels/preview", {"update_id": update,
+                                                                   "destination_id": saved["destination"]["id"]})
+        body = {"update_id": update, "destination_id": saved["destination"]["id"],
+                "preview_digest": preview["payload_digest"], "command_id": f"restart-{hold}"}
+
+        def pressing() -> None:
+            try:
+                first.call("POST", "/api/channels/send", body, timeout=120)
+            except OSError:  # the process is killed under the caller
+                pass
+
+        threading.Thread(target=pressing, daemon=True).start()
+        row = _until(lambda: next(iter(_rows(home, "SELECT * FROM channel_sends WHERE state='dispatching'")), None))
+        if hold == "after":
+            _until(lambda: wire_log.exists() and wire_log.read_text().strip())
+    finally:
+        first.kill()
+    second = _EmailHub(home, "", wire_log)
+    try:
+        [settled] = _rows(home, "SELECT * FROM channel_sends WHERE id=?", row["id"])
+        assert (settled["state"], settled["reason"]) == ("unknown", "interrupted"), settled
+        [operation] = _rows(home, "SELECT o.state, r.outcome FROM kernel_operations o JOIN kernel_receipts r"
+                                  " ON r.operation_id=o.operation_id WHERE o.operation_id=?", row["send_operation_id"])
+        assert operation == {"state": "indeterminate", "outcome": "hub_restart_during_send"}, operation
+        assert _rows(home, "SELECT outcome FROM project_update_deliveries WHERE update_id=?", update) == [
+            {"outcome": "unknown"}]
+        status, replayed = second.call("POST", "/api/channels/send", body)
+        assert status == 200 and (replayed["outcome"], replayed["send"]["reason"]) == ("unknown", "interrupted")
+        sent_lines = wire_log.read_text().splitlines() if wire_log.exists() else []
+        assert len(sent_lines) == (1 if hold == "after" else 0)  # never sent again
+        assert len(_rows(home, "SELECT 1 FROM project_update_deliveries WHERE update_id=?", update)) == 1
+        for path in home.rglob("*"):
+            if path.is_file():
+                assert KEY_MARK.encode() not in path.read_bytes(), path
+    finally:
+        second.kill()

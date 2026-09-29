@@ -315,6 +315,7 @@ CHANNEL_SAVE_EMAIL_KEY = OperationDescriptor(
     method="save_email_key",
     held=("api_key",),
     owner_only=True,
+    owner_press=True,
     admission=Admission("admitted", "Config: the owner's email key in the OS keychain (#694's table: config, "
                                     "his press, HTTP only, in no palette). The key is held by the transport, "
                                     "never an argument, never journaled."),

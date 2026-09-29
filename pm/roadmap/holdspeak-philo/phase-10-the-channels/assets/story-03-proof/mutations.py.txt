@@ -1,0 +1,107 @@
+"""PHILO-10-03: the deliberate mutations. Each one breaks one rule in the REAL code; its fences must turn red.
+
+Run from the worktree root on an isolated HOME (``.tmp/iso.sh .venv/bin/python <this file>``).
+Each mutation edits one file, runs its fences, and restores the file byte for byte (finally), so the
+tree is unchanged after the run. Exit 0 only when EVERY mutation turned its fences red.
+"""
+from __future__ import annotations
+
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+EMAIL = "holdspeak/services/channel_email.py"
+MATERIAL = "holdspeak/kernel/egress_material.py"
+RUNTIME = "holdspeak/connector_runtime.py"
+TESTS = "tests/unit/test_philo10_email_channel.py"
+
+MUTATIONS = [
+    ("M1 redirects followed (the default handler)", EMAIL,
+     "for handler in (HTTPS_HANDLER(), _RefuseRedirect(),",
+     "for handler in (HTTPS_HANDLER(), urllib.request.HTTPRedirectHandler(),",
+     ["-k", "redirect"]),
+    ("M2 the kernel records the exception's text (main's external_egress.py:290)", MATERIAL,
+     "    return type(exc).__name__",
+     '    return f"{type(exc).__name__}: {exc}"',
+     ["-k", "c3_every_egress_caller"]),
+    ("M3 the opener lets a raw transport exception out", EMAIL,
+     '    except Exception:\n        code, left = "transport_error", True\n    if code:',
+     '    except Exception:\n        raise\n    if code:',
+     ["-k", "c3_an_email_transport"]),
+    ("M4 the network seam hashes the destination only (main's connector_runtime.py:215)", RUNTIME,
+     'payload_material=({"destination": destination} if payload_material is None else payload_material),',
+     'payload_material={"destination": destination},',
+     ["-k", "c1_ or c6"]),
+    ("M5 the key becomes planning material (read at plan time, held by the sender)", EMAIL,
+     "            opener=lambda planned: transmit(planned, key_ref), principal=principal,",
+     "            opener=lambda planned, _key=read_key(key_ref): transmit(planned, key_ref), principal=principal,",
+     ["-k", "never_planning_material"]),
+    ("M6 any 4xx is FAILED (no pinned list)", EMAIL,
+     "        if error_excerpt and status in self.PINNED:",
+     "        if 400 <= status < 500:\n            return Outcome('failed', self.PINNED.get(status, 'invalid_request'), detail)\n"
+     "        if error_excerpt and status in self.PINNED:",
+     ["-k", "c2_each_answer"]),
+    ("M7 403 is not split by its discriminator", EMAIL,
+     '            return Outcome("failed", "sendgrid_forbidden", detail)',
+     '            return Outcome("failed", "sender_not_verified", detail)',
+     ["-k", "403"]),
+    ("M8 the key store admits any backend", EMAIL,
+     "        name = _backend_name(backend)\n        if name in cls.ALLOWED_BACKENDS:",
+     "        name = _backend_name(backend)\n        if True:",
+     ["-k", "c5_every_other_backend or c5_a_store_that_is_not_native"]),
+    ("M9 202 without X-Message-Id is SENT", EMAIL,
+     '                return Outcome("unknown", "accepted_without_message_id")',
+     '                return Outcome("sent", None, {"provider": self.name})',
+     ["-k", "accepted-no-id"]),
+    ("M10 the egress child has no parent (the send's operation is not threaded)", EMAIL,
+     "            parent_operation_id=parent, broker=broker)",
+     '            parent_operation_id="", broker=broker)',
+     ["-k", "c1_one_send"]),
+    ("M11 a take-over sends again", EMAIL,
+     '        return Outcome("unknown", "interrupted")',
+     "        return self.dispatch(row)",
+     ["-k", "r1_"]),
+    ("M12 the channel calls SendGrid directly (no registry row)", EMAIL,
+     '        chosen = EMAIL_PROVIDERS.get(str(account.get("provider") or ""))\n        if chosen is None:',
+     '        chosen = SendGridProvider()\n        if chosen is None:',
+     ["-k", "c6_"]),
+]
+
+
+def run(args: list[str]) -> tuple[int, str]:
+    with tempfile.TemporaryDirectory() as base:
+        done = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-x",
+                               f"--basetemp={base}/pt", TESTS, *args], capture_output=True, text=True)
+    tail = [line for line in done.stdout.splitlines() if " passed" in line or " failed" in line]
+    return done.returncode, tail[-1] if tail else done.stdout[-300:]
+
+
+def main() -> int:
+    code, tail = run([])
+    print(f"BASELINE (no mutation): rc={code} {tail}")
+    if code != 0:
+        return 1
+    missed = 0
+    for label, path, old, new, args in MUTATIONS:
+        target = Path(path)
+        original = target.read_bytes()
+        text = original.decode()
+        if text.count(old) != 1:
+            print(f"{label}: ANCHOR NOT FOUND ({text.count(old)})")
+            missed += 1
+            continue
+        try:
+            target.write_text(text.replace(old, new))
+            code, tail = run(args)
+        finally:
+            target.write_bytes(original)
+        red = code != 0
+        missed += 0 if red else 1
+        print(f"{'RED  ' if red else 'GREEN'} {label}: rc={code} {tail}")
+    print(f"MUTATIONS: {len(MUTATIONS) - missed}/{len(MUTATIONS)} turned their fences red")
+    return 0 if missed == 0 else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

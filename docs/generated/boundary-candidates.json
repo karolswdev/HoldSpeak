@@ -4531,7 +4531,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 88,
+      "line": 95,
       "kinds": [
         "process_or_shell"
       ],
@@ -4541,7 +4541,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 90,
+      "line": 97,
       "kinds": [
         "process_or_shell"
       ],
@@ -4551,7 +4551,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 105,
+      "line": 115,
       "kinds": [
         "process_or_shell"
       ],
@@ -4561,7 +4561,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 106,
+      "line": 116,
       "kinds": [
         "process_or_shell"
       ],
@@ -4571,7 +4571,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 166,
+      "line": 176,
       "kinds": [
         "process_or_shell"
       ],
@@ -4581,7 +4581,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 209,
+      "line": 220,
       "kinds": [
         "process_or_shell"
       ],
@@ -4591,7 +4591,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 210,
+      "line": 221,
       "kinds": [
         "process_or_shell"
       ],
@@ -4601,7 +4601,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 245,
+      "line": 268,
       "kinds": [
         "process_or_shell"
       ],
@@ -4611,7 +4611,7 @@
     },
     {
       "path": "holdspeak/plugins/gated_connector.py",
-      "line": 255,
+      "line": 278,
       "kinds": [
         "process_or_shell"
       ],

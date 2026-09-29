@@ -52,7 +52,7 @@ from ..plugins.gated_connector import (
     WriteConnectorManifest,
     build_gated_connector,
 )
-from .channel_contract import CHANNELS, REDACTED, ChannelRefused, Document, Outcome, redact, sha256
+from .channel_contract import CHANNELS, ERROR_LIMIT, REDACTED, ChannelRefused, Document, Outcome, redact, sha256
 from .errors import ValidationError
 
 #: The data class every email egress declares.
@@ -580,7 +580,9 @@ class EmailChannel:
             return Outcome("unknown" if exc.left else "failed", exc.code)
         outcome = chosen.interpret(answer.status, answer.headers, answer.errors)
         if outcome.proof.get("error"):
-            outcome = replace(outcome, proof={**outcome.proof, "error": redact(outcome.proof["error"], body)})
+            # Cut BEFORE the excerpt scan (story 02's GATE 1): the scan's cost is bounded by 240 characters.
+            cut = " ".join(str(outcome.proof["error"]).split())[:ERROR_LIMIT]
+            outcome = replace(outcome, proof={**outcome.proof, "error": redact(cut, body)})
         return outcome
 
     def recover(self, row: Mapping[str, Any]) -> Outcome:

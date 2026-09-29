@@ -25,13 +25,13 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 import uuid
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Callable, Mapping, Sequence
 
 from ..principals import Principal, PrincipalKind
+from .egress_material import payload_digest_of, sanitized_error
 from .model import Admission, KernelRefused, OperationRequest, valid_ref
 
 LOCAL_OWNER = Principal(PrincipalKind.OWNER, "local-owner")
@@ -61,33 +61,6 @@ class EgressPlan:
     kwargs: Mapping[str, Any] = field(compare=False, repr=False)
 
 
-_DIGEST = re.compile(r"^(?:sha256:)?([0-9a-f]{64})$")
-
-
-def frozen_digest(payload_material: Any) -> str:
-    """PHILO-10-03: ``{"payload_digest": <sha256>}`` names the frozen bytes' own digest.
-
-    A caller that froze its exact transport bytes (the email channel: the
-    provider's request body, frozen at prepare) passes their digest; the
-    admission binds THAT digest, not a hash of a description of it. Any other
-    material is hashed as before. ``""`` when the material is not that form.
-    """
-    if isinstance(payload_material, Mapping) and set(payload_material) == {"payload_digest"}:
-        found = _DIGEST.fullmatch(str(payload_material["payload_digest"] or ""))
-        if found:
-            return "sha256:" + found.group(1)
-    return ""
-
-
-def sanitized_error(exc: BaseException) -> str:
-    """What a native result keeps of a transport exception: its type, never its text.
-
-    PHILO-10-03 (Codex Astra r3 finding 2): ``str(exc)`` can carry a header, a
-    key or the body the sender held; the type name cannot.
-    """
-    return type(exc).__name__
-
-
 class EgressExecutionStore:
     def __init__(self) -> None:
         self._plans: dict[str, EgressPlan] = {}
@@ -108,19 +81,12 @@ class EgressExecutionStore:
         kwargs: Mapping[str, Any],
     ) -> EgressPlan:
         native_id = "egress_" + uuid.uuid4().hex
-        payload_digest = frozen_digest(payload_material)
-        if not payload_digest:
-            try:
-                encoded = json.dumps(payload_material, separators=(",", ":"), sort_keys=True, default=str)
-            except (TypeError, ValueError):
-                encoded = repr(payload_material)
-            payload_digest = "sha256:" + hashlib.sha256(encoded.encode()).hexdigest()
         plan = EgressPlan(
             native_id=native_id,
             connector_id=str(connector_id or "external"),
             destination=str(destination or "").strip().lower(),
             data_classes=tuple(str(item).strip().lower() for item in data_classes),
-            payload_digest=payload_digest,
+            payload_digest=payload_digest_of(payload_material),
             declared_permissions=tuple(str(item) for item in declared_permissions),
             allowed_destinations=tuple(
                 str(item).strip().lower() for item in (allowed_destinations or ())
@@ -280,8 +246,6 @@ def run_external_egress(
     broker: Any = None,
     subject_refs: Sequence[str] = (),
 ) -> Any:
-    """Admit, claim, send once, receipt. *subject_refs* join the admission's journal refs
-    (PHILO-10-03: the email send names its destination and its frozen payload digest)."""
     if broker is None:
         from .runtime import _service
 

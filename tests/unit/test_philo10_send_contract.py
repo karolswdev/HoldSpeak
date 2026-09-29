@@ -74,7 +74,8 @@ def test_the_operations_are_declared_once_and_reach_one_service_over_http_and_mc
     from holdspeak import operations
 
     declared = [d.name for d in operations.DESCRIPTORS if d.name.startswith("channel.")]
-    assert declared == list(CHANNEL_OPS)
+    # PHILO-10-03: channel.save_email_key is HTTP only (the key is held by the transport, never an argument).
+    assert declared == [*CHANNEL_OPS, "channel.save_email_key"]
     registry = hub.root.operations
     service = hub.root.channel_service
     assert service is not None and hub.server.app is not None
@@ -87,8 +88,9 @@ def test_the_operations_are_declared_once_and_reach_one_service_over_http_and_mc
         assert tools[name]["description"] == descriptor.description, name
         http = [e for e in descriptor.exposure if e.startswith("http:")]
         assert http and f"mcp:{name}" in descriptor.exposure, name
+    assert "channel.save_email_key" not in tools
     routes = {(m, r.path) for r in hub.server.app.routes for m in getattr(r, "methods", ()) or ()}
-    for name in CHANNEL_OPS:
+    for name in declared:
         for exposure in registry.descriptor(name).exposure:
             if exposure.startswith("http:"):
                 method, path = exposure[5:].split(" ", 1)

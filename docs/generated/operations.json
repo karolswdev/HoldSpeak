@@ -4618,7 +4618,7 @@
     {
       "name": "channel.save_destination",
       "version": 1,
-      "description": "Save a destination you send to: a folder (an absolute path; HoldSpeak writes a new file there per send). Mark it synced if a cloud client syncs that folder. Give replaces to edit one: the old destination is parked and this one is new.",
+      "description": "Save a destination you send to: a folder (an absolute path; HoldSpeak writes a new file there per send), or email through a provider (SendGrid): your verified sender, the name of the saved key, and the To and Cc addresses. Mark a folder synced if a cloud client syncs it. Give replaces to edit one: the old destination is parked and this one is new.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -4630,9 +4630,10 @@
           "channel": {
             "type": "string",
             "enum": [
-              "file"
+              "file",
+              "email"
             ],
-            "description": "The channel: file (a folder)."
+            "description": "The channel: file (a folder) or email."
           },
           "folder": {
             "type": [
@@ -4647,6 +4648,57 @@
               "null"
             ],
             "description": "Optional, file: a cloud client syncs this folder (the badge says cloud)."
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "email: the provider (sendgrid if not given)."
+          },
+          "from_email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "email: the sender address (a sender the provider verified)."
+          },
+          "from_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120,
+            "description": "email: the sender's name."
+          },
+          "key_ref": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "email: the name of the key saved with channel.save_email_key (the provider's name if not given). Never the key."
+          },
+          "to": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "description": "email: the To addresses (at least one)."
+          },
+          "cc": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "description": "email: the Cc addresses (To and Cc together: 20 at most)."
           },
           "replaces": {
             "type": [
@@ -4681,6 +4733,12 @@
         "destination_name_invalid",
         "destination_parked",
         "channel_unknown",
+        "email_provider_unknown",
+        "email_address_invalid",
+        "email_key_ref_invalid",
+        "email_recipients_missing",
+        "email_recipients_too_many",
+        "email_recipient_duplicate",
         "owner_principal_required"
       ],
       "completion": "synchronous; channel.destinations lists it",
@@ -4751,7 +4809,7 @@
     {
       "name": "channel.check_destination",
       "version": 1,
-      "description": "Check a saved destination: a folder still resolves to the saved path, exists and is writable.",
+      "description": "Check a saved destination: a folder still resolves to the saved path, exists and is writable; an email destination's key is in the OS keychain (no call to the provider).",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -4767,7 +4825,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "read",
-      "result": "{destination, check: {state: ready | changed | missing | not_writable | parked, resolved}}",
+      "result": "{destination, check: {state: ready | changed | missing | not_writable | parked | email_key_missing | email_key_store_not_native | email_key_store_locked, resolved}}",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
@@ -4949,7 +5007,7 @@
     {
       "name": "channel.send",
       "version": 1,
-      "description": "The owner's Send: send a prepared send (send_id), or send a published update to a saved destination with the digest of the preview he saw (update_id, destination_id, preview_digest). The answer is the channel's proof (a folder: the file's path, sha256 and size, read back), a known failure, or unknown. HoldSpeak never sends again by itself: a repeat of the same command_id answers the first result. Only the owner sends; an agent prepares.",
+      "description": "The owner's Send: send a prepared send (send_id), or send a published update to a saved destination with the digest of the preview he saw (update_id, destination_id, preview_digest). The answer is the channel's proof (a folder: the file's path, sha256 and size, read back; email: the provider's message id, ACCEPTED BY SENDGRID -- accepted for processing, not delivered), a known failure, or unknown. HoldSpeak never sends again by itself: a repeat of the same command_id answers the first result. Only the owner sends; an agent prepares.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -5009,6 +5067,11 @@
         "send_already_settled",
         "update_not_published",
         "path_outside_folder",
+        "email_provider_unknown",
+        "email_key_missing",
+        "email_key_store_not_native",
+        "email_key_store_locked",
+        "email_recipients_too_many",
         "idempotency_conflict"
       ],
       "completion": "synchronous; channel.sends and project.list_updates (deliveries) show it",
@@ -5070,6 +5133,67 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "channel.save_email_key",
+      "version": 1,
+      "description": "Save your email provider's key (a SendGrid API key) in the OS keychain under a name; an email destination names that key. The key is sent in the request body, is never an argument, and is never shown again.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "key_ref": {
+            "type": "string",
+            "description": "The key's name (from the path)."
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional: the provider (sendgrid)."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "key_ref"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "{key_ref, provider, saved} and the receipt (never the key)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "owner_required",
+        "email_key_ref_invalid",
+        "email_key_invalid",
+        "email_provider_unknown",
+        "email_key_store_not_native",
+        "email_key_store_locked"
+      ],
+      "completion": "synchronous; channel.check_destination of an email destination answers ready",
+      "exposure": [
+        "http:PUT /api/channels/email-keys/{key_ref}"
+      ],
+      "held": [
+        "api_key"
+      ],
+      "owner_only": true,
+      "owner_press": true,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Config: the owner's email key in the OS keychain (#694's table: config, his press, HTTP only, in no palette). The key is held by the transport, never an argument, never journaled.",
         "arguments": [],
         "enforced": true
       }
