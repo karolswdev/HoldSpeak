@@ -161,6 +161,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-29, story 03: Codex Astra r3 on #696 @53fb21d9 RATIFY-WITH-CONDITIONS (`checks/story-03-built-astra-r3.md`); its docs condition paid (the outside-channel BACKLOG row made precise). The story stays in-progress: criterion 2's displayed word (story 04) and criterion 7 (story 06) are OPEN.
+
 2026-09-29, story 03 ROUND FOUR (PR #696): Codex Astra r2 DO-NOT-RATIFY on one P2, paid — `channel.check_destination` is `blocking_io` (the email check reads the keychain), fenced over HTTP and MCP on a real hub. Criterion 2's displayed word (story 04) and criterion 7 (story 06) stay OPEN.
 
 2026-09-29, story 03 ROUND THREE (PR #696): merged with main `3965c5e1` (#695); the CLI seam and the email seam share one `build_gated_connector` authority path; the email send is `blocking_io` and a read answers during a slow send (HTTP and MCP, a real socket hub). Owed: Muad'Dib's full suite and the Codex Astra r2 check.
