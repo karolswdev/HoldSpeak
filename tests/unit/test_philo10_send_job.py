@@ -148,7 +148,7 @@ def test_the_owners_press_sent_both_and_the_far_side_reads_back_the_frozen_bytes
     assert set(legs["press"]) == {"file", "github"}
     for key, press in legs["press"].items():
         assert driver.owner_press_findings(fixture, key, press["send"], press["receipt"], press["operation"]) == []
-        assert driver.readback_findings(key, legs["readback"][key], True) == []
+        assert driver.readback_findings(key, legs["readback"][key], True, digest=digest) == []
         assert press["send"]["payload_digest"] == digest
     assert legs["readback"]["file"]["sha256"] == digest
     assert legs["readback"]["github"]["login"] == fixture["destinations"]["github"]["login"]
@@ -192,9 +192,28 @@ def test_a_send_prepared_by_the_owner_is_red() -> None:
     assert any("not the agent" in x for x in found), found
 
 
+def _digest() -> str:
+    return hashlib.sha256(driver.body_bytes(_fixture())).hexdigest()
+
+
 def test_a_file_that_does_not_read_back_is_red() -> None:
     back = dict(_json(RUN / "legs.json")["readback"]["file"], bytes_equal_frozen=False)
-    assert driver.readback_findings("file", back, True)
+    assert driver.readback_findings("file", back, True, digest=_digest())
+
+
+@pytest.mark.parametrize("key", ["file", "github"])
+def test_an_extra_newline_on_the_far_side_is_red(key: str) -> None:
+    """Codex Astra r1 on #700: equality is exact bytes + sha256, never trimmed. The retained real read-back
+    is green; the same read-back with one extra trailing newline (its digest and equality recomputed) is red."""
+    back = _json(RUN / "legs.json")["readback"][key]
+    assert driver.readback_findings(key, back, True, digest=_digest()) == []
+    body = driver.body_bytes(_fixture()) + b"\n"
+    mutated = dict(back, sha256=hashlib.sha256(body).hexdigest(), body_sha256=hashlib.sha256(body).hexdigest(),
+                   size=len(body), bytes_equal_frozen=False, body_equals_frozen=False)
+    assert driver.readback_findings(key, mutated, True, digest=_digest()), key
+    # Even a record that CLAIMS equality is red when its digest is not the frozen digest.
+    lying = dict(mutated, bytes_equal_frozen=True, body_equals_frozen=True)
+    assert driver.readback_findings(key, lying, True, digest=_digest()), key
 
 
 def test_a_planted_gh_token_is_red(tmp_path: Path) -> None:
@@ -219,3 +238,17 @@ def test_a_resumed_or_shared_session_is_red(tmp_path: Path) -> None:
     audit["session_id"] = first["session_id"]
     (run / "codex" / "agent_check" / "mcp-audit.json").write_text(json.dumps(audit))
     assert any("session_id shared" in x for x in driver.session_isolation_findings(run))
+
+
+def test_the_prepared_row_reshoot_shows_heading_attribution_and_send_on_screen() -> None:
+    """Codex Astra r1 on #700 condition 2: a COPY of the retained DB, put back to prepared; each row's
+    heading, BY the agent and Send asserted on screen at both widths; no send attempted."""
+    seen = _json(RUN / "observations" / "prepared-row-reshoot.json")
+    assert seen["findings"] == [] and seen["no_send"] == []
+    assert seen["sha256"] == hashlib.sha256((RUN / "db-proof.sqlite").read_bytes()).hexdigest()
+    for width in ("1440", "393"):
+        for key in ("file", "github"):
+            row = seen["widths"][width][key]
+            assert len(row["named"]) == 3 and all(v["ok"] for v in row["named"]), row
+            assert row["by"].strip() == "BY CODEX-SEND-AGENT"
+            assert (RUN / row["shot"]).is_file()

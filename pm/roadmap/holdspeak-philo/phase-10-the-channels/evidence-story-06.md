@@ -6,6 +6,16 @@
 - **Branch:** `feat/philo-10-06` from main `05d01ffb` (stories 01–05 merged). No product file changed: a driver, its fixture, its fences, one parameter on the Phase 9 driver's isolation fence.
 - **Label:** REHEARSED; OWNER REVIEW PENDING. Never a sitting.
 
+## Round two — Codex Astra r1 on #700 @ `60630c31` (RATIFY-WITH-CONDITIONS), paid
+
+`checks/story-06-built-astra-r1.md` (verbatim). There was no new real send: the folder still holds one file, and issue 699 still has one comment.
+
+1. **Exact bytes only.** `readback_findings` (`scripts/philo10_send_job.py`) no longer accepts equality with the trailing whitespace trimmed. File and GitHub both need byte equality AND the sha256 of the frozen bytes (`digest=`). The GitHub read-back no longer records a trimmed comparison. New fence `test_an_extra_newline_on_the_far_side_is_red[file|github]`: the retained real read-back is green; with one extra trailing newline it is red; a record that claims equality with the wrong digest is red too. The fence over the retained real read-back stays green (`fence`, captured below).
+2. **Shot 2 at 393.** New mode `reshoot-prepared`. It copies the retained real run's `db-proof.sqlite` (sha256 `24f1cb95…c22c0`, the same before and after), puts the two sends back to `prepared` IN THE COPY (no boundary, no proof, no history row), and boots a hub on it with a gh runner that answers nothing. The browser aborts every `POST /api/channels/send`, and Send is never pressed. For each prepared row at 1440 and 393, the mode seats the row and asserts ON SCREEN (in the viewport, inside every clipping ancestor, on top at three points): the heading (destination name), the attribution `BY CODEX-SEND-AGENT` and Send. Findings: none; sends attempted: none. Shots `2b-prepared-row-{file,github}-{1440,393}.png`; observation `observations/prepared-row-reshoot.json`; fence `test_the_prepared_row_reshoot_shows_heading_attribution_and_send_on_screen`.
+3. **Named deviation (inherited, the owner decides).** The prepared file preview shows FOLDER, not the FILE the ratified canvas shows before Send. Production names the file at the dispatch boundary (`holdspeak/services/channel_service.py:469`), so a prepared row has `file_path: null`. Inherited from `05d01ffb`. It is recorded on the BACKLOG (PHILO-10-06 follow-ups). It is not repaired in this story.
+
+The owner-review box stays open.
+
 ## What ran
 
 - **The owner's word (2026-09-29):** file under `~/Documents/HoldSpeak`; GitHub `karolswdev/HoldSpeak`, an issue Muad'Dib chose (#699, public: only the fixture text posted); Jira, Confluence, email: "I don't have those yet. And that's fine."
@@ -108,4 +118,70 @@ REFUSED github: the ledger records a real send at 2026-09-29T18:47:54.934478+00:
 REFUSED file: /Users/karol/Documents/HoldSpeak/2026-09-29-harbor-cutover-r1-d4f01b83.md already holds the fixture's bytes
 PHILO10_SEND_JOB_REFUSED a real send to a target that already has one; nothing booted
 exit=4
+```
+
+### Captured run — 2026-09-29T19:02:12Z
+
+- **Command:** `uv run python scripts/philo10_send_job.py reshoot-prepared pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-06-shots/final/20260929T184651Z-send-job-real`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** c0c798ec88ab21c0aeba49ed39248baed36d281c
+
+```text
+{
+ "findings": [],
+ "shots": [
+  "shots/2b-prepared-row-file-1440.png",
+  "shots/2b-prepared-row-github-1440.png",
+  "shots/2b-prepared-row-file-393.png",
+  "shots/2b-prepared-row-github-393.png"
+ ]
+}
+```
+
+### Captured run — 2026-09-29T19:03:02Z
+
+- **Command:** `sh /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/c59536e9-4c14-410c-8d54-e0c2beed10bc/scratchpad/mut.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** c0c798ec88ab21c0aeba49ed39248baed36d281c
+
+```text
+FAILED tests/unit/test_philo10_send_job.py::test_an_extra_newline_on_the_far_side_is_red[github]
+1 failed, 1 passed, 21 deselected in 0.32s
+restored:  1 file changed, 126 insertions(+), 14 deletions(-)
+```
+
+### Captured run — 2026-09-29T19:03:09Z
+
+- **Command:** `uv run python scripts/philo10_send_job.py fence pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-06-shots/final/20260929T184651Z-send-job-real`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** c0c798ec88ab21c0aeba49ed39248baed36d281c
+
+```text
+fixture_before_run=[]
+session_isolation=[]
+account_leaks=[]
+gh_credentials=[]
+agent receipts=[]
+agent prepared=[]
+owner press file=[]
+read-back file=[]
+owner press github=[]
+read-back github=[]
+agent_prepare zero_read=0
+agent_check zero_read=0
+FENCES GREEN
+```
+
+### Captured run — 2026-09-29T19:03:10Z
+
+- **Command:** `sh -c H=$(mktemp -d); trap "rm -rf $H" EXIT; HOME=$H uv run pytest -q tests/unit/test_philo10_send_job.py tests/unit/test_philo9_room_job.py tests/unit/test_evidence_scratch_guard.py --basetemp $H/bt -p no:cacheprovider 2>&1 | tail -1`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** c0c798ec88ab21c0aeba49ed39248baed36d281c
+
+```text
+71 passed, 3 warnings in 2.23s
 ```

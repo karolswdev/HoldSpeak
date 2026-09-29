@@ -427,8 +427,7 @@ def github_readback(fixture: dict[str, Any], send: dict[str, Any], home: Path) -
             "url_equals_proof": comment.get("html_url") == url, "login": (comment.get("user") or {}).get("login"),
             "created_at": comment.get("created_at"),
             "body_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
-            "body_equals_frozen": body.encode("utf-8") == body_bytes(fixture),
-            "body_equals_frozen_trailing_whitespace_aside": body.rstrip() == fixture["update_body"].rstrip()}
+            "body_equals_frozen": body.encode("utf-8") == body_bytes(fixture)}
 
 
 def recorded_readback(fixture: dict[str, Any], hub_home: Path) -> dict[str, Any]:
@@ -441,17 +440,19 @@ def recorded_readback(fixture: dict[str, Any], hub_home: Path) -> dict[str, Any]
                                    for c in creates]}
 
 
-def readback_findings(key: str, back: dict[str, Any], real: bool) -> list[str]:
+def readback_findings(key: str, back: dict[str, Any], real: bool, *, digest: str) -> list[str]:
+    """The far side's bytes are the frozen bytes EXACTLY: byte equality AND the sha256 of the frozen bytes
+    (Codex Astra r1 on #700: no trimmed equality)."""
     if key == "file":
-        return [] if back.get("exists") and back.get("bytes_equal_frozen") and back.get("in_folder") else \
-            [f"file: the read-back does not match: {back}"]
+        ok = back.get("exists") and back.get("in_folder") and back.get("bytes_equal_frozen") is True \
+            and back.get("sha256") == digest
+        return [] if ok else [f"file: the read-back is not the frozen bytes: {back}"]
     if not real:
-        return [] if back.get("creates") == 1 and all(back.get("body_equals_frozen") or [False]) else \
-            [f"github (recorded): {back}"]
-    if not (back.get("url_equals_proof") and back.get("login") and
-            (back.get("body_equals_frozen") or back.get("body_equals_frozen_trailing_whitespace_aside"))):
-        return [f"github: the read-back does not match: {back}"]
-    return []
+        ok = back.get("creates") == 1 and back.get("body_equals_frozen") == [True] and back.get("body_sha256") == [digest]
+        return [] if ok else [f"github (recorded): {back}"]
+    ok = back.get("url_equals_proof") is True and back.get("login") and back.get("body_equals_frozen") is True \
+        and back.get("body_sha256") == digest
+    return [] if ok else [f"github: the read-back is not the frozen bytes: {back}"]
 
 
 def check_findings(calls: list[tuple[str, dict[str, Any], str]], proofs: dict[str, str],
@@ -820,7 +821,7 @@ def _run(args: argparse.Namespace) -> int:
                     back = (file_readback(fixture, send, folder) if key == "file"
                             else github_readback(fixture, send, hub_home) if real
                             else recorded_readback(fixture, hub_home))
-                    press_f += readback_findings(key, back, real)
+                    press_f += readback_findings(key, back, real, digest=hashlib.sha256(body_bytes(fixture)).hexdigest())
                     if real:
                         record_real_press_proof(LEDGER_PATH, key, send.get("proof"), send.get("state"))
                     out["press"][key] = {"guard": guard, "pressed": True, "pressed_at": pressed_at, "face_answer": answer,
@@ -945,8 +946,9 @@ def fence_run(run_dir: Path) -> int:
     for key, press in (legs.get("press") or {}).items():
         rows.append((f"owner press {key}", owner_press_findings(fixture, key, press["send"], press["receipt"],
                                                                 press["operation"])))
-        rows.append((f"read-back {key}", readback_findings(key, legs["readback"][key],
-                                                           json.loads((run_dir / "run.json").read_text())["mode"] == "real")))
+        rows.append((f"read-back {key}", readback_findings(
+            key, legs["readback"][key], json.loads((run_dir / "run.json").read_text())["mode"] == "real",
+            digest=hashlib.sha256(body_bytes(fixture)).hexdigest())))
     for name, found in rows:
         problems += len(found)
         print(f"{name}={found}")
@@ -956,6 +958,112 @@ def fence_run(run_dir: Path) -> int:
         print(f"{stage} zero_read={len(zero)}")
     print("FENCES GREEN" if not problems else f"FENCES RED: {problems}")
     return 0 if not problems else 1
+
+
+# ── the prepared row re-shot (Codex Astra r1 on #700, condition 2; no send) ──
+
+
+def _pre_press_copy(run_dir: Path, db: Path) -> dict[str, Any]:
+    """The retained DB, COPIED, with the two sends put back to their state before the owner's press
+    (prepared: no boundary, no proof, no history row). The retained file is never opened for writing."""
+    import sqlite3
+    from contextlib import closing
+
+    shutil.copy2(run_dir / "db-proof.sqlite", db)
+    with closing(sqlite3.connect(db)) as conn:
+        ids = [r[0] for r in conn.execute("SELECT id FROM channel_sends WHERE state='sent'")]
+        conn.execute("UPDATE channel_sends SET state='prepared', send_operation_id=NULL, dispatch_started_at=NULL,"
+                     " file_path=NULL, dispatch_seq=NULL, proof_json=NULL, reason=NULL, settled_at=NULL")
+        gone = conn.execute("DELETE FROM project_update_deliveries WHERE send_id IS NOT NULL").rowcount
+        conn.commit()
+    return {"sends_put_back_to_prepared": ids, "history_rows_removed_in_copy": gone}
+
+
+def reshoot_prepared(args: argparse.Namespace) -> int:
+    """PREPARED at 393 (and 1440) from a COPY of the retained real run's DB: each prepared row's heading,
+    its attribution (BY the agent) and its Send seated in view and asserted ON SCREEN (in the viewport,
+    inside every clipping ancestor, on top at three points) -- not DOM text. Nothing is sent: the browser
+    aborts every POST /api/channels/send, gh is a runner that answers nothing, and Send is never pressed."""
+    from playwright.sync_api import sync_playwright
+
+    run_dir = Path(args.run_dir).resolve()
+    fixture = json.loads((run_dir / "fixture.json").read_text())["fixture"]
+    seeded = json.loads((run_dir / "seed.json").read_text())
+    pid, uid = seeded["project_id"], seeded["update_id"]
+    temp_root = Path(tempfile.mkdtemp(prefix="philo10-06-reshoot-"))
+    home = temp_root / "hub-home"
+    db = home / ".local/share/holdspeak/holdspeak.db"
+    db.parent.mkdir(parents=True)
+    out: dict[str, Any] = {"source": "db-proof.sqlite (a COPY; the retained file is unchanged)",
+                           "sha256": hashlib.sha256((run_dir / "db-proof.sqlite").read_bytes()).hexdigest(),
+                           "copy": _pre_press_copy(run_dir, db), "no_send": [], "widths": {}, "shots": []}
+    runner = temp_root / "gh-none.json"
+    runner.write_text(json.dumps({"answers": [{"argv_prefix": ["gh"], "code": 1, "stdout": "",
+                                               "stderr": "re-shoot: no gh"}]}))
+    hub = p7._gw().Hub(home, token=TOKEN, cli_runner=runner).start()
+    visible_js = _visible_js()
+    try:
+        glass = p9._glass()
+        glass._ensure_build()
+        with sync_playwright() as play:
+            browser, pages, errors = p9._pages(play, hub)
+            try:
+                for width, page in pages.items():
+                    page.route("**/api/channels/send", lambda route: (out["no_send"].append(route.request.url),
+                                                                        route.abort()))
+                    _open_room_update(page, hub, pid, uid, glass)
+                    _open_update(page, uid)
+                    page.locator("[data-testid=prepared-row]").first.wait_for(timeout=20_000)
+                    rows = {}
+                    for key in fixture["press_order"]:
+                        name = fixture["destinations"][key]["name"]
+                        row = _prow(name)
+                        if not page.locator(f"{row} [data-testid=prepared-open]").count():
+                            page.locator(f"{row} > .surface-ledger-line").click()
+                            page.locator(f"{row} [data-testid=prepared-open]").wait_for(timeout=20_000)
+                        named = [f"{row} > [data-testid=prepared-row] [data-destination='{name}']",
+                                 f"{row} > [data-testid=prepared-row] [data-testid=prepared-by]",
+                                 f"{row} [data-testid=prepared-send]"]
+                        page.evaluate(SEAT_ROW, row)
+                        page.wait_for_timeout(400)
+                        page.mouse.move(1, 1)
+                        vis = page.evaluate(visible_js, named)
+                        shot = p9._snap(run_dir, page, f"2b-prepared-row-{key}", width)
+                        rows[key] = {"named": vis, "shot": shot,
+                                     "by": page.locator(f"{row} > [data-testid=prepared-row] [data-testid=prepared-by]").inner_text()}
+                        out["shots"].append(shot)
+                    out["widths"][width] = rows
+                out["page_errors"] = errors
+            finally:
+                browser.close()
+    finally:
+        hub.stop()
+        shutil.rmtree(temp_root, ignore_errors=True)
+    by = f"BY {fixture['agent']['identity'].upper()}"
+    findings = [f"{w} {k}: {v['sel']} {v['why']}" for w, rows in out["widths"].items() for k, r in rows.items()
+                for v in r["named"] if not v["ok"]]
+    findings += [f"{w} {k}: attribution {r['by']!r}" for w, rows in out["widths"].items() for k, r in rows.items()
+                 if r["by"].strip() != by]
+    findings += [f"a send was attempted: {u}" for u in out["no_send"]] + list(out.get("page_errors") or [])
+    out["findings"] = findings
+    p7._json_dump(run_dir / "observations" / "prepared-row-reshoot.json", out)
+    print(json.dumps({"findings": findings, "shots": out["shots"]}, indent=1))
+    return 0 if not findings else 1
+
+
+#: Seat a prepared row: its line at the top of the scroller, just under the window's own header.
+SEAT_ROW = r"""(sel) => { const el = document.querySelector(sel); if (!el) return;
+  el.scrollIntoView({block: 'start'});
+  let s = el.parentElement; while (s && !(s.scrollHeight > s.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(s).overflowY))) s = s.parentElement;
+  if (s) s.scrollTop = Math.max(0, s.scrollTop - 90); }"""
+
+
+def _visible_js() -> str:
+    if str(REPO) not in sys.path:
+        sys.path.insert(0, str(REPO))
+    from tests.e2e._send_face_glass import VISIBLE
+
+    return VISIBLE
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -972,6 +1080,8 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--fixture", type=Path, default=FIXTURE_PATH)
     guard = sub.add_parser("guard", help="the exactly-once guard alone: would a real run send again?")
     guard.add_argument("--fixture", type=Path, default=FIXTURE_PATH)
+    reshoot = sub.add_parser("reshoot-prepared", help="PREPARED rows re-shot from a COPY of a retained DB (no send)")
+    reshoot.add_argument("run_dir", type=Path)
     fence = sub.add_parser("fence", help="the fences over a retained run (no new session, no send)")
     fence.add_argument("run_dir", type=Path)
     parser.set_defaults(evidence_dir=evidence_dir)
@@ -984,6 +1094,8 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.mode == "fence":
         return fence_run(args.run_dir.resolve())
+    if args.mode == "reshoot-prepared":
+        return reshoot_prepared(args)
     if args.mode == "guard":
         found = exactly_once_findings(load_fixture(args.fixture.resolve()))
         for line in found:
