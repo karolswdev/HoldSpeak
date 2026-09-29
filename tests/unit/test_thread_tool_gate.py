@@ -367,10 +367,13 @@ class TestClassificationCensus:
                  "project.setup.start", "project.setup.answer"},  # a setup's drafting (prepare-then-press)
     }
 
-    #: #694 (Codex Astra counsel r4, law 9): every function that WRITES a
-    #: delegation or a schedule's authority, found by its writer (not by a tool
-    #: name), and the MCP tools that reach it. A new writer fails the census
-    #: until it is pinned here with its tools.
+    #: #694 (Codex Astra counsels r4 and r5, law 9): every function that WRITES
+    #: a delegation or a schedule's authority, FOUND by its writer (not by a
+    #: tool name). The writer -> MCP tool mapping below is HAND-PINNED from
+    #: reading the callers, not derived reachability: the test proves the
+    #: writer set is exact and that every pinned tool is non-work or carries a
+    #: predicate; it cannot prove a pinned tool set is complete. A new writer
+    #: fails the census until someone reads its callers and pins it.
     MINTERS: dict[tuple[str, str], frozenset[str]] = {
         # the workbench schedule delegation (ScheduleDelegationService)
         ("holdspeak/services/schedule_delegation.py", "enable_from_owner"): frozenset(),  # no caller today
@@ -390,6 +393,10 @@ class TestClassificationCensus:
         ("holdspeak/db/steward.py", "insert_policy_in_transaction"): frozenset({"project.configure_steward"}),
         ("holdspeak/db/steward.py", "update_policy"): frozenset({"project.configure_steward"}),
         ("holdspeak/db/steward.py", "update_policy_in_transaction"): frozenset({"project.configure_steward"}),
+        # an enabled recording written straight to the repository: the calendar
+        # ingest conductor's event-born recordings, under the owner's own
+        # auto-record setting (settings.update: config); no MCP tool reaches it
+        ("holdspeak/calendar_ingest_conductor.py", "_create_event_born_recordings"): frozenset(),
         # the agent grants: HTTP only (/api/mcp/delegations), no MCP tool
         ("holdspeak/kernel/desk.py", "grant_effect"): frozenset(),
         ("holdspeak/kernel/desk.py", "effect"): frozenset(),
@@ -414,8 +421,11 @@ class TestClassificationCensus:
                     minted = False
                     if isinstance(node, ast.Call):
                         callee = getattr(node.func, "attr", getattr(node.func, "id", ""))
+                        receiver = getattr(getattr(node.func, "value", None), "attr", "")
                         minted = callee == "enable_from_owner_in_transaction" or any(
-                            kw.arg == "unattended_enabled"
+                            (kw.arg == "unattended_enabled"
+                             or (kw.arg == "enabled" and receiver == "scheduled_recordings"
+                                 and callee in {"create", "update"}))
                             and not (isinstance(kw.value, ast.Constant) and not kw.value.value)
                             for kw in node.keywords)
                     elif isinstance(node, ast.Constant) and isinstance(node.value, str):

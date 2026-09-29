@@ -204,30 +204,42 @@ def test_context_compaction_keeps_domain_evidence_failures_and_complete_call_pai
     assert ThreadService._interview_exchange_history(domain + first_write + failure + latest) == domain + failure + latest
 
 
-@pytest.mark.skip(reason="QUARANTINED #694: the test drives project.setup.finalize through the thread's "
-                         "bound dispatch to assert the continuation refusal; finalize is CONFIG (the owner's "
-                         "press), no longer in the section, so the call is refused as unavailable before the "
-                         "continuation check. The drafting half (start/resume reuse) is unchanged. BACKLOG row "
-                         "'Interview setup continuation after #694'.")
-def test_setup_continuation_reuses_live_session_and_replaces_expired_session(rig):
-    db, tid, svc = rig
+def _setup_dispatch(rig, states):
+    db, tid, _svc = rig
     command(rig, {"kind": "section", "section": "projects"})
     sessions = []
-    active_state = "active"
+
     def domain(name, arguments, principal):
         assert principal is OWNER
         if name == "project.setup.resume":
-            return {"id": arguments["session_id"], "state": active_state}
+            return {"id": arguments["session_id"], "state": states["active"]}
         assert name == "project.setup.start"
         sessions.append(f"session-{len(sessions)}")
         return {"id": sessions[-1], "state": "active"}
-    dispatch = ThreadService(db, broadcast=lambda *_: None, tool_dispatch_fn=domain)._bound_tool_dispatch(tid)
+    return ThreadService(db, broadcast=lambda *_: None, tool_dispatch_fn=domain)._bound_tool_dispatch(tid)
+
+
+def test_setup_continuation_reuses_live_session_and_replaces_expired_session(rig):
+    # #694 split (Codex Astra counsel r5): the drafting half, live. The
+    # finalize half is the quarantined test below.
+    _db, tid, svc = rig
+    states = {"active": "active"}
+    dispatch = _setup_dispatch(rig, states)
     first = dispatch("project.setup.start", {}, OWNER)
     assert dispatch("project.setup.start", {}, OWNER)["id"] == first["id"]
     assert svc.get(tid)["setup_session_id"] == first["id"]
-    with pytest.raises(ServiceError, match="continuation"):
-        dispatch("project.setup.finalize", {"session_id": "someone-elses-session"}, OWNER)
-    active_state = "expired"
+    states["active"] = "expired"
     replacement = dispatch("project.setup.start", {}, OWNER)
     assert replacement["id"] != first["id"]
     assert svc.get(tid)["setup_session_id"] == replacement["id"]
+
+
+@pytest.mark.skip(reason="QUARANTINED #694: it drives project.setup.finalize through the thread's bound "
+                         "dispatch to assert the continuation refusal; finalize is CONFIG (the owner's press), "
+                         "no longer in the section, so the call is refused as unavailable before the "
+                         "continuation check. BACKLOG row 'Interview setup continuation after #694'.")
+def test_setup_continuation_refuses_a_foreign_session_at_finalize(rig):
+    dispatch = _setup_dispatch(rig, {"active": "active"})
+    dispatch("project.setup.start", {}, OWNER)
+    with pytest.raises(ServiceError, match="continuation"):
+        dispatch("project.setup.finalize", {"session_id": "someone-elses-session"}, OWNER)

@@ -334,6 +334,10 @@ def _schedules(h: Any) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
 
 
 def _one_call(h: Any, tool: str, arguments: dict[str, Any], *, assign: bool) -> _ModelThatSends:
+    return _one_call_in(h, tool, arguments, assign=assign)[0]
+
+
+def _one_call_in(h: Any, tool: str, arguments: dict[str, Any], *, assign: bool) -> tuple[_ModelThatSends, str]:
     from holdspeak.kernel.runtime import _service
 
     mode = h.client.post("/api/recipes", json={"name": f"Mode {tool}", "kind": "mode", "tools": [tool]})
@@ -347,7 +351,7 @@ def _one_call(h: Any, tool: str, arguments: dict[str, Any], *, assign: bool) -> 
         _service().inference_runner._engine_factory = lambda _rev, **_kw: model
     _run_turn(h, thread.json()["id"])
     assert any(tool in palette for palette in model.palettes), model.palettes  # offered: a mixed tool
-    return model
+    return model, thread.json()["id"]
 
 
 def _yolo(hub: Any) -> Any:
@@ -428,3 +432,27 @@ def test_a_yolo_thread_cannot_mint_a_workbench_delegation(hub: Any) -> None:
     # The producer is real: the owner's own press mints the LIVE delegation.
     dispatch("workbench.update", {"workbench_id": bench["id"], "fields": {"schedule_enabled": True}}, OWNER)
     assert [d["state"] for d in _schedules(h)[1]] == ["LIVE"]
+
+
+def test_a_refused_authority_call_keeps_its_named_reason(hub: Any) -> None:
+    """Codex Astra counsel r5 on #694 (P2): the gate's named refusal was
+    persisted as {"error": "tool_unknown"} -- the tool WAS offered. The thread's
+    tool response keeps the class, the reason and that the owner must press."""
+    h = _yolo(hub)
+    _model, tid = _one_call_in(h, "scheduled_recording.create",
+                               {"title": "Review capture", "cron_expr": "0 9 * * 2", "enabled": True}, assign=True)
+    with h.db._connection() as conn:
+        texts = [r["text"] for r in conn.execute(
+            "SELECT p.text FROM thread_messages m JOIN thread_message_parts p ON p.message_id=m.id "
+            "WHERE m.thread_id=? AND m.role='tool' ORDER BY m.rowid", (tid,))]
+        metas = [json.loads(r["meta_json"]) for r in conn.execute(
+            "SELECT p.meta_json FROM thread_messages m JOIN thread_message_parts p ON p.message_id=m.id "
+            "WHERE m.thread_id=? AND p.kind='tool_call' ORDER BY m.rowid", (tid,))]
+    responses = [json.loads(t) for t in texts if t]
+    assert responses, texts
+    refused = responses[0]
+    assert refused["error"] == "tool_denied" and refused["name"] == "scheduled_recording.create", refused
+    assert refused["class"] == "authority" and refused["owner_press_required"] is True, refused
+    assert "schedule or a delegation" in refused["reason"], refused
+    assert metas and metas[0]["class"] == "authority", metas
+    assert _schedules(h)[0] == []
