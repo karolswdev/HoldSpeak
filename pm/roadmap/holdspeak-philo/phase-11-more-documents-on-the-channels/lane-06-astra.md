@@ -2,7 +2,7 @@
 
 **DRAFT — UNCHECKED, awaiting Muad'Dib. Story 06 remains in progress.**
 
-LANE: PHILO-11-06, story 06 part 1. Worktree `/Users/karol/dev/tools/wt-philo-11-06`; branch `feat/philo-11-06`; dispatched base `8a6b807d6682d9446d9b75216bbd3844d203cdcc`. The pre-Phase-11 comparison is `332d9158`. Part 2 follows a new dispatch after story 05 merges.
+LANE: PHILO-11-06, story 06 part 1. Worktree `/Users/karol/dev/tools/wt-philo-11-06`; branch `feat/philo-11-06`; dispatched base `8a6b807d6682d9446d9b75216bbd3844d203cdcc`. The pre-Phase-11 comparison is `332d9158`. Part 2 follows a new dispatch after story 05 merges. PR: [#712](https://github.com/karolswdev/HoldSpeak/pull/712), draft to `main`, titled **PHILO-11-06 — the atlas cases (part 1: .op and Slack)**. Implementation/proof commit: `719a022409fc5c361b62c39c7f7d915e3de978b1`, pushed to `origin/feat/philo-11-06`; Delivery Workbench gate passed 7/7 with `shipped_count=0`.
 
 OUTCOME: built — part 1 is verified and ready for Muad'Dib's check. The full suite is a recorded red run with the dispositions below; it is not claimed green. The scope is the seven new document operation lifecycles and four recorded Slack outcomes. No `web/src` file is in this lane. The face case TODO list is in [story 06](story-06-the-atlas-cases.md#notes).
 
