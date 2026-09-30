@@ -4,13 +4,13 @@
  * its own. Built to the owner's ratified canvases (phase-11 story 03, boards
  * A1-A6, B1-B5, T2, T3).
  *
- * - The brief: `monday_brief:<id>`, labelled `BRIEF <day>`. The Chair's
- *   BRIEF section and Intelligence -> BRIEF show one pick and one press (the
- *   species' store is keyed by the document).
- * - A desk decision (the decision window): `desk_decision:<id>`.
- * - A decision record (Intelligence -> DECISIONS, the Room's DECISIONS &
- *   COMMITMENTS rows, also the rows marked `source="meeting"`):
- *   `decision_record:<id>`, never `meeting_decision:<id>` (design 6a).
+ * - The brief: kind `monday_brief` plus the brief id, labelled `BRIEF <day>`.
+ *   The Chair's BRIEF section and Intelligence → BRIEF show one pick and one
+ *   press (the species' store is keyed by the document).
+ * - A desk decision (the decision window): kind `desk_decision`.
+ * - A decision record (Intelligence → DECISIONS, the Room's DECISIONS &
+ *   COMMITMENTS rows, also the rows marked `source="meeting"`): kind
+ *   `decision_record`, never the lifecycle kind (design 6a).
  */
 import type { ReactNode } from "react";
 import { PreparedChip, SendWells, mergeKnown, useSends, type DocRef } from "./surface/send";

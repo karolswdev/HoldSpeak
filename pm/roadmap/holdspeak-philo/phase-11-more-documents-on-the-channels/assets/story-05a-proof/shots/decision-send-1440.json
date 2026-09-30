@@ -3,7 +3,7 @@
     "B1-decision-window-picked-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -19,7 +19,7 @@
       "history_head": null,
       "last_chips": [],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "0b70ddb1215ce7c6aafd37a000aaaee5e704e6e407257b010ebe0ccc02891412",
+      "masked_sha": "905e82f9538749140c6555fa0fe393b9a8cd981e316272b7d24b7154faa5de76",
       "modal": false,
       "named": [
         {
@@ -58,7 +58,7 @@
       },
       "prepared": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -111,7 +111,7 @@
       },
       "stale_words": [],
       "wells": [
-        "desk_decision:decision_796031de04c3"
+        "desk_decision:decision_9457f11636a0"
       ],
       "window": true,
       "window_width": 400
@@ -119,7 +119,7 @@
     "B2-decision-saved-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 12:07 THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 13:21 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -127,26 +127,26 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-1a6ac2e7.md SEP 30 12:07"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-4dd877fa.md SEP 30 13:21"
       ],
       "history_head": "SENDS 1",
       "kernel_send": {
         "name": "channel.send",
-        "operation_id": "op_8aa91d74d0e64290a47a113d88410853",
+        "operation_id": "op_a345d6c8040b4f60a288ca34279bed6e",
         "principal_identity": "owner-session",
         "principal_kind": "owner",
         "receipt_outcome": "succeeded",
         "receipt_state": "succeeded",
         "receipts": 1,
-        "result_ref": "channel_send:chs_1a6ac2e7e7ea721bf061fe74",
+        "result_ref": "channel_send:chs_4dd877faa0da93e6c9c8eb0a",
         "state": "succeeded",
-        "target_ref": "document:desk_decision:decision_796031de04c3"
+        "target_ref": "document:desk_decision:decision_9457f11636a0"
       },
       "last_chips": [
-        "✓ SAVED 12:07"
+        "✓ SAVED 13:21"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "cec98ae0ff02044a27c9f66e163d7f9bff0ee70eb23070d49f0f8fd39504e605",
+      "masked_sha": "6b784fe6462efd2977b71aaba515ab943195a8c1df32399859661e32c57b7708",
       "modal": false,
       "named": [
         {
@@ -158,7 +158,7 @@
         {
           "ok": true,
           "sel": ".desk-window [data-seat=desk-decision] [data-testid=destination-row]:has([data-destination='Team folder']) [data-testid=send-last-sent]",
-          "text": "✓ SAVED 12:07",
+          "text": "✓ SAVED 13:21",
           "why": ""
         }
       ],
@@ -185,7 +185,7 @@
       },
       "prepared": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -203,7 +203,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-1a6ac2e7.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-4dd877fa.md"
         }
       ],
       "room_open_verbs": [],
@@ -245,7 +245,7 @@
       },
       "stale_words": [],
       "wells": [
-        "desk_decision:decision_796031de04c3"
+        "desk_decision:decision_9457f11636a0"
       ],
       "window": true,
       "window_width": 400
@@ -253,21 +253,21 @@
     "B2b-decision-history-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 12:07 THIS DEVICE"
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 13:21 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE"
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-1a6ac2e7.md SEP 30 12:07"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-4dd877fa.md SEP 30 13:21"
       ],
       "history_head": "SENDS 1",
       "last_chips": [
-        "✓ SAVED 12:07"
+        "✓ SAVED 13:21"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "e66746dd4644f83e049c867d895403f1f7dbbe01bcff06e6f9c9bfd6608a687e",
+      "masked_sha": "6f17a4f9dd7b41c5ea854391b84a6815c22300e3385289250be4fd6c1182cbd9",
       "modal": false,
       "named": [
         {
@@ -339,7 +339,7 @@
       },
       "stale_words": [],
       "wells": [
-        "desk_decision:decision_796031de04c3"
+        "desk_decision:decision_9457f11636a0"
       ],
       "window": true,
       "window_width": 400
@@ -347,7 +347,7 @@
     "B3-decision-edited-send-again-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 12:07 THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 13:21 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -355,14 +355,14 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-1a6ac2e7.md SEP 30 12:07"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-4dd877fa.md SEP 30 13:21"
       ],
       "history_head": "SENDS 1",
       "last_chips": [
-        "✓ SAVED 12:07"
+        "✓ SAVED 13:21"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "fab659bccf0b01ff186f1a3ede9bc01da7137f7bfff574eebf419ec7dae5bdee",
+      "masked_sha": "7999a165160c29e128ff3f8d06476d98f84ec531848c8fc622dd2a42825adb9b",
       "modal": false,
       "named": [
         {
@@ -380,7 +380,7 @@
       },
       "prepared": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -398,7 +398,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-1a6ac2e7.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-4dd877fa.md"
         }
       ],
       "room_open_verbs": [],
@@ -441,7 +441,7 @@
       "stale_words": [],
       "verb": "Send again",
       "wells": [
-        "desk_decision:decision_796031de04c3"
+        "desk_decision:decision_9457f11636a0"
       ],
       "window": true,
       "window_width": 400
@@ -449,7 +449,7 @@
     "B3b-decision-edited-sent-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 12:07 THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 13:22 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -457,27 +457,27 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-dcb8cec2.md SEP 30 12:07",
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-1a6ac2e7.md SEP 30 12:07"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-58311557.md SEP 30 13:22",
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-4dd877fa.md SEP 30 13:21"
       ],
       "history_head": "SENDS 2",
       "kernel_send": {
         "name": "channel.send",
-        "operation_id": "op_575e36e28885487e9b8ee62b8fcc9213",
+        "operation_id": "op_f2c68dd81f984051b326feab1597fffc",
         "principal_identity": "owner-session",
         "principal_kind": "owner",
         "receipt_outcome": "succeeded",
         "receipt_state": "succeeded",
         "receipts": 1,
-        "result_ref": "channel_send:chs_dcb8cec2b1329187f30366cb",
+        "result_ref": "channel_send:chs_58311557740ca170e0b6e03a",
         "state": "succeeded",
-        "target_ref": "document:desk_decision:decision_796031de04c3"
+        "target_ref": "document:desk_decision:decision_9457f11636a0"
       },
       "last_chips": [
-        "✓ SAVED 12:07"
+        "✓ SAVED 13:22"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "a8c940a1c6df5a47ec7762a43952612e9d603bf741874923e782ae3a034b9452",
+      "masked_sha": "868225c5f0b23740da60c4bce60e699708d9ec51d4aac55a88df8f5fc0d3cae4",
       "modal": false,
       "named": [
         {
@@ -510,7 +510,7 @@
       },
       "prepared": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -528,7 +528,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-dcb8cec2.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-58311557.md"
         }
       ],
       "room_open_verbs": [],
@@ -571,7 +571,7 @@
       },
       "stale_words": [],
       "wells": [
-        "desk_decision:decision_796031de04c3"
+        "desk_decision:decision_9457f11636a0"
       ],
       "window": true,
       "window_width": 400
@@ -579,7 +579,7 @@
     "T2a-preview-changed-fresh-preview-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 12:07 THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 13:22 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -587,23 +587,23 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-dcb8cec2.md SEP 30 12:07",
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-1a6ac2e7.md SEP 30 12:07"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-58311557.md SEP 30 13:22",
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-4dd877fa.md SEP 30 13:21"
       ],
       "history_head": "SENDS 2",
       "kernel_refusal": {
         "name": "channel.send",
-        "operation_id": "op_f236208c0b5d431ebc01fbd49da70df6",
+        "operation_id": "op_dfd692caa562498abbe6d1b012f96ec1",
         "receipt_outcome": "preview_changed",
         "receipt_state": "refused",
         "state": "refused",
-        "target_ref": "document:desk_decision:decision_796031de04c3"
+        "target_ref": "document:desk_decision:decision_9457f11636a0"
       },
       "last_chips": [
-        "✓ SAVED 12:07"
+        "✓ SAVED 13:22"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "03e54226900e3803acc7463aaa8c7b6fb2276454c4a90acdb0e3938a9edf8b46",
+      "masked_sha": "8f278a6b5c57f9d243841a53a080478268532952de5e4b7ac01b5ea1bb36c779",
       "modal": false,
       "named": [
         {
@@ -642,7 +642,7 @@
       },
       "prepared": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -703,7 +703,7 @@
       },
       "stale_words": [],
       "wells": [
-        "desk_decision:decision_796031de04c3"
+        "desk_decision:decision_9457f11636a0"
       ],
       "window": true,
       "window_width": 400
@@ -711,7 +711,7 @@
     "T2a2-preview-changed-passage-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 12:07 THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 13:22 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -719,15 +719,15 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-dcb8cec2.md SEP 30 12:07",
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-1a6ac2e7.md SEP 30 12:07"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-58311557.md SEP 30 13:22",
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-4dd877fa.md SEP 30 13:21"
       ],
       "history_head": "SENDS 2",
       "last_chips": [
-        "✓ SAVED 12:07"
+        "✓ SAVED 13:22"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "346220215d035844e8109bf1cc404c970b2bc3e24d04f962f107d5a4db06eb3c",
+      "masked_sha": "bfb06bd840addf81e038236435b971569ff85ff989b1a1a71f7b1b37e4b36144",
       "modal": false,
       "named": [
         {
@@ -745,7 +745,7 @@
       },
       "prepared": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -806,7 +806,7 @@
       },
       "stale_words": [],
       "wells": [
-        "desk_decision:decision_796031de04c3"
+        "desk_decision:decision_9457f11636a0"
       ],
       "window": true,
       "window_width": 400
@@ -814,7 +814,7 @@
     "T2b-preview-changed-sent-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 12:08 THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder ✓ SAVED 13:22 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -822,28 +822,28 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-a1cb07fa.md SEP 30 12:08",
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-dcb8cec2.md SEP 30 12:07",
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-1a6ac2e7.md SEP 30 12:07"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-35ed0655.md SEP 30 13:22",
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-58311557.md SEP 30 13:22",
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-4dd877fa.md SEP 30 13:21"
       ],
       "history_head": "SENDS 3",
       "kernel_send": {
         "name": "channel.send",
-        "operation_id": "op_c27dee53f0ea444bbfde236604155d57",
+        "operation_id": "op_5255e4eea9c540e18f4a01a78f78e3d4",
         "principal_identity": "owner-session",
         "principal_kind": "owner",
         "receipt_outcome": "succeeded",
         "receipt_state": "succeeded",
         "receipts": 1,
-        "result_ref": "channel_send:chs_a1cb07fa9499c06eb9f6c48a",
+        "result_ref": "channel_send:chs_35ed0655e6b8435923ace94e",
         "state": "succeeded",
-        "target_ref": "document:desk_decision:decision_796031de04c3"
+        "target_ref": "document:desk_decision:decision_9457f11636a0"
       },
       "last_chips": [
-        "✓ SAVED 12:08"
+        "✓ SAVED 13:22"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "182ee5647e7ce87b27680526a4c7e0934cce6a0dbc961063f4c82bd320bda136",
+      "masked_sha": "9bf584bcb2678abab90e87f39e34ba705cf6996e5f949a3fd4ca916a47a5911e",
       "modal": false,
       "named": [
         {
@@ -876,7 +876,7 @@
       },
       "prepared": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -894,7 +894,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-a1cb07fa.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-35ed0655.md"
         }
       ],
       "room_open_verbs": [],
@@ -938,31 +938,31 @@
       },
       "stale_words": [],
       "wells": [
-        "desk_decision:decision_796031de04c3"
+        "desk_decision:decision_9457f11636a0"
       ],
       "window": true,
       "window_width": 400
     }
   },
-  "decision": "decision_796031de04c3",
+  "decision": "decision_9457f11636a0",
   "hub_sends": [
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-30T18:07:50.297778+00:00",
-      "destination_id": "chd_befcd35461944bbe49f46ef9",
+      "created_at": "2026-09-30T19:21:53.934608+00:00",
+      "destination_id": "chd_b50a6840eee978f37b61beaf",
       "destination_name": "Team folder",
       "dispatch_seq": 1,
-      "dispatch_started_at": "2026-09-30T18:07:50.297778+00:00",
+      "dispatch_started_at": "2026-09-30T19:21:53.934608+00:00",
       "document_json": {
-        "label": "DECISION decision_796031de04c3",
+        "label": "DECISION decision_9457f11636a0",
         "slug": "freeze-the-old-ledger-on-nov-3",
         "title": "Freeze the old ledger on Nov 3"
       },
-      "document_ref": "desk_decision:decision_796031de04c3",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-1a6ac2e7.md",
-      "id": "chs_1a6ac2e7e7ea721bf061fe74",
+      "document_ref": "desk_decision:decision_9457f11636a0",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-4dd877fa.md",
+      "id": "chs_4dd877faa0da93e6c9c8eb0a",
       "payload_digest": "590f49620fd211ff89fddf8da7787dca6350be5eac21da51830ae87205fb1899",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -973,37 +973,37 @@
         "text": "# Freeze the old ledger on Nov 3\nStatus: accepted\n\n## Deciders\nKarol, Priya\n\n## Context\nThe cutover rehearsal showed two write paths into the old ledger.\n\n## Decision\nFreeze the old ledger on Nov 3. All writes go to the new ledger after that day.\n\n## Consequences\n- Finance runs one extra reconciliation.\n- Rollback window closes Nov 10.\n"
       },
       "proof": {
-        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-1a6ac2e7.md",
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-4dd877fa.md",
         "sha256": "590f49620fd211ff89fddf8da7787dca6350be5eac21da51830ae87205fb1899",
         "size": 338
       },
       "reason": null,
-      "send_operation_id": "op_8aa91d74d0e64290a47a113d88410853",
-      "settled_at": "2026-09-30T18:07:50+00:00",
+      "send_operation_id": "op_a345d6c8040b4f60a288ca34279bed6e",
+      "settled_at": "2026-09-30T19:21:53+00:00",
       "size": 338,
       "state": "sent",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder"
       },
-      "target_digest": "1447995338c4c5e081e300cf9aac87848f56d0f26f07e1ab8af5229f4e2925da"
+      "target_digest": "60536535afce79e371456bc6d773d1e5cf9299acdacb3773ef9150686408c11e"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-30T18:07:56.518372+00:00",
-      "destination_id": "chd_befcd35461944bbe49f46ef9",
+      "created_at": "2026-09-30T19:22:00.142711+00:00",
+      "destination_id": "chd_b50a6840eee978f37b61beaf",
       "destination_name": "Team folder",
       "dispatch_seq": 2,
-      "dispatch_started_at": "2026-09-30T18:07:56.518372+00:00",
+      "dispatch_started_at": "2026-09-30T19:22:00.142711+00:00",
       "document_json": {
-        "label": "DECISION decision_796031de04c3",
+        "label": "DECISION decision_9457f11636a0",
         "slug": "freeze-the-old-ledger-on-nov-3",
         "title": "Freeze the old ledger on Nov 3"
       },
-      "document_ref": "desk_decision:decision_796031de04c3",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-dcb8cec2.md",
-      "id": "chs_dcb8cec2b1329187f30366cb",
+      "document_ref": "desk_decision:decision_9457f11636a0",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-58311557.md",
+      "id": "chs_58311557740ca170e0b6e03a",
       "payload_digest": "d13fc6384fc9b2ac34c0fdac723f38ca95ec3e1e0afdaf1b995615dd750c5887",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -1014,37 +1014,37 @@
         "text": "# Freeze the old ledger on Nov 3\nStatus: accepted\n\n## Deciders\nKarol, Priya\n\n## Context\nThe cutover rehearsal showed two write paths into the old ledger.\n\n## Decision\nFreeze the old ledger on Nov 5. All writes go to the new ledger after that day.\n\n## Consequences\n- Finance runs one extra reconciliation.\n- Rollback window closes Nov 10.\n"
       },
       "proof": {
-        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-dcb8cec2.md",
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-58311557.md",
         "sha256": "d13fc6384fc9b2ac34c0fdac723f38ca95ec3e1e0afdaf1b995615dd750c5887",
         "size": 338
       },
       "reason": null,
-      "send_operation_id": "op_575e36e28885487e9b8ee62b8fcc9213",
-      "settled_at": "2026-09-30T18:07:56+00:00",
+      "send_operation_id": "op_f2c68dd81f984051b326feab1597fffc",
+      "settled_at": "2026-09-30T19:22:00+00:00",
       "size": 338,
       "state": "sent",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder"
       },
-      "target_digest": "1447995338c4c5e081e300cf9aac87848f56d0f26f07e1ab8af5229f4e2925da"
+      "target_digest": "60536535afce79e371456bc6d773d1e5cf9299acdacb3773ef9150686408c11e"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-30T18:08:02.177423+00:00",
-      "destination_id": "chd_befcd35461944bbe49f46ef9",
+      "created_at": "2026-09-30T19:22:05.822426+00:00",
+      "destination_id": "chd_b50a6840eee978f37b61beaf",
       "destination_name": "Team folder",
       "dispatch_seq": 3,
-      "dispatch_started_at": "2026-09-30T18:08:02.177423+00:00",
+      "dispatch_started_at": "2026-09-30T19:22:05.822426+00:00",
       "document_json": {
-        "label": "DECISION decision_796031de04c3",
+        "label": "DECISION decision_9457f11636a0",
         "slug": "freeze-the-old-ledger-on-nov-3",
         "title": "Freeze the old ledger on Nov 3"
       },
-      "document_ref": "desk_decision:decision_796031de04c3",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-a1cb07fa.md",
-      "id": "chs_a1cb07fa9499c06eb9f6c48a",
+      "document_ref": "desk_decision:decision_9457f11636a0",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-35ed0655.md",
+      "id": "chs_35ed0655e6b8435923ace94e",
       "payload_digest": "d69afdf141d4370f72b7889e9f1f27e386cacceef078a62f25a898f9fdab5c7e",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -1055,19 +1055,19 @@
         "text": "# Freeze the old ledger on Nov 3\nStatus: accepted\n\n## Deciders\nKarol, Priya\n\n## Context\nThe cutover rehearsal showed two write paths into the old ledger.\n\n## Decision\nFreeze the old ledger on Nov 6. All writes go to the new ledger after that day.\n\n## Consequences\n- Finance runs one extra reconciliation.\n- Rollback window closes Nov 10.\n"
       },
       "proof": {
-        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-796031de04c3-a1cb07fa.md",
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-decision-9457f11636a0-35ed0655.md",
         "sha256": "d69afdf141d4370f72b7889e9f1f27e386cacceef078a62f25a898f9fdab5c7e",
         "size": 338
       },
       "reason": null,
-      "send_operation_id": "op_c27dee53f0ea444bbfde236604155d57",
-      "settled_at": "2026-09-30T18:08:02+00:00",
+      "send_operation_id": "op_5255e4eea9c540e18f4a01a78f78e3d4",
+      "settled_at": "2026-09-30T19:22:05+00:00",
       "size": 338,
       "state": "sent",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3060/test_the_decision_window_well_0/Reports/Teamfolder"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3064/test_the_decision_window_well_0/Reports/Teamfolder"
       },
-      "target_digest": "1447995338c4c5e081e300cf9aac87848f56d0f26f07e1ab8af5229f4e2925da"
+      "target_digest": "60536535afce79e371456bc6d773d1e5cf9299acdacb3773ef9150686408c11e"
     }
   ]
 }

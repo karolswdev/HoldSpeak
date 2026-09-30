@@ -291,3 +291,85 @@ bundle gate passed (Desk JS 1337153 B; Desk CSS 324838 B; source maps 0)
 0 scripts/gen_operations_json.py --check
 0 scripts/philo_openapi_reference.py --check
 ```
+
+### Captured run — 2026-09-30T19:19:36Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.zTK0paU8SK uv run pytest -q -p no:cacheprovider tests/unit/test_ux_canon_ratchet.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 369d0be1f61461eec83c7c499e089cbf0003d492
+
+```text
+....                                                                     [100%]
+4 passed in 0.81s
+```
+
+### Re-capture after the ux-canon ratchet fix (2026-09-30)
+
+The ratchet flagged a comment in `web/src/desk/documentSends.tsx` (the scanner read the text between `->` and `<id>` as JSX text); the comment is reworded, no face changed, and the ceiling is untouched (raw-ids back to 17). Two captures at 19:19:38Z failed because `web/node_modules` was empty in this worktree (no build, no vitest; nothing of the tree under test); they are removed here, `npm ci` restored the modules, and the captures below re-ran.
+
+### Captured run — 2026-09-30T19:20:18Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.kW7QcJF9Kb HOLDSPEAK_EVIDENCE_WRITE=1 PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run pytest -q -rA -p no:cacheprovider tests/e2e/test_philo11_05a_brief_decision_send_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 369d0be1f61461eec83c7c499e089cbf0003d492
+
+```text
+........                                                                 [100%]
+==================================== PASSES ====================================
+_ TestBriefAndDecisionSendGlass.test_the_brief_well_on_the_chair_and_in_intelligence[1440] _
+---------------------------- Captured stdout setup -----------------------------
+[glass_infra] web bundle rebuilt in 5.1s
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_brief_well_on_the_chair_and_in_intelligence[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_decision_window_well_and_preview_changed[1440] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_decision_window_well_and_preview_changed[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_decision_record_wells_in_the_room_and_intelligence[1440] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_decision_record_wells_in_the_room_and_intelligence[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestChairMeetingsAndBriefToSlack.test_the_chair_meeting_wells_and_the_brief_to_slack[1440] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestChairMeetingsAndBriefToSlack.test_the_chair_meeting_wells_and_the_brief_to_slack[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_brief_well_on_the_chair_and_in_intelligence[1440]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_brief_well_on_the_chair_and_in_intelligence[393]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_window_well_and_preview_changed[1440]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_window_well_and_preview_changed[393]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_record_wells_in_the_room_and_intelligence[1440]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_record_wells_in_the_room_and_intelligence[393]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestChairMeetingsAndBriefToSlack::test_the_chair_meeting_wells_and_the_brief_to_slack[1440]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestChairMeetingsAndBriefToSlack::test_the_chair_meeting_wells_and_the_brief_to_slack[393]
+8 passed in 213.95s (0:03:33)
+```
+
+### Captured run — 2026-09-30T19:23:56Z
+
+- **Command:** `sh -c cd web && npx vitest run src/desk/__tests__/philo301DecisionFace.test.tsx src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx src/desk/surface/send src/features/channels/__tests__/SendWell.test.tsx src/desk/pullouts src/features/project-room src/desk/chair`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 369d0be1f61461eec83c7c499e089cbf0003d492
+
+```text
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-11-05a/web
+
+
+ Test Files  59 passed (59)
+      Tests  676 passed (676)
+   Start at  13:23:56
+   Duration  7.15s (transform 6.35s, setup 4.86s, import 23.80s, tests 21.09s, environment 17.66s)
+```
