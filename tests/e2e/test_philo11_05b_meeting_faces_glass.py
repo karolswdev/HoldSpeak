@@ -438,8 +438,9 @@ class TestMeetingFacesGlass:
                 page.locator(f"{MR} [data-testid=send-well][data-doc='{followup_ref}']").wait_for(timeout=T)
                 page.locator(f"{MR} [data-testid=destination-row]").first.wait_for(timeout=T)
                 self._pick(page, MR, FOLDER)
-                boards.shoot(page, "C5b-followup-form-folder", [f"{MR} [data-testid=doc-forms] select", self._row(MR, FOLDER)],
-                             seat=f"{MR} [data-testid=doc-forms]", anchor=MR)
+                assert page.locator(f"{MR} [data-testid=doc-forms] select").input_value() == "meeting_followup"
+                boards.shoot(page, "C5b-followup-form-folder", [f"{self._opened(MR, FOLDER)} [data-testid=send-verb]"],
+                             seat=f"CENTER:{self._opened(MR, FOLDER)} [data-testid=send-verb]", anchor=MR)
                 c5b_body = page.locator(f"{self._opened(MR, FOLDER)} [data-testid=send-preview-body]").inner_text()
                 assert SENTINEL not in c5b_body
                 self._press(page, MR, FOLDER)
