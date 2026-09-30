@@ -1,0 +1,887 @@
+{
+  "boards": {
+    "A6-brief-slack-person-sections-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder THIS DEVICE",
+        "● Slack #leads SLACK #leads HOOKS.SLACK.COM",
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM",
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder ✓ SAVED 13:42 THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM",
+        "HOOKS.SLACK.COM",
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM",
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder/2026-09-30-ledger-cutover-sync-summary-2026-09-30-3d642b52.md SEP 30 13:42"
+      ],
+      "history_head": "SENDS 1",
+      "last_chips": [
+        "✓ SAVED 13:42"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "7d093c7e90ec78b80fc8e1a6a67168ad9f0335110ebfd5a598745c57bf06c756",
+      "modal": false,
+      "named": [],
+      "no_answer_shown": false,
+      "person_line_on_screen": true,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              104,
+              44
+            ],
+            "text": "Summary\nDigest\nFollow-up"
+          },
+          {
+            "target": [
+              369,
+              107
+            ],
+            "text": "○\nTeam folder\nFILE\n/private/va"
+          },
+          {
+            "target": [
+              369,
+              55
+            ],
+            "text": "○\nSlack #leads\nSLACK\n#leads\nHO"
+          }
+        ],
+        "reached_by_scroll": [
+          {
+            "points_under_host_bar": 9,
+            "text": "○\nTeam folder\nFILE\n/private/va",
+            "wheel_steps": 2
+          },
+          {
+            "points_under_host_bar": 6,
+            "text": "○\nSlack #leads\nSLACK\n#leads\nHO",
+            "wheel_steps": 2
+          }
+        ]
+      },
+      "prepared": [],
+      "preview_fields": [
+        "CHANNEL #leads",
+        "WEBHOOK hooks.slack.com"
+      ],
+      "preview_fonts": [],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "8 WORDS"
+          },
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "8 WORDS"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "monday_brief:brief-bb63725f347c4641a560cc3a45b77ee7",
+        "meeting_summary:c6-retry",
+        "meeting_summary:c6-sync"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "A6b-brief-slack-posted-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder THIS DEVICE",
+        "● Slack #leads SLACK #leads ✓ POSTED 13:43 HOOKS.SLACK.COM",
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM",
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder ✓ SAVED 13:42 THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM",
+        "HOOKS.SLACK.COM",
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM",
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Slack #leads POSTED #leads SEP 30 13:43",
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder/2026-09-30-ledger-cutover-sync-summary-2026-09-30-3d642b52.md SEP 30 13:42"
+      ],
+      "history_head": "SENDS 1",
+      "kernel_send": {
+        "name": "channel.send",
+        "operation_id": "op_5c5c51643a6545fcac2a943315a75534",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "receipt_outcome": "succeeded",
+        "receipt_state": "succeeded",
+        "receipts": 1,
+        "result_ref": "channel_send:chs_7bc2f8fb7f586c5a0cb50383",
+        "state": "succeeded",
+        "target_ref": "document:monday_brief:brief-bb63725f347c4641a560cc3a45b77ee7"
+      },
+      "last_chips": [
+        "✓ POSTED 13:43",
+        "✓ SAVED 13:42"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "0f5994128c5e009d3e1b31f385f74a85cedb40df934d2139e6a075c0fd152da1",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".chair [data-seat=brief] [data-testid=send-open][data-destination='Slack #leads'] [data-receipt=latest]",
+          "text": "✓ POSTED #leads",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              369,
+              77
+            ],
+            "text": "●\nSlack #leads\nSLACK\n#leads\n✓\n"
+          },
+          {
+            "target": [
+              90,
+              44
+            ],
+            "text": "Send again"
+          }
+        ],
+        "reached_by_scroll": []
+      },
+      "prepared": [],
+      "preview_fields": [
+        "CHANNEL #leads",
+        "WEBHOOK hooks.slack.com"
+      ],
+      "preview_fonts": [],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ POSTED #leads"
+        }
+      ],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "8 WORDS"
+          },
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "8 WORDS"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "monday_brief:brief-bb63725f347c4641a560cc3a45b77ee7",
+        "meeting_summary:c6-retry",
+        "meeting_summary:c6-sync"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "C6b-chair-meetings-row-well-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM",
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM",
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "last_chips": [],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "90bb8cda1a8a812a6bfa64c70df82a16fd5aa0c8b2f3767221ddb46d036d877b",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-sync']) .meeting-summary-slab, li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-sync']) [data-testid=meeting-summary-text]",
+          "text": "The team agreed to freeze the old ledger on Nov 3.",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-sync']) [data-seat=meeting] [data-testid=doc-forms]",
+          "text": "↻ Summary Digest Follow-up",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-sync']) [data-seat=meeting] [data-testid=destination-row]",
+          "text": "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pyte",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "picker_after_scroll": {
+        "nine_points_owned": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "under_bar_first": {
+          "by": "arrival-capture-bar",
+          "covered": true
+        },
+        "wheel_steps": 2
+      },
+      "picker_box": [
+        104,
+        44,
+        "SELECT"
+      ],
+      "picker_owned": [
+        {
+          "target": [
+            104,
+            44
+          ],
+          "text": "Summary\nDigest\nFollow-up"
+        }
+      ],
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              104,
+              44
+            ],
+            "text": "Summary\nDigest\nFollow-up"
+          },
+          {
+            "target": [
+              369,
+              107
+            ],
+            "text": "○\nTeam folder\nFILE\n/private/va"
+          },
+          {
+            "target": [
+              369,
+              55
+            ],
+            "text": "○\nSlack #leads\nSLACK\n#leads\nHO"
+          }
+        ],
+        "reached_by_scroll": [
+          {
+            "points_under_host_bar": 3,
+            "text": "○\nSlack #leads\nSLACK\n#leads\nHO",
+            "wheel_steps": 1
+          }
+        ]
+      },
+      "prepared": [],
+      "preview_fields": [],
+      "preview_fonts": [],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "8 WORDS"
+          },
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "8 WORDS"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "meeting_summary:c6-retry",
+        "meeting_summary:c6-sync"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "C6c-chair-meetings-row-saved-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM",
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder ✓ SAVED 13:42 THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM",
+        "THIS DEVICE",
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder/2026-09-30-ledger-cutover-sync-summary-2026-09-30-3d642b52.md SEP 30 13:42"
+      ],
+      "history_head": "SENDS 1",
+      "kernel_send": {
+        "name": "channel.send",
+        "operation_id": "op_6bf7ec4d17e944e6b1f51653e117f3f2",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "receipt_outcome": "succeeded",
+        "receipt_state": "succeeded",
+        "receipts": 1,
+        "result_ref": "channel_send:chs_3d642b5275ddab977b75aaef",
+        "state": "succeeded",
+        "target_ref": "document:meeting_summary:c6-sync"
+      },
+      "last_chips": [
+        "✓ SAVED 13:42"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "3b9088febaaceb27c3644750a65d79b8c566ad6d274b64c37c769a630c8d3f4c",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-sync']) [data-seat=meeting] [data-testid=send-open][data-destination='Team folder'] [data-receipt=latest]",
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              90,
+              44
+            ],
+            "text": "Send again"
+          },
+          {
+            "target": [
+              369,
+              55
+            ],
+            "text": "○\nSlack #leads\nSLACK\n#leads\nHO"
+          }
+        ],
+        "reached_by_scroll": []
+      },
+      "prepared": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder"
+      ],
+      "preview_fonts": [
+        "Inter",
+        "Inter",
+        "Inter"
+      ],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder/2026-09-30-ledger-cutover-sync-summary-2026-09-30-3d642b52.md"
+        }
+      ],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "8 WORDS"
+          },
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "8 WORDS"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "meeting_summary:c6-retry",
+        "meeting_summary:c6-sync"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "C6e-chair-retained-summary-well-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM",
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder ✓ SAVED 13:42 THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM",
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder/2026-09-30-ledger-cutover-sync-summary-2026-09-30-3d642b52.md SEP 30 13:42"
+      ],
+      "history_head": "SENDS 1",
+      "last_chips": [
+        "✓ SAVED 13:42"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "90d4e00f6e7fccdfc5f67ec80959ca2e244f0ac28b99060151d97cd2e53753db",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-retry']) [data-testid=arrival-summary-status]",
+          "text": "FAILED LAST ERROR · ENGINE ANSWERED 500",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-retry']) [data-seat=meeting] [data-testid=doc-forms]",
+          "text": "↻ Summary Digest Follow-up",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-retry']) [data-seat=meeting] [data-testid=destination-row]",
+          "text": "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pyte",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              104,
+              44
+            ],
+            "text": "Summary\nDigest\nFollow-up"
+          },
+          {
+            "target": [
+              369,
+              107
+            ],
+            "text": "○\nTeam folder\nFILE\n/private/va"
+          },
+          {
+            "target": [
+              369,
+              55
+            ],
+            "text": "○\nSlack #leads\nSLACK\n#leads\nHO"
+          }
+        ],
+        "reached_by_scroll": []
+      },
+      "prepared": [],
+      "preview_fields": [],
+      "preview_fonts": [],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "8 WORDS"
+          },
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "8 WORDS"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "meeting_summary:c6-retry",
+        "meeting_summary:c6-sync"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "C6f-chair-picker-scrolled-clear-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM",
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM",
+        "THIS DEVICE",
+        "HOOKS.SLACK.COM"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "last_chips": [],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "e1ac5696e67e89fcc1aba3c7a1ddd90c35228b0509a4a9c9bce9232e356ca948",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-sync']) [data-seat=meeting] [data-testid=doc-forms]",
+          "text": "↻ Summary Digest Follow-up",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              369,
+              55
+            ],
+            "text": "○\nSlack #leads\nSLACK\n#leads\nHO"
+          },
+          {
+            "target": [
+              104,
+              44
+            ],
+            "text": "Summary\nDigest\nFollow-up"
+          },
+          {
+            "target": [
+              369,
+              107
+            ],
+            "text": "○\nTeam folder\nFILE\n/private/va"
+          },
+          {
+            "target": [
+              369,
+              55
+            ],
+            "text": "○\nSlack #leads\nSLACK\n#leads\nHO"
+          }
+        ],
+        "reached_by_scroll": [
+          {
+            "points_under_host_bar": 3,
+            "text": "○\nTeam folder\nFILE\n/private/va",
+            "wheel_steps": 1
+          },
+          {
+            "points_under_host_bar": 9,
+            "text": "○\nSlack #leads\nSLACK\n#leads\nHO",
+            "wheel_steps": 1
+          }
+        ]
+      },
+      "prepared": [],
+      "preview_fields": [],
+      "preview_fonts": [],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "8 WORDS"
+          },
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "8 WORDS"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "meeting_summary:c6-retry",
+        "meeting_summary:c6-sync"
+      ],
+      "window": true,
+      "window_width": 393
+    }
+  },
+  "edge_requests": 1,
+  "hub_sends": {
+    "brief_slack": [
+      {
+        "account": {
+          "key_ref": "slack_57bcb879671218be93c6d2f6"
+        },
+        "badge": "cloud",
+        "channel": "slack",
+        "created_at": "2026-09-30T19:43:08.038893+00:00",
+        "destination_id": "chd_e76eb933587225b468fd2e39",
+        "destination_name": "Slack #leads",
+        "dispatch_seq": 2,
+        "dispatch_started_at": "2026-09-30T19:43:08.038893+00:00",
+        "document_json": {
+          "label": "BRIEF 2026-09-30",
+          "slug": "brief-2026-09-30",
+          "title": "Monday Brief — 2026-09-30"
+        },
+        "document_ref": "monday_brief:brief-bb63725f347c4641a560cc3a45b77ee7",
+        "file_path": null,
+        "id": "chs_7bc2f8fb7f586c5a0cb50383",
+        "payload_digest": "d5660142cb95e175af48662828fd6429225df78293cbf3db77c25bce9169d6e0",
+        "prepare_operation_id": null,
+        "prepared_by": {
+          "identity": "owner-session",
+          "kind": "owner"
+        },
+        "preview": {
+          "text": "*Monday Brief*\nPeriod: 2026-09-29 – 2026-09-30\nGenerated: 30 Sep 2026, 13:43\n\n2 things changed, 2 decisions waiting.\n\n*Changed*\n- Meeting recorded: Vendor escalation\n  30 min\n- Meeting recorded: Ledger cutover sync\n  45 min\n\n*Decisions*\n- Review decision: Freeze the old ledger on Nov 3\n- Review decision: Cut over by space, not by region\n\n*People*\n\n*Priya Nair*\n- Agenda: 1\n"
+        },
+        "proof": {
+          "destination": "hooks.slack.com:443",
+          "posted_at": "2026-09-30T19:43:08.041652+00:00",
+          "word": "POSTED"
+        },
+        "reason": null,
+        "send_operation_id": "op_5c5c51643a6545fcac2a943315a75534",
+        "settled_at": "2026-09-30T19:43:08+00:00",
+        "size": 375,
+        "state": "sent",
+        "target": {
+          "channel_label": "#leads"
+        },
+        "target_digest": "91b5b1f672844bbe0bd196d27e9d8db5740bfb05e11a8cd6fdcdb8360f44657c"
+      }
+    ],
+    "meeting": [
+      {
+        "account": {},
+        "badge": "local",
+        "channel": "file",
+        "created_at": "2026-09-30T19:42:58.320442+00:00",
+        "destination_id": "chd_f5f4ab8065ea0466c8781575",
+        "destination_name": "Team folder",
+        "dispatch_seq": 1,
+        "dispatch_started_at": "2026-09-30T19:42:58.320442+00:00",
+        "document_json": {
+          "label": "SUMMARY 2026-09-30",
+          "slug": "ledger-cutover-sync",
+          "title": "Ledger cutover sync"
+        },
+        "document_ref": "meeting_summary:c6-sync",
+        "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder/2026-09-30-ledger-cutover-sync-summary-2026-09-30-3d642b52.md",
+        "id": "chs_3d642b5275ddab977b75aaef",
+        "payload_digest": "e36431eefee5f9c59fc5ae9fdceab88cb634cbd7e7055ab07cc0995aba30ce7d",
+        "prepare_operation_id": null,
+        "prepared_by": {
+          "identity": "owner-session",
+          "kind": "owner"
+        },
+        "preview": {
+          "text": "# Ledger cutover sync\nDate: 2026-09-30\n\n## Summary\nThe team agreed to freeze the old ledger on Nov 3.\n\n## Topics\n- cutover\n"
+        },
+        "proof": {
+          "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder/2026-09-30-ledger-cutover-sync-summary-2026-09-30-3d642b52.md",
+          "sha256": "e36431eefee5f9c59fc5ae9fdceab88cb634cbd7e7055ab07cc0995aba30ce7d",
+          "size": 123
+        },
+        "reason": null,
+        "send_operation_id": "op_6bf7ec4d17e944e6b1f51653e117f3f2",
+        "settled_at": "2026-09-30T19:42:58+00:00",
+        "size": 123,
+        "state": "sent",
+        "target": {
+          "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_chair_meeting_wells_a1/Reports/Teamfolder"
+        },
+        "target_digest": "c902ffcba23180f7e9633d43f778b03162eb368b34ec8af885efa7c579f12a3f"
+      }
+    ]
+  }
+}

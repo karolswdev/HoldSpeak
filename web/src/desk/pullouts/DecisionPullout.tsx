@@ -17,6 +17,7 @@ import { humanTime } from "../surface/format";
 import { FoldGadget, PadGadget } from "../surface/gadgets";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
+import { DeskDecisionSendWells } from "../documentSendsLazy";
 
 /** The title createPrimitive("decision") gives (store/dataSlice.ts). */
 export const DEFAULT_DECISION_TITLE = "New decision";
@@ -143,6 +144,10 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
               Superseded by {String(ir.supersededBy)}
             </Button>
           ) : null}
+          {/* PHILO-11-05a (canvas B1-B3, T2): the decision's SEND well,
+              under the record. Not while it is edited: the well sends the
+              stored decision. The footer's Copy, Dictate and Edit stay (R8). */}
+          {!editingDecision ? <DeskDecisionSendWells id={o.id} title={o.title} /> : null}
         </section>
         <DeskFilingStrip
           objectRef={resourceRef}

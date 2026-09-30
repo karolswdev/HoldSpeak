@@ -4298,6 +4298,7 @@
       "test_candidates": [
         "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs175_rhythm_brief_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/e2e/test_philo4_02_generated_clearance.py",
         "tests/unit/test_graph_walk_producer_clock.py",
@@ -4338,6 +4339,7 @@
       "source": "holdspeak/web/routes/monday_brief.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/unit/test_brief_shelf.py",
         "tests/unit/test_philo4_03_breakage_ids.py",
@@ -4377,6 +4379,7 @@
       "test_candidates": [
         "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs175_rhythm_brief_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo4_02_generated_clearance.py",
         "tests/unit/test_brief_shelf.py",
         "tests/unit/test_hs175_week_brief.py",
@@ -5671,6 +5674,7 @@
       "test_candidates": [
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/integration/test_philo11_slack_operations.py",
         "tests/unit/test_philo10_cli_channels.py",
@@ -5733,6 +5737,7 @@
       "test_candidates": [
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/integration/test_philo11_slack_operations.py",
         "tests/unit/test_philo10_cli_channels.py",
@@ -6040,6 +6045,7 @@
       "test_candidates": [
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/integration/test_philo11_slack_operations.py",
         "tests/unit/test_philo10_cli_channels.py",
@@ -6109,6 +6115,7 @@
       "test_candidates": [
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/integration/test_philo11_slack_operations.py",
         "tests/unit/test_philo10_cli_channels.py",
@@ -6171,6 +6178,7 @@
       "test_candidates": [
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/integration/test_philo11_slack_operations.py",
         "tests/unit/test_philo10_cli_channels.py",
@@ -6291,6 +6299,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/integration/test_philo11_slack_operations.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8764,6 +8773,7 @@
         "tests/e2e/test_hs159_interview_glass.py",
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_04_empty_decision_heads_glass.py",
@@ -8849,6 +8859,7 @@
         "tests/e2e/test_hs159_interview_glass.py",
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_04_empty_decision_heads_glass.py",
@@ -8953,6 +8964,7 @@
         "tests/e2e/test_hs159_interview_glass.py",
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_04_empty_decision_heads_glass.py",
@@ -9044,6 +9056,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9084,6 +9097,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9160,6 +9174,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9244,6 +9259,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9284,6 +9300,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9324,6 +9341,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9364,6 +9382,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9404,6 +9423,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9444,6 +9464,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9530,6 +9551,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9570,6 +9592,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9649,6 +9672,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -25513,7 +25537,9 @@
       ],
       "source": "holdspeak/web/routes/people.py",
       "handler_evidence": [],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -25571,6 +25597,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -25604,6 +25631,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -25637,6 +25665,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -25670,6 +25699,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -25703,6 +25733,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -25736,6 +25767,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -25769,6 +25801,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -25802,6 +25835,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -25835,6 +25869,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -25868,6 +25903,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -25901,6 +25937,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -25934,6 +25971,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -25967,6 +26005,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -26000,6 +26039,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -26033,6 +26073,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -26066,6 +26107,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -26151,6 +26193,7 @@
         "tests/e2e/test_hs173_health_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/unit/test_people_routes.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -27280,6 +27323,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27409,6 +27453,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27590,6 +27635,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27709,6 +27755,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27838,6 +27885,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27954,6 +28002,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28072,6 +28121,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28196,6 +28246,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28317,6 +28368,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28442,6 +28494,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28559,6 +28612,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28694,6 +28748,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28811,6 +28866,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28935,6 +28991,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29019,6 +29076,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29152,6 +29210,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29281,6 +29340,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29412,6 +29472,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29545,6 +29606,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29671,6 +29733,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29800,6 +29863,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29929,6 +29993,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30053,6 +30118,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30171,6 +30237,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30292,6 +30359,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30412,6 +30480,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30543,6 +30612,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30674,6 +30744,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30804,6 +30875,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30888,6 +30960,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30972,6 +31045,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31056,6 +31130,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31140,6 +31215,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31259,6 +31335,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31377,6 +31454,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31495,6 +31573,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31613,6 +31692,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31740,6 +31820,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31865,6 +31946,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31992,6 +32074,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32111,6 +32194,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32243,6 +32327,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32368,6 +32453,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32484,6 +32570,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32609,6 +32696,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32741,6 +32829,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32862,6 +32951,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32975,7 +33065,8 @@
         "tests/e2e/test_hs172_room_glass.py",
         "tests/e2e/test_hs200_continuity_glass.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
-        "tests/e2e/test_hs200_people_preparation_glass.py"
+        "tests/e2e/test_hs200_people_preparation_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -33040,7 +33131,8 @@
         "tests/e2e/test_hs172_room_glass.py",
         "tests/e2e/test_hs200_continuity_glass.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
-        "tests/e2e/test_hs200_people_preparation_glass.py"
+        "tests/e2e/test_hs200_people_preparation_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -33115,7 +33207,8 @@
         "tests/e2e/test_hs172_room_glass.py",
         "tests/e2e/test_hs200_continuity_glass.py",
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
-        "tests/e2e/test_hs200_people_preparation_glass.py"
+        "tests/e2e/test_hs200_people_preparation_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -35968,6 +36061,7 @@
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_hs174_rhythm_runs_on_glass.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_calendar_settings.py",
@@ -36093,6 +36187,7 @@
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_hs174_rhythm_runs_on_glass.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_calendar_settings.py",
@@ -36480,6 +36575,7 @@
       "test_candidates": [
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
@@ -36561,6 +36657,7 @@
       "test_candidates": [
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
@@ -36650,6 +36747,7 @@
       "test_candidates": [
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
@@ -37664,6 +37762,7 @@
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo10_01_unknown_send_face.py",
         "tests/e2e/test_philo10_04_send_face_glass.py",
+        "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_setup_first_value_journey.py",

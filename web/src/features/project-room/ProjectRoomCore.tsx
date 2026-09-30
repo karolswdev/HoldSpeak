@@ -84,6 +84,7 @@ import * as api from "./api";
 import { RoomPeopleSection, monogram } from "./RoomPeopleSection";
 import "./project-room.css";
 import { RecallFace } from "./recall/RecallFace";
+import { DecisionRecordPreparedChip, DecisionRecordSendWells } from "../../desk/documentSendsLazy";
 
 /* ── sub-components (kept for backward-compat re-exports) ── */
 
@@ -1428,6 +1429,24 @@ function SinceYouLookedSection({ room }: { room: RoomSnapshot }) {
 
 /* ── DECISIONS & COMMITMENTS section ── */
 
+/** PHILO-11-05a (canvas B4, B4b): a decision row is a decision RECORD
+ *  (design 6a), also when it is marked `source="meeting"`. The row unfolds
+ *  in place and holds the record's SEND well (the seat); it carries
+ *  PREPARED ×K when a send waits. Its `Open` opened nothing for a record
+ *  (G1, ledgered), so it is withheld; a row with a real URL keeps its Open. */
+function RoomDecisionRow({ dec, cells, ...rest }: React.ComponentProps<typeof SurfaceLedgerRow> & {
+  dec: { id: string; text: string };
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <SurfaceLedgerRow {...rest} open={open} onToggle={() => setOpen((o) => !o)}
+      lineLabel={`Decision: ${dec.text}`}
+      cells={<>{cells}<DecisionRecordPreparedChip id={dec.id} /></>}>
+      {open ? <DecisionRecordSendWells id={dec.id} text={dec.text} /> : null}
+    </SurfaceLedgerRow>
+  );
+}
+
 function DecisionsCommitmentsSection({ room }: { room: RoomSnapshot }) {
   const decisionItems = room.decisions.state === "ok" ? room.decisions.items : [];
   const commitmentItems = room.commitments.state === "ok" ? room.commitments.items : [];
@@ -1478,7 +1497,8 @@ function DecisionsCommitmentsSection({ room }: { room: RoomSnapshot }) {
               const dueLabel = dueDateRaw ? formatDueShort(dueDateRaw) : "";
 
               return (
-                <SurfaceLedgerRow
+                <RoomDecisionRow
+                  dec={dec}
                   key={`dec-${dec.id}`}
                   data-testid="decision-row"
                   lead="MTG"
@@ -1500,15 +1520,13 @@ function DecisionsCommitmentsSection({ room }: { room: RoomSnapshot }) {
                       ))}
                     </>
                   }
-                  trailing={
-                    <Button dense variant="ghost" onClick={() => openPrimitive(`decision:${dec.id}`)}>Open</Button>
-                  }
                 />
               );
             }
 
             return (
-              <SurfaceLedgerRow
+              <RoomDecisionRow
+                dec={dec}
                 key={`dec-${dec.id}`}
                 data-testid="decision-row"
                 primary={
@@ -1521,9 +1539,7 @@ function DecisionsCommitmentsSection({ room }: { room: RoomSnapshot }) {
                 trailing={
                   dec.url ? (
                     <Button dense variant="ghost" onClick={() => window.open(dec.url!, "_blank", "noopener")}>Open</Button>
-                  ) : (
-                    <Button dense variant="ghost" onClick={() => openPrimitive(`decision:${dec.id}`)}>Open</Button>
-                  )
+                  ) : undefined
                 }
               />
             );
