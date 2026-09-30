@@ -358,9 +358,10 @@ CHAT_PALETTE: frozenset[str] = frozenset({
     "people.one_on_one.brief", "people.agenda.add", "people.note.create",
     # thread family (HS-152-05)
     "thread.set_status",
-    # channel reads and preparation are WORK; Send and Discard remain owner
-    # press operations and therefore stay outside the thread palette.
-    "channel.destinations", "channel.preview", "channel.prepare", "channel.sends",
+    # Channel destination discovery and preparation are WORK for chat. Preview
+    # and history remain public operations but stay outside this palette; Send
+    # and Discard remain owner press operations too.
+    "channel.destinations", "channel.prepare",
 })
 assert CHAT_PALETTE <= TOOL_NAMES, sorted(CHAT_PALETTE - TOOL_NAMES)
 

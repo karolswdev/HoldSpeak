@@ -22,6 +22,10 @@ After the proof above, the update's re-export of the species' pieces was removed
 
 Shots I looked at: `04-picked-folder-{1440,393}`, `26-prepared-{1440,393}`, `34-history-several-1440`, `34b-history-manual-393`, and the atlas `sent` 393 after-shot. The rows are in the one grammar (name on line 1, chips on line 2 under the name), the preview headings in the display face, SEND at 12 px.
 
+### The merge with main after #707 (main `565df2384`)
+
+Conflicts, resolved on Muad'Dib's rulings: story 02's criterion and design §5 keep main's text with this story's contract sentence (top-level integer `size` / `limit`, no nested form); `current-phase-status.md` (story 03 `done` from main, story 04 `done` from here), the project README and `BACKLOG.md` keep both sides' entries. On the merged tree: 10:51:57 — the focused web units, **45 passed** (the 41 + the 4 closed-receipt fences; 5 files); 10:51:59 — the web baseline, 2,995 passed, zero branch-new; 10:52:32 — the update glass, **4 passed** at 1440 and 393. Shots looked at: `28b-destination-latest-failed-393.png` (the closed row keeps LAST SEND FAILED · NO PERMISSION · NOTHING SENT · THIS DEVICE) and `34b-history-manual-1440.png` (DELIVERY in its Phase 10 look). The full suite is Muad'Dib's.
+
 ### Round four (Astra built-check r3 RATIFY-WITH-CONDITIONS, `checks/story-04-built-astra-r3.md`)
 
 | Item | Proof |
@@ -753,4 +757,43 @@ AssertionError: expected '○Team folderFILE~/Reports/chd_aTHIS D…' to contain
 Suite totals: 2995 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
+```
+
+### Captured run — 2026-09-30T10:51:57Z
+
+- **Command:** `bash -c echo "TREE = merge of origin/main 565df2384 into feat/philo-11-04 8e747aa14 (staged)"; cd web && npx vitest run src/desk/surface/send src/features/channels 2>&1 | grep -E "×|Test Files|Tests "; exit ${PIPESTATUS[0]}`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f7f6711b6667104c599f33d9d11a46992ed29b90
+
+```text
+TREE = merge of origin/main 565df2384 into feat/philo-11-04 8e747aa14 (staged)
+ Test Files  5 passed (5)
+      Tests  45 passed (45)
+```
+
+### Captured run — 2026-09-30T10:51:59Z
+
+- **Command:** `bash -c set -o pipefail; uv run python scripts/check_web_baseline.py --run 2>&1 | tail -4`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f7f6711b6667104c599f33d9d11a46992ed29b90
+
+```text
+
+Suite totals: 2995 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```
+
+### Captured run — 2026-09-30T10:52:32Z
+
+- **Command:** `env HOLDSPEAK_EVIDENCE_WRITE=1 uv run python scripts/verify_philo11_update_glass.py --story 04`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f7f6711b6667104c599f33d9d11a46992ed29b90
+
+```text
+....                                                                     [100%]
+4 passed in 129.26s (0:02:09)
 ```

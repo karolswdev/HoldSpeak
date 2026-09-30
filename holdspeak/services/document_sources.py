@@ -132,7 +132,9 @@ def _brief_markdown(brief: Any, overlay: dict[str, Any]) -> str:
             if detail:
                 lines.append(f"  {detail}")
 
-    if overlay.get("state") == "ready":
+    if overlay.get("state") == "unavailable":
+        lines.extend(["", "PEOPLE · UNAVAILABLE"])
+    elif overlay.get("state") == "ready":
         sections = overlay.get("sections") or []
         if sections:
             lines.extend(["", "## People"])

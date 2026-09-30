@@ -101,7 +101,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local"
@@ -113,7 +113,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "a6d1d6f9a761e45705bd02f49a140577b2957aaef49072d2e75a0ab6283433df",
+      "masked_sha": "2db5d0968da9d0cae7982dd3d00b6430c106da11da95c0039a52c9244f12a872",
       "modal": false,
       "named": [
         {
@@ -195,10 +195,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Locked THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Locked THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -213,7 +213,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "9eeb409005480218af427bea03b78f87a89d44dc92dbb8cea15a9cbfa9c30827",
+      "masked_sha": "8078da510bdd7f6b83ea0c4e25adc11afa923437ae39ee0de902ec28a07bb2cf",
       "modal": false,
       "named": [
         {
@@ -346,10 +346,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Locked THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Locked THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -365,7 +365,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "6d0d72a5a2e8df2d04b598264096d439ed816a51ad22cce068ec346a65144c1d",
+      "masked_sha": "22194b1fb1fa07072096b800b548b1131761908d7da16713d4f7ff1e3858fff6",
       "modal": false,
       "named": [
         {
@@ -498,7 +498,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -527,10 +527,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments ✓ SAVED 01:55 THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Locked THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments ✓ SAVED 04:52 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Locked THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -541,18 +541,18 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-d7b9f86b.md SEP 30 01:55"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-4dbe2f3b.md SEP 30 04:52"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 01:55"
+        "✓ SAVED 04:52"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "205b5811b76bc127bc001468b34aafd7bc2f5d334b8a0f859110ad066ca252b1",
+      "masked_sha": "def84f75546df601b0bedb98dc565669abb80622ac07c320feeee10cd93eb5e9",
       "modal": false,
       "named": [
         {
@@ -673,7 +673,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -684,7 +684,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-d7b9f86b.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-4dbe2f3b.md"
         }
       ],
       "send_head": "SEND",
@@ -708,10 +708,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments ✓ SAVED 01:55 THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Locked THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+        "● Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments ✓ SAVED 04:52 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Locked THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -722,18 +722,18 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-d7b9f86b.md SEP 30 01:55"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-4dbe2f3b.md SEP 30 04:52"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 01:55"
+        "✓ SAVED 04:52"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "c97e5f476af60fb1c9a08fa36f23f1627b54f726a0efaf61641b8acbec09da33",
+      "masked_sha": "1e722134bb085927ddc98b3874da9ea9bb27742a79e9e1a1731cc7cbde90ff8d",
       "modal": false,
       "named": [
         {
@@ -854,7 +854,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -865,7 +865,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-d7b9f86b.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-4dbe2f3b.md"
         }
       ],
       "send_head": "SEND",
@@ -889,10 +889,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments ✓ SAVED 01:55 THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Locked ✗ LAST SEND FAILED NO PERMISSION NOTHING SENT THIS DEVICE",
-        "● Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments ✓ SAVED 04:52 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Locked ✗ LAST SEND FAILED NO PERMISSION NOTHING SENT THIS DEVICE",
+        "● Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -903,8 +903,8 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-d7b9f86b.md SEP 30 01:55",
-        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 30 01:55"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-4dbe2f3b.md SEP 30 04:52",
+        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 30 04:53"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
@@ -912,13 +912,13 @@
         "unknown"
       ],
       "last_chips": [
-        "✓ SAVED 01:55",
+        "✓ SAVED 04:52",
         "✗ LAST SEND FAILED NO PERMISSION NOTHING SENT",
         "⚠ LAST SEND UNKNOWN"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "eb5dbff641c87c2c236493bc0703d3c1d799c36afc43c839cad1c6aac406a948",
+      "masked_sha": "d1691e1e660945ff7d9c3a58d31974040c256b76336d94fb14341c8e3e24cb6e",
       "modal": false,
       "named": [
         {
@@ -1045,7 +1045,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -1080,10 +1080,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments ✓ SAVED 01:55 THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
-        "● Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Locked ✗ LAST SEND FAILED THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments ✓ SAVED 04:52 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
+        "● Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Locked ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1094,19 +1094,19 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-d7b9f86b.md SEP 30 01:55"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-4dbe2f3b.md SEP 30 04:52"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 01:55",
+        "✓ SAVED 04:52",
         "✗ LAST SEND FAILED"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "12f9d9fadd3989cd55ce67a9cdb3776164febf50c815ad22bed87df984572a18",
+      "masked_sha": "eb0e5a0057988c8d6390c230b8806e1311def00ebe46eed7f8b7db01c60b0e39",
       "modal": false,
       "named": [
         {
@@ -1233,7 +1233,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Locked"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Locked"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -1268,10 +1268,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments ✓ SAVED 01:55 THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Locked ✗ LAST SEND FAILED NO PERMISSION NOTHING SENT THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN FILE NOT CONFIRMED THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments ✓ SAVED 04:52 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Locked ✗ LAST SEND FAILED NO PERMISSION NOTHING SENT THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN FILE NOT CONFIRMED THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1281,9 +1281,9 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-d7b9f86b.md SEP 30 01:55",
-        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 30 01:55",
-        "✓ Priya DELIVERED MANUAL SEP 30 01:55"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-4dbe2f3b.md SEP 30 04:52",
+        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 30 04:53",
+        "✓ Priya DELIVERED MANUAL SEP 30 04:53"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -1292,13 +1292,13 @@
         "confirmed"
       ],
       "last_chips": [
-        "✓ SAVED 01:55",
+        "✓ SAVED 04:52",
         "✗ LAST SEND FAILED NO PERMISSION NOTHING SENT",
         "⚠ LAST SEND UNKNOWN FILE NOT CONFIRMED"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "a48cebbc24cab88c89f18fc706d77c0611fa52955a93fedc3c5d27c9e8f603b4",
+      "masked_sha": "5a398568fbfbde3023bc49f4b4f6a6e2f5445ed6890c6bdd7253e433569243c0",
       "modal": false,
       "named": [
         {
@@ -1425,10 +1425,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments ✓ SAVED 01:55 THIS DEVICE",
-        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
-        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Locked ✗ LAST SEND FAILED NO PERMISSION NOTHING SENT THIS DEVICE",
-        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN FILE NOT CONFIRMED THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments ✓ SAVED 04:52 THIS DEVICE",
+        "○ Team drive FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Drive/Team SYNCED FOLDER",
+        "○ Locked folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Locked ✗ LAST SEND FAILED NO PERMISSION NOTHING SENT THIS DEVICE",
+        "○ Long path folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ⚠ LAST SEND UNKNOWN FILE NOT CONFIRMED THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1438,9 +1438,9 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-d7b9f86b.md SEP 30 01:55",
-        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 30 01:55",
-        "✓ Priya DELIVERED MANUAL SEP 30 01:55"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-4dbe2f3b.md SEP 30 04:52",
+        "⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED SEP 30 04:53",
+        "✓ Priya DELIVERED MANUAL SEP 30 04:53"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -1449,19 +1449,19 @@
         "confirmed"
       ],
       "last_chips": [
-        "✓ SAVED 01:55",
+        "✓ SAVED 04:52",
         "✗ LAST SEND FAILED NO PERMISSION NOTHING SENT",
         "⚠ LAST SEND UNKNOWN FILE NOT CONFIRMED"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "f930618a4f4db77f1ab05c25fbdd5673b775a79f77e7476d4b08d71dc5940623",
+      "masked_sha": "c4e22ca593f5deb0cedf95b6b9a6fcb8d597b362ac3e72a6f1e54281e5b97ecb",
       "modal": false,
       "named": [
         {
           "ok": true,
           "sel": "[data-testid=delivery-history] > li:last-child > [data-testid=delivery-row]",
-          "text": "✓ Priya DELIVERED MANUAL SEP 30 01:55",
+          "text": "✓ Priya DELIVERED MANUAL SEP 30 04:53",
           "why": ""
         }
       ],
@@ -1819,7 +1819,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "31f78feff029826d882a5840b2e82ffc40db0a5df3d88112354faff38a65269f",
+      "masked_sha": "bae847c3c0e662b10ce01c24b1f1483c3375153b33cfeec9f3d67da92c9695db",
       "modal": false,
       "named": [
         {
@@ -1942,39 +1942,39 @@
   "hub_deliveries": [
     {
       "channel": "file",
-      "delivered_at": "2026-09-30T07:55:19.363558+00:00",
+      "delivered_at": "2026-09-30T10:52:58.755177+00:00",
       "delivered_to": "Folder Payments",
-      "id": "pdel_d7b9f86b672d8455",
-      "operation_id": "op_2ff0be94ac7f499c816c1b8bd104dc7c",
+      "id": "pdel_4dbe2f3b31eaf878",
+      "operation_id": "op_80d9bafd76f64d7288f6a09f8c99eb7c",
       "outcome": "sent",
-      "project_id": "proj-5619adeacf88",
-      "proof_json": "{\"path\":\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-d7b9f86b.md\",\"sha256\":\"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\",\"size\":286}",
-      "send_id": "chs_d7b9f86b672d84554dee5d6f",
-      "update_id": "pupd_67fce1e84b8f431a940747b24a0c9114"
+      "project_id": "proj-c12df1eb2570",
+      "proof_json": "{\"path\":\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-4dbe2f3b.md\",\"sha256\":\"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\",\"size\":286}",
+      "send_id": "chs_4dbe2f3b31eaf8780fe80438",
+      "update_id": "pupd_2e2987f5ab1f4bbd80f9e19f140fb3c8"
     },
     {
       "channel": "file",
-      "delivered_at": "2026-09-30T07:55:26.435133+00:00",
+      "delivered_at": "2026-09-30T10:53:05.780123+00:00",
       "delivered_to": "Long path folder",
-      "id": "pdel_52e6964e225a2dec",
-      "operation_id": "op_5baf530cb9c345759b236d88ab349bd6",
+      "id": "pdel_89e076968752b181",
+      "operation_id": "op_7121d903594b4f70920c4cc5fd663008",
       "outcome": "unknown",
-      "project_id": "proj-5619adeacf88",
+      "project_id": "proj-c12df1eb2570",
       "proof_json": null,
-      "send_id": "chs_52e6964e225a2dec50845f7d",
-      "update_id": "pupd_67fce1e84b8f431a940747b24a0c9114"
+      "send_id": "chs_89e076968752b1817cd4e2bc",
+      "update_id": "pupd_2e2987f5ab1f4bbd80f9e19f140fb3c8"
     },
     {
       "channel": "manual",
-      "delivered_at": "2026-09-30T07:55:29+00:00",
+      "delivered_at": "2026-09-30T10:53:08+00:00",
       "delivered_to": "Priya",
-      "id": "pdel_84d3fedb77040feb",
-      "operation_id": "op_fc9b40756eda4faa940c91a4f599acd1",
+      "id": "pdel_042bebb08f19d6b4",
+      "operation_id": "op_2c3d2e4a91174a08848e2c9f50a9426b",
       "outcome": "confirmed",
-      "project_id": "proj-5619adeacf88",
+      "project_id": "proj-c12df1eb2570",
       "proof_json": null,
       "send_id": null,
-      "update_id": "pupd_67fce1e84b8f431a940747b24a0c9114"
+      "update_id": "pupd_2e2987f5ab1f4bbd80f9e19f140fb3c8"
     }
   ],
   "hub_sends": [
@@ -1982,19 +1982,19 @@
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-30T07:55:19.363558+00:00",
-      "destination_id": "chd_6d0bba2675f3eb77a7db0088",
+      "created_at": "2026-09-30T10:52:58.755177+00:00",
+      "destination_id": "chd_8a010cdd05242ddceb973777",
       "destination_name": "Folder Payments",
       "dispatch_seq": 1,
-      "dispatch_started_at": "2026-09-30T07:55:19.363558+00:00",
+      "dispatch_started_at": "2026-09-30T10:52:58.755177+00:00",
       "document_json": {
         "label": "REV 1",
         "slug": "payments-ledger-cutover",
         "title": "Payments ledger cutover — update r1 (2026-09-30)"
       },
-      "document_ref": "project_update:pupd_67fce1e84b8f431a940747b24a0c9114",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-d7b9f86b.md",
-      "id": "chs_d7b9f86b672d84554dee5d6f",
+      "document_ref": "project_update:pupd_2e2987f5ab1f4bbd80f9e19f140fb3c8",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-4dbe2f3b.md",
+      "id": "chs_4dbe2f3b31eaf8780fe80438",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -2005,37 +2005,37 @@
         "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
       },
       "proof": {
-        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-d7b9f86b.md",
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments/2026-09-30-payments-ledger-cutover-rev-1-4dbe2f3b.md",
         "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
         "size": 286
       },
       "reason": null,
-      "send_operation_id": "op_2ff0be94ac7f499c816c1b8bd104dc7c",
-      "settled_at": "2026-09-30T07:55:19+00:00",
+      "send_operation_id": "op_80d9bafd76f64d7288f6a09f8c99eb7c",
+      "settled_at": "2026-09-30T10:52:58+00:00",
       "size": 286,
       "state": "sent",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Reports/Payments"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Reports/Payments"
       },
-      "target_digest": "2f22508cd5e93701d9f136b9f9b14d2e3a96119c0a62adbdebe4eef2b60d9170"
+      "target_digest": "29320717c1a50856c293e9eb1deb1842486e614063a63076268f5452a2f2e7c8"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-30T07:55:23.745613+00:00",
-      "destination_id": "chd_b0cc54f0fd5411a5461f1361",
+      "created_at": "2026-09-30T10:53:03.050071+00:00",
+      "destination_id": "chd_2d0a15a359cfbc054e5d66f0",
       "destination_name": "Locked folder",
       "dispatch_seq": 2,
-      "dispatch_started_at": "2026-09-30T07:55:23.745613+00:00",
+      "dispatch_started_at": "2026-09-30T10:53:03.050071+00:00",
       "document_json": {
         "label": "REV 1",
         "slug": "payments-ledger-cutover",
         "title": "Payments ledger cutover — update r1 (2026-09-30)"
       },
-      "document_ref": "project_update:pupd_67fce1e84b8f431a940747b24a0c9114",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Locked/2026-09-30-payments-ledger-cutover-rev-1-e1b9ac9d.md",
-      "id": "chs_e1b9ac9d841d095b5ff4ca62",
+      "document_ref": "project_update:pupd_2e2987f5ab1f4bbd80f9e19f140fb3c8",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Locked/2026-09-30-payments-ledger-cutover-rev-1-0bbe34db.md",
+      "id": "chs_0bbe34dba9026082b95a8605",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -2047,32 +2047,32 @@
       },
       "proof": null,
       "reason": "permission_denied",
-      "send_operation_id": "op_469cf42768be4563a009f06253316d72",
-      "settled_at": "2026-09-30T07:55:23+00:00",
+      "send_operation_id": "op_ef4aa41c67234e7a963a38db01001173",
+      "settled_at": "2026-09-30T10:53:03+00:00",
       "size": 286,
       "state": "failed",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/Locked"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/Locked"
       },
-      "target_digest": "e29fa86c228d93409a573b873005fa88487992a83e5ffefe500d6619f4c42186"
+      "target_digest": "067a3023ffec1887876eaf6e6445899ec531390f88a8256759e685c048edfe87"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-30T07:55:26.435133+00:00",
-      "destination_id": "chd_f6e036dc1c7e543fa85f919a",
+      "created_at": "2026-09-30T10:53:05.780123+00:00",
+      "destination_id": "chd_ad069f26132e3b8062926082",
       "destination_name": "Long path folder",
       "dispatch_seq": 3,
-      "dispatch_started_at": "2026-09-30T07:55:26.435133+00:00",
+      "dispatch_started_at": "2026-09-30T10:53:05.780123+00:00",
       "document_json": {
         "label": "REV 1",
         "slug": "payments-ledger-cutover",
         "title": "Payments ledger cutover — update r1 (2026-09-30)"
       },
-      "document_ref": "project_update:pupd_67fce1e84b8f431a940747b24a0c9114",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/2026-09-30-payments-ledger-cutover-rev-1-52e6964e.md",
-      "id": "chs_52e6964e225a2dec50845f7d",
+      "document_ref": "project_update:pupd_2e2987f5ab1f4bbd80f9e19f140fb3c8",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/2026-09-30-payments-ledger-cutover-rev-1-89e07696.md",
+      "id": "chs_89e076968752b1817cd4e2bc",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -2084,14 +2084,14 @@
       },
       "proof": null,
       "reason": "create_enametoolong",
-      "send_operation_id": "op_5baf530cb9c345759b236d88ab349bd6",
-      "settled_at": "2026-09-30T07:55:26+00:00",
+      "send_operation_id": "op_7121d903594b4f70920c4cc5fd663008",
+      "settled_at": "2026-09-30T10:53:05+00:00",
       "size": 286,
       "state": "unknown",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-t9vdoq6z/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-3pervt3c/pytest/test_the_first_setup_loop_and_0/deep/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       },
-      "target_digest": "754901e611572a5bd688561798734bc6c013361029ce7f941b19783d56981b1c"
+      "target_digest": "e90b99822a371933370eff46cc16b4976252753bf09eabd17a9053e053448746"
     }
   ]
 }
