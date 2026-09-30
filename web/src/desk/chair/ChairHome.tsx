@@ -10,6 +10,7 @@ import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openNewThought } from "../newThought";
 import { BriefEgress, briefReceipt } from "./briefEgress";
+import { BriefPreparedChip, BriefSendWells } from "../documentSends";
 import { generatedLabelLocal } from "../pullouts/views/BriefView";
 import { openSurface, openSurfaceOr, openCoderSession, openProjectRoom } from "../shell";
 import { reportWriteFailure, clearWriteFailure } from "../hooks/useWriteReceipt";
@@ -728,6 +729,9 @@ function Arrival() {
     <>
       {/* Article III / UX-CANON A.9 — the destination is named ON the
           row, BEFORE the verb that reaches it. */}
+      {/* PHILO-11-05a (canvas A4): PREPARED ×K when a send of the brief
+          waits; at narrow width the chips wrap under the label. */}
+      {brief ? <BriefPreparedChip brief={brief} /> : null}
       <BriefEgress />
       <Button
         variant="ghost"
@@ -1384,6 +1388,10 @@ function Arrival() {
             </span>
           ) : null}
           {generateStatus}
+          {/* PHILO-11-05a (canvas A, T3): the brief's SEND well. Keyed, so the
+              same well (its pick, its receipt) stays when the last item is
+              triaged and the Chair changes branch below. */}
+          {brief ? <BriefSendWells key="brief-send" brief={brief} /> : null}
         </div>
       ) : !briefLoading && brief ? (
         /* A brief with nothing untriaged still happened — tonight, or on a
@@ -1421,6 +1429,7 @@ function Arrival() {
             ) : null}
             {generateStatus}
           </SurfaceSection>
+          <BriefSendWells key="brief-send" brief={brief} />
         </div>
       ) : null}
 

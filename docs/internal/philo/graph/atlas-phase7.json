@@ -3656,7 +3656,7 @@
         {
           "path": "web/src/desk/pullouts/DecisionPullout.tsx",
           "symbol": "const cycleDecisionStatus",
-          "line": 70,
+          "line": 71,
           "claim": "the pullout's status control cycles proposed -> accepted -> superseded -> deprecated"
         },
         {
@@ -3668,7 +3668,7 @@
         {
           "path": "web/src/desk/pullouts/DecisionPullout.tsx",
           "symbol": "Supersedes {",
-          "line": 138,
+          "line": 139,
           "claim": "a successor's card names the decision it supersedes"
         },
         {
