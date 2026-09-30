@@ -1,0 +1,21 @@
+#!/bin/sh
+# Run from the lane worktree, after workers stop edits.
+# CLAUDE.md full-suite command, with xdist fast lane; never test_metal.py.
+set -u
+philo11_cache_home="$HOME"
+philo11_test_home="$(mktemp -d)"
+export HOME="$philo11_test_home"
+export PLAYWRIGHT_BROWSERS_PATH="$philo11_cache_home/Library/Caches/ms-playwright"
+export npm_config_cache="$philo11_cache_home/.npm"
+export PUPPETEER_SKIP_DOWNLOAD=true
+printf '%s\n' 'Fresh isolated HOME; warm browser/npm caches only.'
+printf '%s\n' 'Setup: npm --prefix web ci --no-audit --no-fund'
+npm --prefix web ci --no-audit --no-fund
+philo11_setup_status=$?
+printf 'Setup exit: %s\n' "$philo11_setup_status"
+if [ "$philo11_setup_status" -ne 0 ]; then exit "$philo11_setup_status"; fi
+printf '%s\n' 'Command: uv run pytest -q -n auto --ignore=tests/e2e/test_metal.py'
+uv run pytest -q -n auto --ignore=tests/e2e/test_metal.py
+philo11_status=$?
+printf 'Exit: %s\n' "$philo11_status"
+exit "$philo11_status"

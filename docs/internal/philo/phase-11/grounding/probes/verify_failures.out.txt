@@ -1,0 +1,44 @@
+Scope: the three full-suite failures, serial, isolated HOME
+Python: 3.14.2 (main, Jan 27 2026, 23:32:07) [Clang 21.1.4 ]
+Product/test diff against HEAD exit: 0
+Heartbeat integer co_consts: []
+Heartbeat timing instructions: [('LOAD_SMALL_INT', 60), ('LOAD_SMALL_INT', 10), ('LOAD_SMALL_INT', 60)]
+Command: /Users/karol/dev/tools/wt-philo-11-ground-astra/.venv/bin/python3 -m pytest -q tests/integration/test_phase200_recipe_catalog.py::TestTheScheduledOwnerReallyFires::test_the_sweep_is_driven_by_a_wall_clock_loop tests/e2e/test_hs176_loop_glass.py::test_speak_loop_1440 tests/e2e/test_hs176_loop_glass.py::test_speak_loop_393
+F..                                                                      [100%]
+=================================== FAILURES ===================================
+_ TestTheScheduledOwnerReallyFires.test_the_sweep_is_driven_by_a_wall_clock_loop _
+
+self = <tests.integration.test_phase200_recipe_catalog.TestTheScheduledOwnerReallyFires object at 0x10865be10>
+
+    def test_the_sweep_is_driven_by_a_wall_clock_loop(self) -> None:
+        """Asserted on the compiled code object, not the source text.
+
+        Counsel's P2-4: the first cut matched substrings like
+        ``"sweep_interval" in driver``, which a reformat breaks and a
+        gutted loop survives. Bytecode names and constants survive
+        reformatting, comments and local renames, and disappear the moment
+        the loop stops doing the thing.
+        """
+        from holdspeak.runtime.heartbeat import HeartbeatMixin
+
+        loop = HeartbeatMixin._heartbeat_loop
+        names = set(loop.__code__.co_names)
+        # It reads the interval, decides, and sweeps.
+        assert "get_settings" in names
+        assert "run_sweep" in names
+        # It is a loop over a stop event, not a one-shot call.
+        assert {"is_set", "wait"} <= names
+        # The tick is a real number of seconds.
+        ticks = [
+            c for c in loop.__code__.co_consts
+            if isinstance(c, int) and not isinstance(c, bool) and c >= 10
+        ]
+>       assert ticks, loop.__code__.co_consts
+E       AssertionError: ('Tick every 60 seconds; on each tick, check if a sweep is due.', None, ('get_database', 'get_observer'), ('Principal', 'PrincipalKind'), ('HeartbeatService',), ('observer',), ...)
+E       assert []
+
+tests/integration/test_phase200_recipe_catalog.py:652: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/test_phase200_recipe_catalog.py::TestTheScheduledOwnerReallyFires::test_the_sweep_is_driven_by_a_wall_clock_loop
+1 failed, 2 passed in 16.12s
+Exit: 1
