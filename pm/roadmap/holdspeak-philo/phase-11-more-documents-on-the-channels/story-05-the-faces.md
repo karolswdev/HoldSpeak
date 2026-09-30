@@ -23,7 +23,7 @@ A brief, a decision or a meeting summary has no Send (faces.md §1). The meeting
 
 - [ ] Every ratified board built and fenced through the real hub at 1440 and 393; the face's outcome equals the hub's record and receipt in the same fence.
 - [ ] Each face sends its own `document_ref`; a fence per face reads the prepared row's `document_ref` (a Room row marked `source="meeting"` sends `decision_record:<id>`).
-- [ ] Rendered-transition fences at both widths (design §6b): the over-limit Slack refusal word (never `NO ANSWER`); `preview_changed` → a fresh preview → another press that sends; the Chair after its last brief item is triaged, the well still there.
+- [ ] Rendered-transition fences at both widths (design §6b): the over-limit Slack refusal word (never `NO ANSWER`); `preview_changed` → a fresh preview → another press that sends; the Chair after its last brief item is triaged, the well still there. The same send receipt (state, target, time) is on screen after the Chair's branch change at both widths and equals the hub's send row; well presence alone is not the receipt assertion (Astra canvas check r2, condition 2).
 - [ ] No verb offers the parked free-text Slack send.
 - [ ] Nothing covers Send at 393 or in the real-width decision and Meetings windows at 1440 (F7).
 - [ ] A Slack destination saved from the form; the webhook never shown again; POSTED with no link.

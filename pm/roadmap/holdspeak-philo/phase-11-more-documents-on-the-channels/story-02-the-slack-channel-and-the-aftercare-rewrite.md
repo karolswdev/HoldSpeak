@@ -25,7 +25,7 @@ Slack is not a channel. The meeting's Slack export is a second send path: a muta
 - [ ] The bytes on the wire equal the frozen payload; the preview is parsed from those bytes.
 - [ ] A URL with another scheme, host or port is refused at save (`slack_webhook_invalid`). A new webhook is a new destination; a send prepared on the old one refuses `destination_parked`.
 - [ ] The URL never appears in a row, a payload, a receipt, a log, an API answer or an error (a sentinel fence over every one).
-- [ ] Above the Q1 limit, `payload_too_large:slack` before any byte leaves.
+- [ ] Above the Q1 limit, `payload_too_large:slack` before any byte leaves, and the refusal answer carries `size` and `limit` (39,000); fenced through the real refusal producer, red before the fix (Astra canvas check r2, condition 1).
 - [ ] The egress child carries the parent, the authenticated owner principal, the broker and the frozen digest; an agent's Slack send is refused `owner_principal_required`.
 - [ ] No code posts to Slack except `channel.send`. The posture path is red on main (it posts) and green here (it prepares at most). The desk actuator's Slack target refuses `slack_moved_to_channel`. An old `config.json` with `slack_webhook_url` still loads.
 - [ ] A Settings read with a sentinel URL in `config.json` never returns it; a Settings write with the field never sets it (red with only the credential registration removed).
