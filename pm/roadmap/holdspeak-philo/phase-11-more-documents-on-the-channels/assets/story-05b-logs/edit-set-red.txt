@@ -1,0 +1,7 @@
+# the two F1 fences against HEAD 9517ce0f0's Destinations.tsx (before the fix)
+     × Astra counsel r1 F1: Edit on a saved row never says SET while the webhook is unknown 11ms
+     × Edit on a saved row says SET only after a Check confirms the webhook 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/features/channels/__tests__/slackDestination.test.tsx > Slack in the Destination form > Astra counsel r1 F1: Edit on a saved row never says SET while the webhook is unknown
+ FAIL  src/features/channels/__tests__/slackDestination.test.tsx > Slack in the Destination form > Edit on a saved row says SET only after a Check confirms the webhook
+      Tests  2 failed | 6 passed (8)

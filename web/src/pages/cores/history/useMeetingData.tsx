@@ -56,7 +56,6 @@ export interface MeetingData {
     proposal: Record<string, unknown>,
     decision: "approved" | "rejected",
   ) => Promise<void>;
-  proposeSlack: (what: "digest" | "followup") => Promise<void>;
   hasOutcomes: boolean;
   intelOff: boolean;
   /** The raw intel state string for QUEUED/FAILED verb display. */
@@ -170,25 +169,6 @@ export function useMeetingData(
       );
       onReceipt({
         text: decision === "approved" ? "APPROVED" : "REJECTED",
-      });
-    } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
-    } finally {
-      setBusy(false);
-    }
-  };
-  const proposeSlack = async (what: "digest" | "followup") => {
-    setBusy(true);
-    try {
-      await apiFetch(`/api/meetings/${encodeURIComponent(id)}/export/slack`, {
-        method: "POST",
-        json: { what },
-      });
-      setProposals(
-        await apiFetch(`/api/meetings/${encodeURIComponent(id)}/proposals`),
-      );
-      onReceipt({
-        text: what === "digest" ? "PROPOSED DIGEST" : "PROPOSED FOLLOW-UP",
       });
     } catch (reason) {
       onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
@@ -381,7 +361,6 @@ export function useMeetingData(
     aftercare,
     busy,
     decide,
-    proposeSlack,
     hasOutcomes,
     intelOff,
     intelState,

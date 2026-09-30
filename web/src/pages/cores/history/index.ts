@@ -11,7 +11,6 @@ export { ArtifactsLibrary } from "./ArtifactsLibrary";
 export { NeedsYouTable } from "./NeedsYouTable";
 export { TranscriptWell } from "./TranscriptWell";
 export { SettledList } from "./SettledList";
-export { AftercareGadgets } from "./AftercareGadgets";
 export { CatalogRail } from "./CatalogRail";
 export { DoorSection } from "./DoorSection";
 export { useMeetingData, type MeetingData } from "./useMeetingData";
