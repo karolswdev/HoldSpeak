@@ -392,8 +392,12 @@ def test_the_preview_is_the_frozen_bytes_and_the_file_is_those_bytes(
     dest = destination(hub, folder)
     previewed = hub.client.post("/api/channels/preview", json={"document_ref": document_ref, "destination_id": dest}).json()
     prepared = prepare(hub, document_ref, dest)["send"]
-    payload = prepared["preview"]["text"]
-    assert previewed["preview"]["text"] == payload
+    if source_kind == "project_update":
+        assert previewed["preview"]["text"] == prepared["preview"]["text"] == body
+        payload = body
+    else:
+        payload = prepared["preview"]["text"]
+        assert previewed["preview"]["text"] == payload
     assert previewed["payload_digest"] == prepared["payload_digest"] == hashlib.sha256(payload.encode()).hexdigest()
     resp = send(hub, {"send_id": prepared["id"]}).json()
     assert Path(resp["send"]["proof"]["path"]).read_bytes() == payload.encode()
@@ -720,10 +724,10 @@ def test_the_words_map_his_asks_and_never_say_an_agent_sends(hub: Hub) -> None:
     listed = hub.client.post("/api/mcp", json={"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}})
     tools = {t["name"]: t for t in listed.json()["result"]["tools"] if t["name"].startswith("channel.")}
     asks = {
-        "where can I send": ("channel.destinations", "List saved destinations"),
-        "send my update to <destination>": ("channel.prepare", "Prepare a stored document"),
-        "prepare a send": ("channel.prepare", "Prepare a stored document"),
-        "what was sent": ("channel.sends", "List document sends"),
+        "where can I send": ("channel.destinations", "Where can I send"),
+        "send my update to <destination>": ("channel.prepare", "send the update to <destination>"),
+        "prepare a send": ("channel.prepare", "Prepare a send"),
+        "what was sent": ("channel.sends", "What was sent"),
         "send it (the owner)": ("channel.send", "The owner's Send"),
     }
     for ask, (tool, words) in asks.items():

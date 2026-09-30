@@ -24,6 +24,7 @@ _DESTINATION_ID = {"type": "string", "description": "Saved ID from channel.desti
 _DOCUMENT_REF = {"type": "string", "description": "Document ref <kind>:<id>. Kinds: project_update, monday_brief, "
                  "desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, "
                  "meeting_followup. IDs come from source list/read views."}
+_DOCUMENT_REF_FROM_PREVIEW = {"type": "string", "description": "The document ref from channel.preview."}
 _SEND_ID = {"type": "string", "description": "The prepared send: send.id from channel.prepare, or sends[].id from "
                                             "channel.sends."}
 _SEND_RESULT = ("{send: {id, document_ref, destination_id, destination_name, channel, badge, target, payload_digest, "
@@ -33,7 +34,7 @@ _OWNER_ONLY = "owner_principal_required: only the owner sends; an agent prepares
 CHANNEL_DESTINATIONS = OperationDescriptor(
     name="channel.destinations",
     version=1,
-    description="List saved destinations: returned IDs and names, channel, account, target, badge, state, connection.",
+    description="Where can I send? This lists saved destinations: folders, GitHub issues or pull requests, Jira work items, Confluence spaces and email. Each result has a name, channel, account, target, badge (local or cloud), state and connection state.",
     args_schema={
         "type": "object",
         "properties": {
@@ -198,10 +199,10 @@ CHANNEL_PREVIEW = OperationDescriptor(
 CHANNEL_PREPARE = OperationDescriptor(
     name="channel.prepare",
     version=1,
-    description="Prepare a stored document for a saved destination. Freeze target and bytes; nothing leaves the machine; only the owner can Send or Discard.",
+    description="Prepare a send of a stored document using \"send the update to <destination>\". The prepared send freezes its destination and exact preview bytes. Nothing leaves the machine. Only the owner can send or discard it.",
     args_schema={
         "type": "object",
-        "properties": {"document_ref": _DOCUMENT_REF, "destination_id": _DESTINATION_ID, "command_id": _COMMAND_ID},
+        "properties": {"document_ref": _DOCUMENT_REF_FROM_PREVIEW, "destination_id": _DESTINATION_ID, "command_id": _COMMAND_ID},
         "required": ["document_ref", "destination_id"],
         "additionalProperties": False,
     },
@@ -293,7 +294,7 @@ CHANNEL_SEND = OperationDescriptor(
 CHANNEL_SENDS = OperationDescriptor(
     name="channel.sends",
     version=1,
-    description="List document sends: destination, state, proof/reason, frozen preview.",
+    description="What was sent? List document sends by destination and state. Each result includes proof or reason and the frozen preview.",
     args_schema={
         "type": "object",
         "properties": {

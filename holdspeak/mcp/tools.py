@@ -46,7 +46,7 @@ class ToolError(ValueError):
 TOOLS: list[dict[str, Any]] = [
     {
         "name": "desk.list",
-        "description": "List desk primitives by kind; notes expose IDs, directories member_ids, kbs list knowledge bases. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. Remaining kinds use dedicated/read-only tools.",
+        "description": "List desk primitives by kind. Find a note with kind=notes. Read each result by its id with desk.get.",
         "inputSchema": {
             "type": "object",
             "properties": {"kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)}},
@@ -56,7 +56,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "desk.get",
-        "description": "Get a desk primitive by kind and ID from desk.list; read notes and directories. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. Remaining kinds use dedicated/read-only tools.",
+        "description": "Get one desk primitive by kind and ID. Read a note with kind=notes and the id from desk.list. Read a zone and its filed objects with kind=directories.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -70,9 +70,10 @@ TOOLS: list[dict[str, Any]] = [
     {
         "name": "desk.create",
         "description": (
-            "Create a desk primitive. Authorable kinds: notes, decisions, kbs, directories, workflows, chains. "
-            "Fields are in data. For decisions, status=proposed puts it on the review list. "
-            "Keep titles short; reasons go in context_markdown."
+            "Create a desk primitive. Write a note with kind=notes and data containing a title, body_markdown and tags. "
+            "Make a zone with kind=directories, a name and optional parent_id. "
+            "Put a decision on my review list with kind=decisions and status=proposed. "
+            "Write the reason for a decision with kind=decisions in data.context_markdown."
         ),
         "inputSchema": {
             "type": "object",
@@ -92,9 +93,11 @@ TOOLS: list[dict[str, Any]] = [
     {
         "name": "desk.update",
         "description": (
-            "Update supplied desk fields. IDs from desk.list. notes title/body_markdown/tags; "
-            "directories name/parent_id(null=root); decisions context_markdown/decision_markdown/"
-            "consequences_markdown replace old text. Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
+            "Update a desk primitive. Rename a zone with kind=directories and name. "
+            "Move a zone with kind=directories and parent_id. Set parent_id to null to move it to the desk root. "
+            "Edit a note with kind=notes and title, body_markdown or tags. "
+            "Change a decision with kind=decisions. Supply context_markdown, decision_markdown or consequences_markdown "
+            "to replace the old text."
         ),
         "inputSchema": {
             "type": "object",
@@ -260,9 +263,9 @@ TOOLS.extend([
     _workbench_tool("recipe.get", "Get an Agent recipe.", {"recipe_id": {"type": "string"}}, ["recipe_id"]),
     _workbench_tool("recipe.run", "Run an Agent recipe and return its lifecycle-backed result and minted artifact reference.", {"recipe_id": {"type": "string"}, "input": {"type": "string"}, "options": _RECIPE_RUN_OPTIONS_SCHEMA}, ["recipe_id"]),
     _workbench_tool("recipe.chat", "Ask an Agent recipe a question.", {"recipe_id": {"type": "string"}, "question": {"type": "string"}, "options": _RECIPE_CHAT_OPTIONS_SCHEMA}, ["recipe_id", "question"]),
-    _workbench_tool("zone.file", "File a primitive in a Zone. directory_id from desk.list kind=directories; primitive_id kind:id, for example note:<id> with its ID from desk.list kind=notes. Filing again moves it.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "Object kind:id; for example note:<id> with its ID from desk.list kind=notes."}}, ["directory_id", "primitive_id"]),
+    _workbench_tool("zone.file", "File a primitive in a Zone. File a note into a zone by setting directory_id from desk.list kind=directories and primitive_id to note:<id>. Filing a primitive again moves it.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "Object kind:id; for example note:<id> with its ID from desk.list kind=notes."}}, ["directory_id", "primitive_id"]),
     _workbench_tool("zone.unfile", "Remove a primitive from a Zone: directory_id and kind:id primitive_id.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "Filed object kind:id; ID from desk.list (for example note:<id> with its ID from desk.list kind=notes)."}}, ["directory_id", "primitive_id"]),
-    _workbench_tool("zone.list_members", "List Zone members; notes use primitive_id note:<id>.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}}, ["directory_id"]),
+    _workbench_tool("zone.list_members", "List Zone members. List the notes in a zone. Each member has a primitive_id such as note:<id>.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}}, ["directory_id"]),
     _workbench_tool("kb.add_member", "Add a resource reference to a knowledge base. Add a note to a knowledge base: kb_id and ref note:<id>.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}, "ref": {"type": "string", "description": "A kind:id reference: for a note, note:<id> with the id from desk.list kind=notes."}}, ["kb_id", "ref"]),
     _workbench_tool("kb.remove_member", "Remove a resource reference from a knowledge base.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}, "ref": {"type": "string", "description": "The reference to remove, as kind:id: for a note, note:<id> with the id from desk.list kind=notes."}}, ["kb_id", "ref"]),
     _workbench_tool("kb.list_members", "List knowledge-base members.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}}, ["kb_id"]),

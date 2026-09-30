@@ -175,6 +175,7 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 - 2026-09-29 — the owner ruled R1–R9 on the faces grounding's nine questions (verbatim above).
 - 2026-09-29 — Muad'Dib checked the backend grounding: RATIFY-WITH-CONDITIONS; the charter adopts R1–R9 over its §5 recommendations (`docs/internal/philo/phase-11/grounding/checks/backend-muaddib.md`).
 - 2026-09-29 — round two: Astra r1 RATIFY-WITH-CONDITIONS paid — `meeting_decision` has no rendered face seat today (no well, no board; design §6a); the Room's decision rows are `decision_record`; Settings excludes the old webhook field on read and write; `channel.destinations` joins the palette; the brief keeps its same-day id; story 01 owns the inline Send caller; D1 a capability deferral; the three failure transitions drawn and fenced; Q1 worded as our limit — Fedaykin docs lane for Muad'Dib.
+- 2026-09-29 — Muad'Dib's counsel on built r1 accepts story 01 criterion 6 under Constitution XI.5: preview is exempt computation and has no admission or receipt; prepare and inline Send retain their admissions and receipts.
 - 2026-09-29 — DRAFTED: seven stories; one source interface; Slack by webhook; the aftercare path rewritten; the canvases before the species — Fedaykin docs lane for Muad'Dib.
 
 ## Decisions deferred

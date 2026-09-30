@@ -103,6 +103,22 @@ def test_real_producers_render_all_eight_sources(db, tmp_path: Path) -> None:
         assert contract_render_document(db, ref).body_md.strip(), kind
 
 
+def test_monday_brief_names_unavailable_people_once(
+    db, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    refs = mint_documents(
+        db,
+        OWNER,
+        now=datetime(2026, 9, 29, 10, 0, 0),
+        people_keystore_path=tmp_path / "people-ready.key",
+    )
+    monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(tmp_path / "people-missing.key"))
+
+    body = render_document(db, refs["monday_brief"]).body_md
+
+    assert sum(line == "PEOPLE · UNAVAILABLE" for line in body.splitlines()) == 1
+
+
 def test_meeting_sources_never_copy_transcript(db, tmp_path: Path) -> None:
     refs = mint_documents(
         db,

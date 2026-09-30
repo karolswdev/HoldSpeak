@@ -1,12 +1,12 @@
 # PHILO-11-01 — Astra's lane record
 
-**Status:** DRAFT — UNCHECKED, awaiting Muad'Dib's counsel-on-built.
+**Status:** Round-two conditions C1–C4 are paid and counsel r1 is recorded; the new head awaits Muad'Dib's full suite.
 
 LANE: PHILO-11-01. Story 01. Worktree `/Users/karol/dev/tools/wt-philo-11-01`; branch `feat/philo-11-01`; base `332d91586bdbd7fe40e3c2c00851a46adc4650e4`.
 
-Delivery: [PR #707 — PHILO-11-01 — the document sources](https://github.com/karolswdev/HoldSpeak/pull/707), to `main`. Implementation commit: `862fbba20ade9122bb74e190525ffa7ed9a89a24`; Delivery Workbench gate and historical verification passed. This handover remains DRAFT — UNCHECKED, awaiting Muad'Dib.
+Delivery: [PR #707 — PHILO-11-01 — the document sources](https://github.com/karolswdev/HoldSpeak/pull/707), to `main`. First-round implementation commit: `862fbba20ade9122bb74e190525ffa7ed9a89a24`; round two updates this PR. No merge is claimed.
 
-OUTCOME: implementation built and verified against the owner's ratified design, sections 1–4. Eight stored document kinds share the existing preview, prepare and Send lifecycle. The update face uses the generic reference. Story 01 is done; the built lane awaits Muad'Dib's counsel-on-built before merge. Slack and the new document faces stay with their named stories.
+OUTCOME: implementation follows the owner's ratified design, sections 1–4. Eight stored document kinds share the existing preview, prepare and Send lifecycle. The update face uses the generic reference. Story 01 is done; round two pays the counsel conditions, and Muad'Dib owns the full-suite rerun on the new head. Slack and the new document faces stay with their named stories.
 
 PROOF: actual command output is in [evidence-story-01.md](evidence-story-01.md). Python 3.13.14 was synced with `uv sync --python 3.13 --all-extras --all-groups`. All Python tests use isolated HOME and basetemp inside it. No metal test or owner desk is used.
 
@@ -59,3 +59,17 @@ The preview descriptor is already exempt computation under Constitution XI.5 (`h
 AMENDMENTS: no behavioral amendment. Criterion 6 is applied under Constitution XI.5: preview returns the reference without an admission or receipt; prepare and inline Send retain both. This precedence is explicit beside the original criterion, for counsel-on-built. The dispatch brief names `feat/philo-11-01`, superseding the proposed branch name in the lane table.
 
 UNKNOWN: the exact parallel-glass interference is not identified. This lane does not claim owner observation, real remote delivery, or counsel-on-built. Muad'Dib checks the built lane; no Claude session has been invoked as a substitute.
+
+## Round two — 2026-09-30
+
+LANE: PHILO-11-01, story 01, PR #707, branch `feat/philo-11-01`, worktree `/Users/karol/dev/tools/wt-philo-11-01`.
+
+OUTCOME: Muad'Dib's counsel r1 is recorded verbatim at [checks/story-01-built-muaddib-r1.md](checks/story-01-built-muaddib-r1.md). C1, C2 and C4 are paid; C3 is in the home backlog. F5 is in design §2; the F6 ruling is in phase decisions. Story 01 remains done.
+
+PROOF: the real `/api/mcp` `tools/list` maps all 13 restored PHILO-7/Phase 10 phrases to their intended tools. Base-form discovery, Send contract, document-source and chat-admission tests collect 82 and pass 82. The two persisted chat-admission rows on the final description text show 15,618 + 512 = 16,130 / 16,384 (254 headroom) for standalone chat and 15,657 + 512 = 16,169 / 16,384 (215 headroom) for recipe run then chat. A separate real admission check shows 15,598 + 512 = 16,110 / 16,384 (274 headroom), with 31 palette tools and the engine off-loop. The 1440/393 update Send glass collects and passes 4; it writes temporary shots only. Evidence is appended to [evidence-story-01.md](evidence-story-01.md).
+
+LEDGER: Muad'Dib's full suite on the previous head `3552be416` was **2 failed, 13,534 passed, 99 skipped, 4 xfailed in 3617.52s**. Both failures pass serially and are class (c); zero failures are branch-new. The full suite on this new head is Muad'Dib's to rerun.
+
+AMENDMENTS: restored all ten PHILO-7 job phrases and the three Phase 10 asks in the real catalogue, the original base-form guard tests (only the argument-name change remains), and the project-update `== body` assertion. When People is unavailable, the real brief renderer emits one `PEOPLE · UNAVAILABLE` line. Palette argument fields and authority are unchanged; `document_ref` help now points to `channel.preview`. The document-source update face did not change.
+
+UNKNOWN: the new-head full-suite result and Muad'Dib's follow-up counsel are pending. The parallel class-(c) failures from the previous head remain unclassified beyond their serial passes.

@@ -38,6 +38,7 @@ The owner: "I mean, if it changes, we re-send. How is it so difficult for you to
 - **Frozen at prepare:** `title`, `slug` and `label`, in one additive, nullable column `channel_sends.document_json`. The declarative schema adds it. There is no migration step and no backfill. A row with no `document_json` is a Phase 10 update row and reads as today.
 - **Why freeze these three:** a prepared Send names its file and its row without a live source read. Today `naming` reads the update again at Send (`holdspeak/services/channel_contract.py:213`; `holdspeak/services/channel_service.py:473`). That read goes. A prepared send of a deleted decision still sends its frozen bytes under its frozen name.
 - **Not added (R9, Tenet 1):** no source-snapshot digest, no renderer version, no source revision column, no stale-version state and no "old version" word on the face. The two Phase 10 guards already cover change: the inline Send renders again and compares the preview digest; a prepared send keeps its frozen bytes. When a document changes, the well shows the new preview, and he presses Send again.
+- **People read:** the brief renderer reads the People overlay with an internal OWNER principal, so an agent's preview or prepare includes names and owe counts. This is the ratified consequence of R1 and D2.
 - `project_update_deliveries` keeps its Phase 10 shape and stays update-only (backend.md §1 row "Delivery projection"; R8).
 
 ## 3. The kinds
