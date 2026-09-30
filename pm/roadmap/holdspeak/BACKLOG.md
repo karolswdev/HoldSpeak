@@ -1463,3 +1463,11 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 | Item | Kind | Source | Home |
 |---|---|---|---|
 | chat admission overflows on a default 16,384 target after about 300 bytes of conversation. Admission counts one token per byte, reserves 512 output tokens, and includes the whole leaf path. Repair with tokenizer-aware accounting (`holdspeak/services/inference_adoption_service.py:153-155`) or honest per-target limits; every later palette addition cites this row. | context admission (Tenet 3) | Muad'Dib's counsel on built r1, PHILO-11-01 F3/C3 (`pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/checks/story-01-built-muaddib-r1.md`) | UNASSIGNED |
+
+## PHILO-11-04 follow-ups — 2026-09-30 (Astra built-check r1 on #708, Muad'Dib's rulings)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| Unify DELIVERY rows into the one row grammar: the update's DELIVERY history (`web/src/features/channels/SendWell.tsx`, `DeliveryHistory`) keeps its Phase 10 row look while the SEND well and `SENDS N` use the species' grammar (name on line 1, chips under the name on line 2). Draw it on the owner's canvas first (UX-CANON A.2), then build. | face consistency (Tenet 5) | `pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/checks/story-04-built-astra-r1.md` F4; ruling on #708 | UNASSIGNED; the owner's canvas |
+| Carry the unit on a size refusal if a byte-limited channel reuses it: the well renders `<size> / <limit> CHARACTERS` (`web/src/desk/surface/send/SendWell.tsx`, `PreviewFailed`); only Slack's `payload_too_large:slack` carries `size` / `limit` today, in characters. A channel limited in bytes (email) must send its unit and the face must render it. | face words | same check, MISSED 3 | UNASSIGNED; with the first byte-limited producer |
+
