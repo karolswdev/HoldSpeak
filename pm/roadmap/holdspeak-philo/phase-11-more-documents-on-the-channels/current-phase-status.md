@@ -130,6 +130,8 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 
 ## Where we are
 
+2026-09-30, round four: Astra's built-check r3 on PHILO-11-04 is RATIFY-WITH-CONDITIONS (`checks/story-04-built-astra-r3.md`). Condition 1 paid: UNKNOWN and no answer survive the click that leaves the row on both hosts (four fences, red on `f4127c441`, green now). Condition 2 owed: the merge with main after #707.
+
 2026-09-30, round three: PHILO-11-04 pays Astra's built-check r2 (DO-NOT-RATIFY, `checks/story-04-built-astra-r2.md`): a FAILED, REFUSED or no-answer receipt stays on its destination row after the click that closes it or picks another row — at the row's last-send seat, the one the canvas draws (A3, B2, T1: line 2, beside the egress chip) — for the update and for every document (four transition cases, red on `f4127c441`). Not proven here: G2's producer and route (story 02), the Chair and the picker (story 05). #708 merges after #707; the merge with main is owed then.
 
 2026-09-30, round two: PHILO-11-04 pays Astra's built-check r1 (DO-NOT-RATIFY, `checks/story-04-built-astra-r1.md`) on Muad'Dib's rulings: the well's reads and actions are keyed by the document (Astra's two probes red on `13ec2a7b3`, green now); the Slack size contract recorded for story 02 (top-level integer `size`, `limit`); the update's DELIVERY rows back to their ratified Phase 10 look (BACKLOG: unify them on the owner's canvas); the kit CSS guard scans nested files. G4 and the chip-head rule are implemented; their proof on the Chair and the picker is story 05's.

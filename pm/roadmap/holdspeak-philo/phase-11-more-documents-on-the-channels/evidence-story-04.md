@@ -22,6 +22,15 @@ After the proof above, the update's re-export of the species' pieces was removed
 
 Shots I looked at: `04-picked-folder-{1440,393}`, `26-prepared-{1440,393}`, `34-history-several-1440`, `34b-history-manual-393`, and the atlas `sent` 393 after-shot. The rows are in the one grammar (name on line 1, chips on line 2 under the name), the preview headings in the display face, SEND at 12 px.
 
+### Round four (Astra built-check r3 RATIFY-WITH-CONDITIONS, `checks/story-04-built-astra-r3.md`)
+
+| Item | Proof |
+|---|---|
+| Condition 1: UNKNOWN and no answer survive the click that leaves the row, both hosts | Four fences, self-contained so they run unchanged against another implementation: `web/src/desk/surface/send/__tests__/closedReceipt.test.tsx` (a brief: UNKNOWN then close; no answer then pick another) and `web/src/features/channels/__tests__/closedReceipt.test.tsx` (the update through `PublishedWells`: the same two). Each asserts the closed row's result words AND the egress chip (`THIS DEVICE`). **Red before** 08:21:37 — `assets/story-04-logs/closed_receipt_red_before.sh` exports the implementation at `f4127c441` into scratch modules (`send_rb`, `channels_rb`, removed on exit) and runs the same fences: **4 failed** (the closed row kept only `LAST SEND UNKNOWN`, or nothing for no answer). **Green** on the head 08:21:46: **4 passed**. Wider web units 08:21:48: 35 files, **453 passed**. Baseline 08:21:53: 2,995 passed, zero branch-new. |
+| Why no answer is fenced by picking another row | A lost answer HOLDS its press (the Phase 10 press rule: Retry sends the same key), so its own row refuses to close on a click (`SendWell.tsx`, the row's `onToggle`: `if (busy \|\| held) return`). The click that leaves it is picking another row; both hosts fence that. UNKNOWN is fenced by closing the row on both hosts. |
+| Glass | Not re-run: the implementation is byte-equal to `2ac47c3c6` (this round adds tests only), whose glass passed 4/4 at 1440 and 393 (07:54:50). |
+| Condition 2 | Owed: resolve the stack after #707 merges and run the integration suite and gate on that tree. |
+
 ### Round three (Astra built-check r2 DO-NOT-RATIFY, `checks/story-04-built-astra-r2.md`)
 
 | Item | Proof |
@@ -680,6 +689,68 @@ AssertionError: expected '○Team folderFILE~/Reports/TeamTHIS DE…' to contain
 ```text
 
 Suite totals: 2991 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```
+
+### Captured run — 2026-09-30T08:21:37Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-04-logs/closed_receipt_red_before.sh`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** cfc8713556d935d45b30aad7c9cfc5bb0fca15dd
+
+```text
+IMPLEMENTATION = f4127c441 (f4127c441); fences = the head's closedReceipt tests, unchanged but for the module path
+ × src/desk/surface/send_rb/__tests__/closedReceipt.test.tsx > a brief: UNKNOWN and no answer survive the click that leaves the row (Astra r3 C1) > UNKNOWN, then the row is closed: LAST SEND UNKNOWN, its word and the egress stay on the row 57ms
+ × src/desk/surface/send_rb/__tests__/closedReceipt.test.tsx > a brief: UNKNOWN and no answer survive the click that leaves the row (Astra r3 C1) > no answer, then another row is picked: NO ANSWER · RESULT UNKNOWN and the egress stay on the first row 25ms
+ × src/features/channels_rb/__tests__/closedReceipt.test.tsx > the update: UNKNOWN and no answer survive the click that leaves the row (Astra r3 C1) > UNKNOWN, then the row is closed: LAST SEND UNKNOWN, its word and the egress stay on the row 51ms
+ × src/features/channels_rb/__tests__/closedReceipt.test.tsx > the update: UNKNOWN and no answer survive the click that leaves the row (Astra r3 C1) > no answer, then another row is picked: NO ANSWER · RESULT UNKNOWN and the egress stay on the first row 35ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '○Folder PaymentsFILE~/Reports/chd_a⚠L…' to contain 'NO ANSWER'
+AssertionError: expected '○Folder PaymentsFILE~/Reports/chd_aTH…' to contain 'NO ANSWER · RESULT UNKNOWN'
+AssertionError: expected '○Team folderFILE~/Reports/chd_a⚠LAST …' to contain 'NO ANSWER'
+AssertionError: expected '○Team folderFILE~/Reports/chd_aTHIS D…' to contain 'NO ANSWER · RESULT UNKNOWN'
+      Tests  4 failed (4)
+```
+
+### Captured run — 2026-09-30T08:21:46Z
+
+- **Command:** `bash -c cd web && npx vitest run --reporter=verbose src/desk/surface/send/__tests__/closedReceipt.test.tsx src/features/channels/__tests__/closedReceipt.test.tsx 2>&1 | grep -E "✓|×|Tests "; exit ${PIPESTATUS[0]}`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cfc8713556d935d45b30aad7c9cfc5bb0fca15dd
+
+```text
+ ✓ src/desk/surface/send/__tests__/closedReceipt.test.tsx > a brief: UNKNOWN and no answer survive the click that leaves the row (Astra r3 C1) > UNKNOWN, then the row is closed: LAST SEND UNKNOWN, its word and the egress stay on the row 47ms
+ ✓ src/desk/surface/send/__tests__/closedReceipt.test.tsx > a brief: UNKNOWN and no answer survive the click that leaves the row (Astra r3 C1) > no answer, then another row is picked: NO ANSWER · RESULT UNKNOWN and the egress stay on the first row 26ms
+ ✓ src/features/channels/__tests__/closedReceipt.test.tsx > the update: UNKNOWN and no answer survive the click that leaves the row (Astra r3 C1) > UNKNOWN, then the row is closed: LAST SEND UNKNOWN, its word and the egress stay on the row 51ms
+ ✓ src/features/channels/__tests__/closedReceipt.test.tsx > the update: UNKNOWN and no answer survive the click that leaves the row (Astra r3 C1) > no answer, then another row is picked: NO ANSWER · RESULT UNKNOWN and the egress stay on the first row 29ms
+      Tests  4 passed (4)
+```
+
+### Captured run — 2026-09-30T08:21:48Z
+
+- **Command:** `bash -c cd web && npx vitest run src/desk/surface src/features/channels src/pages/cores/connections src/features/project-room/update 2>&1 | grep -E "×|Test Files|Tests "; exit ${PIPESTATUS[0]}`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cfc8713556d935d45b30aad7c9cfc5bb0fca15dd
+
+```text
+ Test Files  35 passed (35)
+      Tests  453 passed (453)
+```
+
+### Captured run — 2026-09-30T08:21:53Z
+
+- **Command:** `bash -c set -o pipefail; uv run python scripts/check_web_baseline.py --run 2>&1 | tail -4`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cfc8713556d935d45b30aad7c9cfc5bb0fca15dd
+
+```text
+
+Suite totals: 2995 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
 ```
