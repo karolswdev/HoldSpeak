@@ -110,7 +110,9 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
       ref: { id: "d8", kind: "decision", title: "Glass decision", status: "proposed", ...fields },
     }) as unknown as WorldObject;
   const heads = () =>
-    Array.from(document.querySelectorAll(".desk-decision-card h3")).map((h) => h.textContent);
+    // PHILO-11-05a: the decision's own headings (its SEND well carries its own head).
+    Array.from(document.querySelectorAll(".desk-decision-card h3"))
+      .filter((h) => !h.closest("[data-send]")).map((h) => h.textContent);
 
   it("a title-only decision shows no heading; Edit offers all three fields", () => {
     render(<DecisionPullout object={decision({})} onClose={() => {}} />);

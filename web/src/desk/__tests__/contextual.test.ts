@@ -128,17 +128,24 @@ describe("HS-93-04 contextual Desk action eligibility", () => {
   });
 
   it("offers only configured Integrations for one compatible source", () => {
+    const github = { ...destinations[1], enabled: true };
     expect(
-      contextualIntegrationActions(destinations, fixture(), ["note:same"]).map(
+      contextualIntegrationActions([...destinations, github], fixture(), ["note:same"]).map(
         (action) => action.label,
       ),
-    ).toEqual(["Send Release checklist to Slack"]);
+    ).toEqual(["Create GitHub issue from Release checklist"]);
     expect(
       contextualIntegrationActions(destinations, fixture(), [
         "note:same",
         "artifact:same",
       ]),
     ).toEqual([]);
+  });
+
+  it("PHILO-11-05: no verb offers the parked free-text Slack send, even with Slack enabled", () => {
+    const labels = contextualIntegrationActions(destinations, fixture(), ["note:same"]).map((a) => a.label);
+    expect(destinations[0]).toMatchObject({ id: "slack", enabled: true });
+    expect(labels.filter((l) => /slack/i.test(l))).toEqual([]);
   });
 
   it("offers selected-material handoff only to waiting Coder sessions", () => {

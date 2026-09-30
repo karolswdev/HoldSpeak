@@ -7,6 +7,7 @@ import { openSurfaceOr } from "../../shell";
 import { SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
 import { SurfaceFooter } from "../../surface/SurfaceFooter";
 import { StateChip, countToken } from "../../surface";
+import { BriefSendWells } from "../../documentSendsLazy";
 
 interface BriefItem {
   id: string;
@@ -456,6 +457,10 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
           <StateChip state="idle" label="PEOPLE · UNAVAILABLE" />
         </div>
       ) : null}
+
+      {/* PHILO-11-05a (canvas A2, A3, A6): the brief's SEND well, after
+          PEOPLE. One pick and one press with the Chair's seat. */}
+      <BriefSendWells brief={brief} />
     </>
   );
 
