@@ -4,6 +4,8 @@
 
 LANE: PHILO-11-01. Story 01. Worktree `/Users/karol/dev/tools/wt-philo-11-01`; branch `feat/philo-11-01`; base `332d91586bdbd7fe40e3c2c00851a46adc4650e4`.
 
+Delivery: [PR #707 — PHILO-11-01 — the document sources](https://github.com/karolswdev/HoldSpeak/pull/707), to `main`. Implementation commit: `862fbba20ade9122bb74e190525ffa7ed9a89a24`; Delivery Workbench gate and historical verification passed. This handover remains DRAFT — UNCHECKED, awaiting Muad'Dib.
+
 OUTCOME: implementation built and verified against the owner's ratified design, sections 1–4. Eight stored document kinds share the existing preview, prepare and Send lifecycle. The update face uses the generic reference. Story 01 is done; the built lane awaits Muad'Dib's counsel-on-built before merge. Slack and the new document faces stay with their named stories.
 
 PROOF: actual command output is in [evidence-story-01.md](evidence-story-01.md). Python 3.13.14 was synced with `uv sync --python 3.13 --all-extras --all-groups`. All Python tests use isolated HOME and basetemp inside it. No metal test or owner desk is used.
