@@ -1,12 +1,14 @@
 #!/bin/bash
-# Red-before for G2: the new G2 case against the COMMITTED (HEAD) SendWell and channels.ts.
+# Red-before for G2: the G2 case against the BASELINE SendWell and channels.ts, pinned to the
+# story's base commit 3552be416 (story 01 head; Astra built-check r1 F2: HEAD no longer selects it).
 set -u
+BASE=3552be416c9d5d968adc162941f1f81a3c7c0b44
 cd /Users/karol/dev/tools/wt-philo-11-04
 D=web/src/features/g2redbefore
 rm -rf "$D"; mkdir -p "$D/__tests__"
-git show HEAD:web/src/features/channels/SendWell.tsx > "$D/SendWell.tsx"
-git show HEAD:web/src/features/channels/channels.ts > "$D/channels.ts"
-git show HEAD:web/src/features/channels/channels.css > "$D/channels.css"
+git show "$BASE":web/src/features/channels/SendWell.tsx > "$D/SendWell.tsx"
+git show "$BASE":web/src/features/channels/channels.ts > "$D/channels.ts"
+git show "$BASE":web/src/features/channels/channels.css > "$D/channels.css"
 cat > "$D/__tests__/g2.test.tsx" <<'T'
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
@@ -21,7 +23,7 @@ vi.mock("../../../pages/cores/connections/api", async () => {
 });
 import { ApiError } from "../../../lib/api";
 import { SendWell, useSends } from "../SendWell";
-it("G2 on HEAD: a preview refused by name shows its word and the size, never NO ANSWER", async () => {
+it("G2 on the baseline 3552be416: a preview refused by name shows its word and the size, never NO ANSWER", async () => {
   apiFetch.mockImplementation((path: string, init: { method?: string } = {}) => {
     const key = `${init.method ?? "GET"} ${path.split("?")[0]}`;
     if (key === "GET /api/channels/destinations") return Promise.resolve({ destinations: [{ id: "chd_1", name: "Folder Payments",

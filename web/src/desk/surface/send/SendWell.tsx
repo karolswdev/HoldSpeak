@@ -86,16 +86,31 @@ export function resetSendStore() {
 
 export type Read<T> = { data: T | null; failed: boolean; reload: () => void };
 
-/** One document's sends. While any row is `dispatching` the well reads again;
- *  when the last one settles, `onSettled` runs once (the history read). */
+/** One document's sends. The read is KEYED by the document: a response for
+ *  another document (a late read after the well changed document) is
+ *  dropped, and the rows it returns belong to the document it was asked for
+ *  or to nothing (Astra r1 F1 on #708). While any row is `dispatching` the
+ *  well reads again; when the last one settles, `onSettled` runs once. */
 export function useSends(ref: string, onSettled?: () => void): Read<Send[]> {
-  const [data, setData] = useState<Send[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [state, setState] = useState<{ ref: string; data: Send[] | null; failed: boolean }>({ ref, data: null, failed: false });
+  const current = useRef(ref);
+  current.current = ref;
   const reload = useCallback(() => {
-    void wire.sends(ref).then((r) => { setData(r); setFailed(false); }).catch(() => setFailed(true));
+    const asked = ref;
+    void wire.sends(asked)
+      .then((r) => {
+        if (current.current !== asked) return;       // an obsolete answer
+        setState({ ref: asked, data: r.filter((s) => s.document_ref === asked), failed: false });
+      })
+      .catch(() => {
+        if (current.current !== asked) return;
+        setState((st) => ({ ref: asked, data: st.ref === asked ? st.data : null, failed: true }));
+      });
   }, [ref]);
   const tick = useStore();
   useEffect(() => { reload(); }, [reload, tick]);
+  const data = state.ref === ref ? state.data : null;
+  const failed = state.ref === ref && state.failed;
   const running = (data ?? []).some((s) => s.state === "dispatching");
   const wasRunning = useRef(false);
   const settled = useRef(onSettled);
@@ -347,9 +362,11 @@ const ENDED = new Set(["sent", "failed", "unknown", "discarded"]);
 /** The ONE result source: the last read, with every record the hub returned
  *  to a press merged in. A read row replaces a returned one only when it is
  *  as far along (an ended row, or the returned one still running); a read
- *  that failed or predates the press never hides a known result. */
+ *  that failed or predates the press never hides a known result. Every row
+ *  in the answer belongs to `ref`. */
 export function mergeKnown(ref: string, read: Send[], known: Iterable<Send> = store.known.values()): Send[] {
-  const out = new Map(read.map((s) => [s.id, s]));
+  // Only this document's rows: a read row of another document never enters.
+  const out = new Map(read.filter((s) => s.document_ref === ref).map((s) => [s.id, s]));
   for (const k of known) {
     if (k.document_ref !== ref) continue;
     const r = out.get(k.id);
@@ -361,8 +378,8 @@ export function mergeKnown(ref: string, read: Send[], known: Iterable<Send> = st
 /* ── the SEND well ─────────────────────────────────────────────────── */
 
 type PreviewState =
-  | { id: string; digest: string; preview: WirePreview }
-  | { id: string; failed: true; code?: string; size?: { size: number; limit: number } | null };
+  | { ref: string; id: string; digest: string; preview: WirePreview }
+  | { ref: string; id: string; failed: true; code?: string; size?: { size: number; limit: number } | null };
 
 /** A preview that did not come: a named refusal (REFUSED + its word, the
  *  size and the limit when the answer carries them, NOTHING SENT, the
@@ -411,12 +428,12 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
     let live = true;
     setPreview(null);
     void wire.preview(ref, picked)
-      .then((p) => { if (live) setPreview({ id: picked, digest: p.payload_digest, preview: p.preview }); })
+      .then((p) => { if (live) setPreview({ ref, id: picked, digest: p.payload_digest, preview: p.preview }); })
       .catch((e) => {
         if (!live) return;
         setPreview(e instanceof Refusal
-          ? { id: picked, failed: true, code: e.code, size: refusalSize(e) }
-          : { id: picked, failed: true });
+          ? { ref, id: picked, failed: true, code: e.code, size: refusalSize(e) }
+          : { ref, id: picked, failed: true });
       });
     return () => { live = false; };
   }, [ref, picked, previewTry]);
@@ -477,7 +494,7 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                 const acc = accountChip(d, conns);
                 const busy = store.busy.has(k);
                 const lost = o.kind === "lost";
-                const pv = preview && preview.id === d.id ? preview : null;
+                const pv = preview && preview.ref === ref && preview.id === d.id ? preview : null;
                 const running = last?.state === "dispatching";
                 const far = farSide(d.channel, d.target, d.account);
                 const verbs = (
@@ -654,7 +671,7 @@ export function SendHistory({ sends }: { sends: Send[] }) {
   if (!rows.length) return null;
   const ok = rows.filter((r) => r.state === "sent").length;
   return (
-    <div data-send="history" data-testid="send-history">
+    <div data-send="history" data-species="send" data-testid="send-history">
       <SurfaceSection label={ok > 0 ? `${HISTORY_HEAD} ${ok}` : HISTORY_HEAD}>
         <SurfaceLedger count="" cols="room">
           <ul className="surface-ledger-rows" data-testid="history-list">

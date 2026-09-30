@@ -18,7 +18,7 @@
 
 /* The well's own base: the UI face at 14 px; a host's text-transform and
    letter-spacing never reach in. */
-:is([data-send="well"], [data-send="history"]) {
+:is([data-send="well"], [data-send="history"][data-species="send"]) {
   font-family: var(--font-ui);
   font-size: 14px;
   line-height: 1.45;
@@ -28,8 +28,8 @@
 }
 
 /* The section: a plain block (not a pullout's grid + hairline). */
-.desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"]) section.surface-section,
-:is([data-send="well"], [data-send="history"]) section.surface-section {
+.desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"][data-species="send"]) section.surface-section,
+:is([data-send="well"], [data-send="history"][data-species="send"]) section.surface-section {
   display: block;
   border-top: 0;
   padding-top: 0;
@@ -37,8 +37,8 @@
 
 /* SEND / SENDS / DELIVERY head: the 12 px floor in every host (a pullout's
    10 px h3 rule does not reach the species' head). */
-.desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"]) .surface-section-head h3,
-:is([data-send="well"], [data-send="history"]) .surface-section-head h3 {
+.desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"][data-species="send"]) .surface-section-head h3,
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-section-head h3 {
   margin: 0 0 6px;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -49,16 +49,16 @@
 }
 
 /* The rows: no host list padding; the one grammar (above). */
-.desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"]) ul.surface-ledger-rows,
-:is([data-send="well"], [data-send="history"]) ul.surface-ledger-rows {
+.desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"][data-species="send"]) ul.surface-ledger-rows,
+:is([data-send="well"], [data-send="history"][data-species="send"]) ul.surface-ledger-rows {
   margin: 0;
   padding-left: 0;
 }
-.desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"]) li.surface-ledger-row,
-:is([data-send="well"], [data-send="history"]) li.surface-ledger-row {
+.desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"][data-species="send"]) li.surface-ledger-row,
+:is([data-send="well"], [data-send="history"][data-species="send"]) li.surface-ledger-row {
   font-size: 14px;
 }
-:is([data-send="well"], [data-send="history"]) .surface-ledger[data-cols] .surface-ledger-line {
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger[data-cols] .surface-ledger-line {
   display: grid;
   grid-template-columns: 16px minmax(0, 1fr);
   align-items: center;
@@ -66,16 +66,16 @@
   padding: 6px 6px;
 }
 /* The room ledger's narrow-container indents never apply inside the well. */
-:is([data-send="well"], [data-send="history"]) .surface-ledger[data-cols] .surface-ledger-line > * {
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger[data-cols] .surface-ledger-line > * {
   margin-left: 0 !important;
 }
-:is([data-send="well"], [data-send="history"]) .surface-ledger[data-cols] .surface-ledger-lead {
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger[data-cols] .surface-ledger-lead {
   grid-column: 1;
   grid-row: 1;
   width: 16px;
   text-align: center;
 }
-:is([data-send="well"], [data-send="history"]) .surface-ledger[data-cols] .surface-ledger-primary {
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger[data-cols] .surface-ledger-primary {
   grid-column: 2;
   grid-row: 1;
   min-width: 0;
@@ -83,7 +83,7 @@
   font-size: 15px;
   white-space: normal;
 }
-:is([data-send="well"], [data-send="history"]) .surface-ledger[data-cols] .send-cells {
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger[data-cols] .send-cells {
   grid-column: 2;
   grid-row: 2;
   display: flex;
@@ -92,7 +92,7 @@
   gap: 4px 6px;
   min-width: 0;
 }
-:is([data-send="well"], [data-send="history"]) .surface-ledger-open {
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger-open {
   padding-left: 26px;
 }
 

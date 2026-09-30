@@ -3,7 +3,7 @@
 // update's own cases stay in features/channels/__tests__/SendWell.test.tsx;
 // its glass fence through the real hub is tests/e2e/test_philo10_04_send_face_glass.py.
 
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Destination, Send } from "../../../../features/channels/channels";
 
@@ -40,7 +40,7 @@ const send = (over: Partial<Send> = {}): Send => ({
   ...over,
 });
 
-type Route = (init: RequestInit & { json?: Record<string, unknown> }) => unknown;
+type Route = (init: RequestInit & { json?: Record<string, unknown> }, path: string) => unknown;
 let routes: Record<string, Route>;
 let previews: string[];
 beforeEach(() => {
@@ -58,7 +58,7 @@ beforeEach(() => {
   apiFetch.mockImplementation((path: string, init: RequestInit & { json?: Record<string, unknown> } = {}) => {
     const r = routes[`${init.method ?? "GET"} ${path.split("?")[0]}`];
     if (!r) return Promise.reject(new Error(`unrouted ${path}`));
-    try { return Promise.resolve(r(init)); } catch (e) { return Promise.reject(e); }
+    try { return Promise.resolve(r(init, path)); } catch (e) { return Promise.reject(e); }
   });
 });
 afterEach(() => vi.useRealTimers());
@@ -181,9 +181,9 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(screen.queryByTestId("preview-failed")).toBeNull();
   });
 
-  it("a preview refusal with no size names its word only (no invented number)", async () => {
+  it("a preview refusal with no top-level size names its word only (no invented number; no nested form)", async () => {
     routes["POST /api/channels/preview"] = () => {
-      throw new ApiError(404, "gone", { success: false, error_code: "document_not_found" });
+      throw new ApiError(404, "gone", { success: false, error_code: "document_not_found", context: { size: 41099, limit: 39000 } });
     };
     render(<SendWells doc={BRIEF} />);
     await pick("Team folder");
@@ -260,11 +260,19 @@ describe("the SEND well species on a brief (not an update)", () => {
     await within(a).findByTestId("send-preview");
   });
 
-  it("T2: PREVIEW CHANGED reads a fresh preview; he presses Send again", async () => {
+  it("T2: PREVIEW CHANGED reads a fresh preview; Send again carries the NEW digest and settles", async () => {
     let n = 0;
+    const digests: unknown[] = [];
+    let stored: Send[] = [];
+    routes["GET /api/channels/sends"] = () => ({ sends: stored });
     routes["POST /api/channels/preview"] = () => ({ payload_digest: `dig${++n}`, preview: { text: `# Brief v${n}` } });
-    routes["POST /api/channels/send"] = () => {
-      throw new ApiError(409, "changed", { success: false, error_code: "preview_changed" });
+    routes["POST /api/channels/send"] = (init) => {
+      digests.push(init.json?.preview_digest);
+      if (init.json?.preview_digest === "dig1") {
+        throw new ApiError(409, "changed", { success: false, error_code: "preview_changed" });
+      }
+      stored = [send({ payload_digest: String(init.json?.preview_digest) })];
+      return { send: stored[0] };
     };
     render(<SendWells doc={BRIEF} />);
     await pick("Team folder");
@@ -273,5 +281,64 @@ describe("the SEND well species on a brief (not an update)", () => {
     fireEvent.click(verb);
     expect((await screen.findByTestId("send-refused")).textContent).toContain("PREVIEW CHANGED");
     await waitFor(() => expect(screen.getByTestId("send-preview-body").textContent).toContain("Brief v2"));
+    const again = screen.getByTestId("send-verb");
+    await waitFor(() => expect((again as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(again);
+    expect((await screen.findByTestId("send-sent")).textContent).toContain("SAVED");
+    expect(digests).toEqual(["dig1", "dig2"]);
+  });
+});
+
+describe("document identity: a well that changes document never shows or sends the old one (Astra r1 F1)", () => {
+  const A: DocRef = { ref: "monday_brief:A", title: "Brief A", label: "BRIEF A" };
+  const B: DocRef = { ref: "monday_brief:B", title: "Brief B", label: "BRIEF B" };
+  const prepared = (ref: string, id: string) => send({
+    id, document_ref: ref, state: "prepared", prepare_operation_id: `op_${id}`, dispatch_started_at: null,
+    settled_at: null, proof: null, file_path: null,
+  });
+  const refOf = (path: string) => decodeURIComponent(path.split("document_ref=")[1] ?? "");
+  const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 30)); });
+
+  it("prepared A switched to B with B's read delayed: Send submits B's send_id or nothing", async () => {
+    let releaseB: (v: unknown) => void = () => {};
+    const bRead = new Promise((r) => { releaseB = r; });
+    const submitted: unknown[] = [];
+    routes["GET /api/channels/sends"] = (_init, path) =>
+      refOf(path) === A.ref ? { sends: [prepared(A.ref, "chs_prepared_A")] } : bRead;
+    routes["POST /api/channels/send"] = (init) => {
+      submitted.push(init.json?.send_id);
+      return { send: { ...prepared(B.ref, String(init.json?.send_id)), state: "sent" } };
+    };
+    const { rerender } = render(<SendWells doc={A} />);
+    await screen.findByTestId("prepared-send");
+    rerender(<SendWells doc={B} />);
+    await flush();
+    const early = screen.queryByTestId("prepared-send");
+    if (early) { fireEvent.click(early); await flush(); }
+    expect(submitted.filter((id) => id !== "chs_prepared_B")).toEqual([]);
+    expect(screen.queryByTestId("prepared-list")?.textContent ?? "").not.toContain("BRIEF A");
+    await act(async () => { releaseB({ sends: [prepared(B.ref, "chs_prepared_B")] }); });
+    fireEvent.click(await screen.findByTestId("prepared-send"));
+    await waitFor(() => expect(submitted).toContain("chs_prepared_B"));
+    expect(submitted.filter((id) => id !== "chs_prepared_B")).toEqual([]);
+  });
+
+  it("a late read for A never populates B's history", async () => {
+    let releaseA: (v: unknown) => void = () => {};
+    const aRead = new Promise((r) => { releaseA = r; });
+    let aAsked = false;
+    routes["GET /api/channels/sends"] = (_init, path) => {
+      if (refOf(path) === A.ref && !aAsked) { aAsked = true; return aRead; }
+      return { sends: [] };
+    };
+    const { rerender } = render(<SendWells doc={A} />);
+    await waitFor(() => expect(aAsked).toBe(true));
+    rerender(<SendWells doc={B} />);
+    await flush();
+    await act(async () => { releaseA({ sends: [send({ document_ref: A.ref, destination_name: "Folder for A" })] }); });
+    await flush();
+    expect(screen.queryByTestId("send-history")).toBeNull();
+    expect(document.body.textContent).not.toContain("Folder for A");
+    expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe(B.ref);
   });
 });

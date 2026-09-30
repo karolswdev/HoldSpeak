@@ -10,17 +10,32 @@ Worktree `../wt-philo-11-04`, branch `feat/philo-11-04`, stacked on story 01 (`f
 
 | Criterion / gap | Proof below |
 |---|---|
-| G2 red before | 06:57:11 — the new G2 case against the COMMITTED `SendWell.tsx` + `channels.ts` (`assets/story-04-logs/g2_red_before.sh` copies them from `HEAD` into a scratch module, runs, removes it): exit 1, the face said `NO PREVIEW · NO ANSWER` for `payload_too_large:slack`. |
-| One species, a case per state for a non-update document (no destination, picked, SENT, POSTED no link, REFUSED incl. the size word, FAILED, UNKNOWN, PREPARED; no manual row) + the update's cases | 06:57:25 — 35 named cases pass (`web/src/desk/surface/send/__tests__/SendWell.test.tsx` 15; `web/src/features/channels/__tests__/SendWell.test.tsx` 16 incl. G2 on the update; `resendProvider` 4). |
+| G2 red before | 06:57:11 — the G2 case against the then-committed `SendWell.tsx` + `channels.ts` (copied from `HEAD` = the base at that moment). **Round two re-pins the script to the base `3552be416`** (Astra r1 F2: `HEAD` no longer selects it): 07:20:02, exit 1, `✗NO PREVIEWNO ANSWERRetry`. This is consumer proof; the producer fields are story 02's (contract recorded in its story file). |
+| One species, a case per state for a non-update document (no destination, picked, SENT, POSTED no link, REFUSED incl. the size word, FAILED, UNKNOWN, PREPARED; no manual row) + the update's cases | 06:57:25 — 35 named cases pass (**corrected, Astra r1 F6:** `web/src/desk/surface/send/__tests__/SendWell.test.tsx` 14; `web/src/features/channels/__tests__/SendWell.test.tsx` 17 incl. G2 on the update; `resendProvider` 4). Round two: 37 (16 / 17 / 4) at 07:20:05. |
 | Library fences (face words, surface orphans, the kit's container law, the UX-canon ratchet) | 06:58:14 (20 passed). **06:57:31 is REJECTED as proof and kept as a finding:** its red was the kit law "the surface kit never reads the viewport" (`tests/unit/test_native_surfaces_guard.py:86`) against the first G4 draft (a `@media (max-width: 420px)` rule in `surface.css`). Fixed in design, not by the fence: the well is itself a `surface` container (G4) and the chip-head rule is intrinsic. |
 | Surface + channels + connections web units | 06:58:16 — 29 files, 354 tests pass. |
-| Phase 10 update glass, 1440 and 393 (no visible change except the ratified look) | 06:58:23 — `scripts/verify_philo11_update_glass.py --story 04` with `HOLDSPEAK_EVIDENCE_WRITE=1`: 4 passed (both fences at both widths). Shots: `assets/story-04-shots/`. |
+| Phase 10 update glass, 1440 and 393 (no visible change except the ratified look) | Round one 06:58:23 (superseded: its DELIVERY rows were in the new grammar, a visible deviation from E1a, Astra r1 F4); round two 07:20:26 below — `scripts/verify_philo11_update_glass.py --story 04` with `HOLDSPEAK_EVIDENCE_WRITE=1`: 4 passed (both fences at both widths). Shots: `assets/story-04-shots/`. |
 | Actual atlas, both widths | **07:00:45–07:00:47 (six entries) are REJECTED**: a zsh loop did not split its arguments (`--case case.p10.send.sent 1440 --viewport  `); nothing ran. The real runs are 07:00:56 → 07:01:44: `case.p10.send.sent` and `case.p10.send.prepared` at 1440 and 393, `.sent.op` and `.prepared.op` at 1440 — six `VERDICT: pass terminal=settled`. Before/after shots and observations: `assets/story-04-walks/`. The walks ran on the bundle with the species (checked: `SendWell-*.css` carries `[data-send=well]{container:surface / inline-size}`). |
 | Web baseline | 07:02:06 — 2,985 passed, 0 failed; `VERDICT: baseline-subset, zero branch-new`. Its five HEALED entries are the same five story 01 observed; not attributed here. |
 
 After the proof above, the update's re-export of the species' pieces was removed (its tests import the species from `desk/surface/send`; no compat shim). The last two runs re-prove that tree: the surface + channels + connections + update web units (33 files, 443 tests) and the web baseline again (2,985 passed, zero branch-new).
 
 Shots I looked at: `04-picked-folder-{1440,393}`, `26-prepared-{1440,393}`, `34-history-several-1440`, `34b-history-manual-393`, and the atlas `sent` 393 after-shot. The rows are in the one grammar (name on line 1, chips on line 2 under the name), the preview headings in the display face, SEND at 12 px.
+
+### Round two (Astra built-check r1 DO-NOT-RATIFY, `checks/story-04-built-astra-r1.md`; Muad'Dib's rulings)
+
+| Item | Proof |
+|---|---|
+| 1. Reads and actions isolated by document identity | 07:16:52 — Astra's two probes as web-unit cases, run with `SendWell.tsx` and `features/channels` byte-equal to `13ec2a7b3` (the capture checks it): **2 failed** — Send on B submitted `chs_prepared_A`; a late A read drew B's history. After the fix (`useSends` keyed by `doc.ref`, obsolete answers dropped; `mergeKnown` admits only rows of `ref`; the preview keyed by `ref`): 07:19:59, **2 passed**. The update's `mergeKnown` case now expects another document's read rows to be dropped (that expectation encoded the bug). |
+| 2. G2 pinned; the contract for story 02 | 07:20:02 red on the base (above). The contract is in `story-02-…md` (top-level integer `size`, `limit` beside `code` / `error_code`; `size` the final Slack text's characters; `limit` 39000) and design §5. The face reads the top level only: the case "no top-level size … no nested form" passes a nested `context` and shows no size. BACKLOG row: carry the unit for a byte-limited channel. |
+| 3. G4 and the chip head | Implemented, not proven: the Chair and the meeting's picker are story 05's proof (both widths, pointer ownership, readable heads, ordinary scrolling). |
+| 4. DELIVERY rows as ratified | The rows' cells are back to the Phase 10 fragments (`DeliveryHistory` byte-equal to base `3552be416`), and the species' look reaches only `[data-send="history"][data-species="send"]` (`SendHistory`), never the update's history. Glass 07:20:26: **4 passed** at 1440 and 393. Compared by eye against Phase 10: `phase-10-the-channels/assets/story-04-shots/34-history-several-1440.png` vs `assets/story-04-shots/34-history-several-1440.png`, and the 393 manual shot `34b-history-manual-393.png` in both: the DELIVERY head, the To field and Mark delivered, the SAVED / RESULT UNKNOWN / DELIVERED rows and their chip placement are the same; the only difference in frame is the SEND well's own row above (the ratified species look, E1a). BACKLOG row: unify DELIVERY rows on the owner's canvas. |
+| 5. The kit CSS guard is recursive | 07:18:47 — `assets/story-04-logs/guard_nested_mutation.sh`: a viewport query appended to `send/send-well.css` → **1 failed** naming `send/send-well.css`; reverted → **5 passed**. (The `git diff --stat` line in that output is this round's own `data-species` edit to the file, not mutation residue: the script restores the pre-mutation copy.) Plus the fixture case `test_the_scan_reaches_nested_kit_css`. Library fences: 07:20:23, **21 passed**. |
+| 6. Counts and T2 | Corrected above. T2 now presses Send again after PREVIEW CHANGED and asserts the digests sent were `dig1` then `dig2`, then SAVED. Round two web units: 07:20:05 **37 passed** (species 16, update 17, provider 4). |
+| Baseline | 07:24:09 — 2,987 passed, 0 failed, zero branch-new. |
+
+The six Phase 10 atlas walks (07:00:56–07:01:44) were not re-run in round two; the glass fences re-ran on the round-two tree.
+
 
 ## Proof
 
@@ -423,6 +438,174 @@ VERDICT: baseline-subset, zero branch-new
 ```text
 
 Suite totals: 2985 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```
+
+### Captured run — 2026-09-30T07:16:52Z
+
+- **Command:** `bash -c git diff --quiet 13ec2a7b3 -- web/src/desk/surface/send/SendWell.tsx web/src/features/channels && echo "IMPLEMENTATION = 13ec2a7b3 (SendWell.tsx, features/channels unchanged)"; cd web && npx vitest run src/desk/surface/send -t "document identity" 2>&1 | grep -E "✓|×|Tests |AssertionError"; exit ${PIPESTATUS[0]}`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** b133339c368e8159bd12b02a5f72d1c54e151a20
+
+```text
+IMPLEMENTATION = 13ec2a7b3 (SendWell.tsx, features/channels unchanged)
+     × prepared A switched to B with B's read delayed: Send submits B's send_id or nothing 97ms
+     × a late read for A never populates B's history 74ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'chs_prepared_A' ] to deeply equal []
+AssertionError: expected <div data-send="history" …(1)>…(1)</div> to be null
+      Tests  2 failed | 14 skipped (16)
+```
+
+### Captured run — 2026-09-30T07:18:47Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-04-logs/guard_nested_mutation.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b133339c368e8159bd12b02a5f72d1c54e151a20
+
+```text
+== mutated (expect FAIL)
+E       AssertionError: ['send/send-well.css: @media (max-width: 420px)']: viewport width media query in the surface kit — use @container surface (DESIGN_SYSTEM.md rule 2)
+E       assert not ['send/send-well.css: @media (max-width: 420px)']
+1 failed, 4 passed in 0.43s
+== reverted (expect pass)
+ web/src/desk/surface/send/send-well.css | 30 +++++++++++++++---------------
+ 1 file changed, 15 insertions(+), 15 deletions(-)
+5 passed in 0.40s
+```
+
+### Captured run — 2026-09-30T07:19:59Z
+
+- **Command:** `bash -c cd web && npx vitest run src/desk/surface/send -t "document identity" 2>&1 | grep -E "✓|×|Tests "; exit ${PIPESTATUS[0]}`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b133339c368e8159bd12b02a5f72d1c54e151a20
+
+```text
+      Tests  2 passed | 14 skipped (16)
+```
+
+### Captured run — 2026-09-30T07:20:02Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-04-logs/g2_red_before.sh`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** b133339c368e8159bd12b02a5f72d1c54e151a20
+
+```text
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+ ❯ src/features/g2redbefore/__tests__/g2.test.tsx (1 test | 1 failed) 99ms
+   × G2 on the baseline 3552be416: a preview refused by name shows its word and the size, never NO ANSWER 97ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/features/g2redbefore/__tests__/g2.test.tsx > G2 on the baseline 3552be416: a preview refused by name shows its word and the size, never NO ANSWER
+AssertionError: expected '✗NO PREVIEWNO ANSWERRetry' to contain 'TOO LARGE FOR SLACK'
+Expected: "TOO LARGE FOR SLACK"
+Received: "✗NO PREVIEWNO ANSWERRetry"
+ ❯ src/features/g2redbefore/__tests__/g2.test.tsx:30:28
+     28|   await new Promise((r) => setTimeout(r, 50));
+     29|   const open = screen.getByTestId("send-open");
+     30|   expect(open.textContent).toContain("TOO LARGE FOR SLACK");
+       |                            ^
+     31|   expect(open.textContent).toContain("41,099 / 39,000 CHARACTERS");
+     32|   expect(open.textContent).not.toContain("NO ANSWER");
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  01:20:03
+   Duration  1.55s (transform 794ms, setup 94ms, import 1.04s, tests 99ms, environment 219ms)
+```
+
+### Captured run — 2026-09-30T07:20:05Z
+
+- **Command:** `bash -c cd web && npx vitest run --reporter=verbose src/desk/surface/send src/features/channels 2>&1 | grep -E "✓|×|Test Files|Tests "; exit ${PIPESTATUS[0]}`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b133339c368e8159bd12b02a5f72d1c54e151a20
+
+```text
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > no destination: NO DESTINATION + Add destination; no history head, no counter of zero 52ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > picked: the preview of THIS document opens with Send; the row keeps the one grammar 35ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the SEND well > no destination: NO DESTINATION + Add destination, never a counter 40ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the SEND well > a destinations read with no answer is named, never the empty state 9ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the SEND well > A1: the pick opens the preview and Send in place; the folder keeps its case 23ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the SEND well > Send settles SAVED + the exact path; a double click is one press 31ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the SEND well > a refusal names its code and NOTHING SENT 26ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the SEND well > G2: a preview refused by name shows its word and the size, never NO ANSWER (PHILO-11-04) 22ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the SEND well > a lost answer keeps the key: Retry sends the SAME command_id 34ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > SENT: SAVED + the exact path; SENDS 1 from the ended sends; the wire carries document_ref 34ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > POSTED: a Slack send shows POSTED and the channel, never a link 16ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > REFUSED on Send: the refusal word and NOTHING SENT 23ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > REFUSED preview over the Slack limit (G2, canvas T1): the named word and the size, never NO ANSWER, no Send 24ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > a preview refusal with no top-level size names its word only (no invented number; no nested form) 12ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the SEND well > A3: prepared sends first, ONE open; an ended one stays as its result 19ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the SEND well > a running send: SENDING on the row and its destination; Send not enabled 45ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the SEND well > a draft has no SEND well (the posture renders the wells only when published) 1ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > latestFor: ONE source, by dispatch_seq (Codex Astra r1 F3 on #697) > an equal clock is ordered by the hub's dispatch sequence 0ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > mergeKnown: a stale or failed read never hides a returned result (r1 F1 on #697) > keeps the returned FAILED over a read that predates it, and a read never replaces an ended row with a running one 0ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > latestFor: ONE source, by dispatch_started_at > a newer failure beats an older success, whatever the preparation order 1ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the one DELIVERY history (A2) > head DELIVERY N counts isDelivered rows; words per channel; manual kept 5ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the one DELIVERY history (A2) > a history read with no answer is named with Retry 1ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the one DELIVERY history (A2) > list chips: PREPARED ×K, RESULT UNKNOWN ×M, DELIVERY ×N; none at zero 7ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the one DELIVERY history (A2) > no chip at zero 15ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > a preview with no answer at all stays NO PREVIEW · NO ANSWER with Retry 28ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > FAILED: the latest send's failure word and NOTHING SENT; no SENDS head for a failure 24ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > UNKNOWN: RESULT UNKNOWN on the row and in the history (SENDS, no counter of zero) 18ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > PREPARED: first in SEND, the document's label, BY STEWARD, Send + Discard; the head chip counts it 18ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > no PREPARED chip at zero 3ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > two seats of one document share one pick (the Chair and Intelligence -> BRIEF) 19ms
+ ✓ src/features/channels/__tests__/resendProvider.test.tsx > the provider words > names the provider that accepted the email 2ms
+ ✓ src/features/channels/__tests__/resendProvider.test.tsx > the provider words > shows the provider's host as the egress and its activity page as the far side 1ms
+ ✓ src/features/channels/__tests__/resendProvider.test.tsx > the provider words > keeps each provider's key under its own name 0ms
+ ✓ src/features/channels/__tests__/resendProvider.test.tsx > the Destination form > picks Resend: its key row, its key save, its egress, its save body 388ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the SEND well species on a brief (not an update) > T2: PREVIEW CHANGED reads a fresh preview; Send again carries the NEW digest and settles 43ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > document identity: a well that changes document never shows or sends the old one (Astra r1 F1) > prepared A switched to B with B's read delayed: Send submits B's send_id or nothing 55ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > document identity: a well that changes document never shows or sends the old one (Astra r1 F1) > a late read for A never populates B's history 68ms
+ Test Files  3 passed (3)
+      Tests  37 passed (37)
+```
+
+### Captured run — 2026-09-30T07:20:23Z
+
+- **Command:** `bash -c H=$(mktemp -d); trap "rm -rf $H" EXIT; HOME=$H uv run pytest -q -p no:cacheprovider tests/unit/test_philo10_face_words.py tests/unit/test_web_surface_orphans.py tests/unit/test_native_surfaces_guard.py tests/unit/test_ux_canon_ratchet.py 2>&1 | tail -3`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b133339c368e8159bd12b02a5f72d1c54e151a20
+
+```text
+.....................                                                    [100%]
+21 passed in 2.75s
+```
+
+### Captured run — 2026-09-30T07:20:26Z
+
+- **Command:** `env HOLDSPEAK_EVIDENCE_WRITE=1 uv run python scripts/verify_philo11_update_glass.py --story 04`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b133339c368e8159bd12b02a5f72d1c54e151a20
+
+```text
+....                                                                     [100%]
+4 passed in 201.98s (0:03:21)
+```
+
+### Captured run — 2026-09-30T07:24:09Z
+
+- **Command:** `bash -c set -o pipefail; uv run python scripts/check_web_baseline.py --run 2>&1 | tail -4`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b133339c368e8159bd12b02a5f72d1c54e151a20
+
+```text
+
+Suite totals: 2987 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
 ```

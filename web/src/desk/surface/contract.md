@@ -413,8 +413,10 @@ so it stays out of the main barrel, which is wire-free.
     (`REV 4`, `BRIEF SEP 29`, `D-1a2b3c`).
   - `head?` — sits first inside SEND (the meeting's form picker).
   - `history?(sends)` — the slot only the update fills: its `DELIVERY N`
-    with the manual To + Mark delivered row (R8). Every other document gets
-    `SendHistory`.
+    with the manual To + Mark delivered row (R8), drawn exactly as Phase 10
+    ratified it (canvas E1a). It is NOT in the species' row grammar (the
+    unification waits for the owner's canvas; BACKLOG). Every other document
+    gets `SendHistory`.
 - `SendWell({ doc, sendsRead, onSettled?, head? })` — the well alone, for a
   host that shares one sends read (`useSends(ref)`).
 - `SendHistory({ sends })` — `SENDS N` over the ended sends (N = sent rows;
@@ -427,6 +429,13 @@ so it stays out of the main barrel, which is wire-free.
 
 Rules the species holds (they are not the host's business):
 
+- **Reads and actions belong to one document.** A sends read is keyed by
+  `doc.ref`: an answer for another document (a late read after the host
+  changed document) is dropped, and only rows whose `document_ref` is this
+  document enter (`useSends`, `mergeKnown`). So a prepared row's Send can
+  never submit another document's `send_id`, and a late read never fills
+  another document's history (Astra built-check r1 F1 on #708). The
+  preview is keyed the same way.
 - **One state per document.** Pick, press, held key and outcome live in a
   module store keyed `<ref>|<target>`: two seats of one document (the
   Chair's brief and Intelligence → BRIEF) show one pick and one press, and a
@@ -436,8 +445,9 @@ Rules the species holds (they are not the host's business):
   NOTHING SENT; FAILED + its word + NOTHING SENT; RESULT UNKNOWN; PREPARED;
   SENDING. Each from `features/channels/channels.ts`, never re-spelled.
 - **A preview refused by name** shows `REFUSED`, its word, the size and the
-  limit when the answer carries them (`41,099 / 39,000 CHARACTERS` for
-  `payload_too_large:slack`), `NOTHING SENT` and the egress chip — never
+  limit when the answer carries them as TOP-LEVEL integers `size` and
+  `limit` beside `code` / `error_code` (`41,099 / 39,000 CHARACTERS` for
+  `payload_too_large:slack`; story 02 produces them; no nested form), `NOTHING SENT` and the egress chip — never
   `NO ANSWER`. Only a preview with no answer at all is
   `NO PREVIEW · NO ANSWER` with Retry. `PREVIEW CHANGED` reads a fresh preview.
 - **Slack is POSTED with no link**: the proof is the channel label.
@@ -445,12 +455,13 @@ Rules the species holds (they are not the host's business):
   every waiting prepared row (UX-CANON: egress where egress happens).
 - **Its own look** (`send/send-well.css`, G3): the UI face at 14 px; the
   preview's headings in the display face; mono only for fields, paths and
-  chips; the `SEND` / `SENDS` / `DELIVERY` head at 12 px in every host (a
+  chips; the `SEND` / `SENDS` head at 12 px in every host (a
   pullout's 10 px `h3` rule does not reach it). ONE row grammar in every
   host at every width: line 1 the lead (16 px) and the name, line 2 the
   chips (`.send-cells`) under the name; an open row's preview at the name's
   indent. No host rule for `section`, `h3`, `ul`, `p` or monospace reaches in.
-- **The 44 px narrow target in every host** (G4): the well is itself a
+- **The 44 px narrow target in every host** (G4, implemented; its proof on
+  the Chair and the meeting's picker is owed by story 05): the well is itself a
   `surface` container (`container: surface / inline-size`), so every narrow
   rule of the kit (the 44 px picker, string field and check token; the
   ledger's narrow reflow) answers to the well's own width, also in a host

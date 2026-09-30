@@ -5,10 +5,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments THIS DEVICE",
-        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger THIS DEVICE",
-        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE",
-        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Old THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE",
+        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Old THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -28,7 +28,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "10916a82dd55f246bd90a3ee77b3c6a1608e0f2abb638704245d910a1d7eb10b",
+      "masked_sha": "c6addd3ce3ba659606cf368c6ebcd1bd030789cf081e4dd7804b01d12a029c35",
       "modal": false,
       "named": [
         {
@@ -227,15 +227,15 @@
         }
       ],
       "prepared": [
-        "◆ Folder Payments ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00 THIS DEVICE",
-        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00 THIS DEVICE",
-        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00 THIS DEVICE",
-        "◆ Folder Ledger ◆ PREPARED BY YOU REV 1 SEP 30 01:00 THIS DEVICE"
+        "◆ Folder Payments ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23 THIS DEVICE",
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23 THIS DEVICE",
+        "◆ Folder Ledger ◆ PREPARED BY YOU REV 1 SEP 30 01:23 THIS DEVICE"
       ],
       "prepared_open": 1,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -264,10 +264,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:00 THIS DEVICE",
-        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
-        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE",
-        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Old THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:23 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE",
+        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Old THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -279,8 +279,8 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md SEP 30 01:00",
-        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-dc67ef23.md JAN 1 02:00"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md SEP 30 01:23",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-88137767.md JAN 1 02:00"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -288,12 +288,12 @@
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 01:00",
+        "✓ SAVED 01:23",
         "✗ LAST SEND FAILED"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "0aa668e4592e4762f8908b59e982e9e257cd6d0049e0f8a153c44dceab614991",
+      "masked_sha": "e49e24846573338d26c08745aaf735644871bfbb7fb7dc2095cff6f520c56bef",
       "modal": false,
       "named": [
         {
@@ -426,13 +426,13 @@
         }
       ],
       "prepared": [
-        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00 THIS DEVICE",
-        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00 THIS DEVICE"
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23 THIS DEVICE"
       ],
       "prepared_open": 0,
       "prepared_results": [
-        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00",
-        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:00"
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:23"
       ],
       "preview_fields": [],
       "preview_has_raw": false,
@@ -456,10 +456,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:00 THIS DEVICE",
-        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
-        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE",
-        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Old THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:23 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE",
+        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Old THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -471,8 +471,8 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md SEP 30 01:00",
-        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-dc67ef23.md JAN 1 02:00"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md SEP 30 01:23",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-88137767.md JAN 1 02:00"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -480,12 +480,12 @@
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 01:00",
+        "✓ SAVED 01:23",
         "✗ LAST SEND FAILED"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "c8f93152bbbff60a1c786a87c314577df9b07e128efb942110e73397c8ada2a8",
+      "masked_sha": "0bd24a7b4661f045eeba0ec91f6dbd9516953a2202d1884fa0c41c93d11450c3",
       "modal": false,
       "named": [
         {
@@ -618,13 +618,13 @@
         }
       ],
       "prepared": [
-        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00 THIS DEVICE",
-        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00 THIS DEVICE"
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23 THIS DEVICE"
       ],
       "prepared_open": 0,
       "prepared_results": [
-        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00",
-        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:00"
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:23"
       ],
       "preview_fields": [],
       "preview_has_raw": false,
@@ -648,10 +648,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:00 THIS DEVICE",
-        "● Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
-        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE",
-        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Old THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:23 THIS DEVICE",
+        "● Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE",
+        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Old THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -664,8 +664,8 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md SEP 30 01:00",
-        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-dc67ef23.md JAN 1 02:00"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md SEP 30 01:23",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-88137767.md JAN 1 02:00"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -673,7 +673,7 @@
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 01:00",
+        "✓ SAVED 01:23",
         "✗ LAST SEND FAILED"
       ],
       "list_chips": [],
@@ -826,16 +826,16 @@
         }
       ],
       "prepared": [
-        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00 THIS DEVICE",
-        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00 THIS DEVICE"
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23 THIS DEVICE"
       ],
       "prepared_open": 0,
       "prepared_results": [
-        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00",
-        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:00"
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:23"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -870,10 +870,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:00 THIS DEVICE",
-        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger THIS DEVICE",
-        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE",
-        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Old THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:23 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE",
+        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Old THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -887,18 +887,18 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md SEP 30 01:00"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md SEP 30 01:23"
       ],
       "history_head": "DELIVERY 1",
       "history_outcomes": [
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 01:00"
+        "✓ SAVED 01:23"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "cfe394d7444aae65c63eaad4c35ec0b44133000ac93904a6b93fd5b1802dccb6",
+      "masked_sha": "abf14e37371de5b4558f4eac5a34a14da74f1e454d9e4fd3d38100e13a988881",
       "modal": false,
       "named": [
         {
@@ -1076,16 +1076,16 @@
         }
       ],
       "prepared": [
-        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00 THIS DEVICE",
-        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00 THIS DEVICE",
-        "◆ Folder Ledger ◆ PREPARED BY YOU REV 1 SEP 30 01:00 THIS DEVICE"
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23 THIS DEVICE",
+        "◆ Folder Ledger ◆ PREPARED BY YOU REV 1 SEP 30 01:23 THIS DEVICE"
       ],
       "prepared_open": 1,
       "prepared_results": [
-        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00"
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -1114,10 +1114,10 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:00 THIS DEVICE",
-        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
-        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE",
-        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Old THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:23 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE",
+        "○ Folder Old FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Old THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1129,8 +1129,8 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md SEP 30 01:00",
-        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-dc67ef23.md JAN 1 02:00"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md SEP 30 01:23",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-88137767.md JAN 1 02:00"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -1138,12 +1138,12 @@
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 01:00",
+        "✓ SAVED 01:23",
         "✗ LAST SEND FAILED"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "93587181e82a496f614cab293c3a7d46e1490116792d2b9b4b29d4a85fe79b78",
+      "masked_sha": "7b35852afdc234bf8c61f2de528f1611d00fe5d7baab8ad50417e639f68cc7c7",
       "modal": false,
       "named": [
         {
@@ -1297,16 +1297,16 @@
         }
       ],
       "prepared": [
-        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION CHANGED SEP 30 01:00 THIS DEVICE",
-        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00 THIS DEVICE"
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION CHANGED SEP 30 01:23 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23 THIS DEVICE"
       ],
       "prepared_open": 1,
       "prepared_results": [
-        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00",
-        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:00"
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:23"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -1335,9 +1335,9 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:00 THIS DEVICE",
-        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
-        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:23 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1348,8 +1348,8 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md SEP 30 01:00",
-        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-dc67ef23.md JAN 1 02:00"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md SEP 30 01:23",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-88137767.md JAN 1 02:00"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -1357,12 +1357,12 @@
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 01:00",
+        "✓ SAVED 01:23",
         "✗ LAST SEND FAILED"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "60a39aaf75239ca5ec00fd116529ec6dabe0df9497745f102e3cbe54c346b0a1",
+      "masked_sha": "172981686bd7a37eed25f79904a603138980cd9a71a2b4a70788d51c32585f9c",
       "modal": false,
       "named": [
         {
@@ -1501,16 +1501,16 @@
         }
       ],
       "prepared": [
-        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION CHANGED SEP 30 01:00 THIS DEVICE",
-        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION PARKED SEP 30 01:00 THIS DEVICE"
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION CHANGED SEP 30 01:23 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION PARKED SEP 30 01:23 THIS DEVICE"
       ],
       "prepared_open": 1,
       "prepared_results": [
-        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00",
-        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:00"
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:23"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Old"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Old"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -1539,9 +1539,9 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:00 THIS DEVICE",
-        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
-        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:23 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1552,8 +1552,8 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md SEP 30 01:00",
-        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-dc67ef23.md JAN 1 02:00"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md SEP 30 01:23",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-88137767.md JAN 1 02:00"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -1561,12 +1561,12 @@
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 01:00",
+        "✓ SAVED 01:23",
         "✗ LAST SEND FAILED"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "d4032ce1dca3e33eaf2d0f5fce0e5b2908d675c77d3228eccc90d2fe4331175b",
+      "masked_sha": "6eeab00def55dfa84327fb458c5fdd857a6e7ebc09fbd579b6d140afd47a844a",
       "modal": false,
       "named": [
         {
@@ -1699,16 +1699,16 @@
         }
       ],
       "prepared": [
-        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION CHANGED SEP 30 01:00 THIS DEVICE",
-        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION PARKED SEP 30 01:00 THIS DEVICE"
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION CHANGED SEP 30 01:23 THIS DEVICE",
+        "◆ Folder Old ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION PARKED SEP 30 01:23 THIS DEVICE"
       ],
       "prepared_open": 1,
       "prepared_results": [
-        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00",
-        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:00"
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:23"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Old"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Old"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -1737,9 +1737,9 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:00 THIS DEVICE",
-        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
-        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE"
+        "○ Folder Payments FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments ✓ SAVED 01:23 THIS DEVICE",
+        "○ Folder Ledger FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger ✗ LAST SEND FAILED THIS DEVICE",
+        "○ Folder Moved FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1749,8 +1749,8 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md SEP 30 01:00",
-        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-dc67ef23.md JAN 1 02:00"
+        "✓ Folder Payments SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md SEP 30 01:23",
+        "✓ Folder Ledger SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-88137767.md JAN 1 02:00"
       ],
       "history_head": "DELIVERY 2",
       "history_outcomes": [
@@ -1758,12 +1758,12 @@
         "sent"
       ],
       "last_chips": [
-        "✓ SAVED 01:00",
+        "✓ SAVED 01:23",
         "✗ LAST SEND FAILED"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "564b6008815080cd11b2e3624d11ec8f7673b44ae21ea4c95812e0478b019c83",
+      "masked_sha": "2a4a4f3997fafdda478b32ff9c948f8fa6022f909bef1183f576c5e93014fe3c",
       "modal": false,
       "named": [
         {
@@ -1881,16 +1881,16 @@
         }
       ],
       "prepared": [
-        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION CHANGED SEP 30 01:00 THIS DEVICE"
+        "◆ Folder Moved ◆ PREPARED BY REMOTE-PROJECT-AGENT REV 1 ✗ DESTINATION CHANGED SEP 30 01:23 THIS DEVICE"
       ],
       "prepared_open": 1,
       "prepared_results": [
-        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00",
-        "· Folder Old ○ DISCARDED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:00",
-        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:00"
+        "· Folder Payments ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23",
+        "· Folder Old ○ DISCARDED BY REMOTE-PROJECT-AGENT REV 1 SEP 30 01:23",
+        "· Folder Ledger ✗ FAILED NO PERMISSION NOTHING SENT BY YOU REV 1 SEP 30 01:23"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -1968,21 +1968,21 @@
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-30T07:00:05+00:00",
-      "destination_id": "chd_9d0dc0f163fd77424e0f2532",
+      "created_at": "2026-09-30T07:23:10+00:00",
+      "destination_id": "chd_03ca79679e7874e0ba0d4113",
       "destination_name": "Folder Payments",
       "dispatch_seq": 1,
-      "dispatch_started_at": "2026-09-30T07:00:12.722259+00:00",
+      "dispatch_started_at": "2026-09-30T07:23:25.125802+00:00",
       "document_json": {
         "label": "REV 1",
         "slug": "payments-ledger-cutover",
         "title": "Payments ledger cutover — update r1 (2026-09-30)"
       },
-      "document_ref": "project_update:pupd_2135ecfdbfdd4d47938bd2297bc557e9",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md",
-      "id": "chs_43e7eb87a8a98b5e60e4db6a",
+      "document_ref": "project_update:pupd_736192abcd254440a1f2d87075cfb993",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md",
+      "id": "chs_4d43661b30ad68e46305842d",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
-      "prepare_operation_id": "op_77e31aeaa55d4bbea95aa84215bc3963",
+      "prepare_operation_id": "op_8f5e46f2512840c597756fef20da4bf9",
       "prepared_by": {
         "identity": "remote-project-agent",
         "kind": "agent"
@@ -1991,26 +1991,26 @@
         "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
       },
       "proof": {
-        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-43e7eb87.md",
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments/2026-09-30-payments-ledger-cutover-rev-1-4d43661b.md",
         "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
         "size": 286
       },
       "reason": null,
-      "send_operation_id": "op_c9a7e63e9f3840059518dce6286488cf",
-      "settled_at": "2026-09-30T07:00:12+00:00",
+      "send_operation_id": "op_4fe8ff2d242e49468b483921805bd71b",
+      "settled_at": "2026-09-30T07:23:25+00:00",
       "size": 286,
       "state": "sent",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Payments"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Payments"
       },
-      "target_digest": "39e301049e008593132a196cd29dfbaa55ba0cd08b6f6d28e8f913b97e0f1a67"
+      "target_digest": "7f61c5d6a3f010747bae3dc2bb51fa595834c0b7a4f43050e16b1de0df024017"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-30T07:00:05+00:00",
-      "destination_id": "chd_59e1d0622818f7822ddd75d3",
+      "created_at": "2026-09-30T07:23:10+00:00",
+      "destination_id": "chd_01658b687999232f7c5d48bb",
       "destination_name": "Folder Moved",
       "dispatch_seq": null,
       "dispatch_started_at": null,
@@ -2019,11 +2019,11 @@
         "slug": "payments-ledger-cutover",
         "title": "Payments ledger cutover — update r1 (2026-09-30)"
       },
-      "document_ref": "project_update:pupd_2135ecfdbfdd4d47938bd2297bc557e9",
+      "document_ref": "project_update:pupd_736192abcd254440a1f2d87075cfb993",
       "file_path": null,
-      "id": "chs_73481a3d9f0a864d6f17e747",
+      "id": "chs_d10a72a5ac6626e1e3869fd4",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
-      "prepare_operation_id": "op_a0d01b0404204d2289da9869b7328b07",
+      "prepare_operation_id": "op_e9fa1fd0928e4d4aa0dfee2d45828a85",
       "prepared_by": {
         "identity": "remote-project-agent",
         "kind": "agent"
@@ -2038,16 +2038,16 @@
       "size": 286,
       "state": "prepared",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Moved"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Moved"
       },
-      "target_digest": "1264e6f217937eb9be794f725a73c29cf1cf4b756e5fce3abe4369a3f1494067"
+      "target_digest": "f8ef316b5caabda65b3baa23035468bdb373503b803e55805f30c52b983a5a92"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-30T07:00:05+00:00",
-      "destination_id": "chd_fae3f70cf8dc95605190f54b",
+      "created_at": "2026-09-30T07:23:10+00:00",
+      "destination_id": "chd_0f2cf4050eb8458647e9f40f",
       "destination_name": "Folder Old",
       "dispatch_seq": null,
       "dispatch_started_at": null,
@@ -2056,11 +2056,11 @@
         "slug": "payments-ledger-cutover",
         "title": "Payments ledger cutover — update r1 (2026-09-30)"
       },
-      "document_ref": "project_update:pupd_2135ecfdbfdd4d47938bd2297bc557e9",
+      "document_ref": "project_update:pupd_736192abcd254440a1f2d87075cfb993",
       "file_path": null,
-      "id": "chs_77fab8956ebac221217c2a0d",
+      "id": "chs_1f618e31429c7f69d41798ba",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
-      "prepare_operation_id": "op_8e16f79314f34968a4a1af490e964553",
+      "prepare_operation_id": "op_80d7e9a07cd1438bad482d5d86d52a9c",
       "prepared_by": {
         "identity": "remote-project-agent",
         "kind": "agent"
@@ -2071,20 +2071,20 @@
       "proof": null,
       "reason": null,
       "send_operation_id": null,
-      "settled_at": "2026-09-30T07:00:29+00:00",
+      "settled_at": "2026-09-30T07:23:46+00:00",
       "size": 286,
       "state": "discarded",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Old"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Old"
       },
-      "target_digest": "dd033be4da0fb8e71cb1fdd61659f9bc9f5e2fe8efc68a0b021d76725435a882"
+      "target_digest": "02e805e66fb1d7708d1a1e28603d7576c4af9592883d15d5a91924a117b14566"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-30T07:00:05+00:00",
-      "destination_id": "chd_2f0e51e7443629c7dbb60fb5",
+      "created_at": "2026-09-30T07:23:10+00:00",
+      "destination_id": "chd_4ae12e8fa05c0ee90df77ce1",
       "destination_name": "Folder Ledger",
       "dispatch_seq": 3,
       "dispatch_started_at": "2030-01-01T09:00:00.000000+00:00",
@@ -2093,11 +2093,11 @@
         "slug": "payments-ledger-cutover",
         "title": "Payments ledger cutover — update r1 (2026-09-30)"
       },
-      "document_ref": "project_update:pupd_2135ecfdbfdd4d47938bd2297bc557e9",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-d5e6c227.md",
-      "id": "chs_d5e6c22745a813a8807640a0",
+      "document_ref": "project_update:pupd_736192abcd254440a1f2d87075cfb993",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-a7016f03.md",
+      "id": "chs_a7016f03c774d9a048f31f55",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
-      "prepare_operation_id": "op_850a6348bc41446ea537d45ac64ad42b",
+      "prepare_operation_id": "op_a166a2066819458eb28b1d20d675bd75",
       "prepared_by": {
         "identity": "owner-session",
         "kind": "owner"
@@ -2107,21 +2107,21 @@
       },
       "proof": null,
       "reason": "permission_denied",
-      "send_operation_id": "op_3828f52fb329474199f186f0f4c1cff4",
-      "settled_at": "2026-09-30T07:00:16+00:00",
+      "send_operation_id": "op_ec937ed03d2c4917a4d0d87723582687",
+      "settled_at": "2026-09-30T07:23:30+00:00",
       "size": 286,
       "state": "failed",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger"
       },
-      "target_digest": "b7d03a205196fa84d114f773d277c7d4fffa16abf4154ce460e014297cac9114"
+      "target_digest": "27c4291b3868bf17eb0f33ece73a6a1e6661192b2656fd8fa47155b9ebbffc80"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
       "created_at": "2030-01-01T09:00:00.000000+00:00",
-      "destination_id": "chd_2f0e51e7443629c7dbb60fb5",
+      "destination_id": "chd_4ae12e8fa05c0ee90df77ce1",
       "destination_name": "Folder Ledger",
       "dispatch_seq": 2,
       "dispatch_started_at": "2030-01-01T09:00:00.000000+00:00",
@@ -2130,9 +2130,9 @@
         "slug": "payments-ledger-cutover",
         "title": "Payments ledger cutover — update r1 (2026-09-30)"
       },
-      "document_ref": "project_update:pupd_2135ecfdbfdd4d47938bd2297bc557e9",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-dc67ef23.md",
-      "id": "chs_dc67ef239b00298c0beb23cc",
+      "document_ref": "project_update:pupd_736192abcd254440a1f2d87075cfb993",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-88137767.md",
+      "id": "chs_881377679a7716e3a2b8a918",
       "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
       "prepare_operation_id": null,
       "prepared_by": {
@@ -2143,19 +2143,19 @@
         "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
       },
       "proof": {
-        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-dc67ef23.md",
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger/2026-09-30-payments-ledger-cutover-rev-1-88137767.md",
         "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
         "size": 286
       },
       "reason": null,
-      "send_operation_id": "op_e91de6f01ec844f58b627c3542476ece",
-      "settled_at": "2026-09-30T07:00:15+00:00",
+      "send_operation_id": "op_eefaa2889a754bcbb438c809dec6582c",
+      "settled_at": "2026-09-30T07:23:29+00:00",
       "size": 286,
       "state": "sent",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-dd5cow47/pytest/test_prepared_sends_and_the_la1/Ledger"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-glass-6e_ztpek/pytest/test_prepared_sends_and_the_la1/Ledger"
       },
-      "target_digest": "b7d03a205196fa84d114f773d277c7d4fffa16abf4154ce460e014297cac9114"
+      "target_digest": "27c4291b3868bf17eb0f33ece73a6a1e6661192b2656fd8fa47155b9ebbffc80"
     }
   ]
 }

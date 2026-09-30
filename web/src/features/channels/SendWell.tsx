@@ -69,11 +69,11 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                     <SurfaceLedgerRow key={r.id} data-testid="delivery-row" wrap expands={false}
                       lead={<span data-outcome={r.outcome}><StateChip state="warning" label="" /></span>}
                       primary={<span className="surface-primary" data-to={r.deliveredTo ?? ""}>{`${SEND_WORDS.unknownChip} · CHECK ${r.deliveredTo ?? "—"}`}</span>}
-                      cells={<span className="send-cells">
+                      cells={<>
                         {reason ? <span className="surface-token" data-chip data-code={reason}>{unknownWord(reason)}</span> : null}
                         {far ? <Button dense variant="ghost" data-testid="history-check" data-href={far} onClick={() => openFar(far)}>{SEND_WORDS.check}</Button> : null}
                         <span className="surface-token" data-chip>{stamp(r.deliveredAt)}</span>
-                      </span>} />
+                      </>} />
                   );
                 }
                 const manual = r.channel === "manual";
@@ -81,7 +81,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                   <SurfaceLedgerRow key={r.id} data-testid="delivery-row" wrap expands={false}
                     lead={<span data-outcome={r.outcome}><StateChip state="success" label="" /></span>}
                     primary={<span className="surface-primary" data-to={r.deliveredTo ?? ""}>{r.deliveredTo ?? "—"}</span>}
-                    cells={<span className="send-cells">
+                    cells={<>
                       <span className="surface-token" data-chip data-tone="ok" data-testid="history-word">
                         {manual ? SENT_WORD.manual : sentWord(r.channel, r.proof, send?.account)}
                       </span>
@@ -89,7 +89,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                         ? <span className="surface-token" data-chip>MANUAL</span>
                         : <ProofCell channel={r.channel} proof={r.proof ?? null} target={send?.target} account={send?.account} />}
                       <span className="surface-token" data-chip>{stamp(r.deliveredAt)}</span>
-                    </span>} />
+                    </>} />
                 );
               })}
             </ul>

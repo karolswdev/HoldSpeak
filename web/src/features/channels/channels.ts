@@ -444,12 +444,14 @@ export class Refusal extends Error {
   constructor(readonly code: string, readonly detail: Record<string, unknown> = {}) { super(code); }
 }
 
-/** The size and the limit a size refusal names, when the answer carries them. */
+/** The size and the limit a size refusal names, when the answer carries them:
+ *  top-level integers beside `code` / `error_code` (story 02's contract for
+ *  `payload_too_large:slack`: `size` the final Slack text's characters,
+ *  `limit` 39000). The word is CHARACTERS: a byte-limited channel that reuses
+ *  this must carry its unit (BACKLOG). */
 export function refusalSize(r: { detail?: Record<string, unknown> } | null | undefined): { size: number; limit: number } | null {
   const d = r?.detail ?? {};
-  const ctx = (d.context && typeof d.context === "object" ? d.context : {}) as Record<string, unknown>;
-  const size = d.size ?? ctx.size, limit = d.limit ?? ctx.limit;
-  return typeof size === "number" && typeof limit === "number" ? { size, limit } : null;
+  return Number.isInteger(d.size) && Number.isInteger(d.limit) ? { size: d.size as number, limit: d.limit as number } : null;
 }
 
 /** A read whose answer lacks its list is unreadable, never empty. */

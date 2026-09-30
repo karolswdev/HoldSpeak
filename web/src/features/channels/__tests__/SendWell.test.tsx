@@ -234,7 +234,8 @@ describe("mergeKnown: a stale or failed read never hides a returned result (r1 F
     expect(latestFor(merged, "chd_1")?.state).toBe("failed");
     const running = { ...failed, state: "dispatching" as const };
     expect(mergeKnown("project_update:u1", [old, running], [failed]).find((s) => s.id === "new")?.state).toBe("failed");
-    expect(mergeKnown("project_update:u2", [old], [failed]).map((s) => s.id)).toEqual(["old"]);
+    // PHILO-11-04 (Astra r1 F1 on #708): rows of another document never enter, from the read or the cache.
+    expect(mergeKnown("project_update:u2", [old], [failed]).map((s) => s.id)).toEqual([]);
   });
 });
 
