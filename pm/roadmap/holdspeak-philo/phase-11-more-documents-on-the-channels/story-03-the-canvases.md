@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 11
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** the owner's ratification; design section 4 (the wire the harness shim serves)
 - **Unblocks:** PHILO-11-04, PHILO-11-05
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Astra checks
@@ -37,5 +37,6 @@ PROVISIONAL: 1–1.5 engineering days.
 
 ## Notes
 
+- 2026-09-29 — round one DRAWN (Fedaykin lane, Opus 5.5): 42 boards × 1440 and 393 on the real product with a harness shim (`assets/story-03-canvas/`, README + `index.html`); fences 132/132 named on screen, 0 stale words, 0 Slack links, 0 Mark delivered on a new kind. `meeting_decision` confirmed seatless on glass; the Room row's Open opens nothing (G1). Seven open questions with recommendations. Owed: Astra's check, then the owner's word.
 - 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
