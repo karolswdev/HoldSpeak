@@ -25,6 +25,7 @@ MODULES = [
     "holdspeak/services/channel_contract.py",
     "holdspeak/services/channel_cli.py",
     "holdspeak/services/channel_email.py",
+    "holdspeak/services/channel_slack.py",
     "holdspeak/services/channel_service.py",
     "holdspeak/kernel/channel_send.py",
     "holdspeak/services/steward_contract.py",
@@ -43,11 +44,18 @@ FLOWS = {
     # answer after it (EmailTransportError, which also carries the key-read codes).
     ("holdspeak/services/channel_email.py", "exc.code"): [({"refused"}, "EmailKeyError"),
                                                           ({"failed", "unknown"}, "EmailTransportError+EmailKeyError")],
+    # Slack follows the same key-custody and transport path.  Its dispatch also
+    # catches a pre-boundary ChannelRefused and records that as a failed send.
+    ("holdspeak/services/channel_slack.py", "exc.code"): [({"refused"}, "SlackKeyError"),
+                                                          ({"failed", "unknown"}, "SlackTransportError+SlackKeyError"),
+                                                          ({"failed"}, "ChannelRefused")],
+    ("holdspeak/services/channel_slack.py", "code"): (set(), "@assigned"),
     ("holdspeak/services/channel_email.py", "code"): (set(), "@assigned"),
     ("holdspeak/services/channel_email.py", "self.PINNED[status]"): ({"failed"}, "@PINNED"),
     # PHILO-10-07: Resend's pinned (status, name) table.
     ("holdspeak/services/channel_email.py", "self.PINNED[status, name]"): ({"failed"}, "@PINNED"),
-    ("holdspeak/services/channel_service.py", "exc.code"): ({"refused"}, "EmailKeyError"),
+    ("holdspeak/services/channel_service.py", "exc.code"): [({"refused"}, "EmailKeyError"),
+                                                              ({"refused"}, "SlackKeyError")],
     # _close_as_row: a stored row's own reason read back (already one of the codes above).
     ("holdspeak/services/channel_service.py", 'row["reason"]'): (set(), "@stored"),
 }
@@ -144,7 +152,8 @@ def emitted() -> dict[str, dict]:
             if isinstance(node, ast.Call):
                 fn = node.func.attr if isinstance(node.func, ast.Attribute) else getattr(node.func, "id", "")
                 where = f"{rel}:{node.lineno}"
-                if fn in ("ChannelRefused", "EmailKeyError", "EmailTransportError") and node.args:
+                if fn in ("ChannelRefused", "EmailKeyError", "EmailTransportError", "SlackKeyError",
+                          "SlackTransportError") and node.args:
                     for code, template in read(node.args[0], where):
                         exc_codes[rel].setdefault(fn, set()).add(code)
                         if fn == "ChannelRefused":
@@ -204,23 +213,27 @@ def emitted() -> dict[str, dict]:
                         for code, _t in read(ret.value, f"{rel}:{ret.lineno}", variable_ok=False):
                             add(code, "failed", f"{rel}:{ret.lineno}")
             elif isinstance(node, ast.FunctionDef) and node.name == "_classify":
+                transport_error = ("EmailTransportError" if rel.endswith("channel_email.py")
+                                    else "SlackTransportError" if rel.endswith("channel_slack.py") else None)
                 for ret in ast.walk(node):
-                    if isinstance(ret, ast.Return) and isinstance(ret.value, ast.Tuple):
+                    if isinstance(ret, ast.Return) and isinstance(ret.value, ast.Tuple) and transport_error:
                         for code, _t in read(ret.value.elts[0], f"{rel}:{ret.lineno}", variable_ok=False):
-                            exc_codes[rel].setdefault("EmailTransportError", set()).add(code)
+                            exc_codes[rel].setdefault(transport_error, set()).add(code)
                     elif isinstance(ret, ast.Return):
                         unsupported.append(f"{rel}:{ret.lineno}: _classify returns no (code, left) pair")
-            elif rel.endswith("channel_email.py") and isinstance(node, ast.Assign) and isinstance(node.value, ast.Tuple) and any(
+            elif rel.endswith(("channel_email.py", "channel_slack.py")) and isinstance(node, ast.Assign) and isinstance(node.value, ast.Tuple) and any(
                     isinstance(t, ast.Tuple) and t.elts and isinstance(t.elts[0], ast.Name) and t.elts[0].id == "code"
                     for t in node.targets):
+                transport_error = ("EmailTransportError" if rel.endswith("channel_email.py") else "SlackTransportError")
                 for code, _t in read(node.value.elts[0], f"{rel}:{node.lineno}", variable_ok=False):
-                    exc_codes[rel].setdefault("EmailTransportError", set()).add(code)
-            elif rel.endswith("channel_email.py") and isinstance(node, ast.Assign) and any(
+                    exc_codes[rel].setdefault(transport_error, set()).add(code)
+            elif rel.endswith(("channel_email.py", "channel_slack.py")) and isinstance(node, ast.Assign) and any(
                     isinstance(t, ast.Name) and t.id == "code" for t in node.targets):
                 # the transport's own code variable (transmit): what it raises EmailTransportError with
                 if _src(node.value, text) not in ALLOWED_CARRIERS:
+                    transport_error = ("EmailTransportError" if rel.endswith("channel_email.py") else "SlackTransportError")
                     for code, _t in read(node.value, f"{rel}:{node.lineno}", variable_ok=False):
-                        exc_codes[rel].setdefault("EmailTransportError", set()).add(code)
+                        exc_codes[rel].setdefault(transport_error, set()).add(code)
     # Follow each declared flow to its source codes.
     for (rel, text_arg), flows in FLOWS.items():
       for kinds, source in (flows if isinstance(flows, list) else [flows]):
@@ -231,8 +244,15 @@ def emitted() -> dict[str, dict]:
                 for k in kinds:
                     add(cls[1:], k, f"{rel} (flow {text_arg})")
                 continue
-            for code in exc_codes.get(rel, {}).get(cls, set()) | (
-                    exc_codes.get("holdspeak/services/channel_email.py", {}).get(cls, set()) if cls.startswith("Email") else set()):
+            source_modules = {
+                "EmailKeyError": "holdspeak/services/channel_email.py",
+                "EmailTransportError": "holdspeak/services/channel_email.py",
+                "SlackKeyError": "holdspeak/services/channel_slack.py",
+                "SlackTransportError": "holdspeak/services/channel_slack.py",
+            }
+            source = source_modules.get(cls)
+            source_codes = exc_codes.get(source, {}).get(cls, set()) if source else set()
+            for code in exc_codes.get(rel, {}).get(cls, set()) | source_codes:
                 for k in kinds:
                     add(code, k, f"{rel} (flow {text_arg} <- {cls})")
     codes["__variables__"] = {"kinds": set(), "template": False, "where": sorted(variables)}

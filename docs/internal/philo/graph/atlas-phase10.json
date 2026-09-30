@@ -7681,13 +7681,13 @@
         {
           "path": "holdspeak/services/channel_service.py",
           "symbol": "def send(self, principal",
-          "line": 402,
+          "line": 452,
           "claim": "the owner's press: the checks, the durable dispatch boundary, one settle"
         },
         {
           "path": "holdspeak/services/channel_service.py",
           "symbol": "def discard(self, principal",
-          "line": 382,
+          "line": 432,
           "claim": "prepared -> discarded by one conditional write; against Send, one wins"
         },
         {

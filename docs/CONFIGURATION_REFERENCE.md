@@ -96,28 +96,28 @@ The hub configuration shell is [`Config`](../holdspeak/config/core.py). Its load
 | `MeetingConfig.allow_actuators` | `bool` | `True` | [holdspeak/config/meeting.py:119](../holdspeak/config/meeting.py) |
 | `MeetingConfig.allowed_actuators` | `list[str]` | `field(default_factory=lambda: ['*'])` | [holdspeak/config/meeting.py:120](../holdspeak/config/meeting.py) |
 | `MeetingConfig.webhook_allowed_hosts` | `list[str]` | `field(default_factory=lambda: ['*'])` | [holdspeak/config/meeting.py:126](../holdspeak/config/meeting.py) |
-| `MeetingConfig.slack_webhook_url` | `str` | `''` | [holdspeak/config/meeting.py:133](../holdspeak/config/meeting.py) |
-| `MeetingConfig.companion_webhook_url` | `str` | `''` | [holdspeak/config/meeting.py:140](../holdspeak/config/meeting.py) |
-| `MeetingConfig.companion_github_repo` | `str` | `''` | [holdspeak/config/meeting.py:146](../holdspeak/config/meeting.py) |
-| `MeetingConfig.diarization_enabled` | `bool` | `False` | [holdspeak/config/meeting.py:149](../holdspeak/config/meeting.py) |
-| `MeetingConfig.diarize_mic` | `bool` | `False` | [holdspeak/config/meeting.py:150](../holdspeak/config/meeting.py) |
-| `MeetingConfig.cross_meeting_recognition` | `bool` | `True` | [holdspeak/config/meeting.py:151](../holdspeak/config/meeting.py) |
-| `MeetingConfig.similarity_threshold` | `float` | `0.75` | [holdspeak/config/meeting.py:152](../holdspeak/config/meeting.py) |
-| `DictationPipelineConfig.enabled` | `bool` | `True` | [holdspeak/config/meeting.py:376](../holdspeak/config/meeting.py) |
-| `DictationPipelineConfig.stages` | `list[str]` | `field(default_factory=lambda: ['intent-router', 'kb-enricher'])` | [holdspeak/config/meeting.py:377](../holdspeak/config/meeting.py) |
-| `DictationPipelineConfig.max_total_latency_ms` | `int` | `600` | [holdspeak/config/meeting.py:378](../holdspeak/config/meeting.py) |
-| `DictationPipelineConfig.target_profile_override` | `str` | `'auto'` | [holdspeak/config/meeting.py:379](../holdspeak/config/meeting.py) |
-| `DictationPipelineConfig.rewrite_passes` | `int` | `1` | [holdspeak/config/meeting.py:384](../holdspeak/config/meeting.py) |
-| `DictationPipelineConfig.corrections_enabled` | `bool` | `True` | [holdspeak/config/meeting.py:389](../holdspeak/config/meeting.py) |
-| `DictationPipelineConfig.target_detect_llm_enabled` | `bool` | `False` | [holdspeak/config/meeting.py:395](../holdspeak/config/meeting.py) |
-| `DictationPipelineConfig.target_detect_llm_below` | `float` | `0.8` | [holdspeak/config/meeting.py:396](../holdspeak/config/meeting.py) |
-| `DictationPipelineConfig.journal_enabled` | `bool` | `True` | [holdspeak/config/meeting.py:401](../holdspeak/config/meeting.py) |
-| `DictationPipelineConfig.journal_retention` | `int` | `500` | [holdspeak/config/meeting.py:404](../holdspeak/config/meeting.py) |
-| `DictationConfig.pipeline` | `DictationPipelineConfig` | `field(default_factory=DictationPipelineConfig)` | [holdspeak/config/meeting.py:448](../holdspeak/config/meeting.py) |
-| `DictationConfig.runtime` | `LLMRuntimeConfig` | `field(default_factory=LLMRuntimeConfig)` | [holdspeak/config/meeting.py:449](../holdspeak/config/meeting.py) |
-| `DictationConfig.macros` | `MacrosConfig` | `field(default_factory=MacrosConfig)` | [holdspeak/config/meeting.py:450](../holdspeak/config/meeting.py) |
-| `DictationConfig.spoken_symbols` | `list` | `field(default_factory=list)` | [holdspeak/config/meeting.py:454](../holdspeak/config/meeting.py) |
-| `DictationConfig.preview_before_type` | `bool` | `False` | [holdspeak/config/meeting.py:459](../holdspeak/config/meeting.py) |
+| `MeetingConfig.slack_webhook_url` | `str` | `''` | [holdspeak/config/meeting.py:130](../holdspeak/config/meeting.py) |
+| `MeetingConfig.companion_webhook_url` | `str` | `''` | [holdspeak/config/meeting.py:137](../holdspeak/config/meeting.py) |
+| `MeetingConfig.companion_github_repo` | `str` | `''` | [holdspeak/config/meeting.py:143](../holdspeak/config/meeting.py) |
+| `MeetingConfig.diarization_enabled` | `bool` | `False` | [holdspeak/config/meeting.py:146](../holdspeak/config/meeting.py) |
+| `MeetingConfig.diarize_mic` | `bool` | `False` | [holdspeak/config/meeting.py:147](../holdspeak/config/meeting.py) |
+| `MeetingConfig.cross_meeting_recognition` | `bool` | `True` | [holdspeak/config/meeting.py:148](../holdspeak/config/meeting.py) |
+| `MeetingConfig.similarity_threshold` | `float` | `0.75` | [holdspeak/config/meeting.py:149](../holdspeak/config/meeting.py) |
+| `DictationPipelineConfig.enabled` | `bool` | `True` | [holdspeak/config/meeting.py:358](../holdspeak/config/meeting.py) |
+| `DictationPipelineConfig.stages` | `list[str]` | `field(default_factory=lambda: ['intent-router', 'kb-enricher'])` | [holdspeak/config/meeting.py:359](../holdspeak/config/meeting.py) |
+| `DictationPipelineConfig.max_total_latency_ms` | `int` | `600` | [holdspeak/config/meeting.py:360](../holdspeak/config/meeting.py) |
+| `DictationPipelineConfig.target_profile_override` | `str` | `'auto'` | [holdspeak/config/meeting.py:361](../holdspeak/config/meeting.py) |
+| `DictationPipelineConfig.rewrite_passes` | `int` | `1` | [holdspeak/config/meeting.py:366](../holdspeak/config/meeting.py) |
+| `DictationPipelineConfig.corrections_enabled` | `bool` | `True` | [holdspeak/config/meeting.py:371](../holdspeak/config/meeting.py) |
+| `DictationPipelineConfig.target_detect_llm_enabled` | `bool` | `False` | [holdspeak/config/meeting.py:377](../holdspeak/config/meeting.py) |
+| `DictationPipelineConfig.target_detect_llm_below` | `float` | `0.8` | [holdspeak/config/meeting.py:378](../holdspeak/config/meeting.py) |
+| `DictationPipelineConfig.journal_enabled` | `bool` | `True` | [holdspeak/config/meeting.py:383](../holdspeak/config/meeting.py) |
+| `DictationPipelineConfig.journal_retention` | `int` | `500` | [holdspeak/config/meeting.py:386](../holdspeak/config/meeting.py) |
+| `DictationConfig.pipeline` | `DictationPipelineConfig` | `field(default_factory=DictationPipelineConfig)` | [holdspeak/config/meeting.py:430](../holdspeak/config/meeting.py) |
+| `DictationConfig.runtime` | `LLMRuntimeConfig` | `field(default_factory=LLMRuntimeConfig)` | [holdspeak/config/meeting.py:431](../holdspeak/config/meeting.py) |
+| `DictationConfig.macros` | `MacrosConfig` | `field(default_factory=MacrosConfig)` | [holdspeak/config/meeting.py:432](../holdspeak/config/meeting.py) |
+| `DictationConfig.spoken_symbols` | `list` | `field(default_factory=list)` | [holdspeak/config/meeting.py:436](../holdspeak/config/meeting.py) |
+| `DictationConfig.preview_before_type` | `bool` | `False` | [holdspeak/config/meeting.py:441](../holdspeak/config/meeting.py) |
 | `ModelConfig.name` | `str` | `'base'` | [holdspeak/config/model.py:14](../holdspeak/config/model.py) |
 | `ModelConfig.warm_on_start` | `bool` | `True` | [holdspeak/config/model.py:15](../holdspeak/config/model.py) |
 | `ModelConfig.backend` | `str` | `'auto'` | [holdspeak/config/model.py:16](../holdspeak/config/model.py) |

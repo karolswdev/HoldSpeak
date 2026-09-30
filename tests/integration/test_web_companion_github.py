@@ -240,9 +240,13 @@ def test_rejection_files_nothing(client, db, settings_path, gh):
 def test_github_decision_is_target_scoped(client, db, settings_path, gh):
     _configure(settings_path)
     pid = client.post(PROPOSE, json={"text": "ship it"}).json()["proposal"]["id"]
-    # a github proposal cannot be decided on the slack or webhook routes
-    assert client.post(f"/api/desk/actuators/slack/{pid}/decision", json={"decision": "approved"}).status_code == 404
+    # The parked Slack route refuses by name without consuming the GitHub
+    # proposal. The live webhook route still refuses a different target.
+    parked = client.post(f"/api/desk/actuators/slack/{pid}/decision", json={"decision": "approved"})
+    assert parked.status_code == 400 and parked.json()["error"] == "slack_moved_to_channel"
     assert client.post(f"/api/desk/actuators/webhook/{pid}/decision", json={"decision": "approved"}).status_code == 404
+    assert db.actuators.get_proposal(pid).status == "proposed"
+    assert gh.calls == []
 
 
 @pytest.mark.integration

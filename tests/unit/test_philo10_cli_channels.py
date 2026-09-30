@@ -802,15 +802,18 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
 
     blocking = {d.name for d in operations.DESCRIPTORS if d.blocking_io}
     assert blocking == {"channel.send", "channel.save_destination", "nudge.send", "connection.recheck",
-                        "channel.save_email_key", "channel.check_destination"}
-    # PHILO-10-03: the table covers the MCP tools; channel.save_email_key (the keychain) is HTTP only --
-    # in no MCP palette, so it has no row -- and is config by its own declaration: the owner's press, owner only.
+                        "channel.save_email_key", "channel.save_slack_webhook", "channel.check_destination"}
+    # The secret saves are HTTP only, in no MCP palette, and config by their
+    # declarations: the owner's press, owner only, with transport-held secrets.
     by_name = {d.name: d for d in operations.DESCRIPTORS}
     mcp_blocking = {n for n in blocking if any(e.startswith("mcp:") for e in by_name[n].exposure)}
-    assert mcp_blocking == blocking - {"channel.save_email_key"}
+    assert mcp_blocking == blocking - {"channel.save_email_key", "channel.save_slack_webhook"}
     assert all(name in TOOL_AUTHORITY for name in mcp_blocking), mcp_blocking - set(TOOL_AUTHORITY)
     key = by_name["channel.save_email_key"]
     assert key.owner_press and key.owner_only and key.held == ("api_key",) and "channel.save_email_key" not in TOOL_AUTHORITY
+    slack = by_name["channel.save_slack_webhook"]
+    assert slack.owner_press and slack.owner_only and slack.held == ("webhook_url",)
+    assert "channel.save_slack_webhook" not in TOOL_AUTHORITY
     for name in ("channel.send", "nudge.send"):
         assert TOOL_AUTHORITY[name] == EGRESS and name in owner_press_operations() and name in blocking, name
     # The kernel's steward-child refusal reads the SAME flag the descriptors declare (no second list).

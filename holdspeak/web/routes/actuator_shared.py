@@ -238,63 +238,11 @@ def decide_proposal(
     return updated, None, 200
 
 
-def execute_slack_proposal(ctx: WebContext, db: Any, proposal: Any, *, actor: str) -> Any:
-    """HS-61-01: the execute leg for an approved Send-to-Slack proposal.
-
-    The repo had no production execute path at all before this — the
-    `ActuatorExecutor` was host-injected in dogfoods only. For `slack`
-    proposals the approval IS the moment the user wants the send, so the
-    decision route executes right here, through the full executor guard
-    stack (status gate, payload parity, audit).
-
-    On consent: the user configured `meeting.slack_webhook_url` (consent
-    for exactly that host — the connector's manifest allow-lists it and
-    nothing else) and just approved this very action. That pair is the
-    Phase-52 "configuring is consent" model PLUS a per-action approval,
-    so this executor instance runs with its master switch on rather than
-    demanding a third toggle (`allow_actuators`) be flipped too.
-
-    The webhook URL is a credential: it is read from config at execution
-    time and injected by the connector in memory only — never stored on
-    the proposal, never broadcast, never returned.
-    """
-    from ...config import Config
-    from ...plugins.actuator_executor import ActuatorExecutor
-    from ...slack_export import build_slack_connector
-
-    url = Config.load().meeting.slack_webhook_url
-    if not url:
-        # Configured when proposed, unconfigured by execution time: an
-        # honest terminal failure (retryable via failed -> approved once
-        # the URL is back), never a silent drop.
-        updated = db.actuators.transition_proposal(
-            proposal.id,
-            to_status="failed",
-            actor=actor,
-            detail="slack export: no webhook URL configured at execution time",
-            error="Slack is not configured (meeting.slack_webhook_url is empty)",
-        )
-        ctx.broadcast("actuator_result", actuator_result_event(updated))
-        return updated
-
-    broker, node = _kernel_executor_binding(proposal)
-    executor = ActuatorExecutor(
-        db,
-        connector=build_slack_connector(url),
-        allow_actuators=True,
-        actor=actor,
-        on_result=lambda event: ctx.broadcast("actuator_result", event),
-        operation_broker=broker,
-        executor_principal=node,
-    )
-    return executor.execute(proposal.id)
-
-
 def execute_webhook_proposal(ctx: WebContext, db: Any, proposal: Any, *, actor: str) -> Any:
     """HSM-14: the execute leg for an approved desk Webhook proposal.
 
-    The generic sibling of `execute_slack_proposal` — same consent model and
-    guard stack, but the URL comes from `meeting.companion_webhook_url` and
+    The generic webhook execute leg uses the same consent model and guard
+    stack; its URL comes from `meeting.companion_webhook_url` and
     the host is allow-listed by `build_url_webhook_connector`. The credential
     is read from config at execution time and injected in memory only.
     """
@@ -368,5 +316,9 @@ class DeskActuatorLifecycle:
 
     @staticmethod
     def _executors(target: str) -> dict[str, Any]:
-        return {target: {"slack": execute_slack_proposal, "webhook": execute_webhook_proposal,
+        if target == "slack":
+            # Legacy desk Slack proposals remain readable, but no posture or
+            # approval path can execute free text after the channel rewrite.
+            return {}
+        return {target: {"webhook": execute_webhook_proposal,
                          "github": execute_github_proposal}[target]}

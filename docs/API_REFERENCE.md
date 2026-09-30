@@ -45,7 +45,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.calendar_events` | 3 |
 | `web.routes.calendar_snapshot` | 2 |
 | `web.routes.calendar_sources` | 1 |
-| `web.routes.channels` | 10 |
+| `web.routes.channels` | 11 |
 | `web.routes.concierge` | 6 |
 | `web.routes.connections` | 2 |
 | `web.routes.constitutional` | 3 |
@@ -75,7 +75,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.mcp_http` | 9 |
 | `web.routes.meeting_import` | 1 |
 | `web.routes.meetings.action_items` | 7 |
-| `web.routes.meetings.aftercare` | 6 |
+| `web.routes.meetings.aftercare` | 5 |
 | `web.routes.meetings.crud` | 9 |
 | `web.routes.meetings.insights` | 3 |
 | `web.routes.meetings.intel` | 8 |

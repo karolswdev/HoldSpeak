@@ -1,0 +1,4 @@
+Same isolated source snapshot; exact metadata regression reversed with built serializer. Worktree product files were never changed.
+Command: /Users/karol/dev/tools/wt-philo-11-02/.venv/bin/python -m pytest -q --basetemp /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-size-green-j0dxabe3/pytest tests/integration/test_philo11_slack_operations.py::test_size_refusal_is_real_and_carries_size_and_limit_before_wire
+.                                                                        [100%]
+1 passed in 3.01s

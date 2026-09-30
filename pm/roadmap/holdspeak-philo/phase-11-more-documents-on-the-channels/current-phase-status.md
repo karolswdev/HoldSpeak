@@ -1,6 +1,6 @@
 # Phase 11 - More documents on the channels
 
-**Last updated:** 2026-09-29 (Story 01 built and verified in `feat/philo-11-01`; counsel-on-built pending Muad'Dib. Full-suite fallout classified and proved in `lane-01-astra.md`. Earlier: RATIFIED by the owner, "Ratify, build it"; Q1 → refuse above 39,000 characters. Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid (`checks/charter-astra-r1.md`) — the decision kinds mapped to their real face seats, the Settings exclusion of the old webhook, `channel.destinations` in the thread palette, the same-day brief id, story 01 owns the inline Send caller, D1 recorded as a capability deferral, the failure-transition boards, Q1 worded as our limit. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib.)
+**Last updated:** 2026-09-30 (Story 02 backend built in `feat/philo-11-02`; full-suite failures classified and verified; see `lane-02-astra.md`. UNCHECKED, awaiting Muad'Dib. Earlier: Story 01 built and verified in `feat/philo-11-01`; counsel-on-built pending Muad'Dib. Full-suite fallout classified and proved in `lane-01-astra.md`. Earlier: RATIFIED by the owner, "Ratify, build it"; Q1 → refuse above 39,000 characters. Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid (`checks/charter-astra-r1.md`) — the decision kinds mapped to their real face seats, the Settings exclusion of the old webhook, `channel.destinations` in the thread palette, the same-day brief id, story 01 owns the inline Send caller, D1 recorded as a capability deferral, the failure-transition boards, Q1 worded as our limit. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib.)
 
 **Status:** RATIFIED by the owner 2026-09-29 ("Ratify, build it") after Astra's check r1 (RATIFY-WITH-CONDITIONS, paid). Q1 ruled: "Higher limit, still refuse" → Muad'Dib set the limit at **39,000** characters of Slack text (Slack truncates above 40,000; he can change it).
 
@@ -102,7 +102,7 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | PHILO-11-01 | The document sources | done | [story-01-the-document-sources](./story-01-the-document-sources.md) | [evidence-story-01](./evidence-story-01.md) |
-| PHILO-11-02 | The Slack channel and the aftercare rewrite | backlog | [story-02-the-slack-channel-and-the-aftercare-rewrite](./story-02-the-slack-channel-and-the-aftercare-rewrite.md) | — |
+| PHILO-11-02 | The Slack channel and the aftercare rewrite | done | [story-02-the-slack-channel-and-the-aftercare-rewrite](./story-02-the-slack-channel-and-the-aftercare-rewrite.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-11-03 | The canvases A–E | backlog | [story-03-the-canvases](./story-03-the-canvases.md) | — |
 | PHILO-11-04 | The SEND well as one library species | backlog | [story-04-the-send-well-species](./story-04-the-send-well-species.md) | — |
 | PHILO-11-05 | The faces: the well on every document, Destinations with Slack | backlog | [story-05-the-faces](./story-05-the-faces.md) | — |
@@ -116,7 +116,7 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 | Lane | Stories | Owner | Checker | Worktree | Branch |
 |---|---|---|---|---|---|
 | The sources | 01 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-11-01 | feat/philo-11-01 |
-| Slack | 02 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-11-02 | feat/philo-11-02-slack |
+| Slack | 02 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-11-02 | feat/philo-11-02 |
 | The canvases | 03 | Muad'Dib (Fedaykin, Opus 5.5) | Astra | ../wt-philo-11-03 | feat/philo-11-03-canvases |
 | The species and the faces | 04 → 05 | Muad'Dib (Fedaykin, Opus 5.5) | Astra | ../wt-philo-11-04, ../wt-philo-11-05 | feat/philo-11-04-send-well-species, feat/philo-11-05-faces |
 | The atlas | 06 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-11-06 | feat/philo-11-06-atlas |
@@ -130,7 +130,9 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 
 ## Where we are
 
-2026-09-29: PHILO-11-01 is built and verified. Eight stored sources use the generic channel contract; the existing update face passes at 1440 and 393. Six actual Phase 10 atlas walks PASS. The final full run is red (38 failed, 13,498 passed): (a) ten stale wording/reference failures corrected; (b) two catalogue guidance losses corrected; (c) 26 glass failures pass twice serially, all 52 invocations. The final focused capture collects and passes 48 checks; the web suite passes 2,970. See [Astra's lane record](lane-01-astra.md). The PR goes to Muad'Dib for counsel-on-built; no merge verdict is claimed. Story 02 has not started in this lane, and story 03's canvas/shim files are untouched. The broader graph census remains red for story 06 reconciliation.
+2026-09-30: PHILO-11-02 backend is built in `feat/philo-11-02`, stacked on #707. Final focused checks pass 101; atlas/schema checks pass 202; the web baseline passes 2,970 with zero branch-new. The actual Slack POSTED, FAILED and UNKNOWN atlas cases pass with one recorded POST and matching frozen bytes and owner receipts. Existing receipt glass passes at 1440 and 393. The full suite is red (66 failed, 13,479 passed); seven old expectations and one backend defect are corrected, three face/reference guards are held for 05/06, and 55 flakes pass twice serially (all 110 invocations). [Astra's lane record](lane-02-astra.md) is DRAFT — UNCHECKED, awaiting Muad'Dib counsel on built. No Slack face or owner-use claim.
+
+2026-09-29: PHILO-11-01 is built and verified. Eight stored sources use the generic channel contract; the existing update face passes at 1440 and 393. Six actual Phase 10 atlas walks PASS. The final full run is red (38 failed, 13,498 passed): (a) ten stale wording/reference failures corrected; (b) two catalogue guidance losses corrected; (c) 26 glass failures pass twice serially, all 52 invocations. The final focused capture collects and passes 48 checks; the web suite passes 2,970. See [Astra's lane record](lane-01-astra.md). The PR goes to Muad'Dib for counsel-on-built; no merge verdict is claimed. Story 02 is built in its separate lane; its verification and ledger are in [lane-02-astra.md](lane-02-astra.md). Story 03's canvas/shim files are untouched here. The broader graph census remains red for story 06 reconciliation.
 
 2026-09-29: PHILO-11-01 is building in Astra's assigned worktree `../wt-philo-11-01`, branch `feat/philo-11-01` (the dispatch brief's branch name). Three Luna workers own sources, the channel contract, and callers with lifecycle fences. Muad'Dib's counsel-on-built follows the PR. Story 02 is not started in this lane. Story 03's canvas and shim remain its lane's files.
 

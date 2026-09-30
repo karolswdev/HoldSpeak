@@ -205,6 +205,21 @@ def test_the_url_never_rides_a_response_or_broadcast(client, db, settings_path, 
 
 
 @pytest.mark.integration
+def test_the_wire_events_ride_for_qlippy(client, db, settings_path, posts, broadcasts):
+    """The live generic webhook path still emits a safe execution receipt."""
+    _configure(settings_path)
+    pid = client.post(PROPOSE, json={"text": "ping"}).json()["proposal"]["id"]
+    _decide(client, pid, "approved")
+    kinds = [kind for kind, _data in broadcasts.events]
+    assert "actuator_proposed" in kinds
+    assert "actuator_result" in kinds
+    result = next(data for kind, data in broadcasts.events if kind == "actuator_result")
+    assert result["status"] == "executed"
+    assert result["target"] == "webhook"
+    assert "payload" not in result
+
+
+@pytest.mark.integration
 def test_companion_status_reports_webhook_configured(client, db, settings_path):
     assert client.get("/api/desk/actuators/status").json()["webhook_configured"] is False
     _configure(settings_path)
@@ -214,8 +229,34 @@ def test_companion_status_reports_webhook_configured(client, db, settings_path):
 
 @pytest.mark.integration
 def test_slack_and_webhook_decisions_do_not_cross(client, db, settings_path):
-    # a webhook proposal cannot be decided on the slack route, and vice-versa
+    # A live webhook proposal cannot be decided through the parked Slack
+    # endpoint. The endpoint returns its named capability refusal, and does
+    # not consume the webhook proposal.
     _configure(settings_path)
     pid = client.post(PROPOSE, json={"text": "ping"}).json()["proposal"]["id"]
     crossed = client.post(f"/api/desk/actuators/slack/{pid}/decision", json={"decision": "approved"})
-    assert crossed.status_code == 404
+    assert crossed.status_code == 400
+    assert crossed.json()["error"] == "slack_moved_to_channel"
+
+    # A historical Slack proposal is still readable, but the live webhook
+    # decision route refuses to act on it by target. This keeps the original
+    # cross-target guard on a real persisted proposal.
+    historical = db.actuators.record_proposal(
+        meeting_id=None,
+        origin="desk",
+        window_id="legacy:slack",
+        plugin_id="webhook_post",
+        plugin_version="1",
+        idempotency_key="legacy-slack-cross-target-1",
+        target="slack",
+        action="post_message",
+        preview="historical Slack message",
+        payload={"body": {"text": "historical Slack message"}},
+        required_capabilities=["actuator"],
+        fixed_destination=True,
+    )
+    reverse = client.post(
+        f"/api/desk/actuators/webhook/{historical.id}/decision",
+        json={"decision": "approved"},
+    )
+    assert reverse.status_code == 404

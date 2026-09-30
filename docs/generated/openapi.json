@@ -1385,17 +1385,6 @@
         "title": "_ResultsRequest",
         "type": "object"
       },
-      "_SlackExportRequest": {
-        "properties": {
-          "what": {
-            "default": "",
-            "title": "What",
-            "type": "string"
-          }
-        },
-        "title": "_SlackExportRequest",
-        "type": "object"
-      },
       "_SpeakerUpdateRequest": {
         "properties": {
           "avatar": {
@@ -6335,6 +6324,24 @@
           }
         },
         "summary": "Api Channel Discard"
+      }
+    },
+    "/api/channels/slack-webhooks": {
+      "post": {
+        "operationId": "api_channel_save_slack_webhook_api_channels_slack_webhooks_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Save Slack Webhook Api Channels Slack Webhooks Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Channel Save Slack Webhook"
       }
     },
     "/api/coders/clear-stale": {
@@ -15689,55 +15696,6 @@
           }
         },
         "summary": "Api Export Meeting"
-      }
-    },
-    "/api/meetings/{meeting_id}/export/slack": {
-      "post": {
-        "operationId": "api_export_meeting_to_slack_api_meetings__meeting_id__export_slack_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "meeting_id",
-            "required": true,
-            "schema": {
-              "title": "Meeting Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/_SlackExportRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Export Meeting To Slack Api Meetings  Meeting Id  Export Slack Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Export Meeting To Slack"
       }
     },
     "/api/meetings/{meeting_id}/follow-through-proposals": {

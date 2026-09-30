@@ -67,8 +67,8 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
         "type": "object",
         "properties": {
             "name": {"type": "string", "maxLength": 120, "description": "Your name for it (120 characters at most)."},
-            "channel": {"type": "string", "enum": ["file", "github", "jira", "confluence", "email"],
-                        "description": "The channel: file (a folder), github, jira, confluence or email."},
+            "channel": {"type": "string", "enum": ["file", "github", "jira", "confluence", "email", "slack"],
+                        "description": "The channel: file (a folder), github, jira, confluence, email or Slack."},
             "folder": {"type": ["string", "null"], "description": "file: the absolute folder path."},
             "synced": {"type": ["boolean", "null"],
                        "description": "Optional, file: a cloud client syncs this folder (the badge says cloud)."},
@@ -83,12 +83,13 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
             "space_id": {"type": ["string", "null"], "description": "confluence: the space id (digits)."},
             "provider": {"type": ["string", "null"],
                          "description": "email: the provider, sendgrid or resend (sendgrid if not given)."},
+            "channel_label": {"type": ["string", "null"], "maxLength": 120,
+                              "description": "slack: your label for the incoming-webhook channel, for example #leads."},
             "from_email": {"type": ["string", "null"],
                            "description": "email: the sender address (a sender the provider verified)."},
             "from_name": {"type": ["string", "null"], "maxLength": 120, "description": "email: the sender's name."},
-            "key_ref": {"type": ["string", "null"], "description": "email: the name of the key saved with "
-                                                                  "channel.save_email_key (the provider's name if "
-                                                                  "not given). Never the key."},
+            "key_ref": {"type": ["string", "null"], "description": "email: the name of the saved provider key; "
+                                                                  "slack: the key_ref returned by channel.save_slack_webhook. Never the secret."},
             "to": {"type": ["array", "null"], "items": {"type": "string"}, "maxItems": 20,
                    "description": "email: the To addresses (at least one)."},
             "cc": {"type": ["array", "null"], "items": {"type": "string"}, "maxItems": 20,
@@ -109,6 +110,9 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
                                    "atlassian_email_invalid", "confluence_space_invalid", "email_provider_unknown",
                                    "email_address_invalid", "email_key_ref_invalid", "email_recipients_missing",
                                    "email_recipients_too_many", "email_recipient_duplicate",
+                                   "slack_webhook_invalid", "slack_key_ref_invalid", "slack_channel_label_invalid",
+                                   "slack_webhook_missing",
+                                   "slack_key_store_not_native", "slack_key_store_locked",
                                    "owner_principal_required"),
     completion="synchronous; channel.destinations lists it",
     exposure=("http:POST /api/channels/destinations", "mcp:channel.save_destination"),
@@ -347,8 +351,40 @@ CHANNEL_SAVE_EMAIL_KEY = OperationDescriptor(
                                     "never an argument, never journaled."),
 )
 
+CHANNEL_SAVE_SLACK_WEBHOOK = OperationDescriptor(
+    name="channel.save_slack_webhook",
+    version=1,
+    description="Save a Slack incoming-webhook URL in the native keychain. The URL is held by HTTP, never an "
+                "argument or result; the returned key_ref is consumed by channel.save_destination.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "command_id": _COMMAND_ID,
+        },
+        "required": [],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="{key_ref, saved} and the receipt (never the URL)",
+    refusals=_CONTRACT_REFUSALS + ("owner_required", "slack_webhook_invalid", "slack_key_ref_invalid",
+                                   "slack_webhook_missing",
+                                   "slack_key_store_not_native", "slack_key_store_locked"),
+    completion="synchronous; channel.save_destination consumes key_ref to create the destination",
+    exposure=("http:POST /api/channels/slack-webhooks",),
+    service="channel_service",
+    method="save_slack_webhook",
+    held=("webhook_url",),
+    owner_only=True,
+    owner_press=True,
+    blocking_io=True,
+    admission=Admission("admitted", "Config: the owner's Slack webhook in the native keychain, HTTP only, in no palette. "
+                                    "The URL is held by the transport and never journaled."),
+)
+
 #: PHILO-10-01's rows, in export order.
 CHANNEL_OPERATIONS: tuple[OperationDescriptor, ...] = (
     CHANNEL_DESTINATIONS, CHANNEL_SAVE_DESTINATION, CHANNEL_REMOVE_DESTINATION, CHANNEL_CHECK_DESTINATION,
     CHANNEL_PREVIEW, CHANNEL_PREPARE, CHANNEL_DISCARD, CHANNEL_SEND, CHANNEL_SENDS, CHANNEL_SAVE_EMAIL_KEY,
+    CHANNEL_SAVE_SLACK_WEBHOOK,
 )

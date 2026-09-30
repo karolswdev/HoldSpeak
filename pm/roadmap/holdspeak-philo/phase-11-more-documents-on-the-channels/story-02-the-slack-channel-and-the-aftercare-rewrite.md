@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 11
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** the owner's ratification and his answer to Q1; PHILO-11-01 for the aftercare rewrite (the channel module runs in parallel with 01)
 - **Unblocks:** PHILO-11-05 (Destinations with Slack), PHILO-11-06, PHILO-11-07
 - **Owner:** Astra's lane (Luna, xhigh); Muad'Dib checks
@@ -21,14 +21,14 @@ Slack is not a channel. The meeting's Slack export is a second send path: a muta
 
 ## Acceptance criteria
 
-- [ ] Each pinned outcome through a recording HTTPS edge: `200 ok` → SENT (face word POSTED) with no link in the proof; each FAILED pair; UNKNOWN on a timeout after send, `500 rollup_error`, another `5xx`, a `3xx` (never followed), `200` without the exact `ok`, an unlisted answer. No repost after UNKNOWN or `429`.
-- [ ] The bytes on the wire equal the frozen payload; the preview is parsed from those bytes.
-- [ ] A URL with another scheme, host or port is refused at save (`slack_webhook_invalid`). A new webhook is a new destination; a send prepared on the old one refuses `destination_parked`.
-- [ ] The URL never appears in a row, a payload, a receipt, a log, an API answer or an error (a sentinel fence over every one).
-- [ ] Above the Q1 limit, `payload_too_large:slack` before any byte leaves.
-- [ ] The egress child carries the parent, the authenticated owner principal, the broker and the frozen digest; an agent's Slack send is refused `owner_principal_required`.
-- [ ] No code posts to Slack except `channel.send`. The posture path is red on main (it posts) and green here (it prepares at most). The desk actuator's Slack target refuses `slack_moved_to_channel`. An old `config.json` with `slack_webhook_url` still loads.
-- [ ] A Settings read with a sentinel URL in `config.json` never returns it; a Settings write with the field never sets it (red with only the credential registration removed).
+- [x] Each pinned outcome through a recording HTTPS edge: `200 ok` → SENT (face word POSTED) with no link in the proof; each FAILED pair; UNKNOWN on a timeout after send, `500 rollup_error`, another `5xx`, a `3xx` (never followed), `200` without the exact `ok`, an unlisted answer. No repost after UNKNOWN or `429`.
+- [x] The bytes on the wire equal the frozen payload; the preview is parsed from those bytes.
+- [x] A URL with another scheme, host or port is refused at save (`slack_webhook_invalid`). A new webhook is a new destination; a send prepared on the old one refuses `destination_parked`.
+- [x] The URL never appears in a row, a payload, a receipt, a log, an API answer or an error (a sentinel fence over every one).
+- [x] Above the Q1 limit, `payload_too_large:slack` before any byte leaves, and the refusal answer carries `size` and `limit` (39,000); fenced through the real refusal producer, red before the fix (Astra canvas check r2, condition 1).
+- [x] The egress child carries the parent, the authenticated owner principal, the broker and the frozen digest; an agent's Slack send is refused `owner_principal_required`.
+- [x] No code posts to Slack except `channel.send`. The posture path is red on main (it posts) and green here (it prepares at most). The desk actuator's Slack target refuses `slack_moved_to_channel`. An old `config.json` with `slack_webhook_url` still loads.
+- [x] A Settings read with a sentinel URL in `config.json` never returns it; a Settings write with the field never sets it (red with only the credential registration removed).
 
 ## Effort (not a promise)
 
@@ -41,5 +41,6 @@ PROVISIONAL: 1.5–2 engineering days.
 
 ## Notes
 
+- 2026-09-30 — backend built and verified in `feat/philo-11-02`; [lane record](lane-02-astra.md) and [evidence](evidence-story-02.md). Full-suite failure ledger names the three guards held for stories 05/06; face scope is unchanged. DRAFT — UNCHECKED, awaiting Muad'Dib counsel on built.
 - 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

@@ -398,5 +398,10 @@ Missing shards: **none**.
 | `channels.document_sources` | `linux_wayland` | unknown | built_unreleased |
 | `channels.document_sources` | `linux_x11` | unknown | built_unreleased |
 | `channels.document_sources` | `macos` | supported_with_setup | built_unreleased |
+| `channels.slack` | `aipi` | not_applicable | built_unreleased |
+| `channels.slack` | `ipad` | unknown | built_unreleased |
+| `channels.slack` | `linux_wayland` | unknown | built_unreleased |
+| `channels.slack` | `linux_x11` | unknown | built_unreleased |
+| `channels.slack` | `macos` | supported_with_setup | built_unreleased |
 
 Availability is a source-backed classification. It does not establish a release or owner observation.

@@ -51,7 +51,7 @@ class ActuatorProposalService:
         text = str(getattr(payload, "text", "") or "").strip()
         if not text: raise ValidationError("text is required")
         config = self._config_provider(); meeting = config.meeting
-        configured = {"slack": meeting.slack_webhook_url, "webhook": meeting.companion_webhook_url,
+        configured = {"webhook": meeting.companion_webhook_url,
                       "github": meeting.companion_github_repo}[target]
         repo = ""
         if target == "github":
@@ -59,8 +59,7 @@ class ActuatorProposalService:
             if not repo: raise ValidationError("No GitHub repo (set companion_github_repo on the host, or pass repo)")
             if not _REPO.match(repo): raise ValidationError("repo must be of the form owner/name")
         elif not configured:
-            label = "Slack" if target == "slack" else "Webhook"
-            raise ValidationError(f"{label} is not configured on the host")
+            raise ValidationError("Webhook is not configured on the host")
         source_ref, source_payload = self._source_binding(payload)
         title = str(getattr(payload, "title", "") or "").strip()
         if target == "github":
@@ -85,7 +84,15 @@ class ActuatorProposalService:
         proposal = self._lifecycle.apply(proposal, target)
         return {"success": True, "proposal": self._lifecycle.serialize(proposal)}
 
-    def propose_slack(self, principal: Principal, payload: Any) -> dict[str, Any]: return self._propose(principal, payload, target="slack")
+    def propose_slack(self, principal: Principal, payload: Any) -> dict[str, Any]:
+        """Keep the old endpoint as a named capability refusal.
+
+        Free text has no document source in the channel contract yet.  The
+        endpoint remains readable to old clients while refusing before it can
+        create a proposal or reach an actuator.
+        """
+        raise ValidationError("slack_moved_to_channel", code="slack_moved_to_channel")
+
     def propose_webhook(self, principal: Principal, payload: Any) -> dict[str, Any]: return self._propose(principal, payload, target="webhook")
     def propose_github(self, principal: Principal, payload: Any) -> dict[str, Any]: return self._propose(principal, payload, target="github")
 
@@ -95,6 +102,7 @@ class ActuatorProposalService:
             if status == 404: raise NotFound("proposal", proposal_id)
             raise ValidationError(error)
         return {"success": True, "proposal": self._lifecycle.serialize(updated)}
-    def decide_slack(self, principal: Principal, proposal_id: str, payload: Any) -> dict[str, Any]: return self._decide(principal, proposal_id, payload, target="slack")
+    def decide_slack(self, principal: Principal, proposal_id: str, payload: Any) -> dict[str, Any]:
+        raise ValidationError("slack_moved_to_channel", code="slack_moved_to_channel")
     def decide_webhook(self, principal: Principal, proposal_id: str, payload: Any) -> dict[str, Any]: return self._decide(principal, proposal_id, payload, target="webhook")
     def decide_github(self, principal: Principal, proposal_id: str, payload: Any) -> dict[str, Any]: return self._decide(principal, proposal_id, payload, target="github")

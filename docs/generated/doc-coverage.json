@@ -1999,7 +1999,7 @@
       },
       "semantic_status": "partially_evidenced",
       "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
-      "tests_executed": 3
+      "tests_executed": 2
     },
     {
       "assertions_inspected": 2,
@@ -2080,7 +2080,7 @@
       },
       "semantic_status": "partially_evidenced",
       "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
-      "tests_executed": 2
+      "tests_executed": 1
     },
     {
       "assertions_inspected": 1,
@@ -2108,6 +2108,33 @@
       "semantic_status": "partially_evidenced",
       "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
       "tests_executed": 1
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "channels.slack",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          2,
+          2
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "unresolved",
+      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
+      "tests_executed": 0
     },
     {
       "assertions_inspected": 0,
@@ -4002,28 +4029,28 @@
   ],
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
   "totals": {
-    "assertions_inspected": 200,
+    "assertions_inspected": 202,
     "doc_paths": [
-      223,
-      223
+      224,
+      224
     ],
     "docs": {
       "api": 0,
       "operational": 65,
       "security": 19
     },
-    "records": 148,
+    "records": 149,
     "records_with_executed_assertions": 74,
-    "semantics_unresolved": 74,
+    "semantics_unresolved": 75,
     "source_paths": [
-      261,
-      261
+      263,
+      263
     ],
     "test_paths": [
-      200,
-      200
+      202,
+      202
     ],
-    "tests_executed": 172
+    "tests_executed": 170
   },
   "validation_errors": 0
 }

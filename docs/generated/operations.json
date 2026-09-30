@@ -4729,9 +4729,10 @@
               "github",
               "jira",
               "confluence",
-              "email"
+              "email",
+              "slack"
             ],
-            "description": "The channel: file (a folder), github, jira, confluence or email."
+            "description": "The channel: file (a folder), github, jira, confluence, email or Slack."
           },
           "folder": {
             "type": [
@@ -4816,6 +4817,14 @@
             ],
             "description": "email: the provider, sendgrid or resend (sendgrid if not given)."
           },
+          "channel_label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120,
+            "description": "slack: your label for the incoming-webhook channel, for example #leads."
+          },
           "from_email": {
             "type": [
               "string",
@@ -4836,7 +4845,7 @@
               "string",
               "null"
             ],
-            "description": "email: the name of the key saved with channel.save_email_key (the provider's name if not given). Never the key."
+            "description": "email: the name of the saved provider key; slack: the key_ref returned by channel.save_slack_webhook. Never the secret."
           },
           "to": {
             "type": [
@@ -4905,6 +4914,12 @@
         "email_recipients_missing",
         "email_recipients_too_many",
         "email_recipient_duplicate",
+        "slack_webhook_invalid",
+        "slack_key_ref_invalid",
+        "slack_channel_label_invalid",
+        "slack_webhook_missing",
+        "slack_key_store_not_native",
+        "slack_key_store_locked",
         "owner_principal_required"
       ],
       "completion": "synchronous; channel.destinations lists it",
@@ -5383,6 +5398,55 @@
       "admission": {
         "rule": "admitted",
         "condition": "Config: the owner's email key in the OS keychain (#694's table: config, his press, HTTP only, in no palette). The key is held by the transport, never an argument, never journaled.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "channel.save_slack_webhook",
+      "version": 1,
+      "description": "Save a Slack incoming-webhook URL in the native keychain. The URL is held by HTTP, never an argument or result; the returned key_ref is consumed by channel.save_destination.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "{key_ref, saved} and the receipt (never the URL)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "owner_required",
+        "slack_webhook_invalid",
+        "slack_key_ref_invalid",
+        "slack_webhook_missing",
+        "slack_key_store_not_native",
+        "slack_key_store_locked"
+      ],
+      "completion": "synchronous; channel.save_destination consumes key_ref to create the destination",
+      "exposure": [
+        "http:POST /api/channels/slack-webhooks"
+      ],
+      "held": [
+        "webhook_url"
+      ],
+      "owner_only": true,
+      "blocking_io": true,
+      "owner_press": true,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Config: the owner's Slack webhook in the native keychain, HTTP only, in no palette. The URL is held by the transport and never journaled.",
         "arguments": [],
         "enforced": true
       }

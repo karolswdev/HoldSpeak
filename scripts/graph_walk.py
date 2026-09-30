@@ -879,7 +879,7 @@ OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create",
                           # PHILO-9-02: the charter's HTTP capability exceptions.
                           "project.door.count", "project.watch.update", "project.watch.baseline",
                           # PHILO-10-03: the email key is a held input, HTTP only (never a tool argument).
-                          "channel.save_email_key"})
+                          "channel.save_email_key", "channel.save_slack_webhook"})
 
 # PHILO-7-01: the desk kind and id argument of each slice prefix.
 _DESK_OP_KINDS: dict[str, tuple[str, str]] = {
@@ -2807,7 +2807,7 @@ def _install_cli_runner(path: Path) -> str:
 
 
 def _install_email_edge(https: list[dict[str, Any]], log_path: Path, lock: Any) -> None:
-    """PHILO-10-07: a RECORDING HTTPS edge for the email channel, and a MEMORY key store.
+    """Recording HTTPS edges for email and Slack, with MEMORY key stores.
 
     The seams are `holdspeak.services.channel_email.HTTPS_HANDLER` and
     `KEY_STORE` (the same attributes the story 03 / 07 fences replace), set
@@ -2817,6 +2817,8 @@ def _install_email_edge(https: list[dict[str, Any]], log_path: Path, lock: Any) 
     lives in this process's memory: the OS keychain is never read or written.
     Each request is logged BEFORE it answers: argv `["https", method, host,
     path]`, the body's sha256, the auth scheme, the User-Agent. Never the key.
+    PHILO-11-02: Slack uses the same recording edge. Its path is a credential,
+    so the call log keeps only `/services/[redacted]` for that host.
     """
     import http.client as _http_client
     import io as _io
@@ -2825,10 +2827,12 @@ def _install_email_edge(https: list[dict[str, Any]], log_path: Path, lock: Any) 
     import urllib.response as _urllib_response
     from urllib.parse import urlparse as _urlparse
 
-    from holdspeak.services import channel_email
+    from holdspeak.services import channel_email, channel_slack
 
     memory = channel_email.MemoryEmailKeyStore()
     channel_email.KEY_STORE = lambda: memory
+    slack_memory = channel_slack.MemorySlackKeyStore()
+    channel_slack.KEY_STORE = lambda: slack_memory
 
     class RecordingEdge(_urllib_request.BaseHandler):
         def https_open(self, req: Any) -> Any:
@@ -2837,6 +2841,8 @@ def _install_email_edge(https: list[dict[str, Any]], log_path: Path, lock: Any) 
             headers = {k.lower(): v for k, v in req.header_items()}
             index = next((i for i, a in enumerate(https)
                           if a.get("host") == argv[2] and a.get("path") == argv[3]), None)
+            if url.hostname == channel_slack.HOST:
+                argv[3] = "/services/[redacted]"
             entry = {"argv": argv, "body_sha256": hashlib.sha256(bytes(req.data or b"")).hexdigest(),
                      "pid": os.getpid(), "at": datetime.now(timezone.utc).isoformat(), "answer": index,
                      "auth": str(headers.get("authorization", "")).split(" ", 1)[0] or None,
@@ -2859,6 +2865,7 @@ def _install_email_edge(https: list[dict[str, Any]], log_path: Path, lock: Any) 
             return resp
 
     channel_email.HTTPS_HANDLER = RecordingEdge
+    channel_slack.HTTPS_HANDLER = RecordingEdge
 
 
 def read_cli_calls(hub: Any) -> list[dict[str, Any]] | None:

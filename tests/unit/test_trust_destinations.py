@@ -26,12 +26,13 @@ def test_registry_is_complete_and_inventory_is_secret_free() -> None:
         assert secret not in rendered
 
 
-def test_doctor_uses_registry_names_for_enabled_destinations() -> None:
+def test_doctor_ignores_the_retained_slack_config_value() -> None:
     config = Config()
     config.meeting.slack_webhook_url = "https://hooks.slack.com/services/a/b/c"
     check = _check_trust_destinations(config)
-    assert check.status == "WARN"
-    assert next(row["name"] for row in destination_registry() if row["id"] == "slack") in check.detail
+    assert check.status == "PASS"
+    slack = next(row for row in destination_inventory(config) if row["id"] == "slack")
+    assert slack["enabled"] is False
 
 
 def test_default_inventory_has_no_external_destination_enabled() -> None:
