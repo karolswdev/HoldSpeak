@@ -1,0 +1,39 @@
+"""Recheck the three full-suite failures serially in a disposable HOME.
+
+Usage: HOME=$(mktemp -d) uv run python <this-file> [--collect-only]
+No test/product edits; local fixture servers only, no live external sends.
+"""
+from pathlib import Path
+import dis
+import os
+import pwd
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parents[6]
+ACCOUNT_HOME = Path(pwd.getpwuid(os.getuid()).pw_dir)
+assert Path.home().resolve() != ACCOUNT_HOME.resolve(), "An isolated HOME is required"
+os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(ACCOUNT_HOME / "Library/Caches/ms-playwright"))
+os.environ.setdefault("npm_config_cache", str(ACCOUNT_HOME / ".npm"))
+os.environ.setdefault("PUPPETEER_SKIP_DOWNLOAD", "true")
+NODES = [
+    "tests/integration/test_phase200_recipe_catalog.py::TestTheScheduledOwnerReallyFires::test_the_sweep_is_driven_by_a_wall_clock_loop",
+    "tests/e2e/test_hs176_loop_glass.py::test_speak_loop_1440",
+    "tests/e2e/test_hs176_loop_glass.py::test_speak_loop_393",
+]
+print("Scope: the three full-suite failures, serial, isolated HOME", flush=True)
+print("Python:", sys.version, flush=True)
+unchanged = subprocess.run(["git", "diff", "--exit-code", "HEAD", "--", "holdspeak", "tests", "web"], cwd=ROOT)
+print("Product/test diff against HEAD exit:", unchanged.returncode, flush=True)
+assert unchanged.returncode == 0, "Recheck requires unchanged product and tests"
+if "--collect-only" not in sys.argv:
+    sys.path.insert(0, str(ROOT))
+    from holdspeak.runtime.heartbeat import HeartbeatMixin
+    loop = HeartbeatMixin._heartbeat_loop
+    print("Heartbeat integer co_consts:", [c for c in loop.__code__.co_consts if isinstance(c, int) and not isinstance(c, bool)], flush=True)
+    print("Heartbeat timing instructions:", [(i.opname, i.argval) for i in dis.get_instructions(loop) if i.opname.startswith("LOAD_") and i.argval in (10, 60)], flush=True)
+command = [sys.executable, "-m", "pytest", "-q", *sys.argv[1:], *NODES]
+print("Command:", " ".join(command), flush=True)
+result = subprocess.run(command, cwd=ROOT, env=os.environ.copy())
+print("Exit:", result.returncode, flush=True)
+raise SystemExit(result.returncode)

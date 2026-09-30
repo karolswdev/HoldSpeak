@@ -1,0 +1,30 @@
+"""Run existing backend fences in a disposable HOME; no new product tests.
+
+Usage: HOME=$(mktemp -d) uv run python <this-file> [--collect-only]
+The subprocess keeps that isolated HOME. Sources are .txt to avoid collection.
+"""
+from pathlib import Path
+import os
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parents[6]
+FOCUSED = [
+    "tests/unit/test_philo10_send_contract.py",
+    "tests/unit/test_philo10_send_recovery.py",
+    "tests/unit/test_philo10_send_restart.py",
+    "tests/unit/test_meeting_exports.py",
+    "tests/unit/test_decision_record_service.py",
+    "tests/unit/test_monday_brief_service.py",
+    "tests/unit/test_slack_export.py",
+    "tests/integration/test_web_slack_export.py",
+    "tests/unit/test_thread_tool_gate.py",
+]
+assert Path.home() != Path("/Users/karol"), "An isolated HOME is required"
+command = [sys.executable, "-m", "pytest", "-q", *sys.argv[1:], *FOCUSED]
+print("Scope: existing backend tests; no live external sends", flush=True)
+print("HOME isolated:", Path.home() != Path("/Users/karol"), flush=True)
+print("Command:", " ".join(command), flush=True)
+result = subprocess.run(command, cwd=ROOT, env=os.environ.copy())
+print("Exit:", result.returncode, flush=True)
+raise SystemExit(result.returncode)
