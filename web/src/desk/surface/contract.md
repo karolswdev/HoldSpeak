@@ -393,3 +393,74 @@ ink to the pixel and the verb is still the library `Button` (UX-CANON A.1).
 The surface inventory of 2026-09-20 (§3.3) is why this exists: raw buttons
 outnumbered library Buttons more than two to one, and the worst sites were
 the shared species themselves.
+
+## SendWell (PHILO-11-04)
+
+The SEND well: ONE species for sending any stored document through the
+channels (Phase 10's well with its eight update bindings replaced by one
+document reference). Ratified on canvas E (phase-11 story 03). Every face
+that sends a document composes it; no face draws its own rows.
+
+**Import path.** `desk/surface/send` — a sanctioned sub-barrel, like
+`DeskEditor`. It carries the channel wire (`features/channels/channels.ts`),
+so it stays out of the main barrel, which is wire-free.
+
+- `SendWells({ doc, head?, onSettled?, history? })` — what a host composes:
+  the well, then its history, over ONE read of the document's sends.
+  - `doc: DocRef` — `{ ref, title, label }`: `ref` is `<kind>:<id>` (the
+    wire's `document_ref`), `title` the well's accessible name
+    (`Send <title>`), `label` the short token a prepared row shows
+    (`REV 4`, `BRIEF SEP 29`, `D-1a2b3c`).
+  - `head?` — sits first inside SEND (the meeting's form picker).
+  - `history?(sends)` — the slot only the update fills: its `DELIVERY N`
+    with the manual To + Mark delivered row (R8). Every other document gets
+    `SendHistory`.
+- `SendWell({ doc, sendsRead, onSettled?, head? })` — the well alone, for a
+  host that shares one sends read (`useSends(ref)`).
+- `SendHistory({ sends })` — `SENDS N` over the ended sends (N = sent rows;
+  `SENDS` with no number when only UNKNOWN rows; nothing at all when none).
+- `PreparedChip({ docRef })` — `◆ PREPARED ×K` for a host head or row;
+  nothing at zero. It carries `data-head-chip` (below).
+- Pieces for other channel faces: `PreviewWell`, `ProofCell`, `Unreadable`,
+  `accountChip`, `useDestinations`, `useConnections`, `latestFor`,
+  `mergeKnown`, `resetSendStore` (test seam).
+
+Rules the species holds (they are not the host's business):
+
+- **One state per document.** Pick, press, held key and outcome live in a
+  module store keyed `<ref>|<target>`: two seats of one document (the
+  Chair's brief and Intelligence → BRIEF) show one pick and one press, and a
+  lost answer's Retry sends the same `command_id`.
+- **The words.** SEND · Send · Send again · Retry · Discard; SAVED, POSTED,
+  COMMENTED, BLOG POSTED, ACCEPTED BY <PROVIDER>; REFUSED + its word +
+  NOTHING SENT; FAILED + its word + NOTHING SENT; RESULT UNKNOWN; PREPARED;
+  SENDING. Each from `features/channels/channels.ts`, never re-spelled.
+- **A preview refused by name** shows `REFUSED`, its word, the size and the
+  limit when the answer carries them (`41,099 / 39,000 CHARACTERS` for
+  `payload_too_large:slack`), `NOTHING SENT` and the egress chip — never
+  `NO ANSWER`. Only a preview with no answer at all is
+  `NO PREVIEW · NO ANSWER` with Retry. `PREVIEW CHANGED` reads a fresh preview.
+- **Slack is POSTED with no link**: the proof is the channel label.
+- **The egress chip** rides every destination row, every open preview and
+  every waiting prepared row (UX-CANON: egress where egress happens).
+- **Its own look** (`send/send-well.css`, G3): the UI face at 14 px; the
+  preview's headings in the display face; mono only for fields, paths and
+  chips; the `SEND` / `SENDS` / `DELIVERY` head at 12 px in every host (a
+  pullout's 10 px `h3` rule does not reach it). ONE row grammar in every
+  host at every width: line 1 the lead (16 px) and the name, line 2 the
+  chips (`.send-cells`) under the name; an open row's preview at the name's
+  indent. No host rule for `section`, `h3`, `ul`, `p` or monospace reaches in.
+- **The 44 px narrow target in every host** (G4): the well is itself a
+  `surface` container (`container: surface / inline-size`), so every narrow
+  rule of the kit (the 44 px picker, string field and check token; the
+  ledger's narrow reflow) answers to the well's own width, also in a host
+  that is not a surface container (the Chair at 393). The kit still never
+  reads the viewport (DESIGN_SYSTEM.md rule 2).
+
+### `data-head-chip` on a section head
+
+A `SurfaceSection` head whose `actions` hold an element with
+`data-head-chip` keeps its label whole on the first line; when the label and
+the chips do not fit on one line, the chips and verbs wrap UNDER the label
+(`surface.css`). The label is never squeezed into a column. The rule is
+intrinsic (no width query), so it holds in any host.

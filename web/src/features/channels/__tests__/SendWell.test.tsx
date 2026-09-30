@@ -19,7 +19,8 @@ vi.mock("../../../pages/cores/connections/api", async () => {
 });
 
 import { ApiError } from "../../../lib/api";
-import { DeliveryHistory, ListChips, SendWell, latestFor, mergeKnown, resetSendStore, useSends } from "../SendWell";
+import { DeliveryHistory, ListChips, updateDoc } from "../SendWell";
+import { SendWell, latestFor, mergeKnown, resetSendStore, useSends } from "../../../desk/surface/send";
 
 const FOLDER = "/Users/karol/Reports/Payments";
 const dest = (over: Partial<Destination> = {}): Destination => ({
@@ -52,8 +53,8 @@ function wireUp() {
 }
 
 function Well({ u = update() }: { u?: ProjectUpdate }) {
-  const read = useSends(u.id);
-  return <SendWell update={u} sendsRead={read} />;
+  const read = useSends(updateDoc(u).ref);
+  return <SendWell doc={updateDoc(u)} sendsRead={read} />;
 }
 
 beforeEach(() => {
@@ -135,6 +136,21 @@ describe("the SEND well", () => {
     expect(refused.textContent).toContain("NOTHING SENT");
   });
 
+  it("G2: a preview refused by name shows its word and the size, never NO ANSWER (PHILO-11-04)", async () => {
+    routes["POST /api/channels/preview"] = () => {
+      throw new ApiError(400, "too large", {
+        success: false, code: "payload_too_large:slack", error_code: "payload_too_large:slack", size: 41099, limit: 39000,
+      });
+    };
+    render(<Well />);
+    fireEvent.click(within(await screen.findByTestId("destination-row")).getByText("Folder Payments"));
+    const refused = await screen.findByTestId("preview-refused");
+    expect(refused.textContent).toContain("TOO LARGE FOR SLACK");
+    expect(refused.textContent).toContain("41,099 / 39,000 CHARACTERS");
+    expect(refused.textContent).toContain("NOTHING SENT");
+    expect(screen.getByTestId("send-open").textContent).not.toContain("NO ANSWER");
+  });
+
   it("a lost answer keeps the key: Retry sends the SAME command_id", async () => {
     const keys: string[] = [];
     let lose = true;
@@ -214,11 +230,11 @@ describe("mergeKnown: a stale or failed read never hides a returned result (r1 F
   it("keeps the returned FAILED over a read that predates it, and a read never replaces an ended row with a running one", () => {
     const old = send({ id: "old", state: "sent", dispatch_seq: 1 });
     const failed = send({ id: "new", state: "failed", reason: "permission_denied", dispatch_seq: 2 });
-    const merged = mergeKnown("u1", [old], [failed]);
+    const merged = mergeKnown("project_update:u1", [old], [failed]);
     expect(latestFor(merged, "chd_1")?.state).toBe("failed");
     const running = { ...failed, state: "dispatching" as const };
-    expect(mergeKnown("u1", [old, running], [failed]).find((s) => s.id === "new")?.state).toBe("failed");
-    expect(mergeKnown("u2", [old], [failed]).map((s) => s.id)).toEqual(["old"]);
+    expect(mergeKnown("project_update:u1", [old, running], [failed]).find((s) => s.id === "new")?.state).toBe("failed");
+    expect(mergeKnown("project_update:u2", [old], [failed]).map((s) => s.id)).toEqual(["old"]);
   });
 });
 

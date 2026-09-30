@@ -104,7 +104,7 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 | PHILO-11-01 | The document sources | done | [story-01-the-document-sources](./story-01-the-document-sources.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-11-02 | The Slack channel and the aftercare rewrite | backlog | [story-02-the-slack-channel-and-the-aftercare-rewrite](./story-02-the-slack-channel-and-the-aftercare-rewrite.md) | — |
 | PHILO-11-03 | The canvases A–E | backlog | [story-03-the-canvases](./story-03-the-canvases.md) | — |
-| PHILO-11-04 | The SEND well as one library species | backlog | [story-04-the-send-well-species](./story-04-the-send-well-species.md) | — |
+| PHILO-11-04 | The SEND well as one library species | done | [story-04-the-send-well-species](./story-04-the-send-well-species.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-11-05 | The faces: the well on every document, Destinations with Slack | backlog | [story-05-the-faces](./story-05-the-faces.md) | — |
 | PHILO-11-06 | The atlas cases for the new kinds and Slack | backlog | [story-06-the-atlas-cases](./story-06-the-atlas-cases.md) | — |
 | PHILO-11-07 | The closing use | backlog | [story-07-the-closing-use](./story-07-the-closing-use.md) | — |
@@ -129,6 +129,8 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 - A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call. CI does not gate a merge (the owner, 2026-09-28).
 
 ## Where we are
+
+2026-09-30: PHILO-11-04 is built and verified (stacked on story 01, #707). The SEND well is one library species (`web/src/desk/surface/send/`, contract.md "SendWell") on a document reference; the update composes it with its own DELIVERY history in the slot. G2, G3, G4 and the head rules paid. The Phase 10 update glass passes at 1440 and 393; six actual Phase 10 atlas walks PASS; the web baseline has zero branch-new. Next: story 05 composes the species on every document face.
 
 2026-09-29: PHILO-11-01 is built and verified. Eight stored sources use the generic channel contract; the existing update face passes at 1440 and 393. Six actual Phase 10 atlas walks PASS. The final full run is red (38 failed, 13,498 passed): (a) ten stale wording/reference failures corrected; (b) two catalogue guidance losses corrected; (c) 26 glass failures pass twice serially, all 52 invocations. The final focused capture collects and passes 48 checks; the web suite passes 2,970. See [Astra's lane record](lane-01-astra.md). The PR goes to Muad'Dib for counsel-on-built; no merge verdict is claimed. Story 02 has not started in this lane, and story 03's canvas/shim files are untouched. The broader graph census remains red for story 06 reconciliation.
 

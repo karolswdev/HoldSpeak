@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 11
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** PHILO-11-03 ratified (canvas E); PHILO-11-01 merged
 - **Unblocks:** PHILO-11-05
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Astra checks
@@ -21,10 +21,10 @@
 
 ## Acceptance criteria
 
-- [ ] One well component in the library, documented in `contract.md`; no face hand-rolls its rows.
-- [ ] The update's Phase 10 glass fences and atlas cases pass unchanged at both widths (no visible change).
-- [ ] A web-unit case per state for a non-update document: no destination, picked, SENT, POSTED (no link), REFUSED, FAILED, UNKNOWN, PREPARED; no manual row on a non-update.
-- [ ] The web baseline has zero branch-new failures.
+- [x] One well component in the library, documented in `contract.md`; no face hand-rolls its rows.
+- [x] The update's Phase 10 glass fences and atlas cases pass unchanged at both widths (no visible change).
+- [x] A web-unit case per state for a non-update document: no destination, picked, SENT, POSTED (no link), REFUSED, FAILED, UNKNOWN, PREPARED; no manual row on a non-update.
+- [x] The web baseline has zero branch-new failures.
 
 ## Effort (not a promise)
 
@@ -36,5 +36,7 @@ PROVISIONAL: about 1 engineering day.
 - **Glass:** the Phase 10 update fences at 1440 and 393.
 
 ## Notes
+
+- 2026-09-30 — BUILT by Muad'Dib's Fedaykin lane (Opus 5.5), stacked on story 01 (#707). The species is `web/src/desk/surface/send/` (`SendWell`, `SendWells`, `SendHistory`, `PreparedChip`, and the pieces faces.md §2 asked exported), imported through its own sub-barrel `desk/surface/send` (it carries the channel wire; the main barrel stays wire-free, so no import cycle through the desk store); documented in `web/src/desk/surface/contract.md` ("SendWell"). The update's `PublishedWells` composes it and fills the `history` slot with its DELIVERY N + Mark delivered (R8). Canvas E conditions paid: G2 (a named preview refusal shows its word and `41,099 / 39,000 CHARACTERS` when the answer carries `size` and `limit`; red before on HEAD); G3 (`send/send-well.css`: the species' own type and the one row grammar); G4 (the well is itself a `surface` container, so the kit's 44 px narrow rules answer to the well's width in any host — the kit law forbids viewport media, `tests/unit/test_native_surfaces_guard.py:86`); the heads (SEND / SENDS / DELIVERY at 12 px in every host; a head with `data-head-chip` wraps its chips under its label, intrinsically). Slack's face words (POSTED with no link, HOOKS.SLACK.COM, WEBHOOK SET, TOO LARGE FOR SLACK) are in `channels.ts`; the wire is story 02's. Proof: `evidence-story-04.md`.
 
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
