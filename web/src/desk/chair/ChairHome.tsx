@@ -59,6 +59,7 @@ import { unfinishedThoughts, type UnfinishedThought } from "../thoughts";
 import type { Meeting } from "../../lib/primitives";
 import { fromWireMeeting } from "../api";
 import { MeetingSummarySlab } from "../../meetings/MeetingSummarySlab";
+import { MeetingSendWellLazy } from "../../meetings/MeetingSendWellLazy";
 import { TranscriptWell } from "../../pages/cores/history/TranscriptWell";
 import {
   RefusalToken,
@@ -2259,6 +2260,12 @@ function ArrivalMeetingWells({
             ))}
           </div>
         </SurfaceWell>
+      ) : null}
+      {/* PHILO-11-05 (canvas C6b): the meeting's SEND well under its summary,
+          in both branches that show one (the healthy slab and the retained
+          summary with status facts). No summary, no well (C4). */}
+      {summary ? (
+        <MeetingSendWellLazy meetingId={meeting.id} title={meeting.title} startedAt={meeting.startedAt} />
       ) : null}
       {segments.length > 0 ? (
         <TranscriptWell

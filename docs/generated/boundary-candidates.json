@@ -6823,7 +6823,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 925,
+      "line": 933,
       "kinds": [
         "http_client"
       ],
@@ -6833,7 +6833,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1076,
+      "line": 1084,
       "kinds": [
         "http_client"
       ],
@@ -6843,7 +6843,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1584,
+      "line": 1597,
       "kinds": [
         "http_client"
       ],
@@ -6853,7 +6853,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1868,
+      "line": 1881,
       "kinds": [
         "http_client"
       ],
@@ -6863,7 +6863,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1922,
+      "line": 1935,
       "kinds": [
         "http_client"
       ],
@@ -6873,7 +6873,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1975,
+      "line": 1988,
       "kinds": [
         "http_client"
       ],
@@ -7253,7 +7253,7 @@
     },
     {
       "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-      "line": 74,
+      "line": 75,
       "kinds": [
         "http_client"
       ],
@@ -7303,7 +7303,7 @@
     },
     {
       "path": "web/src/desk/pullouts/views/BriefView.tsx",
-      "line": 270,
+      "line": 271,
       "kinds": [
         "http_client"
       ],
@@ -7313,7 +7313,7 @@
     },
     {
       "path": "web/src/desk/pullouts/views/BriefView.tsx",
-      "line": 286,
+      "line": 287,
       "kinds": [
         "http_client"
       ],

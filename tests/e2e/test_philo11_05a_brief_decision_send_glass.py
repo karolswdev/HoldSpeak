@@ -66,6 +66,37 @@ def opened(scope: str, name: str) -> str:
     return f"{scope} [data-testid=send-open][data-destination='{name}']"
 
 
+WEBHOOK = "https://hooks.slack.com/services/T0P11/B0P11/philo11-05a-synthetic-credential"
+SECRET_MARK = "philo11-05a-synthetic-credential"
+SLACK = "Slack #leads"
+
+
+class _Edge:
+    """The recording HTTPS edge: every request is recorded, then answered with Slack's exact `200 ok`."""
+
+    def __init__(self) -> None:
+        self.requests: list[dict[str, Any]] = []
+
+    def handler(self) -> Any:
+        import http.client
+        import io
+        import urllib.request
+        import urllib.response
+
+        edge = self
+
+        class Recording(urllib.request.BaseHandler):
+            def https_open(self, req: Any) -> Any:
+                edge.requests.append({"host": req.host, "url": req.full_url, "method": req.get_method(),
+                                      "body": bytes(req.data or b"")})
+                result = urllib.response.addinfourl(io.BytesIO(b"ok"), http.client.parse_headers(io.BytesIO(b"\r\n")),
+                                                    req.full_url, 200)
+                result.msg = "recorded"
+                return result
+
+        return Recording()
+
+
 class _Rig:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -76,6 +107,19 @@ class _Rig:
         keyfile.write_text("{}")
         keyfile.chmod(0o600)
         monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
+        # Slack's transport seams only, in the hub's own process (part B's pattern): a MEMORY
+        # key store and a recording HTTPS edge that answers Slack's exact `200 ok`. The kernel
+        # admission, the egress child and the real opener run; the OS keychain is never
+        # reached (a guard fails the test if it is); nothing leaves the machine.
+        import keyring
+        from holdspeak.services import channel_slack
+
+        self.keys = channel_slack.MemorySlackKeyStore()
+        self.edge = _Edge()
+        monkeypatch.setattr(channel_slack, "KEY_STORE", lambda: self.keys)
+        monkeypatch.setattr(channel_slack, "HTTPS_HANDLER", self.edge.handler)
+        monkeypatch.setattr(keyring, "get_keyring", lambda: (_ for _ in ()).throw(
+            AssertionError("the glass reached the real keychain")))
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
         self.server, self.base = server, base
         try:
@@ -149,6 +193,14 @@ class _Rig:
         assert k["target_ref"] in (f"document:{ref}", f"channel_send:{send['id']}"), (k, ref)
         assert k["principal_kind"] == principal, k
         return k
+
+    @staticmethod
+    def _slack(page: Any) -> str:
+        """A Slack destination through the real routes: the held webhook save, then the destination."""
+        key_ref = _api(page, "POST", "/api/channels/slack-webhooks", {"webhook_url": WEBHOOK}, token=TOKEN)["key_ref"]
+        return _api(page, "POST", "/api/channels/destinations",
+                    {"name": SLACK, "channel": "slack", "key_ref": key_ref, "channel_label": "#leads"},
+                    token=TOKEN)["destination"]["id"]
 
     @staticmethod
     def _focus(page: Any) -> None:
@@ -741,6 +793,195 @@ class TestBriefAndDecisionSendGlass(_Rig):
 
                 shots.write("record-send", {"records": {"mtg": mtg, "plain": plain},
                                             "hub_sends": {"mtg": hub, "plain": hub_plain2}})
+                shots.assert_clean()
+                assert not errors, errors
+            finally:
+                browser.close()
+
+
+class TestChairMeetingsAndBriefToSlack(_Rig):
+    # ── C6b: the Chair's MEETINGS rows (both branches) + A6: the brief to Slack ──
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(900)
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_the_chair_meeting_wells_and_the_brief_to_slack(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        from holdspeak.db import get_database
+        from holdspeak.meeting_session.models import IntelSnapshot, MeetingState, TranscriptSegment
+
+        shots = Boards(SHOTS, width)
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                db = get_database()
+                now = datetime.now().replace(microsecond=0)
+                seg = [TranscriptSegment(text="Two write paths still hit the old ledger.", speaker="Me", start_time=4.0, end_time=9.0)]
+                # The healthy branch: a recorded meeting with its stored summary.
+                db.meetings.save_meeting(MeetingState(
+                    id="c6-sync", started_at=now - timedelta(hours=2), ended_at=now - timedelta(hours=1, minutes=15),
+                    title="Ledger cutover sync", segments=seg, intel_status="completed",
+                    intel=IntelSnapshot(timestamp=0.0, summary="The team agreed to freeze the old ledger on Nov 3.",
+                                        topics=["cutover"])))
+                # The retained-summary branch: a stored summary, then a re-run that failed (the
+                # intel queue's own enqueue -> claim -> fail); the Chair keeps the summary with its
+                # status facts.
+                db.meetings.save_meeting(MeetingState(
+                    id="c6-retry", started_at=now - timedelta(hours=1), ended_at=now - timedelta(minutes=30),
+                    title="Vendor escalation", segments=seg, intel_status="completed",
+                    intel=IntelSnapshot(timestamp=0.0, summary="The vendor owes a fix for the export by Friday.",
+                                        topics=["vendor"])))
+                db.intel.enqueue_intel_job("c6-retry", transcript_hash="c6-retry-hash")
+                claimed = db.intel.claim_next_intel_job(include_scheduled=True)
+                assert claimed is not None and claimed.meeting_id == "c6-retry", claimed
+                db.intel.fail_intel_job("c6-retry", "engine answered 500")
+                team, team_dir = self._dest(page, "Team folder")
+                slack = self._slack(page)
+                assert self.keys.values and not self.edge.requests
+                self._reload(page)
+
+                ok_row = "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-sync'])"
+                rt_row = "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-retry'])"
+                OK = f"{ok_row} [data-seat=meeting]"
+                RT = f"{rt_row} [data-seat=meeting]"
+                page.locator(f"{OK} [data-testid=destination-row]").first.wait_for(timeout=T)
+                page.locator(f"{RT} [data-testid=destination-row]").first.wait_for(timeout=T)
+                page.wait_for_timeout(600)
+
+                # C6b, the healthy branch: SUMMARY, then SEND with the form picker (44 px at 393).
+                picker = f"{OK} [data-testid=doc-forms] select, {OK} [data-testid=doc-forms] .btn"
+                c6 = shots.shoot(page, "C6b-chair-meetings-row-well", OK,
+                                 [f"{ok_row} .meeting-summary-slab, {ok_row} [data-testid=meeting-summary-text]",
+                                  f"{OK} [data-testid=doc-forms]", f"{OK} [data-testid=destination-row]"],
+                                 seat=f"{ok_row} [data-testid=arrival-meeting-row]")
+                assert "meeting_summary:c6-sync" in c6["wells"], c6["wells"]
+                pick_box = page.evaluate("(s) => { const e = document.querySelector(s); const r = e.getBoundingClientRect(); return [r.width, r.height, e.tagName]; }", picker)
+                c6["picker_box"] = pick_box
+                picker_probe = [o for o in c6["pointer"]["owned"] if o["text"].startswith("Summary") or o["text"] == "Document"]
+                c6["picker_owned"] = picker_probe
+                assert picker_probe, c6["pointer"]
+                if width == 393:
+                    # G4 on the Chair: the picker is 44 px tall and owns all nine points of its target.
+                    assert pick_box[1] >= 44, pick_box
+                    assert all(min(o["target"]) >= 44 for o in picker_probe), picker_probe
+                    # Ordinary scrolling past the capture bar: the Chair scrolled so the picker sits
+                    # UNDER the sticky capture bar; the mouse wheel over the Chair then brings it out,
+                    # and the picker owns all nine points of its 44 x 44 target.
+                    under = page.evaluate("""(sel) => { const p = document.querySelector(sel); const bar = document.querySelector('[data-testid=arrival-capture-bar]');
+                      const s = document.querySelector('.chair'); const pr = p.getBoundingClientRect(), br = bar.getBoundingClientRect();
+                      s.scrollTop += (pr.top + pr.height / 2) - (br.top + br.height / 2);
+                      const q = p.getBoundingClientRect(); const h = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2);
+                      return {covered: !!h && !p.contains(h), by: h ? String(h.className).slice(0, 40) : null}; }""", picker)
+                    assert under["covered"], under
+                    steps = 0
+                    for steps in range(1, 16):
+                        page.mouse.move(width / 2, 300)
+                        page.mouse.wheel(0, 90)
+                        page.wait_for_timeout(200)
+                        pts = page.evaluate("""(sel) => { const p = document.querySelector(sel); const r = p.getBoundingClientRect();
+                          const cx = r.left + r.width / 2, cy = r.top + r.height / 2, w = Math.max(44, r.width), h = Math.max(44, r.height);
+                          const L = cx - w / 2 + 1, R = cx + w / 2 - 1, T = cy - h / 2 + 1, B = cy + h / 2 - 1;
+                          return [[cx, cy], [cx, T], [R, cy], [cx, B], [L, cy], [L, T], [R, T], [L, B], [R, B]]
+                            .map(([x, y]) => { const e = document.elementFromPoint(x, y); return !!e && p.contains(e); }); }""", picker)
+                        if all(pts):
+                            break
+                    owned_nine = []
+                    for x, y in page.evaluate("""(sel) => { const p = document.querySelector(sel); const r = p.getBoundingClientRect();
+                          const cx = r.left + r.width / 2, cy = r.top + r.height / 2, w = Math.max(44, r.width), h = Math.max(44, r.height);
+                          const L = cx - w / 2 + 1, R = cx + w / 2 - 1, T = cy - h / 2 + 1, B = cy + h / 2 - 1;
+                          return [[cx, cy], [cx, T], [R, cy], [cx, B], [L, cy], [L, T], [R, T], [L, B], [R, B]]; }""", picker):
+                        page.mouse.move(x, y)
+                        owned_nine.append(page.evaluate("""([sel, x, y]) => { const p = document.querySelector(sel);
+                          const e = document.elementFromPoint(x, y); return !!e && p.contains(e) && !!window.__pm && p.contains(window.__pm); }""",
+                                                        [picker, x, y]))
+                    c6["picker_after_scroll"] = {"under_bar_first": under, "wheel_steps": steps, "nine_points_owned": owned_nine}
+                    assert all(owned_nine), c6["picker_after_scroll"]
+                    shots.shoot(page, "C6f-chair-picker-scrolled-clear-393".replace("-393", ""), OK, [f"{OK} [data-testid=doc-forms]"], seat=None)
+
+                # The send leg from the Chair row: face = hub row = kernel receipt.
+                self._pick(page, OK, "Team folder")
+                self._press(page, OK, "Team folder")
+                mref = "meeting_summary:c6-sync"
+                hub = self._sends(page, mref)
+                assert [(s["document_ref"], s["state"]) for s in hub] == [(mref, "sent")], hub
+                mpath = hub[0]["proof"]["path"]
+                assert Path(mpath).parent == team_dir and "freeze the old ledger" in Path(mpath).read_text()
+                c6s = shots.shoot(page, "C6c-chair-meetings-row-saved", OK,
+                                  [f"{opened(OK, 'Team folder')} [data-receipt=latest]"], block="center")
+                assert c6s["receipts"] == [{"text": f"✓ SAVED {mpath}", "state": "sent", "code": None}], c6s["receipts"]
+                c6s["kernel_send"] = self._face_row_receipt(hub[0], mref)
+                self._unpick(page, OK, "Team folder")
+
+                # C6b, the retained-summary branch: the summary with its status facts, then SEND.
+                c6r = shots.shoot(page, "C6e-chair-retained-summary-well", RT,
+                                  [f"{rt_row} [data-testid=arrival-summary-status]", f"{RT} [data-testid=doc-forms]",
+                                   f"{RT} [data-testid=destination-row]"],
+                                  seat=f"{rt_row} [data-testid=arrival-meeting-row]")
+                assert "meeting_summary:c6-retry" in c6r["wells"], c6r["wells"]
+                assert "FAILED" in self._text(page, f"{rt_row} [data-testid=arrival-summary-status]")
+
+                # A6: the brief to Slack. A person signal (an agenda item on Priya's 1:1) puts a
+                # People section in the brief; one item is acknowledged on the shelf. The
+                # Slack-text preview carries the person lines and no Ack/Defer mark.
+                _api(page, "POST", "/api/decisions", {"title": "Freeze the old ledger on Nov 3", "status": "proposed",
+                                                     "decision_markdown": "Freeze the old ledger on Nov 3."}, token=TOKEN)
+                _api(page, "POST", "/api/decisions", {"title": "Cut over by space, not by region", "status": "proposed",
+                                                     "decision_markdown": "Cut over by space."}, token=TOKEN)
+                _api(page, "POST", "/api/people/setup", {}, token=TOKEN)
+                priya = _api(page, "POST", "/api/people/relationships", {"display_name": "Priya Nair"}, token=TOKEN)["relationship"]["id"]
+                _api(page, "POST", f"/api/people/relationships/{priya}/owner-aliases", {"alias": "Priya"}, token=TOKEN)
+                one = _api(page, "POST", f"/api/people/relationships/{priya}/one-on-ones",
+                           {"visibility": "shared_intent"}, token=TOKEN)["one_on_one"]["id"]
+                _api(page, "POST", f"/api/people/one-on-ones/{one}/agenda",
+                     {"body": "Review the rollback plan", "visibility": "shared_intent", "state": "open",
+                      "source": {"kind": "brief"}}, token=TOKEN)
+                brief = _api(page, "POST", "/api/brief/generate", {}, token=TOKEN)
+                bref = f"monday_brief:{brief['id']}"
+                items = [it for sec in brief["sections"].values() for it in sec]
+                _api(page, "POST", f"/api/brief/items/{items[0]['id']}/shelf", {"state": "acknowledged"}, token=TOKEN)
+                self._reload(page)
+                page.locator(f"{CH} [data-testid=destination-row]").first.wait_for(timeout=T)
+                self._pick(page, CH, SLACK)
+                body = f"{opened(CH, SLACK)} [data-testid=send-preview-body]"
+                text = page.locator(body).inner_text()
+                assert "*People*" in text and "Priya Nair" in text, text[-600:]
+                assert not any(w in text.upper() for w in ("ACKNOWLEDGED", "DEFERRED", " ACK ", "DEFER")), text
+                # The person line itself on screen (the Slack text is one text block: the line's own
+                # range is scrolled into view and must be on top where it is drawn).
+                on = page.evaluate("""([sel, t]) => { const b = document.querySelector(sel); if (!b) return false;
+                  const w = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
+                  for (let n = w.nextNode(); n; n = w.nextNode()) { const i = n.textContent.indexOf(t); if (i < 0) continue;
+                    const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + t.length);
+                    for (let s = n.parentElement; s; s = s.parentElement) {
+                      if (!(s.scrollHeight > s.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(s).overflowY))) continue;
+                      const rr = r.getBoundingClientRect(), sr = s.getBoundingClientRect();
+                      s.scrollTop += rr.top - (sr.top + Math.min(sr.height / 3, 120)); }
+                    const q = r.getBoundingClientRect(); const h = document.elementFromPoint(q.left + 2, q.top + q.height / 2);
+                    return q.top >= 0 && q.bottom <= innerHeight && !!h && b.contains(h); }
+                  return false; }""", [body, "Priya Nair"])
+                page.wait_for_timeout(300)
+                a6 = shots.shoot(page, "A6-brief-slack-person-sections", CH, [], seat=None)
+                a6["person_line_on_screen"] = on
+                assert on, "the person line is not on screen"
+                page.evaluate("(sel) => document.querySelectorAll(sel + ' *').forEach((e) => { e.scrollTop = 0; })", opened(CH, SLACK))
+                self._press(page, CH, SLACK)
+                hub_s = [s for s in self._sends(page, bref) if s["destination_id"] == slack]
+                assert [s["state"] for s in hub_s] == ["sent"], hub_s
+                posted = json.loads(self.edge.requests[-1]["body"])["text"]
+                assert self.edge.requests[-1]["host"] == "hooks.slack.com" and len(self.edge.requests) == 1, self.edge.requests
+                # The bytes that went are the text he read: the preview is parsed back from them.
+                assert "Priya Nair" in posted, posted[-400:]
+                assert " ".join(posted.split()) == " ".join(text.split()), (posted[:300], text[:300])
+                a6b = shots.shoot(page, "A6b-brief-slack-posted", CH, [f"{opened(CH, SLACK)} [data-receipt=latest]"],
+                                  seat=row(CH, SLACK))
+                assert a6b["receipts"] == [{"text": "✓ POSTED #leads", "state": "sent", "code": None}], a6b["receipts"]
+                assert page.locator(f"{CH} [data-testid=proof][data-href]").count() == 0   # POSTED has no link
+                a6b["kernel_send"] = self._face_row_receipt(hub_s[0], bref)
+                assert not any(SECRET_MARK in str(v) for v in (page.content(), hub_s[0]))
+
+                shots.write("chair-meetings-slack", {"hub_sends": {"meeting": hub, "brief_slack": hub_s},
+                                                     "edge_requests": len(self.edge.requests)})
                 shots.assert_clean()
                 assert not errors, errors
             finally:

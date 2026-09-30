@@ -9807,7 +9807,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "!briefLoading && !brief",
-          "line": 1349,
+          "line": 1350,
           "claim": "the Chair draws 'No brief yet' and Generate only when the read ANSWERED null (a failed read takes the branch above it, PHILO-3-03)"
         }
       ],
@@ -9826,7 +9826,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setBriefLoading",
-          "line": 536,
+          "line": 537,
           "claim": "the Chair starts with briefLoading true"
         },
         {
@@ -9857,7 +9857,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "generating",
-          "line": 752,
+          "line": 753,
           "claim": "the Chair's head Generate is disabled and GENERATING… holds the status slot in flight (PHILO-4-01)"
         }
       ],
@@ -9895,7 +9895,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setGenerateFailed",
-          "line": 721,
+          "line": 722,
           "claim": "the Chair names a failed generation BRIEF DID NOT GENERATE · <cause> in the status slot, no Retry (PHILO-4-01)"
         }
       ],
@@ -9951,7 +9951,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefItems",
-          "line": 889,
+          "line": 890,
           "claim": "the Chair reads items only from a brief that is not empty"
         }
       ],
@@ -9971,7 +9971,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "arrival-brief",
-          "line": 1408,
+          "line": 1409,
           "claim": "a brief with nothing untriaged keeps its own section, headline and Generate after a reload (the quiet branch)"
         }
       ],
@@ -9998,7 +9998,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefShelf",
-          "line": 897,
+          "line": 898,
           "claim": "the Chair's untriaged list is the items with no shelf key"
         }
       ],
@@ -10422,7 +10422,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "hasTranscript",
-          "line": 2334,
+          "line": 2341,
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
       ],
@@ -12116,13 +12116,13 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "re-reads",
-          "line": 643,
+          "line": 644,
           "claim": "the Chair is a face that re-reads on arrival"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "apiFetch",
-          "line": 539,
+          "line": 540,
           "claim": "the brief read is one of those re-reads"
         }
       ],
