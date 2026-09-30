@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 709 (plus static mounts). iOS-consumed: 89. Web-consumed: 544.
+Routes: 710 (plus static mounts). iOS-consumed: 89. Web-consumed: 545.
 
 ## device_audio_ws
 
@@ -191,6 +191,7 @@ Routes: 709 (plus static mounts). iOS-consumed: 89. Web-consumed: 544.
 | GET | `/api/channels/sends` | web |
 | POST | `/api/channels/sends` | web |
 | POST | `/api/channels/sends/{send_id}/discard` | web |
+| POST | `/api/channels/slack-webhooks` | web |
 
 ## web.routes.concierge
 

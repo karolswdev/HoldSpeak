@@ -25,7 +25,7 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/desk/actuators/status")
     async def api_desk_actuators_status() -> Any:
         config = service._config_provider().meeting
-        return {"slack_configured": bool(config.slack_webhook_url), "webhook_configured": bool(config.companion_webhook_url), "github_configured": bool(config.companion_github_repo)}
+        return {"webhook_configured": bool(config.companion_webhook_url), "github_configured": bool(config.companion_github_repo)}
 
     def proposal_route(method: Any):
         async def handler(request: Request, payload: _CompanionSlackRequest) -> Any:

@@ -99,20 +99,20 @@ def client(settings_path) -> TestClient:
 
 
 @pytest.mark.integration
-def test_aftercare_flag_is_false_when_unconfigured(client, db, seeded):
+def test_aftercare_does_not_advertise_legacy_slack(client, db, seeded):
     res = client.get("/api/meetings/m1/aftercare")
     assert res.status_code == 200
-    assert res.json()["slack_configured"] is False
+    assert "slack_configured" not in res.json()
 
 
 @pytest.mark.integration
-def test_aftercare_flag_is_true_and_never_the_url(client, db, settings_path, seeded):
+def test_aftercare_keeps_the_legacy_url_out_of_the_response(client, db, settings_path, seeded):
     config = Config.load()
     config.meeting.slack_webhook_url = URL
     config.save(path=settings_path)
     res = client.get("/api/meetings/m1/aftercare")
-    assert res.json()["slack_configured"] is True
-    # The flag is a bool; the credential never rides the response.
+    assert "slack_configured" not in res.json()
+    # The retired credential never rides the response.
     assert "secret-credential" not in res.text
     assert "hooks.slack.com" not in res.text
 

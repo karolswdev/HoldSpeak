@@ -42,6 +42,7 @@ from holdspeak.logging_config import get_logger
 
 from . import channel_contract as contract
 from . import channel_email  # noqa: F401 -- registers the email channel (PHILO-10-03)
+from . import channel_slack  # noqa: F401 -- registers the Slack channel (PHILO-11-02)
 from .channel_contract import ChannelRefused, Outcome
 from .errors import NotFound, ValidationError
 
@@ -105,6 +106,10 @@ class ChannelService:
     def _send_view(self, row: Mapping[str, Any]) -> dict[str, Any]:
         destination = self._db.channel_destinations.get(row["destination_id"]) or {}
         payload = bytes(row["payload"] or b"")
+        # Existing channels report frozen byte size. Slack reports the text
+        # characters governed by its 39,000-character refusal.
+        size = (contract.payload_size("slack", payload)[0]
+                if str(row["channel"]) == "slack" else len(payload))
         return {
             "id": row["id"], "document_ref": row["document_ref"], "destination_id": row["destination_id"],
             "destination_name": destination.get("name"), "channel": row["channel"],
@@ -112,7 +117,7 @@ class ChannelService:
             "account": json.loads(row["account_json"] or "{}"), "target": json.loads(row["target_json"] or "{}"),
             "target_digest": row["target_digest"], "payload_digest": row["payload_digest"],
             "document_json": json.loads(row["document_json"]) if row.get("document_json") else None,
-            "size": len(payload), "preview": contract.preview_for(row["channel"], payload, row["account_json"]),
+            "size": size, "preview": contract.preview_for(row["channel"], payload, row["account_json"]),
             "prepared_by": {"kind": row["prepared_by_kind"], "identity": row["prepared_by_identity"]},
             "prepare_operation_id": row["prepare_operation_id"], "send_operation_id": row["send_operation_id"],
             "state": row["state"], "reason": row["reason"],
@@ -160,9 +165,11 @@ class ChannelService:
         chan = contract.channel(destination["channel"])
         payload = contract.serialize_for(destination, document)
         self._size(destination["channel"], payload)
+        size = (contract.payload_size("slack", payload)[0]
+                if destination["channel"] == "slack" else len(payload))
         return {"document_ref": document.ref, "title": document.title, "destination_id": destination["id"],
                 "channel": destination["channel"], "badge": chan.badge(bool(destination["synced"])),
-                "payload_digest": contract.sha256(payload), "size": len(payload),
+                "payload_digest": contract.sha256(payload), "size": size,
                 "preview": contract.preview_for(destination["channel"], payload, destination["account_json"])}
 
     def check_destination(self, principal: Any, destination_id: str) -> dict[str, Any]:
@@ -178,6 +185,15 @@ class ChannelService:
             state, answered_at = self._email_state(row)
             return {"destination": self._destination_view(row),
                     "check": {"state": state, "resolved": None, "answered_at": answered_at}}
+        if row["channel"] == "slack":
+            if row["state"] != "active":
+                return {"destination": self._destination_view(row),
+                        "check": {"state": "parked", "resolved": None}}
+            chan = contract.channel("slack")
+            check = chan.check_destination(json.loads(row["target_json"] or "{}"),
+                                           account=json.loads(row["account_json"] or "{}"))
+            return {"destination": self._destination_view(row),
+                    "check": {"state": str(check), "resolved": None}}
         if row["channel"] != "file":
             view = self._destination_view(row)
             state = "parked" if row["state"] != "active" else str((view["connection"] or {}).get("state") or "")
@@ -245,7 +261,8 @@ class ChannelService:
                          space_id: Optional[str] = None, provider: Optional[str] = None,
                          from_email: Optional[str] = None, from_name: Optional[str] = None,
                          key_ref: Optional[str] = None, to: Optional[list[str]] = None,
-                         cc: Optional[list[str]] = None, command_id: Optional[str] = None) -> dict[str, Any]:
+                         cc: Optional[list[str]] = None, channel_label: Optional[str] = None,
+                         command_id: Optional[str] = None) -> dict[str, Any]:
         """Save one destination. ``replaces``: Edit -- the old row parks and this one is new.
 
         The account is CONCRETE (design section 1): GitHub freezes ``{host, login}``
@@ -274,6 +291,15 @@ class ChannelService:
             account, target = chan.target_at_save({"provider": provider, "from_email": from_email,
                                                    "from_name": from_name, "key_ref": key_ref, "to": to, "cc": cc})
             synced = False
+        elif channel == "slack":
+            account, target = chan.target_at_save({"key_ref": key_ref, "channel_label": channel_label})
+            # Saving the URL is a separate held operation.  A Slack
+            # destination stores only the keychain item name, never the URL.
+            try:
+                chan.read_key(str(account.get("key_ref") or ""))
+            except channel_slack.SlackKeyError as exc:
+                raise ChannelRefused(exc.code, f"The Slack webhook cannot be read: {exc.code}", status=400) from None
+            synced = False
         else:
             raise ValidationError(f"{channel} destinations arrive with their channel", code="channel_unknown")
         if replaces:
@@ -290,6 +316,29 @@ class ChannelService:
 
         handle.terminal("succeeded", "succeeded", f"channel_destination:{destination_id}", effect=effect)
         return {"destination": self._destination_view(self._stored(destination_id)), "replaced": replaces or None}
+
+    def save_slack_webhook(self, principal: Any, webhook_url: Any, command_id: Optional[str] = None) -> dict[str, Any]:
+        """Save one Slack incoming-webhook URL in native key custody.
+
+        The URL is transport-held and is passed directly to the native key
+        store.  It never enters the operation arguments, destination account,
+        receipt, or response.  The returned key reference is then used by the
+        ordinary destination save operation.
+        """
+        handle = _handle()
+        # The key reference is minted from the admitted save operation.  It is
+        # only a keychain item name, never a credential fingerprint.
+        key_ref = "slack_" + hashlib.sha256(str(handle.operation_id).encode()).hexdigest()[:24]
+        chan = contract.channel("slack")
+        if handle.replay:
+            return {"key_ref": key_ref, "saved": True}
+        key = webhook_url if isinstance(webhook_url, str) else ""
+        try:
+            chan.save_key(key_ref, key)
+        except channel_slack.SlackKeyError as exc:
+            raise ChannelRefused(exc.code, f"The Slack webhook could not be saved: {exc.code}", status=400) from None
+        handle.terminal("succeeded", "succeeded", f"slack_webhook:{key_ref}")
+        return {"key_ref": key_ref, "saved": True}
 
     def remove_destination(self, principal: Any, destination_id: str,
                            command_id: Optional[str] = None) -> dict[str, Any]:
@@ -345,7 +394,8 @@ class ChannelService:
         size, limit, unit = contract.payload_size(channel, payload)
         if limit and size > limit:
             raise ChannelRefused(f"payload_too_large:{channel}",
-                                 f"The payload is {size} {unit}; the {channel} channel takes {limit}", status=400)
+                                 f"The payload is {size} {unit}; the {channel} channel takes {limit}", status=400,
+                                 size=size, limit=limit, unit=unit)
 
     def prepare(self, principal: Any, document_ref: str, destination_id: str,
                 command_id: Optional[str] = None) -> dict[str, Any]:

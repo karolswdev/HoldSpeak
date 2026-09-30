@@ -8962,7 +8962,7 @@
       ],
       "authority": "Owner decision or matching bounded control posture/grant, plus master and allow-list policy and authority parity.",
       "configuration": [
-        "Slack/webhook URL",
+        "Generic webhook URL",
         "companion GitHub repo",
         "control mode",
         "actuator allow-list"
@@ -8979,7 +8979,7 @@
         "docs/PLUGIN_AUTHORING.md"
       ],
       "domain": "integrations",
-      "egress": "Approved GitHub issue/comment, Slack webhook or configured HTTP webhook; destination URL and credentials stay out of responses.",
+      "egress": "Approved GitHub issue/comment or configured HTTP webhook; destination URL and credentials stay out of responses. Slack document sends use channel.send.",
       "egress_possible": true,
       "entry_points": [
         "holdspeak/services/actuator_service.py::ActuatorProposalService",
@@ -9010,7 +9010,8 @@
       ],
       "limitations": [
         "No external connector was called in this audit.",
-        "Actuator readiness depends on destination credentials and policy."
+        "Actuator readiness depends on destination credentials and policy.",
+        "Free-text desk Slack is parked. Historical proposals remain readable; no migration runs."
       ],
       "model_requirements": [],
       "name": "Approval-gated external actuators",
@@ -9037,7 +9038,7 @@
         "linux_x11": "supported_with_setup",
         "macos": "supported_with_setup"
       },
-      "purpose": "Turn reviewed text or artifacts into owner-authorized GitHub, Slack or webhook effects with receipts.",
+      "purpose": "Turn reviewed text or artifacts into owner-authorized GitHub or webhook effects with receipts.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "external_irreversible",
@@ -9055,7 +9056,7 @@
           "symbol": "ActuatorExecutor"
         },
         {
-          "claim": "Desk routes expose concrete GitHub, Slack and webhook proposal/decision paths.",
+          "claim": "Desk routes expose GitHub and webhook proposals and decisions; Slack routes return slack_moved_to_channel.",
           "line": 20,
           "path": "holdspeak/web/routes/desk_actuators.py",
           "symbol": "build_desk_actuators_router"
@@ -9082,14 +9083,8 @@
         },
         {
           "assertion": "Approval posts the exact preview body and returns an executed receipt.",
-          "execution": {
-            "cases": 1,
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "status": "passed"
-          },
           "node": "test_approval_posts_the_preview_byte_equal",
-          "path": "tests/integration/test_web_companion_slack.py"
+          "path": "tests/integration/test_web_companion_webhook.py"
         },
         {
           "assertion": "Webhook URL/secret material is absent from responses and broadcasts.",
@@ -9450,14 +9445,8 @@
       "tests": [
         {
           "assertion": "Actuator proposed/result events include preview-only data suitable for Qlippy without payload secrets.",
-          "execution": {
-            "cases": 1,
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "status": "passed"
-          },
           "node": "test_the_wire_events_ride_for_qlippy",
-          "path": "tests/integration/test_web_companion_slack.py"
+          "path": "tests/integration/test_web_companion_webhook.py"
         },
         {
           "assertion": "A static-source test checks the Qlippy function, subscription, event/action labels, apiFetch and useEffect strings. It does not exercise reachable approval behavior.",
@@ -9523,9 +9512,9 @@
         "channel.discard"
       ],
       "limitations": [
-        "New document faces and Slack belong to later Phase 11 stories.",
+        "New document faces belong to later Phase 11 stories.",
         "External delivery of each new kind and owner observation are not claimed.",
-        "The old aftercare Slack actuator remains until story 02; channel document rendering has no 3,800-character cap."
+        "Meeting digest and follow-up now use the channel renderer. Slack is limited to 39,000 text characters; no split or truncation."
       ],
       "model_requirements": [],
       "name": "Send a stored document",
@@ -9589,6 +9578,123 @@
         }
       ],
       "trust_boundary": "The service reads the stored source by id. A prepared send freezes its bytes and names; inline Send checks the preview digest before dispatch."
+    },
+    {
+      "apis": [
+        "POST /api/channels/slack-webhooks",
+        "POST /api/channels/destinations",
+        "POST /api/channels/preview",
+        "POST /api/channels/sends",
+        "POST /api/channels/send"
+      ],
+      "authority": "Authenticated owner through channel.send; agents may prepare.",
+      "configuration": [
+        "Slack incoming webhook held in the native key store"
+      ],
+      "dependencies": [
+        "ChannelService",
+        "native keyring",
+        "external.egress broker"
+      ],
+      "docs": [
+        "pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/design/document-sources.md"
+      ],
+      "domain": "channels",
+      "egress": "Frozen text leaves for exactly hooks.slack.com:443 on Send. No automatic retry after UNKNOWN or rate limiting.",
+      "egress_possible": true,
+      "entry_points": [
+        "holdspeak/services/channel_slack.py::SlackChannel",
+        "holdspeak/services/channel_service.py::ChannelService"
+      ],
+      "evidence_level": "source_and_assertions_inspected",
+      "exposure": "integration",
+      "failure_states": [
+        "slack_webhook_invalid",
+        "slack_key_store_locked",
+        "slack_webhook_missing",
+        "payload_too_large:slack",
+        "owner_principal_required",
+        "destination_parked",
+        "unknown"
+      ],
+      "id": "channels.slack",
+      "implementation_revision": "PHILO-11-02 on base3552be416; built artifact awaits Muad’Dib counsel.",
+      "inputs": [
+        "stored document reference",
+        "saved destination with key_ref and channel_label",
+        "preview digest or prepared send id"
+      ],
+      "kernel_operations": [
+        "channel.save_slack_webhook",
+        "channel.save_destination",
+        "channel.prepare",
+        "channel.send",
+        "external.egress"
+      ],
+      "limitations": [
+        "The Slack face and removal of the old Settings and aftercare rows belong to PHILO-11-05.",
+        "Tests use a memory key store and recording HTTPS edge. OS keychain access and live Slack delivery are not observed.",
+        "The legacy config field is retained but ignored. Free-text desk Slack returns slack_moved_to_channel."
+      ],
+      "model_requirements": [],
+      "name": "Send a document to Slack",
+      "network_requirements": [
+        "Send: HTTPS POST to hooks.slack.com:443; redirects refused. Check reads local key presence and format without a POST."
+      ],
+      "outputs": [
+        "frozen Slack text preview",
+        "send receipt: POSTED, FAILED, or UNKNOWN; no message link"
+      ],
+      "owner_observed": false,
+      "persistence": [
+        "native key store slot slack:<key_ref> holds the webhook URL",
+        "channel_destinations stores the key reference and label",
+        "channel_sends stores frozen bytes and the outcome"
+      ],
+      "platforms": {
+        "aipi": "not_applicable",
+        "ipad": "unknown",
+        "linux_wayland": "unknown",
+        "linux_x11": "unknown",
+        "macos": "supported_with_setup"
+      },
+      "purpose": "Post a stored document to a saved Slack destination.",
+      "release_availability": "unreleased",
+      "replacement": null,
+      "side_effect": "external_irreversible",
+      "sources": [
+        {
+          "claim": "Serializes, plans, dispatches, and interprets the pinned Slack outcomes.",
+          "line": 386,
+          "path": "holdspeak/services/channel_slack.py",
+          "symbol": "SlackChannel"
+        },
+        {
+          "claim": "Saves a held secret and returns only its minted key reference.",
+          "line": 320,
+          "path": "holdspeak/services/channel_service.py",
+          "symbol": "save_slack_webhook"
+        }
+      ],
+      "status": "built_unreleased",
+      "status_reason": "The backend uses the shared send lifecycle and a native key store. Recorded HTTPS outcomes run in an isolated hub; no real Slack delivery or owner use is claimed.",
+      "surfaces": [
+        "HTTP channel operations",
+        "MCP channel tools"
+      ],
+      "tests": [
+        {
+          "assertion": "The real serializer and plan accept 39,000 characters and refuse 39,001 with size and limit.",
+          "node": "test_multibyte_text_limit_counts_characters_in_serialize_and_plan",
+          "path": "tests/unit/test_philo11_slack_channel.py"
+        },
+        {
+          "assertion": "A real-produced document sends frozen bytes through the hub, with owner-bound egress and no URL in durable or public material.",
+          "node": "test_save_check_preview_prepare_and_send_use_the_real_slack_producer",
+          "path": "tests/integration/test_philo11_slack_operations.py"
+        }
+      ],
+      "trust_boundary": "Only the owner can send. The webhook is held input to the HTTP-only save operation. Admission binds the egress child to the parent, owner, broker, and frozen payload digest."
     }
   ],
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",

@@ -627,7 +627,7 @@ for new configuration. Model Library and Assignments are authoritative.
 | `allow_actuators` | bool | true | Master switch for actuator execution. Control mode still determines authority. |
 | `allowed_actuators` | list | `["*"]` | Per-actuator allow-list. `["*"]` = all actuators may execute. |
 | `webhook_allowed_hosts` | list | `["*"]` | Webhook host allow-list. `["*"]` = any host may be POSTed to. |
-| `slack_webhook_url` | string | `""` | Fixed Slack incoming-webhook credential. Empty keeps Slack aftercare offline. |
+| `slack_webhook_url` | string | `""` | Ignored legacy value. Settings cannot read or change it. Send to Slack uses a saved channel destination. |
 | `companion_webhook_url` | string | `""` | Fixed generic webhook credential for the companion desk. |
 | `companion_github_repo` | string | `""` | Default `owner/name` repo for companion GitHub issue creation. |
 | `diarization_enabled` | bool | false | Enable speaker diarization for system audio |
@@ -690,7 +690,7 @@ Health check endpoint.
 - `GET /api/meetings/{meeting_id}/aftercare` - read-only aftercare digest (open items by owner, decisions, the since-last-meeting diff)
 - `GET /api/meetings/{meeting_id}/followup-draft` - locally-assembled follow-up draft (preview + copy; nothing sent)
 - `POST /api/meetings/{meeting_id}/aftercare/file-issue` - file an accepted action as a GitHub-issue actuator proposal (under default YOLO, an eligible configured action executes with a receipt; Secure and Normal retain approval; audited)
-- `POST /api/meetings/{meeting_id}/export/slack` - propose sending the digest or follow-up draft to the configured Slack webhook (`what`: `digest` or `followup`; the preview is the exact message; captured YOLO may execute it immediately, while Normal/Secure wait for authority; refuses when no URL is configured)
+- Send to Slack uses the channel operations: `channel.preview`, `channel.prepare` and the owner's `channel.send`. The document reference is `meeting_digest:<meeting_id>` or `meeting_followup:<meeting_id>`. The old `/export/slack` route is removed. The Slack face is tracked in PHILO-11-05.
 - `GET /api/all-action-items`
 - `PATCH /api/all-action-items/{item_id}` - update persisted action item status
 - `PATCH /api/all-action-items/{item_id}/review` - update persisted action item review state

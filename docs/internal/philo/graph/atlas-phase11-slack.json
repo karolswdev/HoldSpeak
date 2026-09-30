@@ -1,0 +1,743 @@
+{
+  "schema_version": 1,
+  "atlas_version": "phase11-slack-backend",
+  "extends": "docs/internal/philo/graph/atlas.json",
+  "source_commit": "3552be416c9d5d968adc162941f1f81a3c7c0b44",
+  "cases": [
+    {
+      "id": "case.p11.slack.posted.op",
+      "job": "p11",
+      "edge_ids": [
+        "edge.tool.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p11_slack_channel",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "boundary",
+          "substitute": "cli_runner",
+          "label": "Slack HTTPS edge: posted",
+          "adapter": "slack-https-edge",
+          "reply": "tests/fixtures/philo11_slack/posted.json",
+          "why": "The real channel plan, native admission and redirect-refusing opener run. Only the socket answers and key storage are substituted; the key stays in memory."
+        },
+        {
+          "kind": "op",
+          "name": "project.create",
+          "args": {
+            "name": "Atlas send ledger"
+          },
+          "adapter": "mcp-http",
+          "why": "the Room under test",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "op",
+          "name": "project.draft_update",
+          "args": {
+            "project_id": "{project_id}",
+            "generator": "deterministic"
+          },
+          "adapter": "mcp-http",
+          "why": "an update to publish",
+          "capture_as": "update_id",
+          "capture_path": "update.id"
+        },
+        {
+          "kind": "op",
+          "name": "project.publish_update",
+          "args": {
+            "update_id": "{update_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "a published update"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/slack-webhooks",
+          "adapter": "http-route",
+          "body": {
+            "webhook_url": "https://hooks.slack.com/services/T_ATLAS/B_ATLAS/synthetic"
+          },
+          "expect_status": 200,
+          "capture_as": "key_ref",
+          "capture_path": "key_ref",
+          "why": "The owner saves a synthetic webhook through the held-secret operation into the hub memory key store."
+        },
+        {
+          "kind": "op",
+          "name": "channel.save_destination",
+          "args": {
+            "channel": "slack",
+            "name": "Slack leads",
+            "key_ref": "{key_ref}",
+            "channel_label": "#leads"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id",
+          "why": "The saved destination references the minted key name, never its URL."
+        },
+        {
+          "kind": "op",
+          "name": "channel.check_destination",
+          "args": {
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "Check reads local key presence and URL validity without posting."
+        },
+        {
+          "kind": "op",
+          "name": "channel.preview",
+          "args": {
+            "document_ref": "project_update:{update_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "the preview the owner sees; its digest is what the press names",
+          "capture_as": "digest",
+          "capture_path": "payload_digest"
+        },
+        {
+          "kind": "op",
+          "name": "channel.prepare",
+          "args": {
+            "document_ref": "project_update:{update_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "send_id",
+          "capture_path": "send.id",
+          "why": "Prepare freezes the exact serialized Slack bytes under a real receipt."
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "channel.send",
+        "args": {
+          "send_id": "{send_id}",
+          "command_id": "atlas-p11-slack-posted"
+        },
+        "adapter": "mcp-http",
+        "why": "The owner sends the prepared bytes once through the real channel operation.",
+        "capture_as": "send_op",
+        "capture_path": "operation_id"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "op_facts",
+              "facts": [
+                {
+                  "source": "trigger",
+                  "path": "outcome",
+                  "value": "sent"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends",
+                  "length": 1
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.id",
+                  "value": "{send_id}"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.state",
+                  "value": "sent"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.channel",
+                  "value": "slack"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.payload_digest",
+                  "value": "{digest}"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.proof.url",
+                  "absent": true
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.proof.link",
+                  "absent": true
+                },
+                {
+                  "source": "read",
+                  "index": 0,
+                  "path": "objects.0.operation.name",
+                  "value": "channel.send"
+                },
+                {
+                  "source": "read",
+                  "index": 0,
+                  "path": "objects.0.receipt.operation_id",
+                  "value": "{send_op}"
+                },
+                {
+                  "source": "read",
+                  "index": 0,
+                  "path": "objects.0.receipt.actor_kind",
+                  "value": "owner"
+                },
+                {
+                  "source": "read",
+                  "index": 0,
+                  "path": "objects.0.receipt.state",
+                  "value": "succeeded"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.proof.word",
+                  "value": "POSTED"
+                }
+              ]
+            },
+            {
+              "kind": "cli_calls",
+              "argv_prefix": [
+                "https",
+                "POST",
+                "hooks.slack.com"
+              ],
+              "count": 1
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "project_update:{update_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{send_op}"
+            }
+          }
+        ],
+        "words": "The real producer creates and publishes an update, saves a secret and a Slack destination, previews and prepares. The owner sends once. The recording edge answers 200 ok; the durable send is sent, keeps the preview digest, and has no fabricated link. The kernel receipt names the owner. No real Slack delivery is claimed."
+      },
+      "completion_bound_s": 30,
+      "viewports": []
+    },
+    {
+      "id": "case.p11.slack.failed.op",
+      "job": "p11",
+      "edge_ids": [
+        "edge.tool.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p11_slack_channel",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "boundary",
+          "substitute": "cli_runner",
+          "label": "Slack HTTPS edge: failed",
+          "adapter": "slack-https-edge",
+          "reply": "tests/fixtures/philo11_slack/failed.json",
+          "why": "The real channel plan, native admission and redirect-refusing opener run. Only the socket answers and key storage are substituted; the key stays in memory."
+        },
+        {
+          "kind": "op",
+          "name": "project.create",
+          "args": {
+            "name": "Atlas send ledger"
+          },
+          "adapter": "mcp-http",
+          "why": "the Room under test",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "op",
+          "name": "project.draft_update",
+          "args": {
+            "project_id": "{project_id}",
+            "generator": "deterministic"
+          },
+          "adapter": "mcp-http",
+          "why": "an update to publish",
+          "capture_as": "update_id",
+          "capture_path": "update.id"
+        },
+        {
+          "kind": "op",
+          "name": "project.publish_update",
+          "args": {
+            "update_id": "{update_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "a published update"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/slack-webhooks",
+          "adapter": "http-route",
+          "body": {
+            "webhook_url": "https://hooks.slack.com/services/T_ATLAS/B_ATLAS/synthetic"
+          },
+          "expect_status": 200,
+          "capture_as": "key_ref",
+          "capture_path": "key_ref",
+          "why": "The owner saves a synthetic webhook through the held-secret operation into the hub memory key store."
+        },
+        {
+          "kind": "op",
+          "name": "channel.save_destination",
+          "args": {
+            "channel": "slack",
+            "name": "Slack leads",
+            "key_ref": "{key_ref}",
+            "channel_label": "#leads"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id",
+          "why": "The saved destination references the minted key name, never its URL."
+        },
+        {
+          "kind": "op",
+          "name": "channel.check_destination",
+          "args": {
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "Check reads local key presence and URL validity without posting."
+        },
+        {
+          "kind": "op",
+          "name": "channel.preview",
+          "args": {
+            "document_ref": "project_update:{update_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "the preview the owner sees; its digest is what the press names",
+          "capture_as": "digest",
+          "capture_path": "payload_digest"
+        },
+        {
+          "kind": "op",
+          "name": "channel.prepare",
+          "args": {
+            "document_ref": "project_update:{update_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "send_id",
+          "capture_path": "send.id",
+          "why": "Prepare freezes the exact serialized Slack bytes under a real receipt."
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "channel.send",
+        "args": {
+          "send_id": "{send_id}",
+          "command_id": "atlas-p11-slack-failed"
+        },
+        "adapter": "mcp-http",
+        "why": "The owner sends the prepared bytes once through the real channel operation.",
+        "capture_as": "send_op",
+        "capture_path": "operation_id"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "op_facts",
+              "facts": [
+                {
+                  "source": "trigger",
+                  "path": "outcome",
+                  "value": "failed"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends",
+                  "length": 1
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.id",
+                  "value": "{send_id}"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.state",
+                  "value": "failed"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.channel",
+                  "value": "slack"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.payload_digest",
+                  "value": "{digest}"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.proof.url",
+                  "absent": true
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.proof.link",
+                  "absent": true
+                },
+                {
+                  "source": "read",
+                  "index": 0,
+                  "path": "objects.0.operation.name",
+                  "value": "channel.send"
+                },
+                {
+                  "source": "read",
+                  "index": 0,
+                  "path": "objects.0.receipt.operation_id",
+                  "value": "{send_op}"
+                },
+                {
+                  "source": "read",
+                  "index": 0,
+                  "path": "objects.0.receipt.actor_kind",
+                  "value": "owner"
+                },
+                {
+                  "source": "read",
+                  "index": 0,
+                  "path": "objects.0.receipt.state",
+                  "value": "failed"
+                }
+              ]
+            },
+            {
+              "kind": "cli_calls",
+              "argv_prefix": [
+                "https",
+                "POST",
+                "hooks.slack.com"
+              ],
+              "count": 1
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "project_update:{update_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{send_op}"
+            }
+          }
+        ],
+        "words": "The real producer creates and publishes an update, saves a secret and a Slack destination, previews and prepares. The owner sends once. The recording edge answers 400 invalid_payload; the durable send is failed, keeps the preview digest, and has no fabricated link. The kernel receipt names the owner. No real Slack delivery is claimed."
+      },
+      "completion_bound_s": 30,
+      "viewports": []
+    },
+    {
+      "id": "case.p11.slack.unknown.op",
+      "job": "p11",
+      "edge_ids": [
+        "edge.tool.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p11_slack_channel",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "boundary",
+          "substitute": "cli_runner",
+          "label": "Slack HTTPS edge: unknown",
+          "adapter": "slack-https-edge",
+          "reply": "tests/fixtures/philo11_slack/unknown.json",
+          "why": "The real channel plan, native admission and redirect-refusing opener run. Only the socket answers and key storage are substituted; the key stays in memory."
+        },
+        {
+          "kind": "op",
+          "name": "project.create",
+          "args": {
+            "name": "Atlas send ledger"
+          },
+          "adapter": "mcp-http",
+          "why": "the Room under test",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "op",
+          "name": "project.draft_update",
+          "args": {
+            "project_id": "{project_id}",
+            "generator": "deterministic"
+          },
+          "adapter": "mcp-http",
+          "why": "an update to publish",
+          "capture_as": "update_id",
+          "capture_path": "update.id"
+        },
+        {
+          "kind": "op",
+          "name": "project.publish_update",
+          "args": {
+            "update_id": "{update_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "a published update"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/slack-webhooks",
+          "adapter": "http-route",
+          "body": {
+            "webhook_url": "https://hooks.slack.com/services/T_ATLAS/B_ATLAS/synthetic"
+          },
+          "expect_status": 200,
+          "capture_as": "key_ref",
+          "capture_path": "key_ref",
+          "why": "The owner saves a synthetic webhook through the held-secret operation into the hub memory key store."
+        },
+        {
+          "kind": "op",
+          "name": "channel.save_destination",
+          "args": {
+            "channel": "slack",
+            "name": "Slack leads",
+            "key_ref": "{key_ref}",
+            "channel_label": "#leads"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id",
+          "why": "The saved destination references the minted key name, never its URL."
+        },
+        {
+          "kind": "op",
+          "name": "channel.check_destination",
+          "args": {
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "Check reads local key presence and URL validity without posting."
+        },
+        {
+          "kind": "op",
+          "name": "channel.preview",
+          "args": {
+            "document_ref": "project_update:{update_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "the preview the owner sees; its digest is what the press names",
+          "capture_as": "digest",
+          "capture_path": "payload_digest"
+        },
+        {
+          "kind": "op",
+          "name": "channel.prepare",
+          "args": {
+            "document_ref": "project_update:{update_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "send_id",
+          "capture_path": "send.id",
+          "why": "Prepare freezes the exact serialized Slack bytes under a real receipt."
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "channel.send",
+        "args": {
+          "send_id": "{send_id}",
+          "command_id": "atlas-p11-slack-unknown"
+        },
+        "adapter": "mcp-http",
+        "why": "The owner sends the prepared bytes once through the real channel operation.",
+        "capture_as": "send_op",
+        "capture_path": "operation_id"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "op_facts",
+              "facts": [
+                {
+                  "source": "trigger",
+                  "path": "outcome",
+                  "value": "unknown"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends",
+                  "length": 1
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.id",
+                  "value": "{send_id}"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.state",
+                  "value": "unknown"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.channel",
+                  "value": "slack"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.payload_digest",
+                  "value": "{digest}"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.proof.url",
+                  "absent": true
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.proof.link",
+                  "absent": true
+                },
+                {
+                  "source": "read",
+                  "index": 0,
+                  "path": "objects.0.operation.name",
+                  "value": "channel.send"
+                },
+                {
+                  "source": "read",
+                  "index": 0,
+                  "path": "objects.0.receipt.operation_id",
+                  "value": "{send_op}"
+                },
+                {
+                  "source": "read",
+                  "index": 0,
+                  "path": "objects.0.receipt.actor_kind",
+                  "value": "owner"
+                },
+                {
+                  "source": "read",
+                  "index": 0,
+                  "path": "objects.0.receipt.state",
+                  "value": "indeterminate"
+                }
+              ]
+            },
+            {
+              "kind": "cli_calls",
+              "argv_prefix": [
+                "https",
+                "POST",
+                "hooks.slack.com"
+              ],
+              "count": 1
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "project_update:{update_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{send_op}"
+            }
+          }
+        ],
+        "words": "The real producer creates and publishes an update, saves a secret and a Slack destination, previews and prepares. The owner sends once. The recording edge answers 500 rollup_error; the durable send is unknown, keeps the preview digest, and has no fabricated link. The kernel receipt names the owner. No real Slack delivery is claimed."
+      },
+      "completion_bound_s": 30,
+      "viewports": []
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.p11_slack_channel",
+      "family": "desk_presentation",
+      "values": {
+        "send": "Slack on the shared channel lifecycle; the new Slack face belongs to story 05"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/services/channel_service.py",
+          "symbol": "def send(self, principal",
+          "line": 452,
+          "claim": "The owner sends the frozen payload through the shared lifecycle."
+        },
+        {
+          "path": "scripts/graph_walk.py",
+          "symbol": "def _install_email_edge",
+          "line": 2809,
+          "claim": "Recording HTTPS edges and memory key stores inside the actual hub process."
+        }
+      ],
+      "reachable_by": [
+        "case.p11.slack.posted.op",
+        "case.p11.slack.failed.op",
+        "case.p11.slack.unknown.op"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.python_wall",
+      "source": "datetime.datetime.now() inside the hub process",
+      "mechanism": "none: these cases use wall time without moving a clock",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

@@ -1,0 +1,596 @@
+[
+  {
+    "node": "tests/unit/test_philo_graph_reference.py::test_committed_join_validates",
+    "classification": "b",
+    "disposition": "held; guard unchanged and reproduced",
+    "followup": "PHILO-11-06: reconcile retired export route in historical graph reference",
+    "full": "failed or worker crash",
+    "serial1": "failed",
+    "serial2": null
+  },
+  {
+    "node": "tests/unit/test_api_surface.py::test_clients_only_call_served_routes",
+    "classification": "b",
+    "disposition": "held; guard unchanged and reproduced",
+    "followup": "PHILO-11-05: remove old web export caller",
+    "full": "failed or worker crash",
+    "serial1": "failed",
+    "serial2": null
+  },
+  {
+    "node": "tests/unit/test_philo9_atlas.py::test_the_counts_over_every_atlas_file",
+    "classification": "a",
+    "disposition": "corrected; final focused selection passed",
+    "followup": "atlas exact count",
+    "full": "failed or worker crash",
+    "serial1": "failed",
+    "serial2": null
+  },
+  {
+    "node": "tests/unit/test_phase143_routing_authority_census.py::test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer",
+    "classification": "a",
+    "disposition": "corrected; final focused selection passed",
+    "followup": "routing source anchors",
+    "full": "failed or worker crash",
+    "serial1": "failed",
+    "serial2": null
+  },
+  {
+    "node": "tests/integration/test_web_companion_github.py::test_github_decision_is_target_scoped",
+    "classification": "a",
+    "disposition": "corrected; final focused selection passed",
+    "followup": "parked Slack cross-target refusal; GitHub stays proposed",
+    "full": "failed or worker crash",
+    "serial1": "failed",
+    "serial2": null
+  },
+  {
+    "node": "tests/unit/test_philo5_graph_op.py::test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_target",
+    "classification": "a",
+    "disposition": "corrected; final focused selection passed",
+    "followup": "HTTP-only operation map",
+    "full": "failed or worker crash",
+    "serial1": "failed",
+    "serial2": null
+  },
+  {
+    "node": "tests/unit/test_philo5_one_decision.py::test_the_catalogue_is_explicit_descriptors",
+    "classification": "a",
+    "disposition": "corrected; final focused selection passed",
+    "followup": "operation catalogue",
+    "full": "failed or worker crash",
+    "serial1": "failed",
+    "serial2": null
+  },
+  {
+    "node": "tests/unit/test_philo10_face_words.py::test_every_emitted_code_has_a_face_word",
+    "classification": "b",
+    "disposition": "held; guard unchanged and reproduced",
+    "followup": "PHILO-11-05: supply all 22 source-derived face-word pairs",
+    "full": "failed or worker crash",
+    "serial1": "failed",
+    "serial2": null
+  },
+  {
+    "node": "tests/unit/test_philo10_face_words.py::test_no_code_expression_is_unsupported",
+    "classification": "b",
+    "disposition": "corrected; final focused selection passed",
+    "followup": "typed SlackKeyError propagation and source-derived Slack code census",
+    "full": "failed or worker crash",
+    "serial1": "failed",
+    "serial2": null
+  },
+  {
+    "node": "tests/unit/test_philo5_the_loop_r2.py::test_the_contract_refuses_a_non_owner_before_anything_else",
+    "classification": "a",
+    "disposition": "corrected; final focused selection passed",
+    "followup": "owner-only operation census",
+    "full": "failed or worker crash",
+    "serial1": "failed",
+    "serial2": null
+  },
+  {
+    "node": "tests/unit/test_philo5_the_loop_r2.py::test_every_braced_declaration_has_a_producer_here",
+    "classification": "a",
+    "disposition": "corrected; final focused selection passed",
+    "followup": "real held-secret result producer",
+    "full": "failed or worker crash",
+    "serial1": "failed",
+    "serial2": null
+  },
+  {
+    "node": "tests/unit/test_philo10_send_restart.py::test_r3_a_restart_during_dispatching_ends_unknown_once_and_the_replay_answers_it[desk_decision-killed-after-the-write-send_id]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_03_then_guard.py::test_a_follow_up_after_the_window_is_blocked[1440-before_guard]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_03_then_guard.py::test_a_follow_up_after_the_window_is_blocked[1440-click_wait]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_03_then_guard.py::test_a_follow_up_after_the_window_is_blocked[393-before_guard]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_github_sending_posted_and_a_running_prepared_send[393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_03_then_guard.py::test_a_follow_up_after_the_window_is_blocked[393-click_wait]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_hs176_loop_glass.py::test_speak_loop_1440",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_hs176_loop_glass.py::test_speak_loop_393",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_keeps_only_the_pending_object[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_the_list_field_opens_writes_and_keeps[393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_row_menu_delete_removes_the_object[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_keeps_only_the_pending_object[393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_a_taken_name_shows_the_chip_on_the_list[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[floor-1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_delete_key_removes_the_selected_object[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_a_taken_name_shows_the_chip_on_the_floor[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_a_taken_name_shows_the_chip_on_the_floor[393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[list-393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_chair_withholds_delete_with_its_reason[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_on_the_list_keeps_the_object[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_foot_never_covers_the_last_rows[393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_a_failed_save_shows_in_the_chip_slot[393-spatial-network]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_chair_withholds_delete_with_its_reason[393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_on_the_list_keeps_the_object[393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo3_01_receipt_hits.py::test_receipt_verbs_own_their_areas[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_repeated_delete_never_offers_a_false_undo[list-1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_a_refusal_after_the_field_closed_goes_to_the_write_receipt[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_refused_delete_says_so_with_retry[list-393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_repeated_delete_never_offers_a_false_undo[list-393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_a_refusal_after_the_field_closed_goes_to_the_write_receipt[393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[floor-a_left_selected-1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_refused_delete_says_so_with_retry[floor-1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[floor-a_left_selected-393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_refused_delete_says_so_with_retry[floor-393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_f2_on_a_focused_zone_row_opens_the_field[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[list-a_left_selected-1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_remove_works_again_after_a_refusal[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_a_failed_save_shows_in_the_chip_slot[393-list-422]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_remove_works_again_after_a_refusal[393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_repeated_workbench_remove_never_offers_a_false_undo",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[floor-a_taken_out-393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[list-a_taken_out-1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_a_failed_save_shows_in_the_chip_slot[1440-list-422]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_zone_name_glass.py::TestZoneNameGlass::test_two_new_zone_presses_make_two_zones[1440-spatial]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_foot_never_covers_the_last_rows[1440]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_remove_after_a_refusal_offers_undo[393]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_zone_name_glass.py::TestZoneNameGlass::test_two_new_zone_presses_make_two_zones[1440-list]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_a_failed_save_shows_in_the_chip_slot[1440-spatial-422]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_a_failed_save_shows_in_the_chip_slot[393-spatial-422]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_a_failed_save_shows_in_the_chip_slot[1440-list-network]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  },
+  {
+    "node": "tests/e2e/test_philo8_01_list_rename_glass.py::TestListRenameGlass::test_a_failed_save_shows_in_the_chip_slot[1440-spatial-network]",
+    "classification": "c",
+    "disposition": "serial-green twice; no behavior change to these tests",
+    "followup": "No root cause asserted for the full-run failures or worker crash.",
+    "full": "failed or worker crash",
+    "serial1": "passed",
+    "serial2": "passed"
+  }
+]

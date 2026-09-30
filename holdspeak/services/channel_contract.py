@@ -42,6 +42,9 @@ SIZE_LIMITS: dict[str, tuple[int, str]] = {
     "github": (65_536, "characters"),
     "jira": (32_767, "characters"),
     "confluence": (1_000_000, "bytes"),
+    # Slack's incoming webhook body is one exact text message.  Refuse before
+    # the dispatch boundary; never truncate, split, or upload a second body.
+    "slack": (39_000, "characters"),
 }
 #: An error text that reaches a receipt, a log or the face is cut to this many characters.
 ERROR_LIMIT = 240
@@ -50,7 +53,20 @@ ERROR_LIMIT = 240
 def payload_size(channel: str, payload: bytes) -> tuple[int, int, str]:
     """``(size, limit, unit)`` of *payload* for *channel* (limit 0: no limit)."""
     limit, unit = SIZE_LIMITS.get(channel, (0, "bytes"))
-    size = len(payload.decode("utf-8", errors="replace")) if unit == "characters" else len(payload)
+    if channel == "slack":
+        # Slack's limit applies to the text value, while the frozen payload is
+        # the complete JSON request body.  Count the real producer's field so
+        # receipts and refusal metadata describe the same value the transport
+        # will post.
+        import json
+
+        try:
+            data = json.loads(bytes(payload).decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
+            data = {}
+        size = len(data.get("text", "")) if isinstance(data, dict) else 0
+    else:
+        size = len(payload.decode("utf-8", errors="replace")) if unit == "characters" else len(payload)
     return size, limit, unit
 
 
@@ -422,6 +438,11 @@ CHANNELS: dict[str, Any] = {"file": FileChannel()}
 
 # The CLI channels register themselves at the end of their module (either import order works).
 from . import channel_cli  # noqa: E402,F401
+
+# The Slack channel is another explicit registry row.  Keep this import at
+# the end: channel_slack imports the contract types and registers its one
+# implementation after they have been defined.
+from . import channel_slack  # noqa: E402,F401
 
 
 def channel(name: str) -> Any:

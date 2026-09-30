@@ -23,7 +23,8 @@ A brief, a decision or a meeting summary has no Send (faces.md §1). The meeting
 
 - [ ] Every ratified board built and fenced through the real hub at 1440 and 393; the face's outcome equals the hub's record and receipt in the same fence.
 - [ ] Each face sends its own `document_ref`; a fence per face reads the prepared row's `document_ref` (a Room row marked `source="meeting"` sends `decision_record:<id>`).
-- [ ] Rendered-transition fences at both widths (design §6b): the over-limit Slack refusal word (never `NO ANSWER`); `preview_changed` → a fresh preview → another press that sends; the Chair after its last brief item is triaged, the well still there. The same send receipt (state, target, time) is on screen after the Chair's branch change at both widths and equals the hub's send row; well presence alone is not the receipt assertion (Astra canvas check r2, condition 2).
+- [ ] Rendered-transition fences at both widths (design §6b): the over-limit Slack refusal word (never `NO ANSWER`); `preview_changed` → a fresh preview → another press that sends; the Chair after its last brief item is triaged, the well still there. The same send receipt (state, target, time) stays on screen after the Chair's branch change at both widths and equals the hub's send row; well presence alone is not the receipt assertion (Astra canvas check r2, condition 2).
+- [ ] Story 05 owns the face-word fences for every exact pair in `assets/story-02-logs/missing-face-words.json`: `[unknown, ack_missing]`, `[failed, action_prohibited]`, `[failed, channel_is_archived]`, `[failed, channel_not_found]`, `[failed, invalid_payload]`, `[failed, payload_too_large:slack]`, `[unknown, plan_refused]`, `[unknown, rollup_error]`, `[refused, slack_channel_label_invalid]`, `[refused, slack_key_ref_invalid]`, `[failed, slack_key_store_locked]`, `[refused, slack_key_store_locked]`, `[unknown, slack_key_store_locked]`, `[failed, slack_key_store_not_native]`, `[refused, slack_key_store_not_native]`, `[unknown, slack_key_store_not_native]`, `[failed, slack_webhook_invalid]`, `[refused, slack_webhook_invalid]`, `[unknown, slack_webhook_invalid]`, `[failed, slack_webhook_missing]`, `[refused, slack_webhook_missing]`, `[unknown, slack_webhook_missing]` (22 pairs total).
 - [ ] No verb offers the parked free-text Slack send.
 - [ ] Nothing covers Send at 393 or in the real-width decision and Meetings windows at 1440 (F7).
 - [ ] A Slack destination saved from the form; the webhook never shown again; POSTED with no link.
@@ -41,5 +42,6 @@ PROVISIONAL: 2–3 engineering days.
 
 ## Notes
 
+- 2026-09-30 — PHILO-11-02 counsel C3 assigns the 22 exact missing face-word pairs above to Story 05. This criterion update ships atomically with the Story 02 counsel response; Story 05 remains backlog, and no face implementation ships in that commit.
 - 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

@@ -124,12 +124,9 @@ class MeetingConfig:
     # before egress.
     # HS-139-08: permissive default — wildcard means any host is allowed.
     webhook_allowed_hosts: list[str] = field(default_factory=lambda: ["*"])
-    # HS-61-01: the Send-to-Slack incoming-webhook URL. Default-empty = the
-    # feature is invisible (no aftercare buttons, the export route refuses).
-    # Setting it is the consent for that URL's host: the Slack connector's
-    # manifest allow-lists exactly this host, nothing else. Slack treats
-    # webhook URLs as credentials -- this value never rides a proposal payload,
-    # a broadcast, or a non-settings API response.
+    # Retained for forward-compatible loading of pre-11 config files. Slack
+    # credentials now belong to channel destinations; no feature code reads
+    # this ignored value and Settings drops it from both directions.
     slack_webhook_url: str = ""
 
     # HSM-14: a generic outbound webhook for the iPad desk's Webhook connector
@@ -254,21 +251,6 @@ class MeetingConfig:
                 seen_host.add(host)
                 normalized_hosts.append(host)
         self.webhook_allowed_hosts = normalized_hosts
-
-        # HS-61-01: the Slack webhook URL -- empty is fine (the feature is
-        # off); anything else must pass THE rule (https with a host; plain
-        # http for loopback only), the same one the settings boundary
-        # enforces with a 400. Imported lazily: config loads everywhere and
-        # the export module pulls in the plugin stack.
-        slack_url = str(self.slack_webhook_url or "").strip()
-        if slack_url:
-            from ..slack_export import slack_webhook_host
-
-            try:
-                slack_webhook_host(slack_url)
-            except ValueError as exc:
-                raise ValueError(f"slack_webhook_url: {exc}") from exc
-        self.slack_webhook_url = slack_url
 
     def effective_routing_profile(self) -> str:
         """The ONE meeting routing profile (HS-130-05) — see the module-level

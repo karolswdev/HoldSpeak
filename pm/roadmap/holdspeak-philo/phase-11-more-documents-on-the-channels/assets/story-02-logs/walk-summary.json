@@ -1,0 +1,38 @@
+[
+  {
+    "case": "case.p11.slack.posted.op",
+    "observation": "assets/story-02-walk/posted/20260930T082646Z-case.p11.slack.posted.op-astra-1440/observation.json",
+    "outcome": "sent",
+    "receipt_state": "succeeded",
+    "recorded_posts": 1,
+    "wire_sha256": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+    "frozen_sha256": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+    "isolated_db": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-slack.MrBICY/tmp/graph-walk-home-7k17njie/.local/share/holdspeak/holdspeak.db",
+    "revision": "3552be416c9d5d968adc162941f1f81a3c7c0b44",
+    "dirty": true
+  },
+  {
+    "case": "case.p11.slack.failed.op",
+    "observation": "assets/story-02-walk/failed/20260930T082721Z-case.p11.slack.failed.op-astra-1440/observation.json",
+    "outcome": "failed",
+    "receipt_state": "failed",
+    "recorded_posts": 1,
+    "wire_sha256": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+    "frozen_sha256": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+    "isolated_db": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-slack.UUQcDY/tmp/graph-walk-home-9vu5ytm3/.local/share/holdspeak/holdspeak.db",
+    "revision": "3552be416c9d5d968adc162941f1f81a3c7c0b44",
+    "dirty": true
+  },
+  {
+    "case": "case.p11.slack.unknown.op",
+    "observation": "assets/story-02-walk/unknown/20260930T082755Z-case.p11.slack.unknown.op-astra-1440/observation.json",
+    "outcome": "unknown",
+    "receipt_state": "indeterminate",
+    "recorded_posts": 1,
+    "wire_sha256": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+    "frozen_sha256": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+    "isolated_db": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-slack.FHK7Rx/tmp/graph-walk-home-v59nq6pb/.local/share/holdspeak/holdspeak.db",
+    "revision": "3552be416c9d5d968adc162941f1f81a3c7c0b44",
+    "dirty": true
+  }
+]

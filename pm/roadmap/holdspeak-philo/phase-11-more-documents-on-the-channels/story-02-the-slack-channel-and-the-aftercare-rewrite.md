@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 11
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** the owner's ratification and his answer to Q1; PHILO-11-01 for the aftercare rewrite (the channel module runs in parallel with 01)
 - **Unblocks:** PHILO-11-05 (Destinations with Slack), PHILO-11-06, PHILO-11-07
 - **Owner:** Astra's lane (Luna, xhigh); Muad'Dib checks
@@ -21,14 +21,14 @@ Slack is not a channel. The meeting's Slack export is a second send path: a muta
 
 ## Acceptance criteria
 
-- [ ] Each pinned outcome through a recording HTTPS edge: `200 ok` → SENT (face word POSTED) with no link in the proof; each FAILED pair; UNKNOWN on a timeout after send, `500 rollup_error`, another `5xx`, a `3xx` (never followed), `200` without the exact `ok`, an unlisted answer. No repost after UNKNOWN or `429`.
-- [ ] The bytes on the wire equal the frozen payload; the preview is parsed from those bytes.
-- [ ] A URL with another scheme, host or port is refused at save (`slack_webhook_invalid`). A new webhook is a new destination; a send prepared on the old one refuses `destination_parked`.
-- [ ] The URL never appears in a row, a payload, a receipt, a log, an API answer or an error (a sentinel fence over every one).
-- [ ] Above the Q1 limit, `payload_too_large:slack` before any byte leaves, and the refusal answer carries `size` and `limit` (39,000); fenced through the real refusal producer and the HTTP route, red before the fix (Astra canvas check r2, condition 1). **The contract (Muad'Dib's ruling on PHILO-11-04, Astra built-check r1 F2):** top-level integer `size` and `limit` in the answer, alongside `code` / `error_code: "payload_too_large:slack"` (the existing receipt envelope kept where it applies); `size` is the character count of the final Slack text, `limit` is `39000`. No nested `context` form: the face (`refusalSize`, `web/src/features/channels/channels.ts`) reads the top level only. Today the producer (`holdspeak/services/channel_service.py:344`) sends neither and the route (`holdspeak/web/routes/channels.py:68`) does not serialize exception context: both seams are this story's.
-- [ ] The egress child carries the parent, the authenticated owner principal, the broker and the frozen digest; an agent's Slack send is refused `owner_principal_required`.
-- [ ] No code posts to Slack except `channel.send`. The posture path is red on main (it posts) and green here (it prepares at most). The desk actuator's Slack target refuses `slack_moved_to_channel`. An old `config.json` with `slack_webhook_url` still loads.
-- [ ] A Settings read with a sentinel URL in `config.json` never returns it; a Settings write with the field never sets it (red with only the credential registration removed).
+- [x] Each pinned outcome through a recording HTTPS edge: `200 ok` → SENT (face word POSTED) with no link in the proof; each FAILED pair; UNKNOWN on a timeout after send, `500 rollup_error`, another `5xx`, a `3xx` (never followed), `200` without the exact `ok`, an unlisted answer. No repost after UNKNOWN or `429`.
+- [x] The bytes on the wire equal the frozen payload; the preview is parsed from those bytes.
+- [x] A URL with another scheme, host or port is refused at save (`slack_webhook_invalid`). A new webhook is a new destination; a send prepared on the old one refuses `destination_parked`.
+- [x] The URL never appears in a row, a payload, a receipt, a log, an API answer or an error (a sentinel fence over every one).
+- [x] Above the Q1 limit, `payload_too_large:slack` before any byte leaves, and the refusal answer carries `size` and `limit` (39,000); fenced through the real producer and HTTP route, red before the fix (Astra canvas check r2, condition 1). The answer carries top-level integer `size` and `limit` beside `code` / `error_code: "payload_too_large:slack"`; `size` is the final Slack text's character count and `limit` is 39000. It is not nested under `context`; the face reads the top-level fields in `web/src/features/channels/channels.ts`.
+- [x] The egress child carries the parent, the authenticated owner principal, the broker and the frozen digest; an agent's Slack send is refused `owner_principal_required`.
+- [x] No code posts to Slack except `channel.send`. The posture path is red on main (it posts) and green here (it prepares at most). The desk actuator's Slack target refuses `slack_moved_to_channel`. An old `config.json` with `slack_webhook_url` still loads.
+- [x] A Settings read with a sentinel URL in `config.json` never returns it; a Settings write with the field never sets it (red with only the credential registration removed).
 
 ## Effort (not a promise)
 
@@ -41,5 +41,7 @@ PROVISIONAL: 1.5–2 engineering days.
 
 ## Notes
 
+- 2026-09-30 — round two, Muad'Dib counsel C1–C4 paid; [round-one counsel](checks/story-02-built-muaddib-r1.md), [lane record](lane-02-astra.md), and [evidence](evidence-story-02.md). The atomic response includes the Story 05 criterion naming its 22 face-word pairs; Story 05 remains backlog and no face implementation ships here. Round-two counsel pending.
+- 2026-09-30 — round-one backend built and verified in `feat/philo-11-02`; the full-suite ledger then recorded three held reds: two branch guards from the removed meeting route and one face-word guard. Round one awaited Muad'Dib counsel on built.
 - 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

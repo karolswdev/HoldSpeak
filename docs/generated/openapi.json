@@ -1385,17 +1385,6 @@
         "title": "_ResultsRequest",
         "type": "object"
       },
-      "_SlackExportRequest": {
-        "properties": {
-          "what": {
-            "default": "",
-            "title": "What",
-            "type": "string"
-          }
-        },
-        "title": "_SlackExportRequest",
-        "type": "object"
-      },
       "_SpeakerUpdateRequest": {
         "properties": {
           "avatar": {
@@ -6335,6 +6324,24 @@
           }
         },
         "summary": "Api Channel Discard"
+      }
+    },
+    "/api/channels/slack-webhooks": {
+      "post": {
+        "operationId": "api_channel_save_slack_webhook_api_channels_slack_webhooks_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Save Slack Webhook Api Channels Slack Webhooks Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Channel Save Slack Webhook"
       }
     },
     "/api/coders/clear-stale": {
@@ -15705,16 +15712,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/_SlackExportRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "content": {
