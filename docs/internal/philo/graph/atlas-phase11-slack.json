@@ -413,6 +413,11 @@
                 },
                 {
                   "source": "observe",
+                  "path": "sends.0.reason",
+                  "value": "invalid_payload"
+                },
+                {
+                  "source": "observe",
                   "path": "sends.0.channel",
                   "value": "slack"
                 },
@@ -640,6 +645,11 @@
                   "source": "observe",
                   "path": "sends.0.state",
                   "value": "unknown"
+                },
+                {
+                  "source": "observe",
+                  "path": "sends.0.reason",
+                  "value": "rollup_error"
                 },
                 {
                   "source": "observe",
@@ -950,7 +960,7 @@
         {
           "path": "scripts/graph_walk.py",
           "symbol": "def _install_email_edge",
-          "line": 2883,
+          "line": 2885,
           "claim": "Recording HTTPS edges and memory key stores inside the actual hub process."
         }
       ],

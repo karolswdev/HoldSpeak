@@ -2506,7 +2506,7 @@
         {
           "path": "scripts/graph_walk.py",
           "symbol": "def _op_step",
-          "line": 4579,
+          "line": 4581,
           "claim": "the atlas rig executes canonical operations through the hub"
         }
       ],

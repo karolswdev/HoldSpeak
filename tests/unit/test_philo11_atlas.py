@@ -159,6 +159,24 @@ def test_long_slack_refusal_keeps_integer_limits_and_zero_history() -> None:
     assert {"kind": "cli_calls", "argv_prefix": ["https", "POST", "hooks.slack.com"], "count": 0} in case["expected"]["predicate"]["predicates"]
 
 
+@pytest.mark.parametrize(
+    ("case_id", "reason"),
+    [
+        ("case.p11.slack.failed.op", "invalid_payload"),
+        ("case.p11.slack.unknown.op", "rollup_error"),
+    ],
+)
+def test_slack_terminal_cases_pin_the_recorded_transport_reason(case_id: str, reason: str) -> None:
+    data = json.loads(SLACK.read_text())
+    case = next(c for c in data["cases"] if c["id"] == case_id)
+    facts = next(
+        part["facts"]
+        for part in case["expected"]["predicate"]["predicates"]
+        if part.get("kind") == "op_facts"
+    )
+    assert {"source": "observe", "path": "sends.0.reason", "value": reason} in facts
+
+
 def test_posted_slack_proof_has_no_provider_identity_fields() -> None:
     data = json.loads(SLACK.read_text())
     case = next(c for c in data["cases"] if c["id"] == "case.p11.slack.posted.op")

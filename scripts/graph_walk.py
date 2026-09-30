@@ -363,11 +363,13 @@ def base_provenance(*, engine_mode: str) -> dict[str, Any]:
     # revision.  The Phase 11 archive runner supplies this explicit source
     # identity; ordinary runs keep the existing git-derived values.
     source_revision = os.environ.get("HOLDSPEAK_SOURCE_REVISION") or _git("rev-parse", "HEAD")
+    revision_source = "environment" if os.environ.get("HOLDSPEAK_SOURCE_REVISION") else "git"
     source_dirty = os.environ.get("HOLDSPEAK_SOURCE_DIRTY")
     dirty = (source_dirty.lower() == "true" if source_dirty is not None
              else bool(_git("status", "--porcelain")))
     return {
         "revision": source_revision,
+        "revision_source": revision_source,
         "dirty": dirty,
         "frontend_build": None,
         "hub": None,

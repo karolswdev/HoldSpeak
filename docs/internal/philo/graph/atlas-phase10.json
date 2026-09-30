@@ -7699,7 +7699,7 @@
         {
           "path": "scripts/graph_walk.py",
           "symbol": "def _install_cli_runner",
-          "line": 2824,
+          "line": 2826,
           "claim": "the rig's recording runner (PHILO-10-05)"
         }
       ],

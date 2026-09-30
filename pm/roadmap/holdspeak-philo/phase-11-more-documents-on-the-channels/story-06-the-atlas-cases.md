@@ -47,13 +47,15 @@ PROVISIONAL: about 1 engineering day.
   | Decision record, Room row | `case.p11.decision_record.room.picked`, `case.p11.decision_record.room.sent`, `case.p11.decision_record.room.prepared` |
   | Meeting summary, meeting window | `case.p11.meeting_summary.window.picked`, `case.p11.meeting_summary.window.sent`, `case.p11.meeting_summary.window.prepared` |
   | Meeting summary, Chair row | `case.p11.meeting_summary.chair.picked`, `case.p11.meeting_summary.chair.sent`, `case.p11.meeting_summary.chair.prepared` |
-  | Meeting digest, aftercare | `case.p11.meeting_digest.aftercare.picked`, `case.p11.meeting_digest.aftercare.sent`, `case.p11.meeting_digest.aftercare.prepared` |
-  | Meeting follow-up, aftercare | `case.p11.meeting_followup.aftercare.picked`, `case.p11.meeting_followup.aftercare.sent`, `case.p11.meeting_followup.aftercare.prepared` |
+  | Meeting summary, Meetings record | `case.p11.meeting_summary.meetings_record.picked`, `case.p11.meeting_summary.meetings_record.sent`, `case.p11.meeting_summary.meetings_record.prepared` |
+  | Meeting digest, Meetings record | `case.p11.meeting_digest.meetings_record.picked`, `case.p11.meeting_digest.meetings_record.sent`, `case.p11.meeting_digest.meetings_record.prepared` |
+  | Meeting follow-up, Meetings record | `case.p11.meeting_followup.meetings_record.picked`, `case.p11.meeting_followup.meetings_record.sent`, `case.p11.meeting_followup.meetings_record.prepared` |
   | Slack outcomes on a document face | `case.p11.slack.posted`, `case.p11.slack.failed`, `case.p11.slack.unknown`, `case.p11.slack.too_large` |
   | Design §6b: limit refusal remains on the well | `case.p11.transition.slack_limit` |
   | Design §6b: changed preview, refresh, second Send | `case.p11.transition.preview_changed` |
   | Design §6b: last brief item leaves the Chair branch | `case.p11.transition.brief_last_ack`, `case.p11.transition.brief_last_defer` |
 
 - `meeting_decision` remains `.op` only (design §6a); part 2 adds no face for it. The two last-item cases cover both gestures in the third §6b transition. These ids reserve the remaining work; they are not executed-case claims.
+- 2026-09-30 — round two: paid Muad'Dib's adopted C1–C3 in the progress commit. The Slack reason facts now name the pinned replies, their two passing walks and four negative controls are retained in `assets/story-06-runs/p11-r2-slack-c1-c3/`, and `revision_source` identifies the provenance source. The three Meetings record TODO rows above follow the settled seats. Story 06 remains in progress; part 2 waits for story 05 and a new dispatch.
 - 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

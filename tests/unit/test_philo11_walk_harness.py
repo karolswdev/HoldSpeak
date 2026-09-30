@@ -183,7 +183,21 @@ def test_graph_walk_can_be_told_the_revision_of_an_extracted_archive(monkeypatch
     monkeypatch.setenv("HOLDSPEAK_SOURCE_DIRTY", "true")
     provenance = graph_walk.base_provenance(engine_mode="none")
     assert provenance["revision"].startswith("332d9158")
+    assert provenance["revision_source"] == "environment"
     assert provenance["dirty"] is True
+
+
+def test_graph_walk_provenance_names_git_when_no_revision_override(monkeypatch) -> None:
+    import sys
+
+    sys.path.insert(0, str(REPO / "scripts"))
+    import graph_walk
+
+    monkeypatch.delenv("HOLDSPEAK_SOURCE_REVISION", raising=False)
+    monkeypatch.delenv("HOLDSPEAK_SOURCE_DIRTY", raising=False)
+    provenance = graph_walk.base_provenance(engine_mode="none")
+    assert provenance["revision_source"] == "git"
+    assert provenance["revision"]
 
 
 def test_engine_replay_serves_model_discovery_on_loopback(tmp_path: Path) -> None:
