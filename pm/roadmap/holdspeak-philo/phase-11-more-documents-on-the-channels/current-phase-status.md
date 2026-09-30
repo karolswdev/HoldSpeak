@@ -103,7 +103,7 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 |---|---|---|---|---|
 | PHILO-11-01 | The document sources | done | [story-01-the-document-sources](./story-01-the-document-sources.md) | [evidence-story-01](./evidence-story-01.md) (includes D2 palette amendment) |
 | PHILO-11-02 | The Slack channel and the aftercare rewrite | backlog | [story-02-the-slack-channel-and-the-aftercare-rewrite](./story-02-the-slack-channel-and-the-aftercare-rewrite.md) | — |
-| PHILO-11-03 | The canvases A–E | backlog | [story-03-the-canvases](./story-03-the-canvases.md) | — |
+| PHILO-11-03 | The canvases A–E | done | [story-03-the-canvases](./story-03-the-canvases.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-11-04 | The SEND well as one library species | backlog | [story-04-the-send-well-species](./story-04-the-send-well-species.md) | — |
 | PHILO-11-05 | The faces: the well on every document, Destinations with Slack | backlog | [story-05-the-faces](./story-05-the-faces.md) | — |
 | PHILO-11-06 | The atlas cases for the new kinds and Slack | backlog | [story-06-the-atlas-cases](./story-06-the-atlas-cases.md) | — |
@@ -133,6 +133,12 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 2026-09-29: PHILO-11-01 is built and verified. Eight stored sources use the generic channel contract; the existing update face passes at 1440 and 393. Six actual Phase 10 atlas walks PASS. The final full run is red (38 failed, 13,498 passed): (a) ten stale wording/reference failures corrected; (b) two catalogue guidance losses corrected; (c) 26 glass failures pass twice serially, all 52 invocations. The final focused capture collects and passes 48 checks; the web suite passes 2,970. See [Astra's lane record](lane-01-astra.md). The PR goes to Muad'Dib for counsel-on-built; no merge verdict is claimed. Story 02 has not started in this lane, and story 03's canvas/shim files are untouched. The broader graph census remains red for story 06 reconciliation.
 
 2026-09-29: PHILO-11-01 is building in Astra's assigned worktree `../wt-philo-11-01`, branch `feat/philo-11-01` (the dispatch brief's branch name). Three Luna workers own sources, the channel contract, and callers with lifecycle fences. Muad'Dib's counsel-on-built follows the PR. Story 02 is not started in this lane. Story 03's canvas and shim remain its lane's files.
+
+2026-09-29, story 03 DONE: the owner ratified the canvases A–E and T1–T3 ("Yes...") after Astra r1 and r2, both paid. Stories 04 and 05 may now build the ratified faces (04 after 01 merges).
+
+2026-09-29: story 03 round two — Codex Astra r1 on the canvases (`checks/canvas-astra-r1.md`) RATIFY-WITH-CONDITIONS, paid: the 393 fit, the settled shared appearance (`assets/story-03-canvas/harness/species.css`), the Room row without the dead Open, the scrolled companions. Story 04 takes G2–G4 and the head layout; story 05 the host integration and rendered-transition fences; G1 and G5 are ledgered. Next: the owner's word.
+
+2026-09-29: story 03 in progress — the canvases A–E and T1–T3 drawn on the real product (`assets/story-03-canvas/`): 42 boards at 1440 and 393; `meeting_decision` has no seat (confirmed on glass); the Room row's Open opens nothing (G1, ledgered); seven questions for the owner. Next: Astra's check, then his word.
 
 2026-09-29: the owner RATIFIED the charter ("Ratify, build it"). Q1: "Higher limit, still refuse" — Muad'Dib set the limit at 39,000 characters of Slack text (under Slack's 40,000 truncation). Next: story 01 (Astra) and story 03 canvases (Muad'Dib) in parallel.
 
