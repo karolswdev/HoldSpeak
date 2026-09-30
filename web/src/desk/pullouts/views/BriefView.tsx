@@ -7,7 +7,7 @@ import { openSurfaceOr } from "../../shell";
 import { SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
 import { SurfaceFooter } from "../../surface/SurfaceFooter";
 import { StateChip, countToken } from "../../surface";
-import { BriefSendWells } from "../../documentSends";
+import { BriefSendWells } from "../../documentSendsLazy";
 
 interface BriefItem {
   id: string;

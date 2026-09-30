@@ -84,7 +84,7 @@ import * as api from "./api";
 import { RoomPeopleSection, monogram } from "./RoomPeopleSection";
 import "./project-room.css";
 import { RecallFace } from "./recall/RecallFace";
-import { DecisionRecordPreparedChip, DecisionRecordSendWells } from "../../desk/documentSends";
+import { DecisionRecordPreparedChip, DecisionRecordSendWells } from "../../desk/documentSendsLazy";
 
 /* ── sub-components (kept for backward-compat re-exports) ── */
 

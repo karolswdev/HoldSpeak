@@ -17,7 +17,7 @@ import { humanTime } from "../surface/format";
 import { FoldGadget, PadGadget } from "../surface/gadgets";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
-import { DeskDecisionSendWells } from "../documentSends";
+import { DeskDecisionSendWells } from "../documentSendsLazy";
 
 /** The title createPrimitive("decision") gives (store/dataSlice.ts). */
 export const DEFAULT_DECISION_TITLE = "New decision";

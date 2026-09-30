@@ -687,30 +687,3 @@
     min-height: 44px;
   }
 }
-
-/* PHILO-11-05a (canvas A4): the BRIEF head's actions are one group. With no
-   PREPARED chip the group is transparent (the PHILO-4-01 head, unchanged).
-   With the chip the head wraps (surface.css `:has([data-head-chip])`) and
-   the group moves as one: beside the label when it fits (packed at the
-   right, as before), else the whole group on its own line under the label,
-   spread across it. The label out-grows the group 1000 to 1 on a shared
-   line; alone on its line the group takes the whole line. Intrinsic: no
-   width query. */
-.arrival-brief-verbs {
-  display: contents;
-}
-.arrival-brief-verbs:has([data-head-chip]) {
-  display: flex;
-  flex: 1 1 auto;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  max-width: 100%;
-}
-.arrival-brief-verbs:has([data-head-chip]) > * {
-  flex-shrink: 0;
-}
-.surface-section-head:has(> .arrival-brief-verbs [data-head-chip]) > h3 {
-  flex-grow: 1000;
-}

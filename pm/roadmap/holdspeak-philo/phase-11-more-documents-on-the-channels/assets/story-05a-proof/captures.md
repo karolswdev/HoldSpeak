@@ -12,8 +12,8 @@ species (`web/src/desk/surface/send/`) is unchanged; every face composes it.
 
 | Face | Seat | Document |
 |---|---|---|
-| Chair BRIEF section | `web/src/desk/chair/ChairHome.tsx:1394` (untriaged branch), `:1432` (the branch after the last item is triaged); both keyed `brief-send`, so the same well instance survives the branch change | `monday_brief:<id>` |
-| Chair BRIEF head chip | `web/src/desk/chair/ChairHome.tsx:734` (`PREPARED ×K`, before the egress badge and Generate) | `monday_brief:<id>` |
+| Chair BRIEF section | `web/src/desk/chair/ChairHome.tsx:1397` (untriaged branch), `:1435` (the branch after the last item is triaged); both keyed `brief-send`, so the same well instance survives the branch change | `monday_brief:<id>` |
+| Chair BRIEF head chip | `web/src/desk/chair/ChairHome.tsx:747-749` (`BriefHeadVerbs`: `PREPARED ×K` before the egress badge and Generate) | `monday_brief:<id>` |
 | Intelligence → BRIEF | `web/src/desk/pullouts/views/BriefView.tsx:463` (after PEOPLE); one pick and press state with the Chair (the species' store) | `monday_brief:<id>` |
 | The decision window | `web/src/desk/pullouts/DecisionPullout.tsx:150` (under the record, not while editing; the footer Copy, Dictate, Edit unchanged, R8) | `desk_decision:<id>` |
 | Intelligence → DECISIONS | `web/src/desk/pullouts/views/DecisionsView.tsx:260` (after the record's fields) | `decision_record:<id>` |
@@ -146,10 +146,11 @@ Run (`HOME=$(mktemp -d) HOLDSPEAK_EVIDENCE_WRITE=1 PLAYWRIGHT_BROWSERS_PATH=… 
 
 Round one found the chip staying on the label's line at 393 (the library's
 item-by-item wrap). Ruling: build what was ratified, in the host. The BRIEF
-head's actions are now ONE element (`web/src/desk/chair/ChairHome.tsx:728-750`,
-`.arrival-brief-verbs`), styled in `web/src/desk/chair/chair.css` (tail): with
-no PREPARED chip the group is `display: contents` (the PHILO-4-01 head as it
-was); with the chip the group is one flex item, so it sits beside the label
+head's actions are now ONE element (`web/src/desk/chair/ChairHome.tsx:728-749`,
+`.arrival-brief-verbs`), styled in `web/src/desk/chair/chair.css` (tail). Round
+three moved this into `BriefHeadVerbs` (`web/src/desk/documentSends.tsx`) and
+`web/src/desk/documentSends.css`, see below: with no PREPARED send the verbs
+render as before (no wrapper); with one, the chip and the verbs are one flex item, so it sits beside the label
 when it fits and otherwise wraps as a whole under the label, spread across the
 line (the label out-grows the group 1000:1 on a shared line). No library
 change, no width query.
@@ -192,12 +193,66 @@ Run (round two, isolated HOME, `HOLDSPEAK_EVIDENCE_WRITE=1`): `6 passed in
 153.67s`. Laws: 46 boards; named 78/78; 83 controls owned, 8 after ordinary
 scrolling, 0 missed; 393 minimum target 44 px (38 controls); rows 136/136.
 
+## Round three — Astra counsel r1 (story 05) findings 2 and 4
+
+### Finding 2: the bundle gate
+
+The overrun was not lane CSS: the eager Desk faces (the Chair, Intelligence,
+the decision window) imported the SEND well species, which pulled
+`send-well.css` (5,594 B) and `channels.css` (2,811 B) into the Desk entry
+chunk. Fix, without touching the ratchet:
+
+- `web/src/desk/documentSendsLazy.tsx`: every seat loads the wells through
+  `React.lazy` + `Suspense` (fallback: nothing; the brief head's fallback is
+  its verbs as they were). The species and its CSS ride their own chunk
+  (`documentSends-*.css`, `documentSends-*.js`).
+- The A4 group rules moved out of `chair.css` (now byte-identical to base)
+  into `web/src/desk/documentSends.css`, loaded with that chunk: the group
+  exists only when a prepared send is shown, which only the lazy module draws.
+- Hosts import from `documentSendsLazy`: ChairHome, BriefView,
+  DecisionPullout, DecisionsView, ProjectRoomCore.
+
+```
+bundle gate passed (Desk JS 1336735 B; Desk CSS 324838 B; source maps 0)
+```
+
+Desk CSS delta over base (324,838 B): **0 B**.
+
+### Finding 4: face = row = receipt, B3, A5
+
+- Every face leg now reads the kernel's own record of the send operation
+  (`kernel_operations` + `kernel_receipts`, by the row's `send_operation_id`):
+  name `channel.send`, state and receipt `succeeded`, exactly one receipt,
+  `result_ref == channel_send:<row id>`, `target_ref == document:<ref>` (or the
+  prepared send), principal `owner` — beside the hub row and the face's text.
+  Prepared rows also read their `channel.prepare` receipt (succeeded, principal
+  `remote-project-agent`). T2's refused press reads its receipt: `refused`,
+  outcome `preview_changed`, `target_ref == document:desk_decision:<id>`.
+  Legs: A4c, A3, A5, T3 (brief); B2, B3, T2 (decision window); B4c, B4d, B5
+  (records). Recorded on the boards as `kernel_send` / `kernel_prepare` /
+  `kernel_refusal`.
+- **B3** (both widths): Edit on glass unmounts the well (it sends the stored
+  decision); Done stores the edit (Nov 5) and mounts it again; the preview
+  shows Nov 5 (board B3), the verb is `Send again`; the press sends a file
+  whose Decision section holds Nov 5 and not Nov 3 (board B3b); T2 then runs
+  from Nov 5 to Nov 6.
+- **A5** (both widths): an agenda item for Priya's 1:1 (the routes BriefView's
+  "Add to 1:1 agenda" uses) changes the brief's People section, which is
+  read at render time; a same-day `POST /api/brief/generate` returns the same
+  brief id; the well's fresh preview holds `Priya Nair` (board A5), the verb is
+  `Send again` (board A5b); the press sends a file with `Priya Nair`, and the
+  first send's file does not have it.
+- A6 (the Slack preview's person sections) waits for #710 with C6b.
+
+Run (isolated HOME, `HOLDSPEAK_EVIDENCE_WRITE=1`): 6 collected, `6 passed in
+172.05s`. Laws: 54 boards; named 88/88; 93 controls owned, 8 after ordinary scrolling, 0 missed; 393 minimum target 44 px (43 controls); rows 182/182; kernel records on boards: 22.
+
 ## Web baseline
 
 ```
 === Web baseline report ===
 HEALED (5): (inherited reds that pass; unchanged by this lane)
-Suite totals: 2995 passed, 0 failed, 0 skipped   (round one and round two)
+Suite totals: 2995 passed, 0 failed, 0 skipped   (rounds one, two and three)
 VERDICT: baseline-subset, zero branch-new
 ```
 
@@ -209,7 +264,8 @@ VERDICT: baseline-subset, zero branch-new
   atlas re-anchor: pure line shifts). Round two: 6 more `atlas.json` anchors
   in `ChairHome.tsx` re-anchored; these guards with the doc guards, the graph
   schema, the evidence guard and the document-source test: `255 passed`;
-  all `test_philo11*.py`: `65 passed`.
+  all `test_philo11*.py`: `65 passed`. Round three (6 more `atlas.json`
+  anchors re-pointed): the same set `300 passed`.
 - `test_doc_drift_guard.py`, `test_phase200_canon_guard.py`,
   `test_phase200_doc_claims.py`: `86 passed in 5.43s`.
 - `test_philo_graph_schema.py`: `19 passed`; `scripts/philo_graph_validate.py
@@ -235,9 +291,9 @@ B5-record-intelligence-picked, B5b-record-intelligence-history.
 - **C6b (the Chair's MEETINGS row well)** mounts part B's `MeetingSendWell`
   (PR #710, not merged when this lane ran). The mount in `ChairHome.tsx`
   after that row's `MeetingSummarySlab` is a follow-up commit after #710 merges.
-- **A5/A6 (brief changed / Slack person sections)** and **B3 (Edit after a
-  send)** were not re-fenced here: they need a Slack destination (part B) or
-  repeat T2's mechanism; T2 covers "changed → fresh preview → another press".
+- **A6** (the brief's person sections in a Slack preview) needs a Slack
+  destination: after #710 merges, with C6b (mounting `MeetingSendWellLazy` in
+  both Chair MEETINGS branches, with the picker's 44 px ownership fence).
 - Temp HOMEs: the 32 `$TMPDIR/tmp.*` HOMEs this worktree left (identified by
   the `wt-philo-11-05a` interpreter path in their uv cache) are removed; 25
   with no such mark were left alone (not provably this lane's).

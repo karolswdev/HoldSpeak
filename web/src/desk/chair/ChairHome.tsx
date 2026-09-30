@@ -10,7 +10,7 @@ import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openNewThought } from "../newThought";
 import { BriefEgress, briefReceipt } from "./briefEgress";
-import { BriefPreparedChip, BriefSendWells } from "../documentSends";
+import { BriefHeadVerbs, BriefSendWells } from "../documentSendsLazy";
 import { generatedLabelLocal } from "../pullouts/views/BriefView";
 import { openSurface, openSurfaceOr, openCoderSession, openProjectRoom } from "../shell";
 import { reportWriteFailure, clearWriteFailure } from "../hooks/useWriteReceipt";
@@ -725,17 +725,10 @@ function Arrival() {
   /* PHILO-4-01 (ratified canvas, ask 1): the head verbs of the BRIEF
      section in EVERY branch — the egress badge, then Generate. Disabled
      only while a read or a generation is open. */
-  const briefVerbs = (
-    /* PHILO-11-05a (canvas A4): ONE group, so when the head does not fit
-       on one line the chip, the badge and Generate wrap under the label
-       together (chair.css `.arrival-brief-verbs`). Without the chip the
-       group is `display: contents` and the head lays out as before. */
-    <span className="arrival-brief-verbs">
+  const briefHeadVerbs = (
+    <>
       {/* Article III / UX-CANON A.9 — the destination is named ON the
           row, BEFORE the verb that reaches it. */}
-      {/* PHILO-11-05a (canvas A4): PREPARED ×K when a send of the brief
-          waits. */}
-      {brief ? <BriefPreparedChip brief={brief} /> : null}
       <BriefEgress />
       <Button
         variant="ghost"
@@ -746,8 +739,14 @@ function Arrival() {
       >
         Generate
       </Button>
-    </span>
+    </>
   );
+  /* PHILO-11-05a (canvas A4): with a brief, PREPARED ×K leads the verbs and,
+     while a send waits, the chip and the verbs are one group that wraps under
+     the label at narrow width (desk/documentSends.tsx `BriefHeadVerbs`). */
+  const briefVerbs = brief
+    ? <BriefHeadVerbs brief={brief}>{briefHeadVerbs}</BriefHeadVerbs>
+    : briefHeadVerbs;
   /* The one status line of a generation: open (GENERATING…, the READING…
      idiom) or failed (BRIEF DID NOT GENERATE · <cause>). */
   const generateStatus = generating ? (

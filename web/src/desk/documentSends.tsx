@@ -12,8 +12,10 @@
  *   COMMITMENTS rows, also the rows marked `source="meeting"`):
  *   `decision_record:<id>`, never `meeting_decision:<id>` (design 6a).
  */
-import { PreparedChip, SendWells, type DocRef } from "./surface/send";
+import type { ReactNode } from "react";
+import { PreparedChip, SendWells, mergeKnown, useSends, type DocRef } from "./surface/send";
 import { stamp } from "../features/channels/channels";
+import "./documentSends.css";
 
 /** `SEP 29` from an ISO time, in the viewer's zone. */
 const day = (iso?: string | null) => (iso ? stamp(iso).slice(0, -6) : "");
@@ -40,9 +42,16 @@ export function BriefSendWells({ brief }: { brief: BriefLike }) {
   return <div data-seat="brief"><SendWells doc={briefDoc(brief)} /></div>;
 }
 
-/** PREPARED ×K in the Chair's BRIEF head (A4). Nothing at zero. */
-export function BriefPreparedChip({ brief }: { brief: BriefLike }) {
-  return <PreparedChip docRef={briefDoc(brief).ref} />;
+/** The Chair's BRIEF head verbs with PREPARED ×K first (A4). With a
+ *  prepared send the chip and the verbs are ONE group, so at narrow width
+ *  the whole group wraps under the label (documentSends.css). With none,
+ *  the verbs render as they were (no wrapper, the PHILO-4-01 head). */
+export function BriefHeadVerbs({ brief, children }: { brief: BriefLike; children: ReactNode }) {
+  const ref = briefDoc(brief).ref;
+  const { data } = useSends(ref);
+  const waiting = mergeKnown(ref, data ?? []).some((s) => s.state === "prepared");
+  if (!waiting) return <>{children}</>;
+  return <span className="brief-head-verbs"><PreparedChip docRef={ref} />{children}</span>;
 }
 
 /** The decision window's well (B1-B3, T2). */

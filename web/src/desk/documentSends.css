@@ -1,0 +1,21 @@
+/* PHILO-11-05a (canvas A4): the Chair BRIEF head's verbs as one group when
+   a send of the brief waits. The head wraps (surface.css
+   `:has([data-head-chip])`); the group sits beside the label when it fits
+   (packed at the right) and otherwise wraps whole under the label, spread
+   across the line (the label out-grows the group 1000:1 on a shared line).
+   Intrinsic: no width query. Loaded with the SEND well's own chunk. */
+.brief-head-verbs {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  max-width: 100%;
+}
+.brief-head-verbs > * {
+  flex-shrink: 0;
+}
+.surface-section-head:has(> .brief-head-verbs) > h3 {
+  flex-grow: 1000;
+}

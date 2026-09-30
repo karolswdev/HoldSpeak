@@ -7,7 +7,7 @@ import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface/Sur
 import { countLabel } from "../../surface/count";
 import { MicButton } from "../../surface";
 import { StringGadget } from "../../surface/gadgets";
-import { DecisionRecordSendWells } from "../../documentSends";
+import { DecisionRecordSendWells } from "../../documentSendsLazy";
 
 type ReceiptSource = {
   source_type: string;

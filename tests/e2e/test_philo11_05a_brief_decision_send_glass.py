@@ -71,6 +71,11 @@ class _Rig:
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         _ensure_build()
         self.tmp = tmp_path
+        # The People store on a file key in this HOME (no macOS Keychain in an isolated HOME).
+        keyfile = tmp_path / "people.key"
+        keyfile.write_text("{}")
+        keyfile.chmod(0o600)
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
         self.server, self.base = server, base
         try:
@@ -108,6 +113,42 @@ class _Rig:
     @staticmethod
     def _sends(page: Any, ref: str) -> list[dict[str, Any]]:
         return _api(page, "GET", f"/api/channels/sends?document_ref={ref}", token=TOKEN)["sends"]
+
+    @staticmethod
+    def _kernel(operation_id: str) -> dict[str, Any]:
+        """The kernel's own record of an operation: its row and its ONE terminal receipt."""
+        from holdspeak.db import get_database
+
+        with get_database()._connection() as conn:
+            row = conn.execute(
+                "SELECT o.operation_id, o.name, o.state, o.principal_kind, o.principal_identity, o.target_ref,"
+                " r.state AS receipt_state, r.outcome AS receipt_outcome, r.result_ref,"
+                " (SELECT COUNT(*) FROM kernel_receipts x WHERE x.operation_id = o.operation_id) AS receipts"
+                " FROM kernel_operations o LEFT JOIN kernel_receipts r ON r.operation_id = o.operation_id"
+                " WHERE o.operation_id = ?", (operation_id,)).fetchone()
+        assert row is not None, operation_id
+        return dict(row)
+
+    @staticmethod
+    def _kernel_refusals(name: str, outcome: str) -> list[dict[str, Any]]:
+        from holdspeak.db import get_database
+
+        with get_database()._connection() as conn:
+            return [dict(r) for r in conn.execute(
+                "SELECT o.operation_id, o.name, o.state, o.target_ref, r.state AS receipt_state, r.outcome AS receipt_outcome"
+                " FROM kernel_operations o JOIN kernel_receipts r ON r.operation_id = o.operation_id"
+                " WHERE o.name = ? AND r.outcome = ?", (name, outcome))]
+
+    def _face_row_receipt(self, send: dict[str, Any], ref: str, *, principal: str = "owner") -> dict[str, Any]:
+        """face = row = receipt: the hub's send row and the kernel's receipt of its send
+        operation agree (sent -> succeeded, the same document, one receipt)."""
+        k = self._kernel(send["send_operation_id"])
+        assert k["name"] == "channel.send" and k["receipts"] == 1, k
+        assert (send["state"], k["state"], k["receipt_state"]) == ("sent", "succeeded", "succeeded"), (send, k)
+        assert k["result_ref"] == f"channel_send:{send['id']}", (k, send["id"])
+        assert k["target_ref"] in (f"document:{ref}", f"channel_send:{send['id']}"), (k, ref)
+        assert k["principal_kind"] == principal, k
+        return k
 
     @staticmethod
     def _focus(page: Any) -> None:
@@ -206,6 +247,10 @@ class TestBriefAndDecisionSendGlass(_Rig):
                     # A PROPOSED desk decision is a brief item ("Review decision: ...").
                     _api(page, "POST", "/api/decisions", {"title": title, "status": "proposed", "decision_markdown": text},
                          token=TOKEN)
+                # A person the brief's People overlay reads at render time (the canvas's seed).
+                _api(page, "POST", "/api/people/setup", {}, token=TOKEN)
+                priya = _api(page, "POST", "/api/people/relationships", {"display_name": "Priya Nair"}, token=TOKEN)["relationship"]["id"]
+                _api(page, "POST", f"/api/people/relationships/{priya}/owner-aliases", {"alias": "Priya"}, token=TOKEN)
                 brief = _api(page, "POST", "/api/brief/generate", {}, token=TOKEN)
                 ref = f"monday_brief:{brief['id']}"
                 items = [it for sec in brief["sections"].values() for it in sec]
@@ -253,6 +298,11 @@ class TestBriefAndDecisionSendGlass(_Rig):
                                   [f"{CH} [data-testid=prepared-row]", f"{CH} [data-testid=prepared-send]"])
                 hub_prepared = next(s for s in self._sends(page, ref) if s["id"] == prepared_id)
                 assert hub_prepared["document_ref"] == ref and hub_prepared["state"] == "prepared", hub_prepared
+                # The agent's prepare is a kernel operation with its one receipt, under the agent.
+                kp = self._kernel(hub_prepared["prepare_operation_id"])
+                assert (kp["name"], kp["state"], kp["receipt_state"], kp["receipts"]) == ("channel.prepare", "succeeded", "succeeded", 1), kp
+                assert kp["principal_identity"] == AGENT_ID, kp
+                a4b["kernel_prepare"] = kp
                 preview_text = page.locator(f"{CH} [data-testid=prepared-preview] [data-testid=send-preview-body]").inner_text()
                 assert re.search(r"Generated: \d{1,2} [A-Z][a-z]{2} \d{4}, \d{2}:\d{2}", preview_text), preview_text[:300]
                 assert not re.search(r"\d{4}-\d{2}-\d{2}T|\d{2}:\d{2}:\d{2}\.\d+", preview_text), preview_text[:300]
@@ -266,6 +316,8 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 page.wait_for_timeout(700)
                 hub_prepared = next(s for s in self._sends(page, ref) if s["id"] == prepared_id)
                 assert hub_prepared["state"] == "sent", hub_prepared
+                # face = row = receipt: his press is the owner's channel.send, one succeeded receipt.
+                k_a4c = self._face_row_receipt(hub_prepared, ref)
                 ppath = hub_prepared["proof"]["path"]
                 assert Path(ppath).is_file() and Path(ppath).parent == ledger_dir, ppath
                 sent_text = Path(ppath).read_text()
@@ -278,6 +330,7 @@ class TestBriefAndDecisionSendGlass(_Rig):
                                   [f"{CH} [data-testid=prepared-result]", f"{CH} [data-testid=send-history] .surface-section-head"])
                 assert a4c["prepared"][0].startswith(f"· Ledger folder ✓ SAVED {ppath} BY {AGENT_ID.upper()}"), a4c["prepared"]
                 assert a4c["history_head"] == "SENDS 1", a4c["history_head"]
+                a4c["kernel_send"] = k_a4c
                 assert page.locator(chip).count() == 0   # no counter at zero
 
                 # A2: Intelligence -> BRIEF, after PEOPLE: SEND; the pick opens the preview and Send.
@@ -302,17 +355,58 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 assert Path(path).is_file() and Path(path).parent == team_dir
                 receipt = self._text(page, f"{opened(IB, 'Team folder')} [data-receipt=latest]")
                 assert receipt == f"✓ SAVED {path}", receipt
+                k_a3 = self._face_row_receipt(sent[0], ref)
                 self._unpick(page, IB, "Team folder")
                 a3 = shots.shoot(page, "A3-brief-saved-history", IB,
                                  [f"{row(IB, 'Team folder')} [data-testid=send-last-sent]",
                                   f"{IB} [data-testid=send-history] .surface-section-head"])
                 assert a3["history_head"] == "SENDS 2", a3["history_head"]
                 assert any(h.startswith(f"✓ Team folder SAVED {path}") for h in a3["history"]), a3["history"]
+                a3["kernel_send"] = k_a3
+
+                # A5: the brief changes after the send -- a new person signal (an agenda item
+                # for Priya's 1:1, through the same routes BriefView's "Add to 1:1 agenda" uses),
+                # and a same-day Generate returns the SAME brief id. The brief's People section
+                # is read at render time, so its words change; the well reads the new preview and
+                # offers Send again; the press sends the new words.
+                one = _api(page, "POST", f"/api/people/relationships/{priya}/one-on-ones",
+                           {"visibility": "shared_intent"}, token=TOKEN)["one_on_one"]["id"]
+                _api(page, "POST", f"/api/people/one-on-ones/{one}/agenda",
+                     {"body": "Review the rollback plan", "visibility": "shared_intent", "state": "open",
+                      "source": {"kind": "brief"}}, token=TOKEN)
+                again = _api(page, "POST", "/api/brief/generate", {}, token=TOKEN)
+                assert again["id"] == brief["id"], (again["id"], brief["id"])
+                # The same Intelligence -> BRIEF window, still open: picking reads a fresh preview.
+                self._pick(page, IB, "Team folder")
+                body = f"{opened(IB, 'Team folder')} [data-testid=send-preview-body]"
+                page.wait_for_function("(s) => (document.querySelector(s)?.innerText || '').includes('Priya Nair')", arg=body, timeout=T)
+                verb = self._text(page, f"{opened(IB, 'Team folder')} [data-testid=send-verb]")
+                page.evaluate("""(sel) => { const b = document.querySelector(sel);
+                  const all = [...b.querySelectorAll('*')].filter((e) => e.innerText.includes('Priya Nair'));
+                  const el = all.find((e) => ![...e.children].some((c) => c.innerText.includes('Priya Nair')));
+                  if (el) { el.dataset.mark = 'a5-new-words'; el.scrollIntoView({block: 'center'}); } }""", body)
+                page.wait_for_timeout(300)
+                a5 = shots.shoot(page, "A5-brief-changed-send-again", IB, ["[data-mark=a5-new-words]"], seat=None)
+                assert verb == "Send again", verb
+                a5["verb"] = verb
+                page.evaluate("(sel) => document.querySelectorAll(sel + ' *').forEach((e) => { e.scrollTop = 0; })", opened(IB, "Team folder"))
+                shots.shoot(page, "A5b-brief-changed-verb", IB, [f"{opened(IB, 'Team folder')} [data-testid=send-verb]",
+                                                               f"{row(IB, 'Team folder')} [data-testid=send-last-sent]"],
+                            seat=row(IB, "Team folder"))
+                self._press(page, IB, "Team folder")
+                newer = [s for s in self._sends(page, ref) if s["destination_id"] == team and s["state"] == "sent" and s["id"] != sent[0]["id"]]
+                assert len(newer) == 1, newer
+                assert "Priya Nair" in Path(newer[0]["proof"]["path"]).read_text()
+                assert "Priya Nair" not in Path(path).read_text()   # the first send kept its own words
+                self._face_row_receipt(newer[0], ref)
+                latest_team = newer[0]
+                self._unpick(page, IB, "Team folder")
                 self._close_windows(page)
 
                 # T3: all brief items but one handled through the real shelf route; the Chair's
                 # own Ack on glass then handles the last one and the Chair changes branch.
-                for it in items[1:]:
+                latest_items = [it for sec in _api(page, "GET", "/api/brief/latest", token=TOKEN)["sections"].values() for it in sec]
+                for it in latest_items[1:]:
                     _api(page, "POST", f"/api/brief/items/{it['id']}/shelf", {"state": "acknowledged"}, token=TOKEN)
                 self._reload(page)
                 ack = page.locator(".chair [data-testid=arrival-brief] .btn", has_text="Ack").first
@@ -343,14 +437,15 @@ class TestBriefAndDecisionSendGlass(_Rig):
                                   same_as="T3a2-chair-last-item-receipt")
                 after = receipt_now()
                 # The SAME receipt (state, target, time) after the branch change, equal to the hub's row.
-                hub_row = next(s for s in self._sends(page, ref) if s["id"] == sent[0]["id"])
+                hub_row = next(s for s in self._sends(page, ref) if s["id"] == latest_team["id"])
+                t3_kernel = self._face_row_receipt(hub_row, ref)
                 when = self._stamp(page, hub_row["settled_at"])
                 assert before == after, (before, after)
                 assert after["state"] == hub_row["state"] == "sent", (after, hub_row)
                 assert after["latest"] == f"✓ SAVED {hub_row['proof']['path']}", after
                 assert after["row_chip"] == f"✓ SAVED {when[-5:]}", (after, when)
                 assert after["history"] == f"✓ Team folder SAVED {hub_row['proof']['path']} {when}", (after, when)
-                t3b["receipt_before"], t3b["receipt_after"], t3b["hub_row"] = before, after, hub_row
+                t3b["receipt_before"], t3b["receipt_after"], t3b["hub_row"], t3b["kernel_send"] = before, after, hub_row, t3_kernel
 
                 # T3c: ordinary scrolling (the wheel) brings the receipt's history row out from
                 # under the Chair's sticky capture bar; the receipt is still there.
@@ -423,16 +518,51 @@ class TestBriefAndDecisionSendGlass(_Rig):
                                  [f"{opened(DD, 'Team folder')} [data-receipt=latest]", f"{row(DD, 'Team folder')} [data-testid=send-last-sent]"],
                                  seat=row(DD, "Team folder"))
                 assert b2["receipts"] == [{"text": f"✓ SAVED {path}", "state": "sent", "code": None}], b2["receipts"]
+                b2["kernel_send"] = self._face_row_receipt(hub[0], ref)
                 self._unpick(page, DD, "Team folder")
                 b2b = shots.shoot(page, "B2b-decision-history", DD,
                                   [f"{DD} [data-testid=send-history] .surface-section-head", f"{DD} [data-testid=history-row]"])
                 when = self._stamp(page, hub[0]["settled_at"])
                 assert b2b["history_head"] == "SENDS 1" and b2b["history"] == [f"✓ Team folder SAVED {path} {when}"], b2b["history"]
 
+                # B3: Edit after a send, on glass. Edit unmounts the well (it sends the stored
+                # decision, not a draft); Done stores the edit and mounts it again; the preview
+                # shows the new words and the verb is Send again; the press sends them.
+                win = page.locator(".desk-window:has(.desk-decision-card)").last
+                win.get_by_role("button", name="Edit", exact=True).click()
+                page.locator(f"{DD} [data-testid=send-well]").wait_for(state="detached", timeout=T)
+                pad = win.locator(".desk-decision-editor textarea").nth(1)
+                pad.fill("Freeze the old ledger on Nov 5. All writes go to the new ledger after that day.")
+                win.get_by_role("button", name="Done", exact=True).click()
+                page.locator(f"{DD} [data-testid=destination-row]").first.wait_for(timeout=T)
+                page.wait_for_timeout(800)
+                self._pick(page, DD, "Team folder")
+                body = f"{opened(DD, 'Team folder')} [data-testid=send-preview-body]"
+                page.wait_for_function("(s) => (document.querySelector(s)?.innerText || '').includes('Nov 5')", arg=body, timeout=T)
+                b3verb = self._text(page, f"{opened(DD, 'Team folder')} [data-testid=send-verb]")
+                page.evaluate("""(sel) => { const b = document.querySelector(sel);
+                  const el = [...b.querySelectorAll('p, li')].find((e) => e.innerText.includes('Nov 5'));
+                  if (el) { el.dataset.mark = 'b3-edit'; el.scrollIntoView({block: 'center'}); } }""", body)
+                page.wait_for_timeout(300)
+                b3 = shots.shoot(page, "B3-decision-edited-send-again", DD, ["[data-mark=b3-edit]"], seat=None)
+                assert b3verb == "Send again", b3verb
+                b3["verb"] = b3verb
+                self._press(page, DD, "Team folder")
+                edited = [s for s in self._sends(page, ref) if s["id"] != hub[0]["id"]]
+                assert len(edited) == 1 and edited[0]["state"] == "sent", edited
+                b3_decided = Path(edited[0]["proof"]["path"]).read_text().split("## Decision\n")[1].split("##")[0]
+                assert "Nov 5" in b3_decided and "Nov 3" not in b3_decided, b3_decided
+                b3b = shots.shoot(page, "B3b-decision-edited-sent", DD, [f"{opened(DD, 'Team folder')} [data-receipt=latest]"],
+                                  seat=row(DD, "Team folder"))
+                assert b3b["receipts"] == [{"text": f"✓ SAVED {edited[0]['proof']['path']}", "state": "sent", "code": None}], b3b["receipts"]
+                b3b["kernel_send"] = self._face_row_receipt(edited[0], ref)
+                self._unpick(page, DD, "Team folder")
+                before_t2 = {s["id"] for s in self._sends(page, ref)}
+
                 # T2: he reads the preview; the decision changes in another place; Send refuses
                 # PREVIEW CHANGED, the well reads a fresh preview, another press sends it.
                 self._pick(page, DD, "Team folder")
-                assert "Nov 3" in page.locator(f"{opened(DD, 'Team folder')} [data-testid=send-preview-body]").inner_text()
+                assert "Nov 5" in page.locator(f"{opened(DD, 'Team folder')} [data-testid=send-preview-body]").inner_text()
                 _api(page, "PUT", f"/api/decisions/{dec['id']}",
                      {"decision_markdown": "Freeze the old ledger on Nov 6. All writes go to the new ledger after that day."}, token=TOKEN)
                 page.locator(f"{opened(DD, 'Team folder')} [data-testid=send-verb]").click()
@@ -454,17 +584,23 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 page.wait_for_timeout(300)
                 shots.shoot(page, "T2a2-preview-changed-passage", DD, ["[data-mark=changed-passage]"], seat=None)
                 hub_mid = self._sends(page, ref)
-                assert [s["state"] for s in hub_mid] == ["sent"], hub_mid   # nothing sent by the refused press
+                assert {s["id"] for s in hub_mid} == before_t2, hub_mid   # nothing sent by the refused press
+                # The refused press is a kernel operation with its receipt (refused, preview_changed).
+                refusals = self._kernel_refusals("channel.send", "preview_changed")
+                assert len(refusals) == 1 and refusals[0]["receipt_state"] == "refused", refusals
+                assert refusals[0]["target_ref"] == f"document:{ref}", refusals
+                t2a["kernel_refusal"] = refusals[0]
                 self._press(page, DD, "Team folder")
                 hub2 = self._sends(page, ref)
-                new = [s for s in hub2 if s["id"] != hub[0]["id"]]
+                new = [s for s in hub2 if s["id"] not in before_t2]
                 assert len(new) == 1 and new[0]["state"] == "sent" and new[0]["document_ref"] == ref, hub2
                 path2 = new[0]["proof"]["path"]
                 decided = Path(path2).read_text().split("## Decision\n")[1].split("##")[0]
-                assert "Nov 6" in decided and "Nov 3" not in decided, decided   # the fresh words went
+                assert "Nov 6" in decided and "Nov 5" not in decided, decided   # the fresh words went
                 t2b = shots.shoot(page, "T2b-preview-changed-sent", DD,
                                   [f"{opened(DD, 'Team folder')} [data-receipt=latest]"], seat=row(DD, "Team folder"))
                 assert t2b["receipts"] == [{"text": f"✓ SAVED {path2}", "state": "sent", "code": None}], t2b["receipts"]
+                t2b["kernel_send"] = self._face_row_receipt(new[0], ref)
 
                 shots.write("decision-send", {"decision": dec["id"], "hub_sends": hub2})
                 shots.assert_clean()
@@ -556,12 +692,16 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 page.wait_for_timeout(700)
                 hub = self._sends(page, f"decision_record:{mtg}")
                 assert [(s["id"], s["state"]) for s in hub] == [(prepared["id"], "sent")], hub
+                kp = self._kernel(hub[0]["prepare_operation_id"])
+                assert (kp["name"], kp["receipt_state"], kp["principal_identity"]) == ("channel.prepare", "succeeded", AGENT_ID), kp
+                k_mtg = self._face_row_receipt(hub[0], f"decision_record:{mtg}")
                 mpath = hub[0]["proof"]["path"]
                 assert Path(mpath).parent == team_dir and "Finance runs one more reconciliation" in Path(mpath).read_text()
                 b4c = shots.shoot(page, "B4c-room-row-prepared-saved", "[data-testid=room-body]",
                                   [f"{RR} [data-testid=prepared-result]"], block="center")
                 assert b4c["prepared"][0].startswith(f"· Team folder ✓ SAVED {mpath}"), b4c["prepared"]
                 assert b4c["history_head"] == "SENDS 1", b4c["history_head"]
+                b4c["kernel_send"], b4c["kernel_prepare"] = k_mtg, kp
                 page.locator("[data-testid=decision-row]", has_text="Finance runs").first.click()   # fold it again
                 page.wait_for_timeout(400)
 
@@ -576,6 +716,7 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 b4d = shots.shoot(page, "B4d-room-plain-row-saved", "[data-testid=room-body]",
                                   [f"{opened(RR, 'Team folder')} [data-receipt=latest]"], block="center")
                 assert b4d["receipts"] == [{"text": f"✓ SAVED {ppath}", "state": "sent", "code": None}], b4d["receipts"]
+                b4d["kernel_send"] = self._face_row_receipt(hub_plain[0], f"decision_record:{plain}")
                 self._close_windows(page)
 
                 # B5: Intelligence -> DECISIONS, the record: SEND after its fields.
@@ -591,6 +732,7 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 hub_plain2 = self._sends(page, f"decision_record:{plain}")
                 new = [s for s in hub_plain2 if s["id"] != hub_plain[0]["id"]]
                 assert len(new) == 1 and new[0]["state"] == "sent", hub_plain2
+                k_b5 = self._face_row_receipt(new[0], f"decision_record:{plain}")
                 self._unpick(page, DR, "Team folder")
                 b5b = shots.shoot(page, "B5b-record-intelligence-history", DR,
                                   [f"{DR} [data-testid=send-history] .surface-section-head", f"{DR} [data-testid=history-row]"])
