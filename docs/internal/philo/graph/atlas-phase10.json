@@ -2686,7 +2686,7 @@
             "path": "/api/projects/{project_id}/updates"
           }
         ],
-        "words": "the owner presses Send on the GitHub issue and gh answers the pinned 'could not resolve to an issue': FAILED (a known non-delivery), the owner's failed receipt; the row reads FAILED · ISSUE NOT FOUND · NOTHING SENT (the channel's reason in a plain word, never the raw code), readable in the viewport; the hub holds one failed send and no history row; ONE gh create. New (no red claimed): the Send is a new capability (Phase 10); on the pre-Phase-10 main the case fails (no SEND well)."
+        "words": "the owner presses Send on the GitHub issue and gh answers the pinned 'could not resolve to an issue': FAILED (a known non-delivery), the owner's failed receipt; the row reads FAILED \u00b7 ISSUE NOT FOUND \u00b7 NOTHING SENT (the channel's reason in a plain word, never the raw code), readable in the viewport; the hub holds one failed send and no history row; ONE gh create. New (no red claimed): the Send is a new capability (Phase 10); on the pre-Phase-10 main the case fails (no SEND well)."
       },
       "completion_bound_s": 30,
       "viewports": [
@@ -7699,7 +7699,7 @@
         {
           "path": "scripts/graph_walk.py",
           "symbol": "def _install_cli_runner",
-          "line": 2750,
+          "line": 2824,
           "claim": "the rig's recording runner (PHILO-10-05)"
         }
       ],

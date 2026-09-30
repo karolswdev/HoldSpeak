@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11.json
+RUNTIME: build=None hub=None db=None engine=none
+JOB: p11
+VERDICT: blocked terminal=None
+EVIDENCE: []
+NOTE: the case declares a provider replay at 'tests/fixtures/philo11_documents/meeting_summary_reply.json', but this run was requested with --engine 'none'; replay is installed only for an explicit replayed run

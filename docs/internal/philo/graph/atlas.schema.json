@@ -892,7 +892,8 @@
             },
             "action": {
               "enum": [
-                "restart_hub"
+                "restart_hub",
+                "queue_meeting_intelligence"
               ]
             },
             "capture_as": {
@@ -916,6 +917,11 @@
                 }
               },
               "description": "Pins which network response the rig records as the clicked trigger's own response."
+            },
+            "meeting_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Imported meeting id passed to the real Stop-style intelligence queue producer; no result rows are injected."
             }
           }
         },

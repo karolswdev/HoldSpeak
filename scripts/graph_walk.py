@@ -358,9 +358,17 @@ def _frontend_build() -> dict[str, Any]:
 
 def base_provenance(*, engine_mode: str) -> dict[str, Any]:
     assert engine_mode in ("real", "replayed", "none"), engine_mode
+    # An archive extracted under this worktree has no .git directory.  Git
+    # then walks up into the enclosing checkout and reports the wrong source
+    # revision.  The Phase 11 archive runner supplies this explicit source
+    # identity; ordinary runs keep the existing git-derived values.
+    source_revision = os.environ.get("HOLDSPEAK_SOURCE_REVISION") or _git("rev-parse", "HEAD")
+    source_dirty = os.environ.get("HOLDSPEAK_SOURCE_DIRTY")
+    dirty = (source_dirty.lower() == "true" if source_dirty is not None
+             else bool(_git("status", "--porcelain")))
     return {
-        "revision": _git("rev-parse", "HEAD"),
-        "dirty": bool(_git("status", "--porcelain")),
+        "revision": source_revision,
+        "dirty": dirty,
         "frontend_build": None,
         "hub": None,
         "db_path": None,
@@ -1972,7 +1980,7 @@ def check_predicate(
 #: ``reads`` (by index among the op reads), ``trigger`` the trigger's own
 #: recorded operation (never re-fired).
 OP_FACT_SOURCES = frozenset({"observe", "read", "trigger"})
-OP_FACT_TESTS = ("value", "absent", "nonempty", "contains", "lacks", "length")
+OP_FACT_TESTS = ("value", "absent", "nonempty", "contains", "lacks", "length", "integer")
 
 
 def _op_fact_record(fact: dict[str, Any], after: dict[str, Any]) -> tuple[dict[str, Any] | None, str]:
@@ -2029,6 +2037,8 @@ def _op_fact(fact: dict[str, Any], after: dict[str, Any]) -> tuple[bool, str]:
             f"{where} is absent" if (not found or value is None) else f"{where} is present ({value!r})")
     if not found:
         return False, f"{where} does not resolve"
+    if "integer" in fact and (fact["integer"] is not True or type(value) is not int):
+        return False, f"{where} is not an integer ({value!r})"
     if "value" in fact and value != fact["value"]:
         return False, f"{where} = {value!r}, wanted {fact['value']!r}"
     if fact.get("nonempty") and value in (None, "", [], {}):
@@ -2347,6 +2357,7 @@ class Hub:
         self.producer_clock_reads: list[str] = []
         self.engine_replay_path = engine_replay
         self.engine_replay: str | None = None
+        self.engine_provider_url: str | None = None
         self.wiring: dict[str, Any] = {}
         self.port = _free_port()
         self.url = f"http://127.0.0.1:{self.port}"
@@ -2366,6 +2377,8 @@ class Hub:
                 self.config_path = line.split(" ", 1)[1].strip()
             elif line.startswith("ENGINE_REPLAY "):
                 self.engine_replay = line.split(" ", 1)[1].strip()
+            elif line.startswith("ENGINE_PROVIDER "):
+                self.engine_provider_url = line.split(" ", 1)[1].strip()
             elif line.startswith("CLI_RUNNER "):
                 self.cli_runner = line.split(" ", 1)[1].strip()
             elif line.startswith("WIRING "):
@@ -2385,6 +2398,7 @@ class Hub:
         self.db_path = None
         self.config_path = None
         self.engine_replay = None
+        self.engine_provider_url = None
         self.cli_runner = None
         self.producer_clock = None
         self.wiring = {}
@@ -2717,12 +2731,17 @@ class _ReplayIntel:
         self.calls.append("run_prompt_messages")
         return self.reply.get("raw_text", json.dumps(self.reply))
 
+    def _chat_completion_text(self, messages: Any, **_kwargs: Any) -> str:
+        # AgentTurnService.dispatch_plugin reaches this physical provider leaf.
+        self.calls.append("_chat_completion_text")
+        return self.reply.get("raw_text", json.dumps(self.reply))
+
     def run_prompt_stream(self, **_kwargs: Any) -> Any:
         self.calls.append("run_prompt_stream")
         return iter(())
 
 
-def _install_engine_replay(path: Path) -> str:
+def _install_engine_replay(path: Path) -> tuple[str, str]:
     """Install the recorded reply at the product's own provider seam.
 
     The seam is `holdspeak.intel.providers._configured_engine`
@@ -2740,7 +2759,62 @@ def _install_engine_replay(path: Path) -> str:
     engine = _ReplayIntel(reply)
     engine_module.MeetingIntel = lambda **_: engine
     providers_module._configured_engine = lambda: engine
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    # A recorded provider can declare the typed results its fixture supplies.
+    # Feed that declaration into the real profile/deployment producer; keep
+    # assignment compatibility and the runner's output validation intact.
+    # The ordinary endpoint producer declares only the summary adapter.
+    if reply.get("capabilities"):
+        from holdspeak.inference_capabilities import process_inference_capability_registry
+        from holdspeak.services.model_library_service import ModelLibraryApplicationService
+
+        profile_body = ModelLibraryApplicationService._profile_body
+        definitions = [process_inference_capability_registry().require(name)
+                       for name in reply["capabilities"]]
+
+        def recorded_profile_body(draft: dict[str, Any]) -> dict[str, Any]:
+            body = profile_body(draft)
+            claims = set(body["capability_manifest"]["claims"])
+            for definition in definitions:
+                claims.add(f"result_schema:{definition.output_schema_sha256}")
+                claims.update(definition.requires.capability_classes)
+            material = {"revision": "graph-walk-recorded-provider-v1", "claims": sorted(claims)}
+            digest = hashlib.sha256(json.dumps(material, sort_keys=True, separators=(",", ":"),
+                                               ensure_ascii=True).encode()).hexdigest()
+            body["capability_manifest"] = {**material, "sha256": f"sha256:{digest}"}
+            return body
+
+        ModelLibraryApplicationService._profile_body = staticmethod(recorded_profile_body)
+
+    # Endpoint discovery is a real production HTTP read.  Keep that read on a
+    # loopback-only server owned by this hub process, while the actual model
+    # call remains at the provider replay seam above.  Cases that bind this
+    # URL therefore perform discovery without probing a LAN or internet host.
+    model_id = str(reply.get("model") or "recorded-reply")
+
+    class _ModelsHandler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802 - stdlib handler contract
+            request_path = urllib.parse.urlsplit(self.path).path.rstrip("/")
+            if request_path not in {"/models", "/v1/models"}:
+                self.send_error(404, "recording provider exposes only /v1/models")
+                return
+            payload = json.dumps({
+                "object": "list",
+                "data": [{"id": model_id, "owned_by": "graph-walk-replay"}],
+            }).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+
+        def log_message(self, _format: str, *_args: Any) -> None:
+            return
+
+    provider = ThreadingHTTPServer(("127.0.0.1", 0), _ModelsHandler)
+    threading.Thread(target=provider.serve_forever, daemon=True).start()
+    provider_url = f"http://127.0.0.1:{provider.server_address[1]}/v1"
+    return hashlib.sha256(path.read_bytes()).hexdigest(), provider_url
 
 
 #: PHILO-10-05: the recording runner's call log, in the run's HOME.
@@ -2827,12 +2901,21 @@ def _install_email_edge(https: list[dict[str, Any]], log_path: Path, lock: Any) 
     import urllib.response as _urllib_response
     from urllib.parse import urlparse as _urlparse
 
-    from holdspeak.services import channel_email, channel_slack
+    from holdspeak.services import channel_email
+    # Phase 10 archive exports predate the Slack module.  The common recording
+    # edge must still boot there for email regression cases; Slack cases run
+    # only on a source tree that declares the channel.
+    import importlib.util as _importlib_util
+    if _importlib_util.find_spec("holdspeak.services.channel_slack") is None:
+        channel_slack = None
+    else:
+        from holdspeak.services import channel_slack
 
     memory = channel_email.MemoryEmailKeyStore()
     channel_email.KEY_STORE = lambda: memory
-    slack_memory = channel_slack.MemorySlackKeyStore()
-    channel_slack.KEY_STORE = lambda: slack_memory
+    if channel_slack is not None:
+        slack_memory = channel_slack.MemorySlackKeyStore()
+        channel_slack.KEY_STORE = lambda: slack_memory
 
     class RecordingEdge(_urllib_request.BaseHandler):
         def https_open(self, req: Any) -> Any:
@@ -2841,7 +2924,7 @@ def _install_email_edge(https: list[dict[str, Any]], log_path: Path, lock: Any) 
             headers = {k.lower(): v for k, v in req.header_items()}
             index = next((i for i, a in enumerate(https)
                           if a.get("host") == argv[2] and a.get("path") == argv[3]), None)
-            if url.hostname == channel_slack.HOST:
+            if channel_slack is not None and url.hostname == channel_slack.HOST:
                 argv[3] = "/services/[redacted]"
             entry = {"argv": argv, "body_sha256": hashlib.sha256(bytes(req.data or b"")).hexdigest(),
                      "pid": os.getpid(), "at": datetime.now(timezone.utc).isoformat(), "answer": index,
@@ -2865,7 +2948,8 @@ def _install_email_edge(https: list[dict[str, Any]], log_path: Path, lock: Any) 
             return resp
 
     channel_email.HTTPS_HANDLER = RecordingEdge
-    channel_slack.HTTPS_HANDLER = RecordingEdge
+    if channel_slack is not None:
+        channel_slack.HTTPS_HANDLER = RecordingEdge
 
 
 def read_cli_calls(hub: Any) -> list[dict[str, Any]] | None:
@@ -2955,9 +3039,10 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
     ]
 
     if engine_replay:
-        digest = _install_engine_replay(Path(engine_replay))
+        digest, provider_url = _install_engine_replay(Path(engine_replay))
         has.append("a RECORDED provider reply at the real provider seam")
         print(f"ENGINE_REPLAY {digest}", flush=True)
+        print(f"ENGINE_PROVIDER {provider_url}", flush=True)
 
     if cli_runner:
         digest = _install_cli_runner(Path(cli_runner))
@@ -4058,7 +4143,7 @@ _EXPECTED_READ_FIELDS = (
 
 #: The step fields a captured value may travel into.
 _SUBSTITUTED_FIELDS = ("path", "selector", "name", "value", "url", "key", "body",
-                       "args", "observe_at")
+                       "args", "observe_at", "meeting_id")
 
 
 def substitute(value: Any, variables: dict[str, Any]) -> Any:
@@ -4769,11 +4854,95 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         return record
     if kind == "cli":
         action = step.get("action")
+        if action == "queue_meeting_intelligence":
+            if hub is None or not hasattr(hub, "home") or not hasattr(hub, "db_path"):
+                raise Blocked(
+                    "queue_meeting_intelligence needs the rig's own hub process")
+            raw_meeting_id = step.get("meeting_id")
+            if not isinstance(raw_meeting_id, str) or not raw_meeting_id.strip():
+                raise Blocked(
+                    "queue_meeting_intelligence requires a non-empty meeting_id")
+            if not hub.db_path:
+                raise Blocked(
+                    "queue_meeting_intelligence cannot prove the hub database path")
+
+            # This action is deliberately in the rig process, while the hub
+            # drainer remains the production consumer.  Never use
+            # get_database() here: its singleton could already point at the
+            # owner's database in a long-lived rig process.
+            hub_home = guard_home(hub.home)
+            db_path = guard_path(hub.db_path, "hub database")
+            if not _under(db_path, hub_home) or db_path == hub_home:
+                raise Blocked(
+                    "queue_meeting_intelligence refuses a database outside the "
+                    f"isolated hub HOME ({db_path} is not under {hub_home})")
+
+            database: Any | None = None
+            try:
+                from holdspeak.db.core import Database
+                from holdspeak.db.intel import _durable_transcript_hash
+
+                database = Database(db_path)
+                meeting_id = raw_meeting_id.strip()
+                meeting = database.meetings.get_meeting(meeting_id)
+                if meeting is None:
+                    raise Blocked(
+                        f"queue_meeting_intelligence found no imported meeting "
+                        f"{meeting_id!r} in the isolated hub database")
+                if not getattr(meeting, "segments", None):
+                    raise Blocked(
+                        f"queue_meeting_intelligence meeting {meeting_id!r} has "
+                        "no durable transcript segments")
+
+                # Compute the exact persisted-segment fence used by the
+                # production queue, then call its public producer authority in
+                # the same connection.  Passing planned_route=None is
+                # intentional: the hub's drainer must run the installed-plugin
+                # planner after the real capability assignment is in place.
+                with database._connection() as conn:
+                    transcript_hash = _durable_transcript_hash(conn, meeting_id)
+                    if not transcript_hash:
+                        raise Blocked(
+                            f"queue_meeting_intelligence could not derive a "
+                            f"durable transcript hash for {meeting_id!r}")
+                    job_id = database.intel.enqueue_intel_job(
+                        meeting_id,
+                        transcript_hash=transcript_hash,
+                        planned_route=None,
+                        conn=conn,
+                    )
+            except Blocked:
+                raise
+            except Exception as exc:
+                raise Blocked(
+                    "queue_meeting_intelligence production enqueue failed: "
+                    f"{type(exc).__name__}: {exc}") from exc
+            finally:
+                if database is not None:
+                    database.close()
+
+            if not isinstance(job_id, str) or not job_id.strip():
+                raise Blocked(
+                    "queue_meeting_intelligence producer returned no job id")
+            record = {
+                "kind": "cli",
+                "action": action,
+                "adapter": step.get("adapter", "db-producer"),
+                "meeting_id": meeting_id,
+                "db_path": str(db_path),
+                "producer": "holdspeak.db.intel.IntelRepository.enqueue_intel_job",
+                "job_id": job_id,
+                "transcript_hash": transcript_hash,
+                "planned_route": None,
+            }
+            provenance.setdefault("meeting_intelligence", []).append(record)
+            return record
         if action != "restart_hub":
             raise Blocked(
                 f"cli command {(step.get('command') or action)!r} is not "
                 "implemented in this rig; the case is blocked, not claimed. The "
-                "one implemented command is action 'restart_hub'.")
+                "implemented commands are actions 'restart_hub' and "
+                "'queue_meeting_intelligence'.")
         if hub is None or not hasattr(hub, "restart"):
             raise Blocked("a restart_hub step needs the rig's own hub process")
         resolved_case = substitute(case or {}, variables)
@@ -5360,6 +5529,11 @@ def exercise(
     if hub is not None and getattr(hub, "home", None):
         # PHILO-10-05: a file destination's folder is a real folder on the run's HOME.
         variables["hub_home"] = str(Path(hub.home).resolve())
+    if hub is not None and getattr(hub, "engine_provider_url", None):
+        # Provider discovery is a real HTTP read, but replay walks keep its
+        # endpoint on loopback.  Cases may bind this URL into a profile or
+        # assignment setup step without contacting the owner's LAN endpoint.
+        variables["replay_provider_url"] = str(hub.engine_provider_url)
     steps: list[dict[str, Any]] = []
     for step in case.get("setup", []):
         try:
@@ -6089,6 +6263,7 @@ def run_case(
         # observation is read as if it came from the whole product.
         provenance["product_wiring"] = hub.wiring
         provenance["engine_replay_sha256"] = hub.engine_replay
+        provenance["engine_provider_url"] = hub.engine_provider_url
         provenance["cli_runner_sha256"] = hub.cli_runner
         if engine == "real":
             provenance["engine_identity"] = _engine_identity()

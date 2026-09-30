@@ -1,0 +1,76 @@
+.F.FF                                                                    [100%]
+=================================== FAILURES ===================================
+_ test_integer_facts_check_the_json_type_not_only_equality[39000.0-39000-False] _
+
+value = 39000.0, want = 39000, expected = False
+
+    @pytest.mark.parametrize("value,want,expected", [
+        (39000, 39000, True), (39000.0, 39000, False),
+        ("39000", 39000, False), (True, 1, False), (False, 0, False),
+    ])
+    def test_integer_facts_check_the_json_type_not_only_equality(value, want, expected) -> None:
+        """The same numeric value as a float or boolean is not an integer field."""
+        import sys
+    
+        sys.path.insert(0, str(REPO / "scripts"))
+        import graph_walk
+    
+        predicate = {"kind": "op_facts", "facts": [
+            {"source": "trigger", "path": "limit", "value": want, "integer": True},
+        ]}
+        after = {"operation_trigger": {"response": {"limit": value}}}
+>       assert graph_walk.check_predicate(predicate, {}, after)[0] is expected
+E       assert True is False
+
+tests/unit/test_philo11_walk_harness.py:211: AssertionError
+____ test_integer_facts_check_the_json_type_not_only_equality[True-1-False] ____
+
+value = True, want = 1, expected = False
+
+    @pytest.mark.parametrize("value,want,expected", [
+        (39000, 39000, True), (39000.0, 39000, False),
+        ("39000", 39000, False), (True, 1, False), (False, 0, False),
+    ])
+    def test_integer_facts_check_the_json_type_not_only_equality(value, want, expected) -> None:
+        """The same numeric value as a float or boolean is not an integer field."""
+        import sys
+    
+        sys.path.insert(0, str(REPO / "scripts"))
+        import graph_walk
+    
+        predicate = {"kind": "op_facts", "facts": [
+            {"source": "trigger", "path": "limit", "value": want, "integer": True},
+        ]}
+        after = {"operation_trigger": {"response": {"limit": value}}}
+>       assert graph_walk.check_predicate(predicate, {}, after)[0] is expected
+E       assert True is False
+
+tests/unit/test_philo11_walk_harness.py:211: AssertionError
+___ test_integer_facts_check_the_json_type_not_only_equality[False-0-False] ____
+
+value = False, want = 0, expected = False
+
+    @pytest.mark.parametrize("value,want,expected", [
+        (39000, 39000, True), (39000.0, 39000, False),
+        ("39000", 39000, False), (True, 1, False), (False, 0, False),
+    ])
+    def test_integer_facts_check_the_json_type_not_only_equality(value, want, expected) -> None:
+        """The same numeric value as a float or boolean is not an integer field."""
+        import sys
+    
+        sys.path.insert(0, str(REPO / "scripts"))
+        import graph_walk
+    
+        predicate = {"kind": "op_facts", "facts": [
+            {"source": "trigger", "path": "limit", "value": want, "integer": True},
+        ]}
+        after = {"operation_trigger": {"response": {"limit": value}}}
+>       assert graph_walk.check_predicate(predicate, {}, after)[0] is expected
+E       assert True is False
+
+tests/unit/test_philo11_walk_harness.py:211: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo11_walk_harness.py::test_integer_facts_check_the_json_type_not_only_equality[39000.0-39000-False]
+FAILED tests/unit/test_philo11_walk_harness.py::test_integer_facts_check_the_json_type_not_only_equality[True-1-False]
+FAILED tests/unit/test_philo11_walk_harness.py::test_integer_facts_check_the_json_type_not_only_equality[False-0-False]
+3 failed, 2 passed, 10 deselected in 0.43s

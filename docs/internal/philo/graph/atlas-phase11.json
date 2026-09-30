@@ -1,0 +1,2535 @@
+{
+  "schema_version": 1,
+  "atlas_version": "phase11-documents",
+  "extends": "atlas-phase10.json",
+  "source_commit": "8a6b807d6682d9446d9b75216bbd3844d203cdcc",
+  "cases": [
+    {
+      "id": "case.p11.document.monday_brief.op",
+      "job": "p11",
+      "edge_ids": [
+        "edge.tool.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub with a real producer and a file destination under its HOME."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http",
+          "why": "real brief.generate producer for monday_brief",
+          "capture_as": "brief_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "channel.save_destination",
+          "args": {
+            "name": "P11 monday_brief",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "adapter": "mcp-http",
+          "why": "save a file destination in the isolated hub HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "op",
+          "name": "channel.preview",
+          "args": {
+            "document_ref": "monday_brief:{brief_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "render exact bytes before prepare",
+          "capture_as": "digest",
+          "capture_path": "payload_digest"
+        },
+        {
+          "kind": "op",
+          "name": "channel.prepare",
+          "args": {
+            "document_ref": "monday_brief:{brief_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "prepare the frozen send before the owner press",
+          "capture_as": "send_id",
+          "capture_path": "send.id",
+          "capture_more": [
+            {
+              "as": "prepare_op",
+              "path": "operation_id"
+            }
+          ]
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "channel.send",
+        "args": {
+          "send_id": "{send_id}",
+          "command_id": "atlas-p11-monday_brief"
+        },
+        "adapter": "mcp-http",
+        "why": "the owner sends the prepared file",
+        "capture_as": "send_op",
+        "capture_path": "operation_id"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "path": "outcome",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.state",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends",
+              "length": 1
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.file_path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.proof.path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.payload_digest",
+              "value": "{digest}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.id",
+              "value": "{send_id}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.state",
+              "value": "sent"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.document_ref",
+              "value": "monday_brief:{brief_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "channel.prepare"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{prepare_op}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.operation.name",
+              "value": "channel.send"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{send_op}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "sends",
+              "length": 1
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "monday_brief:{brief_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{prepare_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{send_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "channel.sends",
+            "args": {
+              "document_ref": "monday_brief:{brief_id}"
+            }
+          }
+        ],
+        "words": "the real monday_brief producer renders one frozen document, prepare and the owner send write one durable file send and owner receipts for both transitions."
+      },
+      "completion_bound_s": 120,
+      "viewports": []
+    },
+    {
+      "id": "case.p11.document.desk_decision.op",
+      "job": "p11",
+      "edge_ids": [
+        "edge.tool.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub with a real producer and a file destination under its HOME."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Use one document registry",
+            "status": "accepted",
+            "deciders": [
+              "Avery"
+            ],
+            "context_markdown": "The channel has eight durable sources.",
+            "decision_markdown": "Use one document registry for channel delivery.",
+            "consequences_markdown": "Every send reads the registry.",
+            "tags": [
+              "philo11"
+            ]
+          },
+          "adapter": "mcp-http",
+          "why": "real decision.create producer for desk_decision",
+          "capture_as": "decision_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "channel.save_destination",
+          "args": {
+            "name": "P11 desk_decision",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "adapter": "mcp-http",
+          "why": "save a file destination in the isolated hub HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "op",
+          "name": "channel.preview",
+          "args": {
+            "document_ref": "desk_decision:{decision_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "render exact bytes before prepare",
+          "capture_as": "digest",
+          "capture_path": "payload_digest"
+        },
+        {
+          "kind": "op",
+          "name": "channel.prepare",
+          "args": {
+            "document_ref": "desk_decision:{decision_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "prepare the frozen send before the owner press",
+          "capture_as": "send_id",
+          "capture_path": "send.id",
+          "capture_more": [
+            {
+              "as": "prepare_op",
+              "path": "operation_id"
+            }
+          ]
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "channel.send",
+        "args": {
+          "send_id": "{send_id}",
+          "command_id": "atlas-p11-desk_decision"
+        },
+        "adapter": "mcp-http",
+        "why": "the owner sends the prepared file",
+        "capture_as": "send_op",
+        "capture_path": "operation_id"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "path": "outcome",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.state",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends",
+              "length": 1
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.file_path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.proof.path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.payload_digest",
+              "value": "{digest}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.id",
+              "value": "{send_id}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.state",
+              "value": "sent"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.document_ref",
+              "value": "desk_decision:{decision_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "channel.prepare"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{prepare_op}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.operation.name",
+              "value": "channel.send"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{send_op}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "sends",
+              "length": 1
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "desk_decision:{decision_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{prepare_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{send_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "channel.sends",
+            "args": {
+              "document_ref": "desk_decision:{decision_id}"
+            }
+          }
+        ],
+        "words": "the real desk_decision producer renders one frozen document, prepare and the owner send write one durable file send and owner receipts for both transitions."
+      },
+      "completion_bound_s": 120,
+      "viewports": []
+    },
+    {
+      "id": "case.p11.document.meeting_summary.op",
+      "job": "p11",
+      "edge_ids": [
+        "edge.tool.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "The transcript import and summary replay finish on the isolated hub before the channel lifecycle."
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p11-06-model",
+              "profile_id": "p11-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "p11-06-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "select the owner disclosed summary route"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider edge while retaining the real queue and hub"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "import the transcript through the owner meeting route"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30,
+          "why": "wait for the real transcript importer"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the imported transcript has durable segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the route hash is read from the durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the route hash before the summary operation"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.summary.run",
+          "args": {
+            "meeting_id": "{meeting_id}",
+            "expected_selection_hash": "{selection_hash}"
+          },
+          "adapter": "mcp-http",
+          "why": "queue the real summary operation"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the replayed engine result to settle"
+        },
+        {
+          "kind": "op",
+          "name": "channel.save_destination",
+          "args": {
+            "name": "P11 meeting_summary",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "adapter": "mcp-http",
+          "why": "save a file destination in the isolated hub HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "op",
+          "name": "channel.preview",
+          "args": {
+            "document_ref": "meeting_summary:{meeting_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "render exact bytes before prepare",
+          "capture_as": "digest",
+          "capture_path": "payload_digest"
+        },
+        {
+          "kind": "op",
+          "name": "channel.prepare",
+          "args": {
+            "document_ref": "meeting_summary:{meeting_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "prepare the frozen send before the owner press",
+          "capture_as": "send_id",
+          "capture_path": "send.id",
+          "capture_more": [
+            {
+              "as": "prepare_op",
+              "path": "operation_id"
+            }
+          ]
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "channel.send",
+        "args": {
+          "send_id": "{send_id}",
+          "command_id": "atlas-p11-meeting_summary"
+        },
+        "adapter": "mcp-http",
+        "why": "the owner sends the prepared file",
+        "capture_as": "send_op",
+        "capture_path": "operation_id"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "path": "outcome",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.state",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends",
+              "length": 1
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.file_path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.proof.path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.payload_digest",
+              "value": "{digest}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.id",
+              "value": "{send_id}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.state",
+              "value": "sent"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.document_ref",
+              "value": "meeting_summary:{meeting_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "channel.prepare"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{prepare_op}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.operation.name",
+              "value": "channel.send"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{send_op}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "sends",
+              "length": 1
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "meeting_summary:{meeting_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{prepare_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{send_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "channel.sends",
+            "args": {
+              "document_ref": "meeting_summary:{meeting_id}"
+            }
+          }
+        ],
+        "words": "the real meeting import and summary producer render meeting_summary, then prepare and the owner send write one durable file row with owner receipts."
+      },
+      "completion_bound_s": 180,
+      "viewports": []
+    },
+    {
+      "id": "case.p11.document.meeting_digest.op",
+      "job": "p11",
+      "edge_ids": [
+        "edge.tool.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "The transcript import and summary replay finish on the isolated hub before the channel lifecycle."
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p11-06-model",
+              "profile_id": "p11-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "p11-06-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "select the owner disclosed summary route"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider edge while retaining the real queue and hub"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "import the transcript through the owner meeting route"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30,
+          "why": "wait for the real transcript importer"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the imported transcript has durable segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the route hash is read from the durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the route hash before the summary operation"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.summary.run",
+          "args": {
+            "meeting_id": "{meeting_id}",
+            "expected_selection_hash": "{selection_hash}"
+          },
+          "adapter": "mcp-http",
+          "why": "queue the real summary operation"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the replayed engine result to settle"
+        },
+        {
+          "kind": "op",
+          "name": "channel.save_destination",
+          "args": {
+            "name": "P11 meeting_digest",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "adapter": "mcp-http",
+          "why": "save a file destination in the isolated hub HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "op",
+          "name": "channel.preview",
+          "args": {
+            "document_ref": "meeting_digest:{meeting_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "render exact bytes before prepare",
+          "capture_as": "digest",
+          "capture_path": "payload_digest"
+        },
+        {
+          "kind": "op",
+          "name": "channel.prepare",
+          "args": {
+            "document_ref": "meeting_digest:{meeting_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "prepare the frozen send before the owner press",
+          "capture_as": "send_id",
+          "capture_path": "send.id",
+          "capture_more": [
+            {
+              "as": "prepare_op",
+              "path": "operation_id"
+            }
+          ]
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "channel.send",
+        "args": {
+          "send_id": "{send_id}",
+          "command_id": "atlas-p11-meeting_digest"
+        },
+        "adapter": "mcp-http",
+        "why": "the owner sends the prepared file",
+        "capture_as": "send_op",
+        "capture_path": "operation_id"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "path": "outcome",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.state",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends",
+              "length": 1
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.file_path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.proof.path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.payload_digest",
+              "value": "{digest}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.id",
+              "value": "{send_id}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.state",
+              "value": "sent"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.document_ref",
+              "value": "meeting_digest:{meeting_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "channel.prepare"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{prepare_op}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.operation.name",
+              "value": "channel.send"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{send_op}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "sends",
+              "length": 1
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "meeting_digest:{meeting_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{prepare_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{send_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "channel.sends",
+            "args": {
+              "document_ref": "meeting_digest:{meeting_id}"
+            }
+          }
+        ],
+        "words": "the real meeting import and summary producer render meeting_digest, then prepare and the owner send write one durable file row with owner receipts."
+      },
+      "completion_bound_s": 180,
+      "viewports": []
+    },
+    {
+      "id": "case.p11.document.meeting_followup.op",
+      "job": "p11",
+      "edge_ids": [
+        "edge.tool.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "The transcript import and summary replay finish on the isolated hub before the channel lifecycle."
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p11-06-model",
+              "profile_id": "p11-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "p11-06-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "select the owner disclosed summary route"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider edge while retaining the real queue and hub"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "import the transcript through the owner meeting route"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30,
+          "why": "wait for the real transcript importer"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the imported transcript has durable segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the route hash is read from the durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the route hash before the summary operation"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.summary.run",
+          "args": {
+            "meeting_id": "{meeting_id}",
+            "expected_selection_hash": "{selection_hash}"
+          },
+          "adapter": "mcp-http",
+          "why": "queue the real summary operation"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the replayed engine result to settle"
+        },
+        {
+          "kind": "op",
+          "name": "channel.save_destination",
+          "args": {
+            "name": "P11 meeting_followup",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "adapter": "mcp-http",
+          "why": "save a file destination in the isolated hub HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "op",
+          "name": "channel.preview",
+          "args": {
+            "document_ref": "meeting_followup:{meeting_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "render exact bytes before prepare",
+          "capture_as": "digest",
+          "capture_path": "payload_digest"
+        },
+        {
+          "kind": "op",
+          "name": "channel.prepare",
+          "args": {
+            "document_ref": "meeting_followup:{meeting_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "prepare the frozen send before the owner press",
+          "capture_as": "send_id",
+          "capture_path": "send.id",
+          "capture_more": [
+            {
+              "as": "prepare_op",
+              "path": "operation_id"
+            }
+          ]
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "channel.send",
+        "args": {
+          "send_id": "{send_id}",
+          "command_id": "atlas-p11-meeting_followup"
+        },
+        "adapter": "mcp-http",
+        "why": "the owner sends the prepared file",
+        "capture_as": "send_op",
+        "capture_path": "operation_id"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "path": "outcome",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.state",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends",
+              "length": 1
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.file_path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.proof.path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.payload_digest",
+              "value": "{digest}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.id",
+              "value": "{send_id}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.state",
+              "value": "sent"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.document_ref",
+              "value": "meeting_followup:{meeting_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "channel.prepare"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{prepare_op}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.operation.name",
+              "value": "channel.send"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{send_op}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "sends",
+              "length": 1
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "meeting_followup:{meeting_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{prepare_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{send_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "channel.sends",
+            "args": {
+              "document_ref": "meeting_followup:{meeting_id}"
+            }
+          }
+        ],
+        "words": "the real meeting import and summary producer render meeting_followup, then prepare and the owner send write one durable file row with owner receipts."
+      },
+      "completion_bound_s": 180,
+      "viewports": []
+    },
+    {
+      "id": "case.p11.document.meeting_decision.op",
+      "job": "p11",
+      "edge_ids": [
+        "edge.tool.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "A real meeting proposal is confirmed through the proposal bridge before the channel lifecycle."
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p11-06-model",
+              "profile_id": "p11-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "p11-06-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "select the owner disclosed summary route"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider edge while retaining the real queue and hub"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "import the transcript through the owner meeting route"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30,
+          "why": "wait for the real transcript importer"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the imported transcript has durable segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the route hash is read from the durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the route hash before the summary operation"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "p11-decision-plugin",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "meeting.plugin.decision_capture"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign the recorded provider to the real decision extractor"
+        },
+        {
+          "kind": "cli",
+          "action": "queue_meeting_intelligence",
+          "meeting_id": "{meeting_id}",
+          "adapter": "production-queue",
+          "why": "enqueue the imported transcript through the real Stop-style queue producer; the summary-only Run intentionally excludes plugins"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the replayed engine result to settle"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}/follow-through-proposals",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "proposals",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the actual plugin artifact and proposal bridge, not merely for summary text"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}/follow-through-proposals",
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "proposal_id",
+          "capture_path": "proposals",
+          "capture_match": {
+            "kind": "decision"
+          },
+          "why": "read the proposal minted by the real meeting intelligence chain",
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/proposals/{proposal_id}/confirm",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "confirmed_id",
+          "capture_path": "decision_id",
+          "why": "confirm the real meeting proposal through the proposal bridge"
+        },
+        {
+          "kind": "op",
+          "name": "channel.save_destination",
+          "args": {
+            "name": "P11 meeting_decision",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "adapter": "mcp-http",
+          "why": "save a file destination in the isolated hub HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "op",
+          "name": "channel.preview",
+          "args": {
+            "document_ref": "meeting_decision:{confirmed_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "render exact bytes before prepare",
+          "capture_as": "digest",
+          "capture_path": "payload_digest"
+        },
+        {
+          "kind": "op",
+          "name": "channel.prepare",
+          "args": {
+            "document_ref": "meeting_decision:{confirmed_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "prepare the frozen send before the owner press",
+          "capture_as": "send_id",
+          "capture_path": "send.id",
+          "capture_more": [
+            {
+              "as": "prepare_op",
+              "path": "operation_id"
+            }
+          ]
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "channel.send",
+        "args": {
+          "send_id": "{send_id}",
+          "command_id": "atlas-p11-meeting_decision"
+        },
+        "adapter": "mcp-http",
+        "why": "the owner sends the prepared file",
+        "capture_as": "send_op",
+        "capture_path": "operation_id"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "path": "outcome",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.state",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends",
+              "length": 1
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.file_path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.proof.path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.payload_digest",
+              "value": "{digest}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.id",
+              "value": "{send_id}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.state",
+              "value": "sent"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.document_ref",
+              "value": "meeting_decision:{confirmed_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "channel.prepare"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{prepare_op}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.operation.name",
+              "value": "channel.send"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{send_op}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "sends",
+              "length": 1
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "meeting_decision:{confirmed_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{prepare_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{send_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "channel.sends",
+            "args": {
+              "document_ref": "meeting_decision:{confirmed_id}"
+            }
+          }
+        ],
+        "words": "the real meeting proposal confirmation produces meeting_decision; prepare and owner send prove the durable row and both receipts."
+      },
+      "completion_bound_s": 180,
+      "viewports": []
+    },
+    {
+      "id": "case.p11.document.decision_record.op",
+      "job": "p11",
+      "edge_ids": [
+        "edge.tool.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "A real meeting proposal is confirmed through the proposal bridge before the channel lifecycle."
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p11-06-model",
+              "profile_id": "p11-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "p11-06-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "select the owner disclosed summary route"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider edge while retaining the real queue and hub"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "import the transcript through the owner meeting route"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30,
+          "why": "wait for the real transcript importer"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the imported transcript has durable segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the route hash is read from the durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the route hash before the summary operation"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "p11-decision-plugin",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "meeting.plugin.decision_capture"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign the recorded provider to the real decision extractor"
+        },
+        {
+          "kind": "cli",
+          "action": "queue_meeting_intelligence",
+          "meeting_id": "{meeting_id}",
+          "adapter": "production-queue",
+          "why": "enqueue the imported transcript through the real Stop-style queue producer; the summary-only Run intentionally excludes plugins"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the replayed engine result to settle"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}/follow-through-proposals",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "proposals",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the actual plugin artifact and proposal bridge, not merely for summary text"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}/follow-through-proposals",
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "proposal_id",
+          "capture_path": "proposals",
+          "capture_match": {
+            "kind": "decision"
+          },
+          "why": "read the proposal minted by the real meeting intelligence chain",
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/proposals/{proposal_id}/confirm",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "confirmed_id",
+          "capture_path": "decision_record_id",
+          "why": "confirm the real meeting proposal through the proposal bridge"
+        },
+        {
+          "kind": "op",
+          "name": "channel.save_destination",
+          "args": {
+            "name": "P11 decision_record",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "adapter": "mcp-http",
+          "why": "save a file destination in the isolated hub HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "op",
+          "name": "channel.preview",
+          "args": {
+            "document_ref": "decision_record:{confirmed_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "render exact bytes before prepare",
+          "capture_as": "digest",
+          "capture_path": "payload_digest"
+        },
+        {
+          "kind": "op",
+          "name": "channel.prepare",
+          "args": {
+            "document_ref": "decision_record:{confirmed_id}",
+            "destination_id": "{dest_id}"
+          },
+          "adapter": "mcp-http",
+          "why": "prepare the frozen send before the owner press",
+          "capture_as": "send_id",
+          "capture_path": "send.id",
+          "capture_more": [
+            {
+              "as": "prepare_op",
+              "path": "operation_id"
+            }
+          ]
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "channel.send",
+        "args": {
+          "send_id": "{send_id}",
+          "command_id": "atlas-p11-decision_record"
+        },
+        "adapter": "mcp-http",
+        "why": "the owner sends the prepared file",
+        "capture_as": "send_op",
+        "capture_path": "operation_id"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "path": "outcome",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.state",
+              "value": "sent"
+            },
+            {
+              "source": "trigger",
+              "path": "send.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends",
+              "length": 1
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.file_path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.proof.path",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.channel",
+              "value": "file"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.payload_digest",
+              "value": "{digest}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.id",
+              "value": "{send_id}"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.state",
+              "value": "sent"
+            },
+            {
+              "source": "observe",
+              "path": "sends.0.document_ref",
+              "value": "decision_record:{confirmed_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "channel.prepare"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{prepare_op}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.operation.name",
+              "value": "channel.send"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{send_op}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "sends",
+              "length": 1
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "decision_record:{confirmed_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{prepare_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{send_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "channel.sends",
+            "args": {
+              "document_ref": "decision_record:{confirmed_id}"
+            }
+          }
+        ],
+        "words": "the real meeting proposal confirmation produces decision_record; prepare and owner send prove the durable row and both receipts."
+      },
+      "completion_bound_s": 180,
+      "viewports": []
+    }
+  ],
+  "states": [
+    {
+      "id": "state.documents.p11_sources",
+      "family": "desk_presentation",
+      "values": {
+        "documents": "seven durable Phase 11 source kinds use the shared channel lifecycle",
+        "send": "file send writes one durable hub row and owner receipts for prepare and send"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/services/document_sources.py",
+          "symbol": "DOCUMENT_SOURCES",
+          "line": 360,
+          "claim": "the registry contains the seven new document source kinds"
+        },
+        {
+          "path": "holdspeak/services/channel_service.py",
+          "symbol": "def prepare(self, principal",
+          "line": 400,
+          "claim": "prepare freezes a source document and records the prepared send"
+        },
+        {
+          "path": "holdspeak/services/channel_service.py",
+          "symbol": "def send(self, principal",
+          "line": 452,
+          "claim": "send crosses the file boundary and settles a durable history row"
+        },
+        {
+          "path": "scripts/graph_walk.py",
+          "symbol": "def _op_step",
+          "line": 4579,
+          "claim": "the atlas rig executes canonical operations through the hub"
+        }
+      ],
+      "reachable_by": [
+        "case.p11.document.monday_brief.op",
+        "case.p11.document.desk_decision.op",
+        "case.p11.document.meeting_summary.op",
+        "case.p11.document.meeting_digest.op",
+        "case.p11.document.meeting_followup.op",
+        "case.p11.document.meeting_decision.op",
+        "case.p11.document.decision_record.op"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.python_wall",
+      "source": "datetime.datetime.now() inside the hub process",
+      "mechanism": "none: source cases do not move a clock",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}
