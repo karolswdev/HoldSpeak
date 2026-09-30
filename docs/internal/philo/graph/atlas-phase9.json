@@ -2221,13 +2221,13 @@
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
           "symbol": "data-testid={`credential-row-${cred.id}`}",
-          "line": 974,
+          "line": 973,
           "claim": "one ledger row per credential"
         },
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
           "symbol": "data-testid=\"palette-token\"",
-          "line": 979,
+          "line": 978,
           "claim": "the row's palette token reads the issued name"
         },
         {

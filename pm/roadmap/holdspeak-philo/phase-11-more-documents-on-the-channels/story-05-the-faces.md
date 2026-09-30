@@ -42,6 +42,7 @@ PROVISIONAL: 2–3 engineering days.
 
 ## Notes
 
+- 2026-09-30 — **Named deviation from the ratified canvas, for the owner at close (Muad'Dib's ruling on #710):** the `✓ WEBHOOK SET` account chip on a Slack destination row INSIDE a SEND well (canvas C1) is withheld. The destination list must not read the secret store per row. The Destinations group keeps its SET after a save or a Check (D2a, D3). Recorded in `assets/story-05b-shots/README.md` under "Deviations for the owner".
 - 2026-09-30 — PHILO-11-02 counsel C3 assigns the 22 exact missing face-word pairs above to Story 05. This criterion update ships atomically with the Story 02 counsel response; Story 05 remains backlog, and no face implementation ships in that commit.
 - 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

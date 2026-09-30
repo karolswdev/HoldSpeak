@@ -3543,9 +3543,7 @@
         "POST"
       ],
       "module": "web.routes.meetings.aftercare",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/meetings/{meeting_id}/follow-through-proposals",

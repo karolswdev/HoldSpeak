@@ -169,6 +169,10 @@ const REFUSED: Record<string, string> = {
   email_key_missing: "NO KEY",
   slack_webhook_missing: "NO WEBHOOK",
   slack_webhook_invalid: "WEBHOOK NOT VALID",
+  slack_channel_label_invalid: "CHANNEL NAME NOT VALID",
+  slack_key_ref_invalid: "KEY NAME NOT VALID",
+  slack_key_store_locked: "KEY STORE LOCKED",
+  slack_key_store_not_native: "NO SAFE KEY STORE",
   email_key_ref_invalid: "KEY NAME NOT VALID",
   email_key_store_locked: "KEY STORE LOCKED",
   email_key_store_not_native: "NO SAFE KEY STORE",
@@ -254,6 +258,16 @@ const FAILED: Record<string, string> = {
   tls_failed: "SECURE CONNECTION FAILED",
   timeout: "TIMED OUT",
   transport_error: "CONNECTION FAILED",
+  /* PHILO-11-05: Slack's pinned non-deliveries (design section 5) and its key custody. */
+  invalid_payload: "MESSAGE NOT VALID",
+  action_prohibited: "SLACK REFUSED",
+  channel_not_found: "CHANNEL NOT FOUND",
+  channel_is_archived: "CHANNEL ARCHIVED",
+  "payload_too_large:slack": "TOO LARGE FOR SLACK",
+  slack_webhook_missing: "NO WEBHOOK",
+  slack_webhook_invalid: "WEBHOOK NOT VALID",
+  slack_key_store_locked: "KEY STORE LOCKED",
+  slack_key_store_not_native: "NO SAFE KEY STORE",
 };
 /** A failure code with a variable part: its word by prefix (none today). */
 const FAILED_PREFIX: [string, string][] = [
@@ -285,6 +299,14 @@ const UNKNOWN: Record<string, string> = {
   dns_failed: "HOST NOT FOUND",
   tls_failed: "SECURE CONNECTION FAILED",
   transport_error: "CONNECTION FAILED",
+  /* PHILO-11-05: Slack answered, but not with its exact `ok` (design section 5). */
+  ack_missing: "NO OK FROM SLACK",
+  rollup_error: "SLACK ERROR",
+  plan_refused: "COMMAND NOT VALID",
+  slack_webhook_missing: "NO WEBHOOK",
+  slack_webhook_invalid: "WEBHOOK NOT VALID",
+  slack_key_store_locked: "KEY STORE LOCKED",
+  slack_key_store_not_native: "NO SAFE KEY STORE",
 };
 /** An UNKNOWN code with a variable part: the file channel's unpinned OS
  *  errors (`create_<errno>`, `write_<errno>`), an effect that raised, a CLI's
@@ -501,6 +523,7 @@ export type SaveBody = {
   host?: string; repo?: string; kind?: "issue" | "pr"; number?: number;
   site?: string; email?: string; key?: string; space_id?: string;
   provider?: string; from_email?: string; from_name?: string; key_ref?: string; to?: string[]; cc?: string[];
+  channel_label?: string;
 };
 
 const commandId = () =>
@@ -526,6 +549,12 @@ export const wire = {
   saveKey: (keyRef: string, value: string, provider: EmailProvider = "sendgrid") =>
     call<{ key_ref: string; saved?: boolean }>(`/api/channels/email-keys/${encodeURIComponent(keyRef)}`, {
       method: "PUT", json: { api_key: value, provider, command_id: commandId() },
+    }),
+  /** PHILO-11-05: a Slack webhook, typed once, into the OS keychain (design section 5). The URL is the
+   *  credential: HTTP only, never shown again. The hub mints the key_ref the destination save then names. */
+  saveSlackWebhook: (webhookUrl: string) =>
+    call<{ key_ref: string; saved?: boolean }>("/api/channels/slack-webhooks", {
+      method: "POST", json: { webhook_url: webhookUrl, command_id: commandId() },
     }),
   sends: (documentRef: string) =>
     call<unknown>(`/api/channels/sends?document_ref=${encodeURIComponent(documentRef)}`).then((r) => listOf<Send>(r, "sends")),

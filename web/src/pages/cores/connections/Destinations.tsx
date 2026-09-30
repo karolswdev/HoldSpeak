@@ -16,6 +16,11 @@
  * - A read that gets no answer says CANNOT READ DESTINATIONS + Retry, never
  *   the empty add form. A refused key save says KEY NOT SAVED + why.
  * - Email Check reports the sender's verification, never the key alone.
+ * - PHILO-11-05 (canvas D1-D4, design section 5): Slack is the sixth channel.
+ *   The webhook URL is the credential: a SecretRow saved through the HTTP-only
+ *   `channel.save_slack_webhook` (the hub mints the key_ref), never shown
+ *   again. The channel name is his label; the name fills from it. Check says
+ *   what is known without a post (WEBHOOK SET · HOST OK); it never posts.
  * - No counter of zero: the group head counts only when there is a row.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -49,6 +54,7 @@ const CHANNELS: { value: Channel; label: string }[] = [
   { value: "jira", label: "Jira comment" },
   { value: "confluence", label: "Confluence blog post" },
   { value: "email", label: "Email" },
+  { value: "slack", label: "Slack" },
 ];
 /** Story 07: the email providers, from the one table (SendGrid first: the ratified canvas). */
 const PROVIDERS = (Object.keys(EMAIL_PROVIDERS) as EmailProvider[]).map((p) => ({ value: p, label: EMAIL_PROVIDERS[p].label }));
@@ -60,10 +66,13 @@ type Draft = {
   jiraAccount: string; key: string;
   confAccount: string; space: string;
   provider: EmailProvider; fromEmail: string; fromName: string; to: string; cc: string;
+  /** Slack: his channel label, and the key_ref the webhook save returned (empty until he types it). */
+  slackLabel: string; slackRef: string;
 };
 const EMPTY: Draft = {
   channel: "file", name: "", nameTouched: false, folder: "", synced: false, repo: "", kind: "issue", number: "",
   jiraAccount: "", key: "", confAccount: "", space: "", provider: "sendgrid", fromEmail: "", fromName: "", to: "", cc: "",
+  slackLabel: "", slackRef: "",
 };
 
 function fromDestination(d: Destination): Draft {
@@ -77,17 +86,20 @@ function fromDestination(d: Destination): Draft {
     provider: a.provider === "resend" ? "resend" : "sendgrid",
     fromEmail: String(a.from_email ?? ""), fromName: String(a.from_name ?? ""),
     to: [t.to as unknown].flat().filter(Boolean).join(", "), cc: [t.cc as unknown].flat().filter(Boolean).join(", "),
+    // A new webhook is a new destination: Edit keeps this key_ref until he types a new URL (design section 5).
+    slackLabel: String(t.channel_label ?? ""), slackRef: d.channel === "slack" ? String(a.key_ref ?? "") : "",
   };
 }
 
 /** B3: the name he would type, from the target (editable). */
-export function autoName(d: Pick<Draft, "channel" | "folder" | "repo" | "kind" | "number" | "key" | "space" | "to">): string {
+export function autoName(d: Pick<Draft, "channel" | "folder" | "repo" | "kind" | "number" | "key" | "space" | "to"> & Partial<Pick<Draft, "slackLabel">>): string {
   switch (d.channel) {
     case "file": return d.folder ? `Folder ${d.folder.split("/").filter(Boolean).pop() ?? ""}` : "";
     case "github": return d.repo && d.number ? `${d.repo} ${d.kind === "pr" ? "PR " : ""}#${d.number}` : "";
     case "jira": return d.key ? `Jira ${d.key}` : "";
     case "confluence": return d.space ? `Confluence space ${d.space}` : "";
     case "email": return d.to ? `Email ${d.to.split(",")[0].trim()}` : "";
+    case "slack": return d.slackLabel?.trim() ? `Slack ${d.slackLabel.trim()}` : "";
     default: return "";
   }
 }
@@ -96,16 +108,26 @@ export const keyRef = (fromEmail: string, provider: EmailProvider = "sendgrid") 
   `${provider}-${fromEmail.trim().toLowerCase().replace(/[^a-z0-9_.@-]/g, "-")}`.slice(0, 100);
 const addresses = (text: string) => text.split(",").map((a) => a.trim()).filter(Boolean);
 
-function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
+function DestForm({ conns, initial, replaces, keys, onKey, onSlackKey, onSlackKnown, onDone, onCancel }: {
   conns: ConnectionsResponse | null; initial: Draft; replaces?: string; keys: Record<string, boolean>;
-  onKey: (ref: string, v: string, provider: EmailProvider) => Promise<string | null>; onDone: () => void; onCancel?: () => void;
+  onKey: (ref: string, v: string, provider: EmailProvider) => Promise<string | null>;
+  /** The webhook save: the minted key_ref, or the refusal code. */
+  onSlackKey: (url: string) => Promise<{ keyRef: string } | { code: string }>;
+  /** What a Check found about a key_ref: present or absent. */
+  onSlackKnown: (ref: string, present: boolean) => void;
+  onDone: () => void; onCancel?: () => void;
 }) {
   const [keyRefused, setKeyRefused] = useState<string | null>(null);
+  const [keyChecking, setKeyChecking] = useState(false);
   const [d, setD] = useState<Draft>(initial);
   const [busy, setBusy] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
   const set = (patch: Partial<Draft>) => { setRefused(null); setD((x) => ({ ...x, ...patch })); };
   const name = d.nameTouched ? d.name : autoName(d);
+  // The webhook is SET only when a save or a Check in this session confirmed it (Astra counsel r1 F1):
+  // unknown is never SET. Edit on a saved row starts unknown and offers Check.
+  const slackKnown: boolean | undefined = d.slackRef ? keys[d.slackRef] : false;
+  const slackSet = slackKnown === true;
   const ref = keyRef(d.fromEmail, d.provider);
   const gh = conns?.tools.find((t) => t.provider_id === "github");
   const jiraConns = conns?.tools.find((t) => t.provider_id === "jira")?.connections ?? [];
@@ -118,10 +140,13 @@ function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
     : d.channel === "jira" ? pick(jiraAcc)
     : d.channel === "confluence" ? pick(confAcc)
     : d.channel === "email" ? { provider: d.provider, from_email: d.fromEmail, from_name: d.fromName, key_ref: ref, key_present: !!keys[ref] }
+    : d.channel === "slack" ? { key_ref: d.slackRef, ...(slackKnown === undefined ? {} : { key_present: slackKnown }) }
     : {};
   const eg = egressOf({ channel: d.channel, account, synced: d.synced });
   const acc = accountChip({ channel: d.channel, account }, conns);
   const save = async () => {
+    // Slack: no webhook typed, nothing to save (the hub would store a row that cannot post).
+    if (d.channel === "slack" && slackKnown === false) { setRefused("slack_webhook_missing"); return; }
     setBusy(true); setRefused(null);
     const base = { name, channel: d.channel, ...(replaces ? { replaces } : {}) };
     const body: SaveBody =
@@ -129,6 +154,7 @@ function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
       : d.channel === "github" ? { ...base, host: "github.com", repo: d.repo.trim(), kind: d.kind, number: Number(d.number) || 0 }
       : d.channel === "jira" ? { ...base, ...pick(jiraAcc), key: d.key.trim() }
       : d.channel === "confluence" ? { ...base, ...pick(confAcc), space_id: d.space.trim() }
+      : d.channel === "slack" ? { ...base, key_ref: d.slackRef, channel_label: d.slackLabel.trim() }
       : { ...base, provider: d.provider, from_email: d.fromEmail.trim(), from_name: d.fromName.trim(),
           key_ref: ref, to: addresses(d.to), cc: addresses(d.cc) };
     try {
@@ -201,6 +227,37 @@ function DestForm({ conns, initial, replaces, keys, onKey, onDone, onCancel }: {
         <GadgetRow label="To"><StringGadget label="To" value={d.to} onChange={(v) => set({ to: v })} placeholder="a@company.com, b@company.com" inputProps={{ "data-testid": "dest-to" } as never} /></GadgetRow>
         <GadgetRow label="Cc"><StringGadget label="Cc" value={d.cc} onChange={(v) => set({ cc: v })} placeholder="c@company.com" /></GadgetRow>
       </>) : null}
+      {d.channel === "slack" ? (<>
+        <div className="dest-secret" data-testid="dest-key-row">
+          <SecretRow label="Webhook" configured={slackSet}
+            onReplace={(v) => {
+              setKeyRefused(null);
+              void onSlackKey(v).then((r) => ("keyRef" in r ? set({ slackRef: r.keyRef }) : setKeyRefused(r.code)));
+            }} />
+          {replaces && slackKnown === false ? (
+            <span className="send-line" data-testid="dest-key-missing">
+              <StateChip state="warning" label="NO WEBHOOK" />
+            </span>
+          ) : null}
+          {replaces && d.slackRef && slackKnown === undefined ? (
+            <Button dense variant="ghost" loading={keyChecking} data-testid="dest-key-check"
+              onClick={() => {
+                setKeyChecking(true);
+                void wire.check(replaces)
+                  .then((r) => { if (r.check.state === "ready" || r.check.state === "slack_webhook_missing") onSlackKnown(d.slackRef, r.check.state === "ready"); else setKeyRefused(r.check.state); })
+                  .catch((e) => setKeyRefused(e instanceof Refusal ? e.code : "no_answer"))
+                  .finally(() => setKeyChecking(false));
+              }}>Check</Button>
+          ) : null}
+          {keyRefused ? (
+            <span className="send-line" data-testid="dest-key-refused" data-code={keyRefused}>
+              <StateChip state="failure" label={SEND_WORDS.keyNotSaved} />
+              <span className="surface-token" data-chip>{refusedWord(keyRefused)}</span>
+            </span>
+          ) : null}
+        </div>
+        <GadgetRow label="Channel name"><StringGadget label="Channel name" value={d.slackLabel} onChange={(v) => set({ slackLabel: v })} placeholder="#leads" inputProps={{ "data-testid": "dest-slack-label" } as never} /></GadgetRow>
+      </>) : null}
       <GadgetRow label="Name"><StringGadget label="Name" value={name} onChange={(v) => set({ name: v, nameTouched: true })} placeholder="Name" inputProps={{ "data-testid": "dest-name" } as never} /></GadgetRow>
       <div className="send-verbs" data-testid="dest-form-verbs">
         <Button dense variant="primary" loading={busy} onClick={() => void save()} data-testid="dest-save">Save</Button>
@@ -226,7 +283,7 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-function detailFields(d: Destination): [string, string][] {
+function detailFields(d: Destination, keyKnown?: boolean): [string, string][] {
   const t = d.target, a = d.account;
   const base: [string, string][] = [["Channel", CHANNEL_WORD[d.channel] ?? d.channel]];
   switch (d.channel) {
@@ -236,6 +293,9 @@ function detailFields(d: Destination): [string, string][] {
     case "confluence": return [...base, ["Account", `${a.email} · ${a.site}`], ["Space id", String(t.space_id)]];
     case "email": return [...base, ["Provider", emailProvider(a).label], ["From", a.from_name ? `${a.from_name} <${a.from_email}>` : String(a.from_email)],
       ["To", [t.to as unknown].flat().join(", ")], ["Cc", [t.cc as unknown].flat().join(", ") || "—"]];
+    // The face knows the webhook only as present or absent, and only when known: never the URL.
+    case "slack": return [...base, ["Channel name", String(t.channel_label ?? "")],
+      ["Webhook", keyKnown === true ? "SET · hooks.slack.com" : keyKnown === false ? "NOT SET" : "hooks.slack.com"]];
     default: return base;
   }
 }
@@ -251,6 +311,9 @@ function CheckChip({ state, channel, answeredAt }: { state: string; channel: Cha
     if (state === "sender_not_verified") return <><StateChip state="failure" label="SENDER NOT VERIFIED" />{when}</>;
     if (state === "key_changed") return <StateChip state="warning" label="NOT CHECKED SINCE KEY CHANGE" />;
   }
+  // Slack (design section 5): what is known without a post -- the webhook is in the keychain and its
+  // host passes the rule. Check never posts a test message.
+  if (channel === "slack" && state === "ready") return <StateChip state="success" label="WEBHOOK SET · HOST OK" />;
   if (state === "ready" || state === "connected") return <StateChip state="success" label="CHECKED" />;
   const words: Record<string, string> = {
     changed: "DESTINATION CHANGED", missing: "NO FOLDER", not_writable: "NOT WRITABLE", parked: "DESTINATION PARKED",
@@ -308,6 +371,13 @@ export function Destinations() {
   const onKey = (ref: string, v: string, provider: EmailProvider): Promise<string | null> => wire.saveKey(ref, v, provider)
     .then(() => { setKeys((k) => ({ ...k, [ref]: true })); return null; })
     .catch((e) => (e instanceof Refusal ? e.code : "no_answer"));
+  const onSlackKey = (url: string): Promise<{ keyRef: string } | { code: string }> => wire.saveSlackWebhook(url)
+    .then((r) => { setKeys((k) => ({ ...k, [r.key_ref]: true })); return { keyRef: r.key_ref }; })
+    .catch((e) => ({ code: e instanceof Refusal ? e.code : "no_answer" }));
+  const onSlackKnown = (ref: string, present: boolean) => setKeys((k) => ({ ...k, [ref]: present }));
+  /** A Slack row's webhook, as far as this face knows it (a save or a Check): true, false or unknown. */
+  const slackKey = (d: Destination): boolean | undefined =>
+    d.channel === "slack" ? keys[String(d.account.key_ref ?? "")] : undefined;
   if (readFailed) {
     return (
       <div data-send="destinations" data-testid="destinations" ref={groupRef}>
@@ -324,7 +394,7 @@ export function Destinations() {
   const active = rows.filter((d) => d.state === "active");
   const parked = rows.filter((d) => d.state === "parked");
   const form = (
-    <DestForm conns={conns} initial={EMPTY} keys={keys} onKey={onKey}
+    <DestForm conns={conns} initial={EMPTY} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onSlackKnown={onSlackKnown}
       onDone={() => {
         // PHILO-10-07: after Save the form closes; the saved row stays in view (at 393 the closed form
         // otherwise leaves the list above the window).
@@ -341,7 +411,8 @@ export function Destinations() {
             <ul className="surface-ledger-rows" data-testid="dest-list">
               {active.map((d) => {
                 const eg = egressOf(d);
-                const acc = accountChip(d, conns);
+                const known = slackKey(d);
+                const acc = accountChip(known === undefined ? d : { ...d, account: { ...d.account, key_present: known } }, conns);
                 const c = checks[d.id];
                 return (
                   <SurfaceLedgerRow key={d.id} data-testid="dest-row" wrap open={open === d.id}
@@ -357,12 +428,12 @@ export function Destinations() {
                     </>}>
                     {open === d.id ? (
                       editing === d.id ? (
-                        <DestForm conns={conns} initial={fromDestination(d)} replaces={d.id} keys={keys} onKey={onKey}
+                        <DestForm conns={conns} initial={fromDestination(d)} replaces={d.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onSlackKnown={onSlackKnown}
                           onDone={() => { setEditing(null); setOpen(null); reload(); }} onCancel={() => setEditing(null)} />
                       ) : (
                         <div className="send-open" data-testid="dest-open">
                           <dl className="send-fields">
-                            {detailFields(d).map(([l, v]) => <Field key={l} label={l} value={v} />)}
+                            {detailFields(d, slackKey(d)).map(([l, v]) => <Field key={l} label={l} value={v} />)}
                             <Field label="Saved" value={stamp(d.created_at)} />
                             {c?.at ? <Field label="Checked" value={stamp(c.at)} /> : null}
                             {d.channel === "email" && c?.state ? (
@@ -374,7 +445,14 @@ export function Destinations() {
                               onClick={() => {
                                 setChecks((m) => ({ ...m, [d.id]: { busy: true } }));
                                 void wire.check(d.id)
-                                  .then((r) => setChecks((m) => ({ ...m, [d.id]: { busy: false, state: r.check.state, at: new Date().toISOString(), answeredAt: r.check.answered_at ?? null } })))
+                                  .then((r) => {
+                                    setChecks((m) => ({ ...m, [d.id]: { busy: false, state: r.check.state, at: new Date().toISOString(), answeredAt: r.check.answered_at ?? null } }));
+                                    // Slack: the Check reads the keychain, so it tells the face present or absent.
+                                    const ref = String(d.account.key_ref ?? "");
+                                    if (d.channel === "slack" && ref && (r.check.state === "ready" || r.check.state === "slack_webhook_missing")) {
+                                      setKeys((k) => ({ ...k, [ref]: r.check.state === "ready" }));
+                                    }
+                                  })
                                   .catch((e) => setChecks((m) => ({ ...m, [d.id]: { busy: false, state: e instanceof Refusal ? e.code : "no_answer" } })));
                               }}>Check</Button>
                             <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />

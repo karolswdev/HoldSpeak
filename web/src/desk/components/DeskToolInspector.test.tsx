@@ -6,9 +6,11 @@ import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
 import { DeskToolInspector } from "./DeskToolInspector";
 
-const slack = {
-  id: "slack",
-  name: "Slack",
+// PHILO-11-05: the free-text desk Slack send is parked (design section 6, D1); the
+// inspector's integration flow is fenced on the Custom webhook, which keeps it.
+const webhook = {
+  id: "companion_webhook",
+  name: "Custom webhook",
   operation: "Send approved text",
   enabled: true,
   destination: "Launch workspace",
@@ -43,7 +45,7 @@ describe("HS-93-04 Desk tool inspector", () => {
       projects: [],
       inferenceTargets: [],
       models: [],
-      setup: { trust: { destinations: [slack] } },
+      setup: { trust: { destinations: [webhook] } },
       selectedIds: ["note:release"],
       toolInspector: null,
       closeToolInspector: vi.fn(),
@@ -67,17 +69,17 @@ describe("HS-93-04 Desk tool inspector", () => {
           source: "config",
         });
       }
-      if (url.endsWith("/api/desk/actuators/slack/propose")) {
+      if (url.endsWith("/api/desk/actuators/webhook/propose")) {
         return json({
           proposal: {
             id: "p1",
             status: "proposed",
-            target: "slack",
+            target: "webhook",
             preview: "Send Release checklist to Launch workspace",
-            commitment: { approve: "Approve and send to Slack" },
+            commitment: { approve: "Approve and post to webhook" },
             operation: {
-              effect_class: "slack/post_message",
-              destination: "slack:sha256:fixed",
+              effect_class: "webhook/post",
+              destination: "webhook:sha256:fixed",
               consequence: "execute_now",
             },
             policy_snapshot: {
@@ -97,7 +99,7 @@ describe("HS-93-04 Desk tool inspector", () => {
           },
         });
       }
-      if (url.includes("/api/desk/actuators/slack/p1/decision")) {
+      if (url.includes("/api/desk/actuators/webhook/p1/decision")) {
         expect(JSON.parse(String(init?.body))).toEqual({
           decision: "approved",
           decided_by: "web-desk",
@@ -106,7 +108,7 @@ describe("HS-93-04 Desk tool inspector", () => {
           proposal: {
             id: "p1",
             status: "executed",
-            target: "slack",
+            target: "webhook",
             preview: "Send Release checklist to Launch workspace",
             payload: {
               _source: {
@@ -129,7 +131,7 @@ describe("HS-93-04 Desk tool inspector", () => {
     });
     vi.stubGlobal("fetch", fetcher);
     useDesk.setState({
-      toolInspector: { kind: "integration", id: "slack" },
+      toolInspector: { kind: "integration", id: "companion_webhook" },
     });
 
     render(
@@ -142,15 +144,15 @@ describe("HS-93-04 Desk tool inspector", () => {
     expect(screen.getByText("Ship after checks pass.")).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Send Release checklist to Slack",
+        name: "Post Release checklist to Custom webhook",
       }),
     );
 
     expect(
-      await screen.findByRole("button", { name: "Approve and send to Slack" }),
+      await screen.findByRole("button", { name: "Approve and post to webhook" }),
     ).toBeInTheDocument();
     const proposeCall = fetcher.mock.calls.find(([url]) =>
-      String(url).endsWith("/api/desk/actuators/slack/propose"),
+      String(url).endsWith("/api/desk/actuators/webhook/propose"),
     );
     const proposed = JSON.parse(String((proposeCall?.[1] as RequestInit).body));
     expect(proposed).toMatchObject({
@@ -161,7 +163,7 @@ describe("HS-93-04 Desk tool inspector", () => {
 
     useDesk.setState({ selectedIds: [] });
     fireEvent.click(
-      screen.getByRole("button", { name: "Approve and send to Slack" }),
+      screen.getByRole("button", { name: "Approve and post to webhook" }),
     );
     expect(await screen.findByText("Receipt · executed")).toBeInTheDocument();
     fireEvent.click(
@@ -183,16 +185,16 @@ describe("HS-93-04 Desk tool inspector", () => {
           source: "config",
         });
       }
-      if (url.endsWith("/api/desk/actuators/slack/propose")) {
+      if (url.endsWith("/api/desk/actuators/webhook/propose")) {
         return json({
           proposal: {
             id: "p-yolo",
             status: "executed",
-            target: "slack",
+            target: "webhook",
             preview: "Send Release checklist to Launch workspace",
             operation: {
-              effect_class: "slack/post_message",
-              destination: "slack:sha256:fixed",
+              effect_class: "webhook/post",
+              destination: "webhook:sha256:fixed",
               consequence: "execute_now",
             },
             policy_snapshot: {
@@ -224,7 +226,7 @@ describe("HS-93-04 Desk tool inspector", () => {
     });
     vi.stubGlobal("fetch", fetcher);
     useDesk.setState({
-      toolInspector: { kind: "integration", id: "slack" },
+      toolInspector: { kind: "integration", id: "companion_webhook" },
     });
 
     render(
@@ -236,7 +238,7 @@ describe("HS-93-04 Desk tool inspector", () => {
     expect(await screen.findByText("YOLO")).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Send Release checklist to Slack",
+        name: "Post Release checklist to Custom webhook",
       }),
     );
     expect(await screen.findByText("Receipt · executed")).toBeInTheDocument();
@@ -245,7 +247,7 @@ describe("HS-93-04 Desk tool inspector", () => {
     expect(screen.getAllByText("Control posture").length).toBeGreaterThan(1);
     expect(screen.queryByText("control_posture")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Approve and send to Slack" }),
+      screen.queryByRole("button", { name: "Approve and post to webhook" }),
     ).not.toBeInTheDocument();
     expect(
       fetcher.mock.calls.some(([url]) => String(url).includes("/decision")),

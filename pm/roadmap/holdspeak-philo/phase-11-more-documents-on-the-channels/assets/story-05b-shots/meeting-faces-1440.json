@@ -1,0 +1,2757 @@
+{
+  "boards": {
+    "C1-meetings-record-send-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "8f8bc2dae08b67aa79b1afb8b47af8feefc9b772db8ffa6f78c09b37ef793e36",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=meeting] [data-testid=doc-forms] select",
+          "text": "Summary Digest Follow-up",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=meeting] [data-testid=destination-row]:has([data-destination='Slack #leads'])",
+          "text": "○ Slack #leads SLACK #leads HOOKS.SLACK.COM",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            104,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            104,
+            44
+          ],
+          "text": "Summary\nDigest\nFollow-up"
+        },
+        {
+          "face": [
+            366,
+            107.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            107.8
+          ],
+          "text": "○\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            366,
+            55.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            55.8
+          ],
+          "text": "○\nSlack #leads\nSLACK\n#leads\nHO"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 11,
+            "text": "⚙︎"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 28 · OFF"
+          },
+          {
+            "cls": "meetings-stream-fact",
+            "fs": 10,
+            "text": "SEP 29"
+          },
+          {
+            "cls": "surface-caption",
+            "fs": 11,
+            "text": "NEEDS YOU"
+          },
+          {
+            "cls": "transcript-speaker",
+            "fs": 11,
+            "text": "AVERY"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "C2-summary-slack-picked-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "● Slack #leads SLACK #leads HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "1dc5227a3b8e80b7feb8f1a221dd459fa0df13f51b179e118b75a8760af98672",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=meeting] [data-testid=destination-row]:has([data-destination='Slack #leads'])",
+          "text": "● Slack #leads SLACK #leads HOOKS.SLACK.COM",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=meeting] [data-testid=send-open][data-destination='Slack #leads'] [data-testid=send-verb]",
+          "text": "Send",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            104,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            104,
+            44
+          ],
+          "text": "Summary\nDigest\nFollow-up"
+        },
+        {
+          "face": [
+            366,
+            107.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            107.8
+          ],
+          "text": "○\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            366,
+            55.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            55.8
+          ],
+          "text": "●\nSlack #leads\nSLACK\n#leads\nHO"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            24
+          ],
+          "text": "Send"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "CHANNEL #leads",
+        "WEBHOOK hooks.slack.com"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 11,
+            "text": "⚙︎"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 28 · OFF"
+          },
+          {
+            "cls": "meetings-stream-fact",
+            "fs": 10,
+            "text": "SEP 29"
+          },
+          {
+            "cls": "surface-caption",
+            "fs": 11,
+            "text": "NEEDS YOU"
+          },
+          {
+            "cls": "transcript-speaker",
+            "fs": 11,
+            "text": "AVERY"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "C3-summary-posted-slack-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "● Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "SENDS 1",
+      "history_outcomes": [],
+      "last_chips": [
+        "✓ POSTED 08:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "d7461be25d720026904920b849fef37cb0f2989fb79f9d7ed43899685d2de74a",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=meeting] [data-testid=send-open][data-destination='Slack #leads'] [data-receipt=latest]",
+          "text": "✓ POSTED #leads",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            104,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            104,
+            44
+          ],
+          "text": "Summary\nDigest\nFollow-up"
+        },
+        {
+          "face": [
+            366,
+            107.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            107.8
+          ],
+          "text": "○\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            366,
+            77.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            77.8
+          ],
+          "text": "●\nSlack #leads\nSLACK\n#leads\n✓\n"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            24
+          ],
+          "text": "Send again"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "CHANNEL #leads",
+        "WEBHOOK hooks.slack.com"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ POSTED #leads"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 11,
+            "text": "⚙︎"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 28 · OFF"
+          },
+          {
+            "cls": "meetings-stream-fact",
+            "fs": 10,
+            "text": "SEP 29"
+          },
+          {
+            "cls": "surface-caption",
+            "fs": 11,
+            "text": "NEEDS YOU"
+          },
+          {
+            "cls": "transcript-speaker",
+            "fs": 11,
+            "text": "AVERY"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "C3b-summary-history-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "SENDS 1",
+      "history_outcomes": [],
+      "last_chips": [
+        "✓ POSTED 08:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "bb38970dc4b0ce530b7dffb101eb56dc954d803c63a39aa30de709c0193b4b26",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=meeting] [data-testid=history-row]",
+          "text": "✓ Slack #leads POSTED #leads SEP 30 08:51",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            104,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            104,
+            44
+          ],
+          "text": "Summary\nDigest\nFollow-up"
+        },
+        {
+          "face": [
+            366,
+            107.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            107.8
+          ],
+          "text": "○\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            366,
+            77.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            77.8
+          ],
+          "text": "○\nSlack #leads\nSLACK\n#leads\n✓\n"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 11,
+            "text": "⚙︎"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 28 · OFF"
+          },
+          {
+            "cls": "meetings-stream-fact",
+            "fs": 10,
+            "text": "SEP 29"
+          },
+          {
+            "cls": "surface-caption",
+            "fs": 11,
+            "text": "NEEDS YOU"
+          },
+          {
+            "cls": "transcript-speaker",
+            "fs": 11,
+            "text": "AVERY"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "C4-no-summary-no-well-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [],
+      "egress_chips": [],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "f0454267c77df82baaf6116b5cd7e2742998e399333a47b57d79da13666060db",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window .meetings-detail-head",
+          "text": "Vendor call SEP 29 · SUMMARY OFF",
+          "why": ""
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 11,
+            "text": "⚙︎"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 28 · OFF"
+          },
+          {
+            "cls": "meetings-stream-fact",
+            "fs": 10,
+            "text": "SEP 29"
+          },
+          {
+            "cls": "surface-caption",
+            "fs": 11,
+            "text": "NEEDS YOU"
+          },
+          {
+            "cls": "transcript-speaker",
+            "fs": 11,
+            "text": "AVERY"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "C5-digest-form-slack-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "HOOKS.SLACK.COM:cloud",
+        "HOOKS.SLACK.COM:cloud",
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "09fb5dbe39dff1136169428a77ad06eec9a6c78dbbca2b0c6f6613f924c219fe",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=meeting] [data-testid=doc-forms] select",
+          "text": "Summary Digest Follow-up",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=meeting] [data-testid=prepared-send]",
+          "text": "Send",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            104,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            104,
+            44
+          ],
+          "text": "Summary\nDigest\nFollow-up"
+        },
+        {
+          "face": [
+            366,
+            77.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            77.8
+          ],
+          "text": "◆\nSlack #leads\n◆\nPREPARED\nBY Y"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            24
+          ],
+          "text": "Send"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            24
+          ],
+          "text": "Discard"
+        },
+        {
+          "face": [
+            366,
+            107.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            107.8
+          ],
+          "text": "○\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            366,
+            55.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            55.8
+          ],
+          "text": "○\nSlack #leads\nSLACK\n#leads\nHO"
+        }
+      ],
+      "prepared": [
+        "◆ Slack #leads ◆ PREPARED BY YOU DIGEST SEP 29 SEP 30 08:51 HOOKS.SLACK.COM"
+      ],
+      "prepared_open": 1,
+      "prepared_results": [],
+      "preview_fields": [
+        "CHANNEL #leads",
+        "WEBHOOK hooks.slack.com"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 11,
+            "text": "⚙︎"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 28 · OFF"
+          },
+          {
+            "cls": "meetings-stream-fact",
+            "fs": 10,
+            "text": "SEP 29"
+          },
+          {
+            "cls": "surface-caption",
+            "fs": 11,
+            "text": "NEEDS YOU"
+          },
+          {
+            "cls": "transcript-speaker",
+            "fs": 11,
+            "text": "AVERY"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "C5b-followup-form-folder-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "e77a0f0e0912a186af41d438f9fb4617716649acdee57d2d898abfbf4d430717",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=meeting] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
+          "text": "Send",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            104,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            104,
+            44
+          ],
+          "text": "Summary\nDigest\nFollow-up"
+        },
+        {
+          "face": [
+            366,
+            107.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            107.8
+          ],
+          "text": "●\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            24
+          ],
+          "text": "Send"
+        },
+        {
+          "face": [
+            366,
+            55.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            55.8
+          ],
+          "text": "○\nSlack #leads\nSLACK\n#leads\nHO"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 11,
+            "text": "⚙︎"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 28 · OFF"
+          },
+          {
+            "cls": "meetings-stream-fact",
+            "fs": 10,
+            "text": "SEP 29"
+          },
+          {
+            "cls": "surface-caption",
+            "fs": 11,
+            "text": "NEEDS YOU"
+          },
+          {
+            "cls": "transcript-speaker",
+            "fs": 11,
+            "text": "AVERY"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "C5c-digest-body-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "HOOKS.SLACK.COM:cloud",
+        "HOOKS.SLACK.COM:cloud",
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "0e5b01cf6dc642651d95eaa43223e404e113a74a354600420754951d729be1a9",
+      "modal": false,
+      "named": [],
+      "prepared": [
+        "◆ Slack #leads ◆ PREPARED BY YOU DIGEST SEP 29 SEP 30 08:51 HOOKS.SLACK.COM"
+      ],
+      "prepared_open": 1,
+      "prepared_results": [],
+      "preview_fields": [
+        "CHANNEL #leads",
+        "WEBHOOK hooks.slack.com"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 11,
+            "text": "⚙︎"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 28 · OFF"
+          },
+          {
+            "cls": "meetings-stream-fact",
+            "fs": 10,
+            "text": "SEP 29"
+          },
+          {
+            "cls": "surface-caption",
+            "fs": 11,
+            "text": "NEEDS YOU"
+          },
+          {
+            "cls": "transcript-speaker",
+            "fs": 11,
+            "text": "AVERY"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "C5d-digest-prepared-posted-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "SENDS 1",
+      "history_outcomes": [],
+      "last_chips": [
+        "✓ POSTED 08:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "9f341bcf1130a235697b97f3f75d39d4e9fb0de25048990c6b4280596ada4af4",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=meeting] [data-testid=prepared-result]",
+          "text": "· Slack #leads ✓ POSTED #leads BY YOU DIGEST SEP 29 SEP 30 0",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            104,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            104,
+            44
+          ],
+          "text": "Summary\nDigest\nFollow-up"
+        },
+        {
+          "face": [
+            366,
+            107.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            107.8
+          ],
+          "text": "○\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            366,
+            77.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            77.8
+          ],
+          "text": "○\nSlack #leads\nSLACK\n#leads\n✓\n"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [
+        "· Slack #leads ✓ POSTED #leads BY YOU DIGEST SEP 29 SEP 30 08:51"
+      ],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 11,
+            "text": "⚙︎"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 28 · OFF"
+          },
+          {
+            "cls": "meetings-stream-fact",
+            "fs": 10,
+            "text": "SEP 29"
+          },
+          {
+            "cls": "surface-caption",
+            "fs": 11,
+            "text": "NEEDS YOU"
+          },
+          {
+            "cls": "transcript-speaker",
+            "fs": 11,
+            "text": "AVERY"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "C6-meeting-window-well-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "SENDS 1",
+      "history_outcomes": [],
+      "last_chips": [
+        "✓ POSTED 08:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "fca4ca0733cdc564208ecde0328e804f07068c99a607c8b1724a7864a8dbe6b3",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-pullout [data-seat=meeting] [data-testid=doc-forms] select",
+          "text": "Summary Digest Follow-up",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": ".desk-pullout [data-seat=meeting] [data-testid=destination-row]:has([data-destination='Slack #leads'])",
+          "text": "○ Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            104,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            104,
+            44
+          ],
+          "text": "Summary\nDigest\nFollow-up"
+        },
+        {
+          "face": [
+            370,
+            107.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            370,
+            107.8
+          ],
+          "text": "○\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            370,
+            77.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            370,
+            77.8
+          ],
+          "text": "○\nSlack #leads\nSLACK\n#leads\n✓\n"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 10,
+            "text": "Action items"
+          },
+          {
+            "cls": "surface-eyebrow",
+            "fs": 10,
+            "text": "Zone"
+          },
+          {
+            "cls": "surface-eyebrow",
+            "fs": 10,
+            "text": "Knowledge"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "C6c-meeting-window-picked-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "● Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "SENDS 1",
+      "history_outcomes": [],
+      "last_chips": [
+        "✓ POSTED 08:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "4163f65423171fe7cdb687741a71c51dcfdf3aa9d00b9399048a631d5b921f50",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-pullout [data-seat=meeting] [data-testid=send-open][data-destination='Slack #leads'] [data-testid=send-verb]",
+          "text": "Send again",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            104,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            104,
+            44
+          ],
+          "text": "Summary\nDigest\nFollow-up"
+        },
+        {
+          "face": [
+            370,
+            107.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            370,
+            107.8
+          ],
+          "text": "○\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            370,
+            77.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            370,
+            77.8
+          ],
+          "text": "●\nSlack #leads\nSLACK\n#leads\n✓\n"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            24
+          ],
+          "text": "Send again"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "CHANNEL #leads",
+        "WEBHOOK hooks.slack.com"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ POSTED #leads"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 10,
+            "text": "Action items"
+          },
+          {
+            "cls": "surface-eyebrow",
+            "fs": 10,
+            "text": "Zone"
+          },
+          {
+            "cls": "surface-eyebrow",
+            "fs": 10,
+            "text": "Knowledge"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "C6d-meeting-window-posted-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "● Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": "SENDS 2",
+      "history_outcomes": [],
+      "last_chips": [
+        "✓ POSTED 08:51"
+      ],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "6c6381096c0e817c101c3d1764528c4a26de80cbc6119af3cdd4701a0c396a78",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-pullout [data-seat=meeting] [data-testid=send-open][data-destination='Slack #leads'] [data-receipt=latest]",
+          "text": "✓ POSTED #leads",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            104,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            104,
+            44
+          ],
+          "text": "Summary\nDigest\nFollow-up"
+        },
+        {
+          "face": [
+            370,
+            107.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            370,
+            107.8
+          ],
+          "text": "○\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            370,
+            77.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            370,
+            77.8
+          ],
+          "text": "●\nSlack #leads\nSLACK\n#leads\n✓\n"
+        },
+        {
+          "face": [
+            90,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            90,
+            24
+          ],
+          "text": "Send again"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [
+        "CHANNEL #leads",
+        "WEBHOOK hooks.slack.com"
+      ],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ POSTED #leads"
+        }
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "busy": false,
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 10,
+            "text": "Action items"
+          },
+          {
+            "cls": "surface-eyebrow",
+            "fs": 10,
+            "text": "Zone"
+          },
+          {
+            "cls": "surface-eyebrow",
+            "fs": 10,
+            "text": "Knowledge"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "D1-slack-form-1440": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 1",
+      "dest_parked": [],
+      "destinations": [
+        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "2164f1869572fdf0c22fbe4c41b694161d3c538ac5be9365e05d6b7c516bcdaf",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-key-row]",
+          "text": "Webhook SET Replace",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-slack-label]",
+          "text": "#leads",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-name]",
+          "text": "Slack #leads",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-save]",
+          "text": "Save",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            1362,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1362,
+            47
+          ],
+          "text": "▸\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            188,
+            22.2
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            188,
+            22.2
+          ],
+          "text": "Folder\nGitHub comment\nJira com"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            24
+          ],
+          "text": "Replace"
+        },
+        {
+          "face": [
+            1117,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1117,
+            20
+          ],
+          "text": "Channel name"
+        },
+        {
+          "face": [
+            1117,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1117,
+            20
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            24
+          ],
+          "text": "Save"
+        },
+        {
+          "face": [
+            61.2,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            61.2,
+            24
+          ],
+          "text": "Cancel"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "D2a-webhook-saved-1440": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 1",
+      "dest_parked": [],
+      "destinations": [
+        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "a6adb9b86833e0f5bc6a8d8ecb5b03a61acb15f96f4e6da6cfff96586bbec13a",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-key-row] .gadget-chip",
+          "text": "SET",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            1362,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1362,
+            47
+          ],
+          "text": "▸\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            188,
+            22.2
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            188,
+            22.2
+          ],
+          "text": "Folder\nGitHub comment\nJira com"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            24
+          ],
+          "text": "Replace"
+        },
+        {
+          "face": [
+            1117,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1117,
+            20
+          ],
+          "text": "Channel name"
+        },
+        {
+          "face": [
+            1117,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1117,
+            20
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            24
+          ],
+          "text": "Save"
+        },
+        {
+          "face": [
+            61.2,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            61.2,
+            24
+          ],
+          "text": "Cancel"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "D2b-webhook-refused-1440": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 1",
+      "dest_parked": [],
+      "destinations": [
+        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "31f66e8b612acb4141bf7e7c369145ee8417b1292f814d40c8042a6a89c8a5ed",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-key-refused]",
+          "text": "✗ KEY NOT SAVED WEBHOOK NOT VALID",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            1362,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1362,
+            47
+          ],
+          "text": "▸\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            188,
+            22.2
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            188,
+            22.2
+          ],
+          "text": "Folder\nGitHub comment\nJira com"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            24
+          ],
+          "text": "Replace"
+        },
+        {
+          "face": [
+            1117,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1117,
+            20
+          ],
+          "text": "Channel name"
+        },
+        {
+          "face": [
+            1117,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1117,
+            20
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            24
+          ],
+          "text": "Save"
+        },
+        {
+          "face": [
+            61.2,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            61.2,
+            24
+          ],
+          "text": "Cancel"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "D3-slack-row-checked-1440": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 2",
+      "dest_parked": [],
+      "destinations": [
+        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "▾ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "edd871d6682f723143d6f20bb100592d4a79f5d12da5dffd810f50e301e45475",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-row]:has([data-destination='Slack #leads'])",
+          "text": "▾ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-check-result]",
+          "text": "✓ WEBHOOK SET · HOST OK",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            1362,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1362,
+            47
+          ],
+          "text": "▸\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            1362,
+            26
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1362,
+            26
+          ],
+          "text": "▾\nSlack #leads\nSLACK\n#leads\n✓\n"
+        },
+        {
+          "face": [
+            54,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            54,
+            24
+          ],
+          "text": "Check"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            24
+          ],
+          "text": "Edit"
+        },
+        {
+          "face": [
+            61.2,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            61.2,
+            24
+          ],
+          "text": "Remove"
+        },
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            24
+          ],
+          "text": "Add destination"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "D4-credentials-no-slack-row-1440": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 1",
+      "dest_parked": [],
+      "destinations": [
+        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "d3a9292c599d8f3f84859813f752f03a433810d95af22daf6e0fb4e0ce0c5080",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-mark='creds']",
+          "text": "CREDENTIALS",
+          "why": ""
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "D5-edit-unknown-webhook-not-set-1440": {
+      "body_overflow_x": false,
+      "dest_head": "DESTINATIONS 2",
+      "dest_parked": [],
+      "destinations": [
+        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "▾ Slack #leads SLACK #leads ⚠ NO WEBHOOK HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "984765553d5d144f451f28aab9e3d2b6b8e470ecf9d88dadefc1084e491eccaa",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-testid=dest-key-missing]",
+          "text": "⚠ NO WEBHOOK",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            1362,
+            47
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1362,
+            47
+          ],
+          "text": "▸\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            1362,
+            26
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1362,
+            26
+          ],
+          "text": "▾\nSlack #leads\nSLACK\n#leads\n⚠\n"
+        },
+        {
+          "face": [
+            68.4,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            68.4,
+            24
+          ],
+          "text": "Replace"
+        },
+        {
+          "face": [
+            1039,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1039,
+            20
+          ],
+          "text": "Channel name"
+        },
+        {
+          "face": [
+            1039,
+            20
+          ],
+          "failed_points": [],
+          "kind": "input",
+          "owned": true,
+          "retried": null,
+          "target": [
+            1039,
+            20
+          ],
+          "text": "Name"
+        },
+        {
+          "face": [
+            46.8,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            46.8,
+            24
+          ],
+          "text": "Save"
+        },
+        {
+          "face": [
+            61.2,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            61.2,
+            24
+          ],
+          "text": "Cancel"
+        },
+        {
+          "face": [
+            126,
+            24
+          ],
+          "failed_points": [],
+          "kind": "button",
+          "owned": true,
+          "retried": null,
+          "target": [
+            126,
+            24
+          ],
+          "text": "Add destination"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": null,
+      "send_verbs": [],
+      "send_well_present": false,
+      "small_text": {
+        "inherited": [],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    },
+    "T1-over-slack-limit-refused-1440": {
+      "body_overflow_x": false,
+      "dest_head": null,
+      "dest_parked": [],
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "● Slack #leads SLACK #leads HOOKS.SLACK.COM"
+      ],
+      "egress_chips": [
+        "THIS DEVICE:local",
+        "HOOKS.SLACK.COM:cloud",
+        "HOOKS.SLACK.COM:cloud"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "history_outcomes": [],
+      "last_chips": [],
+      "list_chips": [],
+      "list_rows": [],
+      "masked_sha": "2db24a3abecab90716731017499a8b223dfda290b9238bbd970fa84dc5ccffee",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=meeting] [data-testid=send-open][data-destination='Slack #leads'] [data-testid=preview-refused]",
+          "text": "✗ REFUSED TOO LARGE FOR SLACK 42,067 / 39,000 CHARACTERS NOT",
+          "why": ""
+        }
+      ],
+      "pointer": [
+        {
+          "face": [
+            104,
+            44
+          ],
+          "failed_points": [],
+          "kind": "select",
+          "owned": true,
+          "retried": null,
+          "target": [
+            104,
+            44
+          ],
+          "text": "Summary\nDigest\nFollow-up"
+        },
+        {
+          "face": [
+            366,
+            107.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            107.8
+          ],
+          "text": "○\nTeam folder\nFILE\n/private/va"
+        },
+        {
+          "face": [
+            366,
+            55.8
+          ],
+          "failed_points": [],
+          "kind": "row",
+          "owned": true,
+          "retried": null,
+          "target": [
+            366,
+            55.8
+          ],
+          "text": "●\nSlack #leads\nSLACK\n#leads\nHO"
+        }
+      ],
+      "prepared": [],
+      "prepared_open": 0,
+      "prepared_results": [],
+      "preview_fields": [],
+      "preview_has_raw": false,
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "send_well_present": true,
+      "small_text": {
+        "inherited": [
+          {
+            "cls": "",
+            "fs": 11,
+            "text": "⚙︎"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 29 · OFF"
+          },
+          {
+            "cls": "meetings-stream-compact-facts",
+            "fs": 10,
+            "text": "SEP 28 · OFF"
+          },
+          {
+            "cls": "meetings-stream-fact",
+            "fs": 10,
+            "text": "SEP 28"
+          },
+          {
+            "cls": "surface-caption",
+            "fs": 11,
+            "text": "NEEDS YOU"
+          },
+          {
+            "cls": "transcript-speaker",
+            "fs": 11,
+            "text": "AVERY"
+          }
+        ],
+        "touched": []
+      },
+      "window": true,
+      "words_delivered_word": false
+    }
+  },
+  "facts": {
+    "aftercare_rows_before_slack": false,
+    "check": "✓ WEBHOOK SET · HOST OK",
+    "credentials_slack_row_before": false,
+    "d4": {
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-mark='creds']",
+          "text": "CREDENTIALS",
+          "why": ""
+        }
+      ]
+    },
+    "digest_body_on_screen": true,
+    "digest_send": {
+      "document_ref": "meeting_digest:p11b-sync",
+      "face": "· Slack #leads ✓ POSTED #leads BY YOU DIGEST SEP 29 SEP 30 08:51",
+      "hub_state": "sent",
+      "receipt": {
+        "outcome": "succeeded",
+        "state": "succeeded"
+      }
+    },
+    "edit_probe": {
+      "chip_before_check": "—",
+      "hub_check": "slack_webhook_missing"
+    },
+    "followup_send": {
+      "document_ref": "meeting_followup:p11b-sync",
+      "face": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team/2026-09-30-ledger-cutover-sync-followup-2026-09-29-31d07cd2.md",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team/2026-09-30-ledger-cutover-sync-followup-2026-09-29-31d07cd2.md",
+      "hub_state": "sent",
+      "proof": {
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team/2026-09-30-ledger-cutover-sync-followup-2026-09-29-31d07cd2.md",
+        "sha256": "644f74535572f359a7d37a47cbc21b1f2d6b0ae4615076458a0fd9fe1bf397d4",
+        "size": 239
+      },
+      "receipt": {
+        "outcome": "succeeded",
+        "state": "succeeded"
+      }
+    },
+    "meeting_window_width": 400,
+    "no_summary_wells": 0,
+    "picker_box": [
+      104,
+      44
+    ],
+    "record": {
+      "send_before_transcript": true,
+      "summary_before_send": true,
+      "wells": 1,
+      "window_width": 640
+    },
+    "send_not_covered_record": {
+      "ok": true,
+      "sel": ".desk-window [data-seat=meeting] [data-testid=send-open][data-destination='Slack #leads'] [data-testid=send-verb]",
+      "text": "Send",
+      "why": ""
+    },
+    "slack_destination": {
+      "channel": "slack",
+      "id": "chd_6394aaadc20e7be9e7e9aaa0",
+      "name": "Slack #leads",
+      "target": {
+        "channel_label": "#leads"
+      }
+    },
+    "summary_send": {
+      "document_ref": "meeting_summary:p11b-sync",
+      "edge_requests": 1,
+      "face": "✓ POSTED #leads",
+      "hub_state": "sent",
+      "receipt": {
+        "outcome": "succeeded",
+        "state": "succeeded"
+      }
+    },
+    "t1": {
+      "face": "✗ REFUSED TOO LARGE FOR SLACK 42,067 / 39,000 CHARACTERS NOTHING SENT HOOKS.SLACK.COM",
+      "http": {
+        "code": "payload_too_large:slack",
+        "limit": 39000,
+        "size": 42067,
+        "status": 400
+      },
+      "receipt": {
+        "egress_operations": 2
+      }
+    },
+    "width": 1440,
+    "window_send": {
+      "document_ref": "meeting_summary:p11b-sync",
+      "face": "✓ POSTED #leads",
+      "hub_state": "sent",
+      "receipt": {
+        "outcome": "succeeded",
+        "state": "succeeded"
+      }
+    }
+  }
+}
