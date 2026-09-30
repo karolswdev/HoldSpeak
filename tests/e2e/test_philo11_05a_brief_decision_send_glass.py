@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -80,7 +81,8 @@ class _Rig:
     # ── the rig ──────────────────────────────────────────────────────────
 
     def _open(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
-        browser = pw.chromium.launch(headless=True)
+        # The wheel moves the page in one step (no smooth-scroll animation under the probe).
+        browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
         ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1)
         page = ctx.new_page()
         page.set_default_timeout(45_000)
@@ -238,15 +240,10 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 a4["head"] = head
                 assert head["chip"] == "◆ PREPARED ×1", head
                 assert head["label_lines"] == 1, head   # the label keeps its line
-                # The label keeps its line whole; nothing overlaps it: each head item sits either
-                # beside the label or wholly under it.
-                assert head["chip_right_of_label"] or head["chip_below_label"], head
                 if width == 393:
-                    # At 393 the verbs wrap UNDER the label. FINDING (reported, not paid here): the
-                    # library's intrinsic rule (surface.css `.surface-section-head:has([data-head-chip])`)
-                    # keeps the chip on the label's line when the chip alone fits; canvas A4 at 393 drew
-                    # the chip under the label too. Recorded as `chip_below_label` on the board.
-                    assert head["generate_below_label"], head
+                    # Canvas A4 at 393 (Muad'Dib's ruling): the whole group -- the chip, the
+                    # badge and Generate -- wraps UNDER the label.
+                    assert head["chip_below_label"] and head["generate_below_label"], head
                 else:
                     assert head["chip_right_of_label"] and not head["generate_below_label"], head
 
@@ -256,6 +253,9 @@ class TestBriefAndDecisionSendGlass(_Rig):
                                   [f"{CH} [data-testid=prepared-row]", f"{CH} [data-testid=prepared-send]"])
                 hub_prepared = next(s for s in self._sends(page, ref) if s["id"] == prepared_id)
                 assert hub_prepared["document_ref"] == ref and hub_prepared["state"] == "prepared", hub_prepared
+                preview_text = page.locator(f"{CH} [data-testid=prepared-preview] [data-testid=send-preview-body]").inner_text()
+                assert re.search(r"Generated: \d{1,2} [A-Z][a-z]{2} \d{4}, \d{2}:\d{2}", preview_text), preview_text[:300]
+                assert not re.search(r"\d{4}-\d{2}-\d{2}T|\d{2}:\d{2}:\d{2}\.\d+", preview_text), preview_text[:300]
                 day = self._stamp(page, brief["generated_at"])[:-6]
                 assert a4b["prepared"][0].startswith(f"◆ Ledger folder ◆ PREPARED BY {AGENT_ID.upper()} BRIEF {day}"), a4b["prepared"]
                 assert "THIS DEVICE" in a4b["prepared"][0], a4b["prepared"]
@@ -268,7 +268,12 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 assert hub_prepared["state"] == "sent", hub_prepared
                 ppath = hub_prepared["proof"]["path"]
                 assert Path(ppath).is_file() and Path(ppath).parent == ledger_dir, ppath
-                assert "Monday Brief" in Path(ppath).read_text() or "Brief" in Path(ppath).read_text()
+                sent_text = Path(ppath).read_text()
+                assert "Monday Brief" in sent_text, sent_text[:200]
+                # The sent bytes carry the readable generated time, as the preview does.
+                gen_line = next(ln for ln in sent_text.splitlines() if ln.startswith("Generated: "))
+                assert re.fullmatch(r"Generated: \d{1,2} [A-Z][a-z]{2} \d{4}, \d{2}:\d{2}", gen_line), gen_line
+                assert gen_line in preview_text, (gen_line, preview_text[:300])   # one format: preview == bytes
                 a4c = shots.shoot(page, "A4c-brief-prepared-saved", CH,
                                   [f"{CH} [data-testid=prepared-result]", f"{CH} [data-testid=send-history] .surface-section-head"])
                 assert a4c["prepared"][0].startswith(f"· Ledger folder ✓ SAVED {ppath} BY {AGENT_ID.upper()}"), a4c["prepared"]

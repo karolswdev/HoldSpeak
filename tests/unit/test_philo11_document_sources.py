@@ -1,6 +1,7 @@
 """PHILO-11-01 — the eight stored channel document sources."""
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from pathlib import Path
 import sys
@@ -65,6 +66,11 @@ def test_real_producers_render_all_eight_sources(db, tmp_path: Path) -> None:
     assert "Check the frozen bytes" in brief
     assert "acknowledged" not in brief.lower()
     assert "deferred" not in brief.lower()
+    # PHILO-11-05a: the generated time is a readable date and time, the same
+    # text in the preview and the sent bytes: no ISO `T`, no microseconds.
+    generated = next(line for line in brief.splitlines() if line.startswith("Generated: "))
+    assert re.fullmatch(r"Generated: \d{1,2} [A-Z][a-z]{2} \d{4}, \d{2}:\d{2}", generated), generated
+    assert not re.search(r"\d{4}-\d{2}-\d{2}T|\d{2}:\d{2}:\d{2}\.\d+", brief), generated
     brief_id = refs["monday_brief"].split(":", 1)[1]
     with db._connection() as conn:
         shelved = conn.execute(

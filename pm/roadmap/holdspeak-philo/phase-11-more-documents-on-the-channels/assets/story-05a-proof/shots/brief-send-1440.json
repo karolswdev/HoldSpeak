@@ -9,7 +9,7 @@
       "history_head": null,
       "last_chips": [],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "798fd5518ea047b8fe411cd02618ed0a7d58f6fa86d5ea05edd1352d6ad2dad7",
+      "masked_sha": "9e5bca59f8fd092544a04f27a6e221e52a56257c07e41e5079c8096d5f3e12cf",
       "modal": false,
       "named": [
         {
@@ -62,7 +62,7 @@
       },
       "stale_words": [],
       "wells": [
-        "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084"
+        "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e"
       ],
       "window": true,
       "window_width": 960
@@ -71,8 +71,8 @@
       "body_overflow_x": false,
       "chair_row_open": 1,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder THIS DEVICE",
-        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:00 THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder THIS DEVICE",
+        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:25 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -81,14 +81,14 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md SEP 30 08:00"
+        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md SEP 30 08:25"
       ],
       "history_head": "SENDS 1",
       "last_chips": [
-        "✓ SAVED 08:00"
+        "✓ SAVED 08:25"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "7b47b13b419d00f72bdebc285cf6363f22272fbdb5f88057693fe2e650967c4b",
+      "masked_sha": "b712b0f893122c31b97e241a38ab590ed410252e673d604cf375225db693e859",
       "modal": false,
       "named": [
         {
@@ -133,10 +133,10 @@
         "reached_by_scroll": []
       },
       "prepared": [
-        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:00"
+        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:25"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -195,7 +195,7 @@
       },
       "stale_words": [],
       "wells": [
-        "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084"
+        "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e"
       ],
       "window": true,
       "window_width": 400
@@ -203,8 +203,8 @@
     "A3-brief-saved-history-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder ✓ SAVED 08:00 THIS DEVICE",
-        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:00 THIS DEVICE"
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder ✓ SAVED 08:25 THIS DEVICE",
+        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:25 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -212,22 +212,22 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md SEP 30 08:00",
-        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md SEP 30 08:00"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md SEP 30 08:25",
+        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md SEP 30 08:25"
       ],
       "history_head": "SENDS 2",
       "last_chips": [
-        "✓ SAVED 08:00",
-        "✓ SAVED 08:00"
+        "✓ SAVED 08:25",
+        "✓ SAVED 08:25"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "fb43ac03a7004fbac6736e141d5ec3ea2e80030ab438dc13634f2dd1eb62ac5e",
+      "masked_sha": "5619c664ab8507f1e79075116be457f8cd109af33424c7f74f9b16515f01d73f",
       "modal": false,
       "named": [
         {
           "ok": true,
           "sel": ".desk-window [data-seat=brief] [data-testid=destination-row]:has([data-destination='Team folder']) [data-testid=send-last-sent]",
-          "text": "✓ SAVED 08:00",
+          "text": "✓ SAVED 08:25",
           "why": ""
         },
         {
@@ -259,7 +259,7 @@
         "reached_by_scroll": []
       },
       "prepared": [
-        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:00"
+        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:25"
       ],
       "preview_fields": [],
       "preview_fonts": [],
@@ -309,7 +309,7 @@
       },
       "stale_words": [],
       "wells": [
-        "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084"
+        "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e"
       ],
       "window": true,
       "window_width": 400
@@ -317,8 +317,8 @@
     "A4-brief-prepared-chair-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder THIS DEVICE",
-        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder THIS DEVICE"
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder THIS DEVICE",
+        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -344,7 +344,7 @@
       "history_head": null,
       "last_chips": [],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "484e399a0c4923e4a4ac4d84bc982cf39baf5af67b8b0780782ce1d591c8ff56",
+      "masked_sha": "b9a5b28f09e53d4865ceb8fe99a95b7e058f0ce892f2f6a83fed5bc71ba815f8",
       "modal": false,
       "named": [
         {
@@ -383,10 +383,10 @@
         "reached_by_scroll": []
       },
       "prepared": [
-        "◆ Ledger folder ◆ PREPARED BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 07:59 THIS DEVICE"
+        "◆ Ledger folder ◆ PREPARED BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:25 THIS DEVICE"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -424,7 +424,7 @@
       },
       "stale_words": [],
       "wells": [
-        "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084"
+        "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e"
       ],
       "window": true,
       "window_width": 960
@@ -432,8 +432,8 @@
     "A4b-brief-prepared-row-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder THIS DEVICE",
-        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder THIS DEVICE"
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder THIS DEVICE",
+        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -446,13 +446,13 @@
       "history_head": null,
       "last_chips": [],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "4e86834afc3b8a8b96bdd36a565d90ee93b1ae59a4788e82c0ecc79c8126a7e6",
+      "masked_sha": "0f0f10f60afc5904c2fc3e80533cdae9b403b692ca85c25fa58058dceac22faf",
       "modal": false,
       "named": [
         {
           "ok": true,
           "sel": ".chair [data-seat=brief] [data-testid=prepared-row]",
-          "text": "◆ Ledger folder ◆ PREPARED BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 07:59 THI",
+          "text": "◆ Ledger folder ◆ PREPARED BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:25 THI",
           "why": ""
         },
         {
@@ -505,10 +505,10 @@
         "reached_by_scroll": []
       },
       "prepared": [
-        "◆ Ledger folder ◆ PREPARED BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 07:59 THIS DEVICE"
+        "◆ Ledger folder ◆ PREPARED BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:25 THIS DEVICE"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -546,7 +546,7 @@
       },
       "stale_words": [],
       "wells": [
-        "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084"
+        "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e"
       ],
       "window": true,
       "window_width": 960
@@ -554,8 +554,8 @@
     "A4c-brief-prepared-saved-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder THIS DEVICE",
-        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:00 THIS DEVICE"
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder THIS DEVICE",
+        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:25 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -563,14 +563,14 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md SEP 30 08:00"
+        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md SEP 30 08:25"
       ],
       "history_head": "SENDS 1",
       "last_chips": [
-        "✓ SAVED 08:00"
+        "✓ SAVED 08:25"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "4d58aabe57d6c2a2d88691693419155d905403e3cacd7ac1a951fad0b1393c2b",
+      "masked_sha": "3e098795840176d706ebd0c41e7f4e34e1dafa02b15eba19da67c52670723566",
       "modal": false,
       "named": [
         {
@@ -608,7 +608,7 @@
         "reached_by_scroll": []
       },
       "prepared": [
-        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:00"
+        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:25"
       ],
       "preview_fields": [],
       "preview_fonts": [],
@@ -637,7 +637,7 @@
       },
       "stale_words": [],
       "wells": [
-        "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084"
+        "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e"
       ],
       "window": true,
       "window_width": 960
@@ -645,8 +645,8 @@
     "T3a-chair-last-item-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder ✓ SAVED 08:00 THIS DEVICE",
-        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:00 THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder ✓ SAVED 08:25 THIS DEVICE",
+        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:25 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -655,16 +655,16 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md SEP 30 08:00",
-        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md SEP 30 08:00"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md SEP 30 08:25",
+        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md SEP 30 08:25"
       ],
       "history_head": "SENDS 2",
       "last_chips": [
-        "✓ SAVED 08:00",
-        "✓ SAVED 08:00"
+        "✓ SAVED 08:25",
+        "✓ SAVED 08:25"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "607039634c9d959fa17b6c71e6bbbb6dcc02c267781cd0c4ca60176cbf4e9091",
+      "masked_sha": "b77e22b97a83bf73ce321053ac7a380f62609ba6c98bbd8f54668095639764e5",
       "modal": false,
       "named": [
         {
@@ -702,10 +702,10 @@
         "reached_by_scroll": []
       },
       "prepared": [
-        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:00"
+        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:25"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -722,7 +722,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md"
         }
       ],
       "room_open_verbs": [],
@@ -751,7 +751,7 @@
       },
       "stale_words": [],
       "wells": [
-        "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084"
+        "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e"
       ],
       "window": true,
       "window_width": 960
@@ -759,8 +759,8 @@
     "T3a2-chair-last-item-receipt-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder ✓ SAVED 08:00 THIS DEVICE",
-        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:00 THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder ✓ SAVED 08:25 THIS DEVICE",
+        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:25 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -769,16 +769,16 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md SEP 30 08:00",
-        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md SEP 30 08:00"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md SEP 30 08:25",
+        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md SEP 30 08:25"
       ],
       "history_head": "SENDS 2",
       "last_chips": [
-        "✓ SAVED 08:00",
-        "✓ SAVED 08:00"
+        "✓ SAVED 08:25",
+        "✓ SAVED 08:25"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "7bde01182de8ce40b593a1fd4787e4d183b50dc585b9d79dd1d3670e4ebebfe3",
+      "masked_sha": "a4c4b30b70cd30e242fcbb39a4f4964d043f174163b01a80c30cf305378a0053",
       "modal": false,
       "named": [
         {
@@ -790,7 +790,7 @@
         {
           "ok": true,
           "sel": ".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination='Team folder']) [data-testid=send-last-sent]",
-          "text": "✓ SAVED 08:00",
+          "text": "✓ SAVED 08:25",
           "why": ""
         }
       ],
@@ -823,10 +823,10 @@
         "reached_by_scroll": []
       },
       "prepared": [
-        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:00"
+        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:25"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -843,7 +843,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md"
         }
       ],
       "room_open_verbs": [],
@@ -872,7 +872,7 @@
       },
       "stale_words": [],
       "wells": [
-        "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084"
+        "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e"
       ],
       "window": true,
       "window_width": 960
@@ -880,8 +880,8 @@
     "T3b-chair-after-last-ack-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder ✓ SAVED 08:00 THIS DEVICE",
-        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:00 THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder ✓ SAVED 08:25 THIS DEVICE",
+        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:25 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -890,16 +890,16 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md SEP 30 08:00",
-        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md SEP 30 08:00"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md SEP 30 08:25",
+        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md SEP 30 08:25"
       ],
       "history_head": "SENDS 2",
       "last_chips": [
-        "✓ SAVED 08:00",
-        "✓ SAVED 08:00"
+        "✓ SAVED 08:25",
+        "✓ SAVED 08:25"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "eb2b4ccde0273a279565ceb000cec74a76a2ecf8e562ee2f15aff202766f4002",
+      "masked_sha": "cb3c1dbd6bf29ad8ba216c26daeea270c5b5f47acfc8b9c3180202bde496856a",
       "modal": false,
       "named": [
         {
@@ -937,10 +937,10 @@
         "reached_by_scroll": []
       },
       "prepared": [
-        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:00"
+        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:25"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -957,7 +957,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md"
         }
       ],
       "room_open_verbs": [],
@@ -986,7 +986,7 @@
       },
       "stale_words": [],
       "wells": [
-        "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084"
+        "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e"
       ],
       "window": true,
       "window_width": 960
@@ -994,8 +994,8 @@
     "T3b2-chair-after-last-ack-receipt-1440": {
       "body_overflow_x": false,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder ✓ SAVED 08:00 THIS DEVICE",
-        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:00 THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder ✓ SAVED 08:25 THIS DEVICE",
+        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:25 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -1004,58 +1004,58 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md SEP 30 08:00",
-        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md SEP 30 08:00"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md SEP 30 08:25",
+        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md SEP 30 08:25"
       ],
       "history_head": "SENDS 2",
       "hub_row": {
         "account": {},
         "badge": "local",
         "channel": "file",
-        "created_at": "2026-09-30T14:00:07.218930+00:00",
-        "destination_id": "chd_917e758a32a364ecc991860f",
+        "created_at": "2026-09-30T14:25:43.885320+00:00",
+        "destination_id": "chd_21da29aceaec08999040520d",
         "destination_name": "Team folder",
         "dispatch_seq": 2,
-        "dispatch_started_at": "2026-09-30T14:00:07.218930+00:00",
+        "dispatch_started_at": "2026-09-30T14:25:43.885320+00:00",
         "document_json": {
           "label": "BRIEF 2026-09-30",
           "slug": "brief-2026-09-30",
           "title": "Monday Brief — 2026-09-30"
         },
-        "document_ref": "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084",
-        "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md",
-        "id": "chs_df817438c2e8fdcf869f6a22",
-        "payload_digest": "b54916d1e340a74b679348424cd11dea1138b7a92d4148f54c5d687d5a3400fa",
+        "document_ref": "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e",
+        "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md",
+        "id": "chs_f3d5cfe6025450f5a13402f1",
+        "payload_digest": "b48f9c3d5a961c6c216ac5ecdac6de8ed5cfca408e878bcd339e0af96536a30f",
         "prepare_operation_id": null,
         "prepared_by": {
           "identity": "owner-session",
           "kind": "owner"
         },
         "preview": {
-          "text": "# Monday Brief\nPeriod: 2026-09-29 – 2026-09-30\nGenerated: 2026-09-30T07:59:49.670256\n\n2 decisions waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n- Review decision: Cut over by space, not by region\n\nPEOPLE · UNAVAILABLE\n"
+          "text": "# Monday Brief\nPeriod: 2026-09-29 – 2026-09-30\nGenerated: 30 Sep 2026, 08:25\n\n2 decisions waiting.\n\n## Decisions\n- Review decision: Cut over by space, not by region\n- Review decision: Freeze the old ledger on Nov 3\n\nPEOPLE · UNAVAILABLE\n"
         },
         "proof": {
-          "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md",
-          "sha256": "b54916d1e340a74b679348424cd11dea1138b7a92d4148f54c5d687d5a3400fa",
-          "size": 248
+          "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md",
+          "sha256": "b48f9c3d5a961c6c216ac5ecdac6de8ed5cfca408e878bcd339e0af96536a30f",
+          "size": 240
         },
         "reason": null,
-        "send_operation_id": "op_1760e6972eff48619f78265814943a13",
-        "settled_at": "2026-09-30T14:00:07+00:00",
-        "size": 248,
+        "send_operation_id": "op_56f71231848146e09f6c09d57d4b2ab2",
+        "settled_at": "2026-09-30T14:25:43+00:00",
+        "size": 240,
         "state": "sent",
         "target": {
-          "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
+          "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
         },
-        "target_digest": "62ebd17e89b4020800e8bae8d5118ca854cec0ddcf7a37a101257d8c2a4b0c64"
+        "target_digest": "6a843603ab4ceeac604a4153df3a0fbf40b075d822fd89f0898692c101371410"
       },
       "identical_to": "T3a2-chair-last-item-receipt-1440",
       "last_chips": [
-        "✓ SAVED 08:00",
-        "✓ SAVED 08:00"
+        "✓ SAVED 08:25",
+        "✓ SAVED 08:25"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "7bde01182de8ce40b593a1fd4787e4d183b50dc585b9d79dd1d3670e4ebebfe3",
+      "masked_sha": "a4c4b30b70cd30e242fcbb39a4f4964d043f174163b01a80c30cf305378a0053",
       "modal": false,
       "named": [
         {
@@ -1067,7 +1067,7 @@
         {
           "ok": true,
           "sel": ".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination='Team folder']) [data-testid=send-last-sent]",
-          "text": "✓ SAVED 08:00",
+          "text": "✓ SAVED 08:25",
           "why": ""
         }
       ],
@@ -1100,10 +1100,10 @@
         "reached_by_scroll": []
       },
       "prepared": [
-        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:00"
+        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:25"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -1117,22 +1117,22 @@
         "touched": []
       },
       "receipt_after": {
-        "history": "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md SEP 30 08:00",
-        "latest": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md",
-        "row_chip": "✓ SAVED 08:00",
+        "history": "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md SEP 30 08:25",
+        "latest": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md",
+        "row_chip": "✓ SAVED 08:25",
         "state": "sent"
       },
       "receipt_before": {
-        "history": "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md SEP 30 08:00",
-        "latest": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md",
-        "row_chip": "✓ SAVED 08:00",
+        "history": "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md SEP 30 08:25",
+        "latest": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md",
+        "row_chip": "✓ SAVED 08:25",
         "state": "sent"
       },
       "receipts": [
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md"
         }
       ],
       "room_open_verbs": [],
@@ -1161,7 +1161,7 @@
       },
       "stale_words": [],
       "wells": [
-        "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084"
+        "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e"
       ],
       "window": true,
       "window_width": 960
@@ -1170,8 +1170,8 @@
       "body_overflow_x": false,
       "cleared_by_wheel": true,
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder ✓ SAVED 08:00 THIS DEVICE",
-        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:00 THIS DEVICE"
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder ✓ SAVED 08:25 THIS DEVICE",
+        "○ Ledger folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder ✓ SAVED 08:25 THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE",
@@ -1180,16 +1180,16 @@
       ],
       "h_overflow": false,
       "history": [
-        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md SEP 30 08:00",
-        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md SEP 30 08:00"
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md SEP 30 08:25",
+        "✓ Ledger folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md SEP 30 08:25"
       ],
       "history_head": "SENDS 2",
       "last_chips": [
-        "✓ SAVED 08:00",
-        "✓ SAVED 08:00"
+        "✓ SAVED 08:25",
+        "✓ SAVED 08:25"
       ],
       "mark_delivered_in_new_kind": false,
-      "masked_sha": "ad57f8b1837b09764bcbac9638deb548508df7c986d690acfe5eaa0afacbeaf8",
+      "masked_sha": "18b330973a63346041e032e37b91bef9e8d7f7ef047e3df686a0f6cd52727afc",
       "modal": false,
       "named": [
         {
@@ -1221,10 +1221,10 @@
         "reached_by_scroll": []
       },
       "prepared": [
-        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:00"
+        "· Ledger folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md BY REMOTE-PROJECT-AGENT BRIEF SEP 30 SEP 30 08:25"
       ],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
       ],
       "preview_fonts": [
         "Inter",
@@ -1241,7 +1241,7 @@
         {
           "code": null,
           "state": "sent",
-          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md"
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md"
         }
       ],
       "room_open_verbs": [],
@@ -1270,98 +1270,98 @@
       },
       "stale_words": [],
       "wells": [
-        "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084"
+        "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e"
       ],
       "window": true,
       "window_width": 960
     }
   },
   "brief": {
-    "id": "brief-134ce1ba115a40d1a50ddbfb4f45c084",
-    "ref": "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084"
+    "id": "brief-bac47753bfae465699d88c14fb36dc1e",
+    "ref": "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e"
   },
   "hub_sends": [
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-30T13:59:56+00:00",
-      "destination_id": "chd_f8fe029471177b01a325e487",
+      "created_at": "2026-09-30T14:25:33+00:00",
+      "destination_id": "chd_f05bcde71d2794c2464b48ec",
       "destination_name": "Ledger folder",
       "dispatch_seq": 1,
-      "dispatch_started_at": "2026-09-30T14:00:02.339982+00:00",
+      "dispatch_started_at": "2026-09-30T14:25:38.888516+00:00",
       "document_json": {
         "label": "BRIEF 2026-09-30",
         "slug": "brief-2026-09-30",
         "title": "Monday Brief — 2026-09-30"
       },
-      "document_ref": "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md",
-      "id": "chs_58631e25946b517b8cc21ae0",
-      "payload_digest": "b54916d1e340a74b679348424cd11dea1138b7a92d4148f54c5d687d5a3400fa",
-      "prepare_operation_id": "op_356a05c369964b31a8dfe0f9bab26dc5",
+      "document_ref": "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md",
+      "id": "chs_6e399c98aceb1f21521a1764",
+      "payload_digest": "b48f9c3d5a961c6c216ac5ecdac6de8ed5cfca408e878bcd339e0af96536a30f",
+      "prepare_operation_id": "op_1f6f7ca62c5c428f8e35bdcc07508164",
       "prepared_by": {
         "identity": "remote-project-agent",
         "kind": "agent"
       },
       "preview": {
-        "text": "# Monday Brief\nPeriod: 2026-09-29 – 2026-09-30\nGenerated: 2026-09-30T07:59:49.670256\n\n2 decisions waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n- Review decision: Cut over by space, not by region\n\nPEOPLE · UNAVAILABLE\n"
+        "text": "# Monday Brief\nPeriod: 2026-09-29 – 2026-09-30\nGenerated: 30 Sep 2026, 08:25\n\n2 decisions waiting.\n\n## Decisions\n- Review decision: Cut over by space, not by region\n- Review decision: Freeze the old ledger on Nov 3\n\nPEOPLE · UNAVAILABLE\n"
       },
       "proof": {
-        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-58631e25.md",
-        "sha256": "b54916d1e340a74b679348424cd11dea1138b7a92d4148f54c5d687d5a3400fa",
-        "size": 248
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-6e399c98.md",
+        "sha256": "b48f9c3d5a961c6c216ac5ecdac6de8ed5cfca408e878bcd339e0af96536a30f",
+        "size": 240
       },
       "reason": null,
-      "send_operation_id": "op_f535385315ea4d9d9a6d980350b2d6be",
-      "settled_at": "2026-09-30T14:00:02+00:00",
-      "size": 248,
+      "send_operation_id": "op_d755364bc3df477b9e693ea5347aa2e0",
+      "settled_at": "2026-09-30T14:25:38+00:00",
+      "size": 240,
       "state": "sent",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Ledgerfolder"
       },
-      "target_digest": "495fbbd38ef219a9f7953c99c0ea8cf9b36f815c7f55dc6abed8417c93dfa42b"
+      "target_digest": "74bbc5e36ea90dc4e8f695a83af85292a0cc6e1b2335fa92c8ff2728687ad3df"
     },
     {
       "account": {},
       "badge": "local",
       "channel": "file",
-      "created_at": "2026-09-30T14:00:07.218930+00:00",
-      "destination_id": "chd_917e758a32a364ecc991860f",
+      "created_at": "2026-09-30T14:25:43.885320+00:00",
+      "destination_id": "chd_21da29aceaec08999040520d",
       "destination_name": "Team folder",
       "dispatch_seq": 2,
-      "dispatch_started_at": "2026-09-30T14:00:07.218930+00:00",
+      "dispatch_started_at": "2026-09-30T14:25:43.885320+00:00",
       "document_json": {
         "label": "BRIEF 2026-09-30",
         "slug": "brief-2026-09-30",
         "title": "Monday Brief — 2026-09-30"
       },
-      "document_ref": "monday_brief:brief-134ce1ba115a40d1a50ddbfb4f45c084",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md",
-      "id": "chs_df817438c2e8fdcf869f6a22",
-      "payload_digest": "b54916d1e340a74b679348424cd11dea1138b7a92d4148f54c5d687d5a3400fa",
+      "document_ref": "monday_brief:brief-bac47753bfae465699d88c14fb36dc1e",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md",
+      "id": "chs_f3d5cfe6025450f5a13402f1",
+      "payload_digest": "b48f9c3d5a961c6c216ac5ecdac6de8ed5cfca408e878bcd339e0af96536a30f",
       "prepare_operation_id": null,
       "prepared_by": {
         "identity": "owner-session",
         "kind": "owner"
       },
       "preview": {
-        "text": "# Monday Brief\nPeriod: 2026-09-29 – 2026-09-30\nGenerated: 2026-09-30T07:59:49.670256\n\n2 decisions waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n- Review decision: Cut over by space, not by region\n\nPEOPLE · UNAVAILABLE\n"
+        "text": "# Monday Brief\nPeriod: 2026-09-29 – 2026-09-30\nGenerated: 30 Sep 2026, 08:25\n\n2 decisions waiting.\n\n## Decisions\n- Review decision: Cut over by space, not by region\n- Review decision: Freeze the old ledger on Nov 3\n\nPEOPLE · UNAVAILABLE\n"
       },
       "proof": {
-        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-df817438.md",
-        "sha256": "b54916d1e340a74b679348424cd11dea1138b7a92d4148f54c5d687d5a3400fa",
-        "size": 248
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder/2026-09-30-brief-2026-09-30-brief-2026-09-30-f3d5cfe6.md",
+        "sha256": "b48f9c3d5a961c6c216ac5ecdac6de8ed5cfca408e878bcd339e0af96536a30f",
+        "size": 240
       },
       "reason": null,
-      "send_operation_id": "op_1760e6972eff48619f78265814943a13",
-      "settled_at": "2026-09-30T14:00:07+00:00",
-      "size": 248,
+      "send_operation_id": "op_56f71231848146e09f6c09d57d4b2ab2",
+      "settled_at": "2026-09-30T14:25:43+00:00",
+      "size": 240,
       "state": "sent",
       "target": {
-        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3005/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3022/test_the_brief_well_on_the_cha0/Reports/Teamfolder"
       },
-      "target_digest": "62ebd17e89b4020800e8bae8d5118ca854cec0ddcf7a37a101257d8c2a4b0c64"
+      "target_digest": "6a843603ab4ceeac604a4153df3a0fbf40b075d822fd89f0898692c101371410"
     }
   ]
 }

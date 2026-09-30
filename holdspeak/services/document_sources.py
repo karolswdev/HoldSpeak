@@ -9,6 +9,7 @@ authentication remains at the channel service seam.
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from typing import Any
 
 from .channel_contract import ChannelRefused, Document, DocumentSource, render_update
@@ -51,6 +52,26 @@ def _no_summary(meeting_id: str, kind: str = "meeting") -> ChannelRefused:
 def _date_text(value: Any) -> str:
     text = str(value or "")
     return text[:10]
+
+
+_MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def _time_text(value: Any) -> str:
+    """A stored time as a reader writes it: `30 Sep 2026, 07:59`.
+
+    PHILO-11-05a: one format for the preview and the bytes that are sent (both
+    come from this document). The stored clock is kept as it is (no zone
+    change); a value that does not parse is shown as stored.
+    """
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    try:
+        moment = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return text
+    return f"{moment.day} {_MONTHS[moment.month - 1]} {moment.year}, {moment:%H:%M}"
 
 
 def _format_period(start: Any, end: Any) -> str:
@@ -108,7 +129,7 @@ def _brief_markdown(brief: Any, overlay: dict[str, Any]) -> str:
     lines = [
         "# Monday Brief",
         f"Period: {_format_period(brief.period_start, brief.period_end)}",
-        f"Generated: {brief.generated_at}",
+        f"Generated: {_time_text(brief.generated_at)}",
         "",
         str(brief.headline or "").strip(),
     ]

@@ -145,6 +145,24 @@ HIT = r"""([i, x, y]) => { const b = document.querySelector(`[data-probe="${i}"]
 PM_OWNED = r"""([i]) => { const b = document.querySelector(`[data-probe="${i}"]`); return !!window.__pm && b.contains(window.__pm); }"""
 RESTORE = r"""() => { for (const [e, t, l] of [...(window.__scrollSnap || [])].reverse()) { e.scrollTop = t; e.scrollLeft = l; } }"""
 
+WHEEL_POINT = r"""(i) => {
+  const b = document.querySelector(`[data-probe="${i}"]`);
+  const scroller = (e) => { for (let a = e; a; a = a.parentElement) { const cs = getComputedStyle(a);
+    if (a.scrollHeight > a.clientHeight + 1 && /(auto|scroll)/.test(cs.overflowY)) return a; } return document.scrollingElement; };
+  // The OUTERMOST scroller of the control (the Chair, the window body): the one that
+  // moves it out from under the host's bar. A nested preview scroller does not.
+  let own = null;
+  for (let a = b.parentElement; a; a = a.parentElement) { const cs = getComputedStyle(a);
+    if (a.scrollHeight > a.clientHeight + 1 && /(auto|scroll)/.test(cs.overflowY)) own = a; }
+  own = own || document.scrollingElement;
+  const xs = [innerWidth / 2, 24, innerWidth - 24];
+  for (let d = 0; d < innerHeight / 2; d += 20) for (const y of [innerHeight / 2 - d, innerHeight / 2 + d]) for (const x of xs) {
+    const e = document.elementFromPoint(x, y);
+    if (e && scroller(e) === own) return [x, y];
+  }
+  return [innerWidth / 2, innerHeight / 2];
+}"""
+
 SEAT = r"""([sel, block]) => { const el = document.querySelector(sel); if (!el) return;
   el.scrollIntoView({block});
   if (block !== 'start') return;
@@ -171,7 +189,7 @@ def pointer_pass(page: Any, width: int, anchor: str) -> dict[str, Any]:
             pm = page.evaluate(PM_OWNED, [i])
             if not (h["own"] and pm):
                 bad += 1
-                where.append([round(x), round(y)])
+                where.append([round(x), round(y), page.evaluate("([x, y]) => { const e = document.elementFromPoint(x, y); return e ? (String(e.className || e.tagName).slice(0, 40) + '|' + (e.innerText || '').slice(0, 20)) : null; }", [x, y])])
         return geo, bad, where, under
 
     owned: list[dict[str, Any]] = []
@@ -185,10 +203,20 @@ def pointer_pass(page: Any, width: int, anchor: str) -> dict[str, Any]:
             steps, bad2, where2 = 0, bad, where
             for steps in range(1, 16):
                 cy = page.evaluate("(i) => { const r = document.querySelector(`[data-probe=\"${i}\"]`).getBoundingClientRect(); return r.top + r.height / 2; }", c["i"])
-                # The wheel where he scrolls: over the page's middle (a wheel over the fixed
-                # dock or the menubar scrolls nothing).
-                page.mouse.move(vw / 2, vh / 2)
+                # The wheel where he scrolls: over a point whose nearest scroller is the
+                # control's own (not the fixed dock, not a nested preview scroller).
+                wx, wy = page.evaluate(WHEEL_POINT, c["i"])
+                page.mouse.move(wx, wy)
                 page.mouse.wheel(0, 90 if cy > vh / 2 else -90)
+                # A wheel scroll animates: probe only once the control stands still.
+                last = None
+                for _ in range(20):
+                    page.wait_for_timeout(60)
+                    now = page.evaluate("(i) => document.querySelector(`[data-probe=\"${i}\"]`).getBoundingClientRect().top", c["i"])
+                    if now == last:
+                        break
+                    last = now
+                page.mouse.move(1, 1)   # leave no hover from the wheel point behind
                 page.wait_for_timeout(120)
                 geo2, bad2, where2, under2 = probe(c["i"])
                 if not under2:

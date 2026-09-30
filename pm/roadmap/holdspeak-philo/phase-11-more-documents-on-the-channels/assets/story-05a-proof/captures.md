@@ -142,28 +142,62 @@ Run (`HOME=$(mktemp -d) HOLDSPEAK_EVIDENCE_WRITE=1 PLAYWRIGHT_BROWSERS_PATH=… 
   Room decision row: **0**. Page errors: **0**. Identical shots (clock masked):
   only the declared T3a2/T3b2 pair.
 
-### The heading at 393 (A4) — what the glass shows
+### The heading at 393 (A4) — round two, Muad'Dib's ruling 1
 
-Facts (`A4-brief-prepared-chair-393`): label `BRIEF · 2 THINGS WAITING`, 12 px,
-**one line**; `THIS DEVICE` and Generate wrap **under** the label; Generate
-76 × 24 painted, owned on its 44 px target. **The chip `◆ PREPARED ×1` stays on
-the label's line** (`chip_right_of_label: true`, `chip_below_label: false`).
-Canvas A4 at 393 drew the chip under the label as well. The cause is the
-library's intrinsic head rule (`web/src/desk/surface/surface.css:81-88`,
-`flex-wrap` item by item): the chip alone fits beside the label, so only the
-items after it wrap. The canvas harness had a viewport rule that gave the
-label the full line (`story-03-canvas/harness/species.css:156-163`), which the
-kit may not use. **Not changed here** (a species rule, out of this lane);
-reported to Muad'Dib. The fence asserts what holds (the label whole on one
-line, nothing overlapping it, the verbs under it at 393) and records the chip
-fact on the board.
+Round one found the chip staying on the label's line at 393 (the library's
+item-by-item wrap). Ruling: build what was ratified, in the host. The BRIEF
+head's actions are now ONE element (`web/src/desk/chair/ChairHome.tsx:728-750`,
+`.arrival-brief-verbs`), styled in `web/src/desk/chair/chair.css` (tail): with
+no PREPARED chip the group is `display: contents` (the PHILO-4-01 head as it
+was); with the chip the group is one flex item, so it sits beside the label
+when it fits and otherwise wraps as a whole under the label, spread across the
+line (the label out-grows the group 1000:1 on a shared line). No library
+change, no width query.
+
+Facts (`A4-brief-prepared-chair-*.json`, `head`):
+
+- 393: label `BRIEF · 2 THINGS WAITING`, 12 px, one line; `chip_below_label:
+  true`, `generate_below_label: true` (the fence asserts both: the chip's top
+  is below the label's bottom). The shot shows `◆ PREPARED ×1`, `THIS DEVICE`,
+  Generate on the line under the label, left / centre / right, as canvas A4.
+- 1440: `chip_right_of_label: true`, `generate_below_label: false`; the shot
+  is the round-one layout (chip, badge, Generate packed at the right of the
+  label line).
+
+## The brief's generated time — ruling 2
+
+`holdspeak/services/document_sources.py:60-74` (`_time_text`) and `:132`: the
+brief document now says `Generated: 30 Sep 2026, 08:25` (the stored clock, no
+zone change; an unparsable value is shown as stored). The preview and the sent
+bytes both come from this one document. Fences:
+
+- `tests/unit/test_philo11_document_sources.py:69-73`: the `Generated:` line
+  matches `\d{1,2} Mon YYYY, HH:MM`, and the brief holds no ISO `T` and no
+  microseconds. Red on the old line (`AssertionError: Generated:
+  2026-09-29T10:00:00`, 1 failed, 19 passed); green now: `20 passed`.
+- The glass (A4b/A4c): the prepared preview on the Chair shows the readable
+  line with no `T` and no microseconds, and the sent file's `Generated:` line
+  equals the preview's.
+
+## The rig, round two
+
+- The pointer pass's wheel now goes over a point whose scroller is the
+  control's OUTERMOST scroller (the Chair, the window body). Round one wheeled
+  over the page's middle, which at 393 could land on a nested preview
+  scroller and move the control inside it instead of out from under the bar.
+- The browser runs with `--disable-smooth-scrolling`, and the probe waits
+  until the control stands still after each wheel step.
+
+Run (round two, isolated HOME, `HOLDSPEAK_EVIDENCE_WRITE=1`): `6 passed in
+153.67s`. Laws: 46 boards; named 78/78; 83 controls owned, 8 after ordinary
+scrolling, 0 missed; 393 minimum target 44 px (38 controls); rows 136/136.
 
 ## Web baseline
 
 ```
 === Web baseline report ===
 HEALED (5): (inherited reds that pass; unchanged by this lane)
-Suite totals: 2995 passed, 0 failed, 0 skipped
+Suite totals: 2995 passed, 0 failed, 0 skipped   (round one and round two)
 VERDICT: baseline-subset, zero branch-new
 ```
 
@@ -172,7 +206,10 @@ VERDICT: baseline-subset, zero branch-new
 - `tests/unit/test_philo4_01_atlas_contracts.py`, `test_hs169_room_copy.py`,
   `test_philo_graph_atlas.py`, `test_phase143_surface_fallback_census.py`,
   `test_native_surfaces_guard.py`: `128 passed in 4.04s` (5 failed before the
-  atlas re-anchor: pure line shifts).
+  atlas re-anchor: pure line shifts). Round two: 6 more `atlas.json` anchors
+  in `ChairHome.tsx` re-anchored; these guards with the doc guards, the graph
+  schema, the evidence guard and the document-source test: `255 passed`;
+  all `test_philo11*.py`: `65 passed`.
 - `test_doc_drift_guard.py`, `test_phase200_canon_guard.py`,
   `test_phase200_doc_claims.py`: `86 passed in 5.43s`.
 - `test_philo_graph_schema.py`: `19 passed`; `scripts/philo_graph_validate.py
@@ -201,6 +238,6 @@ B5-record-intelligence-picked, B5b-record-intelligence-history.
 - **A5/A6 (brief changed / Slack person sections)** and **B3 (Edit after a
   send)** were not re-fenced here: they need a Slack destination (part B) or
   repeat T2's mechanism; T2 covers "changed → fresh preview → another press".
-- **The heading chip at 393** (above).
-- Seen, not this lane's: the brief's Markdown shows `Generated:
-  2026-09-30T07:59:49.670256` raw (story 01's renderer).
+- Temp HOMEs: the 32 `$TMPDIR/tmp.*` HOMEs this worktree left (identified by
+  the `wt-philo-11-05a` interpreter path in their uv cache) are removed; 25
+  with no such mark were left alone (not provably this lane's).

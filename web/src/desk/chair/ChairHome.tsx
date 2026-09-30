@@ -726,11 +726,15 @@ function Arrival() {
      section in EVERY branch — the egress badge, then Generate. Disabled
      only while a read or a generation is open. */
   const briefVerbs = (
-    <>
+    /* PHILO-11-05a (canvas A4): ONE group, so when the head does not fit
+       on one line the chip, the badge and Generate wrap under the label
+       together (chair.css `.arrival-brief-verbs`). Without the chip the
+       group is `display: contents` and the head lays out as before. */
+    <span className="arrival-brief-verbs">
       {/* Article III / UX-CANON A.9 — the destination is named ON the
           row, BEFORE the verb that reaches it. */}
       {/* PHILO-11-05a (canvas A4): PREPARED ×K when a send of the brief
-          waits; at narrow width the chips wrap under the label. */}
+          waits. */}
       {brief ? <BriefPreparedChip brief={brief} /> : null}
       <BriefEgress />
       <Button
@@ -742,7 +746,7 @@ function Arrival() {
       >
         Generate
       </Button>
-    </>
+    </span>
   );
   /* The one status line of a generation: open (GENERATING…, the READING…
      idiom) or failed (BRIEF DID NOT GENERATE · <cause>). */
