@@ -1,0 +1,228 @@
+#!/usr/bin/env python3
+"""PHILO-11 C4 Slack grounding probe (GET only; no account and no send).
+
+Run this file as Python with an isolated HOME, for example:
+
+    HOME="$(mktemp -d)" python slack_public_docs.py.txt
+
+The probe fetches public documentation pages only.  It never calls a Slack
+API method, never sends a POST, never reads a keychain, and never imports
+HoldSpeak.  It prints bounded fact checks instead of copying the pages.
+The source URLs intentionally use the public api.slack.com addresses; Slack
+may redirect them to docs.slack.dev and the final GET URL is printed.
+"""
+from __future__ import annotations
+
+from html.parser import HTMLParser
+import os
+from pathlib import Path
+import pwd
+import re
+import sys
+from typing import Iterable
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
+
+
+READ_DATE = "2026-09-29"
+TIMEOUT = 15
+MAX_BYTES = 2_000_000
+ALLOWED_HOSTS = {"api.slack.com", "docs.slack.dev"}
+
+DOCS: tuple[tuple[str, str, tuple[tuple[str, tuple[str, ...]], ...]], ...] = (
+    (
+        "incoming webhooks",
+        "https://api.slack.com/incoming-webhooks",
+        (
+            ("endpoint", ("hooks.slack.com", "POST")),
+            ("success is HTTP 200 plain-text ok", ("HTTP 200", "plain text", "ok")),
+            ("webhook URL is a secret", ("contains a secret",)),
+            ("documented HTTP errors", ("HTTP 400", "HTTP 403", "HTTP 404")),
+            ("documented webhook errors", ("invalid_payload", "action_prohibited", "channel_not_found")),
+        ),
+    ),
+    (
+        "chat.postMessage",
+        "https://api.slack.com/methods/chat.postMessage",
+        (
+            ("endpoint", ("POST https://slack.com/api/chat.postMessage",)),
+            ("bot scope chat:write", ("chat:write",)),
+            ("success carries ok channel ts", ('"ok" : true', '"channel" :', '"ts" :')),
+            ("API error envelope carries ok false", ('"ok" : false', '"error" :')),
+            ("best text size 4,000", ("4,000", "text")),
+            ("hard text truncation 40,000", ("40,000", "truncat")),
+            ("public-channel scope is explicit", ("chat:write.public",)),
+        ),
+    ),
+    (
+        "chat.getPermalink",
+        "https://api.slack.com/methods/chat.getPermalink",
+        (
+            ("GET endpoint", ("GET https://slack.com/api/chat.getPermalink",)),
+            ("requires channel and message_ts", ("channel", "message_ts")),
+            ("success carries permalink", ('"ok" : true', 'permalink')),
+            ("no additional scope", ("No scopes required",)),
+        ),
+    ),
+    (
+        "incoming-webhook scope",
+        "https://api.slack.com/scopes/incoming-webhook",
+        (("scope creates one-way channel webhook", ("incoming webhook", "specific channel")),),
+    ),
+    (
+        "chat:write scope",
+        "https://api.slack.com/scopes/chat%3Awrite",
+        (("scope posts as Slack app", ("chat:write", "Send messages as your Slack app")),),
+    ),
+    (
+        "rate limits",
+        "https://api.slack.com/apis/rate-limits",
+        (
+            ("chat posting is about one per second", ("chat.postMessage", "one message per second")),
+            ("incoming webhooks are one per second", ("Incoming webhooks", "1 per second")),
+            ("429 has Retry-After", ("429", "Retry-After")),
+        ),
+    ),
+    (
+        "long-message truncation",
+        "https://api.slack.com/changelog/2018-04-truncating-really-long-messages",
+        (
+            ("best practice is 4,000", ("4,000", "shorter")),
+            ("Slack truncates at 40,000", ("40,000", "truncate")),
+            ("incoming webhooks are included", ("incoming webhooks",)),
+            ("truncation warning is named", ("message_truncated",)),
+        ),
+    ),
+    (
+        "incoming-webhook error status changelog",
+        "https://api.slack.com/changelog/2016-05-17-changes-to-errors-for-incoming-webhooks",
+        (
+            ("known whole-request status examples", ("HTTP 400", "HTTP 403", "HTTP 404", "HTTP 410")),
+            ("known error names", ("invalid_payload", "action_prohibited", "channel_not_found", "channel_is_archived")),
+            ("500 is exceptional rollup_error", ("HTTP 500", "rollup_error")),
+        ),
+    ),
+)
+
+
+class _Text(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self.title: list[str] = []
+        self.in_title = False
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.in_title = tag.lower() == "title"
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() == "title":
+            self.in_title = False
+
+    def handle_data(self, data: str) -> None:
+        if self.in_title:
+            self.title.append(data)
+        self.parts.append(data)
+
+
+def _clean(chunks: Iterable[str]) -> str:
+    return re.sub(r"\s+", " ", " ".join(chunks)).strip()
+
+
+def _home_isolated() -> bool:
+    """Require HOME to differ from the invoking user's real home directory."""
+    configured = os.environ.get("HOME", "").strip()
+    if not configured:
+        return False
+    try:
+        real_home = pwd.getpwuid(os.getuid()).pw_dir
+    except (KeyError, OSError):
+        return False
+    return Path(configured).expanduser().resolve() != Path(real_home).expanduser().resolve()
+
+
+def _fetch(label: str, url: str) -> tuple[str, int, str, str]:
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or parsed.hostname not in ALLOWED_HOSTS:
+        raise RuntimeError(f"refusing non-official URL: {url}")
+    request = Request(url, method="GET", headers={"User-Agent": "HoldSpeak-Docs-Probe/1"})
+    with urlopen(request, timeout=TIMEOUT) as response:  # noqa: S310 - fixed official GET URL
+        final = response.geturl()
+        final_host = urlparse(final).hostname
+        if final_host not in ALLOWED_HOSTS:
+            raise RuntimeError(f"redirect escaped official docs: {final}")
+        raw = response.read(MAX_BYTES + 1)
+        if len(raw) > MAX_BYTES:
+            raise RuntimeError(f"page too large: {label}")
+        parser = _Text()
+        parser.feed(raw.decode("utf-8", errors="replace"))
+        return final, int(response.status), _clean(parser.title), _clean(parser.parts).lower()
+
+
+def main() -> int:
+    print("SLACK PUBLIC DOCS PROBE")
+    print(f"read_date={READ_DATE}")
+    print("transport=GET only; official docs hosts only; no Slack API calls; no credentials; no POST/send")
+    print(f"home_isolated={_home_isolated()}")
+    failed = 0
+    pages: dict[str, str] = {}
+    for label, url, checks in DOCS:
+        try:
+            final, status, title, text = _fetch(label, url)
+            pages[label] = text
+            print(f"\n[{label}] GET {url}")
+            print(f"status={status} final_url={final} title={title[:120]!r} bytes_bounded=yes")
+            for fact, needles in checks:
+                found = all(needle.lower() in text for needle in needles)
+                failed += not found
+                print(f"fact={'PASS' if found else 'MISS'} {fact}")
+        except Exception as exc:
+            failed += 1
+            print(f"\n[{label}] ERROR {type(exc).__name__}: {str(exc)[:180]}")
+
+    print("\nLOCAL AUDIT — HEAD 7e09c8b40314b183f11eacabfd7d3cd6364789a")
+    print("- holdspeak/slack_export.py:49-70 validates https+host (or loopback http) but does not restrict Slack hosts.")
+    print("- holdspeak/slack_export.py:150-163 renders the exact preview text; :36-39 caps at 3800 with a visible notice.")
+    print("- holdspeak/slack_export.py:166-196 injects the configured URL in memory and gates only its arbitrary configured host.")
+    print("- holdspeak/slack_export.py:199-232 is a generic webhook connector; it accepts any http(s) host and is outside Slack C4.")
+    print("- holdspeak/services/settings_service.py:119-188 redacts slack_webhook_url from reads; :604-621 validates the URL; :1006-1020 replaces Config and calls updated.save().")
+    print("- holdspeak/config/core.py:387-403 writes Config as JSON; Slack's URL is therefore persisted in the config file, not a native key store.")
+    print("- holdspeak/plugins/builtin/webhook_post_actuator.py:125-133 uses urllib.urlopen (redirects are followed); :147-155 raises for every non-2xx.")
+    print("- holdspeak/services/meeting_aftercare_service.py:157-172 records an actuator proposal and can auto-execute under captured control posture; :103-112 executes from the current config URL.")
+    print("- holdspeak/services/channel_email.py:396-456 provides the reusable native-only macOS/Linux/Windows key-store pattern; :582-630 disables redirects and classifies no-byte failures vs ambiguous transport failures.")
+    print("- holdspeak/channel_operations.py:247-292 gives channel.send EGRESS+owner_press; :319-351 keeps the email key held, owner-only, HTTP-only (no MCP argument).")
+    print("- holdspeak/mcp/tool_authority.py:265-273 gives channel.save_destination AUTHORITY, channel.prepare WORK, channel.send/discard EGRESS; holdspeak/mcp/families/channel.py:24-31 omits held-key save from MCP.")
+
+    print("\nOPEN RECOMMENDATIONS — NOT RATIFIED")
+    print("- Initial transport: chat.postMessage with a bot token in the native key store. It yields HTTP 200 JSON ok=true plus channel and ts; chat.getPermalink is an optional GET enrichment and must not downgrade a sent result.")
+    print("- Keep incoming webhook as a later compatibility transport: HTTP 200 plain ok is useful acknowledgement but has no native message id, channel, or ts. Pin hooks.slack.com only; the bot API egress is slack.com.")
+    print("- Move C4 onto the Phase-10 channel lifecycle. Reuse its content renderer; the existing 3800-character truncation cap is C4 behavior, not the proposed generic document rule. Keep the owner's channel.send press, make prepare WORK, keep send/discard owner EGRESS, and remove the YOLO auto-send path.")
+    print("- Generalize the Phase-10 native key store for Slack bot/webhook credentials and add an HTTP-only owner-held key-save seam. Remove the Slack URL from ordinary Config persistence; retain redacted Settings metadata.")
+    print("- Freeze exact Slack JSON at prepare, bind its payload digest and channel target, disable redirects, and map only pinned whole-request rejections to FAILED. Unknown HTTP/transport/redirect results remain UNKNOWN; API HTTP 200 ok:false is an error envelope, not success.")
+    print("\nTRANSPORT OUTCOME TABLE — OPEN, NOT RATIFIED")
+    print("transport | egress | credential | SENT proof | FAILED only when pinned whole-request rejection proves no delivery | UNKNOWN")
+    print("incoming webhook | hooks.slack.com:443 | webhook URL; move it to native key custody | HTTP 200 and exact plain body ok; no message id/channel/ts | exact documented status+error pair such as 400 invalid_payload, 403 action_prohibited, 404 channel_not_found, 410 channel_is_archived | redirect, timeout/drop, 5xx/rollup_error, unpinned error, or non-exact 200")
+    print("chat.postMessage | slack.com:443 | bot token in native key custody; chat:write (chat:write.public only when needed) | HTTP 200 JSON ok=true with channel+ts; optional chat.getPermalink GET | only a pinned ok=false error whose semantics prove the whole request was rejected | HTTP/transport ambiguity, missing fields, unpinned ok=false, or redirect")
+    print("chat.getPermalink | slack.com:443 | same bot token | optional link enrichment from channel+message_ts; never the send proof | no send classification; it is a read | any lookup error leaves an already SENT post SENT with channel+ts")
+    print("\nLIMITS AND PROOF")
+    print("- Slack recommends text under 4,000 characters and truncates over 40,000 with a message_truncated warning; C4 behavior caps at 3,800 with a visible notice and keeps preview and wire text equal. A generic provider should add a named over-limit refusal; the product cap (likely 4,000) remains open, rather than relying on Slack truncation.")
+    print("- Posting and incoming webhooks are generally limited to 1 message per second; Slack returns HTTP 429 with Retry-After. HoldSpeak must not retry an UNKNOWN send automatically.")
+    print("- The webhook's plain ok is an acknowledgement without a native message identity. The Web API's channel+ts is the stronger native proof; a permalink is a separate GET and optional enrichment.")
+    print("\nGAPS RANKED BY OWNER COST")
+    print("1 HIGH — C4 is still an actuator proposal and can auto-execute under control posture (meeting_aftercare_service.py:157-172); it has no channel_sends durable boundary or UNKNOWN recovery.")
+    print("2 HIGH — slack_webhook_url is redacted from reads but persisted in JSON (settings_service.py:119-188, :604-621, :1006-1020; config/core.py:387-403), and slack_webhook_host accepts arbitrary HTTPS hosts (slack_export.py:49-70).")
+    print("3 HIGH — webhook dispatch follows redirects and maps every non-2xx to failed (webhook_post_actuator.py:125-155), which can misstate ambiguous delivery and can leave the configured egress policy.")
+    print("4 MEDIUM — no Slack channel/provider row exists in CHANNELS or channel_operations; current proposal payload has text only, with no frozen channel target or native receipt.")
+    print("5 MEDIUM — current C4 tests fake HTTP and check URL secrecy, but do not prove redirect refusal, exact webhook ok, API ok=false, channel+ts proof, or native key custody.")
+    print("6 LOW — C4 truncates at 3,800 characters; generic channel documents need a named over-limit refusal. The product cap (likely 4,000) is an open decision; no compatibility shim is proposed.")
+    print("\nSEVEN TENETS IMPLICATED")
+    print("T1/T2: choose one bot provider and reuse the Phase-10 key/channel seams; do not build Slack discovery or a new framework before first use.")
+    print("T3/T7: prepare gives the owner a frozen readable preview; only the owner's channel.send press crosses egress and the receipt shows channel+ts.")
+    print("T4: use short controlled outcomes such as ACCEPTED BY SLACK, RESULT UNKNOWN, and CHECK SLACK in the eventual face and records.")
+    print("T5/T6: Slack is one registry channel with one egress badge naming slack.com or hooks.slack.com and one component-based destination row.")
+    print(f"\nprobe_result={'PASS' if failed == 0 else 'CHECK'} missing_fact_count={failed}")
+    return 0 if failed == 0 else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

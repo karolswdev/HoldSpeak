@@ -1,0 +1,10 @@
+Scope: the three full-suite failures, serial, isolated HOME
+Python: 3.14.2 (main, Jan 27 2026, 23:32:07) [Clang 21.1.4 ]
+Product/test diff against HEAD exit: 0
+Command: /Users/karol/dev/tools/wt-philo-11-ground-astra/.venv/bin/python3 -m pytest -q --collect-only tests/integration/test_phase200_recipe_catalog.py::TestTheScheduledOwnerReallyFires::test_the_sweep_is_driven_by_a_wall_clock_loop tests/e2e/test_hs176_loop_glass.py::test_speak_loop_1440 tests/e2e/test_hs176_loop_glass.py::test_speak_loop_393
+tests/integration/test_phase200_recipe_catalog.py::TestTheScheduledOwnerReallyFires::test_the_sweep_is_driven_by_a_wall_clock_loop
+tests/e2e/test_hs176_loop_glass.py::test_speak_loop_1440
+tests/e2e/test_hs176_loop_glass.py::test_speak_loop_393
+
+3 tests collected in 0.11s
+Exit: 0
