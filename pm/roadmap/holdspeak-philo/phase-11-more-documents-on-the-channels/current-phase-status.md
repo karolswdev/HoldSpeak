@@ -1,8 +1,8 @@
 # Phase 11 - More documents on the channels
 
-**Last updated:** 2026-09-29 (round two: Astra r1 RATIFY-WITH-CONDITIONS paid (`checks/charter-astra-r1.md`) — the decision kinds mapped to their real face seats, the Settings exclusion of the old webhook, `channel.destinations` in the thread palette, the same-day brief id, story 01 owns the inline Send caller, D1 recorded as a capability deferral, the failure-transition boards, Q1 worded as our limit. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib.)
+**Last updated:** 2026-09-29 (RATIFIED by the owner, "Ratify, build it"; Q1 → refuse above 39,000 characters. Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid (`checks/charter-astra-r1.md`) — the decision kinds mapped to their real face seats, the Settings exclusion of the old webhook, `channel.destinations` in the thread palette, the same-day brief id, story 01 owns the inline Send caller, D1 recorded as a capability deferral, the failure-transition boards, Q1 worded as our limit. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib.)
 
-**Status:** CHECKED by Astra (r1 RATIFY-WITH-CONDITIONS, paid) — awaiting the owner's ratification.
+**Status:** RATIFIED by the owner 2026-09-29 ("Ratify, build it") after Astra's check r1 (RATIFY-WITH-CONDITIONS, paid). Q1 ruled: "Higher limit, still refuse" → Muad'Dib set the limit at **39,000** characters of Slack text (Slack truncates above 40,000; he can change it).
 
 ## Goal
 
@@ -128,6 +128,8 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 
 ## Where we are
 
+2026-09-29: the owner RATIFIED the charter ("Ratify, build it"). Q1: "Higher limit, still refuse" — Muad'Dib set the limit at 39,000 characters of Slack text (under Slack's 40,000 truncation). Next: story 01 (Astra) and story 03 canvases (Muad'Dib) in parallel.
+
 2026-09-29, round two: Astra r1 RATIFY-WITH-CONDITIONS paid (`checks/charter-astra-r1.md`). Owed: the owner's ratification and Q1.
 
 2026-09-29: DRAFTED (PR #705). The two grounding halves are carried in this branch (draft PRs #702 and #704, superseded by #705).
@@ -149,7 +151,7 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 
 ## Decisions for the owner
 
-- **Q1 — "Our Slack limit is 4,000 characters. A document over it?"** 4,000 is **our chosen limit**, not Slack's hard limit: Slack recommends 4,000 characters and truncates above 40,000. **Recommended: (a).**
+- **Q1 — RULED 2026-09-29: "Higher limit, still refuse"; Muad'Dib set 39,000 characters.** The question as asked: **"Our Slack limit is 4,000 characters. A document over it?"** 4,000 is **our chosen limit**, not Slack's hard limit: Slack recommends 4,000 characters and truncates above 40,000. **Recommended: (a).**
   - (a) Refuse it by name before anything leaves (`payload_too_large:slack`, above our 4,000 characters of Slack text). He sends it by another channel. No truncation, no split, no upload, no automatic shortening.
   - (b) A higher limit he names, below 40,000.
   - (c) Split into several posts. *Several posts, several results; a partial post is possible.*
