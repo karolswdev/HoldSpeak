@@ -22,6 +22,10 @@ After the proof above, the update's re-export of the species' pieces was removed
 
 Shots I looked at: `04-picked-folder-{1440,393}`, `26-prepared-{1440,393}`, `34-history-several-1440`, `34b-history-manual-393`, and the atlas `sent` 393 after-shot. The rows are in the one grammar (name on line 1, chips on line 2 under the name), the preview headings in the display face, SEND at 12 px.
 
+### Atlas re-anchoring (Muad'Dib's full suite on `aaed8ea11`: two branch-new failures)
+
+`tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase10.json]` and `[atlas-phase9.json]` failed: four source references cited `web/src/features/channels/SendWell.tsx` lines the species move emptied. Re-anchored by reading each symbol's current site, test unchanged: `export function SendWell` → `web/src/desk/surface/send/SendWell.tsx:453`; `function PreparedRow` → `web/src/desk/surface/send/SendWell.tsx:612`; `export function DeliveryHistory` (phase 10 and phase 9) → `web/src/features/channels/SendWell.tsx:29`. The three atlas test files then pass: 200 passed (the last capture).
+
 ### The merge with main after #707 (main `565df2384`)
 
 Conflicts, resolved on Muad'Dib's rulings: story 02's criterion and design §5 keep main's text with this story's contract sentence (top-level integer `size` / `limit`, no nested form); `current-phase-status.md` (story 03 `done` from main, story 04 `done` from here), the project README and `BACKLOG.md` keep both sides' entries. On the merged tree: 10:51:57 — the focused web units, **45 passed** (the 41 + the 4 closed-receipt fences; 5 files); 10:51:59 — the web baseline, 2,995 passed, zero branch-new; 10:52:32 — the update glass, **4 passed** at 1440 and 393. Shots looked at: `28b-destination-latest-failed-393.png` (the closed row keeps LAST SEND FAILED · NO PERMISSION · NOTHING SENT · THIS DEVICE) and `34b-history-manual-1440.png` (DELIVERY in its Phase 10 look). The full suite is Muad'Dib's.
@@ -796,4 +800,16 @@ VERDICT: baseline-subset, zero branch-new
 ```text
 ....                                                                     [100%]
 4 passed in 129.26s (0:02:09)
+```
+
+### Captured run — 2026-09-30T11:56:50Z
+
+- **Command:** `bash -c H=$(mktemp -d); trap "rm -rf $H" EXIT; HOME=$H uv run pytest -q -p no:cacheprovider tests/unit/test_philo_graph_atlas.py tests/unit/test_philo9_atlas.py tests/unit/test_philo10_atlas.py 2>&1 | tail -2`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5b2acf8cb53b3c655652e91b512eaedb035a0cf2
+
+```text
+........................................................                 [100%]
+200 passed in 1.52s
 ```

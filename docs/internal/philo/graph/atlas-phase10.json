@@ -7661,21 +7661,21 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/features/channels/SendWell.tsx",
+          "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "export function SendWell",
-          "line": 351,
+          "line": 453,
           "claim": "the SEND well: destinations, the pick, the preview, Send, the latest receipt"
         },
         {
-          "path": "web/src/features/channels/SendWell.tsx",
+          "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "function PreparedRow",
-          "line": 505,
+          "line": 612,
           "claim": "a prepared send: Send and Discard while it waits; its result when it ended"
         },
         {
           "path": "web/src/features/channels/SendWell.tsx",
           "symbol": "export function DeliveryHistory",
-          "line": 593,
+          "line": 29,
           "claim": "the one DELIVERY history (story 01's table)"
         },
         {
