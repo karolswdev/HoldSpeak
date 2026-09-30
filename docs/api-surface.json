@@ -3538,6 +3538,16 @@
       ]
     },
     {
+      "path": "/api/meetings/{meeting_id}/export/slack",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.aftercare",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/meetings/{meeting_id}/follow-through-proposals",
       "methods": [
         "GET"
@@ -6862,8 +6872,6 @@
   ],
   "unmatched_calls": {
     "ios": [],
-    "web": [
-      "/api/meetings/*/export/slack"
-    ]
+    "web": []
   }
 }

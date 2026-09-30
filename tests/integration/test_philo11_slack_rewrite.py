@@ -141,7 +141,7 @@ def test_settings_write_ignores_the_retained_field(
     assert Config.load(settings_path).meeting.slack_webhook_url == before
 
 
-def test_posture_aftercare_route_is_gone_and_never_posts(
+def test_posture_aftercare_route_is_parked_and_never_posts(
     client: TestClient,
     settings_path: Path,
     seeded: Database,
@@ -159,8 +159,44 @@ def test_posture_aftercare_route_is_gone_and_never_posts(
         "/api/meetings/m-rewrite/export/slack", json={"what": "digest"}
     )
 
-    assert response.status_code == 404
+    assert response.status_code == 400
+    assert response.json() == {"success": False, "error": "slack_moved_to_channel"}
     assert calls == []
+
+
+def test_meeting_slack_proposal_approval_is_parked_but_rejection_works(
+    client: TestClient, db: Database, settings_path: Path, seeded: Database
+) -> None:
+    _save_legacy_config(settings_path, mode="neutral")
+    proposal = db.actuators.record_proposal(
+        meeting_id="m-rewrite",
+        window_id="m-rewrite:aftercare",
+        plugin_id="webhook_post",
+        plugin_version="1",
+        idempotency_key="legacy-slack-approval-1",
+        target="slack",
+        action="post_message",
+        preview="historical Slack proposal",
+        payload={"body": {"text": "historical Slack proposal"}},
+        required_capabilities=["actuator"],
+        fixed_destination=True,
+    )
+
+    approved = client.post(
+        f"/api/meetings/m-rewrite/proposals/{proposal.id}/decision",
+        json={"decision": "approved", "decided_by": "owner"},
+    )
+    assert approved.status_code == 400
+    assert approved.json() == {"success": False, "error": "slack_moved_to_channel"}
+    assert db.actuators.get_proposal(proposal.id).status == "proposed"
+
+    rejected = client.post(
+        f"/api/meetings/m-rewrite/proposals/{proposal.id}/decision",
+        json={"decision": "rejected", "decided_by": "owner"},
+    )
+    assert rejected.status_code == 200
+    assert rejected.json()["success"] is True
+    assert rejected.json()["proposal"]["status"] == "rejected"
 
 
 def test_desk_slack_target_is_parked(

@@ -1,4 +1,4 @@
-"""PHILO-11-02 — the retired meeting Slack route has no producer."""
+"""PHILO-11-02 — the retired meeting Slack route is parked by name."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -43,11 +43,12 @@ def client(settings_path: Path, tmp_path: Path) -> TestClient:
     reset_database()
 
 
-def test_old_meeting_export_route_is_absent(client: TestClient) -> None:
+def test_old_meeting_export_route_is_parked(client: TestClient) -> None:
     response = client.post(
         "/api/meetings/any-meeting/export/slack", json={"what": "digest"}
     )
-    assert response.status_code == 404
+    assert response.status_code == 400
+    assert response.json() == {"success": False, "error": "slack_moved_to_channel"}
     assert URL not in response.text
 
 

@@ -147,6 +147,107 @@ def test_propose_preview_is_the_wire_body(client, db, settings_path):
 
 
 @pytest.mark.integration
+def test_identical_content_dedupes(client, db, settings_path):
+    """The live generic webhook retains the companion idempotency fence."""
+    _configure(settings_path)
+    a = client.post(PROPOSE, json={"text": "same"}).json()["proposal"]
+    b = client.post(PROPOSE, json={"text": "same"}).json()["proposal"]
+    assert a["id"] == b["id"]
+    c = client.post(PROPOSE, json={"text": "different"}).json()["proposal"]
+    assert c["id"] != a["id"]
+
+
+@pytest.mark.integration
+def test_source_identity_returns_the_receipt_to_the_desk_subject(
+    client, db, settings_path, posts
+):
+    _configure(settings_path)
+    db.notes.upsert(
+        note_id="n1",
+        title="Release checklist",
+        body_markdown="release is ready",
+    )
+    proposed = client.post(
+        PROPOSE,
+        json={
+            "text": "release is ready",
+            "title": "Release checklist",
+            "source_ref": "note:n1",
+            "source_label": "Release checklist",
+        },
+    )
+    assert proposed.status_code == 200
+    proposal = proposed.json()["proposal"]
+    assert proposal["window_id"] == "note:n1"
+    assert proposal["payload"]["_source"] == {
+        "ref": "note:n1",
+        "label": "Release checklist",
+    }
+
+    final = _decide(client, proposal["id"], "approved").json()["proposal"]
+    assert final["status"] == "executed"
+    receipt = db.projections.list(subject_ref="note:n1")["projections"][0]
+    assert receipt["projection_kind"] == "receipt"
+    assert receipt["subject_label"] == "Release checklist"
+    assert receipt["title"] == "Custom webhook post succeeded"
+    assert receipt["detail_url"] == "/?open=note:n1"
+
+
+@pytest.mark.integration
+def test_source_identity_must_be_a_known_qualified_kind(client, db, settings_path):
+    _configure(settings_path)
+    response = client.post(
+        PROPOSE,
+        json={"text": "ship", "source_ref": "unknown:n1"},
+    )
+    assert response.status_code == 400
+    assert "unknown resource kind" in response.json()["error"]
+
+
+@pytest.mark.integration
+def test_source_identity_must_resolve_to_live_material(client, db, settings_path):
+    _configure(settings_path)
+    response = client.post(
+        PROPOSE,
+        json={"text": "ship", "source_ref": "note:missing"},
+    )
+    assert response.status_code == 400
+    assert response.json()["error"] == "Unknown Note source: missing"
+
+
+@pytest.mark.integration
+def test_posture_change_never_widens_an_existing_proposal(
+    client, db, settings_path, posts, broadcasts
+):
+    _configure(settings_path)
+    proposal = client.post(PROPOSE, json={"text": "captured normal"}).json()[
+        "proposal"
+    ]
+    assert proposal["policy_snapshot"]["mode"] == "neutral"
+    _set_control_mode(settings_path, "yolo")
+
+    repeated = client.post(PROPOSE, json={"text": "captured normal"}).json()[
+        "proposal"
+    ]
+    assert repeated["id"] == proposal["id"]
+    assert repeated["status"] == "proposed"
+    assert repeated["policy_snapshot"]["mode"] == "neutral"
+    assert posts == []
+
+    final = _decide(client, proposal["id"], "approved").json()["proposal"]
+    assert final["status"] == "executed"
+    assert final["policy_snapshot"]["mode"] == "neutral"
+    assert final["policy_snapshot"]["authority_basis"] == "per_action_decision"
+
+
+@pytest.mark.integration
+def test_decision_on_unknown_proposal_404(client, db, settings_path):
+    _configure(settings_path)
+    res = _decide(client, "ghost", "approved")
+    assert res.status_code == 404
+
+
+@pytest.mark.integration
 def test_approval_posts_the_preview_byte_equal(client, db, settings_path, posts, broadcasts):
     _configure(settings_path)
     proposal = client.post(PROPOSE, json={"text": "the brief"}).json()["proposal"]

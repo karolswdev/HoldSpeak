@@ -41,6 +41,7 @@ PROVISIONAL: 1.5–2 engineering days.
 
 ## Notes
 
-- 2026-09-30 — backend built and verified in `feat/philo-11-02`; [lane record](lane-02-astra.md) and [evidence](evidence-story-02.md). Full-suite failure ledger names the three guards held for stories 05/06; face scope is unchanged. DRAFT — UNCHECKED, awaiting Muad'Dib counsel on built.
+- 2026-09-30 — round two, Muad'Dib counsel C1–C4 paid; [round-one counsel](checks/story-02-built-muaddib-r1.md), [lane record](lane-02-astra.md), and [evidence](evidence-story-02.md). The atomic response includes the Story 05 criterion naming its 22 face-word pairs; Story 05 remains backlog and no face implementation ships here. Round-two counsel pending.
+- 2026-09-30 — round-one backend built and verified in `feat/philo-11-02`; the full-suite ledger then recorded three held reds: two branch guards from the removed meeting route and one face-word guard. Round one awaited Muad'Dib counsel on built.
 - 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

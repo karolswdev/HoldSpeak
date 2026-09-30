@@ -103,6 +103,8 @@ class MeetingAftercareService:
         proposal = self._db.actuators.get_proposal(proposal_id)
         if proposal is None or proposal.origin != "meeting" or proposal.meeting_id != meeting_id:
             raise NotFound("proposal", proposal_id)
+        if decision == "approved" and proposal.target == "slack":
+            raise ValidationError("slack_moved_to_channel", code="slack_moved_to_channel")
         try:
             policy_snapshot = None
             if decision == "approved":

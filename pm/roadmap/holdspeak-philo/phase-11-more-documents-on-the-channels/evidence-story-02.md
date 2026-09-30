@@ -1453,3 +1453,527 @@ note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.wind
 note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
 graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
 ```
+
+### Captured run — 2026-09-30T09:19:08Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh pytest --collect-only -q tests/unit/test_philo_graph_reference.py::test_committed_join_validates tests/unit/test_api_surface.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** dfaaa5fc31259b54381a7e2dcdf69c1391c5cbec
+
+```text
+tests/unit/test_philo_graph_reference.py::test_committed_join_validates
+tests/unit/test_api_surface.py::test_committed_manifest_matches_the_live_app
+tests/unit/test_api_surface.py::test_committed_markdown_matches_the_manifest
+tests/unit/test_api_surface.py::test_clients_only_call_served_routes
+tests/unit/test_api_surface.py::test_manifest_is_not_vacuous
+tests/unit/test_api_surface.py::test_extractors_see_the_real_call_sites
+tests/unit/test_api_surface.py::test_committed_openapi_matches_reference_app
+
+7 tests collected in 0.15s
+```
+
+### Captured run — 2026-09-30T09:19:15Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh pytest -q -n 0 tests/integration/test_philo11_slack_rewrite.py::test_posture_aftercare_route_is_parked_and_never_posts tests/integration/test_philo11_slack_rewrite.py::test_meeting_slack_proposal_approval_is_parked_but_rejection_works tests/integration/test_web_slack_export.py::test_old_meeting_export_route_is_parked tests/unit/test_philo_graph_reference.py::test_committed_join_validates tests/unit/test_api_surface.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** dfaaa5fc31259b54381a7e2dcdf69c1391c5cbec
+
+```text
+..........                                                               [100%]
+10 passed in 5.20s
+```
+
+### Captured run — 2026-09-30T09:19:38Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh pytest --collect-only -q tests/integration/test_web_companion_webhook.py::test_identical_content_dedupes tests/integration/test_web_companion_webhook.py::test_source_identity_returns_the_receipt_to_the_desk_subject tests/integration/test_web_companion_webhook.py::test_source_identity_must_be_a_known_qualified_kind tests/integration/test_web_companion_webhook.py::test_source_identity_must_resolve_to_live_material tests/integration/test_web_companion_webhook.py::test_posture_change_never_widens_an_existing_proposal tests/integration/test_web_companion_webhook.py::test_decision_on_unknown_proposal_404 tests/integration/test_web_aftercare_file_issue.py::test_github_approvals_keep_todays_behavior tests/unit/test_trust_destinations.py::test_doctor_uses_registry_names_for_enabled_destinations`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** dfaaa5fc31259b54381a7e2dcdf69c1391c5cbec
+
+```text
+tests/integration/test_web_companion_webhook.py::test_identical_content_dedupes
+tests/integration/test_web_companion_webhook.py::test_source_identity_returns_the_receipt_to_the_desk_subject
+tests/integration/test_web_companion_webhook.py::test_source_identity_must_be_a_known_qualified_kind
+tests/integration/test_web_companion_webhook.py::test_source_identity_must_resolve_to_live_material
+tests/integration/test_web_companion_webhook.py::test_posture_change_never_widens_an_existing_proposal
+tests/integration/test_web_companion_webhook.py::test_decision_on_unknown_proposal_404
+tests/integration/test_web_aftercare_file_issue.py::test_github_approvals_keep_todays_behavior
+tests/unit/test_trust_destinations.py::test_doctor_uses_registry_names_for_enabled_destinations
+
+8 tests collected in 0.46s
+```
+
+### Captured run — 2026-09-30T09:19:48Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh pytest -q -n 0 tests/integration/test_web_companion_webhook.py::test_identical_content_dedupes tests/integration/test_web_companion_webhook.py::test_source_identity_returns_the_receipt_to_the_desk_subject tests/integration/test_web_companion_webhook.py::test_source_identity_must_be_a_known_qualified_kind tests/integration/test_web_companion_webhook.py::test_source_identity_must_resolve_to_live_material tests/integration/test_web_companion_webhook.py::test_posture_change_never_widens_an_existing_proposal tests/integration/test_web_companion_webhook.py::test_decision_on_unknown_proposal_404 tests/integration/test_web_aftercare_file_issue.py::test_github_approvals_keep_todays_behavior tests/unit/test_trust_destinations.py::test_doctor_uses_registry_names_for_enabled_destinations`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** dfaaa5fc31259b54381a7e2dcdf69c1391c5cbec
+
+```text
+........                                                                 [100%]
+8 passed in 5.17s
+```
+
+### Captured run — 2026-09-30T09:20:04Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh pytest --collect-only -q tests/unit/test_philo11_slack_channel.py tests/integration/test_philo11_slack_operations.py tests/integration/test_philo11_slack_rewrite.py tests/unit/test_philo11_channel_contract.py tests/unit/test_philo10_face_words.py tests/unit/test_philo9_atlas.py::test_the_counts_over_every_atlas_file tests/unit/test_phase143_routing_authority_census.py::test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer tests/integration/test_web_companion_github.py::test_github_decision_is_target_scoped tests/unit/test_philo5_graph_op.py::test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_target tests/unit/test_philo5_one_decision.py::test_the_catalogue_is_explicit_descriptors tests/unit/test_philo5_the_loop_r2.py::test_the_contract_refuses_a_non_owner_before_anything_else tests/unit/test_philo5_the_loop_r2.py::test_every_braced_declaration_has_a_producer_here -k not test_every_emitted_code_has_a_face_word`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** dfaaa5fc31259b54381a7e2dcdf69c1391c5cbec
+
+```text
+tests/unit/test_philo11_slack_channel.py::test_save_target_has_only_label_and_key_reference_and_url_rule
+tests/unit/test_philo11_slack_channel.py::test_real_save_key_rejects_every_non_admitted_webhook_url[http://hooks.slack.com/services/T/B/K]
+tests/unit/test_philo11_slack_channel.py::test_real_save_key_rejects_every_non_admitted_webhook_url[https://evil.example/services/T/B/K]
+tests/unit/test_philo11_slack_channel.py::test_real_save_key_rejects_every_non_admitted_webhook_url[https://hooks.slack.com:0/services/T/B/K]
+tests/unit/test_philo11_slack_channel.py::test_real_save_key_rejects_every_non_admitted_webhook_url[https://hooks.slack.com:8443/services/T/B/K]
+tests/unit/test_philo11_slack_channel.py::test_real_save_key_rejects_every_non_admitted_webhook_url[https://hooks.slack.com/not-services/T/B/K]
+tests/unit/test_philo11_slack_channel.py::test_real_save_key_rejects_every_non_admitted_webhook_url[https://hooks.slack.com/services/T/B/K?leak=yes]
+tests/unit/test_philo11_slack_channel.py::test_real_save_key_accepts_default_and_explicit_443
+tests/unit/test_philo11_slack_channel.py::test_markdown_is_serialized_once_and_preview_is_read_from_frozen_bytes
+tests/unit/test_philo11_slack_channel.py::test_size_refusal_is_named_before_dispatch
+tests/unit/test_philo11_slack_channel.py::test_multibyte_text_limit_counts_characters_in_serialize_and_plan
+tests/unit/test_philo11_slack_channel.py::test_pinned_outcomes[200-ok-headers0-sent-None]
+tests/unit/test_philo11_slack_channel.py::test_pinned_outcomes[200-OK-headers1-unknown-ack_missing]
+tests/unit/test_philo11_slack_channel.py::test_pinned_outcomes[400-invalid_payload-headers2-failed-invalid_payload]
+tests/unit/test_philo11_slack_channel.py::test_pinned_outcomes[403-action_prohibited-headers3-failed-action_prohibited]
+tests/unit/test_philo11_slack_channel.py::test_pinned_outcomes[404-channel_not_found-headers4-failed-channel_not_found]
+tests/unit/test_philo11_slack_channel.py::test_pinned_outcomes[410-channel_is_archived-headers5-failed-channel_is_archived]
+tests/unit/test_philo11_slack_channel.py::test_pinned_outcomes[429-rate_limited-headers6-failed-rate_limited]
+tests/unit/test_philo11_slack_channel.py::test_pinned_outcomes[500-rollup_error-headers7-unknown-rollup_error]
+tests/unit/test_philo11_slack_channel.py::test_pinned_outcomes[503-unavailable-headers8-unknown-unpinned_503]
+tests/unit/test_philo11_slack_channel.py::test_pinned_outcomes[302--headers9-unknown-redirect_refused]
+tests/unit/test_philo11_slack_channel.py::test_transmit_reads_memory_key_and_sends_frozen_bytes_only
+tests/unit/test_philo11_slack_channel.py::test_transport_errors_do_not_expose_webhook
+tests/unit/test_philo11_slack_channel.py::test_native_key_store_accepts_only_the_three_native_backends[keyring.backends.macOS-Keyring]
+tests/unit/test_philo11_slack_channel.py::test_native_key_store_accepts_only_the_three_native_backends[keyring.backends.SecretService-Keyring]
+tests/unit/test_philo11_slack_channel.py::test_native_key_store_accepts_only_the_three_native_backends[keyring.backends.Windows-WinVaultKeyring]
+tests/unit/test_philo11_slack_channel.py::test_non_native_key_store_is_refused_by_name[backend0]
+tests/unit/test_philo11_slack_channel.py::test_non_native_key_store_is_refused_by_name[backend1]
+tests/unit/test_philo11_slack_channel.py::test_non_native_key_store_is_refused_by_name[backend2]
+tests/unit/test_philo11_slack_channel.py::test_native_key_store_distinguishes_locked_and_missing_without_os_keychain
+tests/unit/test_philo11_slack_channel.py::test_quiet_https_edge_tracks_before_and_after_byte_failures[connect_error0-None-False-connect_refused]
+tests/unit/test_philo11_slack_channel.py::test_quiet_https_edge_tracks_before_and_after_byte_failures[connect_error1-None-False-tls_failed]
+tests/unit/test_philo11_slack_channel.py::test_quiet_https_edge_tracks_before_and_after_byte_failures[connect_error2-None-False-dns_failed]
+tests/unit/test_philo11_slack_channel.py::test_quiet_https_edge_tracks_before_and_after_byte_failures[None-fail_after_connect3-True-tls_failed]
+tests/unit/test_philo11_slack_channel.py::test_native_keyring_is_never_constructed_by_unit_fixture
+tests/integration/test_philo11_slack_operations.py::test_save_check_preview_prepare_and_send_use_the_real_slack_producer
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[ok-answer-sent-None]
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[invalid-answer-failed-invalid_payload]
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[prohibited-answer-failed-action_prohibited]
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[missing-answer-failed-channel_not_found]
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[archived-answer-failed-channel_is_archived]
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[rate_limited-answer-failed-rate_limited]
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[rollup-answer-unknown-rollup_error]
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[other_5xx-answer-unknown-unpinned_503]
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[redirect-answer-unknown-redirect_refused]
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[wrong_ok-answer-unknown-ack_missing]
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[unlisted-answer-unknown-unpinned_418]
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[timeout-answer-unknown-timeout]
+tests/integration/test_philo11_slack_operations.py::test_each_slack_outcome_is_interpreted_by_the_real_send[secret_echo-answer-unknown-unpinned_400]
+tests/integration/test_philo11_slack_operations.py::test_unknown_replay_and_rate_limit_never_post_again[unknown]
+tests/integration/test_philo11_slack_operations.py::test_unknown_replay_and_rate_limit_never_post_again[rate_limited]
+tests/integration/test_philo11_slack_operations.py::test_an_agent_cannot_press_slack_send
+tests/integration/test_philo11_slack_operations.py::test_transport_failure_records_whether_bytes_may_have_left[connect_before-error0-False-failed-connect_refused]
+tests/integration/test_philo11_slack_operations.py::test_transport_failure_records_whether_bytes_may_have_left[dns_before-error1-False-failed-dns_failed]
+tests/integration/test_philo11_slack_operations.py::test_transport_failure_records_whether_bytes_may_have_left[tls_before-error2-False-failed-tls_failed]
+tests/integration/test_philo11_slack_operations.py::test_transport_failure_records_whether_bytes_may_have_left[timeout_before-error3-False-failed-timeout]
+tests/integration/test_philo11_slack_operations.py::test_transport_failure_records_whether_bytes_may_have_left[tls_after-error4-True-unknown-tls_failed]
+tests/integration/test_philo11_slack_operations.py::test_transport_failure_records_whether_bytes_may_have_left[timeout_after-error5-True-unknown-timeout]
+tests/integration/test_philo11_slack_operations.py::test_size_refusal_is_real_and_carries_size_and_limit_before_wire
+tests/integration/test_philo11_slack_operations.py::test_slack_size_is_text_characters_in_preview_and_prepared_send
+tests/integration/test_philo11_slack_operations.py::test_replacing_slack_destination_parks_old_and_old_prepare_refuses
+tests/integration/test_philo11_slack_operations.py::test_invalid_webhook_is_refused_at_save_without_key_or_wire[http://hooks.slack.com/services/T/B/K]
+tests/integration/test_philo11_slack_operations.py::test_invalid_webhook_is_refused_at_save_without_key_or_wire[https://slack.com/services/T/B/K]
+tests/integration/test_philo11_slack_operations.py::test_invalid_webhook_is_refused_at_save_without_key_or_wire[https://hooks.slack.com:8443/services/T/B/K]
+tests/integration/test_philo11_slack_operations.py::test_invalid_webhook_is_refused_at_save_without_key_or_wire[https://hooks.slack.com/services/T/B/K?secret=leak]
+tests/integration/test_philo11_slack_rewrite.py::test_old_config_loads_but_aftercare_does_not_advertise_slack
+tests/integration/test_philo11_slack_rewrite.py::test_settings_read_and_write_keep_the_retained_field_private
+tests/integration/test_philo11_slack_rewrite.py::test_settings_write_ignores_the_retained_field
+tests/integration/test_philo11_slack_rewrite.py::test_posture_aftercare_route_is_parked_and_never_posts
+tests/integration/test_philo11_slack_rewrite.py::test_meeting_slack_proposal_approval_is_parked_but_rejection_works
+tests/integration/test_philo11_slack_rewrite.py::test_desk_slack_target_is_parked
+tests/integration/test_philo11_slack_rewrite.py::test_historical_slack_proposals_remain_readable
+tests/integration/test_philo11_slack_rewrite.py::test_legacy_slack_connector_is_removed
+tests/unit/test_philo11_channel_contract.py::test_generic_document_ref_is_one_wire_for_http_mcp_and_history_filter
+tests/unit/test_philo11_channel_contract.py::test_prepared_send_uses_frozen_bytes_and_name_after_source_is_deleted[project_update]
+tests/unit/test_philo11_channel_contract.py::test_prepared_send_uses_frozen_bytes_and_name_after_source_is_deleted[desk_decision]
+tests/unit/test_philo11_channel_contract.py::test_legacy_prepared_non_file_row_does_not_reread_deleted_source
+tests/unit/test_philo11_channel_contract.py::test_inline_send_refuses_changed_preview_then_sends_new_preview[project_update]
+tests/unit/test_philo11_channel_contract.py::test_inline_send_refuses_changed_preview_then_sends_new_preview[desk_decision]
+tests/unit/test_philo11_channel_contract.py::test_kernel_target_names_document_ref_and_external_agent_send_is_refused_over_mcp[project_update]
+tests/unit/test_philo11_channel_contract.py::test_kernel_target_names_document_ref_and_external_agent_send_is_refused_over_mcp[desk_decision]
+tests/unit/test_philo11_channel_contract.py::test_agent_brief_preview_and_prepare_keep_owner_overlay_and_payload
+tests/unit/test_philo11_channel_contract.py::test_thread_palette_discovers_destination_then_prepares_without_send_admission
+tests/unit/test_philo10_face_words.py::test_no_code_expression_is_unsupported
+tests/unit/test_philo10_face_words.py::test_every_variable_code_site_is_followed
+tests/unit/test_philo10_face_words.py::test_the_derivation_sees_the_known_codes_of_each_kind
+tests/unit/test_philo10_face_words.py::test_slack_codes_are_derived_from_the_backend_source[slack_webhook_invalid-refused]
+tests/unit/test_philo10_face_words.py::test_slack_codes_are_derived_from_the_backend_source[invalid_payload-failed]
+tests/unit/test_philo10_face_words.py::test_slack_codes_are_derived_from_the_backend_source[rollup_error-unknown]
+tests/unit/test_philo10_face_words.py::test_the_face_reads_its_tables_through_the_word_functions
+tests/unit/test_philo10_face_words.py::test_every_face_word_is_plain
+tests/unit/test_philo10_face_words.py::test_the_census_codes_have_their_words[github_target_not_found-ISSUE NOT FOUND]
+tests/unit/test_philo10_face_words.py::test_the_census_codes_have_their_words[github_permission_denied-NO PERMISSION]
+tests/unit/test_philo10_face_words.py::test_the_census_codes_have_their_words[jira_cannot_be_edited-CANNOT COMMENT]
+tests/unit/test_philo10_face_words.py::test_the_census_codes_have_their_words[atlassian_unauthorized-NOT SIGNED IN]
+tests/unit/test_philo9_atlas.py::test_the_counts_over_every_atlas_file
+tests/unit/test_phase143_routing_authority_census.py::test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer
+tests/integration/test_web_companion_github.py::test_github_decision_is_target_scoped
+tests/unit/test_philo5_graph_op.py::test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_target
+tests/unit/test_philo5_one_decision.py::test_the_catalogue_is_explicit_descriptors
+tests/unit/test_philo5_the_loop_r2.py::test_the_contract_refuses_a_non_owner_before_anything_else
+tests/unit/test_philo5_the_loop_r2.py::test_every_braced_declaration_has_a_producer_here
+
+102/103 tests collected (1 deselected) in 0.72s
+```
+
+### Captured run — 2026-09-30T09:20:14Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh pytest -q -n 0 tests/unit/test_philo11_slack_channel.py tests/integration/test_philo11_slack_operations.py tests/integration/test_philo11_slack_rewrite.py tests/unit/test_philo11_channel_contract.py tests/unit/test_philo10_face_words.py tests/unit/test_philo9_atlas.py::test_the_counts_over_every_atlas_file tests/unit/test_phase143_routing_authority_census.py::test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer tests/integration/test_web_companion_github.py::test_github_decision_is_target_scoped tests/unit/test_philo5_graph_op.py::test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_target tests/unit/test_philo5_one_decision.py::test_the_catalogue_is_explicit_descriptors tests/unit/test_philo5_the_loop_r2.py::test_the_contract_refuses_a_non_owner_before_anything_else tests/unit/test_philo5_the_loop_r2.py::test_every_braced_declaration_has_a_producer_here -k not test_every_emitted_code_has_a_face_word`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** dfaaa5fc31259b54381a7e2dcdf69c1391c5cbec
+
+```text
+........................................................................ [ 70%]
+..............................                                           [100%]
+102 passed, 1 deselected in 35.64s
+```
+
+### Captured run — 2026-09-30T09:21:20Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh run bash -e -c uv run --python 3.13 --extra dev python scripts/gen_api_surface.py --check; uv run --python 3.13 --extra dev python scripts/philo_openapi_reference.py --check; uv run --python 3.13 --extra dev python scripts/philo_graph_reference.py --check; uv run --python 3.13 --extra dev python scripts/philo_graph_reference.py --census`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** dfaaa5fc31259b54381a7e2dcdf69c1391c5cbec
+
+```text
+wrote docs/api-surface.json (710 routes)
+wrote docs/API_SURFACE.md
+OpenAPI: 581 paths
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+census scope: HTTP routes (the app assembled from source by scripts/gen_api_surface.py, schema-hidden page routes excluded; stale = docs/generated/openapi.json differs from source), desk verbs (web/src/desk/verbRegistry.ts + applications.ts), MCP tools (the real holdspeak.mcp.tools catalogue). Face handlers, keys, timers, frames, CLI and connector edges are not censused. miscited = a pass cited a handler that was not in the file at the revision it examined.
+new: http DELETE /api/channels/destinations/{destination_id} has no edge (api_channel_remove_destination)
+new: http DELETE /api/settings/remote/delegations/{identity} has no edge (revoke_delegation)
+new: http DELETE /api/settings/remote/delegations/{identity}/projects/{project_id} has no edge (revoke_project_delegation)
+new: http GET /api/channels/destinations has no edge (api_channel_destinations)
+new: http GET /api/channels/sends has no edge (api_channel_sends)
+new: http POST /api/channels/destinations has no edge (api_channel_save_destination)
+new: http POST /api/channels/destinations/{destination_id}/check has no edge (api_channel_check_destination)
+new: http POST /api/channels/preview has no edge (api_channel_preview)
+new: http POST /api/channels/send has no edge (api_channel_send)
+new: http POST /api/channels/sends has no edge (api_channel_prepare)
+new: http POST /api/channels/sends/{send_id}/discard has no edge (api_channel_discard)
+new: http POST /api/channels/slack-webhooks has no edge (api_channel_save_slack_webhook)
+new: http POST /api/updates/{update_id}/delivered has no edge (api_mark_update_delivered)
+new: http PUT /api/channels/email-keys/{key_ref} has no edge (api_channel_save_email_key)
+new: http PUT /api/settings/remote/delegations/{identity} has no edge (grant_delegation)
+new: http PUT /api/settings/remote/delegations/{identity}/projects/{project_id} has no edge (grant_project_delegation)
+miscited: http GET /api/brief/latest (edge.route.brief_latest): def api_latest was not in holdspeak/web/routes/monday_brief.py at c42963bc either
+miscited: http POST /api/brief/items/{item_id}/shelf (edge.route.brief_item_shelf): def api_shelf was not in holdspeak/web/routes/monday_brief.py at c42963bc either
+miscited: http POST /api/inference/assignments/set (edge.route.inference_assignments_set): def api_set_assignments was not in holdspeak/web/routes/inference_assignments.py at c42963bc either
+miscited: http POST /api/settings/heartbeat/run-now (edge.route.heartbeat_run_now): source registered api_heartbeat_run_now at c42963bc already; the pass cited api_run_heartbeat
+miscited: http POST /api/stop (edge.route.meeting_stop): source registered api_stop at c42963bc already; the pass cited api_meeting_stop
+new: mcp tool channel.check_destination has no edge
+new: mcp tool channel.destinations has no edge
+new: mcp tool channel.discard has no edge
+new: mcp tool channel.prepare has no edge
+new: mcp tool channel.preview has no edge
+new: mcp tool channel.remove_destination has no edge
+new: mcp tool channel.save_destination has no edge
+new: mcp tool channel.send has no edge
+new: mcp tool channel.sends has no edge
+new: mcp tool kernel.receipt has no edge
+new: mcp tool meeting.import has no edge
+new: mcp tool monday_brief.shelf has no edge
+new: mcp tool monday_brief.shelf_read has no edge
+new: mcp tool project.item.create has no edge
+new: mcp tool project.item.list has no edge
+new: mcp tool project.item.transition has no edge
+new: mcp tool project.item.update has no edge
+new: mcp tool project.mark_update_delivered has no edge
+new: mcp tool project.resource.add has no edge
+new: mcp tool project.resource.list has no edge
+new: mcp tool project.resource.remove has no edge
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+census: 37 new, 0 removed, 0 changed, 0 stale, 5 miscited, 0 unread, 14 subtype conflict note(s) against docs/generated/graph.json (source_commit f575a582)
+```
+
+### Captured run — 2026-09-30T09:21:50Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh run bash -e -c uv run --python 3.13 --extra dev python scripts/gen_api_surface.py --check; uv run --python 3.13 --extra dev python scripts/philo_openapi_reference.py --check; uv run --python 3.13 --extra dev python scripts/philo_graph_reference.py --check`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** dfaaa5fc31259b54381a7e2dcdf69c1391c5cbec
+
+```text
+wrote docs/api-surface.json (710 routes)
+wrote docs/API_SURFACE.md
+OpenAPI: 581 paths
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+```
+
+### Captured run — 2026-09-30T09:23:12Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh run uv run --python 3.13 --extra test --extra dev python scripts/verify_philo11_update_glass.py`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** dfaaa5fc31259b54381a7e2dcdf69c1391c5cbec
+
+```text
+.F..                                                                     [100%]
+=================================== FAILURES ===================================
+____ TestSendFaceGlass.test_the_first_setup_loop_and_every_file_state[393] _____
+
+self = <tests.e2e.test_philo10_04_send_face_glass.TestSendFaceGlass object at 0x10c3ec910>
+width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(1200)
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_the_first_setup_loop_and_every_file_state(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        shots = Boards(SHOTS, width, UP)
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                pid = _api(page, "POST", "/api/projects", {"name": NAME}, token=TOKEN)["project"]["id"]
+                uid = self._published(page, pid)
+                payments = self.tmp / "Reports" / "Payments"
+                payments.mkdir(parents=True)
+                self._room(page, pid)
+                self._updates(page)
+                self._open_update(page, uid)
+                page.evaluate("window.__noReload = 1")
+
+                # Board 1: no destination -- one token and one verb.
+                page.locator("[data-testid=send-none]").wait_for(timeout=T)
+                none = shots.shoot(page, "01-no-destination",
+                                   ["[data-testid=send-none]", "[data-testid=send-add-destination]"])
+                assert none["send_head"] == "SEND" and not none["destinations"]
+
+                # B1 (B2 ruling): Add destination opens Settings AT the group, the form open.
+                page.locator("[data-testid=send-add-destination]").click()
+                page.locator("[data-testid=dest-form]").wait_for(timeout=T)
+                page.wait_for_timeout(900)
+                arrive = shots.shoot(page, "b01-arrive-from-room",
+                                     ["[data-send=destinations] .gadget-group-label", "[data-testid=dest-form] select"],
+                                     seat=None, anchor=DS)
+                assert arrive["dest_head"] == "DESTINATIONS", arrive["dest_head"]
+
+                # B2 + B3: the folder; the name fills from the target and stays editable.
+                page.locator("[data-testid=dest-folder]").fill(str(payments))
+                page.wait_for_timeout(200)
+                assert page.locator("[data-testid=dest-name]").input_value() == "Folder Payments"
+                shots.shoot(page, "b02-add-folder", ["[data-testid=dest-folder]", "[data-testid=dest-name]",
+                                                     "[data-testid=dest-save]"], anchor=DS)
+                page.locator("[data-testid=dest-save]").click()
+                page.locator("[data-testid=dest-row]").first.wait_for(timeout=T)
+                page.locator("[aria-label^='Close Settings']").first.click()
+                page.wait_for_timeout(900)
+
+                # Board 2: back in the Room, the new destination shows with no reload.
+                page.locator(self._row("Folder Payments")).wait_for(timeout=T)
+                back = shots.shoot(page, "02-back-in-the-room", [self._row("Folder Payments")])
+                assert page.evaluate("window.__noReload") == 1, "the Room reloaded"
+                assert back["destinations"] and "Folder Payments" in back["destinations"][0]
+
+                # Three more, through the real routes: a synced folder, a folder the OS
+                # refuses the create in, and story 01's UNKNOWN recipe.
+                team = self.tmp / "Drive" / "Team"
+                team.mkdir(parents=True)
+                locked = self.tmp / "Locked"
+                locked.mkdir()
+                self._dest(page, "Team drive", team, synced=True)
+                self._dest(page, "Locked folder", locked)
+                self._dest(page, "Long path folder", _long_folder(self.tmp / "deep"))
+                locked.chmod(0o555)
+                self.locked.append(locked)
+                self._focus(page)
+                page.wait_for_function("document.querySelectorAll('[data-testid=destination-row]').length === 4")
+                listed = shots.shoot(page, "03-destinations", [self._row("Folder Payments"), self._row("Team drive")])
+                assert [r.split(" FILE ")[0].split(" ", 1)[1] for r in listed["destinations"]] == [
+                    "Folder Payments", "Team drive", "Locked folder", "Long path folder"], listed["destinations"]
+                assert "SYNCED FOLDER:cloud" in listed["egress_chips"] and "THIS DEVICE:local" in listed["egress_chips"]
+                # The literal path keeps its case (the token species uppercases; the literal does not).
+                assert "/Reports/Payments" in listed["destinations"][0], listed["destinations"][0]
+
+                # Board 4 (A1): the pick opens the preview and Send in place.
+                self._pick(page, "Folder Payments")
+                picked = shots.shoot(page, "04-picked-folder",
+                                     [self._row("Folder Payments"),
+                                      f"{self._open_sel('Folder Payments')} [data-testid=send-preview-field] dd",
+                                      f"{self._open_sel('Folder Payments')} [data-testid=send-verb]"])
+                assert picked["preview_fields"] == [f"FOLDER {payments.resolve()}"], picked["preview_fields"]
+                assert picked["send_verbs"] == [{"text": "Send", "disabled": False, "busy": False}], picked["send_verbs"]
+
+                # Board 5: a DOUBLE click is one send; SAVED + the exact path.
+                self._send(page, "Folder Payments", double=True)
+                hub = self._sends(page, uid)
+                # Codex Astra r2 on #697: the long receipt itself is brought into view (centred), so the
+                # on-screen fence cannot pass on a clipped receipt; the row's chip is read from the facts.
+                receipt = f"{self._open_sel('Folder Payments')} [data-testid=send-sent]"
+                saved = shots.shoot(page, "05-saved-folder", [receipt], seat=f"CENTER:{receipt}")
+                assert any("SAVED" in c for c in saved["last_chips"]), saved["last_chips"]
+                assert [s["state"] for s in hub] == ["sent"], hub  # one dispatch for the double click
+                path = hub[0]["proof"]["path"]
+                assert Path(path).is_file() and Path(path).parent == payments.resolve()
+                assert saved["receipts"] == [{"text": f"✓ SAVED {path}", "state": "sent", "code": None}], saved["receipts"]
+                assert saved["send_verbs"][0]["text"] == "Send again"
+
+                # Board 6: the history row from story 01's one table.
+                dl = self._deliveries(page, pid, uid)
+                page.locator("[data-testid=delivery-row]").first.wait_for(timeout=T)
+                hist = shots.shoot(page, "06-saved-folder-history", ["[data-testid=delivery-row]"])
+                assert hist["history_head"] == "DELIVERY 1", hist["history_head"]
+                assert hist["history"][0].startswith(f"✓ Folder Payments SAVED {path}"), hist["history"]
+                assert [d["outcome"] for d in dl] == ["sent"] and dl[0]["send_id"] == hub[0]["id"]
+
+                # FAILED (the pinned create refusal): the row keeps LAST SEND FAILED.
+                self._unpick(page, "Folder Payments")
+                self._pick(page, "Locked folder")
+                self._send(page, "Locked folder")
+                failed = shots.shoot(page, "17-failed-folder",
+                                     [f"{self._row('Locked folder')} [data-testid=send-last-failed]",
+                                      f"{self._open_sel('Locked folder')} [data-testid=send-failed]"])
+                assert failed["receipts"] == [{"text": "✗ FAILED NO PERMISSION NOTHING SENT", "state": "failed",
+                                               "code": "permission_denied"}], failed["receipts"]
+
+                # UNKNOWN (story 01's recipe): no automatic re-send; Send again is a new send.
+                self._unpick(page, "Locked folder")
+                self._pick(page, "Long path folder")
+                self._send(page, "Long path folder")
+                unknown = shots.shoot(page, "11-unknown-folder",
+                                      [f"{self._row('Long path folder')} [data-testid=send-last-unknown]",
+                                       f"{self._open_sel('Long path folder')} [data-testid=send-unknown]"])
+                assert unknown["receipts"][0]["state"] == "unknown", unknown["receipts"]
+                assert unknown["receipts"][0]["text"] == "⚠ RESULT UNKNOWN FILE NOT CONFIRMED", unknown["receipts"]
+                assert unknown["send_verbs"][0]["text"] == "Send again"
+                self._unpick(page, "Long path folder")
+
+                # The manual row kept: Mark delivered.
+                page.locator("[data-testid=deliver-to]").fill("Priya")
+                page.locator("[data-testid=deliver-verb]").click()
+                page.wait_for_function("document.querySelectorAll('[data-testid=delivery-row]').length >= 3", timeout=T)
+                page.wait_for_timeout(500)
+                hub_all = self._sends(page, uid)
+                dl = self._deliveries(page, pid, uid)
+                several = shots.shoot(page, "34-history-several", ["[data-testid=delivery-history]"])
+                assert [(d["delivered_to"], d["channel"], d["outcome"]) for d in dl] == [
+                    ("Folder Payments", "file", "sent"), ("Long path folder", "file", "unknown"),
+                    ("Priya", "manual", "confirmed")], dl
+                assert several["history_head"] == "DELIVERY 2", several["history_head"]
+                assert several["history_outcomes"] == ["sent", "unknown", "confirmed"]
+                assert several["history"][1].startswith("⚠ RESULT UNKNOWN · CHECK Long path folder FILE NOT CONFIRMED"), several["history"]
+                assert several["history"][2].startswith("✓ Priya DELIVERED MANUAL"), several["history"]
+                # FAILED writes no history row (nothing was delivered).
+                assert sorted(s["state"] for s in hub_all) == ["failed", "sent", "unknown"], hub_all
+                last = "[data-testid=delivery-history] > li:last-child > [data-testid=delivery-row]"
+                shots.shoot(page, "34b-history-manual", [last], seat=f"CENTER:{last}")
+
+                # A2: the list chip is DELIVERY ×N, the same count (isDelivered).
+                self._back(page)
+                chips = shots.shoot(page, "35-list-chips", ["[data-testid=update-delivered-chip]",
+                                                            "[data-testid=update-unknown-chip]"])
+                assert chips["list_chips"] == ["⚠ RESULT UNKNOWN ×1", "✓ DELIVERY ×2"], chips["list_chips"]
+                assert not chips["words_delivered_word"]
+
+                # A draft has no SEND well.
+                page.locator("[data-testid=update-verb-draft-deterministic]").click()
+                page.locator("[data-testid=update-editor][data-lifecycle=draft]").wait_for(timeout=T)
+                page.wait_for_timeout(600)
+                draft = shots.shoot(page, "36-draft-no-send", ["[data-testid=update-verb-back]"], seat=None)
+                assert not draft["send_well_present"] and draft["history_head"] is None
+                shots.write("send-face-file", {"hub_sends": hub_all, "hub_deliveries": dl})
+>               shots.assert_clean()
+
+tests/e2e/test_philo10_04_send_face_glass.py:421:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <tests.e2e._send_face_glass.Boards object at 0x11525d6d0>
+
+    def assert_clean(self) -> None:
+        """The laws on every board: named elements on screen, no identical shots,
+        no text under 12 px, no raw button, no modal, no overflow, every touched
+        control owns its nine points."""
+>       assert not self.hidden, self.hidden
+               ^^^^^^^^^^^^^^^
+E       AssertionError: ['04-picked-folder-393: {\'sel\': "[data-testid=send-open][data-destination=\'Folder Payments\'] [data-testid=send-verb]", \'ok\': False, \'why\': \'clipped\', \'text\': \'Send\'}']
+
+tests/e2e/_send_face_glass.py:217: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the_first_setup_loop_and_every_file_state[393]
+1 failed, 3 passed in 118.20s (0:01:58)
+```
+
+### Captured run — 2026-09-30T09:25:51Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh pytest -q -n 0 tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the_first_setup_loop_and_every_file_state[393]`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** dfaaa5fc31259b54381a7e2dcdf69c1391c5cbec
+
+```text
+.                                                                        [100%]
+1 passed in 32.30s
+```
+
+### Captured run — 2026-09-30T09:26:40Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh pytest -q -n 0 tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the_first_setup_loop_and_every_file_state[393]`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** dfaaa5fc31259b54381a7e2dcdf69c1391c5cbec
+
+```text
+.                                                                        [100%]
+1 passed in 32.10s
+```
