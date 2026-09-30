@@ -4228,6 +4228,9 @@ CREATE TABLE IF NOT EXISTS channel_sends (
     target_digest TEXT NOT NULL,
     payload BLOB NOT NULL,
     payload_digest TEXT NOT NULL,
+    -- PHILO-11-01: frozen source naming provenance. NULL is the legacy
+    -- Phase 10 shape and keeps its naming fallback.
+    document_json TEXT,
     prepared_by_kind TEXT NOT NULL DEFAULT '',
     prepared_by_identity TEXT NOT NULL DEFAULT '',
     prepare_operation_id TEXT UNIQUE,

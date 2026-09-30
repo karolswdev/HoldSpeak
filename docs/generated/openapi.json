@@ -6226,7 +6226,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "update_id",
+            "name": "document_ref",
             "required": false,
             "schema": {
               "anyOf": [
@@ -6237,7 +6237,7 @@
                   "type": "null"
                 }
               ],
-              "title": "Update Id"
+              "title": "Document Ref"
             }
           },
           {

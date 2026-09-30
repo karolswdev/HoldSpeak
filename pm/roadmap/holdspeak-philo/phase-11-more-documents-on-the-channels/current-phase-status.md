@@ -1,6 +1,6 @@
 # Phase 11 - More documents on the channels
 
-**Last updated:** 2026-09-29 (RATIFIED by the owner, "Ratify, build it"; Q1 → refuse above 39,000 characters. Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid (`checks/charter-astra-r1.md`) — the decision kinds mapped to their real face seats, the Settings exclusion of the old webhook, `channel.destinations` in the thread palette, the same-day brief id, story 01 owns the inline Send caller, D1 recorded as a capability deferral, the failure-transition boards, Q1 worded as our limit. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib.)
+**Last updated:** 2026-09-29 (Story 01 built and verified in `feat/philo-11-01`; counsel-on-built pending Muad'Dib. Full-suite fallout classified and proved in `lane-01-astra.md`. Earlier: RATIFIED by the owner, "Ratify, build it"; Q1 → refuse above 39,000 characters. Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid (`checks/charter-astra-r1.md`) — the decision kinds mapped to their real face seats, the Settings exclusion of the old webhook, `channel.destinations` in the thread palette, the same-day brief id, story 01 owns the inline Send caller, D1 recorded as a capability deferral, the failure-transition boards, Q1 worded as our limit. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib.)
 
 **Status:** RATIFIED by the owner 2026-09-29 ("Ratify, build it") after Astra's check r1 (RATIFY-WITH-CONDITIONS, paid). Q1 ruled: "Higher limit, still refuse" → Muad'Dib set the limit at **39,000** characters of Slack text (Slack truncates above 40,000; he can change it).
 
@@ -80,6 +80,8 @@ Unchanged from Phase 10 (`../phase-10-the-channels/current-phase-status.md`, "Ad
 | `channel.preview`, `channel.prepare`, inline `channel.send` | the argument is `document_ref`; the admission and the receipt name it (`holdspeak/services/project_kernel.py:184`) |
 | its effect: the Slack POST | `external.egress`, a child of the send, with its parent, the authenticated owner principal, the broker and the frozen `payload_digest`; allowed host exactly `hooks.slack.com:443`; data class `slack_message`; the URL only in the dispatch opener |
 
+Story 01 applies Constitution XI.5 to the first row: preview returns `document_ref` but remains exempt computation, with no admission or receipt. Prepare and inline Send identify the document in their admissions and receipts. The original row's conflicting preview wording and this precedence are recorded in [Astra's lane record](lane-01-astra.md) for Muad'Dib's counsel-on-built.
+
 The aftercare Slack proposal and its executor leave the table: they no longer exist (design §6).
 
 ## Exit criteria (evidence required)
@@ -99,7 +101,7 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-11-01 | The document sources | backlog | [story-01-the-document-sources](./story-01-the-document-sources.md) | — |
+| PHILO-11-01 | The document sources | done | [story-01-the-document-sources](./story-01-the-document-sources.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-11-02 | The Slack channel and the aftercare rewrite | backlog | [story-02-the-slack-channel-and-the-aftercare-rewrite](./story-02-the-slack-channel-and-the-aftercare-rewrite.md) | — |
 | PHILO-11-03 | The canvases A–E | backlog | [story-03-the-canvases](./story-03-the-canvases.md) | — |
 | PHILO-11-04 | The SEND well as one library species | backlog | [story-04-the-send-well-species](./story-04-the-send-well-species.md) | — |
@@ -113,7 +115,7 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 
 | Lane | Stories | Owner | Checker | Worktree | Branch |
 |---|---|---|---|---|---|
-| The sources | 01 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-11-01 | feat/philo-11-01-document-sources |
+| The sources | 01 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-11-01 | feat/philo-11-01 |
 | Slack | 02 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-11-02 | feat/philo-11-02-slack |
 | The canvases | 03 | Muad'Dib (Fedaykin, Opus 5.5) | Astra | ../wt-philo-11-03 | feat/philo-11-03-canvases |
 | The species and the faces | 04 → 05 | Muad'Dib (Fedaykin, Opus 5.5) | Astra | ../wt-philo-11-04, ../wt-philo-11-05 | feat/philo-11-04-send-well-species, feat/philo-11-05-faces |
@@ -127,6 +129,10 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 - A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call. CI does not gate a merge (the owner, 2026-09-28).
 
 ## Where we are
+
+2026-09-29: PHILO-11-01 is built and verified. Eight stored sources use the generic channel contract; the existing update face passes at 1440 and 393. Six actual Phase 10 atlas walks PASS. The final full run is red (38 failed, 13,498 passed): (a) ten stale wording/reference failures corrected; (b) two catalogue guidance losses corrected; (c) 26 glass failures pass twice serially, all 52 invocations. The final focused capture collects and passes 48 checks; the web suite passes 2,970. See [Astra's lane record](lane-01-astra.md). The PR goes to Muad'Dib for counsel-on-built; no merge verdict is claimed. Story 02 has not started in this lane, and story 03's canvas/shim files are untouched. The broader graph census remains red for story 06 reconciliation.
+
+2026-09-29: PHILO-11-01 is building in Astra's assigned worktree `../wt-philo-11-01`, branch `feat/philo-11-01` (the dispatch brief's branch name). Three Luna workers own sources, the channel contract, and callers with lifecycle fences. Muad'Dib's counsel-on-built follows the PR. Story 02 is not started in this lane. Story 03's canvas and shim remain its lane's files.
 
 2026-09-29: the owner RATIFIED the charter ("Ratify, build it"). Q1: "Higher limit, still refuse" — Muad'Dib set the limit at 39,000 characters of Slack text (under Slack's 40,000 truncation). Next: story 01 (Astra) and story 03 canvases (Muad'Dib) in parallel.
 

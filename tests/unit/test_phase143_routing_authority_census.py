@@ -107,7 +107,7 @@ ROUTING_RESOLVER_REFERENCES = {
     # (the decision helpers, the loop's new tools and the import intake);
     # re-anchored, the settings.hub read itself unchanged. PHILO-7-01/02: moved
     # down again (985 -> 1148) with the desk operations; re-anchored, same read.
-    "holdspeak/mcp/tools.py:1163:import:resolve_meeting_placement",
+    "holdspeak/mcp/tools.py:1150:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:44:import:resolve_meeting_placement",
     "holdspeak/web/routes/system/settings.py:45:ref:resolve_meeting_placement",
     "holdspeak/services/settings_service.py:78:import:resolve_meeting_placement",
@@ -171,7 +171,7 @@ ROUTING_POINTER_ATTRIBUTES = {
     # HS-172: resolve_meeting_placement pointer reads
     # HS-201-03: mcp/tools.py moved down three lines (see the reference set).
     # PHILO-7-01/02: moved down again (984 -> 1147); re-anchored, same read.
-    "holdspeak/mcp/tools.py:1162:intel_profile_id",
+    "holdspeak/mcp/tools.py:1149:intel_profile_id",
     "holdspeak/web/routes/system/settings.py:41:intel_profile_id",
 }
 
@@ -205,7 +205,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/model_profile_service.py:264:profile_id",
         # HS-172: meetings host resolve display reads (HS-200-13: +2 lines).
         # PHILO-7-01/02: moved down (987 -> 1150); re-anchored, same read.
-        "holdspeak/mcp/tools.py:1165:profile_id",
+        "holdspeak/mcp/tools.py:1152:profile_id",
         "holdspeak/web/routes/system/settings.py:46:profile_id",
     }},
     **{site: "immutable evidence" for site in {

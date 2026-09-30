@@ -762,7 +762,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           }
         ],
         "words": "the owner picks the folder: its row opens the preview as the channel will get it and Send, in place (A1), readable in the viewport; a preview writes nothing (the hub holds no send for the update). New (no red claimed): the Send is a new capability (Phase 10); on the pre-Phase-10 main the case fails (no SEND well)."
@@ -1018,7 +1018,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           }
         ],
         "words": "the owner presses Send on the GitHub issue and the create is held at the process edge after the dispatch boundary: the row reads SENDING, readable in the viewport; the hub holds ONE send, dispatching, and the recording runner saw ONE gh issue comment. New (no red claimed): the Send is a new capability (Phase 10); on the pre-Phase-10 main the case fails (no SEND well)."
@@ -1286,7 +1286,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           },
           {
             "method": "GET",
@@ -1363,7 +1363,7 @@
           "kind": "op",
           "name": "channel.preview",
           "args": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}"
           },
           "adapter": "mcp-http",
@@ -1376,7 +1376,7 @@
         "kind": "op",
         "name": "channel.send",
         "args": {
-          "update_id": "{update_id}",
+          "document_ref": "project_update:{update_id}",
           "destination_id": "{dest_id}",
           "preview_digest": "{digest}",
           "command_id": "atlas-p10-05-sent"
@@ -1478,7 +1478,7 @@
             "kind": "op",
             "name": "channel.sends",
             "args": {
-              "update_id": "{update_id}"
+              "document_ref": "project_update:{update_id}"
             }
           }
         ],
@@ -1756,7 +1756,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           },
           {
             "method": "GET",
@@ -1842,7 +1842,7 @@
           "kind": "op",
           "name": "channel.preview",
           "args": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{gh_id}"
           },
           "adapter": "mcp-http",
@@ -1855,7 +1855,7 @@
         "kind": "op",
         "name": "channel.send",
         "args": {
-          "update_id": "{update_id}",
+          "document_ref": "project_update:{update_id}",
           "destination_id": "{gh_id}",
           "preview_digest": "{digest}",
           "command_id": "atlas-p10-05-posted"
@@ -2212,7 +2212,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           },
           {
             "method": "GET",
@@ -2289,7 +2289,7 @@
           "kind": "op",
           "name": "channel.preview",
           "args": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}"
           },
           "adapter": "mcp-http",
@@ -2311,7 +2311,7 @@
         "kind": "op",
         "name": "channel.send",
         "args": {
-          "update_id": "{update_id}",
+          "document_ref": "project_update:{update_id}",
           "destination_id": "{dest_id}",
           "preview_digest": "{digest}",
           "command_id": "atlas-p10-05-refused"
@@ -2381,7 +2381,7 @@
           "kind": "op",
           "name": "channel.sends",
           "args": {
-            "update_id": "{update_id}"
+            "document_ref": "project_update:{update_id}"
           }
         },
         "reads": [
@@ -2679,7 +2679,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           },
           {
             "method": "GET",
@@ -2765,7 +2765,7 @@
           "kind": "op",
           "name": "channel.preview",
           "args": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{gh_id}"
           },
           "adapter": "mcp-http",
@@ -2778,7 +2778,7 @@
         "kind": "op",
         "name": "channel.send",
         "args": {
-          "update_id": "{update_id}",
+          "document_ref": "project_update:{update_id}",
           "destination_id": "{gh_id}",
           "preview_digest": "{digest}",
           "command_id": "atlas-p10-05-failed"
@@ -2857,7 +2857,7 @@
           "kind": "op",
           "name": "channel.sends",
           "args": {
-            "update_id": "{update_id}"
+            "document_ref": "project_update:{update_id}"
           }
         },
         "reads": [
@@ -3146,7 +3146,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           },
           {
             "method": "GET",
@@ -3232,7 +3232,7 @@
           "kind": "op",
           "name": "channel.preview",
           "args": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{gh_id}"
           },
           "adapter": "mcp-http",
@@ -3245,7 +3245,7 @@
         "kind": "op",
         "name": "channel.send",
         "args": {
-          "update_id": "{update_id}",
+          "document_ref": "project_update:{update_id}",
           "destination_id": "{gh_id}",
           "preview_digest": "{digest}",
           "command_id": "atlas-p10-05-unknown"
@@ -3552,7 +3552,7 @@
             "path": "sends.0.state",
             "value": "dispatching"
           },
-          "observe_at": "protocol: GET /api/channels/sends?update_id={update_id}",
+          "observe_at": "protocol: GET /api/channels/sends?document_ref=project_update:{update_id}",
           "timeout_s": 15,
           "why": "the send crossed its durable dispatch boundary before the restart"
         },
@@ -3672,7 +3672,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           },
           {
             "method": "GET",
@@ -3792,7 +3792,7 @@
           "path": "/api/channels/sends",
           "adapter": "http-route",
           "body": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}"
           },
           "expect_status": 200,
@@ -3933,7 +3933,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           }
         ],
         "words": "a transition: a prepared send, then its destination edited in Settings (saved again; the old one parks); the owner's Send on the prepared row is REFUSED destination_parked with a refused receipt; the row shows DESTINATION PARKED and stays prepared on the hub (Discard and prepare again). New (no red claimed): the Send is a new capability (Phase 10); on the pre-Phase-10 main the case fails (no SEND well)."
@@ -4006,7 +4006,7 @@
           "kind": "op",
           "name": "channel.prepare",
           "args": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}"
           },
           "adapter": "mcp-http",
@@ -4100,7 +4100,7 @@
           "kind": "op",
           "name": "channel.sends",
           "args": {
-            "update_id": "{update_id}"
+            "document_ref": "project_update:{update_id}"
           }
         },
         "reads": [
@@ -4222,7 +4222,7 @@
           "path": "/api/channels/sends",
           "adapter": "http-route",
           "body": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}"
           },
           "expect_status": 200,
@@ -4318,7 +4318,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           }
         ],
         "words": "a send prepared by the owner waits in the SEND well: its row reads PREPARED, BY YOU, with its preview, Send and Discard (A3: the first one open), readable in the viewport; the hub holds that send prepared by the owner. New (no red claimed): the Send is a new capability (Phase 10); on the pre-Phase-10 main the case fails (no SEND well)."
@@ -4392,7 +4392,7 @@
         "kind": "op",
         "name": "channel.prepare",
         "args": {
-          "update_id": "{update_id}",
+          "document_ref": "project_update:{update_id}",
           "destination_id": "{dest_id}"
         },
         "adapter": "mcp-http",
@@ -4466,7 +4466,7 @@
           "kind": "op",
           "name": "channel.sends",
           "args": {
-            "update_id": "{update_id}"
+            "document_ref": "project_update:{update_id}"
           }
         },
         "reads": [
@@ -4595,7 +4595,7 @@
           "path": "/api/channels/preview",
           "adapter": "http-route",
           "body": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}"
           },
           "expect_status": 200,
@@ -4609,7 +4609,7 @@
           "path": "/api/channels/send",
           "adapter": "http-route",
           "body": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}",
             "preview_digest": "{digest}",
             "command_id": "atlas-p10-05-first"
@@ -4772,7 +4772,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           },
           {
             "method": "GET",
@@ -4849,7 +4849,7 @@
           "kind": "op",
           "name": "channel.preview",
           "args": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}"
           },
           "adapter": "mcp-http",
@@ -4861,7 +4861,7 @@
           "kind": "op",
           "name": "channel.send",
           "args": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}",
             "preview_digest": "{digest}",
             "command_id": "atlas-p10-05-first"
@@ -4876,7 +4876,7 @@
         "kind": "op",
         "name": "channel.send",
         "args": {
-          "update_id": "{update_id}",
+          "document_ref": "project_update:{update_id}",
           "destination_id": "{dest_id}",
           "preview_digest": "{digest}",
           "command_id": "atlas-p10-05-second"
@@ -4993,7 +4993,7 @@
             "kind": "op",
             "name": "channel.sends",
             "args": {
-              "update_id": "{update_id}"
+              "document_ref": "project_update:{update_id}"
             }
           }
         ],
@@ -5107,7 +5107,7 @@
           "path": "/api/channels/sends",
           "adapter": "http-route",
           "body": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}"
           },
           "expect_status": 200,
@@ -5254,7 +5254,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           }
         ],
         "words": "a transition, Send and Discard together: a prepared send open on the face is sent by another hand (the same hub, the send route); the owner's Discard on the stale face (Discard, then Discard? inside the confirm window: one gesture) is REFUSED send_already_settled with a refused receipt; the face reads the sends again and the prepared row now shows its result, SAVED (the send won), readable in the viewport; the hub keeps the send SENT (one wins). New (no red claimed): the Send is a new capability (Phase 10); on the pre-Phase-10 main the case fails (no SEND well)."
@@ -5327,7 +5327,7 @@
           "kind": "op",
           "name": "channel.prepare",
           "args": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}"
           },
           "adapter": "mcp-http",
@@ -5412,7 +5412,7 @@
           "kind": "op",
           "name": "channel.sends",
           "args": {
-            "update_id": "{update_id}"
+            "document_ref": "project_update:{update_id}"
           }
         },
         "reads": [
@@ -5491,7 +5491,7 @@
           "kind": "op",
           "name": "channel.prepare",
           "args": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}"
           },
           "adapter": "mcp-http",
@@ -5575,7 +5575,7 @@
           "kind": "op",
           "name": "channel.sends",
           "args": {
-            "update_id": "{update_id}"
+            "document_ref": "project_update:{update_id}"
           }
         },
         "reads": [
@@ -5670,7 +5670,7 @@
           "kind": "op",
           "name": "channel.prepare",
           "args": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{gh_id}"
           },
           "adapter": "mcp-http",
@@ -5782,7 +5782,7 @@
           "kind": "op",
           "name": "channel.sends",
           "args": {
-            "update_id": "{update_id}"
+            "document_ref": "project_update:{update_id}"
           }
         },
         "reads": [
@@ -6069,7 +6069,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           },
           {
             "method": "GET",
@@ -6716,7 +6716,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           },
           {
             "method": "GET",
@@ -6875,7 +6875,7 @@
           "path": "/api/channels/sends",
           "adapter": "http-route",
           "body": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}"
           },
           "expect_status": 200,
@@ -7012,7 +7012,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           }
         ],
         "words": "a transition, PREPARED to SENT: a send prepared to the Resend destination waits in the SEND well; the owner presses its own Send and the prepared row turns to ACCEPTED BY RESEND, readable in the viewport; the hub holds that send sent with Resend's proof; ONE request to api.resend.com/emails. New (no red claimed): Resend is a new provider (PHILO-10-07); on main 05d01ffb the Provider cycle has SendGrid only and the hub has no Resend provider."
@@ -7167,7 +7167,7 @@
           "path": "/api/channels/preview",
           "adapter": "http-route",
           "body": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}"
           },
           "expect_status": 200,
@@ -7181,7 +7181,7 @@
           "path": "/api/channels/send",
           "adapter": "http-route",
           "body": {
-            "update_id": "{update_id}",
+            "document_ref": "project_update:{update_id}",
             "destination_id": "{dest_id}",
             "preview_digest": "{digest}",
             "command_id": "atlas-p10-07-earlier"
@@ -7317,7 +7317,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           },
           {
             "method": "GET",
@@ -7634,7 +7634,7 @@
         "reads": [
           {
             "method": "GET",
-            "path": "/api/channels/sends?update_id={update_id}"
+            "path": "/api/channels/sends?document_ref=project_update:{update_id}"
           },
           {
             "method": "GET",
@@ -7681,13 +7681,13 @@
         {
           "path": "holdspeak/services/channel_service.py",
           "symbol": "def send(self, principal",
-          "line": 400,
+          "line": 402,
           "claim": "the owner's press: the checks, the durable dispatch boundary, one settle"
         },
         {
           "path": "holdspeak/services/channel_service.py",
           "symbol": "def discard(self, principal",
-          "line": 380,
+          "line": 382,
           "claim": "prepared -> discarded by one conditional write; against Send, one wins"
         },
         {

@@ -53,7 +53,7 @@ type Outcome =
   | { kind: "refused"; code: string; at: number }
   | { kind: "lost" }
   | { kind: "settled"; send: Send };
-type Held = { key: string; body: { send_id?: string; update_id?: string; destination_id?: string; preview_digest?: string } };
+type Held = { key: string; body: { send_id?: string; document_ref?: string; destination_id?: string; preview_digest?: string } };
 const store = {
   picked: new Map<string, string | null>(),          // updateId -> destination id
   preparedOpen: new Map<string, string | null>(),    // updateId -> the one open prepared row (absent = the first)
@@ -86,7 +86,7 @@ export function useSends(updateId: string, onSettled?: () => void): Read<Send[]>
   const [data, setData] = useState<Send[] | null>(null);
   const [failed, setFailed] = useState(false);
   const reload = useCallback(() => {
-    void wire.sends(updateId).then((r) => { setData(r); setFailed(false); }).catch(() => setFailed(true));
+    void wire.sends(`project_update:${updateId}`).then((r) => { setData(r); setFailed(false); }).catch(() => setFailed(true));
   }, [updateId]);
   const tick = useStore();
   useEffect(() => { reload(); }, [reload, tick]);
@@ -362,7 +362,7 @@ export function SendWell({ update, sendsRead, onSettled }: {
     if (!picked) { setPreview(null); return; }
     let live = true;
     setPreview(null);
-    void wire.preview(uid, picked)
+    void wire.preview(`project_update:${uid}`, picked)
       .then((p) => { if (live) setPreview({ id: picked, digest: p.payload_digest, preview: p.preview }); })
       .catch(() => { if (live) setPreview({ id: picked, failed: true }); });
     return () => { live = false; };
@@ -427,7 +427,7 @@ export function SendWell({ update, sendsRead, onSettled }: {
                       disabled={!pv || "failed" in pv || running}
                       data-testid={lost ? "send-retry" : "send-verb"}
                       onClick={() => void press(uid, d.id, () => ({
-                        update_id: uid, destination_id: d.id,
+                        document_ref: `project_update:${uid}`, destination_id: d.id,
                         preview_digest: (pv as { digest: string }).digest,
                       }), reload, onSettled)}>
                       {lost ? SEND_WORDS.retry : last ? SEND_WORDS.sendAgain : SEND_WORDS.send}

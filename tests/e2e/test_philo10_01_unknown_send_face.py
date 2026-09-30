@@ -82,7 +82,7 @@ class TestUnknownSendFace:
     def _send(self, page: Any, uid: str, name: str, folder: Path) -> tuple[int, Any]:
         dest = _api(page, "POST", "/api/channels/destinations",
                     {"name": name, "channel": "file", "folder": str(folder)}, token=TOKEN)["destination"]["id"]
-        send_id = _api(page, "POST", "/api/channels/sends", {"update_id": uid, "destination_id": dest},
+        send_id = _api(page, "POST", "/api/channels/sends", {"document_ref": f"project_update:{uid}", "destination_id": dest},
                        token=TOKEN)["send"]["id"]
         return _api_allow_error(page, "POST", "/api/channels/send", {"send_id": send_id}, token=TOKEN)
 

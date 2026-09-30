@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 11
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** the owner's ratification
 - **Unblocks:** PHILO-11-02 (the aftercare rewrite), PHILO-11-04, PHILO-11-06, PHILO-11-07
 - **Owner:** Astra's lane (Luna, xhigh); Muad'Dib checks
@@ -21,17 +21,19 @@ Only a published project update can be previewed, prepared or sent. Preview and 
 
 ## Acceptance criteria
 
-- [ ] Each of the eight kinds renders from its stored record by id through the real producer, and refuses by name (`document_kind_unknown`, `document_not_found`, `no_summary`, `not_published`). The brief carries its person sections. No model runs at preview or Send.
-- [ ] A transcript sentinel never appears in the payload of `meeting_summary`, `meeting_digest` or `meeting_followup`.
-- [ ] Preview, prepare, the inline send and sends take `document_ref` on HTTP, MCP and the rig's `op` step, over one descriptor and one service; `update_id` is gone. The Phase 10 update send still works unchanged on the face.
-- [ ] The Phase 10 lifecycle fences (R1–R6 over both forms, preview equals payload, one winner, `owner_principal_required`, `preview_changed`) are green, and each runs over at least one new kind as well as the update.
-- [ ] A prepared send of a new kind names its file and sends its frozen bytes with the source deleted (no live read at Send). An inline Send after the source changed refuses `preview_changed`; a new preview sends the new text.
-- [ ] The receipt and the admission of preview, prepare and the inline send name the `document_ref`.
-- [ ] A thread prepares "my brief for #leads" through the thread gate with no destination id given to the test (it finds the id through `channel.destinations`).
-- [ ] Two boundaries, two fences: a thread's `channel.send` is refused by the palette gate ("Tool outside the admitted palette", `holdspeak/services/thread_tools.py:591`; no operation); an external agent's `channel.send` over MCP is refused `owner_principal_required` with a receipt.
-- [ ] The update face's inline Send (the `SendWell.tsx:429` body) and prepared Send pass their Phase 10 glass at both widths on the story 01 head.
-- [ ] The brief's payload carries every item (an acknowledged one included) and the person overlay's sections; no Ack or Defer mark.
-- [ ] `project_update_deliveries` gets rows only for updates; the new kinds' history is their ended sends.
+- [x] Each of the eight kinds renders from its stored record by id through the real producer, and refuses by name (`document_kind_unknown`, `document_not_found`, `no_summary`, `not_published`). The brief carries its person sections. No model runs at preview or Send.
+- [x] A transcript sentinel never appears in the payload of `meeting_summary`, `meeting_digest` or `meeting_followup`.
+- [x] Preview, prepare, the inline send and sends take `document_ref` on HTTP, MCP and the rig's `op` step, over one descriptor and one service; `update_id` is gone. The Phase 10 update send still works unchanged on the face.
+- [x] The Phase 10 lifecycle fences (R1–R6 over both forms, preview equals payload, one winner, `owner_principal_required`, `preview_changed`) are green, and each runs over at least one new kind as well as the update.
+- [x] A prepared send of a new kind names its file and sends its frozen bytes with the source deleted (no live read at Send). An inline Send after the source changed refuses `preview_changed`; a new preview sends the new text.
+- [x] The receipt and the admission of preview, prepare and the inline send name the `document_ref`.
+- [x] A thread prepares "my brief for #leads" through the thread gate with no destination id given to the test (it finds the id through `channel.destinations`).
+- [x] Two boundaries, two fences: a thread's `channel.send` is refused by the palette gate ("Tool outside the admitted palette", `holdspeak/services/thread_tools.py:591`; no operation); an external agent's `channel.send` over MCP is refused `owner_principal_required` with a receipt.
+- [x] The update face's inline Send (the `SendWell.tsx:429` body) and prepared Send pass their Phase 10 glass at both widths on the story 01 head.
+- [x] The brief's payload carries every item (an acknowledged one included) and the person overlay's sections; no Ack or Defer mark.
+- [x] `project_update_deliveries` gets rows only for updates; the new kinds' history is their ended sends.
+
+**Criterion 6 and Constitution XI.5:** preview is effect-free computation, as it was in Phase 10. It returns `document_ref` and creates no operation or receipt. Prepare and inline Send are admitted effects; their operation targets and receipts identify `document_ref`. The higher canon governs the wording above. The existing no-preview-operation fence remains binding. This interpretation is recorded in `lane-01-astra.md` for Muad'Dib's counsel-on-built; no new preview lifecycle is introduced.
 
 ## Effort (not a promise)
 
@@ -43,6 +45,8 @@ PROVISIONAL: 2.5–3.5 engineering days.
 - **Rig:** `op` steps for preview, prepare and sends per kind.
 
 ## Notes
+
+- 2026-09-29 — built and verified in `feat/philo-11-01`; [lane record](lane-01-astra.md) and [captured evidence](evidence-story-01.md). Muad'Dib's counsel-on-built is pending. Criterion 6 follows Constitution XI.5 as recorded above.
 
 - 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

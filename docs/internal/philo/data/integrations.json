@@ -2300,6 +2300,123 @@
       "evidence_level": "source_and_assertions_inspected",
       "release_availability": "unverified",
       "owner_observed": false
+    },
+    {
+      "id": "channels.document_sources",
+      "name": "Send a stored document",
+      "purpose": "Send an update, brief, decision, or meeting summary to a saved destination.",
+      "domain": "channels",
+      "status": "built_unreleased",
+      "status_reason": "The eight stored sources run through the channel contract. The file-channel rig passed for each kind; owner use and new document faces are not claimed.",
+      "exposure": "integration",
+      "surfaces": [
+        "HTTP channel operations",
+        "MCP channel tools",
+        "Thread preparation",
+        "Project update Send well"
+      ],
+      "entry_points": [
+        "holdspeak/services/channel_service.py::ChannelService",
+        "holdspeak/services/document_sources.py::render_document"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "unknown",
+        "aipi": "not_applicable"
+      },
+      "inputs": [
+        "document_ref: project_update, monday_brief, desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, or meeting_followup",
+        "saved destination id",
+        "preview digest or prepared send id"
+      ],
+      "outputs": [
+        "readable preview",
+        "prepared send",
+        "terminal receipt and channel proof or reason"
+      ],
+      "persistence": [
+        "channel_sends: frozen payload and title, slug, label in document_json",
+        "project_update_deliveries for project updates only"
+      ],
+      "apis": [
+        "POST /api/channels/preview",
+        "POST /api/channels/sends",
+        "POST /api/channels/send",
+        "GET /api/channels/sends"
+      ],
+      "configuration": [
+        "saved channel destination"
+      ],
+      "dependencies": [
+        "DocumentSource registry",
+        "ChannelService",
+        "kernel",
+        "stored document producers"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "The saved channel determines egress. Preview and prepare do not send."
+      ],
+      "trust_boundary": "The service reads the stored source by id. A prepared send freezes its bytes and names; inline Send checks the preview digest before dispatch.",
+      "egress_possible": true,
+      "egress": "The owner sends the rendered document to the saved destination. The brief includes People sections; meeting forms omit the transcript.",
+      "side_effect": "external_irreversible",
+      "authority": "Connected agents and threads may prepare a send. Send and Discard require the owner. Preview is exempt computation under Article XI.5.",
+      "kernel_operations": [
+        "channel.prepare",
+        "channel.send",
+        "channel.discard"
+      ],
+      "sources": [
+        {
+          "path": "holdspeak/services/document_sources.py",
+          "symbol": "render_document",
+          "line": 370,
+          "claim": "One table resolves eight stored document kinds."
+        },
+        {
+          "path": "holdspeak/services/channel_service.py",
+          "symbol": "ChannelService",
+          "line": 65,
+          "claim": "The shared channel service previews, freezes, sends, and lists document references."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/integration/test_philo11_document_rig.py",
+          "node": "test_each_document_previews_prepares_and_lists_through_the_real_rig",
+          "assertion": "Each real-produced kind previews, prepares, sends to a file, lists its ended send, and reads its receipt through the real subprocess hub; People content is present and the meeting transcript sentinel is absent.",
+          "execution": {
+            "status": "passed",
+            "record": "pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/evidence-story-01.md",
+            "run": "2026-09-30T02:41:45Z",
+            "cases": 8
+          }
+        }
+      ],
+      "docs": [
+        "pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/design/document-sources.md"
+      ],
+      "limitations": [
+        "New document faces and Slack belong to later Phase 11 stories.",
+        "External delivery of each new kind and owner observation are not claimed.",
+        "The old aftercare Slack actuator remains until story 02; channel document rendering has no 3,800-character cap."
+      ],
+      "failure_states": [
+        "document_kind_unknown",
+        "document_not_found",
+        "not_published",
+        "no_summary",
+        "preview_changed",
+        "owner_principal_required"
+      ],
+      "replacement": null,
+      "evidence_level": "tests_executed",
+      "release_availability": "unreleased",
+      "owner_observed": false,
+      "implementation_revision": "PHILO-11-01 on base 332d91586bdbd7fe40e3c2c00851a46adc4650e4; the inventory snapshot above remains its historical census baseline."
     }
   ],
   "components": [],

@@ -13,12 +13,12 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 259 / 259 |
-| Test paths | 199 / 199 |
-| Documentation paths | 222 / 222 |
-| Assertions inspected | 199 |
-| Tests executed | 171 |
-| Records with an executed assertion | 73 |
+| Source paths | 261 / 261 |
+| Test paths | 200 / 200 |
+| Documentation paths | 223 / 223 |
+| Assertions inspected | 200 |
+| Tests executed | 172 |
+| Records with an executed assertion | 74 |
 | Semantic records unresolved | 74 |
 
 ## Documentation classes
@@ -110,6 +110,7 @@ Validation errors at generation: **0**.
 | `companion.ipad_client` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
 | `companion.aipi_audio_control` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
 | `companion.qlippy_presence` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
+| `channels.document_sources` | capabilities | 2/2 | 1/1 | 1 | 1 | 0 | partially_evidenced |
 | `runtime.kernel` | components | 2/2 | 0/0 | 0 | 0 | 0 | unresolved |
 | `runtime.inference` | components | 1/1 | 0/0 | 0 | 0 | 1 | unresolved |
 | `authority.edge` | components | 1/1 | 0/0 | 0 | 0 | 2 | unresolved |

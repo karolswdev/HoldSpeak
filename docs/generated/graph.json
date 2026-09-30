@@ -14,7 +14,7 @@
   },
   {
    "path": "docs/generated/openapi.json",
-   "sha256": "572b97dd0a37292fc4de6a59e6334fabecfcd250c7c9ebef50e489fdd09ca01a"
+   "sha256": "fee1b67bfcdda1eecfd923d224d5449be8a10ad44f93d1588435fe799ebf6a80"
   },
   {
    "path": "docs/internal/philo/data/desk.json",
@@ -22,7 +22,7 @@
   },
   {
    "path": "docs/internal/philo/data/integrations.json",
-   "sha256": "9628241504c30713e1f263b0fa0216c729802bdb035275ad9b8d963f953d852c"
+   "sha256": "de569a7e0d1b06236a84536feac974aca8d2f5b8ca9ddc11c458f061832d3e41"
   },
   {
    "path": "docs/internal/philo/data/runtime.json",

@@ -171,7 +171,7 @@ class _Rig:
 
     @staticmethod
     def _sends(page: Any, uid: str) -> list[dict[str, Any]]:
-        return _api(page, "GET", f"/api/channels/sends?update_id={uid}", token=TOKEN)["sends"]
+        return _api(page, "GET", f"/api/channels/sends?document_ref=project_update:{uid}", token=TOKEN)["sends"]
 
     @staticmethod
     def _deliveries(page: Any, pid: str, uid: str) -> list[dict[str, Any]]:
@@ -449,11 +449,11 @@ class TestSendFaceGlass(_Rig):
                 agent = self._agent()
                 prepared: dict[str, str] = {}
                 for name in ("Folder Payments", "Folder Moved", "Folder Old"):
-                    r = agent.post("/api/channels/sends", json={"update_id": uid, "destination_id": ids[name]})
+                    r = agent.post("/api/channels/sends", json={"document_ref": f"project_update:{uid}", "destination_id": ids[name]})
                     assert r.status_code == 200, r.text
                     prepared[name] = r.json()["send"]["id"]
                 prepared["Folder Ledger"] = _api(page, "POST", "/api/channels/sends",
-                                                 {"update_id": uid, "destination_id": ids["Folder Ledger"]},
+                                                 {"document_ref": f"project_update:{uid}", "destination_id": ids["Folder Ledger"]},
                                                  token=TOKEN)["send"]["id"]
                 self._room(page, pid)
                 self._updates(page)
@@ -1013,7 +1013,7 @@ class TestSendChannelsGlass(_Rig):
                 self._unpick(page, gh)
 
                 # Boards 26b, 26c, 27: a prepared send running survives Back and return.
-                sid = _api(page, "POST", "/api/channels/sends", {"update_id": uid, "destination_id": dest},
+                sid = _api(page, "POST", "/api/channels/sends", {"document_ref": f"project_update:{uid}", "destination_id": dest},
                            token=TOKEN)["send"]["id"]
                 self._focus(page)
                 self._back(page)
@@ -1572,11 +1572,11 @@ class TestSendEmailGlass(_Rig):
                 result = f"{row} [data-testid=dest-check-result]"
 
                 def api_send(script: Any = None) -> dict[str, Any]:
-                    digest = _api(page, "POST", "/api/channels/preview", {"update_id": uid, "destination_id": dest},
+                    digest = _api(page, "POST", "/api/channels/preview", {"document_ref": f"project_update:{uid}", "destination_id": dest},
                                   token=TOKEN)["payload_digest"]
                     if script is not None:
                         self.wire.script = [script]
-                    return _api(page, "POST", "/api/channels/send", {"update_id": uid, "destination_id": dest,
+                    return _api(page, "POST", "/api/channels/send", {"document_ref": f"project_update:{uid}", "destination_id": dest,
                                                                      "preview_digest": digest}, token=TOKEN)
 
                 def check(code: str) -> str:

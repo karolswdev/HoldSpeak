@@ -158,6 +158,8 @@ const REFUSED: Record<string, string> = {
   destination_not_saved: "DESTINATION NOT SAVED",
   destination_name_invalid: "NAME MISSING",
   document_unknown: "NO DOCUMENT",
+  document_kind_unknown: "DOCUMENT TYPE UNKNOWN",
+  document_not_found: "DOCUMENT NOT FOUND",
   email_address_invalid: "ADDRESS NOT VALID",
   email_key_invalid: "KEY NOT VALID",
   email_key_missing: "NO KEY",
@@ -175,6 +177,8 @@ const REFUSED: Record<string, string> = {
   address_invalid: "ADDRESS NOT VALID",
   channel_unknown: "CHANNEL NOT READY",
   invalid_arguments: "NOT VALID",
+  no_summary: "NO SUMMARY",
+  not_published: "NOT PUBLISHED",
   validation_error: "NOT VALID",
   preview_changed: "PREVIEW CHANGED",
   payload_changed: "PREVIEW CHANGED",
@@ -496,13 +500,13 @@ export const wire = {
     call<{ key_ref: string; saved?: boolean }>(`/api/channels/email-keys/${encodeURIComponent(keyRef)}`, {
       method: "PUT", json: { api_key: value, provider, command_id: commandId() },
     }),
-  sends: (updateId: string) =>
-    call<unknown>(`/api/channels/sends?update_id=${encodeURIComponent(updateId)}`).then((r) => listOf<Send>(r, "sends")),
-  preview: (updateId: string, destinationId: string) =>
+  sends: (documentRef: string) =>
+    call<unknown>(`/api/channels/sends?document_ref=${encodeURIComponent(documentRef)}`).then((r) => listOf<Send>(r, "sends")),
+  preview: (documentRef: string, destinationId: string) =>
     call<{ payload_digest: string; preview: WirePreview }>("/api/channels/preview", {
-      method: "POST", json: { update_id: updateId, destination_id: destinationId },
+      method: "POST", json: { document_ref: documentRef, destination_id: destinationId },
     }),
-  send: (body: { command_id: string; send_id?: string; update_id?: string; destination_id?: string; preview_digest?: string }) =>
+  send: (body: { command_id: string; send_id?: string; document_ref?: string; destination_id?: string; preview_digest?: string }) =>
     call<{ send: Send }>("/api/channels/send", { method: "POST", json: body }).then((r) => r.send),
   discard: (sendId: string) =>
     call<{ send: Send }>(`/api/channels/sends/${encodeURIComponent(sendId)}/discard`, {

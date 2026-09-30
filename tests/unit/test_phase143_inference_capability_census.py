@@ -245,8 +245,8 @@ OPERATION_CONTRACT_VARIABLE_SITES: dict[str, str] = {
     # PHILO-7-01: primitive detail resource reads through DESK_OPERATIONS.
     "holdspeak/mcp/resources.py:578|read_resource|call": "_ops().invoke(principal, DESK_OPERATIONS[(kind, 'get')], ...)",
     # PHILO-7-01: MCP primitive list/get read through DESK_OPERATIONS.
-    "holdspeak/mcp/tools.py:662|_primitive_list|call": "ops().invoke(principal, _desk_operation(kind, 'list'), {})",
-    "holdspeak/mcp/tools.py:668|_primitive_get|call": "ops().invoke(principal, _desk_operation(kind, 'get'), ...)",
+    "holdspeak/mcp/tools.py:649|_primitive_list|call": "ops().invoke(principal, _desk_operation(kind, 'list'), {})",
+    "holdspeak/mcp/tools.py:655|_primitive_get|call": "ops().invoke(principal, _desk_operation(kind, 'get'), ...)",
     # PHILO-7-02: invoke_receipted calls the registry's own invoke with its name.
     "holdspeak/operations.py:2162|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args)",
     "holdspeak/operations.py:2163|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args, held=held)",
@@ -412,7 +412,7 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     # down; the recipe.run branch itself is unchanged. PHILO-7-01/02: moved
     # down again (852 -> 1008) with the desk operations; re-anchored, same
     # branch, same call.
-    "holdspeak/mcp/tools.py:1029|dispatch|run": ProposedRoute(
+    "holdspeak/mcp/tools.py:1016|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
     # HS-151-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115

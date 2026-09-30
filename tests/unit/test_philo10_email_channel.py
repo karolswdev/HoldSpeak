@@ -164,7 +164,7 @@ def ready(hub: Hub, *, body: str = f"Cutover is green. {SENTINEL}", **extra: Any
 def press(hub: Hub, form: str, update: str, dest: str, key: str) -> dict[str, Any]:
     if form == "send_id":
         return {"send_id": prepare(hub, update, dest)["send"]["id"], "command_id": key}
-    return {"update_id": update, "destination_id": dest, "preview_digest": preview_digest(hub, update, dest),
+    return {"document_ref": f"project_update:{update}", "destination_id": dest, "preview_digest": preview_digest(hub, update, dest),
             "command_id": key}
 
 
@@ -719,7 +719,7 @@ def test_an_edited_sender_parks_the_destination_and_refuses_the_prepared_send(hu
 
 def test_a_request_over_the_size_limit_is_refused_by_name(hub: Hub, wire: Wire) -> None:
     update, dest = ready(hub, body="x" * 1_000_001)
-    refused = hub.client.post("/api/channels/sends", json={"update_id": update, "destination_id": dest})
+    refused = hub.client.post("/api/channels/sends", json={"document_ref": f"project_update:{update}", "destination_id": dest})
     assert refused.json()["code"] == "payload_too_large:email" and wire.requests == []
 
 
@@ -1264,9 +1264,9 @@ def test_c2_r3_a_restart_during_an_email_send_ends_unknown_once_and_never_sends_
             "name": "Priya by email", "channel": "email", "from_email": "karol@example.com",
             "to": ["priya@example.com"]})
         assert status == 200, saved
-        _s, preview = first.call("POST", "/api/channels/preview", {"update_id": update,
+        _s, preview = first.call("POST", "/api/channels/preview", {"document_ref": f"project_update:{update}",
                                                                    "destination_id": saved["destination"]["id"]})
-        body = {"update_id": update, "destination_id": saved["destination"]["id"],
+        body = {"document_ref": f"project_update:{update}", "destination_id": saved["destination"]["id"],
                 "preview_digest": preview["payload_digest"], "command_id": f"restart-{hold}"}
 
         def pressing() -> None:
@@ -1321,7 +1321,7 @@ def test_r3_the_hub_answers_a_read_during_a_slow_email_send(tmp_path: Path, tran
             "name": "Priya by email", "channel": "email", "from_email": "karol@example.com",
             "to": ["priya@example.com"]})
         assert status == 200, saved
-        _s, prepared = hub.call("POST", "/api/channels/sends", {"update_id": update,
+        _s, prepared = hub.call("POST", "/api/channels/sends", {"document_ref": f"project_update:{update}",
                                                                 "destination_id": saved["destination"]["id"]})
         body = {"send_id": prepared["send"]["id"]}
 

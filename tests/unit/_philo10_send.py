@@ -41,23 +41,52 @@ def destination(hub: Hub, folder: Path, name: str = "Team folder", **extra: Any)
     return resp.json()["destination"]["id"]
 
 
+def document_ref(update: str) -> str:
+    return f"project_update:{update}"
+
+
+def desk_decision_ref(hub: Hub) -> str:
+    """Mint a desk decision through the real producer for the Phase 11 source fence."""
+    is_error, decision = hub.mcp("desk.create", {"kind": "decisions", "data": {
+        "title": "Keep the cutover window",
+        "status": "accepted",
+        "context_markdown": "The migration is ready for the agreed window.",
+        "decision_markdown": "Run the migration during the cutover window.",
+        "consequences_markdown": "The support team monitors the result.",
+    }})
+    assert is_error is False, decision
+    return f"desk_decision:{decision['id']}"
+
+
+def source(hub: Hub, kind: str = "project_update") -> str:
+    if kind == "project_update":
+        _pid, update = room(hub)
+        return document_ref(update)
+    if kind == "desk_decision":
+        return desk_decision_ref(hub)
+    raise AssertionError(f"unknown Phase 11 source kind: {kind}")
+
+
 def prepare(hub: Hub, update: str, dest: str, **extra: Any) -> dict[str, Any]:
-    resp = hub.client.post("/api/channels/sends", json={"update_id": update, "destination_id": dest, **extra})
+    ref = update if ":" in update else document_ref(update)
+    resp = hub.client.post("/api/channels/sends", json={"document_ref": ref, "destination_id": dest, **extra})
     assert resp.status_code == 200, resp.text
     return resp.json()
 
 
 def preview_digest(hub: Hub, update: str, dest: str) -> str:
-    resp = hub.client.post("/api/channels/preview", json={"update_id": update, "destination_id": dest})
+    ref = update if ":" in update else document_ref(update)
+    resp = hub.client.post("/api/channels/preview", json={"document_ref": ref, "destination_id": dest})
     assert resp.status_code == 200, resp.text
     return resp.json()["payload_digest"]
 
 
 def send_body(hub: Hub, form: str, update: str, dest: str, key: str) -> dict[str, Any]:
-    """The owner's press in either form: a prepared row (send_id) or inline (update, destination, digest)."""
+    """The owner's press in either form: a prepared row or inline document_ref, destination and digest."""
+    ref = update if ":" in update else document_ref(update)
     if form == "send_id":
         return {"send_id": prepare(hub, update, dest)["send"]["id"], "command_id": key}
-    return {"update_id": update, "destination_id": dest, "preview_digest": preview_digest(hub, update, dest),
+    return {"document_ref": ref, "destination_id": dest, "preview_digest": preview_digest(hub, update, dest),
             "command_id": key}
 
 
@@ -95,6 +124,17 @@ def history(hub: Hub, update: str) -> list[dict[str, Any]]:
     with hub.db._connection() as conn:
         return [dict(r) for r in conn.execute(
             "SELECT * FROM project_update_deliveries WHERE update_id=? ORDER BY delivered_at, rowid", (update,))]
+
+
+def history_for_ref(hub: Hub, ref: str) -> list[dict[str, Any]]:
+    """Return ended-send history for either the update projection or a new source kind."""
+    if ref.startswith("project_update:"):
+        return history(hub, ref.split(":", 1)[1])
+    with hub.db._connection() as conn:
+        rows = conn.execute(
+            "SELECT state AS outcome, send_operation_id AS operation_id FROM channel_sends "
+            "WHERE document_ref=? AND state IN ('sent','unknown') ORDER BY created_at, rowid", (ref,))
+        return [dict(row) for row in rows]
 
 
 class DispatchSpy:

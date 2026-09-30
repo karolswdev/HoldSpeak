@@ -393,5 +393,10 @@ Missing shards: **none**.
 | `companion.qlippy_presence` | `linux_wayland` | supported_with_setup | experimental |
 | `companion.qlippy_presence` | `linux_x11` | supported_with_setup | experimental |
 | `companion.qlippy_presence` | `macos` | supported_with_setup | experimental |
+| `channels.document_sources` | `aipi` | not_applicable | built_unreleased |
+| `channels.document_sources` | `ipad` | unknown | built_unreleased |
+| `channels.document_sources` | `linux_wayland` | unknown | built_unreleased |
+| `channels.document_sources` | `linux_x11` | unknown | built_unreleased |
+| `channels.document_sources` | `macos` | supported_with_setup | built_unreleased |
 
 Availability is a source-backed classification. It does not establish a release or owner observation.
