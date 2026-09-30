@@ -1,0 +1,9 @@
+/* PHILO-11-03 canvas only: the seat spacing for the proposed well. Every
+ * species style (Button, StateChip, EgressChip, CycleGadget, SurfaceLedger,
+ * SurfaceSection) is the product's (surface.css, channels.css). Tokens only;
+ * no new colour. */
+[data-p11="seat"] { margin-top: 12px; min-width: 0; }
+[data-p11="seat"] .p11-wells { display: grid; gap: 8px; min-width: 0; }
+[data-p11="forms"] { display: flex; align-items: center; gap: 8px; margin: 2px 0 6px; }
+/* The Room row opens in place: the well under the row's words. */
+.surface-ledger-row [data-p11="seat"] { padding: 4px 0 8px; }

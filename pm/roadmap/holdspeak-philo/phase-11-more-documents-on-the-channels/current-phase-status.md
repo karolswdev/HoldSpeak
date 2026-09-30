@@ -1,6 +1,6 @@
 # Phase 11 - More documents on the channels
 
-**Last updated:** 2026-09-29 (RATIFIED by the owner, "Ratify, build it"; Q1 → refuse above 39,000 characters. Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid (`checks/charter-astra-r1.md`) — the decision kinds mapped to their real face seats, the Settings exclusion of the old webhook, `channel.destinations` in the thread palette, the same-day brief id, story 01 owns the inline Send caller, D1 recorded as a capability deferral, the failure-transition boards, Q1 worded as our limit. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib.)
+**Last updated:** 2026-09-29 (story 03 round two: Codex Astra r1 RATIFY-WITH-CONDITIONS on the canvases paid; 45 boards at both widths; awaiting the owner's word. Earlier: story 03 canvases A–E and T1–T3 DRAWN, round one: 42 boards at both widths, for Astra's check and the owner's ratification. Earlier: RATIFIED by the owner, "Ratify, build it"; Q1 → refuse above 39,000 characters. Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid (`checks/charter-astra-r1.md`) — the decision kinds mapped to their real face seats, the Settings exclusion of the old webhook, `channel.destinations` in the thread palette, the same-day brief id, story 01 owns the inline Send caller, D1 recorded as a capability deferral, the failure-transition boards, Q1 worded as our limit. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib.)
 
 **Status:** RATIFIED by the owner 2026-09-29 ("Ratify, build it") after Astra's check r1 (RATIFY-WITH-CONDITIONS, paid). Q1 ruled: "Higher limit, still refuse" → Muad'Dib set the limit at **39,000** characters of Slack text (Slack truncates above 40,000; he can change it).
 
@@ -101,7 +101,7 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 |---|---|---|---|---|
 | PHILO-11-01 | The document sources | backlog | [story-01-the-document-sources](./story-01-the-document-sources.md) | — |
 | PHILO-11-02 | The Slack channel and the aftercare rewrite | backlog | [story-02-the-slack-channel-and-the-aftercare-rewrite](./story-02-the-slack-channel-and-the-aftercare-rewrite.md) | — |
-| PHILO-11-03 | The canvases A–E | backlog | [story-03-the-canvases](./story-03-the-canvases.md) | — |
+| PHILO-11-03 | The canvases A–E | done | [story-03-the-canvases](./story-03-the-canvases.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-11-04 | The SEND well as one library species | backlog | [story-04-the-send-well-species](./story-04-the-send-well-species.md) | — |
 | PHILO-11-05 | The faces: the well on every document, Destinations with Slack | backlog | [story-05-the-faces](./story-05-the-faces.md) | — |
 | PHILO-11-06 | The atlas cases for the new kinds and Slack | backlog | [story-06-the-atlas-cases](./story-06-the-atlas-cases.md) | — |
@@ -127,6 +127,12 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 - A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call. CI does not gate a merge (the owner, 2026-09-28).
 
 ## Where we are
+
+2026-09-29, story 03 DONE: the owner ratified the canvases A–E and T1–T3 ("Yes...") after Astra r1 and r2, both paid. Stories 04 and 05 may now build the ratified faces (04 after 01 merges).
+
+2026-09-29: story 03 round two — Codex Astra r1 on the canvases (`checks/canvas-astra-r1.md`) RATIFY-WITH-CONDITIONS, paid: the 393 fit, the settled shared appearance (`assets/story-03-canvas/harness/species.css`), the Room row without the dead Open, the scrolled companions. Story 04 takes G2–G4 and the head layout; story 05 the host integration and rendered-transition fences; G1 and G5 are ledgered. Next: the owner's word.
+
+2026-09-29: story 03 in progress — the canvases A–E and T1–T3 drawn on the real product (`assets/story-03-canvas/`): 42 boards at 1440 and 393; `meeting_decision` has no seat (confirmed on glass); the Room row's Open opens nothing (G1, ledgered); seven questions for the owner. Next: Astra's check, then his word.
 
 2026-09-29: the owner RATIFIED the charter ("Ratify, build it"). Q1: "Higher limit, still refuse" — Muad'Dib set the limit at 39,000 characters of Slack text (under Slack's 40,000 truncation). Next: story 01 (Astra) and story 03 canvases (Muad'Dib) in parallel.
 
