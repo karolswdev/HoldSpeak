@@ -201,6 +201,12 @@ class TestMeetingFacesGlass:
     def _sends(page: Any, ref: str) -> list[dict[str, Any]]:
         return _api(page, "GET", f"/api/channels/sends?document_ref={ref}", token=TOKEN)["sends"]
 
+    def _egress_count(self) -> int:
+        from holdspeak.db import get_database
+
+        with get_database()._connection() as conn:
+            return int(conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='external.egress'").fetchone()[0])
+
     def _receipt(self, operation_id: str) -> dict[str, Any]:
         from holdspeak.db import get_database
 
@@ -223,6 +229,22 @@ class TestMeetingFacesGlass:
           const all = [...document.querySelectorAll('*')].filter((e) => ok(e) && e.getBoundingClientRect().width);
           const el = all.find((e) => ![...e.children].some(ok)) || all[0]; if (el) el.dataset.mark = n; }""", [text, name])
         return f"[data-mark='{name}']"
+
+    @staticmethod
+    def _scroll_to_text(page: Any, sel: str, text: str) -> bool:
+        """Scroll the text's own line into its scrollers; True when that line is on screen and on top."""
+        return page.evaluate("""([sel, t]) => { const b = document.querySelector(sel); if (!b) return false;
+          const w = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
+          for (let n = w.nextNode(); n; n = w.nextNode()) { const i = n.textContent.indexOf(t); if (i < 0) continue;
+            const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + t.length);
+            for (let s = n.parentElement; s; s = s.parentElement) {
+              if (!(s.scrollHeight > s.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(s).overflowY))) continue;
+              const rr = r.getBoundingClientRect(), sr = s.getBoundingClientRect();
+              s.scrollTop += rr.top - (sr.top + Math.min(sr.height / 3, 120));
+            }
+            const q = r.getBoundingClientRect(); const h = document.elementFromPoint(q.left + 2, q.top + q.height / 2);
+            return q.top >= 0 && q.bottom <= innerHeight && !!h && b.contains(h); }
+          return false; }""", [sel, text])
 
     @staticmethod
     def _covered(page: Any, sel: str) -> dict[str, Any]:
@@ -334,6 +356,28 @@ class TestMeetingFacesGlass:
                 assert "Slack webhook" not in settings_text          # with a Slack destination too
                 facts["check"] = check
 
+                # ── Astra counsel r1 F1: the key gone from the store, a fresh page, Edit -- never SET ──
+                slot = f"slack:{slack['account']['key_ref']}"
+                del self.keys.values[slot]
+                self._settings(page)
+                page.locator(f"[data-testid=dest-row]:has([data-destination='{SLACK}'])").click()
+                page.locator("[data-testid=dest-edit]").click()
+                page.locator("[data-testid=dest-form] [data-testid=dest-key-row]").wait_for(timeout=T)
+                page.wait_for_timeout(300)
+                edit_chip = page.locator(f"{key_row} .gadget-chip").first.inner_text().strip()
+                assert edit_chip != "SET", edit_chip
+                assert "WEBHOOK SET" not in page.locator("[data-testid=dest-form]").inner_text()
+                page.locator("[data-testid=dest-key-check]").click()
+                page.locator("[data-testid=dest-key-missing]").wait_for(timeout=T)
+                hub_check = _api(page, "POST", f"/api/channels/destinations/{slack['id']}/check", {}, token=TOKEN)["check"]["state"]
+                assert hub_check == "slack_webhook_missing", hub_check
+                assert page.locator(f"{key_row} .gadget-chip").first.inner_text().strip() != "SET"
+                boards.shoot(page, "D5-edit-unknown-webhook-not-set", ["[data-testid=dest-key-missing]"],
+                             seat="CENTER:[data-testid=dest-key-row]", anchor=DS)
+                assert self.edge.requests == [], "the Edit probe posted to Slack"
+                facts["edit_probe"] = {"chip_before_check": edit_chip, "hub_check": hub_check}
+                self.keys.values[slot] = WEBHOOK            # the webhook back for the send legs
+
                 # ── C1: the Meetings record -- SUMMARY, then SEND, then TRANSCRIPT ──
                 self._record(page, ids["sync"])
                 page.locator(f"{MR} [data-testid=destination-row]").first.wait_for(timeout=T)
@@ -418,6 +462,14 @@ class TestMeetingFacesGlass:
                 assert "DIGEST → SLACK" not in win and "FOLLOW-UP → SLACK" not in win
                 boards.shoot(page, "C5-digest-form-slack", [f"{MR} [data-testid=doc-forms] select", f"{MR} [data-testid=prepared-send]"],
                              seat=f"CENTER:{MR} [data-testid=doc-forms]", anchor=MR)
+                # C5c as ratified: the digest body itself on screen (its own line, in the preview well).
+                body_sel = f"{MR} [data-testid=prepared-open] [data-testid=send-preview-body]"
+                on_screen = self._scroll_to_text(page, body_sel, "Still open")
+                assert on_screen, "the digest body is not on screen"
+                page.mouse.move(1, 1)
+                page.wait_for_timeout(250)
+                boards.shoot(page, "C5c-digest-body", [], seat=None, anchor=MR, pointer=False)
+                facts["digest_body_on_screen"] = on_screen
                 page.locator(f"{MR} [data-testid=prepared-send]").click()
                 page.locator(f"{MR} [data-testid=prepared-result]").wait_for(timeout=T)
                 page.wait_for_timeout(600)
@@ -428,9 +480,12 @@ class TestMeetingFacesGlass:
                 dres = " ".join(page.locator(f"{MR} [data-testid=prepared-result]").inner_text().split())
                 assert "POSTED" in dres and "#leads" in dres, dres
                 assert len(self.edge.requests) == 2 and json.loads(self.edge.requests[1]["body"])["text"] == drows[0]["preview"]["text"]
-                boards.shoot(page, "C5c-digest-prepared-posted", [f"{MR} [data-testid=prepared-result]"],
+                dreceipt = self._receipt(drows[0]["send_operation_id"])
+                assert dreceipt.get("state") == "succeeded", dreceipt
+                boards.shoot(page, "C5d-digest-prepared-posted", [f"{MR} [data-testid=prepared-result]"],
                              seat=f"CENTER:{MR} [data-testid=prepared-result]", anchor=MR)
-                facts["digest_send"] = {"face": dres, "hub_state": drows[0]["state"], "document_ref": drows[0]["document_ref"]}
+                facts["digest_send"] = {"face": dres, "hub_state": drows[0]["state"], "document_ref": drows[0]["document_ref"],
+                                        "receipt": dreceipt}
 
                 # ── C5b: the follow-up to the folder ──
                 followup_ref = f"meeting_followup:{ids['sync']}"
@@ -448,8 +503,15 @@ class TestMeetingFacesGlass:
                 assert len(frows) == 1 and frows[0]["state"] == "sent" and frows[0]["document_ref"] == followup_ref, frows
                 saved = Path(frows[0]["file_path"]).read_text()
                 assert SENTINEL not in saved
-                assert page.locator(f"{self._opened(MR, FOLDER)} [data-receipt=latest]").get_attribute("data-state") == "sent"
-                facts["followup_send"] = {"hub_state": frows[0]["state"], "document_ref": followup_ref}
+                freceipt_el = page.locator(f"{self._opened(MR, FOLDER)} [data-receipt=latest]")
+                assert freceipt_el.get_attribute("data-state") == "sent"
+                fface = " ".join(freceipt_el.inner_text().split())
+                assert fface == f"✓ SAVED {frows[0]['file_path']}", (fface, frows[0]["file_path"])
+                assert (frows[0].get("proof") or {}).get("path", frows[0]["file_path"]) == frows[0]["file_path"], frows[0]["proof"]
+                freceipt = self._receipt(frows[0]["send_operation_id"])
+                assert freceipt.get("state") == "succeeded", freceipt
+                facts["followup_send"] = {"face": fface, "hub_state": frows[0]["state"], "document_ref": followup_ref,
+                                          "file_path": frows[0]["file_path"], "proof": frows[0].get("proof"), "receipt": freceipt}
                 page.locator(f"{MR} [data-testid=doc-forms] select").select_option("meeting_summary")
 
                 # ── C4: no summary, no well ──
@@ -469,6 +531,11 @@ class TestMeetingFacesGlass:
                 code = answer.get("error_code") or answer.get("code")
                 assert code == "payload_too_large:slack", answer
                 assert isinstance(answer["size"], int) and answer["limit"] == 39_000 and answer["size"] > 39_000, answer
+                # channel.preview is admission-exempt (holdspeak/channel_operations.py:199): no kernel
+                # operation, so no receipt. The kernel record is the ABSENCE of any egress for it.
+                assert "operation_id" not in answer and "receipt" not in answer, sorted(answer)
+                t1_receipt = {"egress_operations": self._egress_count()}
+                assert t1_receipt["egress_operations"] == 2, t1_receipt       # the summary and the digest only
                 self._record(page, ids["offsite"])
                 page.locator(f"{MR} [data-testid=destination-row]").first.wait_for(timeout=T)
                 self._pick(page, MR, SLACK)
@@ -482,7 +549,8 @@ class TestMeetingFacesGlass:
                 assert self._sends(page, over_ref) == [] and len(self.edge.requests) == 2      # nothing sent
                 boards.shoot(page, "T1-over-slack-limit-refused", [f"{self._opened(MR, SLACK)} [data-testid=preview-refused]"],
                              seat=f"CENTER:{self._opened(MR, SLACK)} [data-testid=preview-refused]", anchor=MR)
-                facts["t1"] = {"face": t1, "http": {"status": status, "code": code, "size": answer["size"], "limit": answer["limit"]}}
+                facts["t1"] = {"face": t1, "http": {"status": status, "code": code, "size": answer["size"], "limit": answer["limit"]},
+                              "receipt": t1_receipt}
 
                 # ── C6: the meeting window -- the same well, its history ──
                 page.evaluate("() => localStorage.removeItem('hs.desk.workspace.v1')")
@@ -500,6 +568,24 @@ class TestMeetingFacesGlass:
                 c6b = boards.shoot(page, "C6c-meeting-window-picked", [f"{self._opened(MW, SLACK)} [data-testid=send-verb]"],
                                    seat=f"CENTER:{self._opened(MW, SLACK)} [data-testid=send-verb]", anchor=MW)
                 assert c6b["named"][0]["ok"], c6b["named"]                  # nothing covers Send in the meeting window
+                summary_ref = f"meeting_summary:{ids['sync']}"
+                before = {r["id"] for r in self._sends(page, summary_ref)}
+                self._press(page, MW, SLACK)
+                wrows = [r for r in self._sends(page, summary_ref) if r["id"] not in before]
+                assert len(wrows) == 1, wrows
+                w = wrows[0]
+                assert w["state"] == "sent" and w["document_ref"] == summary_ref and w["destination_id"] == slack["id"], w
+                wreceipt = self._receipt(w["send_operation_id"])
+                assert wreceipt.get("state") == "succeeded", wreceipt
+                wface_el = page.locator(f"{self._opened(MW, SLACK)} [data-receipt=latest]")
+                assert wface_el.get_attribute("data-state") == "sent"
+                wface = " ".join(wface_el.inner_text().split())
+                assert wface == "✓ POSTED #leads", wface
+                assert page.locator(f"{self._opened(MW, SLACK)} a[href]").count() == 0
+                assert len(self.edge.requests) == 3 and json.loads(self.edge.requests[2]["body"])["text"] == w["preview"]["text"]
+                c6d = boards.shoot(page, "C6d-meeting-window-posted", [f"{self._opened(MW, SLACK)} [data-receipt=latest]"],
+                                   seat=f"CENTER:{self._opened(MW, SLACK)} [data-receipt=latest]", anchor=MW)
+                facts["window_send"] = {"face": wface, "hub_state": w["state"], "document_ref": w["document_ref"], "receipt": wreceipt}
                 facts["meeting_window_width"] = mw_width
 
                 # The laws on every board (touched text: 12 px floor; the host's own heads are ledgered, inherited).

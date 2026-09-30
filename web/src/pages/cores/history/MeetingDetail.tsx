@@ -22,7 +22,7 @@ import { useMeetingData } from "./useMeetingData";
 import { MeetingHeader } from "./MeetingHeader";
 import { CaptureSlab } from "./CaptureSlab";
 import { ArtifactsLibrary } from "./ArtifactsLibrary";
-import { MeetingSendWell } from "../../../meetings/MeetingSendWell";
+import { MeetingSendWellLazy as MeetingSendWell } from "../../../meetings/MeetingSendWellLazy";
 import { NeedsYouTable } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
 import { SettledList } from "./SettledList";

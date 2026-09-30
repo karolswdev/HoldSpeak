@@ -20,7 +20,7 @@ import { MeetingIntelRecovery } from "../../meetings/MeetingIntelRecovery";
 import { ThreadsSection } from "./shared/ThreadsSection";
 import type { PulloutContentProps } from "./types";
 import { Button } from "../../components/signal/Signal";
-import { MeetingSendWell } from "../../meetings/MeetingSendWell";
+import { MeetingSendWellLazy as MeetingSendWell } from "../../meetings/MeetingSendWellLazy";
 
 interface MeetingDetail {
   intel?: { summary?: string; action_items?: any[]; topics?: string[] } | null;

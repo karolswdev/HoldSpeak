@@ -14,7 +14,6 @@ import { useState } from "react";
 import { CycleGadget } from "../desk/surface";
 import { SendWells } from "../desk/surface/send";
 import { stamp } from "../features/channels/channels";
-import "./MeetingSendWell.css";
 
 export const MEETING_FORMS = [
   { value: "meeting_summary", label: "Summary", word: "SUMMARY" },
@@ -35,7 +34,7 @@ export function MeetingSendWell({ meetingId, title, startedAt }: {
   const [kind, setKind] = useState<Form>(formPick.get(meetingId) ?? "meeting_summary");
   const form = MEETING_FORMS.find((f) => f.value === kind) ?? MEETING_FORMS[0];
   const head = (
-    <div className="send-forms" data-testid="doc-forms">
+    <div className="send-line" data-testid="doc-forms">
       <CycleGadget label="Document" value={kind}
         options={MEETING_FORMS.map(({ value, label }) => ({ value, label }))}
         onChange={(v) => { formPick.set(meetingId, v as Form); setKind(v as Form); }} />

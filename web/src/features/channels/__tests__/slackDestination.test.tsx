@@ -168,4 +168,38 @@ describe("Slack in the Destination form", () => {
     expect(result.textContent).toContain("NO WEBHOOK");
     expect(screen.getByTestId("dest-open").textContent).toContain("NOT SET");
   });
+
+  it("Astra counsel r1 F1: Edit on a saved row never says SET while the webhook is unknown", async () => {
+    // A saved Slack row whose webhook presence this session has not confirmed (a fresh page:
+    // the list read does not open the keychain). The hub's Check then finds it missing.
+    rows = [slackRow("chd_slack")];
+    checkState = "slack_webhook_missing";
+    render(<Destinations />);
+    fireEvent.click(within(await screen.findByTestId("dest-row")).getByText("Slack #leads"));
+    fireEvent.click(await screen.findByTestId("dest-edit"));
+    const keyRow = await screen.findByTestId("dest-key-row");
+    expect(within(keyRow).queryByText("SET")).toBeNull();
+    expect(screen.getByTestId("dest-form").textContent).not.toContain("WEBHOOK SET");
+    // The neutral state offers Check; a Check that finds no webhook says NO WEBHOOK, still no SET.
+    fireEvent.click(within(keyRow).getByTestId("dest-key-check"));
+    const missing = await screen.findByTestId("dest-key-missing");
+    expect(missing.textContent).toContain("NO WEBHOOK");
+    expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
+    // Save now refuses by name and sends nothing.
+    fireEvent.click(screen.getByTestId("dest-save"));
+    expect((await screen.findByTestId("dest-refused")).getAttribute("data-code")).toBe("slack_webhook_missing");
+    expect(calls.filter((c) => c.method === "POST" && c.path === "/api/channels/destinations")).toEqual([]);
+  });
+
+  it("Edit on a saved row says SET only after a Check confirms the webhook", async () => {
+    rows = [slackRow("chd_slack")];
+    render(<Destinations />);
+    fireEvent.click(within(await screen.findByTestId("dest-row")).getByText("Slack #leads"));
+    fireEvent.click(await screen.findByTestId("dest-edit"));
+    const keyRow = await screen.findByTestId("dest-key-row");
+    expect(within(keyRow).queryByText("SET")).toBeNull();
+    fireEvent.click(within(keyRow).getByTestId("dest-key-check"));
+    await waitFor(() => expect(within(screen.getByTestId("dest-key-row")).getByText("SET")).toBeTruthy());
+    expect(screen.queryByTestId("dest-key-check")).toBeNull();
+  });
 });

@@ -108,20 +108,26 @@ export const keyRef = (fromEmail: string, provider: EmailProvider = "sendgrid") 
   `${provider}-${fromEmail.trim().toLowerCase().replace(/[^a-z0-9_.@-]/g, "-")}`.slice(0, 100);
 const addresses = (text: string) => text.split(",").map((a) => a.trim()).filter(Boolean);
 
-function DestForm({ conns, initial, replaces, keys, onKey, onSlackKey, onDone, onCancel }: {
+function DestForm({ conns, initial, replaces, keys, onKey, onSlackKey, onSlackKnown, onDone, onCancel }: {
   conns: ConnectionsResponse | null; initial: Draft; replaces?: string; keys: Record<string, boolean>;
   onKey: (ref: string, v: string, provider: EmailProvider) => Promise<string | null>;
   /** The webhook save: the minted key_ref, or the refusal code. */
   onSlackKey: (url: string) => Promise<{ keyRef: string } | { code: string }>;
+  /** What a Check found about a key_ref: present or absent. */
+  onSlackKnown: (ref: string, present: boolean) => void;
   onDone: () => void; onCancel?: () => void;
 }) {
   const [keyRefused, setKeyRefused] = useState<string | null>(null);
+  const [keyChecking, setKeyChecking] = useState(false);
   const [d, setD] = useState<Draft>(initial);
   const [busy, setBusy] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
   const set = (patch: Partial<Draft>) => { setRefused(null); setD((x) => ({ ...x, ...patch })); };
   const name = d.nameTouched ? d.name : autoName(d);
-  const slackSet = !!d.slackRef && keys[d.slackRef] !== false;
+  // The webhook is SET only when a save or a Check in this session confirmed it (Astra counsel r1 F1):
+  // unknown is never SET. Edit on a saved row starts unknown and offers Check.
+  const slackKnown: boolean | undefined = d.slackRef ? keys[d.slackRef] : false;
+  const slackSet = slackKnown === true;
   const ref = keyRef(d.fromEmail, d.provider);
   const gh = conns?.tools.find((t) => t.provider_id === "github");
   const jiraConns = conns?.tools.find((t) => t.provider_id === "jira")?.connections ?? [];
@@ -134,13 +140,13 @@ function DestForm({ conns, initial, replaces, keys, onKey, onSlackKey, onDone, o
     : d.channel === "jira" ? pick(jiraAcc)
     : d.channel === "confluence" ? pick(confAcc)
     : d.channel === "email" ? { provider: d.provider, from_email: d.fromEmail, from_name: d.fromName, key_ref: ref, key_present: !!keys[ref] }
-    : d.channel === "slack" ? { key_ref: d.slackRef, key_present: slackSet }
+    : d.channel === "slack" ? { key_ref: d.slackRef, ...(slackKnown === undefined ? {} : { key_present: slackKnown }) }
     : {};
   const eg = egressOf({ channel: d.channel, account, synced: d.synced });
   const acc = accountChip({ channel: d.channel, account }, conns);
   const save = async () => {
     // Slack: no webhook typed, nothing to save (the hub would store a row that cannot post).
-    if (d.channel === "slack" && !slackSet) { setRefused("slack_webhook_missing"); return; }
+    if (d.channel === "slack" && slackKnown === false) { setRefused("slack_webhook_missing"); return; }
     setBusy(true); setRefused(null);
     const base = { name, channel: d.channel, ...(replaces ? { replaces } : {}) };
     const body: SaveBody =
@@ -228,6 +234,21 @@ function DestForm({ conns, initial, replaces, keys, onKey, onSlackKey, onDone, o
               setKeyRefused(null);
               void onSlackKey(v).then((r) => ("keyRef" in r ? set({ slackRef: r.keyRef }) : setKeyRefused(r.code)));
             }} />
+          {replaces && slackKnown === false ? (
+            <span className="send-line" data-testid="dest-key-missing">
+              <StateChip state="warning" label="NO WEBHOOK" />
+            </span>
+          ) : null}
+          {replaces && d.slackRef && slackKnown === undefined ? (
+            <Button dense variant="ghost" loading={keyChecking} data-testid="dest-key-check"
+              onClick={() => {
+                setKeyChecking(true);
+                void wire.check(replaces)
+                  .then((r) => { if (r.check.state === "ready" || r.check.state === "slack_webhook_missing") onSlackKnown(d.slackRef, r.check.state === "ready"); else setKeyRefused(r.check.state); })
+                  .catch((e) => setKeyRefused(e instanceof Refusal ? e.code : "no_answer"))
+                  .finally(() => setKeyChecking(false));
+              }}>Check</Button>
+          ) : null}
           {keyRefused ? (
             <span className="send-line" data-testid="dest-key-refused" data-code={keyRefused}>
               <StateChip state="failure" label={SEND_WORDS.keyNotSaved} />
@@ -353,6 +374,7 @@ export function Destinations() {
   const onSlackKey = (url: string): Promise<{ keyRef: string } | { code: string }> => wire.saveSlackWebhook(url)
     .then((r) => { setKeys((k) => ({ ...k, [r.key_ref]: true })); return { keyRef: r.key_ref }; })
     .catch((e) => ({ code: e instanceof Refusal ? e.code : "no_answer" }));
+  const onSlackKnown = (ref: string, present: boolean) => setKeys((k) => ({ ...k, [ref]: present }));
   /** A Slack row's webhook, as far as this face knows it (a save or a Check): true, false or unknown. */
   const slackKey = (d: Destination): boolean | undefined =>
     d.channel === "slack" ? keys[String(d.account.key_ref ?? "")] : undefined;
@@ -372,7 +394,7 @@ export function Destinations() {
   const active = rows.filter((d) => d.state === "active");
   const parked = rows.filter((d) => d.state === "parked");
   const form = (
-    <DestForm conns={conns} initial={EMPTY} keys={keys} onKey={onKey} onSlackKey={onSlackKey}
+    <DestForm conns={conns} initial={EMPTY} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onSlackKnown={onSlackKnown}
       onDone={() => {
         // PHILO-10-07: after Save the form closes; the saved row stays in view (at 393 the closed form
         // otherwise leaves the list above the window).
@@ -406,7 +428,7 @@ export function Destinations() {
                     </>}>
                     {open === d.id ? (
                       editing === d.id ? (
-                        <DestForm conns={conns} initial={fromDestination(d)} replaces={d.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey}
+                        <DestForm conns={conns} initial={fromDestination(d)} replaces={d.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onSlackKnown={onSlackKnown}
                           onDone={() => { setEditing(null); setOpen(null); reload(); }} onCancel={() => setEditing(null)} />
                       ) : (
                         <div className="send-open" data-testid="dest-open">
