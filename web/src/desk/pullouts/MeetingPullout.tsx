@@ -20,6 +20,7 @@ import { MeetingIntelRecovery } from "../../meetings/MeetingIntelRecovery";
 import { ThreadsSection } from "./shared/ThreadsSection";
 import type { PulloutContentProps } from "./types";
 import { Button } from "../../components/signal/Signal";
+import { MeetingSendWell } from "../../meetings/MeetingSendWell";
 
 interface MeetingDetail {
   intel?: { summary?: string; action_items?: any[]; topics?: string[] } | null;
@@ -147,6 +148,11 @@ export function MeetingPullout({ object: o, onClose }: PulloutContentProps) {
               </span>
             ))}
           </span>
+        ) : null}
+        {/* PHILO-11-05 (canvas C6): summary and topics, then SEND; no summary, no well. */}
+        {detail?.intel?.summary?.trim() ? (
+          <MeetingSendWell meetingId={o.id} title={String(detail.title ?? o.title ?? "Meeting")}
+            startedAt={String(detail.started_at ?? "") || null} />
         ) : null}
         {detail?.intel?.action_items &&
           detail.intel.action_items.length > 0 && (

@@ -22,7 +22,7 @@ import { useMeetingData } from "./useMeetingData";
 import { MeetingHeader } from "./MeetingHeader";
 import { CaptureSlab } from "./CaptureSlab";
 import { ArtifactsLibrary } from "./ArtifactsLibrary";
-import { AftercareGadgets } from "./AftercareGadgets";
+import { MeetingSendWell } from "../../../meetings/MeetingSendWell";
 import { NeedsYouTable } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
 import { SettledList } from "./SettledList";
@@ -70,10 +70,6 @@ export function MeetingDetail({
     needsRows,
     needsCount,
     settledActions,
-    aftercare,
-    authority,
-    busy,
-    proposeSlack,
     timelineRows,
   } = data;
 
@@ -171,6 +167,13 @@ export function MeetingDetail({
           {/* HS-201-04: the summary is shown on the record, with its
               meeting — the result first, the transcript under it. */}
           <MeetingSummarySlab intel={summaryIntel} receipt={runReceipt} />
+          {/* PHILO-11-05 (canvas C1, C4): SUMMARY, then SEND; no summary, no well.
+              The old aftercare Slack rows are gone (R7): the digest and the
+              follow-up are forms of this one well. */}
+          {summaryIntel?.summary?.trim() ? (
+            <MeetingSendWell meetingId={id} title={meetingTitle}
+              startedAt={String((detail ?? meeting)?.started_at ?? "") || null} />
+          ) : null}
           <TranscriptWell
             id={id}
             segments={segments}
@@ -187,12 +190,6 @@ export function MeetingDetail({
               </ul>
             </div>
           ) : null}
-          <AftercareGadgets
-            aftercare={aftercare}
-            authority={authority}
-            busy={busy}
-            proposeSlack={proposeSlack}
-          />
           <SettledList settledActions={settledActions} />
         </>
       )}

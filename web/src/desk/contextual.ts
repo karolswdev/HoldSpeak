@@ -37,7 +37,10 @@ export interface ContextualCoderAction {
 
 const CAPABILITY_KINDS = new Set<PrimitiveKind>(["recipe", "chain", "workflow"]);
 const TEXT_MATERIAL_KINDS = new Set<PrimitiveKind>(["note", "artifact"]);
-const INTEGRATION_IDS = new Set(["slack", "companion_webhook", "github"]);
+/* PHILO-11-05 (design section 6, D1): the free-text desk Slack send is PARKED.
+ * Its endpoint refuses `slack_moved_to_channel`, so no verb offers it; Slack is
+ * reached through a document's SEND well. The webhook and GitHub verbs stay. */
+const INTEGRATION_IDS = new Set(["companion_webhook", "github"]);
 
 function selectionMatches(object: WorldObject, selected: string): boolean {
   return (
@@ -134,9 +137,7 @@ export function contextualIntegrationActions(
       label:
         destination.id === "github"
           ? `Create GitHub issue from ${selected[0].title}`
-          : destination.id === "slack"
-            ? `Send ${selected[0].title} to Slack`
-            : `Post ${selected[0].title} to Custom webhook`,
+          : `Post ${selected[0].title} to Custom webhook`,
       destination,
       source: selected[0],
     }));
