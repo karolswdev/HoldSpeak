@@ -110,36 +110,53 @@ The Slack "digest" is a different text: what was decided, what is still open, wh
 
 Each board at 1440 × 900 and 393 × 852, on the real product with a harness shim for the new wire (the Phase 10 pattern: `pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-04-send-canvas/README.md`, "What the boards are").
 
-**Canvas A: the brief** (in the Intelligence BRIEF view, per Q4)
+**Canvas A: the brief** (on the Chair BRIEF section and the Intelligence BRIEF view, per ruling R4)
 - A1 no destination (`NO DESTINATION` + Add destination)
 - A2 a destination picked: the preview fields and the brief body, Send, the egress chip
 - A3 sent (one channel, with proof), and the history of this brief
 - A4 a send the steward prepared (`PREPARED`, `BY STEWARD`) and the Chair's BRIEF head with its `PREPARED ×1` chip
-- A5 an older brief's prepared send after a new Generate (its frozen date on the row)
+- A5 a new Generate after a send: the well offers Send again with the new preview (ruling R9)
+- A6 the person sections in the preview (ruling R1)
 
-**Canvas B: a decision** (in the decision window, per Q4)
+**Canvas B: a decision** (in every decision face, per ruling R4)
 - B1 picked, in the about-400 px window at 1440 and at 393
 - B2 sent
-- B3 Edit after the pick: `PREVIEW CHANGED`, nothing sent
+- B3 Edit after a send: the preview shows the new text; Send again (ruling R9)
+- B5 the meeting decision row and the decision receipt (Intelligence → DECISIONS) with their SEND wells (ruling R2)
 - B4 prepared by an agent, and the Room's decision row with its `PREPARED ×1` chip
 
-**Canvas C: a meeting summary** (in the Meetings record, per Q4)
+**Canvas C: a meeting summary** (in every meeting face, per ruling R4)
 - C1 the record: SUMMARY, then SEND, at about 640 px and at 393
 - C2 Slack picked: the preview in Slack text, the `HOOKS.SLACK.COM` chip
 - C3 posted to Slack; history
 - C4 a meeting with no summary: no SEND well (the draft rule of Phase 10 board 36)
-- C5 the record without the aftercare Slack rows (per Q7)
+- C5 the aftercare digest and follow-up as documents in the same SEND well; the old `DIGEST → SLACK` rows gone (ruling R7)
+- C6 the meeting window (`MeetingPullout`) and the Chair's MEETINGS row with the well (ruling R4)
 
 **Canvas D: Destinations with Slack**
 - D1 the form, Slack chosen: Webhook, Channel name, Name, the egress chip
 - D2 the webhook saved (`KEY SET` pattern), and refused (`KEY NOT SAVED` + why)
 - D3 the Slack row in the list, open, with Check
-- D4 the Credentials group without the `Slack webhook` row, and the moved webhook as a Slack destination (per Q7)
+- D4 the Credentials group without the `Slack webhook` row (ruling R7: no migration; he adds a Slack destination)
 
 **Canvas E: the shared well** (one board per face, the same species)
 - E1 the four SEND wells side by side: update, brief, decision, meeting, to prove "the same object never drawn two ways" (UX-CANON §D, first rule)
 
-## 7. Open face questions for the owner (each with the recommended default)
+## 7. The owner's rulings (2026-09-29, verbatim, to the nine questions below)
+
+| # | His word | What it rules for the faces |
+|---|---|---|
+| R1 | "Both." | The Monday brief goes out with its items **and** its person sections. |
+| R2 | "All." | Every kind of decision: the desk record, the meeting decision, the decision receipt. |
+| R3 | "All." | Every meeting summary form: the summary and topics, the digest, the follow-up. |
+| R4 | "In all those." | A SEND well on every face where each document lives today (1a, 1b, 1c). This makes F3 binding: one library species, composed on every face. |
+| R5 | "Ok." | One destination list, no filter. |
+| R6 | "Ok." | Slack by incoming webhook. |
+| R7 | "As long as everything can use the same thing - we are golden. No need to 'migrate', just rewrite it. I'm the only user, remember?" | The aftercare Slack export is rewritten onto the Slack channel. It has no migration step: he adds a Slack destination once. The old webhook setting and the aftercare rows go. |
+| R8 | "OK" | Copy stays as it is. Mark delivered stays on the update only. |
+| R9 | "I mean, if it changes, we re-send. How is it so difficult for you to comprehend?" | Nothing is frozen for him to track. When a document changes, the well shows the new preview and he presses Send again. No old-version rows or stale-date words. |
+
+## 7a. The questions as asked (the defaults were the lane's; the rulings above replace them)
 
 1. **Which brief?** Default: **the Monday brief** (Chair and Intelligence), items only. The person sections are **not** sent (People data leaving the machine; he can widen this later).
 2. **Which decision?** Default: **the desk decision record** (the window the Room's decision rows open). Any status; the status shows in the preview fields. The Copy verb reads the hub's text too (F6), so there is one text of a decision.
