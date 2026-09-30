@@ -35,7 +35,7 @@ import {
   SurfaceLedgerRow,
 } from "../../../desk/surface";
 import type { ConnectionsResponse } from "./api";
-import { accountChip, useConnections } from "../../../features/channels/SendWell";
+import { accountChip, useConnections } from "../../../desk/surface/send";
 import {
   CHANNEL_WORD, DEST_FOCUS, EMAIL_PROVIDERS, SEND_WORDS, egressOf, emailProvider, refusedWord, stamp,
   takeDestinationsFocus, targetToken, wire, Refusal, type Channel, type Destination, type EmailProvider,

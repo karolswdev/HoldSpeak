@@ -1,8 +1,8 @@
 # PHILO-11-02 — Astra lane record
 
-**DRAFT — Muad'Dib counsel on built r1: RATIFY-WITH-CONDITIONS; C1–C4 paid in this branch; awaiting round-two counsel.**
+**DRAFT — Muad'Dib's r2 counsel RATIFY is recorded; #707 and #708 are merged from main f2eac680. Focused Slack, graph/API, atlas and census checks pass on the merged tree; Muad'Dib's full-suite result on the committed head is pending. PR #709 remains unmerged.**
 
-LANE: PHILO-11-02. Story 02. Worktree `/Users/karol/dev/tools/wt-philo-11-02`; branch `feat/philo-11-02`; base `3552be416c9d5d968adc162941f1f81a3c7c0b44`. Stacked on [#707](https://github.com/karolswdev/HoldSpeak/pull/707). Published as [PR #709](https://github.com/karolswdev/HoldSpeak/pull/709) to `main`. Implementation commit `49a04d9c8ff15c2ad3582b16e128d89c21a6b804` passed the seven-rule gate and `dw verify`. #707 is still open at `fd1028f3` (last read before publication); merge `main` after it lands.
+LANE: PHILO-11-02. Story 02. Worktree `/Users/karol/dev/tools/wt-philo-11-02`; branch `feat/philo-11-02`; base `3552be416c9d5d968adc162941f1f81a3c7c0b44`. Originally stacked on [#707](https://github.com/karolswdev/HoldSpeak/pull/707), then updated after #707 and #708 merged into main at `f2eac6803c15e0f08b87d5066bb7d9d2b43b82ae`. Published as [PR #709](https://github.com/karolswdev/HoldSpeak/pull/709) to `main`; this round merges `origin/main` into `feat/philo-11-02`. The merge commit is the current branch head; PR #709 remains unmerged pending Muad'Dib's full suite on the merged head.
 
 OUTCOME: round one built and published the backend on PR #709. Round two pays Muad'Dib's four conditions: the old meeting export URL stays parked with `slack_moved_to_channel`; approving a historical meeting Slack proposal is refused while rejection remains available; shared live actuator guards are rehomed to the generic webhook and GitHub paths; and Story 05 owns the 22 face-word pairs by name. Slack channel delivery still uses the existing channel lifecycle. The URL is held by an HTTP-only save, stored in native key custody under `slack:<key_ref>`, and never journaled. A separate destination stores the reference and label. Check is local. Send freezes one JSON text body and admits one child to `hooks.slack.com:443`. Only exact `200 ok` yields POSTED, with no link. The aftercare Slack proposal and execution path, Settings credential, and posture send path are removed; history remains readable. The config field remains loadable and is explicitly dropped on Settings reads and writes. No migration or new chat tool.
 
@@ -44,3 +44,20 @@ AMENDMENTS: no Story 02 criterion was removed. Round two retains the meeting exp
 UNKNOWN: no live Slack delivery (the owner has no webhook), actual OS keychain round trip, new Slack face, owner desk observation, or closing real-use proof. The key-store tests use memory and fake native backends; the actual transport is exercised at recorded/fake socket boundaries. Native custody and host policy are implemented and tested without writing the owner's keychain or desk. The full suite is deferred until #707 lands; Muad'Dib will run it and then Astra may merge main. No CI watch or self-invoked counsel.
 
 Tuesday: the backend can deliver a saved document once the owner has a webhook and story 05 supplies the face. This backend lane alone does not yet give him that Tuesday flow.
+
+
+## Round three — merge #707/#708, verify on merged head
+
+OUTCOME: Muad'Dib's RATIFY on round two is recorded in `checks/story-02-built-muaddib-r2.md`. The branch merges `origin/main` at f2eac6803c15e0f08b87d5066bb7d9d2b43b82ae; Story 02 stays done and the merged face consumes the Slack refusal's top-level `size` and `limit`.
+
+PROOF:
+
+- The real preview route returned `payload_too_large:slack`, top-level `size: 39001` and `limit: 39000`, with no egress. The G2 SEND well web-unit renders its top-level refusal fields as `41,099 / 39,000 CHARACTERS`. Both runs are captured in `evidence-story-02.md`.
+- The focused Slack selection passed 102, with only `test_every_emitted_code_has_a_face_word` deselected for Story 05.
+- Graph join, API surface, `test_philo_graph_atlas.py`, Phase 9/10 atlas counts and both Phase 143 census suites passed: 243 tests.
+- Real Slack operation atlas cases `case.p11.slack.posted.op`, `case.p11.slack.failed.op` and `case.p11.slack.unknown.op` each passed on a separate isolated hub with the recording HTTPS edge and memory key store. Observations: `.tmp/graph-walk/philo11-02-round3/slack-posted/20260930T121801Z-case.p11.slack.posted.op-astra-1440/observation.json`, `.tmp/graph-walk/philo11-02-round3/slack-failed/20260930T121830Z-case.p11.slack.failed.op-astra-1440/observation.json`, and `.tmp/graph-walk/philo11-02-round3/slack-unknown/20260930T121854Z-case.p11.slack.unknown.op-astra-1440/observation.json`. Each DB path is under its temporary HOME; observations record the pre-merge revision and a dirty tree because the merge had not yet been committed. No real Slack post occurred.
+- `.githooks/dw check holdspeak-philo` passed before the merge test runs; the commit gate and `dw verify` are pending.
+
+LEDGER: The story 05 criterion retains both the 22 face-word pairs and story 04's same-row receipt assertion. Story 02's size sentence occurs once and names the top-level face contract. D2's chat palette is `channel.destinations` plus `channel.prepare`; preview and sends remain available over MCP/HTTP. BACKLOG preserves the Phase 10 Slack omission as history and the Phase 11 closure as current.
+
+UNKNOWN: Per the owner's instruction, no full suite was run; Muad'Dib runs it on the committed merged head. The G2 browser-unit uses the API's top-level answer shape as its web test input; the separate backend integration test exercises the real producer and HTTP route. No live Slack post or native-keyring round trip was attempted.

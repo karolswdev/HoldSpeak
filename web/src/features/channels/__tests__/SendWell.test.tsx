@@ -19,7 +19,8 @@ vi.mock("../../../pages/cores/connections/api", async () => {
 });
 
 import { ApiError } from "../../../lib/api";
-import { DeliveryHistory, ListChips, SendWell, latestFor, mergeKnown, resetSendStore, useSends } from "../SendWell";
+import { DeliveryHistory, ListChips, updateDoc } from "../SendWell";
+import { SendWell, latestFor, mergeKnown, resetSendStore, useSends } from "../../../desk/surface/send";
 
 const FOLDER = "/Users/karol/Reports/Payments";
 const dest = (over: Partial<Destination> = {}): Destination => ({
@@ -52,8 +53,8 @@ function wireUp() {
 }
 
 function Well({ u = update() }: { u?: ProjectUpdate }) {
-  const read = useSends(u.id);
-  return <SendWell update={u} sendsRead={read} />;
+  const read = useSends(updateDoc(u).ref);
+  return <SendWell doc={updateDoc(u)} sendsRead={read} />;
 }
 
 beforeEach(() => {
@@ -135,6 +136,21 @@ describe("the SEND well", () => {
     expect(refused.textContent).toContain("NOTHING SENT");
   });
 
+  it("G2: a preview refused by name shows its word and the size, never NO ANSWER (PHILO-11-04)", async () => {
+    routes["POST /api/channels/preview"] = () => {
+      throw new ApiError(400, "too large", {
+        success: false, code: "payload_too_large:slack", error_code: "payload_too_large:slack", size: 41099, limit: 39000,
+      });
+    };
+    render(<Well />);
+    fireEvent.click(within(await screen.findByTestId("destination-row")).getByText("Folder Payments"));
+    const refused = await screen.findByTestId("preview-refused");
+    expect(refused.textContent).toContain("TOO LARGE FOR SLACK");
+    expect(refused.textContent).toContain("41,099 / 39,000 CHARACTERS");
+    expect(refused.textContent).toContain("NOTHING SENT");
+    expect(screen.getByTestId("send-open").textContent).not.toContain("NO ANSWER");
+  });
+
   it("a lost answer keeps the key: Retry sends the SAME command_id", async () => {
     const keys: string[] = [];
     let lose = true;
@@ -199,6 +215,51 @@ describe("the SEND well", () => {
   });
 });
 
+describe("the update: the receipt survives the click that leaves the row (Astra r2 F1)", () => {
+  const rowOf = (name: string) => screen.getAllByTestId("destination-row").find((r) => r.textContent?.includes(name))!;
+  const pressSend = async () => {
+    const verb = await screen.findByTestId("send-verb");
+    await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(verb);
+  };
+
+  it("FAILED, then the row is closed: LAST SEND FAILED, its word and NOTHING SENT stay on the row", async () => {
+    let stored: Send[] = [];
+    routes["GET /api/channels/sends"] = () => ({ sends: stored });
+    routes["POST /api/channels/send"] = () => {
+      stored = [send({ state: "failed", reason: "permission_denied", proof: null })];
+      return { send: stored[0] };
+    };
+    render(<Well />);
+    fireEvent.click(within(await screen.findByTestId("destination-row")).getByText("Folder Payments"));
+    await pressSend();
+    await screen.findByTestId("send-failed");
+    fireEvent.click(within(rowOf("Folder Payments")).getByText("Folder Payments"));
+    await waitFor(() => expect(screen.queryByTestId("send-open")).toBeNull());
+    const row = rowOf("Folder Payments");
+    expect(row.textContent).toContain("LAST SEND FAILED");
+    expect(row.textContent).toContain("NO PERMISSION");
+    expect(row.textContent).toContain("NOTHING SENT");
+  });
+
+  it("REFUSED, then another row is picked: the refusal stays on the first row", async () => {
+    routes["GET /api/channels/destinations"] = () => ({ destinations: [dest(), dest({ id: "chd_2", name: "Folder Other", target: { folder: "/tmp/other" } })] });
+    routes["POST /api/channels/send"] = () => {
+      throw new ApiError(409, "changed", { success: false, error_code: "destination_changed" });
+    };
+    render(<Well />);
+    fireEvent.click(within(await screen.findAllByTestId("destination-row").then((r) => r[0])).getByText("Folder Payments"));
+    await pressSend();
+    await screen.findByTestId("send-refused");
+    fireEvent.click(within(rowOf("Folder Other")).getByText("Folder Other"));
+    await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Folder Other"));
+    const row = rowOf("Folder Payments");
+    expect(row.textContent).toContain("REFUSED");
+    expect(row.textContent).toContain("DESTINATION CHANGED");
+    expect(row.textContent).toContain("NOTHING SENT");
+  });
+});
+
 describe("latestFor: ONE source, by dispatch_seq (Codex Astra r1 F3 on #697)", () => {
   it("an equal clock is ordered by the hub's dispatch sequence", () => {
     const at = "2026-09-28T10:00:00.000000+00:00";
@@ -214,11 +275,12 @@ describe("mergeKnown: a stale or failed read never hides a returned result (r1 F
   it("keeps the returned FAILED over a read that predates it, and a read never replaces an ended row with a running one", () => {
     const old = send({ id: "old", state: "sent", dispatch_seq: 1 });
     const failed = send({ id: "new", state: "failed", reason: "permission_denied", dispatch_seq: 2 });
-    const merged = mergeKnown("u1", [old], [failed]);
+    const merged = mergeKnown("project_update:u1", [old], [failed]);
     expect(latestFor(merged, "chd_1")?.state).toBe("failed");
     const running = { ...failed, state: "dispatching" as const };
-    expect(mergeKnown("u1", [old, running], [failed]).find((s) => s.id === "new")?.state).toBe("failed");
-    expect(mergeKnown("u2", [old], [failed]).map((s) => s.id)).toEqual(["old"]);
+    expect(mergeKnown("project_update:u1", [old, running], [failed]).find((s) => s.id === "new")?.state).toBe("failed");
+    // PHILO-11-04 (Astra r1 F1 on #708): rows of another document never enter, from the read or the cache.
+    expect(mergeKnown("project_update:u2", [old], [failed]).map((s) => s.id)).toEqual([]);
   });
 });
 

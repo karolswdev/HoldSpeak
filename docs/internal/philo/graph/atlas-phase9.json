@@ -2173,7 +2173,7 @@
         {
           "path": "web/src/features/channels/SendWell.tsx",
           "symbol": "export function DeliveryHistory",
-          "line": 593,
+          "line": 29,
           "claim": "To + Mark delivered above the body of a published update, and the delivery history (PHILO-10-04: under the SEND well, story 01's one table)"
         },
         {

@@ -1,0 +1,1 @@
+VERDICT: RATIFY — C1–C4 paid in 246367a05; test_philo_graph_reference.py and test_api_surface.py are byte-identical to base; POST /api/meetings/{meeting_id}/export/slack answers slack_moved_to_channel. Muad'Dib, 2026-09-30.

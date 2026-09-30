@@ -258,7 +258,10 @@ def test_thread_palette_discovers_destination_then_prepares_without_send_admissi
     destination(hub, tmp_path / "out", name="#leads")
     from holdspeak.services.thread_tools import CHAT_PALETTE, ThreadToolExecutor
 
-    assert {"channel.destinations", "channel.preview", "channel.prepare", "channel.sends"} <= CHAT_PALETTE
+    channel_family = {
+        "channel.destinations", "channel.preview", "channel.prepare", "channel.sends",
+    }
+    assert CHAT_PALETTE & channel_family == {"channel.destinations", "channel.prepare"}
     thread = hub.db.threads.create_thread(title="Channel thread")
 
     def dispatch(name: str, args: dict[str, Any], principal: Any) -> Any:

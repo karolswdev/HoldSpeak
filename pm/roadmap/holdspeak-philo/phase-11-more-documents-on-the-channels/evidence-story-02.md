@@ -1977,3 +1977,132 @@ FAILED tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the
 .                                                                        [100%]
 1 passed in 32.10s
 ```
+
+### Captured run — 2026-09-30T12:14:42Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh pytest -q -n 0 tests/unit/test_philo11_slack_channel.py tests/integration/test_philo11_slack_operations.py tests/integration/test_philo11_slack_rewrite.py tests/unit/test_philo11_channel_contract.py tests/unit/test_philo10_face_words.py tests/unit/test_philo9_atlas.py::test_the_counts_over_every_atlas_file tests/unit/test_phase143_routing_authority_census.py::test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer tests/integration/test_web_companion_github.py::test_github_decision_is_target_scoped tests/unit/test_philo5_graph_op.py::test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_target tests/unit/test_philo5_one_decision.py::test_the_catalogue_is_explicit_descriptors tests/unit/test_philo5_the_loop_r2.py::test_the_contract_refuses_a_non_owner_before_anything_else tests/unit/test_philo5_the_loop_r2.py::test_every_braced_declaration_has_a_producer_here -k not test_every_emitted_code_has_a_face_word`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** unknown
+
+```text
+........................................................................ [ 70%]
+..............................                                           [100%]
+102 passed, 1 deselected in 35.52s
+```
+
+### Captured run — 2026-09-30T12:16:45Z
+
+- **Command:** `bash -c task_home=$(mktemp -d); export HOME="$task_home"; npm --prefix web run test:web -- src/features/channels/__tests__/SendWell.test.tsx -t "G2: a preview refused by name"; task_rc=$?; rm -rf "$task_home"; exit "$task_rc"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1b6829900b191ee588e1b13abffe8a8eb7d31e5b
+
+```text
+
+> holdspeak-web@0.0.1 test:web
+> vitest run --maxWorkers=2 src/features/channels/__tests__/SendWell.test.tsx -t G2: a preview refused by name
+
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-11-02/web
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 18 skipped (19)
+   Start at  06:16:45
+   Duration  986ms (transform 318ms, setup 99ms, import 467ms, tests 36ms, environment 309ms)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice
+```
+
+### Captured run — 2026-09-30T12:17:09Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh pytest -q -n 0 tests/unit/test_philo_graph_reference.py tests/unit/test_api_surface.py tests/unit/test_philo_graph_atlas.py tests/unit/test_philo9_atlas.py tests/unit/test_philo10_atlas.py tests/unit/test_phase143_routing_authority_census.py tests/unit/test_phase143_inference_capability_census.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1b6829900b191ee588e1b13abffe8a8eb7d31e5b
+
+```text
+........................................................................ [ 29%]
+........................................................................ [ 59%]
+........................................................................ [ 88%]
+...........................                                              [100%]
+243 passed in 29.71s
+```
+
+### Captured run — 2026-09-30T12:18:01Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh walk --atlas docs/internal/philo/graph/atlas-phase11-slack.json --case case.p11.slack.posted.op --brain astra --viewport 1440 --engine none --out .tmp/graph-walk/philo11-02-round3/slack-posted`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1b6829900b191ee588e1b13abffe8a8eb7d31e5b
+
+```text
+[glass_infra] web bundle rebuilt in 4.7s
+PASS: live
+BRAIN: astra
+SOURCE: 246367a056adb660032330279697ca4eba975d32 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11-slack.json
+RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:50562 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-slack.mRvBDw/tmp/graph-walk-home-0fnvixa_/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p11
+VERDICT: pass terminal=settled
+EVIDENCE: ['.tmp/graph-walk/philo11-02-round3/slack-posted/20260930T121801Z-case.p11.slack.posted.op-astra-1440/before.png', '.tmp/graph-walk/philo11-02-round3/slack-posted/20260930T121801Z-case.p11.slack.posted.op-astra-1440/after.png']
+NOTE: placeholder(s) ['send_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)
+NOTE: predicate: all_of: op_facts: all 13 facts hold: the trigger outcome holds; observe_at sends holds; observe_at sends.0.id holds; observe_at sends.0.state holds; observe_at sends.0.channel holds; observe_at sends.0.payload_digest holds; observe_at sends.0.proof.url is absent; observe_at sends.0.proof.link is absent; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_kind holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; observe_at sends.0.proof.word holds | cli_calls: 1 call(s) starting ['https', 'POST', 'hooks.slack.com'] at the recording runner (pids [2813]; 1 call(s) in all), wanted 1
+```
+
+### Captured run — 2026-09-30T12:18:30Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh walk --atlas docs/internal/philo/graph/atlas-phase11-slack.json --case case.p11.slack.failed.op --brain astra --viewport 1440 --engine none --out .tmp/graph-walk/philo11-02-round3/slack-failed`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1b6829900b191ee588e1b13abffe8a8eb7d31e5b
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: 246367a056adb660032330279697ca4eba975d32 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11-slack.json
+RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:50591 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-slack.h4B8nJ/tmp/graph-walk-home-z1c0kd2r/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p11
+VERDICT: pass terminal=settled
+EVIDENCE: ['.tmp/graph-walk/philo11-02-round3/slack-failed/20260930T121830Z-case.p11.slack.failed.op-astra-1440/before.png', '.tmp/graph-walk/philo11-02-round3/slack-failed/20260930T121830Z-case.p11.slack.failed.op-astra-1440/after.png']
+NOTE: placeholder(s) ['send_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)
+NOTE: predicate: all_of: op_facts: all 12 facts hold: the trigger outcome holds; observe_at sends holds; observe_at sends.0.id holds; observe_at sends.0.state holds; observe_at sends.0.channel holds; observe_at sends.0.payload_digest holds; observe_at sends.0.proof.url is absent; observe_at sends.0.proof.link is absent; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_kind holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds | cli_calls: 1 call(s) starting ['https', 'POST', 'hooks.slack.com'] at the recording runner (pids [3067]; 1 call(s) in all), wanted 1
+```
+
+### Captured run — 2026-09-30T12:18:54Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh walk --atlas docs/internal/philo/graph/atlas-phase11-slack.json --case case.p11.slack.unknown.op --brain astra --viewport 1440 --engine none --out .tmp/graph-walk/philo11-02-round3/slack-unknown`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1b6829900b191ee588e1b13abffe8a8eb7d31e5b
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: 246367a056adb660032330279697ca4eba975d32 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11-slack.json
+RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:50622 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-slack.Pz83Zh/tmp/graph-walk-home-ur59f803/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p11
+VERDICT: pass terminal=settled
+EVIDENCE: ['.tmp/graph-walk/philo11-02-round3/slack-unknown/20260930T121854Z-case.p11.slack.unknown.op-astra-1440/before.png', '.tmp/graph-walk/philo11-02-round3/slack-unknown/20260930T121854Z-case.p11.slack.unknown.op-astra-1440/after.png']
+NOTE: placeholder(s) ['send_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)
+NOTE: predicate: all_of: op_facts: all 12 facts hold: the trigger outcome holds; observe_at sends holds; observe_at sends.0.id holds; observe_at sends.0.state holds; observe_at sends.0.channel holds; observe_at sends.0.payload_digest holds; observe_at sends.0.proof.url is absent; observe_at sends.0.proof.link is absent; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_kind holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds | cli_calls: 1 call(s) starting ['https', 'POST', 'hooks.slack.com'] at the recording runner (pids [3275]; 1 call(s) in all), wanted 1
+```
+
+### Captured run — 2026-09-30T12:25:45Z
+
+- **Command:** `bash scripts/verify_philo11_slack.sh pytest -q -n 0 tests/integration/test_philo11_slack_operations.py::test_size_refusal_is_real_and_carries_size_and_limit_before_wire`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 7e0c4d30aa37c56e2d39563903e27af9ac988b8a
+
+```text
+.                                                                        [100%]
+1 passed in 1.16s
+```

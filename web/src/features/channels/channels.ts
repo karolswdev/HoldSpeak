@@ -16,7 +16,9 @@
 import { apiFetch, ApiError } from "../../lib/api";
 import { refusalWord } from "../../desk/surface/egress";
 
-export type Channel = "file" | "github" | "jira" | "confluence" | "email";
+/** PHILO-11-04: Slack is the sixth channel (design section 5; story 02 carries its wire).
+ *  The face words live here so the well shows a Slack row the day the hub carries it. */
+export type Channel = "file" | "github" | "jira" | "confluence" | "email" | "slack";
 
 export type Destination = {
   id: string;
@@ -102,6 +104,7 @@ export const CHANNEL_WORD: Record<Channel, string> = {
   jira: "JIRA",
   confluence: "CONFLUENCE",
   email: "EMAIL",
+  slack: "SLACK",
 };
 
 /* ── the email providers (story 03 SendGrid; story 07 Resend) ─────── */
@@ -123,6 +126,7 @@ export const SENT_WORD: Record<Channel | "manual", string> = {
   jira: "COMMENTED",
   confluence: "BLOG POSTED",
   email: "ACCEPTED BY SENDGRID",
+  slack: "POSTED",
   manual: "DELIVERED",
 };
 /** Email's word names the provider that accepted it (the proof's provider, else the account's). */
@@ -163,6 +167,8 @@ const REFUSED: Record<string, string> = {
   email_address_invalid: "ADDRESS NOT VALID",
   email_key_invalid: "KEY NOT VALID",
   email_key_missing: "NO KEY",
+  slack_webhook_missing: "NO WEBHOOK",
+  slack_webhook_invalid: "WEBHOOK NOT VALID",
   email_key_ref_invalid: "KEY NAME NOT VALID",
   email_key_store_locked: "KEY STORE LOCKED",
   email_key_store_not_native: "NO SAFE KEY STORE",
@@ -195,6 +201,7 @@ const REFUSED: Record<string, string> = {
 };
 /** A refusal code with a variable part: its word by prefix. */
 const REFUSED_PREFIX: [string, string][] = [
+  ["payload_too_large:slack", "TOO LARGE FOR SLACK"],
   ["payload_too_large:", "TOO LARGE"],
 ];
 
@@ -322,6 +329,7 @@ export function targetToken(channel: Channel, t: Record<string, string | number>
       const to = (Array.isArray(raw) ? raw.map(String) : String(raw ?? "").split(",")).map((a) => a.trim()).filter(Boolean);
       return (to[0] ?? "") + (to.length > 1 ? ` +${to.length - 1}` : "");
     }
+    case "slack": return String(t.channel_label ?? "");
     default: return "";
   }
 }
@@ -348,6 +356,7 @@ export function egressOf(d: { channel: Channel; account: Record<string, string |
       const host = emailProvider(d.account).host;
       return { label: host.toUpperCase(), scope: "cloud", title: host };
     }
+    case "slack": return { label: "HOOKS.SLACK.COM", scope: "cloud", title: "hooks.slack.com" };
     default: return { label: "", scope: "local", title: "" };
   }
 }
@@ -416,6 +425,12 @@ export function previewOf(
       if (wire.subject) f.push({ label: "Subject", value: String(wire.subject) });
       return { fields: f, body_kind: "text", body: String(wire.text ?? body) };
     }
+    case "slack":
+      // A webhook has no read call: the fields are the channel label and the one host.
+      return {
+        fields: [{ label: "Channel", value: String(t.channel_label ?? "") }, { label: "Webhook", value: "hooks.slack.com" }],
+        body_kind: "text", body,
+      };
     default:
       return { fields: [], body_kind: "text", body };
   }
@@ -423,8 +438,20 @@ export function previewOf(
 
 /* ── the wire client ───────────────────────────────────────────────── */
 
+/** A named refusal. `detail` is the hub's whole answer: a size refusal
+ *  carries `size` and `limit` there (design section 5, canvas T1). */
 export class Refusal extends Error {
-  constructor(readonly code: string) { super(code); }
+  constructor(readonly code: string, readonly detail: Record<string, unknown> = {}) { super(code); }
+}
+
+/** The size and the limit a size refusal names, when the answer carries them:
+ *  top-level integers beside `code` / `error_code` (story 02's contract for
+ *  `payload_too_large:slack`: `size` the final Slack text's characters,
+ *  `limit` 39000). The word is CHARACTERS: a byte-limited channel that reuses
+ *  this must carry its unit (BACKLOG). */
+export function refusalSize(r: { detail?: Record<string, unknown> } | null | undefined): { size: number; limit: number } | null {
+  const d = r?.detail ?? {};
+  return Number.isInteger(d.size) && Number.isInteger(d.limit) ? { size: d.size as number, limit: d.limit as number } : null;
 }
 
 /** A read whose answer lacks its list is unreadable, never empty. */
@@ -444,7 +471,7 @@ async function call<T>(path: string, init: RequestInit & { json?: unknown } = {}
       const p = (e.payload ?? {}) as Record<string, unknown>;
       const code = p.error_code ?? p.code;
       const receipt = (p.receipt ?? null) as Record<string, unknown> | null;
-      if (code && (receipt?.state === "refused" || (e.status >= 400 && e.status < 500))) throw new Refusal(String(code));
+      if (code && (receipt?.state === "refused" || (e.status >= 400 && e.status < 500))) throw new Refusal(String(code), p);
     }
     throw e;
   }

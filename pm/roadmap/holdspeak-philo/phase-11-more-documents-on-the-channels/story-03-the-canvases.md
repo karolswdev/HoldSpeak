@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 11
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** the owner's ratification; design section 4 (the wire the harness shim serves)
 - **Unblocks:** PHILO-11-04, PHILO-11-05
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Astra checks
@@ -21,11 +21,11 @@ The SEND well lives only under a published update (`web/src/features/project-roo
 
 ## Acceptance criteria
 
-- [ ] Every board drawn at both widths; the decision and Meetings boards at their real window widths at 1440; the full well's fit at 393 shown, not assumed.
-- [ ] Boards T1–T3 drawn at both widths.
-- [ ] No board shows a stale-version word or an old-version row (R9); no board shows Mark delivered on a new kind (R8); no board shows a message link for a Slack post.
-- [ ] Every verb the library Button; the egress chip on each row that leaves the machine; no modal; no prose; no counter of zero.
-- [ ] Astra's check recorded; the owner's ratification recorded verbatim before story 04 or 05 commits a face change.
+- [x] Every board drawn at both widths; the decision and Meetings boards at their real window widths at 1440; the full well's fit at 393 shown, not assumed.
+- [x] Boards T1–T3 drawn at both widths.
+- [x] No board shows a stale-version word or an old-version row (R9); no board shows Mark delivered on a new kind (R8); no board shows a message link for a Slack post.
+- [x] Every verb the library Button; the egress chip on each row that leaves the machine; no modal; no prose; no counter of zero.
+- [x] Astra's check recorded; the owner's ratification recorded verbatim before story 04 or 05 commits a face change.
 
 ## Effort (not a promise)
 
@@ -37,5 +37,9 @@ PROVISIONAL: 1–1.5 engineering days.
 
 ## Notes
 
+- 2026-09-29 — round two (Fedaykin lane, Opus 5.5): Codex Astra r1 RATIFY-WITH-CONDITIONS (`checks/canvas-astra-r1.md`, verbatim) paid. 393 fit drawn (A4 heading wraps; the picker at 44 px; 12 px heads counted honestly; covered controls reached by ordinary scrolling, T3c); the settled appearance drawn (`harness/species.css`: own type, one row grammar, 274/274 rows); the Room row unfolds with the dead Open withheld (G1 → ledger); T2a2 and C5c companions; the questions cut to one face choice. G2–G4 and the head layout → story 04; host integration and rendered-transition fences → story 05; G1, G5 → ledger. 45 boards × 2 widths, 142/142 named on screen, 0 pointer misses. Owed: the owner's word.
+- 2026-09-29 — round one DRAWN (Fedaykin lane, Opus 5.5): 42 boards × 1440 and 393 on the real product with a harness shim (`assets/story-03-canvas/`, README + `index.html`); fences 132/132 named on screen, 0 stale words, 0 Slack links, 0 Mark delivered on a new kind. `meeting_decision` confirmed seatless on glass; the Room row's Open opens nothing (G1). Seven open questions with recommendations. Owed: Astra's check, then the owner's word.
 - 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+- 2026-09-29 — RATIFIED by the owner ("Yes...") on https://claude.ai/artifact/CeP2nHek6PpxNMrBTKhbD3 after Astra r1 and r2 (both paid). Done.

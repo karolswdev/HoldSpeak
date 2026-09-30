@@ -6007,3 +6007,429 @@ tests/unit/test_philo5_one_decision.py::test_operations_export_matches_the_catal
 ................................................                         [100%]
 48 passed in 28.34s
 ```
+
+### Captured run — 2026-09-30T07:08:23Z
+
+- **Command:** `uv run python .tmp/philo11/round2_verify.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b1f71ec6b5210279b668fd978f157aafaeafb4ca
+
+```text
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[file a note into a zone]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[find a note]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[list the notes in a zone]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[make a zone]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[put a decision on my review list]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[read a note]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[the reason for a decision]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.list]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.get]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.create]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.update]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.delete]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.verb]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[zone.file]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[zone.unfile]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[zone.list_members]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[kb.add_member]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[kb.remove_member]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[kb.list_members]
+tests/unit/test_philo10_send_contract.py::test_the_operations_are_declared_once_and_reach_one_service_over_http_and_mcp
+tests/unit/test_philo10_send_contract.py::test_http_and_mcp_reach_the_same_rows
+tests/unit/test_philo10_send_contract.py::test_each_admitted_row_is_one_operation_with_one_terminal_receipt[http]
+tests/unit/test_philo10_send_contract.py::test_each_admitted_row_is_one_operation_with_one_terminal_receipt[mcp]
+tests/unit/test_philo10_send_contract.py::test_reads_and_previews_leave_no_operation
+tests/unit/test_philo10_send_contract.py::test_each_refusal_class_leaves_its_receipt_and_sends_nothing
+tests/unit/test_philo10_send_contract.py::test_an_agents_send_discard_and_destination_writes_are_refused_owner_principal_required[project_update]
+tests/unit/test_philo10_send_contract.py::test_an_agents_send_discard_and_destination_writes_are_refused_owner_principal_required[desk_decision]
+tests/unit/test_philo10_send_contract.py::test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner[project_update-mcp]
+tests/unit/test_philo10_send_contract.py::test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner[project_update-http]
+tests/unit/test_philo10_send_contract.py::test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner[desk_decision-mcp]
+tests/unit/test_philo10_send_contract.py::test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner[desk_decision-http]
+tests/unit/test_philo10_send_contract.py::test_the_channel_tools_sit_in_the_agents_project_palette
+tests/unit/test_philo10_send_contract.py::test_two_sends_of_one_update_to_one_folder_make_two_files_with_their_proof
+tests/unit/test_philo10_send_contract.py::test_the_suffix_and_exclusive_create_never_write_over_an_old_file
+tests/unit/test_philo10_send_contract.py::test_a_name_that_leaves_the_folder_is_refused
+tests/unit/test_philo10_send_contract.py::test_a_create_refused_by_the_os_is_failed_and_writes_no_history
+tests/unit/test_philo10_send_contract.py::test_an_error_off_the_pinned_list_and_bytes_that_do_not_read_back_are_unknown
+tests/unit/test_philo10_send_contract.py::test_the_preview_is_the_frozen_bytes_and_the_file_is_those_bytes[project_update]
+tests/unit/test_philo10_send_contract.py::test_the_preview_is_the_frozen_bytes_and_the_file_is_those_bytes[desk_decision]
+tests/unit/test_philo10_send_contract.py::test_a_changed_payload_is_refused_before_any_effect
+tests/unit/test_philo10_send_contract.py::test_an_oversize_payload_is_refused_by_name
+tests/unit/test_philo10_send_contract.py::test_the_body_never_reaches_a_kernel_row_a_receipt_the_journal_a_log_or_an_error
+tests/unit/test_philo10_send_contract.py::test_the_private_payload_file_is_0600_in_0700_and_its_digest_is_checked
+tests/unit/test_philo10_send_contract.py::test_an_error_is_redacted_and_cut
+tests/unit/test_philo10_send_contract.py::test_an_excerpt_of_the_payload_and_a_secret_are_redacted
+tests/unit/test_philo10_send_contract.py::test_edit_parks_the_old_row_and_a_send_prepared_to_it_is_refused_with_the_historical_target
+tests/unit/test_philo10_send_contract.py::test_a_destination_whose_target_changed_after_prepare_is_refused
+tests/unit/test_philo10_send_contract.py::test_remove_parks_and_keeps_history
+tests/unit/test_philo10_send_contract.py::test_a_remove_that_commits_before_the_boundary_wins_and_nothing_is_dispatched[send_id]
+tests/unit/test_philo10_send_contract.py::test_a_remove_that_commits_before_the_boundary_wins_and_nothing_is_dispatched[inline]
+tests/unit/test_philo10_send_contract.py::test_a_remove_after_the_boundary_parks_and_the_send_stands[send_id]
+tests/unit/test_philo10_send_contract.py::test_a_remove_after_the_boundary_parks_and_the_send_stands[inline]
+tests/unit/test_philo10_send_contract.py::test_a_folder_marked_synced_is_badged_cloud
+tests/unit/test_philo10_send_contract.py::test_send_and_discard_pressed_together_settle_once[project_update]
+tests/unit/test_philo10_send_contract.py::test_send_and_discard_pressed_together_settle_once[desk_decision]
+tests/unit/test_philo10_send_contract.py::test_a_discard_pressed_while_the_send_dispatches_is_refused_and_the_send_stands[project_update]
+tests/unit/test_philo10_send_contract.py::test_a_discard_pressed_while_the_send_dispatches_is_refused_and_the_send_stands[desk_decision]
+tests/unit/test_philo10_send_contract.py::test_manual_rows_read_channel_manual
+tests/unit/test_philo10_send_contract.py::test_an_existing_database_gains_the_columns_and_its_rows_read_manual
+tests/unit/test_philo10_send_contract.py::test_the_words_map_his_asks_and_never_say_an_agent_sends
+tests/unit/test_philo11_document_sources.py::test_registry_declares_the_eight_kinds
+tests/unit/test_philo11_document_sources.py::test_real_producers_render_all_eight_sources
+tests/unit/test_philo11_document_sources.py::test_monday_brief_names_unavailable_people_once
+tests/unit/test_philo11_document_sources.py::test_meeting_sources_never_copy_transcript
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[project_update]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[monday_brief]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[desk_decision]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[meeting_decision]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[decision_record]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[meeting_summary]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[meeting_digest]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[meeting_followup]
+tests/unit/test_philo11_document_sources.py::test_named_source_refusals[unknown_kind:source-document_kind_unknown]
+tests/unit/test_philo11_document_sources.py::test_named_source_refusals[-document_kind_unknown]
+tests/unit/test_philo11_document_sources.py::test_named_source_refusals[meeting_summary:missing-document_not_found]
+tests/unit/test_philo11_document_sources.py::test_missing_meeting_summary_is_named_no_summary
+tests/unit/test_philo11_document_sources.py::test_empty_aftercare_is_named_no_summary[meeting_digest]
+tests/unit/test_philo11_document_sources.py::test_empty_aftercare_is_named_no_summary[meeting_followup]
+tests/unit/test_philo11_document_sources.py::test_project_update_refuses_unpublished_by_generic_name
+tests/unit/test_philo11_document_sources.py::test_aftercare_document_markdown_is_not_truncated
+tests/unit/test_engine_off_the_loop.py::test_recipe_run_and_chat_run_the_engine_off_the_loop
+tests/unit/test_web_routes_recipe_chat.py::test_chat_alias_engine_runs_off_the_loop
+
+82 tests collected in 0.70s
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 87%]
+..........                                                               [100%]
+82 passed in 9.33s
+{"ceiling": 16384, "database": "popen-gw1/test_recipe_run_and_chat_run_t0/holdspeak.db", "headroom": 148, "input_tokens_bytes": 15724, "leaf_entries": 0, "operation_id": "chat_turn_261b80d858dd42109b4db3584396ac89", "reserved_output_tokens": 512, "source": "persisted inference_adoption_route_evidence row from the real test producer", "total_tokens": 16236}
+{"ceiling": 16384, "database": "popen-gw4/test_chat_alias_engine_runs_of0/holdspeak.db", "headroom": 187, "input_tokens_bytes": 15685, "leaf_entries": 0, "operation_id": "chat_turn_556597eb823d4744ad9a74b643e65dca", "reserved_output_tokens": 512, "source": "persisted inference_adoption_route_evidence row from the real test producer", "total_tokens": 16197}
+```
+
+### Captured run — 2026-09-30T07:10:56Z
+
+- **Command:** `uv run python .tmp/philo11/round2_real_proof.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b1f71ec6b5210279b668fd978f157aafaeafb4ca
+
+```text
+Intel queue drainer is OFF: this process does not own the database.
+246 catalogue entries: all non-description fields unchanged.
+SPY RUN 1 on_loop= False
+{"context_ceiling": 16384, "engine_off_loop": true, "headroom": 207, "input_tokens": 15665, "palette_tools": 31, "reserved_output_tokens": 512, "source": "actual inference_adoption_route_evidence and material snapshot rows", "total_tokens": 16177}
+REAL tools/list: 'file a note into a zone' -> zone.file
+REAL tools/list: 'find a note' -> desk.list
+REAL tools/list: 'read a note' -> desk.get
+REAL tools/list: 'make a zone' -> desk.create
+REAL tools/list: 'put a decision on my review list' -> desk.create
+REAL tools/list: 'list the notes in a zone' -> zone.list_members
+REAL tools/list: 'the reason for a decision' -> desk.create
+REAL tools/list: 'write a note' -> desk.create
+REAL tools/list: 'rename a zone' -> desk.update
+REAL tools/list: 'move a zone' -> desk.update
+REAL tools/list: 'Where can I send' -> channel.destinations
+REAL tools/list: 'send the update to <destination>' -> channel.prepare
+REAL tools/list: 'What was sent' -> channel.sends
+```
+
+### Captured run — 2026-09-30T07:15:59Z
+
+- **Command:** `uv run python .tmp/philo11/round2_verify.py`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** b1f71ec6b5210279b668fd978f157aafaeafb4ca
+
+```text
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[file a note into a zone]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[find a note]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[list the notes in a zone]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[make a zone]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[put a decision on my review list]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[read a note]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[the reason for a decision]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.list]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.get]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.create]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.update]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.delete]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.verb]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[zone.file]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[zone.unfile]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[zone.list_members]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[kb.add_member]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[kb.remove_member]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[kb.list_members]
+tests/unit/test_philo10_send_contract.py::test_the_operations_are_declared_once_and_reach_one_service_over_http_and_mcp
+tests/unit/test_philo10_send_contract.py::test_http_and_mcp_reach_the_same_rows
+tests/unit/test_philo10_send_contract.py::test_each_admitted_row_is_one_operation_with_one_terminal_receipt[http]
+tests/unit/test_philo10_send_contract.py::test_each_admitted_row_is_one_operation_with_one_terminal_receipt[mcp]
+tests/unit/test_philo10_send_contract.py::test_reads_and_previews_leave_no_operation
+tests/unit/test_philo10_send_contract.py::test_each_refusal_class_leaves_its_receipt_and_sends_nothing
+tests/unit/test_philo10_send_contract.py::test_an_agents_send_discard_and_destination_writes_are_refused_owner_principal_required[project_update]
+tests/unit/test_philo10_send_contract.py::test_an_agents_send_discard_and_destination_writes_are_refused_owner_principal_required[desk_decision]
+tests/unit/test_philo10_send_contract.py::test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner[project_update-mcp]
+tests/unit/test_philo10_send_contract.py::test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner[project_update-http]
+tests/unit/test_philo10_send_contract.py::test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner[desk_decision-mcp]
+tests/unit/test_philo10_send_contract.py::test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner[desk_decision-http]
+tests/unit/test_philo10_send_contract.py::test_the_channel_tools_sit_in_the_agents_project_palette
+tests/unit/test_philo10_send_contract.py::test_two_sends_of_one_update_to_one_folder_make_two_files_with_their_proof
+tests/unit/test_philo10_send_contract.py::test_the_suffix_and_exclusive_create_never_write_over_an_old_file
+tests/unit/test_philo10_send_contract.py::test_a_name_that_leaves_the_folder_is_refused
+tests/unit/test_philo10_send_contract.py::test_a_create_refused_by_the_os_is_failed_and_writes_no_history
+tests/unit/test_philo10_send_contract.py::test_an_error_off_the_pinned_list_and_bytes_that_do_not_read_back_are_unknown
+tests/unit/test_philo10_send_contract.py::test_the_preview_is_the_frozen_bytes_and_the_file_is_those_bytes[project_update]
+tests/unit/test_philo10_send_contract.py::test_the_preview_is_the_frozen_bytes_and_the_file_is_those_bytes[desk_decision]
+tests/unit/test_philo10_send_contract.py::test_a_changed_payload_is_refused_before_any_effect
+tests/unit/test_philo10_send_contract.py::test_an_oversize_payload_is_refused_by_name
+tests/unit/test_philo10_send_contract.py::test_the_body_never_reaches_a_kernel_row_a_receipt_the_journal_a_log_or_an_error
+tests/unit/test_philo10_send_contract.py::test_the_private_payload_file_is_0600_in_0700_and_its_digest_is_checked
+tests/unit/test_philo10_send_contract.py::test_an_error_is_redacted_and_cut
+tests/unit/test_philo10_send_contract.py::test_an_excerpt_of_the_payload_and_a_secret_are_redacted
+tests/unit/test_philo10_send_contract.py::test_edit_parks_the_old_row_and_a_send_prepared_to_it_is_refused_with_the_historical_target
+tests/unit/test_philo10_send_contract.py::test_a_destination_whose_target_changed_after_prepare_is_refused
+tests/unit/test_philo10_send_contract.py::test_remove_parks_and_keeps_history
+tests/unit/test_philo10_send_contract.py::test_a_remove_that_commits_before_the_boundary_wins_and_nothing_is_dispatched[send_id]
+tests/unit/test_philo10_send_contract.py::test_a_remove_that_commits_before_the_boundary_wins_and_nothing_is_dispatched[inline]
+tests/unit/test_philo10_send_contract.py::test_a_remove_after_the_boundary_parks_and_the_send_stands[send_id]
+tests/unit/test_philo10_send_contract.py::test_a_remove_after_the_boundary_parks_and_the_send_stands[inline]
+tests/unit/test_philo10_send_contract.py::test_a_folder_marked_synced_is_badged_cloud
+tests/unit/test_philo10_send_contract.py::test_send_and_discard_pressed_together_settle_once[project_update]
+tests/unit/test_philo10_send_contract.py::test_send_and_discard_pressed_together_settle_once[desk_decision]
+tests/unit/test_philo10_send_contract.py::test_a_discard_pressed_while_the_send_dispatches_is_refused_and_the_send_stands[project_update]
+tests/unit/test_philo10_send_contract.py::test_a_discard_pressed_while_the_send_dispatches_is_refused_and_the_send_stands[desk_decision]
+tests/unit/test_philo10_send_contract.py::test_manual_rows_read_channel_manual
+tests/unit/test_philo10_send_contract.py::test_an_existing_database_gains_the_columns_and_its_rows_read_manual
+tests/unit/test_philo10_send_contract.py::test_the_words_map_his_asks_and_never_say_an_agent_sends
+tests/unit/test_philo11_document_sources.py::test_registry_declares_the_eight_kinds
+tests/unit/test_philo11_document_sources.py::test_real_producers_render_all_eight_sources
+tests/unit/test_philo11_document_sources.py::test_monday_brief_names_unavailable_people_once
+tests/unit/test_philo11_document_sources.py::test_meeting_sources_never_copy_transcript
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[project_update]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[monday_brief]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[desk_decision]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[meeting_decision]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[decision_record]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[meeting_summary]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[meeting_digest]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[meeting_followup]
+tests/unit/test_philo11_document_sources.py::test_named_source_refusals[unknown_kind:source-document_kind_unknown]
+tests/unit/test_philo11_document_sources.py::test_named_source_refusals[-document_kind_unknown]
+tests/unit/test_philo11_document_sources.py::test_named_source_refusals[meeting_summary:missing-document_not_found]
+tests/unit/test_philo11_document_sources.py::test_missing_meeting_summary_is_named_no_summary
+tests/unit/test_philo11_document_sources.py::test_empty_aftercare_is_named_no_summary[meeting_digest]
+tests/unit/test_philo11_document_sources.py::test_empty_aftercare_is_named_no_summary[meeting_followup]
+tests/unit/test_philo11_document_sources.py::test_project_update_refuses_unpublished_by_generic_name
+tests/unit/test_philo11_document_sources.py::test_aftercare_document_markdown_is_not_truncated
+tests/unit/test_engine_off_the_loop.py::test_recipe_run_and_chat_run_the_engine_off_the_loop
+tests/unit/test_web_routes_recipe_chat.py::test_chat_alias_engine_runs_off_the_loop
+
+82 tests collected in 0.73s
+bringing up nodes...
+bringing up nodes...
+
+...................F.................................................... [ 87%]
+..........                                                               [100%]
+=================================== FAILURES ===================================
+_ test_each_job_phrase_maps_to_one_tool_and_its_argument_path[the reason for a decision] _
+[gw3] darwin -- Python 3.13.14 /Users/karol/dev/tools/wt-philo-11-01/.venv/bin/python
+tests/unit/test_philo7_discovery.py:105: in test_each_job_phrase_maps_to_one_tool_and_its_argument_path
+    assert f"kind={value}" in sentence, f"{phrase!r}: the sentence does not name kind={value}: {sentence!r}"
+E   AssertionError: 'the reason for a decision': the sentence does not name kind=decisions: 'the reason for a decision in data.context_markdown.'
+E   assert 'kind=decisions' in 'the reason for a decision in data.context_markdown.'
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[the reason for a decision]
+1 failed, 81 passed in 10.82s
+```
+
+### Captured run — 2026-09-30T07:16:33Z
+
+- **Command:** `uv run python .tmp/philo11/round2_verify.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b1f71ec6b5210279b668fd978f157aafaeafb4ca
+
+```text
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[file a note into a zone]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[find a note]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[list the notes in a zone]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[make a zone]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[put a decision on my review list]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[read a note]
+tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[the reason for a decision]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.list]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.get]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.create]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.update]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.delete]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.verb]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[zone.file]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[zone.unfile]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[zone.list_members]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[kb.add_member]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[kb.remove_member]
+tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[kb.list_members]
+tests/unit/test_philo10_send_contract.py::test_the_operations_are_declared_once_and_reach_one_service_over_http_and_mcp
+tests/unit/test_philo10_send_contract.py::test_http_and_mcp_reach_the_same_rows
+tests/unit/test_philo10_send_contract.py::test_each_admitted_row_is_one_operation_with_one_terminal_receipt[http]
+tests/unit/test_philo10_send_contract.py::test_each_admitted_row_is_one_operation_with_one_terminal_receipt[mcp]
+tests/unit/test_philo10_send_contract.py::test_reads_and_previews_leave_no_operation
+tests/unit/test_philo10_send_contract.py::test_each_refusal_class_leaves_its_receipt_and_sends_nothing
+tests/unit/test_philo10_send_contract.py::test_an_agents_send_discard_and_destination_writes_are_refused_owner_principal_required[project_update]
+tests/unit/test_philo10_send_contract.py::test_an_agents_send_discard_and_destination_writes_are_refused_owner_principal_required[desk_decision]
+tests/unit/test_philo10_send_contract.py::test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner[project_update-mcp]
+tests/unit/test_philo10_send_contract.py::test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner[project_update-http]
+tests/unit/test_philo10_send_contract.py::test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner[desk_decision-mcp]
+tests/unit/test_philo10_send_contract.py::test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner[desk_decision-http]
+tests/unit/test_philo10_send_contract.py::test_the_channel_tools_sit_in_the_agents_project_palette
+tests/unit/test_philo10_send_contract.py::test_two_sends_of_one_update_to_one_folder_make_two_files_with_their_proof
+tests/unit/test_philo10_send_contract.py::test_the_suffix_and_exclusive_create_never_write_over_an_old_file
+tests/unit/test_philo10_send_contract.py::test_a_name_that_leaves_the_folder_is_refused
+tests/unit/test_philo10_send_contract.py::test_a_create_refused_by_the_os_is_failed_and_writes_no_history
+tests/unit/test_philo10_send_contract.py::test_an_error_off_the_pinned_list_and_bytes_that_do_not_read_back_are_unknown
+tests/unit/test_philo10_send_contract.py::test_the_preview_is_the_frozen_bytes_and_the_file_is_those_bytes[project_update]
+tests/unit/test_philo10_send_contract.py::test_the_preview_is_the_frozen_bytes_and_the_file_is_those_bytes[desk_decision]
+tests/unit/test_philo10_send_contract.py::test_a_changed_payload_is_refused_before_any_effect
+tests/unit/test_philo10_send_contract.py::test_an_oversize_payload_is_refused_by_name
+tests/unit/test_philo10_send_contract.py::test_the_body_never_reaches_a_kernel_row_a_receipt_the_journal_a_log_or_an_error
+tests/unit/test_philo10_send_contract.py::test_the_private_payload_file_is_0600_in_0700_and_its_digest_is_checked
+tests/unit/test_philo10_send_contract.py::test_an_error_is_redacted_and_cut
+tests/unit/test_philo10_send_contract.py::test_an_excerpt_of_the_payload_and_a_secret_are_redacted
+tests/unit/test_philo10_send_contract.py::test_edit_parks_the_old_row_and_a_send_prepared_to_it_is_refused_with_the_historical_target
+tests/unit/test_philo10_send_contract.py::test_a_destination_whose_target_changed_after_prepare_is_refused
+tests/unit/test_philo10_send_contract.py::test_remove_parks_and_keeps_history
+tests/unit/test_philo10_send_contract.py::test_a_remove_that_commits_before_the_boundary_wins_and_nothing_is_dispatched[send_id]
+tests/unit/test_philo10_send_contract.py::test_a_remove_that_commits_before_the_boundary_wins_and_nothing_is_dispatched[inline]
+tests/unit/test_philo10_send_contract.py::test_a_remove_after_the_boundary_parks_and_the_send_stands[send_id]
+tests/unit/test_philo10_send_contract.py::test_a_remove_after_the_boundary_parks_and_the_send_stands[inline]
+tests/unit/test_philo10_send_contract.py::test_a_folder_marked_synced_is_badged_cloud
+tests/unit/test_philo10_send_contract.py::test_send_and_discard_pressed_together_settle_once[project_update]
+tests/unit/test_philo10_send_contract.py::test_send_and_discard_pressed_together_settle_once[desk_decision]
+tests/unit/test_philo10_send_contract.py::test_a_discard_pressed_while_the_send_dispatches_is_refused_and_the_send_stands[project_update]
+tests/unit/test_philo10_send_contract.py::test_a_discard_pressed_while_the_send_dispatches_is_refused_and_the_send_stands[desk_decision]
+tests/unit/test_philo10_send_contract.py::test_manual_rows_read_channel_manual
+tests/unit/test_philo10_send_contract.py::test_an_existing_database_gains_the_columns_and_its_rows_read_manual
+tests/unit/test_philo10_send_contract.py::test_the_words_map_his_asks_and_never_say_an_agent_sends
+tests/unit/test_philo11_document_sources.py::test_registry_declares_the_eight_kinds
+tests/unit/test_philo11_document_sources.py::test_real_producers_render_all_eight_sources
+tests/unit/test_philo11_document_sources.py::test_monday_brief_names_unavailable_people_once
+tests/unit/test_philo11_document_sources.py::test_meeting_sources_never_copy_transcript
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[project_update]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[monday_brief]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[desk_decision]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[meeting_decision]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[decision_record]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[meeting_summary]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[meeting_digest]
+tests/unit/test_philo11_document_sources.py::test_each_source_names_a_missing_record[meeting_followup]
+tests/unit/test_philo11_document_sources.py::test_named_source_refusals[unknown_kind:source-document_kind_unknown]
+tests/unit/test_philo11_document_sources.py::test_named_source_refusals[-document_kind_unknown]
+tests/unit/test_philo11_document_sources.py::test_named_source_refusals[meeting_summary:missing-document_not_found]
+tests/unit/test_philo11_document_sources.py::test_missing_meeting_summary_is_named_no_summary
+tests/unit/test_philo11_document_sources.py::test_empty_aftercare_is_named_no_summary[meeting_digest]
+tests/unit/test_philo11_document_sources.py::test_empty_aftercare_is_named_no_summary[meeting_followup]
+tests/unit/test_philo11_document_sources.py::test_project_update_refuses_unpublished_by_generic_name
+tests/unit/test_philo11_document_sources.py::test_aftercare_document_markdown_is_not_truncated
+tests/unit/test_engine_off_the_loop.py::test_recipe_run_and_chat_run_the_engine_off_the_loop
+tests/unit/test_web_routes_recipe_chat.py::test_chat_alias_engine_runs_off_the_loop
+
+82 tests collected in 0.67s
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 87%]
+..........                                                               [100%]
+82 passed in 9.88s
+{"ceiling": 16384, "database": "popen-gw5/test_chat_alias_engine_runs_of0/holdspeak.db", "headroom": 254, "input_tokens_bytes": 15618, "leaf_entries": 0, "operation_id": "chat_turn_9566940f29514959aab089acbe5ac471", "reserved_output_tokens": 512, "source": "persisted inference_adoption_route_evidence row from the real test producer", "total_tokens": 16130}
+{"ceiling": 16384, "database": "popen-gw8/test_recipe_run_and_chat_run_t0/holdspeak.db", "headroom": 215, "input_tokens_bytes": 15657, "leaf_entries": 0, "operation_id": "chat_turn_00bed555d00c4d859b136748f7b1d03b", "reserved_output_tokens": 512, "source": "persisted inference_adoption_route_evidence row from the real test producer", "total_tokens": 16169}
+```
+
+### Captured run — 2026-09-30T07:16:51Z
+
+- **Command:** `uv run python .tmp/philo11/round2_real_proof.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b1f71ec6b5210279b668fd978f157aafaeafb4ca
+
+```text
+Intel queue drainer is OFF: this process does not own the database.
+246 catalogue entries: all non-description fields unchanged.
+SPY RUN 1 on_loop= False
+{"context_ceiling": 16384, "engine_off_loop": true, "headroom": 274, "input_tokens": 15598, "palette_tools": 31, "reserved_output_tokens": 512, "source": "actual inference_adoption_route_evidence and material snapshot rows", "total_tokens": 16110}
+REAL tools/list: 'file a note into a zone' -> zone.file
+REAL tools/list: 'find a note' -> desk.list
+REAL tools/list: 'read a note' -> desk.get
+REAL tools/list: 'make a zone' -> desk.create
+REAL tools/list: 'put a decision on my review list' -> desk.create
+REAL tools/list: 'list the notes in a zone' -> zone.list_members
+REAL tools/list: 'the reason for a decision' -> desk.create
+REAL tools/list: 'write a note' -> desk.create
+REAL tools/list: 'rename a zone' -> desk.update
+REAL tools/list: 'move a zone' -> desk.update
+REAL tools/list: 'Where can I send' -> channel.destinations
+REAL tools/list: 'send the update to <destination>' -> channel.prepare
+REAL tools/list: 'What was sent' -> channel.sends
+```
+
+### Captured run — 2026-09-30T07:20:33Z
+
+- **Command:** `uv run python scripts/verify_philo11_update_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b1f71ec6b5210279b668fd978f157aafaeafb4ca
+
+```text
+....                                                                     [100%]
+4 passed in 195.50s (0:03:15)
+```
+
+### Captured run — 2026-09-30T09:39:35Z
+
+- **Command:** `uv run --python 3.13 python .tmp/philo11-round3-admission.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 802e431c299a893ea64f75eec8096885574ef7ac
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+..                                                                       [100%]
+2 passed in 2.82s
+{"accounting": "utf8-byte-upper-bound@1", "capability_id": "recipe.run", "context_ceiling": 16384, "eligibility": "executable", "headroom": 15242, "input_bytes_upper_bound": 630, "reason_code": null, "reserved_output_tokens": 512, "route_leg_ordinal": 1, "total": 1142}
+{"accounting": "utf8-byte-upper-bound@1", "capability_id": "chat.turn", "context_ceiling": 16384, "eligibility": "executable", "headroom": 870, "input_bytes_upper_bound": 15002, "reason_code": null, "reserved_output_tokens": 512, "route_leg_ordinal": 1, "total": 15514}
+{"accounting": "utf8-byte-upper-bound@1", "capability_id": "chat.turn", "context_ceiling": 16384, "eligibility": "executable", "headroom": 909, "input_bytes_upper_bound": 14963, "reason_code": null, "reserved_output_tokens": 512, "route_leg_ordinal": 1, "total": 15475}
+Actual route evidence rows: 3
+```
+
+### Captured run — 2026-09-30T09:39:55Z
+
+- **Command:** `uv run --python 3.13 python .tmp/philo11-round3-focused.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 802e431c299a893ea64f75eec8096885574ef7ac
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 74%]
+.........................                                                [100%]
+97 passed in 14.59s
+```
+
+### Captured run — 2026-09-30T09:40:22Z
+
+- **Command:** `uv run --python 3.13 python scripts/verify_philo11_update_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 802e431c299a893ea64f75eec8096885574ef7ac
+
+```text
+....                                                                     [100%]
+4 passed in 121.59s (0:02:01)
+```

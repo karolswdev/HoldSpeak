@@ -1,12 +1,12 @@
 # PHILO-11-01 — Astra's lane record
 
-**Status:** DRAFT — UNCHECKED, awaiting Muad'Dib's counsel-on-built.
+**Status:** Round-two conditions C1–C4 are paid and counsel r1 is recorded; the new head awaits Muad'Dib's full suite.
 
 LANE: PHILO-11-01. Story 01. Worktree `/Users/karol/dev/tools/wt-philo-11-01`; branch `feat/philo-11-01`; base `332d91586bdbd7fe40e3c2c00851a46adc4650e4`.
 
-Delivery: [PR #707 — PHILO-11-01 — the document sources](https://github.com/karolswdev/HoldSpeak/pull/707), to `main`. Implementation commit: `862fbba20ade9122bb74e190525ffa7ed9a89a24`; Delivery Workbench gate and historical verification passed. This handover remains DRAFT — UNCHECKED, awaiting Muad'Dib.
+Delivery: [PR #707 — PHILO-11-01 — the document sources](https://github.com/karolswdev/HoldSpeak/pull/707), to `main`. First-round implementation commit: `862fbba20ade9122bb74e190525ffa7ed9a89a24`; round two updates this PR. No merge is claimed.
 
-OUTCOME: implementation built and verified against the owner's ratified design, sections 1–4. Eight stored document kinds share the existing preview, prepare and Send lifecycle. The update face uses the generic reference. Story 01 is done; the built lane awaits Muad'Dib's counsel-on-built before merge. Slack and the new document faces stay with their named stories.
+OUTCOME: implementation follows the owner's ratified design, sections 1–4. Eight stored document kinds share the existing preview, prepare and Send lifecycle. The update face uses the generic reference. Story 01 is done; round two pays the counsel conditions, and Muad'Dib owns the full-suite rerun on the new head. Slack and the new document faces stay with their named stories.
 
 PROOF: actual command output is in [evidence-story-01.md](evidence-story-01.md). Python 3.13.14 was synced with `uv sync --python 3.13 --all-extras --all-groups`. All Python tests use isolated HOME and basetemp inside it. No metal test or owner desk is used.
 
@@ -59,3 +59,31 @@ The preview descriptor is already exempt computation under Constitution XI.5 (`h
 AMENDMENTS: no behavioral amendment. Criterion 6 is applied under Constitution XI.5: preview returns the reference without an admission or receipt; prepare and inline Send retain both. This precedence is explicit beside the original criterion, for counsel-on-built. The dispatch brief names `feat/philo-11-01`, superseding the proposed branch name in the lane table.
 
 UNKNOWN: the exact parallel-glass interference is not identified. This lane does not claim owner observation, real remote delivery, or counsel-on-built. Muad'Dib checks the built lane; no Claude session has been invoked as a substitute.
+
+## Round two — 2026-09-30
+
+LANE: PHILO-11-01, story 01, PR #707, branch `feat/philo-11-01`, worktree `/Users/karol/dev/tools/wt-philo-11-01`.
+
+OUTCOME: Muad'Dib's counsel r1 is recorded verbatim at [checks/story-01-built-muaddib-r1.md](checks/story-01-built-muaddib-r1.md). C1, C2 and C4 are paid; C3 is in the home backlog. F5 is in design §2; the F6 ruling is in phase decisions. Story 01 remains done.
+
+PROOF: the real `/api/mcp` `tools/list` maps all 13 restored PHILO-7/Phase 10 phrases to their intended tools. Base-form discovery, Send contract, document-source and chat-admission tests collect 82 and pass 82. The two persisted chat-admission rows on the final description text show 15,618 + 512 = 16,130 / 16,384 (254 headroom) for standalone chat and 15,657 + 512 = 16,169 / 16,384 (215 headroom) for recipe run then chat. A separate real admission check shows 15,598 + 512 = 16,110 / 16,384 (274 headroom), with 31 palette tools and the engine off-loop. The 1440/393 update Send glass collects and passes 4; it writes temporary shots only. Evidence is appended to [evidence-story-01.md](evidence-story-01.md).
+
+LEDGER: Muad'Dib's full suite on the previous head `3552be416` was **2 failed, 13,534 passed, 99 skipped, 4 xfailed in 3617.52s**. Both failures pass serially and are class (c); zero failures are branch-new. The full suite on this new head is Muad'Dib's to rerun.
+
+AMENDMENTS: restored all ten PHILO-7 job phrases and the three Phase 10 asks in the real catalogue, the original base-form guard tests (only the argument-name change remains), and the project-update `== body` assertion. When People is unavailable, the real brief renderer emits one `PEOPLE · UNAVAILABLE` line. Palette argument fields and authority are unchanged; `document_ref` help now points to `channel.preview`. The document-source update face did not change.
+
+UNKNOWN: the new-head full-suite result and Muad'Dib's follow-up counsel are pending. The parallel class-(c) failures from the previous head remain unclassified beyond their serial passes.
+
+## Round three — 2026-09-30
+
+LANE: PHILO-11-01, story 01, PR #707, branch `feat/philo-11-01`, worktree `/Users/karol/dev/tools/wt-philo-11-01`, starting head `fd1028f3c`.
+
+OUTCOME: Muad'Dib's D2 budget amendment is applied. The chat palette contains only `channel.destinations` and `channel.prepare`; `channel.preview` and `channel.sends` remain public over MCP and HTTP. Prepare returns the preview in its answer, and the thread still finds `#leads` by name. The story stays done. This round's changes are recorded in [evidence-story-01.md](evidence-story-01.md); the branch tip and PR are reported after the gate.
+
+PROOF: the palette membership fence failed against the old four-tool palette, then passed with the two ruled tools. Its real `channel.destinations` → `channel.prepare` path checks the preview text in the prepared payload and confirms a refused `channel.send` creates no operation. The focused selection collects and passes 97 tests in 14.59s. It includes the five branch-new failures from Muad'Dib's prior check, the PHILO-7 and Phase 10 discovery guards, the chat admission pair, the document-source tests and the `#leads` thread fence. The real admission rows use `utf8-byte-upper-bound@1`: recipe/run then chat uses 15,002 input bytes + 512 reserved output = 15,514 / 16,384, with 870 headroom; chat alias uses 14,963 + 512 = 15,475 / 16,384, with 909 headroom. Both are executable. The unchanged update Send glass passes all four cases at 1440 and 393. `dw check holdspeak-philo` and `git diff --check` pass.
+
+LEDGER: Muad'Dib's full suite on `fd1028f3c` was **33 failed, 13,504 passed, 99 skipped, 4 xfailed in 4217.94s**. All 26 e2e failures pass serially; two unit/integration failures also pass serially, class (c). The five branch-new failures were the three moved AST census pins, the regenerated operations export, and the restored desk kind-boundary sentence; all five pass in the focused selection. Astra did not rerun the full suite; Muad'Dib owns it on the new head.
+
+AMENDMENTS: `design/document-sources.md` §2 records the exact palette ruling; §4 and the phase status D2 record its MCP/HTTP boundary and that prepare carries the preview. The story scope and palette membership fence now state the same rule. The original owner phrases, kind-boundary guidance and guard assertions remain intact. Census anchors follow the real source sites without loosening their checks.
+
+UNKNOWN: the full suite on this round's head and Muad'Dib's new counsel are pending. This round makes no claim of owner observation or remote delivery.

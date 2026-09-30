@@ -44,16 +44,6 @@ JOBS: dict[str, tuple[str, tuple[tuple[str, str | None], ...]]] = {
     "the reason for a decision": ("desk.create", (("kind", "decisions"), ("data", "context_markdown"))),
 }
 
-COMPACT_PHRASES = {
-    "file a note into a zone": "file a primitive in a zone",
-    "find a note": "notes expose ids",
-    "read a note": "read notes",
-    "make a zone": "directories (zones)",
-    "put a decision on my review list": "for decisions, status=proposed puts it on the review list",
-    "list the notes in a zone": "notes use primitive_id",
-    "the reason for a decision": "context_markdown(reason/facts)",
-}
-
 #: The slice's tools whose id arguments must say where the value comes from.
 SLICE_TOOLS = (
     "desk.list", "desk.get", "desk.create", "desk.update", "desk.delete", "desk.verb",
@@ -96,46 +86,23 @@ def _by_name(catalogue: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {tool["name"]: tool for tool in catalogue}
 
 
-def _description_texts(value: Any):
-    """Yield top-level and nested schema descriptions from one catalogue row."""
-    if isinstance(value, dict):
-        description = value.get("description")
-        if isinstance(description, str):
-            yield description
-        for child in value.values():
-            yield from _description_texts(child)
-    elif isinstance(value, list):
-        for child in value:
-            yield from _description_texts(child)
-
-
 @pytest.mark.parametrize("phrase", sorted(JOBS))
 def test_each_job_phrase_maps_to_one_tool_and_its_argument_path(catalogue, phrase) -> None:
     tool_name, path = JOBS[phrase]
-    compact_phrase = COMPACT_PHRASES[phrase]
-    matches = [
-        (tool, text)
-        for tool in catalogue
-        for text in _description_texts(tool)
-        if compact_phrase in text.lower()
-    ]
-    naming = sorted({tool["name"] for tool, _ in matches})
-    assert naming == [tool_name], f"{phrase!r} ({compact_phrase!r}) is named by {naming}, expected [{tool_name!r}]"
+    naming = [t["name"] for t in catalogue if phrase in t.get("description", "").lower()]
+    assert naming == [tool_name], f"{phrase!r} is named by {naming}, expected [{tool_name!r}]"
     tool = _by_name(catalogue)[tool_name]
-    description = next(text.lower() for candidate, text in matches if candidate["name"] == tool_name)
+    description = tool["description"].lower()
     properties = tool["inputSchema"]["properties"]
-    # The matching clause owns the phrase and its nearby argument guidance.
-    clauses = re.split(r";|(?<=\.)\s+", description)
-    sentence = next(clause for clause in clauses if compact_phrase in clause)
+    # The job's sentence: from the phrase to the end of its sentence.
+    sentence = description[description.index(phrase):].split(". ")[0]
     for argument, value in path:
         assert argument in properties, f"{tool_name} has no argument {argument!r}"
         if value is None:
             continue
         if argument == "kind":
             assert value in properties["kind"]["enum"], (tool_name, value)
-            assert re.search(rf"\b{re.escape(value)}\b", sentence), (
-                f"{phrase!r}: the clause does not name kind={value}: {sentence!r}"
-            )
+            assert f"kind={value}" in sentence, f"{phrase!r}: the sentence does not name kind={value}: {sentence!r}"
         else:
             words = (sentence + " " + properties[argument].get("description", "").lower())
             assert value in words, f"{phrase!r}: {argument} does not name {value!r}: {words!r}"
