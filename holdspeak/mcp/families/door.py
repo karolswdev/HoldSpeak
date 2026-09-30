@@ -29,31 +29,31 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "door.add_item",
-        "description": "Add an action item to the Dashboard Door. Creates a follow-through card with the given task, optional owner, and optional due date.",
+        "description": "Add a Door action item; creates a Follow-Through card with optional owner and due date.",
         "inputSchema": {
             "$id": "holdspeak://mcp/door.add_item@1",
             "type": "object",
             "properties": {
                 "task": {
                     "type": "string",
-                    "description": "Action item task description.",
+                    "description": "Task.",
                 },
                 "owner": {
                     "type": "string",
-                    "description": "Optional accountable owner.",
+                    "description": "Optional owner.",
                 },
                 "due": {
                     "type": "string",
-                    "description": "Optional ISO-8601 due date.",
+                    "description": "Optional ISO-8601 date.",
                 },
                 "source_type": {
                     "type": "string",
                     "enum": ["meeting", "thread"],
-                    "description": "Source kind (default: thread when invoked from chat).",
+                    "description": "Source kind; chat defaults to thread.",
                 },
                 "source_ref": {
                     "type": "string",
-                    "description": "Source reference (e.g. thread:<id>).",
+                    "description": "Source ref (e.g. thread:<id>).",
                 },
             },
             "required": ["task"],

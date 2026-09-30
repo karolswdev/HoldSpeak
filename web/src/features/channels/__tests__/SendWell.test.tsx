@@ -103,7 +103,7 @@ describe("the SEND well", () => {
     routes["GET /api/channels/sends"] = () => ({ sends: stored });
     routes["POST /api/channels/send"] = (init) => {
       calls += 1;
-      expect(init.json).toMatchObject({ update_id: "u1", destination_id: "chd_1", preview_digest: "dig1" });
+      expect(init.json).toMatchObject({ document_ref: "project_update:u1", destination_id: "chd_1", preview_digest: "dig1" });
       stored = [send()];
       return { send: stored[0] };
     };

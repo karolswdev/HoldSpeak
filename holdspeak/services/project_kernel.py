@@ -183,7 +183,7 @@ def _broker(database: Any) -> Any:
 
 def target_for(name: str, args: Mapping[str, Any]) -> str:
     """The operation's journal-safe target: what it acts on."""
-    for key, kind in (("send_id", "channel_send"), ("run_id", "steward_run"), ("update_id", "project_update"),
+    for key, kind in (("send_id", "channel_send"), ("document_ref", "document"), ("run_id", "steward_run"), ("update_id", "project_update"),
                       ("destination_id", "channel_destination"), ("watch_id", "watch"),
                       ("step_id", "steward_step"), ("project_id", "project")):
         if args.get(key):

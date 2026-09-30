@@ -147,6 +147,84 @@ def _digest_message(digest: dict[str, Any]) -> str:
     return "\n\n".join(sections)
 
 
+def _digest_markdown(digest: dict[str, Any]) -> str:
+    """Render the stored aftercare digest as complete Markdown.
+
+    This is the document-source renderer used by the channels.  It deliberately
+    has no Slack length cap: a channel decides whether a payload fits before the
+    dispatch boundary, and a document must never be silently shortened.
+    """
+    title = str(digest.get("meeting_title") or "").strip() or "Meeting"
+    date = str(digest.get("meeting_date") or "")[:10]
+    header = f"# {title}" + (f"\n{date}" if date else "")
+    sections: list[str] = [header]
+
+    decisions = digest.get("decisions") or []
+    decision_lines = ["## What we decided"]
+    for item in decisions:
+        decision = str(item.get("decision") or "").strip()
+        if not decision:
+            continue
+        rationale = str(item.get("rationale") or "").strip()
+        decision_lines.append(
+            f"- {decision}" + (f". Why: {rationale}" if rationale else "")
+        )
+    if len(decision_lines) > 1:
+        sections.append("\n".join(decision_lines))
+
+    by_owner = (digest.get("open_items") or {}).get("by_owner") or []
+    open_lines = ["## Still open"]
+    for group in by_owner:
+        owner = str(group.get("owner") or "Unassigned")
+        for item in group.get("items") or []:
+            task = str(item.get("task") or "").strip()
+            if not task:
+                continue
+            due = str(item.get("due") or "").strip()
+            open_lines.append(f"- {owner}: {task}" + (f" (due {due})" if due else ""))
+    if len(open_lines) > 1:
+        sections.append("\n".join(open_lines))
+
+    since = digest.get("since_last_meeting")
+    if since and since.get("changed"):
+        previous = (since.get("previous_meeting") or {}).get("title") or "the last meeting"
+        lines = [f"## Since {previous}"]
+        new_decisions = since.get("new_decisions") or []
+        if new_decisions:
+            lines.append("New decisions:")
+            lines.extend(f"- {str(item.get('decision') or '').strip()}" for item in new_decisions)
+        new_actions = since.get("new_actions") or []
+        if new_actions:
+            lines.append("New action items:")
+            lines.extend(f"- {str(item.get('task') or '').strip()}" for item in new_actions)
+        closed = since.get("closed_actions") or []
+        if closed:
+            lines.append("Closed since last time:")
+            lines.extend(f"- {str(item.get('task') or '').strip()}" for item in closed)
+        if len(lines) > 1:
+            sections.append("\n".join(lines))
+
+    if len(sections) == 1:
+        sections.append("Nothing was decided and nothing is open for this meeting.")
+    return "\n\n".join(sections)
+
+
+def document_markdown_for(digest: dict[str, Any], what: str) -> str:
+    """Return the complete Markdown body for a channel document source.
+
+    ``digest`` is already the persisted aftercare projection.  The function is
+    deterministic and does not call a model or read a transcript.  ``what`` is
+    ``digest`` or ``followup``; unknown values are refused by name.
+    """
+    if what == "digest":
+        return _digest_markdown(digest)
+    if what == "followup":
+        from .meeting_aftercare import build_followup_draft
+
+        return build_followup_draft(digest)
+    raise ValueError(f"unknown export kind: {what!r} (expected 'digest' or 'followup')")
+
+
 def slack_message_for(digest: dict[str, Any], what: str) -> str:
     """The exact Slack message text for one export kind.
 
@@ -238,6 +316,7 @@ __all__ = [
     "SLACK_TEXT_LIMIT",
     "TRUNCATION_NOTICE",
     "build_slack_connector",
+    "document_markdown_for",
     "slack_message_for",
     "slack_webhook_host",
 ]

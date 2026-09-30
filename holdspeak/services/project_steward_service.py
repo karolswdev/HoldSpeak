@@ -1886,8 +1886,8 @@ class ProjectStewardService(StewardContract):
             if seen is not None:
                 continue
             answer = self._child(principal, "channel.prepare",
-                                 {"update_id": update["id"], "destination_id": destination_id},
-                                 lambda d=destination_id: channels.prepare(principal, update["id"], d))
+                                 {"document_ref": document_ref, "destination_id": destination_id},
+                                 lambda d=destination_id: channels.prepare(principal, document_ref, d))
             prepared.append(str(((answer or {}).get("send") or {}).get("id") or ""))
         return {"effect": "prepare_send", "outcome": "applied" if prepared else "reconciled",
                 "update_id": update["id"], "prepared": prepared}

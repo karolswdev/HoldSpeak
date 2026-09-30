@@ -507,12 +507,12 @@ def _p_channel_check_destination(hub: Hub, monkeypatch: Any, tmp_path: Path) -> 
 
 def _p_channel_preview(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     uid, dest = _channel(hub, tmp_path)
-    return hub.root.operations.invoke(OWNER, "channel.preview", {"update_id": uid, "destination_id": dest})
+    return hub.root.operations.invoke(OWNER, "channel.preview", {"document_ref": f"project_update:{uid}", "destination_id": dest})
 
 
 def _p_channel_prepare(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     uid, dest = _channel(hub, tmp_path)
-    return hub.root.operations.invoke(OWNER, "channel.prepare", {"update_id": uid, "destination_id": dest})
+    return hub.root.operations.invoke(OWNER, "channel.prepare", {"document_ref": f"project_update:{uid}", "destination_id": dest})
 
 
 def _p_channel_discard(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:

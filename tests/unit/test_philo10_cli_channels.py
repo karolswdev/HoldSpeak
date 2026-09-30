@@ -145,7 +145,7 @@ def test_gate2_the_hub_answers_a_read_during_a_slow_send(tmp_path: Path, transpo
         baseline = time.perf_counter()
         assert hub.call("GET", "/api/channels/destinations")[0] == 200
         baseline = time.perf_counter() - baseline
-        status, prepared = hub.call("POST", "/api/channels/sends", {"update_id": update, "destination_id": dest})
+        status, prepared = hub.call("POST", "/api/channels/sends", {"document_ref": f"project_update:{update}", "destination_id": dest})
         body = {"send_id": prepared["send"]["id"]}
 
         def press() -> Any:
@@ -358,7 +358,7 @@ def test_an_oversize_body_is_refused_by_name_before_any_dispatch(
     _pid, fits = room(hub, name="Fits", body="\u00e9" * limit)  # characters, not bytes
     assert prepare(hub, fits, dest)["send"]["size"] == 2 * limit
     _pid, update = room(hub, name="Too long", body="x" * (limit + 1))
-    refused = hub.client.post("/api/channels/sends", json={"update_id": update, "destination_id": dest})
+    refused = hub.client.post("/api/channels/sends", json={"document_ref": f"project_update:{update}", "destination_id": dest})
     assert refused.status_code == 400 and refused.json()["code"] == f"payload_too_large:{channel}", refused.text
     assert canned.creates() == []
 
@@ -695,7 +695,7 @@ def test_a_real_kill_during_a_gh_create_ends_unknown_once_and_the_replay_never_r
         assert status == 200, saved
         assert saved["destination"]["account"]["login"] == "octo-owner"
         status, prepared = first.call("POST", "/api/channels/sends",
-                                      {"update_id": update, "destination_id": saved["destination"]["id"]})
+                                      {"document_ref": f"project_update:{update}", "destination_id": saved["destination"]["id"]})
         body = {"send_id": prepared["send"]["id"], "command_id": "kill-during-gh"}
 
         def press() -> None:

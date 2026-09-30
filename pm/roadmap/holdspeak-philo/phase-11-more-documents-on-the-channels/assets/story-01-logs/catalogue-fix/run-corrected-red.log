@@ -1,0 +1,29 @@
+...F...............                                                      [100%]
+=================================== FAILURES ===================================
+___ test_each_job_phrase_maps_to_one_tool_and_its_argument_path[make a zone] ___
+
+catalogue = [{'description': 'List desk primitives by kind; notes expose IDs, directories member_ids, kbs list knowledge bases. Th...h.add_item, workbench.run.', 'type': 'string'}}, 'required': ['verb_id'], 'type': 'object'}, 'name': 'desk.verb'}, ...]
+phrase = 'make a zone'
+
+    @pytest.mark.parametrize("phrase", sorted(JOBS))
+    def test_each_job_phrase_maps_to_one_tool_and_its_argument_path(catalogue, phrase) -> None:
+        tool_name, path = JOBS[phrase]
+        compact_phrase = COMPACT_PHRASES[phrase]
+        matches = [
+            (tool, text)
+            for tool in catalogue
+            for text in _description_texts(tool)
+            if compact_phrase in text.lower()
+        ]
+        naming = sorted({tool["name"] for tool, _ in matches})
+>       assert naming == [tool_name], f"{phrase!r} ({compact_phrase!r}) is named by {naming}, expected [{tool_name!r}]"
+E       AssertionError: 'make a zone' ('directories (zones)') is named by [], expected ['desk.create']
+E       assert [] == ['desk.create']
+E         
+E         Right contains one more item: 'desk.create'
+E         Use -v to get more diff
+
+tests/unit/test_philo7_discovery.py:123: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[make a zone]
+1 failed, 18 passed in 1.37s

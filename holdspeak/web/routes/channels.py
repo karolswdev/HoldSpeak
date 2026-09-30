@@ -133,9 +133,9 @@ def build_channels_router(ctx: WebContext) -> APIRouter:
         return refused if refused is not None else await call(request, "channel.send", data)
 
     @router.get("/api/channels/sends")
-    async def api_channel_sends(request: Request, update_id: Optional[str] = None,
+    async def api_channel_sends(request: Request, document_ref: Optional[str] = None,
                                 send_id: Optional[str] = None) -> Any:
-        args = {k: v for k, v in (("update_id", update_id), ("send_id", send_id)) if v}
+        args = {k: v for k, v in (("document_ref", document_ref), ("send_id", send_id)) if v}
         return await call(request, "channel.sends", args)
 
     @router.put("/api/channels/email-keys/{key_ref}")

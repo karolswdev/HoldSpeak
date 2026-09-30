@@ -135,7 +135,7 @@ def _until(check: Any, timeout: float = 30.0) -> Any:
     raise AssertionError("condition never held")
 
 
-def _agent_prepare(hub: HubProcess, update: str, dest: str) -> dict[str, Any]:
+def _agent_prepare(hub: HubProcess, document_ref: str, dest: str) -> dict[str, Any]:
     status, _ = hub.call("PUT", "/api/settings/remote", {"enabled": True})
     assert status == 200
     status, issued = hub.call("POST", "/api/settings/remote/credentials",
@@ -143,40 +143,67 @@ def _agent_prepare(hub: HubProcess, update: str, dest: str) -> dict[str, Any]:
     assert status == 200, issued
     status, answer = hub.call("POST", "/api/mcp", {
         "jsonrpc": "2.0", "id": 1, "method": "tools/call",
-        "params": {"name": "channel.prepare", "arguments": {"update_id": update, "destination_id": dest}}},
+        "params": {"name": "channel.prepare", "arguments": {"document_ref": document_ref, "destination_id": dest}}},
         token=issued["token"])
     assert status == 200, answer
     assert answer["result"]["isError"] is False, answer
     return json.loads(answer["result"]["content"][0]["text"])
 
 
+def _source(hub: HubProcess, source_kind: str) -> str:
+    if source_kind == "project_update":
+        status, made = hub.call("POST", "/api/projects", {"name": "Payments ledger cutover"})
+        assert status == 200, made
+        pid = made["project"]["id"]
+        status, drafted = hub.call("POST", f"/api/projects/{pid}/updates/draft", {})
+        assert status == 200, drafted
+        update = drafted["update"]["id"]
+        assert hub.call("POST", f"/api/updates/{update}/publish", {})[0] == 200
+        return f"project_update:{update}"
+    if source_kind == "desk_decision":
+        status, made = hub.call("POST", "/api/decisions", {
+            "title": "Keep the cutover window", "status": "accepted",
+            "context_markdown": "The migration is ready for the agreed window.",
+            "decision_markdown": "Run the migration during the cutover window.",
+            "consequences_markdown": "The support team monitors the result.",
+        })
+        assert status == 201, made
+        return f"desk_decision:{made['decision']['id']}"
+    raise AssertionError(source_kind)
+
+
+def _history(home: Path, document_ref: str) -> list[dict[str, Any]]:
+    if document_ref.startswith("project_update:"):
+        update = document_ref.split(":", 1)[1]
+        return _rows(home, "SELECT outcome, operation_id, channel FROM project_update_deliveries WHERE update_id=?", update)
+    return _rows(home, "SELECT state AS outcome, send_operation_id AS operation_id, channel FROM channel_sends "
+                      "WHERE document_ref=? AND state IN ('sent','unknown')", document_ref)
+
+
 @pytest.mark.timeout(240)
 @pytest.mark.parametrize("form", ["send_id", "inline"])
 @pytest.mark.parametrize("hold", ["before", "after"], ids=["killed-before-the-write", "killed-after-the-write"])
+@pytest.mark.parametrize("source_kind", ["project_update", "desk_decision"])
 def test_r3_a_restart_during_dispatching_ends_unknown_once_and_the_replay_answers_it(
-    tmp_path: Path, form: str, hold: str,
+    tmp_path: Path, form: str, hold: str, source_kind: str,
 ) -> None:
     home, folder = tmp_path / "home", tmp_path / "out"
     home.mkdir()
     folder.mkdir()
     first = HubProcess(home, hold=hold)
     try:
-        status, made = first.call("POST", "/api/projects", {"name": "Payments ledger cutover"})
-        pid = made["project"]["id"]
-        status, drafted = first.call("POST", f"/api/projects/{pid}/updates/draft", {})
-        update = drafted["update"]["id"]
-        assert first.call("POST", f"/api/updates/{update}/publish", {})[0] == 200
+        document_ref = _source(first, source_kind)
         status, saved = first.call("POST", "/api/channels/destinations",
                                    {"name": "Team folder", "channel": "file", "folder": str(folder)})
         assert status == 200, saved
         dest = saved["destination"]["id"]
-        waiting = _agent_prepare(first, update, dest)["send"]  # survives the restart, never pressed here
+        waiting = _agent_prepare(first, document_ref, dest)["send"]  # survives the restart, never pressed here
         if form == "send_id":
-            prepared = _agent_prepare(first, update, dest)["send"]
+            prepared = _agent_prepare(first, document_ref, dest)["send"]
             body: dict[str, Any] = {"send_id": prepared["id"], "command_id": f"restart-{form}-{hold}"}
         else:
-            status, preview = first.call("POST", "/api/channels/preview", {"update_id": update, "destination_id": dest})
-            body = {"update_id": update, "destination_id": dest, "preview_digest": preview["payload_digest"],
+            status, preview = first.call("POST", "/api/channels/preview", {"document_ref": document_ref, "destination_id": dest})
+            body = {"document_ref": document_ref, "destination_id": dest, "preview_digest": preview["payload_digest"],
                     "command_id": f"restart-{form}-{hold}"}
         def press() -> None:
             try:
@@ -198,9 +225,7 @@ def test_r3_a_restart_during_dispatching_ends_unknown_once_and_the_replay_answer
                                   " ON r.operation_id=o.operation_id WHERE o.operation_id=?", row["send_operation_id"])
         assert operation == {"state": "indeterminate", "outcome": "hub_restart_during_send"}, operation
         assert len(_rows(home, "SELECT 1 FROM kernel_receipts WHERE operation_id=?", row["send_operation_id"])) == 1
-        history = _rows(home, "SELECT outcome, operation_id, channel FROM project_update_deliveries WHERE update_id=?",
-                        update)
-        assert history == [{"outcome": "unknown", "operation_id": row["send_operation_id"], "channel": "file"}]
+        assert _history(home, document_ref) == [{"outcome": "unknown", "operation_id": row["send_operation_id"], "channel": "file"}]
         on_disk = sorted(folder.iterdir())
         proof = json.loads(settled["proof_json"]) if settled["proof_json"] else None
         if hold == "after":
@@ -214,7 +239,7 @@ def test_r3_a_restart_during_dispatching_ends_unknown_once_and_the_replay_answer
         assert (replayed["outcome"], replayed["send"]["reason"]) == ("unknown", "interrupted")
         assert replayed["operation_id"] == row["send_operation_id"]
         assert sorted(folder.iterdir()) == on_disk  # no second dispatch
-        assert len(_rows(home, "SELECT 1 FROM project_update_deliveries WHERE update_id=?", update)) == 1
+        assert len(_history(home, document_ref)) == 1
         # The agent's prepared send survived the restart with its preview; the owner sends it now.
         status, listed = second.call("GET", f"/api/channels/sends?send_id={waiting['id']}")
         [survivor] = listed["sends"]

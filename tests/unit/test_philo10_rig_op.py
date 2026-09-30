@@ -51,17 +51,18 @@ def test_the_rig_reaches_the_send_and_reads_each_receipt(tmp_path: Path) -> None
         assert receipt(saved["operation_id"])["state"] == "succeeded"
         dest = saved["destination"]["id"]
         assert [d["id"] for d in op("channel.destinations", {})["destinations"]] == [dest]
-        preview = op("channel.preview", {"update_id": update, "destination_id": dest})
-        prepared = op("channel.prepare", {"update_id": update, "destination_id": dest})
+        document_ref = f"project_update:{update}"
+        preview = op("channel.preview", {"document_ref": document_ref, "destination_id": dest})
+        prepared = op("channel.prepare", {"document_ref": document_ref, "destination_id": dest})
         assert receipt(prepared["operation_id"])["state"] == "succeeded"
         assert prepared["send"]["payload_digest"] == preview["payload_digest"]
         sent = op("channel.send", {"send_id": prepared["send"]["id"], "command_id": "rig-press"})
         assert sent["outcome"] == "sent" and receipt(sent["operation_id"])["state"] == "succeeded"
         proof = sent["send"]["proof"]
         assert Path(proof["path"]).parent == folder.resolve() and proof["sha256"] == preview["payload_digest"]
-        listed = op("channel.sends", {"update_id": update})["sends"]
+        listed = op("channel.sends", {"document_ref": document_ref})["sends"]
         assert [(s["id"], s["state"]) for s in listed] == [(prepared["send"]["id"], "sent")]
-        second = op("channel.prepare", {"update_id": update, "destination_id": dest})
+        second = op("channel.prepare", {"document_ref": document_ref, "destination_id": dest})
         discarded = op("channel.discard", {"send_id": second["send"]["id"]})
         assert discarded["send"]["state"] == "discarded" and receipt(discarded["operation_id"])["state"] == "succeeded"
         assert op("channel.check_destination", {"destination_id": dest})["check"]["state"] == "ready"

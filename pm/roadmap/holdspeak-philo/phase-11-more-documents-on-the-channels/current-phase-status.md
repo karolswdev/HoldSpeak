@@ -1,6 +1,6 @@
 # Phase 11 - More documents on the channels
 
-**Last updated:** 2026-09-29 (story 03 round two: Codex Astra r1 RATIFY-WITH-CONDITIONS on the canvases paid; 45 boards at both widths; awaiting the owner's word. Earlier: story 03 canvases A–E and T1–T3 DRAWN, round one: 42 boards at both widths, for Astra's check and the owner's ratification. Earlier: RATIFIED by the owner, "Ratify, build it"; Q1 → refuse above 39,000 characters. Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid (`checks/charter-astra-r1.md`) — the decision kinds mapped to their real face seats, the Settings exclusion of the old webhook, `channel.destinations` in the thread palette, the same-day brief id, story 01 owns the inline Send caller, D1 recorded as a capability deferral, the failure-transition boards, Q1 worded as our limit. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib.)
+**Last updated:** 2026-09-30 (Muad'Dib amended D2: the chat palette has `channel.destinations` and `channel.prepare` only; preview and history stay public over MCP and HTTP. Story 01 built and verified in `feat/philo-11-01`; new-head full-suite result and counsel-on-built pending Muad'Dib. Earlier: RATIFIED by the owner, "Ratify, build it"; Q1 → refuse above 39,000 characters. Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid (`checks/charter-astra-r1.md`) — the decision kinds mapped to their real face seats, the Settings exclusion of the old webhook, `channel.destinations` in the thread palette, the same-day brief id, story 01 owns the inline Send caller, D1 recorded as a capability deferral, the failure-transition boards, Q1 worded as our limit. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib.)
 
 **Status:** RATIFIED by the owner 2026-09-29 ("Ratify, build it") after Astra's check r1 (RATIFY-WITH-CONDITIONS, paid). Q1 ruled: "Higher limit, still refuse" → Muad'Dib set the limit at **39,000** characters of Slack text (Slack truncates above 40,000; he can change it).
 
@@ -55,7 +55,7 @@ DRAFT, 2026-09-29, written by the Fedaykin docs lane (Opus 5.5) for Muad'Dib. **
 ## Scope
 
 - **In:**
-  1. **The document sources (story 01),** as `design/document-sources.md` §§1–4 settles them. One declared `DocumentSource` interface and one registry table. The update becomes the first source. Seven new kinds: `monday_brief`, `desk_decision`, `meeting_decision`, `decision_record`, `meeting_summary`, `meeting_digest`, `meeting_followup`. Each reads its stored record by id and renders Markdown. No meeting form carries the transcript. The generic descriptors: `channel.preview`, `channel.prepare` and the inline `channel.send` take `document_ref` in place of `update_id`; `channel.sends` filters by `document_ref`. The minimal provenance: `kind` and `source_id` from `document_ref`; the frozen title, slug and label in one additive column. The kernel target mapping names the document. The thread's chat palette gains `channel.destinations`, preview, prepare and sends. Story 01 also changes the two client callers (`channels.ts` and the inline Send body in `SendWell.tsx:429`) so the update face never breaks between merges.
+  1. **The document sources (story 01),** as `design/document-sources.md` §§1–4 settles them. One declared `DocumentSource` interface and one registry table. The update becomes the first source. Seven new kinds: `monday_brief`, `desk_decision`, `meeting_decision`, `decision_record`, `meeting_summary`, `meeting_digest`, `meeting_followup`. Each reads its stored record by id and renders Markdown. No meeting form carries the transcript. The generic descriptors: `channel.preview`, `channel.prepare` and the inline `channel.send` take `document_ref` in place of `update_id`; `channel.sends` filters by `document_ref`. The minimal provenance: `kind` and `source_id` from `document_ref`; the frozen title, slug and label in one additive column. The kernel target mapping names the document. The thread's chat palette gains `channel.destinations` and `channel.prepare`; `channel.preview` and `channel.sends` stay public over MCP and HTTP. Story 01 also changes the two client callers (`channels.ts` and the inline Send body in `SendWell.tsx:429`) so the update face never breaks between merges.
   2. **The Slack channel and the aftercare rewrite (story 02),** as design §§5–6 settles them. Slack by incoming webhook: the URL in the native keyring, the exact host `hooks.slack.com:443`, redirects refused, the pinned outcomes, `200 ok` = POSTED with no link, a size limit refused by name (Q1). The aftercare Slack path rewritten onto the channel with no migration: the old webhook setting, its every reader, the aftercare Slack proposal and executor, and the posture auto-execute path go. Settings reads and writes drop `meeting.slack_webhook_url` explicitly, so the ignored field never leaks (design §6). The desk actuator's free-text Slack target and its face affordance are parked: a deliberate capability deferral (D1).
   3. **The canvases A–E (story 03),** faces.md §6, at 1440 and 393, on the real product with a harness shim for the new wire. They include the failure transitions (design §6b): the over-limit Slack refusal, `preview_changed` → a fresh preview → another press, the Chair after its last brief item is triaged. The owner ratifies them before any face build.
   4. **The SEND well as one library species (story 04):** the eight update bindings (faces.md B1–B8) replaced by a document reference; the species in the library and in `web/src/desk/surface/contract.md`; the update face composes it first, with no visible change.
@@ -80,6 +80,8 @@ Unchanged from Phase 10 (`../phase-10-the-channels/current-phase-status.md`, "Ad
 | `channel.preview`, `channel.prepare`, inline `channel.send` | the argument is `document_ref`; the admission and the receipt name it (`holdspeak/services/project_kernel.py:184`) |
 | its effect: the Slack POST | `external.egress`, a child of the send, with its parent, the authenticated owner principal, the broker and the frozen `payload_digest`; allowed host exactly `hooks.slack.com:443`; data class `slack_message`; the URL only in the dispatch opener |
 
+Story 01 applies Constitution XI.5 to the first row: preview returns `document_ref` but remains exempt computation, with no admission or receipt. Prepare and inline Send identify the document in their admissions and receipts. The original row's conflicting preview wording and this precedence are recorded in [Astra's lane record](lane-01-astra.md) for Muad'Dib's counsel-on-built.
+
 The aftercare Slack proposal and its executor leave the table: they no longer exist (design §6).
 
 ## Exit criteria (evidence required)
@@ -99,7 +101,7 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-11-01 | The document sources | backlog | [story-01-the-document-sources](./story-01-the-document-sources.md) | — |
+| PHILO-11-01 | The document sources | done | [story-01-the-document-sources](./story-01-the-document-sources.md) | [evidence-story-01](./evidence-story-01.md) (includes D2 palette amendment) |
 | PHILO-11-02 | The Slack channel and the aftercare rewrite | backlog | [story-02-the-slack-channel-and-the-aftercare-rewrite](./story-02-the-slack-channel-and-the-aftercare-rewrite.md) | — |
 | PHILO-11-03 | The canvases A–E | done | [story-03-the-canvases](./story-03-the-canvases.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-11-04 | The SEND well as one library species | backlog | [story-04-the-send-well-species](./story-04-the-send-well-species.md) | — |
@@ -113,7 +115,7 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 
 | Lane | Stories | Owner | Checker | Worktree | Branch |
 |---|---|---|---|---|---|
-| The sources | 01 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-11-01 | feat/philo-11-01-document-sources |
+| The sources | 01 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-11-01 | feat/philo-11-01 |
 | Slack | 02 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-11-02 | feat/philo-11-02-slack |
 | The canvases | 03 | Muad'Dib (Fedaykin, Opus 5.5) | Astra | ../wt-philo-11-03 | feat/philo-11-03-canvases |
 | The species and the faces | 04 → 05 | Muad'Dib (Fedaykin, Opus 5.5) | Astra | ../wt-philo-11-04, ../wt-philo-11-05 | feat/philo-11-04-send-well-species, feat/philo-11-05-faces |
@@ -127,6 +129,10 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 - A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call. CI does not gate a merge (the owner, 2026-09-28).
 
 ## Where we are
+
+2026-09-29: PHILO-11-01 is built and verified. Eight stored sources use the generic channel contract; the existing update face passes at 1440 and 393. Six actual Phase 10 atlas walks PASS. The final full run is red (38 failed, 13,498 passed): (a) ten stale wording/reference failures corrected; (b) two catalogue guidance losses corrected; (c) 26 glass failures pass twice serially, all 52 invocations. The final focused capture collects and passes 48 checks; the web suite passes 2,970. See [Astra's lane record](lane-01-astra.md). The PR goes to Muad'Dib for counsel-on-built; no merge verdict is claimed. Story 02 has not started in this lane, and story 03's canvas/shim files are untouched. The broader graph census remains red for story 06 reconciliation.
+
+2026-09-29: PHILO-11-01 is building in Astra's assigned worktree `../wt-philo-11-01`, branch `feat/philo-11-01` (the dispatch brief's branch name). Three Luna workers own sources, the channel contract, and callers with lifecycle fences. Muad'Dib's counsel-on-built follows the PR. Story 02 is not started in this lane. Story 03's canvas and shim remain its lane's files.
 
 2026-09-29, story 03 DONE: the owner ratified the canvases A–E and T1–T3 ("Yes...") after Astra r1 and r2, both paid. Stories 04 and 05 may now build the ratified faces (04 after 01 merges).
 
@@ -167,7 +173,7 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 ## Stated defaults (not questions)
 
 - **D1 — a deliberate capability deferral: the desk's free-text Slack send is parked.** The desk actuator (`holdspeak/services/actuator_service.py:51-54`; its affordance in `web/src/desk/contextual.ts:130`) posts free text to Slack through the old setting. Free text is not one of the documents R1–R3 name, and **R7 did not order its removal.** Phase 11 parks it on purpose, rather than invent a free-text kind: the endpoint refuses `slack_moved_to_channel`, and the face affordance is parked too. Historical proposals and receipts stay readable. Its webhook and GitHub targets do not change. **What he loses until a free-text kind exists:** posting an arbitrary desk text to Slack. BACKLOG row. (Ratified by Astra r1 finding 7.)
-- **D2 — the thread may prepare.** `channel.destinations`, preview, prepare and sends join the chat palette; the thread finds a destination by name. Send, Discard, saving or removing a destination and secrets stay his press (his ruling of 2026-09-29 on thread authority).
+- **D2 — the thread may prepare.** `channel.destinations` and `channel.prepare` join the chat palette; the thread finds a destination by name. `channel.preview` and `channel.sends` stay public over MCP and HTTP. Send, Discard, saving or removing a destination and secrets stay his press (his ruling of 2026-09-29 on thread authority; palette scope amended by Muad'Dib on 2026-09-30 for the admission budget).
 - **D3 — the real sends go to targets he names** (the Phase 10 Q6 ruling carries): the scratch issue #699, his own address through Resend, a Slack scratch channel if he makes a webhook.
 
 ## Decisions made (this phase)
@@ -175,6 +181,8 @@ The aftercare Slack proposal and its executor leave the table: they no longer ex
 - 2026-09-29 — the owner ruled R1–R9 on the faces grounding's nine questions (verbatim above).
 - 2026-09-29 — Muad'Dib checked the backend grounding: RATIFY-WITH-CONDITIONS; the charter adopts R1–R9 over its §5 recommendations (`docs/internal/philo/phase-11/grounding/checks/backend-muaddib.md`).
 - 2026-09-29 — round two: Astra r1 RATIFY-WITH-CONDITIONS paid — `meeting_decision` has no rendered face seat today (no well, no board; design §6a); the Room's decision rows are `decision_record`; Settings excludes the old webhook field on read and write; `channel.destinations` joins the palette; the brief keeps its same-day id; story 01 owns the inline Send caller; D1 a capability deferral; the three failure transitions drawn and fenced; Q1 worded as our limit — Fedaykin docs lane for Muad'Dib.
+- 2026-09-29 — Muad'Dib's counsel on built r1 accepts story 01 criterion 6 under Constitution XI.5: preview is exempt computation and has no admission or receipt; prepare and inline Send retain their admissions and receipts.
+- 2026-09-30 — Muad'Dib amended D2 for the chat admission budget: only `channel.destinations` and `channel.prepare` are in the chat palette; `channel.preview` and `channel.sends` remain public over MCP and HTTP. Prepare's answer carries the preview.
 - 2026-09-29 — DRAFTED: seven stories; one source interface; Slack by webhook; the aftercare path rewritten; the canvases before the species — Fedaykin docs lane for Muad'Dib.
 
 ## Decisions deferred

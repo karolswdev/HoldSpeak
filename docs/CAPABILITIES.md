@@ -86,6 +86,7 @@ Missing shards: **none**.
 | `companion.ipad_client` | iPad hub client | Capture, review, import, approve and inspect HoldSpeak work from a typed native client. | built_unreleased | user | source_and_assertions_inspected | no | possible |
 | `companion.aipi_audio_control` | AIPI-Lite audio and control companion | Forward device audio and expose meeting/status/Coder controls through a separate bridge. | experimental | user | source_and_assertions_inspected | no | possible |
 | `companion.qlippy_presence` | Qlippy presence | Reflect selected attention states and egress posture through the optional mascot surface. | experimental | user | source_and_assertions_inspected | no | local |
+| `channels.document_sources` | Send a stored document | Send an update, brief, decision, or meeting summary to a saved destination. | built_unreleased | integration | tests_executed | no | possible |
 
 ## Reading the catalogue
 
