@@ -16,7 +16,7 @@ The atlas has Send cases for the update only (`docs/internal/philo/graph/atlas-p
 
 ## Scope
 
-- **In:** for each new kind, cases for picked, SENT and PREPARED at 1440 and 393; for Slack, POSTED, FAILED, UNKNOWN and the long-document refusal, through a recording HTTPS edge in the rig's hub (the Phase 10 story 07 pattern); `.op` siblings where the outcome is durable; each case through `scripts/graph_walk.py`, one case per run.
+- **In:** for each new kind with a face seat, cases for picked, SENT and PREPARED at 1440 and 393 (`meeting_decision`: `.op` cases only, design §6a); the three failure transitions (design §6b); for Slack, POSTED, FAILED, UNKNOWN and the long-document refusal, through a recording HTTPS edge in the rig's hub (the Phase 10 story 07 pattern); `.op` siblings where the outcome is durable; each case through `scripts/graph_walk.py`, one case per run.
 - **Out:** real sends (07).
 
 ## Acceptance criteria
@@ -34,4 +34,5 @@ PROVISIONAL: about 1 engineering day.
 
 ## Notes
 
+- 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

@@ -22,6 +22,7 @@ The new kinds and Slack are proven only on isolated hubs and recording edges unt
 ## Acceptance criteria
 
 - [ ] The cold session prepares; the face shows PREPARED by that agent; his Send ends SENT (or POSTED) with its proof at both widths, read back from the hub.
+- [ ] The Slack text length of each real brief sent is recorded against the Q1 limit (the Tuesday claim is conditional on it; Astra r1 finding 9).
 - [ ] Each real send's proof read back from the far side, or its limit named. Secrets, addresses and the webhook URL redacted at capture.
 
 ## Effort (not a promise)
@@ -35,4 +36,5 @@ PROVISIONAL: about 1 engineering day, plus the real-send legs.
 
 ## Notes
 
+- 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

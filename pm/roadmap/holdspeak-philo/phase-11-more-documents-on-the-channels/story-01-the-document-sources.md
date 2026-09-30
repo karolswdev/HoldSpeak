@@ -16,7 +16,7 @@ Only a published project update can be previewed, prepared or sent. Preview and 
 
 ## Scope
 
-- **In:** the `DocumentSource` Protocol and the `DOCUMENT_SOURCES` table (design section 1); the update as the first source; the seven new sources and their refusals (section 3): `monday_brief` (whole, with person sections, R1), `desk_decision`, `meeting_decision`, `decision_record` (R2), `meeting_summary`, `meeting_digest`, `meeting_followup` (R3, never the transcript); the digest and follow-up renderers kept from `holdspeak/slack_export.py` as Markdown, the 3,800-character truncation removed; the generic descriptors (section 4): `document_ref` on preview, prepare and the inline send, the `document_ref` filter on `channel.sends`; the one client call in `web/src/features/channels/channels.ts:499-506` and the Phase 10 atlas `.op` arguments changed in the same commit; the frozen `document_json` column (title, slug, label; section 2) and file naming from it; the kernel target mapping (`holdspeak/services/project_kernel.py:184`); preview, prepare and sends in the chat palette (stated default D2).
+- **In:** the `DocumentSource` Protocol and the `DOCUMENT_SOURCES` table (design section 1); the update as the first source; the seven new sources and their refusals (section 3): `monday_brief` (whole, with person sections, R1), `desk_decision`, `meeting_decision`, `decision_record` (R2), `meeting_summary`, `meeting_digest`, `meeting_followup` (R3, never the transcript); the digest and follow-up renderers kept from `holdspeak/slack_export.py` as Markdown, the 3,800-character truncation removed; the generic descriptors (section 4): `document_ref` on preview, prepare and the inline send, the `document_ref` filter on `channel.sends`; the two client callers changed in the same commit — the wire in `web/src/features/channels/channels.ts:499-506` and the inline Send body in `web/src/features/channels/SendWell.tsx:429` (`update_id: uid` → the generic reference) — with their fences, and the Phase 10 atlas `.op` arguments (Astra r1 finding 5: nothing breaks between the merges of 01 and 04); the frozen `document_json` column (title, slug, label; section 2) and file naming from it; the kernel target mapping (`holdspeak/services/project_kernel.py:184`); `channel.destinations`, preview, prepare and sends in the chat palette (stated default D2; Astra r1 finding 3); the brief source composes the stored brief (by id, `holdspeak/services/monday_brief_service.py:1492`) with the real person overlay (`holdspeak/services/person_overlay.py:3`), every item kept and the Ack/Defer marks omitted (Astra r1 finding 4).
 - **Out:** the Slack channel (02); any face (03–05); Mark delivered on new kinds (R8); a snapshot digest, a renderer version, a stale state (R9); other briefs (charter Out).
 
 ## Acceptance criteria
@@ -27,7 +27,10 @@ Only a published project update can be previewed, prepared or sent. Preview and 
 - [ ] The Phase 10 lifecycle fences (R1–R6 over both forms, preview equals payload, one winner, `owner_principal_required`, `preview_changed`) are green, and each runs over at least one new kind as well as the update.
 - [ ] A prepared send of a new kind names its file and sends its frozen bytes with the source deleted (no live read at Send). An inline Send after the source changed refuses `preview_changed`; a new preview sends the new text.
 - [ ] The receipt and the admission of preview, prepare and the inline send name the `document_ref`.
-- [ ] A thread prepares a send of a new kind through the thread gate; its Send is refused `owner_principal_required` with a receipt.
+- [ ] A thread prepares "my brief for #leads" through the thread gate with no destination id given to the test (it finds the id through `channel.destinations`).
+- [ ] Two boundaries, two fences: a thread's `channel.send` is refused by the palette gate ("Tool outside the admitted palette", `holdspeak/services/thread_tools.py:591`; no operation); an external agent's `channel.send` over MCP is refused `owner_principal_required` with a receipt.
+- [ ] The update face's inline Send (the `SendWell.tsx:429` body) and prepared Send pass their Phase 10 glass at both widths on the story 01 head.
+- [ ] The brief's payload carries every item (an acknowledged one included) and the person overlay's sections; no Ack or Defer mark.
 - [ ] `project_update_deliveries` gets rows only for updates; the new kinds' history is their ended sends.
 
 ## Effort (not a promise)
@@ -41,4 +44,5 @@ PROVISIONAL: 2.5–3.5 engineering days.
 
 ## Notes
 
+- 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

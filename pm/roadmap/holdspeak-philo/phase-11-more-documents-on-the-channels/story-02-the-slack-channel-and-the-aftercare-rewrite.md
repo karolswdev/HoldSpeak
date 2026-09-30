@@ -16,7 +16,7 @@ Slack is not a channel. The meeting's Slack export is a second send path: a muta
 
 ## Scope
 
-- **In:** the Slack channel (design section 5): the destination (`{key_ref}`, `{channel_label}`), the webhook URL saved once into the native keyring under `slack:<key_ref>` through an HTTP-only held-secret operation (its name in this story's first commit, checked by Muad'Dib), the host rule at save, the Markdown-to-Slack-text serializer and the frozen `{"text": ...}` body, the size refusal as Q1 rules, the `external.egress` child to exactly `hooks.slack.com:443` with parent, principal, broker and digest, redirects refused, exceptions sanitized, the pinned outcome table (POSTED with no link), Check without a post. The aftercare rewrite (design section 6): every reader of `meeting.slack_webhook_url` removed from the send path (the census in section 6), the config field kept as an ignored value, the aftercare Slack proposal and executor and `build_slack_connector` removed, the posture path unable to post, the desk actuator's Slack target parked (`slack_moved_to_channel`, stated default D1), historical proposals kept readable; the BACKLOG row "Slack as a Send channel" closed and a row for the parked free-text Slack send.
+- **In:** the Slack channel (design section 5): the destination (`{key_ref}`, `{channel_label}`), the webhook URL saved once into the native keyring under `slack:<key_ref>` through an HTTP-only held-secret operation (its name in this story's first commit, checked by Muad'Dib), the host rule at save, the Markdown-to-Slack-text serializer and the frozen `{"text": ...}` body, the size refusal as Q1 rules, the `external.egress` child to exactly `hooks.slack.com:443` with parent, principal, broker and digest, redirects refused, exceptions sanitized, the pinned outcome table (POSTED with no link), Check without a post. The aftercare rewrite (design section 6): every reader of `meeting.slack_webhook_url` removed from the send path (the census in section 6), the config field kept as an ignored value and explicitly dropped from Settings reads and writes (design section 6; Astra r1 finding 2: removing the credential registration alone makes `SECRET_PATHS` stop redacting it), the aftercare Slack proposal and executor and `build_slack_connector` removed, the posture path unable to post, the desk actuator's Slack endpoint parked (`slack_moved_to_channel`, stated default D1, a deliberate capability deferral; story 05 parks its face affordance), historical proposals kept readable; the BACKLOG row "Slack as a Send channel" closed and a row for the parked free-text Slack send.
 - **Out:** a bot token, a message link (R6); a split or truncated post (Q1); the face (story 05 removes the aftercare rows and the Settings row, and draws Destinations with Slack); the generic webhook actuator's redirect defect (its BACKLOG row stands).
 
 ## Acceptance criteria
@@ -28,6 +28,7 @@ Slack is not a channel. The meeting's Slack export is a second send path: a muta
 - [ ] Above the Q1 limit, `payload_too_large:slack` before any byte leaves.
 - [ ] The egress child carries the parent, the authenticated owner principal, the broker and the frozen digest; an agent's Slack send is refused `owner_principal_required`.
 - [ ] No code posts to Slack except `channel.send`. The posture path is red on main (it posts) and green here (it prepares at most). The desk actuator's Slack target refuses `slack_moved_to_channel`. An old `config.json` with `slack_webhook_url` still loads.
+- [ ] A Settings read with a sentinel URL in `config.json` never returns it; a Settings write with the field never sets it (red with only the credential registration removed).
 
 ## Effort (not a promise)
 
@@ -40,4 +41,5 @@ PROVISIONAL: 1.5–2 engineering days.
 
 ## Notes
 
+- 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
