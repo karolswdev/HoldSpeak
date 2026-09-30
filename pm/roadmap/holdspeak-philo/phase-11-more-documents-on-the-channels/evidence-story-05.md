@@ -373,3 +373,149 @@ PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestChairMeeting
    Start at  13:23:56
    Duration  7.15s (transform 6.35s, setup 4.86s, import 23.80s, tests 21.09s, environment 17.66s)
 ```
+
+### No internal id in sent text (Muad'Dib's ruling, 2026-09-30)
+
+The decision record's Sources listed raw refs (`proposal: prop-…`,
+`transcript: meeting:<id>#segment:1`, `artifact: …`) and its Successor a
+record id; the meeting decision named its meeting by id. That text is what
+gets SENT. `holdspeak/services/document_sources.py` now names each source by
+what a person recognizes (`_source_lines`: a meeting or a transcript segment
+-> the meeting's title and date, or "A meeting (removed)"; a proposal ->
+"From a meeting proposal"; the desk -> "Written on the desk"; artifact and
+supersession rows left out), the later decision by its words ("## Superseded
+by"), and the meeting decision's meeting by title and date. The rest of each
+record is unchanged. The D-<hex> prepared-row labels stay (the canvas draws
+them). Fence: `tests/unit/test_philo11_document_sources.py`
+`test_no_rendered_document_carries_an_internal_id` (all eight kinds: no
+`prop-`, `record-`, `meeting:`, `#segment`, no source id, no hex id of 8+
+characters) and `test_a_decision_record_names_its_sources_as_a_person_recognizes_them`.
+Red on head 130da18d1 with the renderer unchanged:
+`assets/story-05a-proof/logs/no-internal-id-red.txt` (2 failed: the
+meeting decision's `philo11-meeting`, the record's `meeting:`, `record-`, hex
+ids). Green below.
+
+### Captured run — 2026-09-30T19:30:35Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.sQuRdybrXf uv run pytest -q -p no:cacheprovider tests/unit/test_philo11_document_sources.py tests/unit/test_philo11_channel_contract.py tests/unit/test_philo11_slack_channel.py tests/unit/test_decision_record_service.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b1f869ec698a4dde39bce6cc04116969c6f2b913
+
+```text
+........................................................................ [ 79%]
+...................                                                      [100%]
+91 passed in 15.18s
+```
+
+### Captured run — 2026-09-30T19:30:51Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.sQuRdybrXf HOLDSPEAK_EVIDENCE_WRITE=1 PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run pytest -q -rA -p no:cacheprovider tests/e2e/test_philo11_05a_brief_decision_send_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b1f869ec698a4dde39bce6cc04116969c6f2b913
+
+```text
+........                                                                 [100%]
+==================================== PASSES ====================================
+_ TestBriefAndDecisionSendGlass.test_the_brief_well_on_the_chair_and_in_intelligence[1440] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_brief_well_on_the_chair_and_in_intelligence[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_decision_window_well_and_preview_changed[1440] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_decision_window_well_and_preview_changed[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_decision_record_wells_in_the_room_and_intelligence[1440] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_decision_record_wells_in_the_room_and_intelligence[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestChairMeetingsAndBriefToSlack.test_the_chair_meeting_wells_and_the_brief_to_slack[1440] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestChairMeetingsAndBriefToSlack.test_the_chair_meeting_wells_and_the_brief_to_slack[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_brief_well_on_the_chair_and_in_intelligence[1440]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_brief_well_on_the_chair_and_in_intelligence[393]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_window_well_and_preview_changed[1440]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_window_well_and_preview_changed[393]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_record_wells_in_the_room_and_intelligence[1440]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_record_wells_in_the_room_and_intelligence[393]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestChairMeetingsAndBriefToSlack::test_the_chair_meeting_wells_and_the_brief_to_slack[1440]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestChairMeetingsAndBriefToSlack::test_the_chair_meeting_wells_and_the_brief_to_slack[393]
+8 passed in 208.43s (0:03:28)
+```
+
+The decision labels also named the saved file with the source id
+(`...-decision-record-<hex>-<send>.md`): the desk, meeting and record
+decisions' label is now `DECISION` (the file keeps its title slug, date and
+the design's 8-character send suffix). The fence now reads each kind's
+title and label as well as its body; the red log above was re-recorded
+against head's renderer with this fence. Re-captured below.
+
+### Captured run — 2026-09-30T19:39:24Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.XB51L5tQEx uv run pytest -q -p no:cacheprovider tests/unit/test_philo11_document_sources.py tests/unit/test_philo11_channel_contract.py tests/unit/test_philo11_slack_channel.py tests/unit/test_decision_record_service.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b1f869ec698a4dde39bce6cc04116969c6f2b913
+
+```text
+........................................................................ [ 79%]
+...................                                                      [100%]
+91 passed in 15.35s
+```
+
+### Captured run — 2026-09-30T19:39:40Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.XB51L5tQEx HOLDSPEAK_EVIDENCE_WRITE=1 PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run pytest -q -rA -p no:cacheprovider tests/e2e/test_philo11_05a_brief_decision_send_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b1f869ec698a4dde39bce6cc04116969c6f2b913
+
+```text
+........                                                                 [100%]
+==================================== PASSES ====================================
+_ TestBriefAndDecisionSendGlass.test_the_brief_well_on_the_chair_and_in_intelligence[1440] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_brief_well_on_the_chair_and_in_intelligence[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_decision_window_well_and_preview_changed[1440] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_decision_window_well_and_preview_changed[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_decision_record_wells_in_the_room_and_intelligence[1440] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestBriefAndDecisionSendGlass.test_the_decision_record_wells_in_the_room_and_intelligence[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestChairMeetingsAndBriefToSlack.test_the_chair_meeting_wells_and_the_brief_to_slack[1440] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestChairMeetingsAndBriefToSlack.test_the_chair_meeting_wells_and_the_brief_to_slack[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_brief_well_on_the_chair_and_in_intelligence[1440]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_brief_well_on_the_chair_and_in_intelligence[393]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_window_well_and_preview_changed[1440]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_window_well_and_preview_changed[393]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_record_wells_in_the_room_and_intelligence[1440]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_record_wells_in_the_room_and_intelligence[393]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestChairMeetingsAndBriefToSlack::test_the_chair_meeting_wells_and_the_brief_to_slack[1440]
+PASSED tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestChairMeetingsAndBriefToSlack::test_the_chair_meeting_wells_and_the_brief_to_slack[393]
+8 passed in 209.50s (0:03:29)
+```

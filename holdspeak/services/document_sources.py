@@ -74,6 +74,62 @@ def _time_text(value: Any) -> str:
     return f"{moment.day} {_MONTHS[moment.month - 1]} {moment.year}, {moment:%H:%M}"
 
 
+def _day_text(value: Any) -> str:
+    """A stored date as a reader writes it: `29 Sep 2026` (empty when unknown)."""
+    if isinstance(value, datetime):
+        moment = value
+    else:
+        text = str(value or "").strip()
+        if not text:
+            return ""
+        try:
+            moment = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except ValueError:
+            return ""
+    return f"{moment.day} {_MONTHS[moment.month - 1]} {moment.year}"
+
+
+_MEETING_IN_REF = re.compile(r"^meeting:([^#]+)")
+
+
+def _meeting_line(db: Any, meeting_id: str) -> str:
+    """A meeting as a person recognizes it: its title and date, never its id."""
+    meeting = db.meetings.get_meeting(meeting_id) if meeting_id else None
+    if meeting is None:
+        return "A meeting (removed)"
+    title = str(meeting.title or "").strip() or "A meeting"
+    day = _day_text(meeting.started_at)
+    return f"{title}, {day}" if day else title
+
+
+def _source_lines(db: Any, sources: list[dict[str, Any]]) -> list[str]:
+    """PHILO-11-05a (Muad'Dib's ruling): the text is SENT to other people, so a
+    record's sources are named by what a person recognizes, never by an
+    internal id or ref. A meeting (also one named only by a transcript
+    segment) -> its title and date; a proposal -> "From a meeting proposal";
+    the desk or a manual entry -> "Written on the desk". Artifact rows and the
+    supersession links carry nothing a reader can use and are left out."""
+    lines: list[str] = []
+    for source in sources:
+        kind = str(source.get("source_type") or "").strip()
+        ref = str(source.get("source_ref") or "").strip()
+        if kind == "meeting":
+            line = _meeting_line(db, str(source.get("meeting_id") or ref))
+        elif kind in ("segment", "transcript"):
+            found = _MEETING_IN_REF.match(ref)
+            meeting_id = str(source.get("meeting_id") or (found.group(1) if found else ""))
+            line = _meeting_line(db, meeting_id) if meeting_id else ""
+        elif kind == "proposal":
+            line = "From a meeting proposal"
+        elif kind in ("desk", "manual"):
+            line = "Written on the desk"
+        else:
+            line = ""
+        if line and f"- {line}" not in lines:
+            lines.append(f"- {line}")
+    return lines
+
+
 def _format_period(start: Any, end: Any) -> str:
     left = _date_text(start)
     right = _date_text(end)
@@ -247,7 +303,7 @@ class _DeskDecisionSource:
             title=title,
             body_md="\n".join(lines).strip() + "\n",
             slug=_slug(title, "decision"),
-            label=f"DECISION {source_id}",
+            label="DECISION",  # never the id: the label names the saved file (PHILO-11-05a)
         )
 
 
@@ -283,14 +339,15 @@ class _MeetingDecisionSource:
         if decision.get("rationale"):
             body.extend(["", "## Rationale", str(decision["rationale"]).strip()])
         if meeting_id:
-            body.extend(["", f"Meeting: {meeting_id}"])
+            # The meeting by its title and date, never its id (it is sent to people).
+            body.extend(["", f"Meeting: {_meeting_line(db, meeting_id)}"])
         title_for_slug = str(decision.get("text") or title)
         return _make_document(
             ref=f"{self.kind}:{source_id}",
             title=str(decision.get("text") or title),
             body_md="\n".join(body).strip() + "\n",
             slug=_slug(title_for_slug, "decision"),
-            label=f"DECISION {source_id}",
+            label="DECISION",  # never the id: the label names the saved file (PHILO-11-05a)
         )
 
 
@@ -309,22 +366,21 @@ class _DecisionRecordSource:
             value = str(record.get(field) or "").strip()
             if value:
                 lines.extend(["", f"## {heading}", value])
-        sources = record.get("sources") or []
-        if sources:
-            lines.extend(["", "## Sources"])
-            for source in sources:
-                source_type = str(source.get("source_type") or "source").strip()
-                source_ref = str(source.get("source_ref") or "").strip()
-                lines.append(f"- {source_type}: {source_ref}" if source_ref else f"- {source_type}")
+        named = _source_lines(db, record.get("sources") or [])
+        if named:
+            lines.extend(["", "## Sources", *named])
         successor = str(record.get("successor_id") or "").strip()
         if successor:
-            lines.extend(["", "## Successor", successor])
+            # The later decision by its words, never its record id.
+            later = DecisionRecordService(db).get(_source_read_context(), successor)
+            words = str((later or {}).get("decision_text") or "").strip()
+            lines.extend(["", "## Superseded by", words or "A later decision (removed)"])
         return _make_document(
             ref=f"{self.kind}:{source_id}",
             title=title,
             body_md="\n".join(lines).strip() + "\n",
             slug=_slug(title, "decision"),
-            label=f"DECISION {source_id}",
+            label="DECISION",  # never the id: the label names the saved file (PHILO-11-05a)
         )
 
 

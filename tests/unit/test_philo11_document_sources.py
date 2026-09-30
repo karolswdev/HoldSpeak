@@ -93,9 +93,11 @@ def test_real_producers_render_all_eight_sources(db, tmp_path: Path) -> None:
     assert "Lifecycle: superseded" in record_body
     assert "## Owner\nAvery" in record_body
     assert "## Review date\n2026-10-10" in record_body
-    assert "- meeting: philo11-meeting" in record_body
-    assert "- artifact: philo11-decisions" in record_body
-    assert "## Successor" in record_body
+    # PHILO-11-05a (Muad'Dib's ruling): sources by what a person recognizes;
+    # the later decision by its words (no internal refs in sent text).
+    assert "- Source review, 29 Sep 2026" in record_body
+    assert "artifact" not in record_body and "philo11-meeting" not in record_body
+    assert "## Superseded by\nUse one document registry (successor)" in record_body
     assert "## Summary" in rendered["meeting_summary"].body_md
     assert "The channel reads durable records." in rendered["meeting_summary"].body_md
     assert "## Topics" in rendered["meeting_summary"].body_md
@@ -213,3 +215,46 @@ def test_aftercare_document_markdown_is_not_truncated(db) -> None:
     assert len(followup) > 3800
     assert "Long stored decision 399" in digest
     assert "Long stored decision 399" in followup
+
+
+# PHILO-11-05a (Muad'Dib's ruling): the rendered text is what gets SENT to
+# other people. No internal id or ref may leave the machine in it: no
+# proposal, record, meeting or segment ref, no source id of any kind, and no
+# hex id of 8 or more characters.
+_INTERNAL = re.compile(r"prop-|record-|meeting:|#segment|decision_[0-9a-f]|brief-|pupd_|chs_")
+_HEX_ID = re.compile(r"\b(?=[0-9a-f]*[a-f])(?=[0-9a-f]*\d)[0-9a-f]{8,}\b")
+
+
+def test_no_rendered_document_carries_an_internal_id(db, tmp_path: Path) -> None:
+    refs = mint_documents(
+        db,
+        OWNER,
+        now=datetime(2026, 9, 29, 10, 0, 0),
+        people_keystore_path=tmp_path / "people.key",
+    )
+    source_ids = {ref.split(":", 1)[1] for ref in refs.values()}
+    with db._connection() as conn:
+        source_ids |= {str(r[0]) for r in conn.execute("SELECT source_ref FROM decision_record_sources")}
+        source_ids |= {str(r[0]) for r in conn.execute("SELECT id FROM decision_records")}
+    leaks: list[str] = []
+    for kind, ref in refs.items():
+        document = render_document(db, ref)
+        # The body is the text that is sent; the title and label name the saved file.
+        text = "\n".join((document.body_md, document.title, document.label))
+        for pattern in (_INTERNAL, _HEX_ID):
+            leaks += [f"{kind}: {m.group(0)!r}" for m in pattern.finditer(text)]
+        leaks += [f"{kind}: source id {sid!r}" for sid in source_ids if sid and sid in text]
+    assert not leaks, leaks
+
+
+def test_a_decision_record_names_its_sources_as_a_person_recognizes_them(db, tmp_path: Path) -> None:
+    refs = mint_documents(
+        db,
+        OWNER,
+        now=datetime(2026, 9, 29, 10, 0, 0),
+        people_keystore_path=tmp_path / "people.key",
+    )
+    body = render_document(db, refs["decision_record"]).body_md
+    meeting = db.meetings.get_meeting(refs["meeting_summary"].split(":", 1)[1])
+    assert "## Sources" in body
+    assert f"{meeting.title}, {meeting.started_at:%-d %b %Y}" in body, body
