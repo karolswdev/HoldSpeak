@@ -258,6 +258,43 @@ function LastChip({ s }: { s: Send | undefined }) {
   return null;
 }
 
+/** A CLOSED destination row's receipt, at the seat the canvas draws the
+ *  last send (line 2, beside the egress chip): when the click that left the
+ *  row leaves a failure, a refusal or no answer, the words stay on screen
+ *  (Astra built-check r2 F1). SENT and SENDING keep their one chip. */
+function ClosedReceipt({ o, last }: { o: Outcome; last: Send | undefined }) {
+  if (o.kind === "lost") {
+    return <span className="send-line" data-testid="send-last-lost"><StateChip state="warning" label={SEND_WORDS.lost} /></span>;
+  }
+  if (o.kind === "refused" && (!last?.dispatch_started_at || o.at > Date.parse(last.dispatch_started_at))) {
+    return (
+      <span className="send-line" data-testid="send-last-refused" data-code={o.code}>
+        <StateChip state="failure" label="REFUSED" />
+        <span className="surface-token" data-chip>{refusedWord(o.code)}</span>
+        <span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span>
+      </span>
+    );
+  }
+  if (last?.state === "failed") {
+    return (
+      <span className="send-line" data-testid="send-last-failed" data-code={last.reason ?? ""}>
+        <StateChip state="failure" label={SEND_WORDS.lastFailed} />
+        <span className="surface-token" data-chip>{failedWord(last.reason ?? "")}</span>
+        <span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span>
+      </span>
+    );
+  }
+  if (last?.state === "unknown") {
+    return (
+      <span className="send-line" data-testid="send-last-unknown">
+        <StateChip state="warning" label={SEND_WORDS.lastUnknown} />
+        <span className="surface-token" data-chip>{last.reason ? unknownWord(last.reason) : "NO ANSWER"}</span>
+      </span>
+    );
+  }
+  return <LastChip s={last} />;
+}
+
 /** The destination's latest send: the one receipt the open row shows. */
 function LatestReceipt({ s }: { s: Send | undefined }) {
   if (!s) return null;
@@ -540,7 +577,7 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                       <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
                       <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetToken(d.channel, d.target)}</span>
                       {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
-                      <LastChip s={last} />
+                      {open ? <LastChip s={last} /> : <ClosedReceipt o={o} last={last} />}
                       <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
                     </span>}
                   >

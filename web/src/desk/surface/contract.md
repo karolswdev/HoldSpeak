@@ -444,13 +444,19 @@ Rules the species holds (they are not the host's business):
   COMMENTED, BLOG POSTED, ACCEPTED BY <PROVIDER>; REFUSED + its word +
   NOTHING SENT; FAILED + its word + NOTHING SENT; RESULT UNKNOWN; PREPARED;
   SENDING. Each from `features/channels/channels.ts`, never re-spelled.
-- **A preview refused by name** shows `REFUSED`, its word, the size and the
+- **A preview refused by name** (consumer behaviour; story 02 proves the producer and the route) shows `REFUSED`, its word, the size and the
   limit when the answer carries them as TOP-LEVEL integers `size` and
   `limit` beside `code` / `error_code` (`41,099 / 39,000 CHARACTERS` for
   `payload_too_large:slack`; story 02 produces them; no nested form), `NOTHING SENT` and the egress chip — never
   `NO ANSWER`. Only a preview with no answer at all is
   `NO PREVIEW · NO ANSWER` with Retry. `PREVIEW CHANGED` reads a fresh preview.
 - **Slack is POSTED with no link**: the proof is the channel label.
+- **The receipt survives the click that leaves its row.** A CLOSED
+  destination row keeps its whole last result at its last-send seat (line 2,
+  beside the egress chip): LAST SEND FAILED + its word + NOTHING SENT; a
+  refusal newer than the latest send, REFUSED + its word + NOTHING SENT;
+  LAST SEND UNKNOWN + its word; NO ANSWER · RESULT UNKNOWN. An open row
+  shows the receipt under Send and keeps the one-chip summary on its line.
 - **The egress chip** rides every destination row, every open preview and
   every waiting prepared row (UX-CANON: egress where egress happens).
 - **Its own look** (`send/send-well.css`, G3): the UI face at 14 px; the

@@ -215,6 +215,51 @@ describe("the SEND well", () => {
   });
 });
 
+describe("the update: the receipt survives the click that leaves the row (Astra r2 F1)", () => {
+  const rowOf = (name: string) => screen.getAllByTestId("destination-row").find((r) => r.textContent?.includes(name))!;
+  const pressSend = async () => {
+    const verb = await screen.findByTestId("send-verb");
+    await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(verb);
+  };
+
+  it("FAILED, then the row is closed: LAST SEND FAILED, its word and NOTHING SENT stay on the row", async () => {
+    let stored: Send[] = [];
+    routes["GET /api/channels/sends"] = () => ({ sends: stored });
+    routes["POST /api/channels/send"] = () => {
+      stored = [send({ state: "failed", reason: "permission_denied", proof: null })];
+      return { send: stored[0] };
+    };
+    render(<Well />);
+    fireEvent.click(within(await screen.findByTestId("destination-row")).getByText("Folder Payments"));
+    await pressSend();
+    await screen.findByTestId("send-failed");
+    fireEvent.click(within(rowOf("Folder Payments")).getByText("Folder Payments"));
+    await waitFor(() => expect(screen.queryByTestId("send-open")).toBeNull());
+    const row = rowOf("Folder Payments");
+    expect(row.textContent).toContain("LAST SEND FAILED");
+    expect(row.textContent).toContain("NO PERMISSION");
+    expect(row.textContent).toContain("NOTHING SENT");
+  });
+
+  it("REFUSED, then another row is picked: the refusal stays on the first row", async () => {
+    routes["GET /api/channels/destinations"] = () => ({ destinations: [dest(), dest({ id: "chd_2", name: "Folder Other", target: { folder: "/tmp/other" } })] });
+    routes["POST /api/channels/send"] = () => {
+      throw new ApiError(409, "changed", { success: false, error_code: "destination_changed" });
+    };
+    render(<Well />);
+    fireEvent.click(within(await screen.findAllByTestId("destination-row").then((r) => r[0])).getByText("Folder Payments"));
+    await pressSend();
+    await screen.findByTestId("send-refused");
+    fireEvent.click(within(rowOf("Folder Other")).getByText("Folder Other"));
+    await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Folder Other"));
+    const row = rowOf("Folder Payments");
+    expect(row.textContent).toContain("REFUSED");
+    expect(row.textContent).toContain("DESTINATION CHANGED");
+    expect(row.textContent).toContain("NOTHING SENT");
+  });
+});
+
 describe("latestFor: ONE source, by dispatch_seq (Codex Astra r1 F3 on #697)", () => {
   it("an equal clock is ordered by the hub's dispatch sequence", () => {
     const at = "2026-09-28T10:00:00.000000+00:00";

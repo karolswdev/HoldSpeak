@@ -342,3 +342,51 @@ describe("document identity: a well that changes document never shows or sends t
     expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe(B.ref);
   });
 });
+
+describe("the receipt survives the click that leaves the row (Astra r2 F1)", () => {
+  const other = folder({ id: "chd_o", name: "Other folder", target: { folder: "/Users/karol/Reports/Other" } });
+  const pressSend = async () => {
+    const verb = await screen.findByTestId("send-verb");
+    await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(verb);
+  };
+  const rowOf = (name: string) => screen.getAllByTestId("destination-row").find((r) => r.textContent?.includes(name))!;
+
+  it("FAILED, then the row is closed: the failure word, NOTHING SENT and the egress stay on the row", async () => {
+    let stored: Send[] = [];
+    routes["GET /api/channels/sends"] = () => ({ sends: stored });
+    routes["POST /api/channels/send"] = () => {
+      stored = [send({ state: "failed", reason: "permission_denied", proof: null })];
+      return { send: stored[0] };
+    };
+    render(<SendWells doc={BRIEF} />);
+    await pick("Team folder");
+    await pressSend();
+    expect((await screen.findByTestId("send-failed")).textContent).toContain("NO PERMISSION");
+    fireEvent.click(within(rowOf("Team folder")).getByText("Team folder"));   // close it
+    await waitFor(() => expect(screen.queryByTestId("send-open")).toBeNull());
+    const row = rowOf("Team folder");
+    expect(row.textContent).toContain("FAILED");
+    expect(row.textContent).toContain("NO PERMISSION");
+    expect(row.textContent).toContain("NOTHING SENT");
+    expect(row.textContent).toContain("THIS DEVICE");
+  });
+
+  it("REFUSED, then another row is picked: the refusal word and NOTHING SENT stay on the first row", async () => {
+    routes["GET /api/channels/destinations"] = () => ({ destinations: [folder(), other] });
+    routes["POST /api/channels/send"] = () => {
+      throw new ApiError(409, "changed", { success: false, error_code: "destination_changed" });
+    };
+    render(<SendWells doc={BRIEF} />);
+    await pick("Team folder");
+    await pressSend();
+    await screen.findByTestId("send-refused");
+    await pick("Other folder");
+    await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Other folder"));
+    const row = rowOf("Team folder");
+    expect(row.textContent).toContain("REFUSED");
+    expect(row.textContent).toContain("DESTINATION CHANGED");
+    expect(row.textContent).toContain("NOTHING SENT");
+  });
+});
+

@@ -22,6 +22,17 @@ After the proof above, the update's re-export of the species' pieces was removed
 
 Shots I looked at: `04-picked-folder-{1440,393}`, `26-prepared-{1440,393}`, `34-history-several-1440`, `34b-history-manual-393`, and the atlas `sent` 393 after-shot. The rows are in the one grammar (name on line 1, chips on line 2 under the name), the preview headings in the display face, SEND at 12 px.
 
+### Round three (Astra built-check r2 DO-NOT-RATIFY, `checks/story-04-built-astra-r2.md`)
+
+| Item | Proof |
+|---|---|
+| The receipt survives the click that leaves its row, update and non-update | 07:54:15 — four rendered-transition cases (species: FAILED then close, REFUSED then pick another row; update: the same two) run with `SendWell.tsx` and `features/channels` byte-equal to `f4127c441`: **4 failed** (the closed row kept `LAST SEND FAILED` only, or nothing for a refusal). After `ClosedReceipt`: 07:54:48, **41 passed** (species 18, update 19, provider 4). Glass 07:54:50: **4 passed** at 1440 and 393. Shots looked at: `17-failed-folder-393.png` (the open row: the Phase 10 look, the receipt under Send) and `28b-destination-latest-failed-1440.png` (the CLOSED Folder Ledger row: LAST SEND FAILED · NO PERMISSION · NOTHING SENT · THIS DEVICE). |
+| The seat | Canvas A3, B2, A4c draw a destination's last result on the closed row's line 2 beside the egress; T1 draws the refusal in the open row. Phase 10 at `332d9158` kept only `LastChip` on a closed row. SENDS stays as drawn (sent and unknown rows). |
+| Claims | G2: consumer behaviour only; the producer and route proof is story 02's. G4 and the chip head: implemented; the Chair and picker proof is story 05's. Neither is proven here. |
+| Baseline | 07:57:21 — 2,991 passed, zero branch-new. |
+| Not done | The merge with main after #707 (Muad'Dib's call); atlas walks not re-run by this lane (Astra re-ran all six on `f4127c441`, r2 F6). |
+
+
 ### Round two (Astra built-check r1 DO-NOT-RATIFY, `checks/story-04-built-astra-r1.md`; Muad'Dib's rulings)
 
 | Item | Proof |
@@ -606,6 +617,69 @@ Received: "✗NO PREVIEWNO ANSWERRetry"
 ```text
 
 Suite totals: 2987 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```
+
+### Captured run — 2026-09-30T07:54:15Z
+
+- **Command:** `bash -c git diff --quiet f4127c441 -- web/src/desk/surface/send/SendWell.tsx web/src/features/channels && echo "IMPLEMENTATION = f4127c441"; cd web && npx vitest run src/desk/surface/send src/features/channels -t "survives the click" 2>&1 | grep -E "✓|×|Tests |AssertionError"; exit ${PIPESTATUS[0]}`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 09a2cc2c3b7999c410144c3c6b82cd74b7fa4774
+
+```text
+     × FAILED, then the row is closed: the failure word, NOTHING SENT and the egress stay on the row 43ms
+     × REFUSED, then another row is picked: the refusal word and NOTHING SENT stay on the first row 25ms
+     × FAILED, then the row is closed: LAST SEND FAILED, its word and NOTHING SENT stay on the row 41ms
+     × REFUSED, then another row is picked: the refusal stays on the first row 21ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '○Folder PaymentsFILE~/Reports/Payment…' to contain 'NO PERMISSION'
+AssertionError: expected '○Folder PaymentsFILE~/Reports/Payment…' to contain 'REFUSED'
+AssertionError: expected '○Team folderFILE~/Reports/Team✗LAST S…' to contain 'NO PERMISSION'
+AssertionError: expected '○Team folderFILE~/Reports/TeamTHIS DE…' to contain 'REFUSED'
+      Tests  4 failed | 37 skipped (41)
+```
+
+### Captured run — 2026-09-30T07:54:48Z
+
+- **Command:** `bash -c cd web && npx vitest run --reporter=verbose src/desk/surface/send src/features/channels 2>&1 | grep -E "survives|×|Test Files|Tests "; exit ${PIPESTATUS[0]}`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 09a2cc2c3b7999c410144c3c6b82cd74b7fa4774
+
+```text
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the update: the receipt survives the click that leaves the row (Astra r2 F1) > FAILED, then the row is closed: LAST SEND FAILED, its word and NOTHING SENT stay on the row 19ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the update: the receipt survives the click that leaves the row (Astra r2 F1) > REFUSED, then another row is picked: the refusal stays on the first row 18ms
+ ✓ src/features/channels/__tests__/SendWell.test.tsx > the one DELIVERY history (A2) > list chips: PREPARED ×K, RESULT UNKNOWN ×M, DELIVERY ×N; none at zero 3ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the receipt survives the click that leaves the row (Astra r2 F1) > FAILED, then the row is closed: the failure word, NOTHING SENT and the egress stay on the row 14ms
+ ✓ src/desk/surface/send/__tests__/SendWell.test.tsx > the receipt survives the click that leaves the row (Astra r2 F1) > REFUSED, then another row is picked: the refusal word and NOTHING SENT stay on the first row 19ms
+ Test Files  3 passed (3)
+      Tests  41 passed (41)
+```
+
+### Captured run — 2026-09-30T07:54:50Z
+
+- **Command:** `env HOLDSPEAK_EVIDENCE_WRITE=1 uv run python scripts/verify_philo11_update_glass.py --story 04`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 09a2cc2c3b7999c410144c3c6b82cd74b7fa4774
+
+```text
+....                                                                     [100%]
+4 passed in 139.22s (0:02:19)
+```
+
+### Captured run — 2026-09-30T07:57:21Z
+
+- **Command:** `bash -c set -o pipefail; uv run python scripts/check_web_baseline.py --run 2>&1 | tail -4`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 09a2cc2c3b7999c410144c3c6b82cd74b7fa4774
+
+```text
+
+Suite totals: 2991 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
 ```
