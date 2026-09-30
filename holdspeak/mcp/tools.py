@@ -46,7 +46,7 @@ class ToolError(ValueError):
 TOOLS: list[dict[str, Any]] = [
     {
         "name": "desk.list",
-        "description": "List desk primitives by kind. Find a note with kind=notes. Read each result by its id with desk.get.",
+        "description": "List desk primitives by kind. Find a note with kind=notes. Read each result by its id with desk.get. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains.",
         "inputSchema": {
             "type": "object",
             "properties": {"kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)}},
@@ -56,7 +56,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "desk.get",
-        "description": "Get one desk primitive by kind and ID. Read a note with kind=notes and the id from desk.list. Read a zone and its filed objects with kind=directories.",
+        "description": "Get one desk primitive by kind and ID. Read a note with kind=notes and the id from desk.list. Read a zone and its filed objects with kind=directories. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -73,7 +73,8 @@ TOOLS: list[dict[str, Any]] = [
             "Create a desk primitive. Write a note with kind=notes and data containing a title, body_markdown and tags. "
             "Make a zone with kind=directories, a name and optional parent_id. "
             "Put a decision on my review list with kind=decisions and status=proposed. "
-            "Write the reason for a decision with kind=decisions in data.context_markdown."
+            "Write the reason for a decision with kind=decisions in data.context_markdown. "
+            "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {
             "type": "object",
@@ -97,7 +98,7 @@ TOOLS: list[dict[str, Any]] = [
             "Move a zone with kind=directories and parent_id. Set parent_id to null to move it to the desk root. "
             "Edit a note with kind=notes and title, body_markdown or tags. "
             "Change a decision with kind=decisions. Supply context_markdown, decision_markdown or consequences_markdown "
-            "to replace the old text."
+            "to replace the old text. Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {
             "type": "object",

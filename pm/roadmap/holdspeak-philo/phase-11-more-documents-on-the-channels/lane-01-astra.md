@@ -73,3 +73,17 @@ LEDGER: Muad'Dib's full suite on the previous head `3552be416` was **2 failed, 1
 AMENDMENTS: restored all ten PHILO-7 job phrases and the three Phase 10 asks in the real catalogue, the original base-form guard tests (only the argument-name change remains), and the project-update `== body` assertion. When People is unavailable, the real brief renderer emits one `PEOPLE · UNAVAILABLE` line. Palette argument fields and authority are unchanged; `document_ref` help now points to `channel.preview`. The document-source update face did not change.
 
 UNKNOWN: the new-head full-suite result and Muad'Dib's follow-up counsel are pending. The parallel class-(c) failures from the previous head remain unclassified beyond their serial passes.
+
+## Round three — 2026-09-30
+
+LANE: PHILO-11-01, story 01, PR #707, branch `feat/philo-11-01`, worktree `/Users/karol/dev/tools/wt-philo-11-01`, starting head `fd1028f3c`.
+
+OUTCOME: Muad'Dib's D2 budget amendment is applied. The chat palette contains only `channel.destinations` and `channel.prepare`; `channel.preview` and `channel.sends` remain public over MCP and HTTP. Prepare returns the preview in its answer, and the thread still finds `#leads` by name. The story stays done. This round's changes are recorded in [evidence-story-01.md](evidence-story-01.md); the branch tip and PR are reported after the gate.
+
+PROOF: the palette membership fence failed against the old four-tool palette, then passed with the two ruled tools. Its real `channel.destinations` → `channel.prepare` path checks the preview text in the prepared payload and confirms a refused `channel.send` creates no operation. The focused selection collects and passes 97 tests in 14.59s. It includes the five branch-new failures from Muad'Dib's prior check, the PHILO-7 and Phase 10 discovery guards, the chat admission pair, the document-source tests and the `#leads` thread fence. The real admission rows use `utf8-byte-upper-bound@1`: recipe/run then chat uses 15,002 input bytes + 512 reserved output = 15,514 / 16,384, with 870 headroom; chat alias uses 14,963 + 512 = 15,475 / 16,384, with 909 headroom. Both are executable. The unchanged update Send glass passes all four cases at 1440 and 393. `dw check holdspeak-philo` and `git diff --check` pass.
+
+LEDGER: Muad'Dib's full suite on `fd1028f3c` was **33 failed, 13,504 passed, 99 skipped, 4 xfailed in 4217.94s**. All 26 e2e failures pass serially; two unit/integration failures also pass serially, class (c). The five branch-new failures were the three moved AST census pins, the regenerated operations export, and the restored desk kind-boundary sentence; all five pass in the focused selection. Astra did not rerun the full suite; Muad'Dib owns it on the new head.
+
+AMENDMENTS: `design/document-sources.md` §2 records the exact palette ruling; §4 and the phase status D2 record its MCP/HTTP boundary and that prepare carries the preview. The story scope and palette membership fence now state the same rule. The original owner phrases, kind-boundary guidance and guard assertions remain intact. Census anchors follow the real source sites without loosening their checks.
+
+UNKNOWN: the full suite on this round's head and Muad'Dib's new counsel are pending. This round makes no claim of owner observation or remote delivery.

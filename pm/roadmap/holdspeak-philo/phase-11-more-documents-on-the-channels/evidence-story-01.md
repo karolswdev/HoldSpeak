@@ -6386,3 +6386,50 @@ REAL tools/list: 'What was sent' -> channel.sends
 ....                                                                     [100%]
 4 passed in 195.50s (0:03:15)
 ```
+
+### Captured run — 2026-09-30T09:39:35Z
+
+- **Command:** `uv run --python 3.13 python .tmp/philo11-round3-admission.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 802e431c299a893ea64f75eec8096885574ef7ac
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+..                                                                       [100%]
+2 passed in 2.82s
+{"accounting": "utf8-byte-upper-bound@1", "capability_id": "recipe.run", "context_ceiling": 16384, "eligibility": "executable", "headroom": 15242, "input_bytes_upper_bound": 630, "reason_code": null, "reserved_output_tokens": 512, "route_leg_ordinal": 1, "total": 1142}
+{"accounting": "utf8-byte-upper-bound@1", "capability_id": "chat.turn", "context_ceiling": 16384, "eligibility": "executable", "headroom": 870, "input_bytes_upper_bound": 15002, "reason_code": null, "reserved_output_tokens": 512, "route_leg_ordinal": 1, "total": 15514}
+{"accounting": "utf8-byte-upper-bound@1", "capability_id": "chat.turn", "context_ceiling": 16384, "eligibility": "executable", "headroom": 909, "input_bytes_upper_bound": 14963, "reason_code": null, "reserved_output_tokens": 512, "route_leg_ordinal": 1, "total": 15475}
+Actual route evidence rows: 3
+```
+
+### Captured run — 2026-09-30T09:39:55Z
+
+- **Command:** `uv run --python 3.13 python .tmp/philo11-round3-focused.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 802e431c299a893ea64f75eec8096885574ef7ac
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 74%]
+.........................                                                [100%]
+97 passed in 14.59s
+```
+
+### Captured run — 2026-09-30T09:40:22Z
+
+- **Command:** `uv run --python 3.13 python scripts/verify_philo11_update_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 802e431c299a893ea64f75eec8096885574ef7ac
+
+```text
+....                                                                     [100%]
+4 passed in 121.59s (0:02:01)
+```
