@@ -5,7 +5,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
         "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
       ],
       "egress_chips": [
@@ -19,7 +19,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "8f8bc2dae08b67aa79b1afb8b47af8feefc9b772db8ffa6f78c09b37ef793e36",
+      "masked_sha": "8b97c0118b1305a3b9e2c846452a0bdf2c19a55c5a659b9a1c4f142f4e49ce2b",
       "modal": false,
       "named": [
         {
@@ -143,7 +143,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
         "● Slack #leads SLACK #leads HOOKS.SLACK.COM"
       ],
       "egress_chips": [
@@ -158,7 +158,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "1dc5227a3b8e80b7feb8f1a221dd459fa0df13f51b179e118b75a8760af98672",
+      "masked_sha": "08a13fc6c621b57fb0dad00770d64fb647b1348e6a3fb5a049df219bdb89ad6a",
       "modal": false,
       "named": [
         {
@@ -306,8 +306,8 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
-        "● Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM"
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "● Slack #leads SLACK #leads ✓ POSTED 12:04 HOOKS.SLACK.COM"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -319,11 +319,11 @@
       "history_head": "SENDS 1",
       "history_outcomes": [],
       "last_chips": [
-        "✓ POSTED 08:51"
+        "✓ POSTED 12:04"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "d7461be25d720026904920b849fef37cb0f2989fb79f9d7ed43899685d2de74a",
+      "masked_sha": "09fdb0c865622ed9fd7bdd2050e7a45a249e9199ddad73d90adf1eb2d29b4c34",
       "modal": false,
       "named": [
         {
@@ -471,8 +471,8 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
-        "○ Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM"
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Slack #leads SLACK #leads ✓ POSTED 12:04 HOOKS.SLACK.COM"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -483,17 +483,17 @@
       "history_head": "SENDS 1",
       "history_outcomes": [],
       "last_chips": [
-        "✓ POSTED 08:51"
+        "✓ POSTED 12:04"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "bb38970dc4b0ce530b7dffb101eb56dc954d803c63a39aa30de709c0193b4b26",
+      "masked_sha": "4c755891b250c7c7ee8cde7fc156147d54a57c1dc7fc90eaca7a5a88245a4e39",
       "modal": false,
       "named": [
         {
           "ok": true,
           "sel": ".desk-window [data-seat=meeting] [data-testid=history-row]",
-          "text": "✓ Slack #leads POSTED #leads SEP 30 08:51",
+          "text": "✓ Slack #leads POSTED #leads SEP 30 12:04",
           "why": ""
         }
       ],
@@ -613,7 +613,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "f0454267c77df82baaf6116b5cd7e2742998e399333a47b57d79da13666060db",
+      "masked_sha": "4bb609d2b9b10dcec10e46aebe9f61d490d8c3a9727fc3fccb6e0c42a4e1cca8",
       "modal": false,
       "named": [
         {
@@ -684,7 +684,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
         "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
       ],
       "egress_chips": [
@@ -700,7 +700,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "09fb5dbe39dff1136169428a77ad06eec9a6c78dbbca2b0c6f6613f924c219fe",
+      "masked_sha": "19e2f682bbb815a3d8946b901517f2264603decb6d2338d528d2fa23bbf5ae9d",
       "modal": false,
       "named": [
         {
@@ -809,7 +809,7 @@
         }
       ],
       "prepared": [
-        "◆ Slack #leads ◆ PREPARED BY YOU DIGEST SEP 29 SEP 30 08:51 HOOKS.SLACK.COM"
+        "◆ Slack #leads ◆ PREPARED BY YOU DIGEST SEP 29 SEP 30 12:04 HOOKS.SLACK.COM"
       ],
       "prepared_open": 1,
       "prepared_results": [],
@@ -880,7 +880,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
         "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
       ],
       "egress_chips": [
@@ -895,7 +895,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "e77a0f0e0912a186af41d438f9fb4617716649acdee57d2d898abfbf4d430717",
+      "masked_sha": "f67a32e1e3ecee3e1a15ed0d4078a5d6aee6108baae25a82e2cfcc3e30249562",
       "modal": false,
       "named": [
         {
@@ -971,7 +971,7 @@
       "prepared_open": 0,
       "prepared_results": [],
       "preview_fields": [
-        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team"
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team"
       ],
       "preview_has_raw": false,
       "raw_buttons": {
@@ -1036,7 +1036,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
         "○ Slack #leads SLACK #leads HOOKS.SLACK.COM"
       ],
       "egress_chips": [
@@ -1052,11 +1052,11 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "0e5b01cf6dc642651d95eaa43223e404e113a74a354600420754951d729be1a9",
+      "masked_sha": "08c1a3839bdcf0ff6357d9a12be49fc931012bcbc45016305e00c0effa5e7f86",
       "modal": false,
       "named": [],
       "prepared": [
-        "◆ Slack #leads ◆ PREPARED BY YOU DIGEST SEP 29 SEP 30 08:51 HOOKS.SLACK.COM"
+        "◆ Slack #leads ◆ PREPARED BY YOU DIGEST SEP 29 SEP 30 12:04 HOOKS.SLACK.COM"
       ],
       "prepared_open": 1,
       "prepared_results": [],
@@ -1127,8 +1127,8 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
-        "○ Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM"
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Slack #leads SLACK #leads ✓ POSTED 12:04 HOOKS.SLACK.COM"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1139,17 +1139,17 @@
       "history_head": "SENDS 1",
       "history_outcomes": [],
       "last_chips": [
-        "✓ POSTED 08:51"
+        "✓ POSTED 12:04"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "9f341bcf1130a235697b97f3f75d39d4e9fb0de25048990c6b4280596ada4af4",
+      "masked_sha": "3005c553c44fac48f8383a34643fb892193bd9995c80689d747a04d96e491735",
       "modal": false,
       "named": [
         {
           "ok": true,
           "sel": ".desk-window [data-seat=meeting] [data-testid=prepared-result]",
-          "text": "· Slack #leads ✓ POSTED #leads BY YOU DIGEST SEP 29 SEP 30 0",
+          "text": "· Slack #leads ✓ POSTED #leads BY YOU DIGEST SEP 29 SEP 30 1",
           "why": ""
         }
       ],
@@ -1203,7 +1203,7 @@
       "prepared": [],
       "prepared_open": 0,
       "prepared_results": [
-        "· Slack #leads ✓ POSTED #leads BY YOU DIGEST SEP 29 SEP 30 08:51"
+        "· Slack #leads ✓ POSTED #leads BY YOU DIGEST SEP 29 SEP 30 12:04"
       ],
       "preview_fields": [],
       "preview_has_raw": false,
@@ -1263,8 +1263,8 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
-        "○ Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM"
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Slack #leads SLACK #leads ✓ POSTED 12:04 HOOKS.SLACK.COM"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1275,11 +1275,11 @@
       "history_head": "SENDS 1",
       "history_outcomes": [],
       "last_chips": [
-        "✓ POSTED 08:51"
+        "✓ POSTED 12:04"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "fca4ca0733cdc564208ecde0328e804f07068c99a607c8b1724a7864a8dbe6b3",
+      "masked_sha": "387f4159dd973d46b851a2ebe5147edef6677599f97ae5e5b295e366fb98e0a7",
       "modal": false,
       "named": [
         {
@@ -1291,7 +1291,7 @@
         {
           "ok": true,
           "sel": ".desk-pullout [data-seat=meeting] [data-testid=destination-row]:has([data-destination='Slack #leads'])",
-          "text": "○ Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM",
+          "text": "○ Slack #leads SLACK #leads ✓ POSTED 12:04 HOOKS.SLACK.COM",
           "why": ""
         }
       ],
@@ -1383,8 +1383,8 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
-        "● Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM"
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "● Slack #leads SLACK #leads ✓ POSTED 12:04 HOOKS.SLACK.COM"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1396,11 +1396,11 @@
       "history_head": "SENDS 1",
       "history_outcomes": [],
       "last_chips": [
-        "✓ POSTED 08:51"
+        "✓ POSTED 12:04"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "4163f65423171fe7cdb687741a71c51dcfdf3aa9d00b9399048a631d5b921f50",
+      "masked_sha": "4da7567979273a5dfe72e5c619a567a730ec7d58a648b1f032d0475a18bf8a7d",
       "modal": false,
       "named": [
         {
@@ -1528,8 +1528,8 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
-        "● Slack #leads SLACK #leads ✓ POSTED 08:51 HOOKS.SLACK.COM"
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "● Slack #leads SLACK #leads ✓ POSTED 12:05 HOOKS.SLACK.COM"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1541,11 +1541,11 @@
       "history_head": "SENDS 2",
       "history_outcomes": [],
       "last_chips": [
-        "✓ POSTED 08:51"
+        "✓ POSTED 12:05"
       ],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "6c6381096c0e817c101c3d1764528c4a26de80cbc6119af3cdd4701a0c396a78",
+      "masked_sha": "224c41471b769a4d21c3e48eb265e70b75e00f83eb4982d019b07973fe921b61",
       "modal": false,
       "named": [
         {
@@ -1673,7 +1673,7 @@
       "dest_head": "DESTINATIONS 1",
       "dest_parked": [],
       "destinations": [
-        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE"
+        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1686,7 +1686,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "2164f1869572fdf0c22fbe4c41b694161d3c538ac5be9365e05d6b7c516bcdaf",
+      "masked_sha": "effe13bd783e67a0ff9ab8c791ba07680ec38ef3431106c36eb7dad5b269a648",
       "modal": false,
       "named": [
         {
@@ -1846,7 +1846,7 @@
       "dest_head": "DESTINATIONS 1",
       "dest_parked": [],
       "destinations": [
-        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE"
+        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -1859,7 +1859,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "a6adb9b86833e0f5bc6a8d8ecb5b03a61acb15f96f4e6da6cfff96586bbec13a",
+      "masked_sha": "39cd74f3c1c888980fcc89978051bdd2335eaaaf45aab35c674c27fe57f5248f",
       "modal": false,
       "named": [
         {
@@ -2001,7 +2001,7 @@
       "dest_head": "DESTINATIONS 1",
       "dest_parked": [],
       "destinations": [
-        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE"
+        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local",
@@ -2014,7 +2014,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "31f66e8b612acb4141bf7e7c369145ee8417b1292f814d40c8042a6a89c8a5ed",
+      "masked_sha": "5fc161fb9ba6d41b16ce77dd7fc0a8828d008fe577614bac6bc24d888ba7ebe0",
       "modal": false,
       "named": [
         {
@@ -2156,7 +2156,7 @@
       "dest_head": "DESTINATIONS 2",
       "dest_parked": [],
       "destinations": [
-        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
         "▾ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
       ],
       "egress_chips": [
@@ -2171,7 +2171,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "edd871d6682f723143d6f20bb100592d4a79f5d12da5dffd810f50e301e45475",
+      "masked_sha": "e2a15cdf42865955f2c097b2666c23eff25dfd7534c4b659fed65d5f4df8d50d",
       "modal": false,
       "named": [
         {
@@ -2304,7 +2304,7 @@
       "dest_head": "DESTINATIONS 1",
       "dest_parked": [],
       "destinations": [
-        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE"
+        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE"
       ],
       "egress_chips": [
         "THIS DEVICE:local"
@@ -2316,7 +2316,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "d3a9292c599d8f3f84859813f752f03a433810d95af22daf6e0fb4e0ce0c5080",
+      "masked_sha": "5994dd83da9cc9d4bb3fa51e3727cc46d67ec161002c1e9d82da5cb28490252f",
       "modal": false,
       "named": [
         {
@@ -2351,7 +2351,7 @@
       "dest_head": "DESTINATIONS 2",
       "dest_parked": [],
       "destinations": [
-        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "▸ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
         "▾ Slack #leads SLACK #leads ⚠ NO WEBHOOK HOOKS.SLACK.COM"
       ],
       "egress_chips": [
@@ -2366,7 +2366,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "984765553d5d144f451f28aab9e3d2b6b8e470ecf9d88dadefc1084e491eccaa",
+      "masked_sha": "71ca24e6e85df4c692d650c26b1c97ed2b5ffc82c7d507f5c3fb0b4fceed62f3",
       "modal": false,
       "named": [
         {
@@ -2523,7 +2523,7 @@
       "dest_head": null,
       "dest_parked": [],
       "destinations": [
-        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team THIS DEVICE",
         "● Slack #leads SLACK #leads HOOKS.SLACK.COM"
       ],
       "egress_chips": [
@@ -2538,7 +2538,7 @@
       "last_chips": [],
       "list_chips": [],
       "list_rows": [],
-      "masked_sha": "2db24a3abecab90716731017499a8b223dfda290b9238bbd970fa84dc5ccffee",
+      "masked_sha": "4874787c846e9c4ecb70564afde5a17d9278d181bc6ed64cd45a4bdbdfc7281a",
       "modal": false,
       "named": [
         {
@@ -2669,7 +2669,7 @@
     "digest_body_on_screen": true,
     "digest_send": {
       "document_ref": "meeting_digest:p11b-sync",
-      "face": "· Slack #leads ✓ POSTED #leads BY YOU DIGEST SEP 29 SEP 30 08:51",
+      "face": "· Slack #leads ✓ POSTED #leads BY YOU DIGEST SEP 29 SEP 30 12:04",
       "hub_state": "sent",
       "receipt": {
         "outcome": "succeeded",
@@ -2682,11 +2682,11 @@
     },
     "followup_send": {
       "document_ref": "meeting_followup:p11b-sync",
-      "face": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team/2026-09-30-ledger-cutover-sync-followup-2026-09-29-31d07cd2.md",
-      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team/2026-09-30-ledger-cutover-sync-followup-2026-09-29-31d07cd2.md",
+      "face": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team/2026-09-30-ledger-cutover-sync-followup-2026-09-29-b0bf0367.md",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team/2026-09-30-ledger-cutover-sync-followup-2026-09-29-b0bf0367.md",
       "hub_state": "sent",
       "proof": {
-        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3034/test_the_meeting_faces_and_sla0/Team/2026-09-30-ledger-cutover-sync-followup-2026-09-29-31d07cd2.md",
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3059/test_the_meeting_faces_and_sla0/Team/2026-09-30-ledger-cutover-sync-followup-2026-09-29-b0bf0367.md",
         "sha256": "644f74535572f359a7d37a47cbc21b1f2d6b0ae4615076458a0fd9fe1bf397d4",
         "size": 239
       },
@@ -2715,7 +2715,7 @@
     },
     "slack_destination": {
       "channel": "slack",
-      "id": "chd_6394aaadc20e7be9e7e9aaa0",
+      "id": "chd_799a872f587b17fa941464c8",
       "name": "Slack #leads",
       "target": {
         "channel_label": "#leads"

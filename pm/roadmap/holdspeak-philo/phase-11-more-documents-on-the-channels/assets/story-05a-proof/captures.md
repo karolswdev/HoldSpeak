@@ -129,7 +129,7 @@ Run (`HOME=$(mktemp -d) HOLDSPEAK_EVIDENCE_WRITE=1 PLAYWRIGHT_BROWSERS_PATH=… 
   a failure). T3c: the mouse wheel over the page brings the history row out
   from under the capture bar; the receipt is unchanged after the scroll.
 
-### The laws on every board (46 boards, `shots/*-{1440,393}.json`)
+### The laws on every board (round one: 46 boards; the final inventory is in "Inventory (final)" below)
 
 - Named elements on screen (viewport, every clipping ancestor, on top): **78 of 78**.
 - Pointer (nine points, elementFromPoint and a real pointer move; the 44 × 44
@@ -190,7 +190,7 @@ bytes both come from this one document. Fences:
   until the control stands still after each wheel step.
 
 Run (round two, isolated HOME, `HOLDSPEAK_EVIDENCE_WRITE=1`): `6 passed in
-153.67s`. Laws: 46 boards; named 78/78; 83 controls owned, 8 after ordinary
+153.67s`. Laws (round two, 46 boards): named 78/78; 83 controls owned, 8 after ordinary
 scrolling, 0 missed; 393 minimum target 44 px (38 controls); rows 136/136.
 
 ## Round three — Astra counsel r1 (story 05) findings 2 and 4
@@ -245,7 +245,56 @@ Desk CSS delta over base (324,838 B): **0 B**.
 - A6 (the Slack preview's person sections) waits for #710 with C6b.
 
 Run (isolated HOME, `HOLDSPEAK_EVIDENCE_WRITE=1`): 6 collected, `6 passed in
-172.05s`. Laws: 54 boards; named 88/88; 93 controls owned, 8 after ordinary scrolling, 0 missed; 393 minimum target 44 px (43 controls); rows 182/182; kernel records on boards: 22.
+172.05s`. Laws (round three, 54 boards): named 88/88; 93 controls owned, 8 after ordinary scrolling, 0 missed; 393 minimum target 44 px (43 controls); rows 182/182; kernel records on boards: 22.
+
+## Round four — after #710 merged (C6b, A6, the done flip)
+
+- **C6b**: `MeetingSendWellLazy` (part B's, on main) mounts in
+  `ArrivalMeetingWells` (`web/src/desk/chair/ChairHome.tsx`) whenever the row
+  shows a summary: the healthy slab AND the retained summary with its status
+  facts. No summary, no well. The retained branch is produced by the intel
+  queue's own `enqueue_intel_job` -> `claim_next_intel_job` -> `fail_intel_job`
+  (FAILED · LAST ERROR · ENGINE ANSWERED 500 on the row; board C6e).
+  The Chair send leg (C6c): the hub has `(meeting_summary:c6-sync, sent)`,
+  the face's receipt is `✓ SAVED <its path>`, and the kernel operation is
+  `channel.send` succeeded with one receipt.
+- **Chair picker at 393 (G4)**: the Summary/Digest/Follow-up picker is a
+  SELECT 104 x 44 px. The rig scrolls the Chair so the picker sits UNDER the
+  capture bar (`elementFromPoint` at its centre = `arrival-capture-bar`), then
+  wheels the Chair: 2 wheel steps bring it out, and all nine points of its
+  44 x 44 target are owned by elementFromPoint AND a real pointer move (fact
+  `picker_after_scroll` on `C6b-chair-meetings-row-well-393`; board C6f).
+- **A6**: a Slack destination saved through the real routes
+  (`POST /api/channels/slack-webhooks`, then the destination) on part B's
+  memory key store and recording HTTPS edge. With an agenda item on Priya's
+  1:1 and one brief item acknowledged, the Slack-text preview carries
+  `*People*` / `*Priya Nair*` / `- Agenda: 1` and no ACKNOWLEDGED, DEFERRED,
+  Ack or Defer mark; the person line itself is on screen (range fence). Send:
+  exactly one request to `hooks.slack.com`, its `text` equal (whitespace
+  normalized) to the preview; the face `✓ POSTED #leads`, no link; the hub
+  row `sent`; the kernel receipt succeeded. The webhook never appears in the
+  page or the row.
+- **Generated docs**: `philo_api_reference.py`, `philo_boundary_census.py`,
+  `philo_graph_reference.py` regenerated; all 13 Documentation Navigation
+  commands (and `gen_operations_json --check`, `philo_openapi_reference
+  --check`) exit 0.
+
+### Inventory (final, this head)
+
+- `shots/`: **65 boards** = 32 boards at both widths + 1 at 393 only
+  (`C6f-chair-picker-scrolled-clear`); **65 PNG files** (one per board and
+  width) and **8 facts files** (`brief-send`, `decision-send`, `record-send`,
+  `chair-meetings-slack`, each `-1440.json` and `-393.json`): **73 files**.
+- Laws over the 65 boards: named elements on screen **105/105**; **130**
+  well controls owned, **13** of them after ordinary scrolling, **0** missed;
+  at 393 the smallest target is **44 px** (60 controls); rows in the one
+  grammar **244/244**; **26** kernel records (send, prepare, refusal)
+  recorded on boards.
+- Earlier counts in this file (46, 54) are the inventories of rounds one to
+  three; they are superseded by this one.
+- Looked at: every board of rounds one to three at the time (re-rendered in
+  this run by the same code), and in this round C6b, C6c, C6e (both widths),
+  C6f, A6 and A6b (both widths).
 
 ## Web baseline
 
