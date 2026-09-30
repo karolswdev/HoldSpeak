@@ -476,13 +476,13 @@ export function DocSendWell({ doc, sendsRead, onSettled, head }: {
                     }}
                     lead={<span className="send-pick" aria-hidden="true">{open ? "●" : "○"}</span>}
                     primary={<span className="surface-primary" data-destination={d.name}>{d.name}</span>}
-                    cells={<>
+                    cells={<span className="p11-cells">
                       <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
                       <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetToken(d.channel, d.target)}</span>
                       {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
                       <LastChip s={last} />
                       <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
-                    </>}
+                    </span>}
                   >
                     {open ? (
                       <div className="send-open" data-testid="send-open" data-destination={d.name}>
@@ -568,7 +568,7 @@ function PreparedRow({ uid, label, s, reload, conns, dest, open, onToggle, onSet
       onToggle={waiting ? onToggle : undefined}
       lead={waiting ? <StateChip state="active" icon="◆" label="" /> : <span className="send-pick" aria-hidden="true">·</span>}
       primary={<span className="surface-primary" data-destination={name} data-state={s.state}>{name}</span>}
-      cells={<>
+      cells={<span className="p11-cells">
         {waiting
           ? <StateChip state="active" icon="◆" label={SEND_WORDS.prepared} />
           : <span className="send-line" data-testid="prepared-result-word" data-state={s.state} data-code={s.reason ?? ""}>{result}</span>}
@@ -580,7 +580,7 @@ function PreparedRow({ uid, label, s, reload, conns, dest, open, onToggle, onSet
         <span className="surface-token" data-chip>{stamp(s.settled_at ?? s.created_at)}</span>
         {waiting && acc ? <StateChip state={acc.state} label={acc.label} /> : null}
         {waiting ? <EgressChip label={eg.label} scope={eg.scope} title={eg.title} /> : null}
-      </>}
+      </span>}
     >
       {waiting && open ? (
         <div className="send-open" data-testid="prepared-open">
@@ -642,22 +642,22 @@ export function SendHistory({ sends }: { sends: Send[] }) {
                   <SurfaceLedgerRow key={r.id} data-testid="history-row" wrap expands={false}
                     lead={<span data-outcome="unknown"><StateChip state="warning" label="" /></span>}
                     primary={<span className="surface-primary" data-to={name}>{`${SEND_WORDS.unknownChip} · CHECK ${name}`}</span>}
-                    cells={<>
+                    cells={<span className="p11-cells">
                       {r.reason ? <span className="surface-token" data-chip>{unknownWord(r.reason)}</span> : null}
                       {far ? <Button dense variant="ghost" data-testid="history-check" onClick={() => openFar(far)}>{SEND_WORDS.check}</Button> : null}
                       <span className="surface-token" data-chip>{stamp(r.settled_at)}</span>
-                    </>} />
+                    </span>} />
                 );
               }
               return (
                 <SurfaceLedgerRow key={r.id} data-testid="history-row" wrap expands={false}
                   lead={<span data-outcome="sent"><StateChip state="success" label="" /></span>}
                   primary={<span className="surface-primary" data-to={name}>{name}</span>}
-                  cells={<>
+                  cells={<span className="p11-cells">
                     <span className="surface-token" data-chip data-tone="ok" data-testid="history-word">{sentWord(r.channel, r.proof, r.account)}</span>
                     <ProofCell channel={r.channel} proof={r.proof} target={r.target} account={r.account} />
                     <span className="surface-token" data-chip>{stamp(r.settled_at)}</span>
-                  </>} />
+                  </span>} />
               );
             })}
           </ul>

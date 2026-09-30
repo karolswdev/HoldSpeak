@@ -39,12 +39,14 @@ export function P11RecordWell({ id }: { id: string }) {
 }
 
 /** The Room's DECISIONS & COMMITMENTS row (a decision RECORD, design 6a):
- *  the row opens in place and holds the well; `Open` stays in its trailing
- *  slot; the row carries PREPARED ×K when a send waits (B4). */
-export function P11RoomRow({ dec, cells, ...rest }: ComponentProps<typeof SurfaceLedgerRow> & { dec: { id: string } }) {
+ *  the row opens in place and holds the well (the seat); the dead `Open`
+ *  is withheld (G1); the row carries PREPARED ×K when a send waits (B4). */
+export function P11RoomRow({ dec, cells, trailing, ...rest }: ComponentProps<typeof SurfaceLedgerRow> & { dec: { id: string; url?: string | null } }) {
   const [open, setOpen] = useState(false);
+  // Round two (Astra r1 F3): the row's own `Open` opens nothing for a decision record (G1, ledgered);
+  // the unfolded row IS the seat, so the dead verb is withheld. A row with a real URL keeps its Open.
   return (
-    <SurfaceLedgerRow {...rest} open={open} onToggle={() => setOpen((o) => !o)}
+    <SurfaceLedgerRow {...rest} trailing={dec.url ? trailing : undefined} open={open} onToggle={() => setOpen((o) => !o)}
       cells={<>{cells}<PreparedChip docRef={`decision_record:${dec.id}`} /></>}>
       {open ? <P11RecordWell id={dec.id} /> : null}
     </SurfaceLedgerRow>

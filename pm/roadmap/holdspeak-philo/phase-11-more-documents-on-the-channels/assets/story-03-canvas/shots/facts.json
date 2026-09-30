@@ -2,35 +2,35 @@
  "_seed": {
   "project": [
    200,
-   "proj-ea457bf36d46"
+   "proj-3a0509294a70"
   ],
   "link_meeting": 200,
   "update": [
    200,
    200,
-   "pupd_8ed9beb95bb945efbbdd5f9c6dcd7e3d"
+   "pupd_6e82607407cc405fa187e187939a6e96"
   ],
   "desk_decision": [
    201,
-   "decision_1d17ea3a8f92"
+   "decision_31fcd645b116"
   ],
   "people_setup": 200,
   "person": [
    201,
    200,
-   "a2707634-047f-4ceb-aa38-84dc2cde238f"
+   "03dc620c-fd2e-4c0e-9662-14c70480a125"
   ],
   "brief": [
    200,
-   "brief-7de9b7aa200c4ca9b84f06c6d2c7e65f"
+   "brief-9b977eee140343e785e30dcae49f1c52"
   ],
   "file_destination": [
    200,
-   "chd_f6c7d55e0eac07af4c01da88"
+   "chd_3f22ccbc31927fc4bfa1c859"
   ],
   "db": {
-   "record": "record-cf4fba59db3148f09b06e9d4639b4e44",
-   "record_mtg": "record-576ff2473ee847538467f93f468149b9",
+   "record": "record-455829505e6b412fb00de0e87a0317c9",
+   "record_mtg": "record-7bee5634078947a7bb38b0066224a231",
    "meetings": [
     "m-sync",
     "m-bare",
@@ -57,6 +57,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -135,14 +138,14 @@
     "text": "FOLLOW-UP → SLACK"
    }
   ],
-  "masked_sha": "a1b83948a72c3174b2becc6d554732c7e3ccbab28c26a01fdcb6556a822b83e7",
+  "masked_sha": "8f7c5526862c56e5eed4e97b4ed20edff8a87b38639aa8105ed262bb83ad6d65",
   "pointer": {
    "owned": 0,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
- "_today_settings_text": "Settings\nSETTINGS\nGUIDE\nCONNECTIONS\nTOOLS 5\nGH\nGitHub\n○\nNEVER CHECKED\nGH\nGITHUB.COM\nRecheck\nGITHUB.COM\nJ\nJira\n○\nNEVER CHECKED\nACLI\nSITE\nEMAIL\nAdd\nC\nConfluence\n○\nNEVER CHECKED\nACLI\nCalendar\n○\nNOT SET UP\nLOCAL\nSet up\nM\nModels\nUnassigned\n○\nUNASSIGNED\nLOCAL\nOpen Models\nDESTINATIONS 1\n▸\nTeam folder\nFILE\n/private/tmp/p11-qwerc05u/Reports\nTHIS DEVICE\nAdd destination\nCREDENTIALS\nNOT SET\nvalues stay on this hub\nWeb pairing token\nSET\nReplace\nRotate\nDelete\nDevice audio key\n—\nReplace\nRotate\nTelegram bot token\n—\nReplace\nTelegram pairing code\n—\nReplace\nRotate\nSlack webhook\nhooks.slack.com\nSET\nReplace\nDelete\nCustom webhook\n—\nReplace\nRAW\n2\nNOT SET\nNOT CHECKED",
+ "_today_settings_text": "Settings\nSETTINGS\nGUIDE\nCONNECTIONS\nTOOLS 5\nGH\nGitHub\n○\nNEVER CHECKED\nGH\nGITHUB.COM\nRecheck\nGITHUB.COM\nJ\nJira\n○\nNEVER CHECKED\nACLI\nSITE\nEMAIL\nAdd\nC\nConfluence\n○\nNEVER CHECKED\nACLI\nCalendar\n○\nNOT SET UP\nLOCAL\nSet up\nM\nModels\nUnassigned\n○\nUNASSIGNED\nLOCAL\nOpen Models\nDESTINATIONS 1\n▸\nTeam folder\nFILE\n/private/tmp/p11-x_d8as0d/Reports\nTHIS DEVICE\nAdd destination\nCREDENTIALS\nNOT SET\nvalues stay on this hub\nWeb pairing token\nSET\nReplace\nRotate\nDelete\nDevice audio key\n—\nReplace\nRotate\nTelegram bot token\n—\nReplace\nTelegram pairing code\n—\nReplace\nRotate\nSlack webhook\nhooks.slack.com\nSET\nReplace\nDelete\nCustom webhook\n—\nReplace\nRAW\n2\nNOT SET\nNOT CHECKED",
  "0b-today-credentials-slack-row-1440": {
   "window": true,
   "window_width": 1392,
@@ -160,6 +163,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -186,11 +192,11 @@
     "text": "Slack webhook hooks.slack.com"
    }
   ],
-  "masked_sha": "958009620717762c8ec9530e669df1275da91f604c3dc1e7981a6f62ca085760",
+  "masked_sha": "c8e17b57ea04f6d56374eba551e88d6b370e7a0ccb03a0b483ee0d1ad35e2eda",
   "pointer": {
    "owned": 0,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "0c-today-room-record-open-1440": {
@@ -210,6 +216,12 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [
+   1,
+   1
+  ],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -230,11 +242,11 @@
     "text": "Payments ledger cutover ROOM HISTORY Nothing needs you ● ON "
    }
   ],
-  "masked_sha": "d0c4178e6b30b370acef6cfa7bb4dc6d2923f13fa8e1de07aada623fe508c0b8",
+  "masked_sha": "e80052e73e9743093c04f42c4bb3a50f5839043c215360441d2a043d1c083274",
   "pointer": {
    "owned": 0,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "room_row_open_window_text": "windows before 1, after 1; console: []",
   "lifecycle_row_text_in_room": false
@@ -243,7 +255,7 @@
   "window": true,
   "window_width": 960,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f",
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
@@ -260,6 +272,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -373,11 +388,11 @@
     "text": "Add destination"
    }
   ],
-  "masked_sha": "a69c60e3a41f2ba6afeaea42a12385902e6b1db60aa57b6132a5afc93fe65b21",
+  "masked_sha": "96976cca8c0d485e1148daa09c6dae887d5e65eae841174f4e3f228bf772d8fa",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "D1-slack-form-1440": {
@@ -399,6 +414,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -433,16 +451,11 @@
     "text": "Save"
    }
   ],
-  "masked_sha": "e4c4e6bf3fa3f7f7c3eb50e3a8601b516b0de6cc715c4ebffee116b571cda868",
+  "masked_sha": "138e07c4b80e1205e9414f02424db6005e5555317157f1288e97307a50ddb8a0",
   "pointer": {
-   "owned": 5,
+   "owned": 4,
    "missed": [],
-   "under_host_bar": [
-    {
-     "text": "",
-     "points_under_host_bar": 9
-    }
-   ]
+   "reached_by_scroll": []
   }
  },
  "D2b-webhook-refused-1440": {
@@ -464,6 +477,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -484,16 +500,11 @@
     "text": "✗ KEY NOT SAVED WEBHOOK NOT VALID"
    }
   ],
-  "masked_sha": "b23fb2656bddb7fce7ac46020ff14920a35e3fa45c3e05369b971012788492b4",
+  "masked_sha": "ff7b3973fb631e75c3c24dfd573de1647066b7536dac3be25ce36dd8ec37013c",
   "pointer": {
-   "owned": 5,
+   "owned": 4,
    "missed": [],
-   "under_host_bar": [
-    {
-     "text": "",
-     "points_under_host_bar": 9
-    }
-   ]
+   "reached_by_scroll": []
   }
  },
  "D2a-webhook-saved-1440": {
@@ -515,6 +526,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -535,16 +549,11 @@
     "text": "Webhook SET Replace"
    }
   ],
-  "masked_sha": "d8b9cab782d27358e23bc3cb47347581d1433ee69004b25f9e30f07318b20212",
+  "masked_sha": "531c9be1810883667ff882f4a3d4d3fefdeb786932a321515f3986a1c36c1cd9",
   "pointer": {
-   "owned": 5,
+   "owned": 4,
    "missed": [],
-   "under_host_bar": [
-    {
-     "text": "",
-     "points_under_host_bar": 9
-    }
-   ]
+   "reached_by_scroll": []
   },
   "key_row_text": "Webhook\nSET\nReplace"
  },
@@ -569,6 +578,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -596,16 +608,11 @@
     "text": "✓ WEBHOOK SET · HOST OK"
    }
   ],
-  "masked_sha": "48abf469ea6f15c9ce6a37898a5449ede93c221926c94c5c315b072419297371",
+  "masked_sha": "d3c68c6f9e10c9859d6c858b945051249e1e0f2baf8cb43beed4657d79139e34",
   "pointer": {
    "owned": 6,
    "missed": [],
-   "under_host_bar": [
-    {
-     "text": "",
-     "points_under_host_bar": 9
-    }
-   ]
+   "reached_by_scroll": []
   }
  },
  "D4-credentials-no-slack-row-1440": {
@@ -628,6 +635,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -648,16 +658,11 @@
     "text": "CREDENTIALS"
    }
   ],
-  "masked_sha": "2e75153c2a79ebde83d16a271eb08056d56007c3f686a45bb9cef5898d4681e2",
+  "masked_sha": "dac8dd356586add508c8fa0c3bd859d46538dd3642aa62eb2e89c004808ab520",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": [
-    {
-     "text": "",
-     "points_under_host_bar": 9
-    }
-   ]
+   "reached_by_scroll": []
   },
   "credentials_slack_row": false
  },
@@ -665,17 +670,17 @@
   "window": true,
   "window_width": 400,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f"
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb"
   ],
   "destinations": [
-   "● Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
-   "FOLDER /private/tmp/p11-qwerc05u/Reports"
+   "FOLDER /private/tmp/p11-_n85bcl3/Reports"
   ],
-  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 21:32 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Vendor call (10 min) Meeting recorded: Ledger cutover sync (45 min · 3 action items) Waiting Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Write the rollback plan (Due Fri) Unassigned: Run the last reconciliation (Needs an owner) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d)",
+  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 21:56 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Ledger cutover sync (45 min · 3 action items) Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Vendor call (10 min) Waiting Unassigned: Run the last reconciliation (Needs an owner) Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Write the rollback plan (Due Fri) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d)",
   "outcomes": [],
   "history_head": null,
   "history": [],
@@ -689,6 +694,21 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -767,11 +787,6 @@
      "text": "PEOPLE",
      "fs": 11,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
     }
    ]
   },
@@ -787,7 +802,7 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "● Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DE"
+    "text": "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DE"
    },
    {
     "sel": ".desk-window [data-seat=brief] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
@@ -804,21 +819,21 @@
     "text": "Brief · SEP 28 – 29"
    }
   ],
-  "masked_sha": "75f73ea0fbbbfab7d1834f8b6d8a3a0b6d97dcbf7ac22ee90712f586a921f531",
+  "masked_sha": "08bafb07c15ba7fe160b90b206983727b7fb775fe13d6fa9cd92677fed772ee8",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "A3-brief-saved-history-1440": {
   "window": true,
   "window_width": 400,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f"
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports ✓ SAVED 21:33 THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED 21:57 THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -827,7 +842,7 @@
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Team folder SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md SEP 29 21:33"
+   "✓ Team folder SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -838,6 +853,13 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -916,16 +938,6 @@
      "text": "PEOPLE",
      "fs": 11,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
-     "fs": 10,
-     "head": true
     }
    ]
   },
@@ -941,7 +953,7 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "✓ SAVED 21:33"
+    "text": "✓ SAVED 21:57"
    },
    {
     "sel": ".desk-window [data-seat=brief] [data-testid=send-history] .surface-section-head",
@@ -951,21 +963,21 @@
     "text": "SENDS 1"
    }
   ],
-  "masked_sha": "d0ab55a45c7d546925e56e52ba26b3ecabf643b41c79c35bb1cab5019f4d0b09",
+  "masked_sha": "a39cec52430502dc993234fb80db6e523c4206a3fd50080019412ba898a3fc34",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "A6-brief-slack-person-sections-1440": {
   "window": true,
   "window_width": 400,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f"
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports ✓ SAVED 21:33 THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED 21:57 THIS DEVICE",
    "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -973,11 +985,11 @@
    "CHANNEL #leads",
    "WEBHOOK hooks.slack.com"
   ],
-  "preview_body": "*Brief · SEP 28 – 29* GENERATED SEP 29 21:32 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. *This week* • 2 new decisions from meetings *Changed* • Meeting recorded: Cutover planning offsite (360 min) • Meeting recorded: Vendor call (10 min) • Meeting recorded: Ledger cutover sync (45 min · 3 action items) *Waiting* • Unassigned: Tell support the freeze date (Needs an owner) • Unassigned: Write the rollback plan (Due Fri) • Unassigned: Run the last reconciliation (Needs an owner) *Decisions* • Review decision: Freeze the old ledger on Nov 3 • Review decision: Cut over by space, not by region • Review decision: Keep the old ledger read-only for 30 days *People* • Priya Nair: they owe 1 (0d)",
+  "preview_body": "*Brief · SEP 28 – 29* GENERATED SEP 29 21:56 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. *This week* • 2 new decisions from meetings *Changed* • Meeting recorded: Ledger cutover sync (45 min · 3 action items) • Meeting recorded: Cutover planning offsite (360 min) • Meeting recorded: Vendor call (10 min) *Waiting* • Unassigned: Run the last reconciliation (Needs an owner) • Unassigned: Tell support the freeze date (Needs an owner) • Unassigned: Write the rollback plan (Due Fri) *Decisions* • Review decision: Freeze the old ledger on Nov 3 • Review decision: Cut over by space, not by region • Review decision: Keep the old ledger read-only for 30 days *People* • Priya Nair: they owe 1 (0d)",
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Team folder SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md SEP 29 21:33"
+   "✓ Team folder SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -989,6 +1001,15 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -1067,16 +1088,6 @@
      "text": "PEOPLE",
      "fs": 11,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
-     "fs": 10,
-     "head": true
     }
    ]
   },
@@ -1087,11 +1098,11 @@
   "h_overflow": false,
   "body_overflow_x": false,
   "named": [],
-  "masked_sha": "5c4121f374b16bb2da68064e2f3bc110b7fa5a06d517ccd6dc43391b7038a89e",
+  "masked_sha": "84e393876d8f398d7b6ebc9db4a478a9d1d11c19ac2c8a3c73f49e295ed72f83",
   "pointer": {
-   "owned": 3,
+   "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "preview_has_people": true,
   "preview_has_ack_marks": false,
@@ -1101,27 +1112,27 @@
   "window": true,
   "window_width": 400,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f"
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb"
   ],
   "destinations": [
-   "● Team folder FILE /private/tmp/p11-qwerc05u/Reports ✓ SAVED 21:33 THIS DEVICE",
+   "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED 21:57 THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
-   "FOLDER /private/tmp/p11-qwerc05u/Reports"
+   "FOLDER /private/tmp/p11-_n85bcl3/Reports"
   ],
-  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 21:32 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Vendor call (10 min) Meeting recorded: Ledger cutover sync (45 min · 3 action items) Waiting Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Write the rollback plan (Due Fri) Unassigned: Run the last reconciliation (Needs an owner) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d) Marek Wolny: they owe 1 (0d)",
+  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 21:56 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Ledger cutover sync (45 min · 3 action items) Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Vendor call (10 min) Waiting Unassigned: Run the last reconciliation (Needs an owner) Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Write the rollback plan (Due Fri) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d) Marek Wolny: they owe 1 (0d)",
   "outcomes": [
    {
     "tid": "send-sent",
-    "text": "✓ SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md",
+    "text": "✓ SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md",
     "code": null
    }
   ],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Team folder SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md SEP 29 21:33"
+   "✓ Team folder SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -1133,6 +1144,22 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -1211,16 +1238,6 @@
      "text": "PEOPLE",
      "fs": 11,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
-     "fs": 10,
-     "head": true
     }
    ]
   },
@@ -1231,11 +1248,11 @@
   "h_overflow": false,
   "body_overflow_x": false,
   "named": [],
-  "masked_sha": "daaa9e7ff392447de73a8caa86df742c98b66cb714385d51c17a04b568bcba5e",
+  "masked_sha": "e65d6ea6110f24320cc1a857e95153e897c30c1faeea32ceaa2427ebecf20d9f",
   "pointer": {
-   "owned": 3,
+   "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "same_brief_id_after_generate": true,
   "new_text_in_preview": true,
@@ -1246,27 +1263,27 @@
   "window": true,
   "window_width": 400,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f"
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb"
   ],
   "destinations": [
-   "● Team folder FILE /private/tmp/p11-qwerc05u/Reports ✓ SAVED 21:33 THIS DEVICE",
+   "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED 21:57 THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
-   "FOLDER /private/tmp/p11-qwerc05u/Reports"
+   "FOLDER /private/tmp/p11-_n85bcl3/Reports"
   ],
-  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 21:32 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Vendor call (10 min) Meeting recorded: Ledger cutover sync (45 min · 3 action items) Waiting Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Write the rollback plan (Due Fri) Unassigned: Run the last reconciliation (Needs an owner) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d) Marek Wolny: they owe 1 (0d)",
+  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 21:56 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Ledger cutover sync (45 min · 3 action items) Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Vendor call (10 min) Waiting Unassigned: Run the last reconciliation (Needs an owner) Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Write the rollback plan (Due Fri) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d) Marek Wolny: they owe 1 (0d)",
   "outcomes": [
    {
     "tid": "send-sent",
-    "text": "✓ SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md",
+    "text": "✓ SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md",
     "code": null
    }
   ],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Team folder SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md SEP 29 21:33"
+   "✓ Team folder SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -1278,6 +1295,22 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -1356,16 +1389,6 @@
      "text": "PEOPLE",
      "fs": 11,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
-     "fs": 10,
-     "head": true
     }
    ]
   },
@@ -1388,44 +1411,44 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "✓ SAVED 21:33"
+    "text": "✓ SAVED 21:57"
    }
   ],
-  "masked_sha": "62b2e6ab0dbcd6e61a6278b3a3ab2ed8712f915b0e24f6db7c27f479222d3e39",
+  "masked_sha": "1d242c0ac8b8dea06b3a1ee67f47f482d15f6f5f4078d24aa53f21e522bd38ee",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "A4-brief-prepared-chair-1440": {
   "window": true,
   "window_width": 960,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f",
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports ✓ SAVED 21:33 THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED 21:57 THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "◆ Slack #leads ◆ PREPARED BY STEWARD BRIEF SEP 29 SEP 29 21:33 ✓ WEBHOOK SET HOOKS.SLACK.COM"
+   "◆ Slack #leads ◆ PREPARED BY STEWARD BRIEF SEP 29 SEP 29 21:57 ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "preview_fields": [
    "CHANNEL #leads",
    "WEBHOOK hooks.slack.com"
   ],
-  "preview_body": "*Brief · SEP 28 – 29* GENERATED SEP 29 21:32 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. *This week* • 2 new decisions from meetings *Changed* • Meeting recorded: Cutover planning offsite (360 min) • Meeting recorded: Vendor call (10 min) • Meeting recorded: Ledger cutover sync (45 min · 3 action items) *Waiting* • Unassigned: Tell support the freeze date (Needs an owner) • Unassigned: Write the rollback plan (Due Fri) • Unassigned: Run the last reconciliation (Needs an owner) *Decisions* • Review decision: Freeze the old ledger on Nov 3 • Review decision: Cut over by space, not by region • Review decision: Keep the old ledger read-only for 30 days *People* • Priya Nair: they owe 1 (0d) • Marek Wolny: they owe 1 (0d)",
+  "preview_body": "*Brief · SEP 28 – 29* GENERATED SEP 29 21:56 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. *This week* • 2 new decisions from meetings *Changed* • Meeting recorded: Ledger cutover sync (45 min · 3 action items) • Meeting recorded: Cutover planning offsite (360 min) • Meeting recorded: Vendor call (10 min) *Waiting* • Unassigned: Run the last reconciliation (Needs an owner) • Unassigned: Tell support the freeze date (Needs an owner) • Unassigned: Write the rollback plan (Due Fri) *Decisions* • Review decision: Freeze the old ledger on Nov 3 • Review decision: Cut over by space, not by region • Review decision: Keep the old ledger read-only for 30 days *People* • Priya Nair: they owe 1 (0d) • Marek Wolny: they owe 1 (0d)",
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Team folder SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md SEP 29 21:33"
+   "✓ Team folder SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md SEP 29 21:57"
   ],
   "egress_chips": [
    "HOOKS.SLACK.COM",
@@ -1442,6 +1465,20 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -1548,41 +1585,41 @@
     "text": "◆ PREPARED ×1"
    }
   ],
-  "masked_sha": "497f531bb83f3e31029b32507553408db7be810de68e43c929a95b5cc6152156",
+  "masked_sha": "7de6b5e3315e48dea4426bbaafd2b7f0df2473d3b50b56d7e90cc219e3f645d3",
   "pointer": {
    "owned": 1,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "A4b-brief-prepared-row-1440": {
   "window": true,
   "window_width": 960,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f",
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports ✓ SAVED 21:33 THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED 21:57 THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "◆ Slack #leads ◆ PREPARED BY STEWARD BRIEF SEP 29 SEP 29 21:33 ✓ WEBHOOK SET HOOKS.SLACK.COM"
+   "◆ Slack #leads ◆ PREPARED BY STEWARD BRIEF SEP 29 SEP 29 21:57 ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "preview_fields": [
    "CHANNEL #leads",
    "WEBHOOK hooks.slack.com"
   ],
-  "preview_body": "*Brief · SEP 28 – 29* GENERATED SEP 29 21:32 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. *This week* • 2 new decisions from meetings *Changed* • Meeting recorded: Cutover planning offsite (360 min) • Meeting recorded: Vendor call (10 min) • Meeting recorded: Ledger cutover sync (45 min · 3 action items) *Waiting* • Unassigned: Tell support the freeze date (Needs an owner) • Unassigned: Write the rollback plan (Due Fri) • Unassigned: Run the last reconciliation (Needs an owner) *Decisions* • Review decision: Freeze the old ledger on Nov 3 • Review decision: Cut over by space, not by region • Review decision: Keep the old ledger read-only for 30 days *People* • Priya Nair: they owe 1 (0d) • Marek Wolny: they owe 1 (0d)",
+  "preview_body": "*Brief · SEP 28 – 29* GENERATED SEP 29 21:56 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. *This week* • 2 new decisions from meetings *Changed* • Meeting recorded: Ledger cutover sync (45 min · 3 action items) • Meeting recorded: Cutover planning offsite (360 min) • Meeting recorded: Vendor call (10 min) *Waiting* • Unassigned: Run the last reconciliation (Needs an owner) • Unassigned: Tell support the freeze date (Needs an owner) • Unassigned: Write the rollback plan (Due Fri) *Decisions* • Review decision: Freeze the old ledger on Nov 3 • Review decision: Cut over by space, not by region • Review decision: Keep the old ledger read-only for 30 days *People* • Priya Nair: they owe 1 (0d) • Marek Wolny: they owe 1 (0d)",
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Team folder SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md SEP 29 21:33"
+   "✓ Team folder SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md SEP 29 21:57"
   ],
   "egress_chips": [
    "HOOKS.SLACK.COM",
@@ -1599,6 +1636,20 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -1712,39 +1763,39 @@
     "text": "Send"
    }
   ],
-  "masked_sha": "ada89a9466d2ecf9e721ae53aa1a9bd26cb331581111b8bacfc27977f955557c",
+  "masked_sha": "f9cfb4d53070fd1295d248d11567e50803f4f3def53664893a244e1eb340445c",
   "pointer": {
    "owned": 6,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "A4c-brief-prepared-posted-1440": {
   "window": true,
   "window_width": 960,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f",
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports ✓ SAVED 21:33 THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:33 HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED 21:57 THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:33"
+   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:57"
   ],
   "preview_fields": [],
   "preview_body": "",
   "outcomes": [],
   "history_head": "SENDS 2",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:33",
-   "✓ Team folder SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md SEP 29 21:33"
+   "✓ Slack #leads POSTED #leads SEP 29 21:57",
+   "✓ Team folder SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -1759,6 +1810,19 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -1869,42 +1933,42 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "SENDS 2 ✓ Slack #leads POSTED #leads SEP 29 21:33 ✓ Team fol"
+    "text": "SENDS 2 ✓ Slack #leads POSTED #leads SEP 29 21:57 ✓ Team fol"
    }
   ],
-  "masked_sha": "f70b8defb343258fb4c4a8ad6a390f69fe9418666bf1b07add369a66c1f3bc5c",
+  "masked_sha": "a6cb0afd745afd7deed1f3cf2b7c6bab9e26511ee95f15710178861f7c8ece8b",
   "pointer": {
-   "owned": 7,
+   "owned": 6,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "T3a-chair-last-item-1440": {
   "window": true,
   "window_width": 960,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f",
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports ✓ SAVED 21:33 THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:33 HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED 21:57 THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:33"
+   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:57"
   ],
   "preview_fields": [],
   "preview_body": "",
   "outcomes": [],
   "history_head": "SENDS 2",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:33",
-   "✓ Team folder SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md SEP 29 21:33"
+   "✓ Slack #leads POSTED #leads SEP 29 21:57",
+   "✓ Team folder SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -1919,6 +1983,19 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -2032,39 +2109,39 @@
     "text": "SEND · Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 "
    }
   ],
-  "masked_sha": "7e797b188251ab7a682ce82ec663e0ba262be9f07873584fdca0a8563c7b2cc6",
+  "masked_sha": "774bfd2e0762c30bc80d2a182ac1c2880b428928a148c2f3135867bcde8bac28",
   "pointer": {
    "owned": 5,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "T3b-chair-after-last-ack-1440": {
   "window": true,
   "window_width": 960,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f",
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports ✓ SAVED 21:33 THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:33 HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED 21:57 THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:33"
+   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:57"
   ],
   "preview_fields": [],
   "preview_body": "",
   "outcomes": [],
   "history_head": "SENDS 2",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:33",
-   "✓ Team folder SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md SEP 29 21:33"
+   "✓ Slack #leads POSTED #leads SEP 29 21:57",
+   "✓ Team folder SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -2079,6 +2156,19 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -2192,22 +2282,196 @@
     "text": "SEND · Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 "
    }
   ],
-  "masked_sha": "fc3722c21292881bad12e12b02573e818746747f81997faae1bd629f5662f8ef",
+  "masked_sha": "483bac4acb5842d135503c53f0d477fd739de0d283a63623c23acf9ca7f5f3f3",
   "pointer": {
    "owned": 5,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
-  "branch_text": "BRIEF\nTHIS DEVICE\nGenerate\n2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting.\nSEP 28 – 29 · GENERATED SEP 29 21:32\nALL 9 HANDLED\nBrief ready · 10 items · SEP 29 21:32\nSEND\n·\nSlack #leads\n✓\nPOSTED\n#leads\nBY STEWARD\nBRIEF SEP 29\nSEP 29 21:33\n○\nTeam folder\nFILE\n/private/tmp/p11-qwerc05u/Reports\n✓\nSAVED 21:33\nTHIS DEVICE\n○\nSlack #leads\nSLACK\n#leads\n✓\nWEBHOOK SET\n✓\nPOSTED 21:33\nH"
+  "branch_text": "BRIEF\nTHIS DEVICE\nGenerate\n2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting.\nSEP 28 – 29 · GENERATED SEP 29 21:56\nALL 9 HANDLED\nBrief ready · 10 items · SEP 29 21:56\nSEND\n·\nSlack #leads\n✓\nPOSTED\n#leads\nBY STEWARD\nBRIEF SEP 29\nSEP 29 21:57\n○\nTeam folder\nFILE\n/private/tmp/p11-_n85bcl3/Reports\n✓\nSAVED 21:57\nTHIS DEVICE\n○\nSlack #leads\nSLACK\n#leads\n✓\nWEBHOOK SET\n✓\nPOSTED 21:57\nH"
+ },
+ "T3c-scrolled-clear-of-capture-bar-1440": {
+  "window": true,
+  "window_width": 960,
+  "wells": [
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb",
+   "meeting_summary:m-sync",
+   "meeting_summary:m-offsite"
+  ],
+  "destinations": [
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED 21:57 THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
+  ],
+  "prepared": [
+   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:57"
+  ],
+  "preview_fields": [],
+  "preview_body": "",
+  "outcomes": [],
+  "history_head": "SENDS 2",
+  "history": [
+   "✓ Slack #leads POSTED #leads SEP 29 21:57",
+   "✓ Team folder SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md SEP 29 21:57"
+  ],
+  "egress_chips": [
+   "THIS DEVICE",
+   "HOOKS.SLACK.COM",
+   "THIS DEVICE",
+   "HOOKS.SLACK.COM",
+   "THIS DEVICE",
+   "HOOKS.SLACK.COM"
+  ],
+  "proof_links_on_slack": 0,
+  "mark_delivered_in_new_kind": false,
+  "stale_words": [],
+  "no_answer_shown": false,
+  "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": [
+    {
+     "text": "RANKED",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "OVERDUE",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "DUE TODAY",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "NOT RUN",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "NO DUE DATE",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "WAITING",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "CHECKED 1 MIN AGO",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "MTG",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "NO DUE DATE · UNASSIGNED",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "MTG",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "NO DUE DATE · UNASSIGNED",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "MTG",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "NO DUE DATE · UNASSIGNED",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "TRANSCRIPT",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "6 WORDS",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "TRANSCRIPT",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "26 WORDS",
+     "fs": 10,
+     "head": false
+    }
+   ]
+  },
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": []
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "named": [
+   {
+    "sel": ".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination='Slack #leads'])",
+    "ok": true,
+    "why": "",
+    "tall": false,
+    "text": "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOO"
+   },
+   {
+    "sel": ".chair [data-seat=brief] [data-testid=send-history] .surface-section-head",
+    "ok": true,
+    "why": "",
+    "tall": false,
+    "text": "SENDS 2"
+   }
+  ],
+  "masked_sha": "6d293bdbee298692ff5eaa0c103036155e53b5b083f7f837528f47550474449d",
+  "pointer": {
+   "owned": 6,
+   "missed": [],
+   "reached_by_scroll": []
+  },
+  "cleared_by_wheel": true
  },
  "B1-decision-window-picked-1440": {
   "window": true,
   "window_width": 400,
   "wells": [
-   "desk_decision:decision_1d17ea3a8f92"
+   "desk_decision:decision_f0cf693abc88"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -2229,6 +2493,14 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -2245,11 +2517,6 @@
     },
     {
      "text": "Consequences",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SEND",
      "fs": 10,
      "head": true
     },
@@ -2292,22 +2559,22 @@
     "text": "Send"
    }
   ],
-  "masked_sha": "9bd79c6f825a0dd75697c8e8089bf0126ccb2a0f575dbc46ba19f11d13b3103e",
+  "masked_sha": "25241acadac00f2d8812b3536fc1d5470fddbe5f4143e6f30fe8d52d66fcb387",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "B2-decision-posted-slack-1440": {
   "window": true,
   "window_width": 400,
   "wells": [
-   "desk_decision:decision_1d17ea3a8f92"
+   "desk_decision:decision_f0cf693abc88"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
-   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:33 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
@@ -2324,7 +2591,7 @@
   ],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:33"
+   "✓ Slack #leads POSTED #leads SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -2336,6 +2603,15 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -2352,16 +2628,6 @@
     },
     {
      "text": "Consequences",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
      "fs": 10,
      "head": true
     },
@@ -2401,25 +2667,25 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "✓ POSTED 21:33"
+    "text": "✓ POSTED 21:57"
    }
   ],
-  "masked_sha": "42bbb54216ca315aa48c02968a676f404856817e44ad4f83aa77f053244548e8",
+  "masked_sha": "a96b53f77461348a3fbff37ff19ee9a439092fd6db068e557fb2a6a4e356c9d4",
   "pointer": {
    "owned": 4,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "B2b-decision-history-1440": {
   "window": true,
   "window_width": 400,
   "wells": [
-   "desk_decision:decision_1d17ea3a8f92"
+   "desk_decision:decision_f0cf693abc88"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:33 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -2427,7 +2693,7 @@
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:33"
+   "✓ Slack #leads POSTED #leads SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -2438,6 +2704,13 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -2454,16 +2727,6 @@
     },
     {
      "text": "Consequences",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
      "fs": 10,
      "head": true
     },
@@ -2503,25 +2766,25 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "✓ Slack #leads POSTED #leads SEP 29 21:33"
+    "text": "✓ Slack #leads POSTED #leads SEP 29 21:57"
    }
   ],
-  "masked_sha": "f0565712bad8e4a6ad9db9f58f51c85c74530654745ee30563c6f9763c18e513",
+  "masked_sha": "5ca2c12365e8e45f7b1f8232758acfbb3c3f5e78acb1ae2a1af1cc6e0f878c66",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "B3-decision-edited-send-again-1440": {
   "window": true,
   "window_width": 400,
   "wells": [
-   "desk_decision:decision_1d17ea3a8f92"
+   "desk_decision:decision_f0cf693abc88"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
-   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:33 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
@@ -2538,7 +2801,7 @@
   ],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:33"
+   "✓ Slack #leads POSTED #leads SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -2550,6 +2813,15 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -2566,16 +2838,6 @@
     },
     {
      "text": "Consequences",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
      "fs": 10,
      "head": true
     },
@@ -2603,11 +2865,11 @@
   "h_overflow": false,
   "body_overflow_x": false,
   "named": [],
-  "masked_sha": "794e4702f8aea4111b3e9d1ddfe35ce9cf395ed4c4d8ce1a4b612370ad44144f",
+  "masked_sha": "645df14d58cd65fd35ae217884b20629640724a90c7ac89b6a02cf4baebeb038",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "new_text": true,
   "verb": "Send again",
@@ -2617,11 +2879,11 @@
   "window": true,
   "window_width": 400,
   "wells": [
-   "desk_decision:decision_1d17ea3a8f92"
+   "desk_decision:decision_f0cf693abc88"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
-   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:33 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
@@ -2638,7 +2900,7 @@
   ],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:33"
+   "✓ Slack #leads POSTED #leads SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -2650,6 +2912,15 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -2666,16 +2937,6 @@
     },
     {
      "text": "Consequences",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
      "fs": 10,
      "head": true
     },
@@ -2718,22 +2979,22 @@
     "text": "Send again"
    }
   ],
-  "masked_sha": "3113f722577771008197f558cf8d6cf37fcf307564a88866944427ad1c9aa12c",
+  "masked_sha": "0841b3300b770977ac5674f2d1d568481f0ffb4a651a8930ad56934f4db2096c",
   "pointer": {
    "owned": 4,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
- "T2b-preview-changed-sent-1440": {
+ "T2a2-preview-changed-passage-1440": {
   "window": true,
   "window_width": 400,
   "wells": [
-   "desk_decision:decision_1d17ea3a8f92"
+   "desk_decision:decision_f0cf693abc88"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
-   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:34 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
@@ -2743,15 +3004,14 @@
   "preview_body": "*Freeze the old ledger on Nov 3* Status: accepted · Deciders: Karol, Priya *Context* The cutover rehearsal showed two write paths into the old ledger. *Decision* Freeze the old ledger on Nov 6. All writes go to the new ledger after that day. *Consequences* • Finance runs one extra reconciliation. • Rollback window closes Nov 10.",
   "outcomes": [
    {
-    "tid": "send-sent",
-    "text": "✓ POSTED #leads",
-    "code": null
+    "tid": "send-refused",
+    "text": "✗ REFUSED PREVIEW CHANGED NOTHING SENT",
+    "code": "preview_changed"
    }
   ],
-  "history_head": "SENDS 2",
+  "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:34",
-   "✓ Slack #leads POSTED #leads SEP 29 21:33"
+   "✓ Slack #leads POSTED #leads SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -2763,6 +3023,15 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -2783,12 +3052,101 @@
      "head": true
     },
     {
-     "text": "SEND",
+     "text": "Zone",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "Knowledge",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "Projects",
+     "fs": 10,
+     "head": false
+    }
+   ]
+  },
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": []
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "named": [],
+  "masked_sha": "30fd60981f96dc3c79e5f4a0545bac11732d5b3e20f17afb56e83f5492ed9951",
+  "pointer": {
+   "owned": 2,
+   "missed": [],
+   "reached_by_scroll": []
+  },
+  "changed_passage_on_screen": true
+ },
+ "T2b-preview-changed-sent-1440": {
+  "window": true,
+  "window_width": 400,
+  "wells": [
+   "desk_decision:decision_f0cf693abc88"
+  ],
+  "destinations": [
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM"
+  ],
+  "prepared": [],
+  "preview_fields": [
+   "CHANNEL #leads",
+   "WEBHOOK hooks.slack.com"
+  ],
+  "preview_body": "*Freeze the old ledger on Nov 3* Status: accepted · Deciders: Karol, Priya *Context* The cutover rehearsal showed two write paths into the old ledger. *Decision* Freeze the old ledger on Nov 6. All writes go to the new ledger after that day. *Consequences* • Finance runs one extra reconciliation. • Rollback window closes Nov 10.",
+  "outcomes": [
+   {
+    "tid": "send-sent",
+    "text": "✓ POSTED #leads",
+    "code": null
+   }
+  ],
+  "history_head": "SENDS 2",
+  "history": [
+   "✓ Slack #leads POSTED #leads SEP 29 21:57",
+   "✓ Slack #leads POSTED #leads SEP 29 21:57"
+  ],
+  "egress_chips": [
+   "THIS DEVICE",
+   "HOOKS.SLACK.COM",
+   "HOOKS.SLACK.COM"
+  ],
+  "proof_links_on_slack": 0,
+  "mark_delivered_in_new_kind": false,
+  "stale_words": [],
+  "no_answer_shown": false,
+  "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": [
+    {
+     "text": "Decision context",
      "fs": 10,
      "head": true
     },
     {
-     "text": "SENDS 2",
+     "text": "Decision",
+     "fs": 10,
+     "head": true
+    },
+    {
+     "text": "Consequences",
      "fs": 10,
      "head": true
     },
@@ -2824,11 +3182,11 @@
     "text": "✓ POSTED #leads"
    }
   ],
-  "masked_sha": "b32168d1b2b5cc1a8ac7abc14b60bff590bd50d82f7d7ee3631caf296f757659",
+  "masked_sha": "700c76b7ff01ea3b869dcbbafa832e8fd3c46da262b36fe984d061d57463d5cc",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "sent_text_has_nov6": true
  },
@@ -2836,15 +3194,15 @@
   "window": true,
   "window_width": 400,
   "wells": [
-   "decision_record:record-cf4fba59db3148f09b06e9d4639b4e44"
+   "decision_record:record-d55356bc33654a0eb87e196d2acfa58f"
   ],
   "destinations": [
-   "● Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
-   "FOLDER /private/tmp/p11-qwerc05u/Reports"
+   "FOLDER /private/tmp/p11-_n85bcl3/Reports"
   ],
   "preview_body": "Freeze the old ledger on Nov 3 Why: The cutover rehearsal found two write paths into the old ledger. Alternatives: Freeze by region; freeze after the quarter close. Owner: Priya Review: 2026-10-13 From: Ledger cutover sync State: active",
   "outcomes": [],
@@ -2860,6 +3218,19 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -2895,7 +3266,7 @@
      "head": false
     },
     {
-     "text": "cf4fba59db31",
+     "text": "d55356bc3365",
      "fs": 10,
      "head": false
     },
@@ -2923,11 +3294,6 @@
      "text": "Review",
      "fs": 10,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
     },
     {
      "text": "PROVENANCE",
@@ -2973,7 +3339,7 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "● Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DE"
+    "text": "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DE"
    },
    {
     "sel": ".desk-window [data-seat=decision-record] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
@@ -2983,11 +3349,11 @@
     "text": "Send"
    }
   ],
-  "masked_sha": "244e5f464a4a25f66115489991a9bd969bc7463f93e3705d3245c11ad428596f",
+  "masked_sha": "67718d46b05dc08d2a94810cf42e625119d2cd99d3d816c723022b2c5d94f09a",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "B4-room-row-prepared-chip-1440": {
@@ -3007,6 +3373,12 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [
+   0,
+   0
+  ],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -3027,11 +3399,11 @@
     "text": "MTG Finance runs one more reconciliation before the freeze C"
    }
   ],
-  "masked_sha": "d9ab782efee418daf2401810afa3d4834ca99136824776a37cadb6a86b839435",
+  "masked_sha": "d7ae987cf12f9d5306369658254a07b8076ef42d3e0639359c5155f64d9c8ed2",
   "pointer": {
    "owned": 0,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "lifecycle_row_text_in_room": false
  },
@@ -3039,17 +3411,17 @@
   "window": true,
   "window_width": 800,
   "wells": [
-   "decision_record:record-576ff2473ee847538467f93f468149b9"
+   "decision_record:record-85f9277163fb4246b6f9ac77246246db"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "◆ Team folder ◆ PREPARED BY CODEX D-576FF2 SEP 29 21:34 THIS DEVICE"
+   "◆ Team folder ◆ PREPARED BY CODEX D-85F927 SEP 29 21:58 THIS DEVICE"
   ],
   "preview_fields": [
-   "FOLDER /private/tmp/p11-qwerc05u/Reports"
+   "FOLDER /private/tmp/p11-_n85bcl3/Reports"
   ],
   "preview_body": "Finance runs one more reconciliation before the freeze Why: The last run found 3 unmatched entries. Owner: Marek From: Ledger cutover sync State: active",
   "outcomes": [],
@@ -3066,6 +3438,21 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [
+   0,
+   0
+  ],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -3090,21 +3477,18 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "D-576FF2"
+    "text": "D-85F927"
    }
   ],
-  "masked_sha": "e50c716f2c6266ea820791c06bb69997eb52e4898e982d47dbed2c7b80207997",
+  "masked_sha": "e360ca8cbb0523f8b339d793004251b754b841112644547f7b6e11129d1f3a19",
   "pointer": {
-   "owned": 3,
+   "owned": 4,
    "missed": [],
-   "under_host_bar": [
+   "reached_by_scroll": [
     {
      "text": "○\nTeam folder\nFILE\n/private/tm",
-     "points_under_host_bar": 6
-    },
-    {
-     "text": "○\nSlack #leads\nSLACK\n#leads\n✓\n",
-     "points_under_host_bar": 9
+     "points_under_host_bar": 6,
+     "wheel_steps": 1
     }
    ]
   }
@@ -3116,7 +3500,7 @@
    "meeting_summary:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -3134,6 +3518,12 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -3209,14 +3599,14 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DE"
+    "text": "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DE"
    }
   ],
-  "masked_sha": "0e5e469c4ce44dde1d6395cebaaf08559d5c7d76730da67354f849ef728808f6",
+  "masked_sha": "c3b43b0ebb0a0435d1852d6c5f1a1277f43db0a1b1c278f5a6106991d4e11ac1",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C2-summary-slack-picked-1440": {
@@ -3226,7 +3616,7 @@
    "meeting_summary:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -3248,6 +3638,14 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -3326,11 +3724,11 @@
     "text": "Send"
    }
   ],
-  "masked_sha": "078050e2cdbf2da219b0fd1bf7220d51026e47a0c851ca4e4346694cbd5dabb6",
+  "masked_sha": "695f41b717a5ff84c2de2e2c17162eb7ed2893b08c08ce3f363ce9caff42abc0",
   "pointer": {
-   "owned": 3,
+   "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C3-summary-posted-slack-1440": {
@@ -3340,8 +3738,8 @@
    "meeting_summary:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
-   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:34 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:58 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
@@ -3358,7 +3756,7 @@
   ],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:34"
+   "✓ Slack #leads POSTED #leads SEP 29 21:58"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -3370,6 +3768,15 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -3445,14 +3852,14 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "✓ POSTED 21:34"
+    "text": "✓ POSTED 21:58"
    }
   ],
-  "masked_sha": "3eef8cb1378fc94d07f1c928dbf96ebdf4916635d3ba8f835d3ba77ff20d0f74",
+  "masked_sha": "187f76a80b1d289a45359b15318864b203fa3becf5f36df5d986582ae433e69e",
   "pointer": {
-   "owned": 3,
+   "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C3b-summary-history-1440": {
@@ -3462,8 +3869,8 @@
    "meeting_summary:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:34 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:58 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -3471,7 +3878,7 @@
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:34"
+   "✓ Slack #leads POSTED #leads SEP 29 21:58"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -3482,6 +3889,13 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -3557,14 +3971,14 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "✓ Slack #leads POSTED #leads SEP 29 21:34"
+    "text": "✓ Slack #leads POSTED #leads SEP 29 21:58"
    }
   ],
-  "masked_sha": "85c903b476e4032f9dc7648d54552b33ed3ffe4a35fbcb239ce0ed3569f18da3",
+  "masked_sha": "069eebd3d82f86afc06f258174ce450bb8932578c2715218f9fd8bf08d26e178",
   "pointer": {
    "owned": 4,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C5-digest-form-slack-1440": {
@@ -3574,7 +3988,7 @@
    "meeting_digest:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -3596,6 +4010,14 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -3674,13 +4096,121 @@
     "text": "Send"
    }
   ],
-  "masked_sha": "597c107dac8f5f4867d589c09bca1afaaf790344df7b6e56ea8b545337d02ac3",
+  "masked_sha": "f3230bd9b29bfad510e23487a2348771830b4ee021bf41a33adca5edbf182772",
   "pointer": {
    "owned": 4,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "aftercare_rows_on_face": false
+ },
+ "C5c-digest-body-1440": {
+  "window": true,
+  "window_width": 640,
+  "wells": [
+   "meeting_digest:m-sync"
+  ],
+  "destinations": [
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
+  ],
+  "prepared": [],
+  "preview_fields": [
+   "CHANNEL #leads",
+   "WEBHOOK hooks.slack.com"
+  ],
+  "preview_body": "*Ledger cutover sync* 2026-09-29 *What we decided* • Freeze the old ledger on Nov 3. Why: Two write paths remain • Cut over by space, not by region *Still open* • Marek: Run the last reconciliation • Priya: Write the rollback plan (due Fri) • Unassigned: Tell support the freeze date",
+  "outcomes": [],
+  "history_head": null,
+  "history": [],
+  "egress_chips": [
+   "THIS DEVICE",
+   "HOOKS.SLACK.COM",
+   "HOOKS.SLACK.COM"
+  ],
+  "proof_links_on_slack": 0,
+  "mark_delivered_in_new_kind": false,
+  "stale_words": [],
+  "no_answer_shown": false,
+  "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": [
+    {
+     "text": "⚙︎",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "SEP 29 · OFF",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "SEP 29 · SAVED",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "SEP 28 · SAVED",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "SEP 22 · SAVED",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "SEP 29",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "45 MIN",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "ME",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "PRIYA",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "PRIYA",
+     "fs": 11,
+     "head": false
+    }
+   ]
+  },
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": []
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "named": [],
+  "masked_sha": "045026de03115f525e185430462c709f01d4814ecb3dccfbb52b31c526235f5d",
+  "pointer": {
+   "owned": 1,
+   "missed": [],
+   "reached_by_scroll": []
+  },
+  "digest_body_on_screen": true
  },
  "C5b-followup-form-folder-1440": {
   "window": true,
@@ -3689,12 +4219,12 @@
    "meeting_followup:m-sync"
   ],
   "destinations": [
-   "● Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
-   "FOLDER /private/tmp/p11-qwerc05u/Reports"
+   "FOLDER /private/tmp/p11-_n85bcl3/Reports"
   ],
   "preview_body": "Follow-up: Ledger cutover sync 2026-09-29 What we decided Freeze the old ledger on Nov 3. Why: Two write paths remain Cut over by space, not by region Open items Marek: Run the last reconciliation Priya: Write the rollback plan (due Fri) Unassigned: Tell support the freeze date Since Cutover planning offsite New decisions: Freeze the old ledger on Nov 3 Cut over by space, not by region New action items: Write the rollback plan Run the last reconciliation Tell support the freeze date",
   "outcomes": [],
@@ -3710,6 +4240,21 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -3788,11 +4333,11 @@
     "text": "Send"
    }
   ],
-  "masked_sha": "e500c1929a339b1d021e76a7b0f5178c0e1a1871a7418ac155b58137a89491fc",
+  "masked_sha": "dafbb5f12f74f628ea7120efb498170daf2c0ce6a428c37e37dac223ceac64cb",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C4-no-summary-no-well-1440": {
@@ -3812,6 +4357,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -3878,11 +4426,11 @@
     "text": "Meetings OUTCOMES REVIEW RECORD ARTIFACTS ⚙︎ 1 meeting needs"
    }
   ],
-  "masked_sha": "5f326bff23688f8335a46990b73a10692ed7b35ec9fd6bdd79b7f7358cf8eb09",
+  "masked_sha": "c20880e7611dbb826b768b4f75d5bdf14529d8068302f41bce5a1d9cebe08853",
   "pointer": {
    "owned": 0,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "send_wells": 0
  },
@@ -3893,7 +4441,7 @@
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -3918,6 +4466,12 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -3974,11 +4528,11 @@
     "text": "✗ REFUSED TOO LARGE FOR SLACK 41,099 / 39,000 CHARACTERS NOT"
    }
   ],
-  "masked_sha": "aac2e723d583f3c5b869bd820ef87cfacb8cb235a4f61c0e9c31aa4fef5b3916",
+  "masked_sha": "5a8750a94aa50986fe023e62c76d76bd8efe22235645ab67c73f26253f4eb00a",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "refusal_text": "✗\nREFUSED\nTOO LARGE FOR SLACK\n41,099 / 39,000 CHARACTERS\nNOTHING SENT\nHOOKS.SLACK.COM"
  },
@@ -3989,8 +4543,8 @@
    "meeting_summary:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:34 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:58 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -3998,7 +4552,7 @@
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:34"
+   "✓ Slack #leads POSTED #leads SEP 29 21:58"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -4009,20 +4563,17 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
    "inherited": [
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
-     "fs": 10,
-     "head": true
-    },
     {
      "text": "Action items",
      "fs": 10,
@@ -4069,34 +4620,34 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DE"
+    "text": "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DE"
    }
   ],
-  "masked_sha": "9553316ce22367f1e49d5b719c7796b535826a788cd7674363d4364ba16e019c",
+  "masked_sha": "04fa30d784c309109b1b7c2dba1d622c63973fcdf836c72c52b865ec249c702f",
   "pointer": {
    "owned": 4,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C6b-chair-meetings-row-well-1440": {
   "window": true,
   "window_width": 960,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f",
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports ✓ SAVED 21:33 THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:33 HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:34 HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED 21:57 THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:58 HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:33"
+   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:57"
   ],
   "preview_fields": [],
   "preview_body": "",
@@ -4109,9 +4660,9 @@
   ],
   "history_head": "SENDS 2",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:33",
-   "✓ Team folder SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md SEP 29 21:33",
-   "✓ Slack #leads POSTED #leads SEP 29 21:34"
+   "✓ Slack #leads POSTED #leads SEP 29 21:57",
+   "✓ Team folder SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md SEP 29 21:57",
+   "✓ Slack #leads POSTED #leads SEP 29 21:58"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -4127,6 +4678,20 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -4233,30 +4798,33 @@
     "text": "↻ Summary Digest Follow-up"
    }
   ],
-  "masked_sha": "ba5eae36fc8d5b368ccb7efc01fe86aca927d26b9cf07c10d254642088c2d111",
+  "masked_sha": "816a816b5c68fe3f83e8f6e4ba74d88ed551257ae1920b72af44effdc8485965",
   "pointer": {
-   "owned": 4,
+   "owned": 5,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "E1a-update-well-1440": {
   "window": true,
   "window_width": 800,
   "wells": [
-   "project_update:pupd_8ed9beb95bb945efbbdd5f9c6dcd7e3d"
+   "project_update:pupd_5482d5d880bd4344bb6e0e11b3d627bc"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
+   "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
-  "preview_fields": [],
-  "preview_body": "",
+  "preview_fields": [
+   "FOLDER /private/tmp/p11-_n85bcl3/Reports"
+  ],
+  "preview_body": "Progress Milestone: Cutover rehearsal -- planned Decisions No decisions in this window. Risks & Blockers No risks or blockers in this window. Dependencies No dependencies tracked. Next Actions Milestone: Cutover rehearsal -- planned Source Coverage All sources consulted successfully.",
   "outcomes": [],
   "history_head": null,
   "history": [],
   "egress_chips": [
+   "THIS DEVICE",
    "THIS DEVICE",
    "HOOKS.SLACK.COM"
   ],
@@ -4265,6 +4833,19 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -4278,29 +4859,29 @@
   "body_overflow_x": false,
   "named": [
    {
-    "sel": "[data-seat=update] [data-testid=destination-row]",
+    "sel": "[data-seat=update] [data-testid=destination-row]:has([data-destination='Team folder'])",
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DE"
+    "text": "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DE"
    },
    {
-    "sel": "[data-testid=deliver-line]",
+    "sel": "[data-seat=update] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "Mark delivered"
+    "text": "Send"
    }
   ],
-  "masked_sha": "ff756ad93662cb1851f9f9780624201676483bdd96ded253a57b7915b10f5faa",
+  "masked_sha": "9aa0e97383cea1218a7f7a3a91b8229595dbaefc51edf8add5ccd68ea47db21a",
   "pointer": {
-   "owned": 4,
+   "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "well_signature": [
    {
-    "doc": "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f",
+    "doc": "monday_brief:brief-979826eb2d304323b57fbf08f5368abb",
     "rows": [
      3,
      3
@@ -4321,7 +4902,7 @@
     ]
    },
    {
-    "doc": "project_update:pupd_8ed9beb95bb945efbbdd5f9c6dcd7e3d",
+    "doc": "project_update:pupd_5482d5d880bd4344bb6e0e11b3d627bc",
     "rows": [
      3,
      3
@@ -4329,28 +4910,42 @@
    }
   ]
  },
+ "_row_layout_1440": {
+  "E1b-brief-well-1440": false,
+  "E1c-decision-well-1440": false,
+  "E1d-meeting-well-1440": false
+ },
  "E1b-brief-well-1440": {
   "window": true,
   "window_width": 400,
   "wells": [
-   "monday_brief:brief-7de9b7aa200c4ca9b84f06c6d2c7e65f"
+   "monday_brief:brief-979826eb2d304323b57fbf08f5368abb"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports ✓ SAVED 21:33 THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:33 HOOKS.SLACK.COM"
+   "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED 21:57 THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:33"
+   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:57"
   ],
-  "preview_fields": [],
-  "preview_body": "",
-  "outcomes": [],
+  "preview_fields": [
+   "FOLDER /private/tmp/p11-_n85bcl3/Reports"
+  ],
+  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 21:56 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Ledger cutover sync (45 min · 3 action items) Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Vendor call (10 min) Waiting Unassigned: Run the last reconciliation (Needs an owner) Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Write the rollback plan (Due Fri) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d) Marek Wolny: they owe 1 (0d)",
+  "outcomes": [
+   {
+    "tid": "send-sent",
+    "text": "✓ SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md",
+    "code": null
+   }
+  ],
   "history_head": "SENDS 2",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:33",
-   "✓ Team folder SAVED /private/tmp/p11-qwerc05u/Reports/2026-09-30-brief-brief-sep-29-f5fea662.md SEP 29 21:33"
+   "✓ Slack #leads POSTED #leads SEP 29 21:57",
+   "✓ Team folder SAVED /private/tmp/p11-_n85bcl3/Reports/2026-09-30-brief-brief-sep-29-8048bcb3.md SEP 29 21:57"
   ],
   "egress_chips": [
+   "THIS DEVICE",
    "THIS DEVICE",
    "HOOKS.SLACK.COM"
   ],
@@ -4359,6 +4954,24 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -4487,16 +5100,6 @@
      "text": "PEOPLE",
      "fs": 11,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 2",
-     "fs": 10,
-     "head": true
     }
    ]
   },
@@ -4508,51 +5111,51 @@
   "body_overflow_x": false,
   "named": [
    {
-    "sel": ".desk-window [data-seat=brief] [data-testid=destination-row]",
+    "sel": ".desk-window [data-seat=brief] [data-testid=destination-row]:has([data-destination='Team folder'])",
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports ✓ SAVED"
+    "text": "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports ✓ SAVED"
+   },
+   {
+    "sel": ".desk-window [data-seat=brief] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
+    "ok": true,
+    "why": "",
+    "tall": false,
+    "text": "Send again"
    }
   ],
-  "masked_sha": "88216364a68a8e66ceb9ae7ec1c07c0b97aa5184e0e65e2ccb7b12bf2314d06b",
+  "masked_sha": "f23c7217b502e7d59027af5b51406a20f218be5bcfca5e8e438cb835043b717e",
   "pointer": {
-   "owned": 4,
+   "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "E1c-decision-well-1440": {
   "window": true,
   "window_width": 400,
   "wells": [
-   "desk_decision:decision_1d17ea3a8f92"
+   "desk_decision:decision_f0cf693abc88"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
-   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:34 HOOKS.SLACK.COM"
+   "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:57 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
-   "CHANNEL #leads",
-   "WEBHOOK hooks.slack.com"
+   "FOLDER /private/tmp/p11-_n85bcl3/Reports"
   ],
-  "preview_body": "*Freeze the old ledger on Nov 3* Status: accepted · Deciders: Karol, Priya *Context* The cutover rehearsal showed two write paths into the old ledger. *Decision* Freeze the old ledger on Nov 6. All writes go to the new ledger after that day. *Consequences* • Finance runs one extra reconciliation. • Rollback window closes Nov 10.",
-  "outcomes": [
-   {
-    "tid": "send-sent",
-    "text": "✓ POSTED #leads",
-    "code": null
-   }
-  ],
+  "preview_body": "Freeze the old ledger on Nov 3 Status: accepted · Deciders: Karol, Priya Context The cutover rehearsal showed two write paths into the old ledger. Decision Freeze the old ledger on Nov 6. All writes go to the new ledger after that day. Consequences Finance runs one extra reconciliation. Rollback window closes Nov 10.",
+  "outcomes": [],
   "history_head": "SENDS 2",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:34",
-   "✓ Slack #leads POSTED #leads SEP 29 21:33"
+   "✓ Slack #leads POSTED #leads SEP 29 21:57",
+   "✓ Slack #leads POSTED #leads SEP 29 21:57"
   ],
   "egress_chips": [
    "THIS DEVICE",
-   "HOOKS.SLACK.COM",
+   "THIS DEVICE",
    "HOOKS.SLACK.COM"
   ],
   "proof_links_on_slack": 0,
@@ -4560,6 +5163,20 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -4576,16 +5193,6 @@
     },
     {
      "text": "Consequences",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 2",
      "fs": 10,
      "head": true
     },
@@ -4614,18 +5221,25 @@
   "body_overflow_x": false,
   "named": [
    {
-    "sel": ".desk-window [data-seat=desk-decision] [data-testid=destination-row]",
+    "sel": ".desk-window [data-seat=desk-decision] [data-testid=destination-row]:has([data-destination='Team folder'])",
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DE"
+    "text": "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DE"
+   },
+   {
+    "sel": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
+    "ok": true,
+    "why": "",
+    "tall": false,
+    "text": "Send"
    }
   ],
-  "masked_sha": "3ec94566e3843432b071a9d9dfedccb4dbed1af305f3f3754fd1a62886935a32",
+  "masked_sha": "8a4f756c6a5a4670c453bb6f0e8f9d4abbb3aa654562b82c8e4f387f0ae53064",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "E1d-meeting-well-1440": {
@@ -4635,18 +5249,21 @@
    "meeting_summary:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:34 HOOKS.SLACK.COM"
+   "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:58 HOOKS.SLACK.COM"
   ],
   "prepared": [],
-  "preview_fields": [],
-  "preview_body": "",
+  "preview_fields": [
+   "FOLDER /private/tmp/p11-_n85bcl3/Reports"
+  ],
+  "preview_body": "Ledger cutover sync 2026-09-29 The team agreed to freeze the old ledger on Nov 3. Finance runs one more reconciliation before the freeze. Priya owns the rollback plan. Topics: cutover, reconciliation",
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:34"
+   "✓ Slack #leads POSTED #leads SEP 29 21:58"
   ],
   "egress_chips": [
+   "THIS DEVICE",
    "THIS DEVICE",
    "HOOKS.SLACK.COM"
   ],
@@ -4655,20 +5272,21 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
    "inherited": [
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
-     "fs": 10,
-     "head": true
-    },
     {
      "text": "Action items",
      "fs": 10,
@@ -4704,18 +5322,25 @@
   "body_overflow_x": false,
   "named": [
    {
-    "sel": ".desk-window [data-seat=meeting] [data-testid=destination-row]",
+    "sel": ".desk-window [data-seat=meeting] [data-testid=destination-row]:has([data-destination='Team folder'])",
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "○ Team folder FILE /private/tmp/p11-qwerc05u/Reports THIS DE"
+    "text": "● Team folder FILE /private/tmp/p11-_n85bcl3/Reports THIS DE"
+   },
+   {
+    "sel": ".desk-window [data-seat=meeting] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
+    "ok": true,
+    "why": "",
+    "tall": false,
+    "text": "Send"
    }
   ],
-  "masked_sha": "cf28bd2a32c78cd578c6354e9b74a338e4190830f821198f4df2f0e643c73f0f",
+  "masked_sha": "9b366e9ab55496f16661e9ef0314248a746be7c735d39e7cf4919a9058a44ecb",
   "pointer": {
-   "owned": 4,
+   "owned": 5,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "_browser_errors_1440": [],
@@ -4737,6 +5362,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -4799,7 +5427,7 @@
   "pointer": {
    "owned": 0,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "0b-today-credentials-slack-row-393": {
@@ -4819,6 +5447,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -4849,7 +5480,7 @@
   "pointer": {
    "owned": 0,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "0c-today-room-record-open-393": {
@@ -4869,6 +5500,12 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [
+   1,
+   1
+  ],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -4889,11 +5526,11 @@
     "text": "Payments ledger cutover ROOM HISTORY Nothing needs you ● ON "
    }
   ],
-  "masked_sha": "d74972726e27742361a7b0fbb1ff6a43527716481065460c752483ce85bcc9c7",
+  "masked_sha": "cb69ef876433a82fec68934d2c40b92e714a20d49310269ae8ac4e8dbeba76f2",
   "pointer": {
    "owned": 0,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "room_row_open_window_text": "windows before 1, after 1; console: []",
   "lifecycle_row_text_in_room": false
@@ -4902,7 +5539,7 @@
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729",
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
@@ -4919,6 +5556,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -5032,11 +5672,11 @@
     "text": "Add destination"
    }
   ],
-  "masked_sha": "f42912866a96723284ecab0a219f7e91e8a3da1d4c2c0fdd6092a1278331551c",
+  "masked_sha": "b75ca1fc057586adf30bcbd7a3253d9bc09a905ddec490d29921d344fb7474b0",
   "pointer": {
    "owned": 1,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "D1-slack-form-393": {
@@ -5058,6 +5698,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -5094,9 +5737,9 @@
   ],
   "masked_sha": "428ee7556dc532a3a277bddf0b7a60411716a18f27e0cc3ea15044d27bbf8307",
   "pointer": {
-   "owned": 5,
+   "owned": 4,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "D2b-webhook-refused-393": {
@@ -5118,6 +5761,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -5140,9 +5786,9 @@
   ],
   "masked_sha": "e1fe1c865437bbef71d16fe69e04b5a9cc92f931dc07805d9ac21daa1401978d",
   "pointer": {
-   "owned": 5,
+   "owned": 4,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "D2a-webhook-saved-393": {
@@ -5164,6 +5810,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -5186,9 +5835,9 @@
   ],
   "masked_sha": "b165e7ff660f669edaf7cf8acc89dd4f3c2228fb3fae0a65e9193778887faf40",
   "pointer": {
-   "owned": 5,
+   "owned": 4,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "key_row_text": "Webhook\nSET\nReplace"
  },
@@ -5213,6 +5862,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -5240,11 +5892,11 @@
     "text": "✓ WEBHOOK SET · HOST OK"
    }
   ],
-  "masked_sha": "56a0b41d18d36447c6cc341a073eb4e51b96d49b9717d5ab5091c6d23ba07359",
+  "masked_sha": "c01c7e6534e38f3239885928d51c2b0802d4e2f274388d54d823771693170cf1",
   "pointer": {
    "owned": 6,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "D4-credentials-no-slack-row-393": {
@@ -5267,6 +5919,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -5291,12 +5946,7 @@
   "pointer": {
    "owned": 1,
    "missed": [],
-   "under_host_bar": [
-    {
-     "text": "",
-     "points_under_host_bar": 9
-    }
-   ]
+   "reached_by_scroll": []
   },
   "credentials_slack_row": false
  },
@@ -5304,17 +5954,17 @@
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729"
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52"
   ],
   "destinations": [
-   "● Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
-   "FOLDER /private/tmp/p11-t31nug0l/Reports"
+   "FOLDER /private/tmp/p11-x_d8as0d/Reports"
   ],
-  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 21:28 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Ledger cutover sync (45 min · 3 action items) Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Vendor call (10 min) Waiting Unassigned: Write the rollback plan (Due Fri) Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Run the last reconciliation (Needs an owner) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d)",
+  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 22:02 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Ledger cutover sync (45 min · 3 action items) Meeting recorded: Vendor call (10 min) Waiting Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Run the last reconciliation (Needs an owner) Unassigned: Write the rollback plan (Due Fri) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d)",
   "outcomes": [],
   "history_head": null,
   "history": [],
@@ -5328,6 +5978,21 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -5406,11 +6071,6 @@
      "text": "PEOPLE",
      "fs": 11,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
     }
    ]
   },
@@ -5426,7 +6086,7 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "● Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DE"
+    "text": "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DE"
    },
    {
     "sel": ".desk-window [data-seat=brief] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
@@ -5443,21 +6103,21 @@
     "text": "Brief · SEP 28 – 29"
    }
   ],
-  "masked_sha": "f99e5b62c1a5c593a57154862b00dd9901fc0909b8aa5ac9afda82964723f4e0",
+  "masked_sha": "650959cd3e68c2f6df642d921fedf526ae721e0031b3d780925edfb19a34cdfc",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "A3-brief-saved-history-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729"
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports ✓ SAVED 21:29 THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED 22:03 THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -5466,7 +6126,7 @@
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Team folder SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md SEP 29 21:29"
+   "✓ Team folder SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md SEP 29 22:03"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -5477,6 +6137,13 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -5555,16 +6222,6 @@
      "text": "PEOPLE",
      "fs": 11,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
-     "fs": 10,
-     "head": true
     }
    ]
   },
@@ -5580,7 +6237,7 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "✓ SAVED 21:29"
+    "text": "✓ SAVED 22:03"
    },
    {
     "sel": ".desk-window [data-seat=brief] [data-testid=send-history] .surface-section-head",
@@ -5590,21 +6247,21 @@
     "text": "SENDS 1"
    }
   ],
-  "masked_sha": "a030c479d806013d61820b5611988d13be90dca2303637083c76a50826207fe9",
+  "masked_sha": "decf7f7f10ba45d1c1c22bf70508bcd3a334aa90270c8fc52b9398871900e8a5",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "A6-brief-slack-person-sections-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729"
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports ✓ SAVED 21:29 THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED 22:03 THIS DEVICE",
    "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -5612,11 +6269,11 @@
    "CHANNEL #leads",
    "WEBHOOK hooks.slack.com"
   ],
-  "preview_body": "*Brief · SEP 28 – 29* GENERATED SEP 29 21:28 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. *This week* • 2 new decisions from meetings *Changed* • Meeting recorded: Ledger cutover sync (45 min · 3 action items) • Meeting recorded: Cutover planning offsite (360 min) • Meeting recorded: Vendor call (10 min) *Waiting* • Unassigned: Write the rollback plan (Due Fri) • Unassigned: Tell support the freeze date (Needs an owner) • Unassigned: Run the last reconciliation (Needs an owner) *Decisions* • Review decision: Freeze the old ledger on Nov 3 • Review decision: Cut over by space, not by region • Review decision: Keep the old ledger read-only for 30 days *People* • Priya Nair: they owe 1 (0d)",
+  "preview_body": "*Brief · SEP 28 – 29* GENERATED SEP 29 22:02 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. *This week* • 2 new decisions from meetings *Changed* • Meeting recorded: Cutover planning offsite (360 min) • Meeting recorded: Ledger cutover sync (45 min · 3 action items) • Meeting recorded: Vendor call (10 min) *Waiting* • Unassigned: Tell support the freeze date (Needs an owner) • Unassigned: Run the last reconciliation (Needs an owner) • Unassigned: Write the rollback plan (Due Fri) *Decisions* • Review decision: Freeze the old ledger on Nov 3 • Review decision: Cut over by space, not by region • Review decision: Keep the old ledger read-only for 30 days *People* • Priya Nair: they owe 1 (0d)",
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Team folder SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md SEP 29 21:29"
+   "✓ Team folder SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md SEP 29 22:03"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -5628,6 +6285,15 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -5706,16 +6372,6 @@
      "text": "PEOPLE",
      "fs": 11,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
-     "fs": 10,
-     "head": true
     }
    ]
   },
@@ -5726,11 +6382,11 @@
   "h_overflow": false,
   "body_overflow_x": false,
   "named": [],
-  "masked_sha": "f49e9e091d5059d25c678a66895f9f705f9f352ae0e945f41ec4cc2f6c7f5f29",
+  "masked_sha": "b89ea652dbdae60f78bb199692ed9f5c43e6f657164fe4d560d8555d6570e808",
   "pointer": {
    "owned": 1,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "preview_has_people": true,
   "preview_has_ack_marks": false,
@@ -5740,27 +6396,27 @@
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729"
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52"
   ],
   "destinations": [
-   "● Team folder FILE /private/tmp/p11-t31nug0l/Reports ✓ SAVED 21:29 THIS DEVICE",
+   "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED 22:03 THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
-   "FOLDER /private/tmp/p11-t31nug0l/Reports"
+   "FOLDER /private/tmp/p11-x_d8as0d/Reports"
   ],
-  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 21:28 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Ledger cutover sync (45 min · 3 action items) Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Vendor call (10 min) Waiting Unassigned: Write the rollback plan (Due Fri) Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Run the last reconciliation (Needs an owner) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d) Marek Wolny: they owe 1 (0d)",
+  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 22:02 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Ledger cutover sync (45 min · 3 action items) Meeting recorded: Vendor call (10 min) Waiting Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Run the last reconciliation (Needs an owner) Unassigned: Write the rollback plan (Due Fri) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d) Marek Wolny: they owe 1 (0d)",
   "outcomes": [
    {
     "tid": "send-sent",
-    "text": "✓ SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md",
+    "text": "✓ SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md",
     "code": null
    }
   ],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Team folder SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md SEP 29 21:29"
+   "✓ Team folder SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md SEP 29 22:03"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -5772,6 +6428,22 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -5850,16 +6522,6 @@
      "text": "PEOPLE",
      "fs": 11,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
-     "fs": 10,
-     "head": true
     }
    ]
   },
@@ -5870,11 +6532,11 @@
   "h_overflow": false,
   "body_overflow_x": false,
   "named": [],
-  "masked_sha": "d212c031cf58db3a78540eb97242b46507b2847a374bb7a3434fc81b14bfe3b1",
+  "masked_sha": "bd768bd9e64707a6cefe3044ff8e6d97edabc04c1c444cab05d344516a910102",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "same_brief_id_after_generate": true,
   "new_text_in_preview": true,
@@ -5885,27 +6547,27 @@
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729"
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52"
   ],
   "destinations": [
-   "● Team folder FILE /private/tmp/p11-t31nug0l/Reports ✓ SAVED 21:29 THIS DEVICE",
+   "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED 22:03 THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
-   "FOLDER /private/tmp/p11-t31nug0l/Reports"
+   "FOLDER /private/tmp/p11-x_d8as0d/Reports"
   ],
-  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 21:28 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Ledger cutover sync (45 min · 3 action items) Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Vendor call (10 min) Waiting Unassigned: Write the rollback plan (Due Fri) Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Run the last reconciliation (Needs an owner) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d) Marek Wolny: they owe 1 (0d)",
+  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 22:02 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Ledger cutover sync (45 min · 3 action items) Meeting recorded: Vendor call (10 min) Waiting Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Run the last reconciliation (Needs an owner) Unassigned: Write the rollback plan (Due Fri) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d) Marek Wolny: they owe 1 (0d)",
   "outcomes": [
    {
     "tid": "send-sent",
-    "text": "✓ SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md",
+    "text": "✓ SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md",
     "code": null
    }
   ],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Team folder SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md SEP 29 21:29"
+   "✓ Team folder SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md SEP 29 22:03"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -5917,6 +6579,22 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -5995,16 +6673,6 @@
      "text": "PEOPLE",
      "fs": 11,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
-     "fs": 10,
-     "head": true
     }
    ]
   },
@@ -6027,44 +6695,44 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "✓ SAVED 21:29"
+    "text": "✓ SAVED 22:03"
    }
   ],
-  "masked_sha": "1c8ae63ad68b70f6edc1bf3869f1825ee646ab2b40c3fc6da81cd5a458af5047",
+  "masked_sha": "f4137d31fb64f0422e73c776c4838ada4cdcd1e12882cb6014c254286f691a14",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "A4-brief-prepared-chair-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729",
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports ✓ SAVED 21:29 THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED 22:03 THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "◆ Slack #leads ◆ PREPARED BY STEWARD BRIEF SEP 29 SEP 29 21:29 ✓ WEBHOOK SET HOOKS.SLACK.COM"
+   "◆ Slack #leads ◆ PREPARED BY STEWARD BRIEF SEP 29 SEP 29 22:03 ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "preview_fields": [
    "CHANNEL #leads",
    "WEBHOOK hooks.slack.com"
   ],
-  "preview_body": "*Brief · SEP 28 – 29* GENERATED SEP 29 21:28 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. *This week* • 2 new decisions from meetings *Changed* • Meeting recorded: Ledger cutover sync (45 min · 3 action items) • Meeting recorded: Cutover planning offsite (360 min) • Meeting recorded: Vendor call (10 min) *Waiting* • Unassigned: Write the rollback plan (Due Fri) • Unassigned: Tell support the freeze date (Needs an owner) • Unassigned: Run the last reconciliation (Needs an owner) *Decisions* • Review decision: Freeze the old ledger on Nov 3 • Review decision: Cut over by space, not by region • Review decision: Keep the old ledger read-only for 30 days *People* • Priya Nair: they owe 1 (0d) • Marek Wolny: they owe 1 (0d)",
+  "preview_body": "*Brief · SEP 28 – 29* GENERATED SEP 29 22:02 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. *This week* • 2 new decisions from meetings *Changed* • Meeting recorded: Cutover planning offsite (360 min) • Meeting recorded: Ledger cutover sync (45 min · 3 action items) • Meeting recorded: Vendor call (10 min) *Waiting* • Unassigned: Tell support the freeze date (Needs an owner) • Unassigned: Run the last reconciliation (Needs an owner) • Unassigned: Write the rollback plan (Due Fri) *Decisions* • Review decision: Freeze the old ledger on Nov 3 • Review decision: Cut over by space, not by region • Review decision: Keep the old ledger read-only for 30 days *People* • Priya Nair: they owe 1 (0d) • Marek Wolny: they owe 1 (0d)",
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Team folder SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md SEP 29 21:29"
+   "✓ Team folder SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md SEP 29 22:03"
   ],
   "egress_chips": [
    "HOOKS.SLACK.COM",
@@ -6081,6 +6749,20 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -6187,41 +6869,41 @@
     "text": "◆ PREPARED ×1"
    }
   ],
-  "masked_sha": "8f97e80251cd3548aa71ed93b3f135f6e6663e7e6df9c6d73da1876bc4891c38",
+  "masked_sha": "1f80b6536be8f6f04afdf742b621ea4e42e98c74ef26cac50f58a4e1a35a2946",
   "pointer": {
    "owned": 0,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "A4b-brief-prepared-row-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729",
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports ✓ SAVED 21:29 THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED 22:03 THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "◆ Slack #leads ◆ PREPARED BY STEWARD BRIEF SEP 29 SEP 29 21:29 ✓ WEBHOOK SET HOOKS.SLACK.COM"
+   "◆ Slack #leads ◆ PREPARED BY STEWARD BRIEF SEP 29 SEP 29 22:03 ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "preview_fields": [
    "CHANNEL #leads",
    "WEBHOOK hooks.slack.com"
   ],
-  "preview_body": "*Brief · SEP 28 – 29* GENERATED SEP 29 21:28 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. *This week* • 2 new decisions from meetings *Changed* • Meeting recorded: Ledger cutover sync (45 min · 3 action items) • Meeting recorded: Cutover planning offsite (360 min) • Meeting recorded: Vendor call (10 min) *Waiting* • Unassigned: Write the rollback plan (Due Fri) • Unassigned: Tell support the freeze date (Needs an owner) • Unassigned: Run the last reconciliation (Needs an owner) *Decisions* • Review decision: Freeze the old ledger on Nov 3 • Review decision: Cut over by space, not by region • Review decision: Keep the old ledger read-only for 30 days *People* • Priya Nair: they owe 1 (0d) • Marek Wolny: they owe 1 (0d)",
+  "preview_body": "*Brief · SEP 28 – 29* GENERATED SEP 29 22:02 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. *This week* • 2 new decisions from meetings *Changed* • Meeting recorded: Cutover planning offsite (360 min) • Meeting recorded: Ledger cutover sync (45 min · 3 action items) • Meeting recorded: Vendor call (10 min) *Waiting* • Unassigned: Tell support the freeze date (Needs an owner) • Unassigned: Run the last reconciliation (Needs an owner) • Unassigned: Write the rollback plan (Due Fri) *Decisions* • Review decision: Freeze the old ledger on Nov 3 • Review decision: Cut over by space, not by region • Review decision: Keep the old ledger read-only for 30 days *People* • Priya Nair: they owe 1 (0d) • Marek Wolny: they owe 1 (0d)",
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Team folder SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md SEP 29 21:29"
+   "✓ Team folder SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md SEP 29 22:03"
   ],
   "egress_chips": [
    "HOOKS.SLACK.COM",
@@ -6238,6 +6920,20 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -6341,7 +7037,7 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "◆ Slack #leads ◆ PREPARED BY STEWARD BRIEF SEP 29 SEP 29 21:"
+    "text": "◆ Slack #leads ◆ PREPARED BY STEWARD BRIEF SEP 29 SEP 29 22:"
    },
    {
     "sel": ".chair [data-seat=brief] [data-testid=prepared-send]",
@@ -6351,18 +7047,20 @@
     "text": "Send"
    }
   ],
-  "masked_sha": "fb77a0a6d1c79161d899711ccda93de3ec9499049abac5d1711598f707692f01",
+  "masked_sha": "e121e38153f1d4be06d7bc046e4a9c16ad5bbdf60ddbaa9bf075a3331bb07e5c",
   "pointer": {
-   "owned": 3,
+   "owned": 5,
    "missed": [],
-   "under_host_bar": [
+   "reached_by_scroll": [
     {
      "text": "○\nTeam folder\nFILE\n/private/tm",
-     "points_under_host_bar": 9
+     "points_under_host_bar": 9,
+     "wheel_steps": 1
     },
     {
      "text": "○\nSlack #leads\nSLACK\n#leads\n✓\n",
-     "points_under_host_bar": 6
+     "points_under_host_bar": 9,
+     "wheel_steps": 2
     }
    ]
   }
@@ -6371,28 +7069,28 @@
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729",
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports ✓ SAVED 21:29 THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED 22:03 THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:03 HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:30"
+   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 22:03"
   ],
   "preview_fields": [],
   "preview_body": "",
   "outcomes": [],
   "history_head": "SENDS 2",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30",
-   "✓ Team folder SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md SEP 29 21:29"
+   "✓ Slack #leads POSTED #leads SEP 29 22:03",
+   "✓ Team folder SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md SEP 29 22:03"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -6407,6 +7105,19 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -6517,47 +7228,42 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "SENDS 2 ✓ Slack #leads POSTED #leads SEP 29 21:30 ✓ Team fol"
+    "text": "SENDS 2 ✓ Slack #leads POSTED #leads SEP 29 22:03 ✓ Team fol"
    }
   ],
-  "masked_sha": "c1852fbeddc13397af72bd33ffedbe4d1d702bffd12e8f24d5ae2499e69dba6d",
+  "masked_sha": "afc45c0126f502776ae81609bc049788d0b59959e46548cd7ac1cfdf0dc090e4",
   "pointer": {
-   "owned": 4,
+   "owned": 5,
    "missed": [],
-   "under_host_bar": [
-    {
-     "text": "✓\nTeam folder\nSAVED\n/private/t",
-     "points_under_host_bar": 3
-    }
-   ]
+   "reached_by_scroll": []
   }
  },
  "T3a-chair-last-item-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729",
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports ✓ SAVED 21:29 THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED 22:03 THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:03 HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:30"
+   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 22:03"
   ],
   "preview_fields": [],
   "preview_body": "",
   "outcomes": [],
   "history_head": "SENDS 2",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30",
-   "✓ Team folder SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md SEP 29 21:29"
+   "✓ Slack #leads POSTED #leads SEP 29 22:03",
+   "✓ Team folder SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md SEP 29 22:03"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -6572,6 +7278,19 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -6685,18 +7404,20 @@
     "text": "SEND · Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 "
    }
   ],
-  "masked_sha": "0b3702dcd7d1210bc96f0d64501ed791ae66fddd2792b0f7aa87822c93f9801e",
+  "masked_sha": "ee6d1c27c0ef997bfe91142f647031ca4c056bac183ced652deb0cf239e06991",
   "pointer": {
-   "owned": 2,
+   "owned": 4,
    "missed": [],
-   "under_host_bar": [
+   "reached_by_scroll": [
     {
      "text": "○\nSlack #leads\nSLACK\n#leads\n✓\n",
-     "points_under_host_bar": 6
+     "points_under_host_bar": 3,
+     "wheel_steps": 1
     },
     {
      "text": "✓\nSlack #leads\nPOSTED\n#leads\nS",
-     "points_under_host_bar": 9
+     "points_under_host_bar": 6,
+     "wheel_steps": 2
     }
    ]
   }
@@ -6705,28 +7426,28 @@
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729",
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports ✓ SAVED 21:29 THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED 22:03 THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:03 HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:30"
+   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 22:03"
   ],
   "preview_fields": [],
   "preview_body": "",
   "outcomes": [],
   "history_head": "SENDS 2",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30",
-   "✓ Team folder SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md SEP 29 21:29"
+   "✓ Slack #leads POSTED #leads SEP 29 22:03",
+   "✓ Team folder SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md SEP 29 22:03"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -6741,6 +7462,19 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -6854,31 +7588,213 @@
     "text": "SEND · Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 "
    }
   ],
-  "masked_sha": "9a0438eb8516c86c60f83486486d4731461c5cbc87a92cdaa84b9c92f2bdb559",
+  "masked_sha": "79ffe3422724d77fcd8da722b95cd428d3e3d735525755eeada60f161b3cde73",
   "pointer": {
-   "owned": 2,
+   "owned": 4,
    "missed": [],
-   "under_host_bar": [
+   "reached_by_scroll": [
     {
      "text": "○\nSlack #leads\nSLACK\n#leads\n✓\n",
-     "points_under_host_bar": 6
+     "points_under_host_bar": 3,
+     "wheel_steps": 1
     },
     {
      "text": "✓\nSlack #leads\nPOSTED\n#leads\nS",
-     "points_under_host_bar": 6
+     "points_under_host_bar": 9,
+     "wheel_steps": 2
     }
    ]
   },
-  "branch_text": "BRIEF\nTHIS DEVICE\nGenerate\n2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting.\nSEP 28 – 29 · GENERATED SEP 29 21:28\nALL 9 HANDLED\nBrief ready · 10 items · SEP 29 21:28\nSEND\n·\nSlack #leads\n✓\nPOSTED\n#leads\nBY STEWARD\nBRIEF SEP 29\nSEP 29 21:30\n○\nTeam folder\nFILE\n/private/tmp/p11-t31nug0l/Reports\n✓\nSAVED 21:29\nTHIS DEVICE\n○\nSlack #leads\nSLACK\n#leads\n✓\nWEBHOOK SET\n✓\nPOSTED 21:30\nH"
+  "branch_text": "BRIEF\nTHIS DEVICE\nGenerate\n2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting.\nSEP 28 – 29 · GENERATED SEP 29 22:02\nALL 9 HANDLED\nBrief ready · 10 items · SEP 29 22:02\nSEND\n·\nSlack #leads\n✓\nPOSTED\n#leads\nBY STEWARD\nBRIEF SEP 29\nSEP 29 22:03\n○\nTeam folder\nFILE\n/private/tmp/p11-x_d8as0d/Reports\n✓\nSAVED 22:03\nTHIS DEVICE\n○\nSlack #leads\nSLACK\n#leads\n✓\nWEBHOOK SET\n✓\nPOSTED 22:03\nH"
+ },
+ "T3c-scrolled-clear-of-capture-bar-393": {
+  "window": true,
+  "window_width": 393,
+  "wells": [
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52",
+   "meeting_summary:m-sync",
+   "meeting_summary:m-offsite"
+  ],
+  "destinations": [
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED 22:03 THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:03 HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
+  ],
+  "prepared": [
+   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 22:03"
+  ],
+  "preview_fields": [],
+  "preview_body": "",
+  "outcomes": [],
+  "history_head": "SENDS 2",
+  "history": [
+   "✓ Slack #leads POSTED #leads SEP 29 22:03",
+   "✓ Team folder SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md SEP 29 22:03"
+  ],
+  "egress_chips": [
+   "THIS DEVICE",
+   "HOOKS.SLACK.COM",
+   "THIS DEVICE",
+   "HOOKS.SLACK.COM",
+   "THIS DEVICE",
+   "HOOKS.SLACK.COM"
+  ],
+  "proof_links_on_slack": 0,
+  "mark_delivered_in_new_kind": false,
+  "stale_words": [],
+  "no_answer_shown": false,
+  "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": [
+    {
+     "text": "RANKED",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "OVERDUE",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "DUE TODAY",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "NOT RUN",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "NO DUE DATE",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "WAITING",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "CHECKED 1 MIN AGO",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "MTG",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "NO DUE DATE · UNASSIGNED",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "MTG",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "NO DUE DATE · UNASSIGNED",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "MTG",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "NO DUE DATE · UNASSIGNED",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "TRANSCRIPT",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "6 WORDS",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "TRANSCRIPT",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "26 WORDS",
+     "fs": 10,
+     "head": false
+    }
+   ]
+  },
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": []
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "named": [
+   {
+    "sel": ".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination='Slack #leads'])",
+    "ok": true,
+    "why": "",
+    "tall": false,
+    "text": "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:03 HOO"
+   },
+   {
+    "sel": ".chair [data-seat=brief] [data-testid=send-history] .surface-section-head",
+    "ok": true,
+    "why": "",
+    "tall": false,
+    "text": "SENDS 2"
+   }
+  ],
+  "masked_sha": "0c551ba756bbeb96102dbe285da55f661b4ed273816cec9fa2671d9cd6ca24f3",
+  "pointer": {
+   "owned": 5,
+   "missed": [],
+   "reached_by_scroll": [
+    {
+     "text": "✓\nTeam folder\nSAVED\n/private/t",
+     "points_under_host_bar": 6,
+     "wheel_steps": 1
+    }
+   ]
+  },
+  "cleared_by_wheel": true
  },
  "B1-decision-window-picked-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "desk_decision:decision_8f3a98fe7c16"
+   "desk_decision:decision_31fcd645b116"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -6900,6 +7816,14 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -6916,11 +7840,6 @@
     },
     {
      "text": "Consequences",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SEND",
      "fs": 10,
      "head": true
     },
@@ -6963,22 +7882,22 @@
     "text": "Send"
    }
   ],
-  "masked_sha": "fc7f18f730c898190ee378aafd72047f01923279a2f127fdc03972d46b0705a4",
+  "masked_sha": "08f3fa628389d8dce8e75282754e005f850abcaba307490641277875f2951750",
   "pointer": {
-   "owned": 3,
+   "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "B2-decision-posted-slack-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "desk_decision:decision_8f3a98fe7c16"
+   "desk_decision:decision_31fcd645b116"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
-   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:04 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
@@ -6995,7 +7914,7 @@
   ],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30"
+   "✓ Slack #leads POSTED #leads SEP 29 22:04"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -7007,6 +7926,15 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -7023,16 +7951,6 @@
     },
     {
      "text": "Consequences",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
      "fs": 10,
      "head": true
     },
@@ -7072,25 +7990,25 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "✓ POSTED 21:30"
+    "text": "✓ POSTED 22:04"
    }
   ],
-  "masked_sha": "7d4ea88b156c02763291d78a496c62cc2da9daab1c3257713172c0f5a93877c2",
+  "masked_sha": "81f6066b9cdeaa11ade117b678696699ab5217b89bad4f542694108b2ab35fe2",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "B2b-decision-history-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "desk_decision:decision_8f3a98fe7c16"
+   "desk_decision:decision_31fcd645b116"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:04 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -7098,7 +8016,7 @@
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30"
+   "✓ Slack #leads POSTED #leads SEP 29 22:04"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -7109,6 +8027,13 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -7125,16 +8050,6 @@
     },
     {
      "text": "Consequences",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
      "fs": 10,
      "head": true
     },
@@ -7174,25 +8089,25 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "✓ Slack #leads POSTED #leads SEP 29 21:30"
+    "text": "✓ Slack #leads POSTED #leads SEP 29 22:04"
    }
   ],
-  "masked_sha": "65e78236c5ab77977f9618f1d2b9be6370c67dcc58d055063d4d0eb86b4d6a7f",
+  "masked_sha": "c3042162ab8062e4f17df9c4d4adb2040e17e8a7987a2e96bd1f839708913223",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "B3-decision-edited-send-again-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "desk_decision:decision_8f3a98fe7c16"
+   "desk_decision:decision_31fcd645b116"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
-   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:04 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
@@ -7209,7 +8124,7 @@
   ],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30"
+   "✓ Slack #leads POSTED #leads SEP 29 22:04"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -7221,6 +8136,15 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -7237,16 +8161,6 @@
     },
     {
      "text": "Consequences",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
      "fs": 10,
      "head": true
     },
@@ -7274,11 +8188,11 @@
   "h_overflow": false,
   "body_overflow_x": false,
   "named": [],
-  "masked_sha": "e3aebd7c95a3ec26b3d22f2fe3edc5f1874602738706a72a33fb2475c2f5fd52",
+  "masked_sha": "d8519c90ba367af282de663056adf44ab28a4693e7fd9e25fefecef3be2e5ed1",
   "pointer": {
    "owned": 1,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "new_text": true,
   "verb": "Send again",
@@ -7288,11 +8202,11 @@
   "window": true,
   "window_width": 393,
   "wells": [
-   "desk_decision:decision_8f3a98fe7c16"
+   "desk_decision:decision_31fcd645b116"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
-   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:04 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
@@ -7309,7 +8223,7 @@
   ],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30"
+   "✓ Slack #leads POSTED #leads SEP 29 22:04"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -7321,6 +8235,15 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -7337,16 +8260,6 @@
     },
     {
      "text": "Consequences",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
      "fs": 10,
      "head": true
     },
@@ -7389,22 +8302,22 @@
     "text": "Send again"
    }
   ],
-  "masked_sha": "eeaf3e53bd770dba7a0c3ae1117c41265c95cb376c5008b77af18c74424aa666",
+  "masked_sha": "96be5e073c77f4c02a7cecd8bf5109519e5cfee800ef7f2a746555f19a8835d8",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
- "T2b-preview-changed-sent-393": {
+ "T2a2-preview-changed-passage-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "desk_decision:decision_8f3a98fe7c16"
+   "desk_decision:decision_31fcd645b116"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
-   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:04 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
@@ -7414,15 +8327,14 @@
   "preview_body": "*Freeze the old ledger on Nov 3* Status: accepted · Deciders: Karol, Priya *Context* The cutover rehearsal showed two write paths into the old ledger. *Decision* Freeze the old ledger on Nov 6. All writes go to the new ledger after that day. *Consequences* • Finance runs one extra reconciliation. • Rollback window closes Nov 10.",
   "outcomes": [
    {
-    "tid": "send-sent",
-    "text": "✓ POSTED #leads",
-    "code": null
+    "tid": "send-refused",
+    "text": "✗ REFUSED PREVIEW CHANGED NOTHING SENT",
+    "code": "preview_changed"
    }
   ],
-  "history_head": "SENDS 2",
+  "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30",
-   "✓ Slack #leads POSTED #leads SEP 29 21:30"
+   "✓ Slack #leads POSTED #leads SEP 29 22:04"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -7434,6 +8346,15 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -7454,12 +8375,101 @@
      "head": true
     },
     {
-     "text": "SEND",
+     "text": "Zone",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "Knowledge",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "Projects",
+     "fs": 10,
+     "head": false
+    }
+   ]
+  },
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": []
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "named": [],
+  "masked_sha": "3faeef1e6f7155dabd568a9f2ed357ff8475444b310637b2d47efafe804bef67",
+  "pointer": {
+   "owned": 1,
+   "missed": [],
+   "reached_by_scroll": []
+  },
+  "changed_passage_on_screen": true
+ },
+ "T2b-preview-changed-sent-393": {
+  "window": true,
+  "window_width": 393,
+  "wells": [
+   "desk_decision:decision_31fcd645b116"
+  ],
+  "destinations": [
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:04 HOOKS.SLACK.COM"
+  ],
+  "prepared": [],
+  "preview_fields": [
+   "CHANNEL #leads",
+   "WEBHOOK hooks.slack.com"
+  ],
+  "preview_body": "*Freeze the old ledger on Nov 3* Status: accepted · Deciders: Karol, Priya *Context* The cutover rehearsal showed two write paths into the old ledger. *Decision* Freeze the old ledger on Nov 6. All writes go to the new ledger after that day. *Consequences* • Finance runs one extra reconciliation. • Rollback window closes Nov 10.",
+  "outcomes": [
+   {
+    "tid": "send-sent",
+    "text": "✓ POSTED #leads",
+    "code": null
+   }
+  ],
+  "history_head": "SENDS 2",
+  "history": [
+   "✓ Slack #leads POSTED #leads SEP 29 22:04",
+   "✓ Slack #leads POSTED #leads SEP 29 22:04"
+  ],
+  "egress_chips": [
+   "THIS DEVICE",
+   "HOOKS.SLACK.COM",
+   "HOOKS.SLACK.COM"
+  ],
+  "proof_links_on_slack": 0,
+  "mark_delivered_in_new_kind": false,
+  "stale_words": [],
+  "no_answer_shown": false,
+  "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": [
+    {
+     "text": "Decision context",
      "fs": 10,
      "head": true
     },
     {
-     "text": "SENDS 2",
+     "text": "Decision",
+     "fs": 10,
+     "head": true
+    },
+    {
+     "text": "Consequences",
      "fs": 10,
      "head": true
     },
@@ -7495,11 +8505,11 @@
     "text": "✓ POSTED #leads"
    }
   ],
-  "masked_sha": "57b75bfd79c818f84b5026d524e19e30c692091879a4b6534efe988b7b3350c4",
+  "masked_sha": "6122c2781ac99294e4a9e2ff1fa886569228ea7ccf5a8f2d832e6c562ef5e22e",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "sent_text_has_nov6": true
  },
@@ -7507,15 +8517,15 @@
   "window": true,
   "window_width": 393,
   "wells": [
-   "decision_record:record-9b72983141604653a36ac6280bbe2699"
+   "decision_record:record-455829505e6b412fb00de0e87a0317c9"
   ],
   "destinations": [
-   "● Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
-   "FOLDER /private/tmp/p11-t31nug0l/Reports"
+   "FOLDER /private/tmp/p11-x_d8as0d/Reports"
   ],
   "preview_body": "Freeze the old ledger on Nov 3 Why: The cutover rehearsal found two write paths into the old ledger. Alternatives: Freeze by region; freeze after the quarter close. Owner: Priya Review: 2026-10-13 From: Ledger cutover sync State: active",
   "outcomes": [],
@@ -7531,6 +8541,19 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -7566,7 +8589,7 @@
      "head": false
     },
     {
-     "text": "9b7298314160",
+     "text": "455829505e6b",
      "fs": 10,
      "head": false
     },
@@ -7594,11 +8617,6 @@
      "text": "Review",
      "fs": 10,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
     },
     {
      "text": "PROVENANCE",
@@ -7644,7 +8662,7 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "● Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DE"
+    "text": "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DE"
    },
    {
     "sel": ".desk-window [data-seat=decision-record] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
@@ -7654,11 +8672,11 @@
     "text": "Send"
    }
   ],
-  "masked_sha": "2c05b4881b234bec28e22b991cdefe674976d2c74a3a847836b5aa85f949990f",
+  "masked_sha": "925a94e39bfe0f0a28359c56977e7a25dae08b8a14f2e2fc9d676642a2e4c71e",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "B4-room-row-prepared-chip-393": {
@@ -7678,6 +8696,12 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [
+   0,
+   0
+  ],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -7698,11 +8722,11 @@
     "text": "MTG Finance runs one more reconciliation before the freeze C"
    }
   ],
-  "masked_sha": "387ae753f9d8e995b439e07eca4e43dd04ed5215ee33089a689144af6aa18592",
+  "masked_sha": "2fb9f432b8317d9c44f26969d285377868f394a3063469be9b907718fbdb978a",
   "pointer": {
    "owned": 0,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "lifecycle_row_text_in_room": false
  },
@@ -7710,17 +8734,17 @@
   "window": true,
   "window_width": 393,
   "wells": [
-   "decision_record:record-690eba0ca0fb4ce7b45481883ff05c7b"
+   "decision_record:record-7bee5634078947a7bb38b0066224a231"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "◆ Team folder ◆ PREPARED BY CODEX D-690EBA SEP 29 21:30 THIS DEVICE"
+   "◆ Team folder ◆ PREPARED BY CODEX D-7BEE56 SEP 29 22:04 THIS DEVICE"
   ],
   "preview_fields": [
-   "FOLDER /private/tmp/p11-t31nug0l/Reports"
+   "FOLDER /private/tmp/p11-x_d8as0d/Reports"
   ],
   "preview_body": "Finance runs one more reconciliation before the freeze Why: The last run found 3 unmatched entries. Owner: Marek From: Ledger cutover sync State: active",
   "outcomes": [],
@@ -7737,6 +8761,21 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [
+   0,
+   0
+  ],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -7761,14 +8800,14 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "D-690EBA"
+    "text": "D-7BEE56"
    }
   ],
-  "masked_sha": "2ffd28709caf4624b2906b61ea8c3ac2d3a5919ab037c52b26ed8a9c85ddcc3c",
+  "masked_sha": "4fe0160287b57265022890d7e33d1950f0f0f1a6f275fafcc26d84e258cdc6a6",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C1-meetings-record-send-393": {
@@ -7778,7 +8817,7 @@
    "meeting_summary:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -7796,6 +8835,12 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -7851,14 +8896,14 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DE"
+    "text": "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DE"
    }
   ],
-  "masked_sha": "0ea887956c15eee84c6cbc07330a388711130ec57bd18d280b83c1c54351c153",
+  "masked_sha": "5a81488e908044e63c72fc15d38b81a30b0121d8478f5b68c41040a5303ce890",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C2-summary-slack-picked-393": {
@@ -7868,7 +8913,7 @@
    "meeting_summary:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -7890,6 +8935,14 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -7948,11 +9001,11 @@
     "text": "Send"
    }
   ],
-  "masked_sha": "233db432eeb589ef5521a84e82460e8649477b91b22f25dcc26190e336d856a2",
+  "masked_sha": "253f98a09e0c6fe71c680bc4ce943924151fb6f4840d498e635ff3b9a06832e5",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C3-summary-posted-slack-393": {
@@ -7962,8 +9015,8 @@
    "meeting_summary:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
-   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:04 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
@@ -7980,7 +9033,7 @@
   ],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30"
+   "✓ Slack #leads POSTED #leads SEP 29 22:04"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -7992,6 +9045,15 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -8047,14 +9109,14 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "✓ POSTED 21:30"
+    "text": "✓ POSTED 22:04"
    }
   ],
-  "masked_sha": "5c0b573e232b56d337211d61f40d70b7b57fc04a58d7c48b219a109de836c279",
+  "masked_sha": "b71bc68339b987b8203df72603c376f3f60d005525fce08300532e848c5a7ad9",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C3b-summary-history-393": {
@@ -8064,8 +9126,8 @@
    "meeting_summary:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:04 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -8073,7 +9135,7 @@
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30"
+   "✓ Slack #leads POSTED #leads SEP 29 22:04"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -8084,6 +9146,13 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -8139,14 +9208,14 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "✓ Slack #leads POSTED #leads SEP 29 21:30"
+    "text": "✓ Slack #leads POSTED #leads SEP 29 22:04"
    }
   ],
-  "masked_sha": "5f5a94a72add2e141f27ddd9b52d1f9c2abe8de995dd3de3de91b2335efaf4a1",
+  "masked_sha": "1595e21b28ccae285936a3ca3a141744391596b84e13abdcf505c3de09a3138e",
   "pointer": {
-   "owned": 2,
+   "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C5-digest-form-slack-393": {
@@ -8156,7 +9225,7 @@
    "meeting_digest:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -8178,6 +9247,14 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -8236,18 +9313,101 @@
     "text": "Send"
    }
   ],
-  "masked_sha": "5e40516c8ac7316f2c6ed9aa1a74d5801ef63f3751619b464841f72f346e85c9",
+  "masked_sha": "ef84535f2694ee233528057872ad68107bb9e8ae7651263ac4b3e58f052d5da1",
   "pointer": {
-   "owned": 3,
+   "owned": 4,
    "missed": [],
-   "under_host_bar": [
+   "reached_by_scroll": []
+  },
+  "aftercare_rows_on_face": false
+ },
+ "C5c-digest-body-393": {
+  "window": true,
+  "window_width": 393,
+  "wells": [
+   "meeting_digest:m-sync"
+  ],
+  "destinations": [
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
+  ],
+  "prepared": [],
+  "preview_fields": [
+   "CHANNEL #leads",
+   "WEBHOOK hooks.slack.com"
+  ],
+  "preview_body": "*Ledger cutover sync* 2026-09-29 *What we decided* • Freeze the old ledger on Nov 3. Why: Two write paths remain • Cut over by space, not by region *Still open* • Marek: Run the last reconciliation • Priya: Write the rollback plan (due Fri) • Unassigned: Tell support the freeze date",
+  "outcomes": [],
+  "history_head": null,
+  "history": [],
+  "egress_chips": [
+   "THIS DEVICE",
+   "HOOKS.SLACK.COM",
+   "HOOKS.SLACK.COM"
+  ],
+  "proof_links_on_slack": 0,
+  "mark_delivered_in_new_kind": false,
+  "stale_words": [],
+  "no_answer_shown": false,
+  "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter"
+  ],
+  "room_open_verbs": [],
+  "modal": false,
+  "small_text": {
+   "proposal": [],
+   "inherited": [
     {
-     "text": "Send",
-     "points_under_host_bar": 3
+     "text": "⚙︎",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "SEP 29",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "45 MIN",
+     "fs": 10,
+     "head": false
+    },
+    {
+     "text": "ME",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "PRIYA",
+     "fs": 11,
+     "head": false
+    },
+    {
+     "text": "PRIYA",
+     "fs": 11,
+     "head": false
     }
    ]
   },
-  "aftercare_rows_on_face": false
+  "raw_buttons": {
+   "proposal": [],
+   "inherited": []
+  },
+  "h_overflow": false,
+  "body_overflow_x": false,
+  "named": [],
+  "masked_sha": "72c5f7803271d4567adc0ac158efc2ac614a02c694ad173647c7a9d59af712b4",
+  "pointer": {
+   "owned": 0,
+   "missed": [],
+   "reached_by_scroll": []
+  },
+  "digest_body_on_screen": true
  },
  "C5b-followup-form-folder-393": {
   "window": true,
@@ -8256,12 +9416,12 @@
    "meeting_followup:m-sync"
   ],
   "destinations": [
-   "● Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
-   "FOLDER /private/tmp/p11-t31nug0l/Reports"
+   "FOLDER /private/tmp/p11-x_d8as0d/Reports"
   ],
   "preview_body": "Follow-up: Ledger cutover sync 2026-09-29 What we decided Freeze the old ledger on Nov 3. Why: Two write paths remain Cut over by space, not by region Open items Marek: Run the last reconciliation Priya: Write the rollback plan (due Fri) Unassigned: Tell support the freeze date Since Cutover planning offsite New decisions: Freeze the old ledger on Nov 3 Cut over by space, not by region New action items: Write the rollback plan Run the last reconciliation Tell support the freeze date",
   "outcomes": [],
@@ -8277,6 +9437,21 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -8335,11 +9510,11 @@
     "text": "Send"
    }
   ],
-  "masked_sha": "3724936db1bcabd968adc5201f24563135ff852cef57e6adc37c3abffc6bc705",
+  "masked_sha": "30b37de020c1ebf61c6b11285dc5330982b9dc56f62e0014e334b8591c2c0e47",
   "pointer": {
    "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C4-no-summary-no-well-393": {
@@ -8359,6 +9534,9 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -8409,7 +9587,7 @@
   "pointer": {
    "owned": 0,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "send_wells": 0
  },
@@ -8420,7 +9598,7 @@
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
@@ -8445,6 +9623,12 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -8481,11 +9665,11 @@
     "text": "✗ REFUSED TOO LARGE FOR SLACK 41,099 / 39,000 CHARACTERS NOT"
    }
   ],
-  "masked_sha": "be2d926a33d584452f16728cd6b6217e49091c0b678d4545235b533da159f67c",
+  "masked_sha": "4b2cfa1328ddec008c16a5b9cd36b62a44c3205d6424abe0f2f5bfb314c3284a",
   "pointer": {
    "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "refusal_text": "✗\nREFUSED\nTOO LARGE FOR SLACK\n41,099 / 39,000 CHARACTERS\nNOTHING SENT\nHOOKS.SLACK.COM"
  },
@@ -8496,8 +9680,8 @@
    "meeting_summary:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM"
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:04 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [],
@@ -8505,7 +9689,7 @@
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30"
+   "✓ Slack #leads POSTED #leads SEP 29 22:04"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -8516,20 +9700,17 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
    "inherited": [
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
-     "fs": 10,
-     "head": true
-    },
     {
      "text": "Action items",
      "fs": 10,
@@ -8576,34 +9757,34 @@
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DE"
+    "text": "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DE"
    }
   ],
-  "masked_sha": "d9b5be0ff43021cc30391acd3522fccbc02a731562fb3f0cc104e96fe1be46a2",
+  "masked_sha": "d5ea662270a95127f3ea40950d6c7ed2a200c0e151ce574c8405ed2f509332da",
   "pointer": {
    "owned": 4,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "C6b-chair-meetings-row-well-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729",
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52",
    "meeting_summary:m-sync",
    "meeting_summary:m-offsite"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports ✓ SAVED 21:29 THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM",
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED 22:03 THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:03 HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:04 HOOKS.SLACK.COM",
+   "○ Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "● Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:30"
+   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 22:03"
   ],
   "preview_fields": [],
   "preview_body": "",
@@ -8616,9 +9797,9 @@
   ],
   "history_head": "SENDS 2",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30",
-   "✓ Team folder SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md SEP 29 21:29",
-   "✓ Slack #leads POSTED #leads SEP 29 21:30"
+   "✓ Slack #leads POSTED #leads SEP 29 22:03",
+   "✓ Team folder SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md SEP 29 22:03",
+   "✓ Slack #leads POSTED #leads SEP 29 22:04"
   ],
   "egress_chips": [
    "THIS DEVICE",
@@ -8634,6 +9815,20 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -8740,53 +9935,15 @@
     "text": "↻ Summary Digest Follow-up"
    }
   ],
-  "masked_sha": "3c435ba8bc9db81a2eb6ba7a29f4afa7f60b5b7b93776e762c97c21faa7b4181",
+  "masked_sha": "072fd3f7c1edf6e251a5c9d7c02d49c30dcefbb8cf5dc321395256687b59e53f",
   "pointer": {
-   "owned": 2,
-   "missed": [
-    {
-     "text": "Summary\nDigest\nFollow-up",
-     "missed_points": 6,
-     "where": [
-      [
-       64,
-       292,
-       "surface-section-head"
-      ],
-      [
-       64,
-       334,
-       "surface-section"
-      ],
-      [
-       13,
-       292,
-       "H3"
-      ],
-      [
-       115,
-       292,
-       "surface-section-head"
-      ],
-      [
-       13,
-       334,
-       "surface-section"
-      ],
-      [
-       115,
-       334,
-       "surface-section"
-      ]
-     ],
-     "html": "<select aria-label=\"Document\" data-probe=\"0\"><option value=\"meeting_summary\">Summary</option><option value=\"meeting_digest\">Digest</option><",
-     "opacity": "1"
-    }
-   ],
-   "under_host_bar": [
+   "owned": 4,
+   "missed": [],
+   "reached_by_scroll": [
     {
      "text": "✓\nSlack #leads\nPOSTED\n#leads\nS",
-     "points_under_host_bar": 6
+     "points_under_host_bar": 6,
+     "wheel_steps": 1
     }
    ]
   }
@@ -8795,19 +9952,22 @@
   "window": true,
   "window_width": 393,
   "wells": [
-   "project_update:pupd_d0a6ba55c940480b81a4e01563aec951"
+   "project_update:pupd_6e82607407cc405fa187e187939a6e96"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
+   "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
    "○ Slack #leads SLACK #leads ✓ WEBHOOK SET HOOKS.SLACK.COM"
   ],
   "prepared": [],
-  "preview_fields": [],
-  "preview_body": "",
+  "preview_fields": [
+   "FOLDER /private/tmp/p11-x_d8as0d/Reports"
+  ],
+  "preview_body": "Progress Milestone: Cutover rehearsal -- planned Decisions No decisions in this window. Risks & Blockers No risks or blockers in this window. Dependencies No dependencies tracked. Next Actions Milestone: Cutover rehearsal -- planned Source Coverage All sources consulted successfully.",
   "outcomes": [],
   "history_head": null,
   "history": [],
   "egress_chips": [
+   "THIS DEVICE",
    "THIS DEVICE",
    "HOOKS.SLACK.COM"
   ],
@@ -8816,6 +9976,19 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -8829,29 +10002,29 @@
   "body_overflow_x": false,
   "named": [
    {
-    "sel": "[data-seat=update] [data-testid=destination-row]",
+    "sel": "[data-seat=update] [data-testid=destination-row]:has([data-destination='Team folder'])",
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DE"
+    "text": "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DE"
    },
    {
-    "sel": "[data-testid=deliver-line]",
+    "sel": "[data-seat=update] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "Mark delivered"
+    "text": "Send"
    }
   ],
-  "masked_sha": "d4b4cff67d7d010722fbeeda4aa86ff2e8a3cd47201e76df4095d6c1cdb31e00",
+  "masked_sha": "b1c835a562a4b1ef48a80df3d4962a835d99a0a1b608aaab24bc948172d6abf0",
   "pointer": {
-   "owned": 4,
+   "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   },
   "well_signature": [
    {
-    "doc": "monday_brief:brief-b1e52776b81944278f4494efe50f1729",
+    "doc": "monday_brief:brief-9b977eee140343e785e30dcae49f1c52",
     "rows": [
      3,
      3
@@ -8872,7 +10045,7 @@
     ]
    },
    {
-    "doc": "project_update:pupd_d0a6ba55c940480b81a4e01563aec951",
+    "doc": "project_update:pupd_6e82607407cc405fa187e187939a6e96",
     "rows": [
      3,
      3
@@ -8880,28 +10053,42 @@
    }
   ]
  },
+ "_row_layout_393": {
+  "E1b-brief-well-393": false,
+  "E1c-decision-well-393": false,
+  "E1d-meeting-well-393": false
+ },
  "E1b-brief-well-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "monday_brief:brief-b1e52776b81944278f4494efe50f1729"
+   "monday_brief:brief-9b977eee140343e785e30dcae49f1c52"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports ✓ SAVED 21:29 THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM"
+   "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED 22:03 THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:03 HOOKS.SLACK.COM"
   ],
   "prepared": [
-   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 21:30"
+   "· Slack #leads ✓ POSTED #leads BY STEWARD BRIEF SEP 29 SEP 29 22:03"
   ],
-  "preview_fields": [],
-  "preview_body": "",
-  "outcomes": [],
+  "preview_fields": [
+   "FOLDER /private/tmp/p11-x_d8as0d/Reports"
+  ],
+  "preview_body": "Brief · SEP 28 – 29 GENERATED SEP 29 22:02 2 new decisions, 3 things changed, 3 things waiting, 3 decisions waiting. This week 2 new decisions from meetings Changed Meeting recorded: Cutover planning offsite (360 min) Meeting recorded: Ledger cutover sync (45 min · 3 action items) Meeting recorded: Vendor call (10 min) Waiting Unassigned: Tell support the freeze date (Needs an owner) Unassigned: Run the last reconciliation (Needs an owner) Unassigned: Write the rollback plan (Due Fri) Decisions Review decision: Freeze the old ledger on Nov 3 Review decision: Cut over by space, not by region Review decision: Keep the old ledger read-only for 30 days People Priya Nair: they owe 1 (0d) Marek Wolny: they owe 1 (0d)",
+  "outcomes": [
+   {
+    "tid": "send-sent",
+    "text": "✓ SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md",
+    "code": null
+   }
+  ],
   "history_head": "SENDS 2",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30",
-   "✓ Team folder SAVED /private/tmp/p11-t31nug0l/Reports/2026-09-30-brief-brief-sep-29-53028735.md SEP 29 21:29"
+   "✓ Slack #leads POSTED #leads SEP 29 22:03",
+   "✓ Team folder SAVED /private/tmp/p11-x_d8as0d/Reports/2026-09-30-brief-brief-sep-29-5e319e10.md SEP 29 22:03"
   ],
   "egress_chips": [
+   "THIS DEVICE",
    "THIS DEVICE",
    "HOOKS.SLACK.COM"
   ],
@@ -8910,6 +10097,24 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -9038,16 +10243,6 @@
      "text": "PEOPLE",
      "fs": 11,
      "head": false
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 2",
-     "fs": 10,
-     "head": true
     }
    ]
   },
@@ -9059,51 +10254,51 @@
   "body_overflow_x": false,
   "named": [
    {
-    "sel": ".desk-window [data-seat=brief] [data-testid=destination-row]",
+    "sel": ".desk-window [data-seat=brief] [data-testid=destination-row]:has([data-destination='Team folder'])",
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports ✓ SAVED"
+    "text": "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports ✓ SAVED"
+   },
+   {
+    "sel": ".desk-window [data-seat=brief] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
+    "ok": true,
+    "why": "",
+    "tall": false,
+    "text": "Send again"
    }
   ],
-  "masked_sha": "51a8d2fcb149e5529c7fea11d65deb67099a12ca6859ebac32e75457950e7309",
+  "masked_sha": "1dde77444a006cb4bdf23a6c13876c09205f44a180f4789c3e7a524c4fde93c2",
   "pointer": {
-   "owned": 3,
+   "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "E1c-decision-well-393": {
   "window": true,
   "window_width": 393,
   "wells": [
-   "desk_decision:decision_8f3a98fe7c16"
+   "desk_decision:decision_31fcd645b116"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
-   "● Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM"
+   "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:04 HOOKS.SLACK.COM"
   ],
   "prepared": [],
   "preview_fields": [
-   "CHANNEL #leads",
-   "WEBHOOK hooks.slack.com"
+   "FOLDER /private/tmp/p11-x_d8as0d/Reports"
   ],
-  "preview_body": "*Freeze the old ledger on Nov 3* Status: accepted · Deciders: Karol, Priya *Context* The cutover rehearsal showed two write paths into the old ledger. *Decision* Freeze the old ledger on Nov 6. All writes go to the new ledger after that day. *Consequences* • Finance runs one extra reconciliation. • Rollback window closes Nov 10.",
-  "outcomes": [
-   {
-    "tid": "send-sent",
-    "text": "✓ POSTED #leads",
-    "code": null
-   }
-  ],
+  "preview_body": "Freeze the old ledger on Nov 3 Status: accepted · Deciders: Karol, Priya Context The cutover rehearsal showed two write paths into the old ledger. Decision Freeze the old ledger on Nov 6. All writes go to the new ledger after that day. Consequences Finance runs one extra reconciliation. Rollback window closes Nov 10.",
+  "outcomes": [],
   "history_head": "SENDS 2",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30",
-   "✓ Slack #leads POSTED #leads SEP 29 21:30"
+   "✓ Slack #leads POSTED #leads SEP 29 22:04",
+   "✓ Slack #leads POSTED #leads SEP 29 22:04"
   ],
   "egress_chips": [
    "THIS DEVICE",
-   "HOOKS.SLACK.COM",
+   "THIS DEVICE",
    "HOOKS.SLACK.COM"
   ],
   "proof_links_on_slack": 0,
@@ -9111,6 +10306,20 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
@@ -9127,16 +10336,6 @@
     },
     {
      "text": "Consequences",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 2",
      "fs": 10,
      "head": true
     },
@@ -9165,18 +10364,25 @@
   "body_overflow_x": false,
   "named": [
    {
-    "sel": ".desk-window [data-seat=desk-decision] [data-testid=destination-row]",
+    "sel": ".desk-window [data-seat=desk-decision] [data-testid=destination-row]:has([data-destination='Team folder'])",
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DE"
+    "text": "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DE"
+   },
+   {
+    "sel": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
+    "ok": true,
+    "why": "",
+    "tall": false,
+    "text": "Send"
    }
   ],
-  "masked_sha": "52d8a8a02325468c608bf11c3cd84c024bd8306464dc9968b5bb8a25000548b3",
+  "masked_sha": "254004a6a258e34e1f9b564c63c0eb6e429f04321eb4dd58276cfbe74e46fce7",
   "pointer": {
-   "owned": 3,
+   "owned": 2,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "E1d-meeting-well-393": {
@@ -9186,18 +10392,21 @@
    "meeting_summary:m-sync"
   ],
   "destinations": [
-   "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DEVICE",
-   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 21:30 HOOKS.SLACK.COM"
+   "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DEVICE",
+   "○ Slack #leads SLACK #leads ✓ WEBHOOK SET ✓ POSTED 22:04 HOOKS.SLACK.COM"
   ],
   "prepared": [],
-  "preview_fields": [],
-  "preview_body": "",
+  "preview_fields": [
+   "FOLDER /private/tmp/p11-x_d8as0d/Reports"
+  ],
+  "preview_body": "Ledger cutover sync 2026-09-29 The team agreed to freeze the old ledger on Nov 3. Finance runs one more reconciliation before the freeze. Priya owns the rollback plan. Topics: cutover, reconciliation",
   "outcomes": [],
   "history_head": "SENDS 1",
   "history": [
-   "✓ Slack #leads POSTED #leads SEP 29 21:30"
+   "✓ Slack #leads POSTED #leads SEP 29 22:04"
   ],
   "egress_chips": [
+   "THIS DEVICE",
    "THIS DEVICE",
    "HOOKS.SLACK.COM"
   ],
@@ -9206,20 +10415,21 @@
   "stale_words": [],
   "no_answer_shown": false,
   "transcript_sentinel": false,
+  "row_grammar": [
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "preview_fonts": [
+   "Inter",
+   "Inter",
+   "Inter"
+  ],
+  "room_open_verbs": [],
   "modal": false,
   "small_text": {
    "proposal": [],
    "inherited": [
-    {
-     "text": "SEND",
-     "fs": 10,
-     "head": true
-    },
-    {
-     "text": "SENDS 1",
-     "fs": 10,
-     "head": true
-    },
     {
      "text": "Action items",
      "fs": 10,
@@ -9255,30 +10465,27 @@
   "body_overflow_x": false,
   "named": [
    {
-    "sel": ".desk-window [data-seat=meeting] [data-testid=destination-row]",
+    "sel": ".desk-window [data-seat=meeting] [data-testid=destination-row]:has([data-destination='Team folder'])",
     "ok": true,
     "why": "",
     "tall": false,
-    "text": "○ Team folder FILE /private/tmp/p11-t31nug0l/Reports THIS DE"
+    "text": "● Team folder FILE /private/tmp/p11-x_d8as0d/Reports THIS DE"
+   },
+   {
+    "sel": ".desk-window [data-seat=meeting] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
+    "ok": true,
+    "why": "",
+    "tall": false,
+    "text": "Send"
    }
   ],
-  "masked_sha": "2ad0bfa2d23e48fd11b8ebc1fddea5ac6f4dbddfba2eb73e8e0670660b33c8f0",
+  "masked_sha": "5493d423acaff49c42df550daee460216ba534ba05d99a77108a5d8ad5c1150b",
   "pointer": {
-   "owned": 4,
+   "owned": 3,
    "missed": [],
-   "under_host_bar": []
+   "reached_by_scroll": []
   }
  },
  "_browser_errors_393": [],
- "_fails_393": [],
- "_row_layout_393": {
-  "E1b-brief-well-393": true,
-  "E1c-decision-well-393": true,
-  "E1d-meeting-well-393": true
- },
- "_row_layout_1440": {
-  "E1b-brief-well-1440": true,
-  "E1c-decision-well-1440": true,
-  "E1d-meeting-well-1440": true
- }
+ "_fails_393": []
 }

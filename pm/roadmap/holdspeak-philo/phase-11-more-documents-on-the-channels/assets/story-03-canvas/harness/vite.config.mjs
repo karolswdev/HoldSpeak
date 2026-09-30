@@ -11,6 +11,7 @@
 //       below). A missing or doubled anchor stops the build: the canvas never
 //       draws a seat the product file does not have;
 //     - REMOVALS (R7): the aftercare Slack rows; the Credentials Slack webhook row;
+//     - species.css: the SETTLED appearance of the well (round two; story 04 moves it into the library);
 //     - shim.ts (the unbuilt wire, stated) and canvas.css, loaded before the app.
 //   CANVAS_MODE=today: the product exactly as on this branch, no swap, no shim.
 // HUB = the real hub's origin (shoot.py starts it and sets this).
@@ -130,7 +131,7 @@ export default {
         html.replace(
           "</head>",
           (proposal
-            ? `<link rel="stylesheet" href="/@fs${harness}canvas.css"><script type="module" src="/@fs${harness}shim.ts"></script>`
+            ? `<link rel="stylesheet" href="/@fs${harness}canvas.css"><link rel="stylesheet" href="/@fs${harness}species.css"><script type="module" src="/@fs${harness}shim.ts"></script>`
             : "") + `<script type="module" src="/@fs${harness}nav.ts"></script></head>`,
         ),
     },

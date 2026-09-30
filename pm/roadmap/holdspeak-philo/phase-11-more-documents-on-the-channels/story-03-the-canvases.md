@@ -37,6 +37,7 @@ PROVISIONAL: 1–1.5 engineering days.
 
 ## Notes
 
+- 2026-09-29 — round two (Fedaykin lane, Opus 5.5): Codex Astra r1 RATIFY-WITH-CONDITIONS (`checks/canvas-astra-r1.md`, verbatim) paid. 393 fit drawn (A4 heading wraps; the picker at 44 px; 12 px heads counted honestly; covered controls reached by ordinary scrolling, T3c); the settled appearance drawn (`harness/species.css`: own type, one row grammar, 274/274 rows); the Room row unfolds with the dead Open withheld (G1 → ledger); T2a2 and C5c companions; the questions cut to one face choice. G2–G4 and the head layout → story 04; host integration and rendered-transition fences → story 05; G1, G5 → ledger. 45 boards × 2 widths, 142/142 named on screen, 0 pointer misses. Owed: the owner's word.
 - 2026-09-29 — round one DRAWN (Fedaykin lane, Opus 5.5): 42 boards × 1440 and 393 on the real product with a harness shim (`assets/story-03-canvas/`, README + `index.html`); fences 132/132 named on screen, 0 stale words, 0 Slack links, 0 Mark delivered on a new kind. `meeting_decision` confirmed seatless on glass; the Room row's Open opens nothing (G1). Seven open questions with recommendations. Owed: Astra's check, then the owner's word.
 - 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

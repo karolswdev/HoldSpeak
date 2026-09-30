@@ -97,9 +97,8 @@ FACTS = r"""(anchorSel) => {
     if (!t || GLYPH.test(t)) continue;
     const el = n.parentElement; const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
     if (!r.width || !r.height || cs.visibility === 'hidden' || cs.display === 'none') continue;
-    // The section head species (SurfaceSection, surface.css) draws its head at 10 px in a pullout, on the
-    // host's own heads too (DECISION CONTEXT): recorded as the species' size, not the proposal's.
-    if (parseFloat(cs.fontSize) < 12) (el.closest('[data-p11]') && !el.closest('.surface-section-head') ? small.proposal : small.inherited).push({text: t.slice(0, 40), fs: parseFloat(cs.fontSize), head: !!el.closest('.surface-section-head')});
+    // Every word the proposal adds counts, its SEND / SENDS heads included (Codex Astra r1 F1).
+    if (parseFloat(cs.fontSize) < 12) (el.closest('[data-p11]') ? small.proposal : small.inherited).push({text: t.slice(0, 40), fs: parseFloat(cs.fontSize), head: !!el.closest('.surface-section-head')});
   }
   const raw = [...win.querySelectorAll('button')].filter((b) => !String(b.className).includes('btn') && b.getBoundingClientRect().width);
   const rawIn = (p) => raw.filter((b) => !!b.closest('[data-p11]') === p).map((b) => (b.innerText || b.getAttribute('aria-label') || '').trim().slice(0, 30));
@@ -125,6 +124,19 @@ FACTS = r"""(anchorSel) => {
     stale_words: %STALE%.filter((wd) => wellText.toUpperCase().includes(wd)),
     no_answer_shown: /NO ANSWER/.test(wellText),
     transcript_sentinel: /TRANSCRIPT-SENTINEL-7Q/.test(wellText),
+    // Round two (Codex Astra r1 F2): ONE row grammar in every host -- lead and name on line 1,
+    // the chips on line 2 at the name's edge -- and the well's own type in every preview.
+    row_grammar: [...win.querySelectorAll('[data-p11=well] .surface-ledger-line, [data-p11=history] .surface-ledger-line')]
+      .filter((l) => l.getBoundingClientRect().width).map((l) => {
+        const lead = l.querySelector(':scope > .surface-ledger-lead'), prim = l.querySelector(':scope > .surface-ledger-primary'), cells = l.querySelector(':scope > .p11-cells');
+        if (!lead || !prim || !cells) return 'missing';
+        const a = lead.getBoundingClientRect(), b = prim.getBoundingClientRect(), c = cells.getBoundingClientRect();
+        return (Math.abs(a.top - b.top) < 14 && c.top >= b.bottom - 2 && Math.abs(c.left - b.left) < 2) ? 'ok' : 'off';
+      }),
+    preview_fonts: [...win.querySelectorAll('[data-p11=well] .send-preview-body p, [data-p11=well] .send-preview-body li, [data-p11=well] .send-preview-text')]
+      .filter((e) => e.getBoundingClientRect().width).slice(0, 8).map((e) => getComputedStyle(e).fontFamily.split(',')[0].replace(/"/g, '').trim()),
+    room_open_verbs: [...document.querySelectorAll('[data-testid=decision-row]')].filter((r) => r.getBoundingClientRect().width)
+      .map((r) => [...r.querySelectorAll('.btn')].filter((b) => b.innerText.trim() === 'Open').length),
     modal: !!document.querySelector('[role=dialog][aria-modal=true], .modal, dialog[open]'),
     small_text: small,
     raw_buttons: {proposal: rawIn(true), inherited: rawIn(false)},
@@ -167,11 +179,13 @@ CONTROLS = r"""(anchorSel) => {
   const win = anchor ? (anchor.closest('.desk-window') || anchor.closest('.chair') || document.body) : null;
   if (!win) return [];
   document.querySelectorAll('[data-probe]').forEach((e) => e.removeAttribute('data-probe'));
-  window.__scrollSnap = [...document.querySelectorAll('*')].filter((e) => e.scrollTop || e.scrollLeft).map((e) => [e, e.scrollTop, e.scrollLeft]);
+  window.__scrollSnap = [...document.querySelectorAll('*')].filter((e) => e.scrollTop || e.scrollLeft || e.scrollHeight > e.clientHeight + 1).map((e) => [e, e.scrollTop, e.scrollLeft]);
   window.__pm = null;
   if (!window.__pmHooked) { document.addEventListener('pointermove', (e) => { window.__pm = e.target; }, true); window.__pmHooked = true; }
   const btns = [...win.querySelectorAll('[data-p11] .btn, [data-p11] .surface-ledger-line, [data-p11] select, [data-p11] input:not([type=hidden]):not([type=checkbox])')]
-    .filter((b) => { const r = b.getBoundingClientRect(); return r.width && r.bottom > 0 && r.top < innerHeight; });
+    .filter((b) => { const r = b.getBoundingClientRect();
+      // A control inside a closed fold (height 0, clipped away) is not on the board.
+      return r.width && r.height > 1 && r.bottom > 0 && r.top < innerHeight && (!b.checkVisibility || b.checkVisibility({checkOpacity: true, checkVisibilityCSS: true})); });
   return btns.map((b, i) => { b.dataset.probe = String(i); return {i, text: (b.innerText || b.getAttribute('aria-label') || b.value || '').trim().slice(0, 30),
     html: b.outerHTML.slice(0, 140), opacity: getComputedStyle(b).opacity}; });
 }"""
@@ -198,32 +212,55 @@ HIT = r"""([i, x, y]) => { const b = document.querySelector(`[data-probe="${i}"]
   for (let a = el; a && !bar; a = a.parentElement) { const p = getComputedStyle(a).position; if ((p === 'sticky' || p === 'fixed') && !a.closest('[data-p11]')) bar = true; }
   return {own: !!el && b.contains(el), bar: !!el && !b.contains(el) && bar}; }"""
 PM_OWNED = r"""([i]) => { const b = document.querySelector(`[data-probe="${i}"]`); return !!window.__pm && b.contains(window.__pm); }"""
-RESTORE = r"""() => { for (const [e, t, l] of (window.__scrollSnap || []).reverse()) { e.scrollTop = t; e.scrollLeft = l; } }"""
+RESTORE = r"""() => { for (const [e, t, l] of [...(window.__scrollSnap || [])].reverse()) { e.scrollTop = t; e.scrollLeft = l; } }"""
 
 
 def pointer_pass(page, width: int, anchor: str) -> dict:
-    owned, missed, behind = 0, [], []
-    for c in page.evaluate(CONTROLS, anchor):
-        geo = page.evaluate(POINTS9, [c["i"], width])
-        if not geo["inview"]:
-            continue   # only what the shot shows
+    """Every proposal control the shot shows, nine points each. A control that sits under the
+    HOST's own sticky bar (the Chair's capture bar, the Room's ask well, a Settings group label)
+    is then reached by ORDINARY scrolling -- the mouse wheel over it, as he would -- and probed
+    again: reached = owned on all nine points after the scroll; not reached = a miss (Codex Astra
+    r1 F1: a covered control is never excluded)."""
+    vw, vh = page.viewport_size["width"], page.viewport_size["height"]
+
+    def probe(i: int):
+        geo = page.evaluate(POINTS9, [i, width])
         bad, where, under = 0, [], 0
         for x, y in geo["points"]:
-            if not (0 <= x < page.viewport_size["width"] and 0 <= y < page.viewport_size["height"]):
+            if not (0 <= x < vw and 0 <= y < vh):
                 bad += 1
                 continue
-            h = page.evaluate(HIT, [c["i"], x, y])
-            efp = h["own"]
+            h = page.evaluate(HIT, [i, x, y])
             under += 1 if h["bar"] else 0
             page.mouse.move(x, y)
-            pm = page.evaluate(PM_OWNED, [c["i"]])
-            if not (efp and pm):
+            pm = page.evaluate(PM_OWNED, [i])
+            if not (h["own"] and pm):
                 bad += 1
                 where.append([round(x), round(y), page.evaluate("([x, y]) => { const e = document.elementFromPoint(x, y); return e ? String(e.className || e.tagName).slice(0, 50) : null; }", [x, y])])
-        if bad and under == bad:
-            # Scrolled under the HOST's own sticky bar (the Chair's capture bar, the Room's ask
-            # well): not on this board. Recorded, not counted as a miss.
-            behind.append({"text": c["text"], "points_under_host_bar": under})
+        return geo, bad, where, under
+
+    owned, missed, reached = 0, [], []
+    for c in page.evaluate(CONTROLS, anchor):
+        geo, bad, where, under = probe(c["i"])
+        if not geo["inview"]:
+            continue   # only what the shot shows
+        if bad and under:
+            steps = 0
+            for steps in range(1, 16):
+                cy = page.evaluate("(i) => { const r = document.querySelector(`[data-probe=\"${i}\"]`).getBoundingClientRect(); return r.top + r.height / 2; }", c["i"])
+                page.mouse.move(vw / 2, min(max(cy, 5), vh - 5))
+                page.mouse.wheel(0, 90 if cy > vh / 2 else -90)
+                page.wait_for_timeout(120)
+                geo2, bad2, where2, under2 = probe(c["i"])
+                if not under2:
+                    break
+            if bad2 == 0:
+                reached.append({"text": c["text"], "points_under_host_bar": under, "wheel_steps": steps})
+                owned += 1
+            else:
+                missed.append({"text": c["text"], "missed_points": bad2, "where": where2, "html": c["html"], "after_scroll": True})
+            page.evaluate(RESTORE)
+            page.wait_for_timeout(80)
         elif bad:
             missed.append({"text": c["text"], "missed_points": bad, "where": where, "html": c["html"], "opacity": c["opacity"]})
         else:
@@ -231,7 +268,7 @@ def pointer_pass(page, width: int, anchor: str) -> dict:
     page.mouse.move(1, 1)
     page.evaluate(RESTORE)
     page.wait_for_timeout(100)
-    return {"owned": owned, "missed": missed, "under_host_bar": behind}
+    return {"owned": owned, "missed": missed, "reached_by_scroll": reached}
 
 
 def seed_hub(hub_url: str, home: str) -> dict:
@@ -416,9 +453,13 @@ def run(width: int, height: int) -> tuple[list[str], dict]:
                 law = {"stale words": not f.get("stale_words"), "no Mark delivered on a new kind": not f.get("mark_delivered_in_new_kind"),
                        "no link on a Slack post": not f.get("proof_links_on_slack"), "no modal": not f.get("modal"),
                        "no transcript": not f.get("transcript_sentinel"), "no raw button in the proposal": not f.get("raw_buttons", {}).get("proposal"),
-                       "no text under 12px in the proposal": not f.get("small_text", {}).get("proposal")}
+                       "no text under 12px in the proposal": not f.get("small_text", {}).get("proposal"),
+                       "one row grammar": all(g == "ok" for g in f.get("row_grammar", [])),
+                       "the well's own type in the preview": not any("Mono" in x for x in f.get("preview_fonts", [])),
+                       "no missed control (after ordinary scrolling)": not f["pointer"]["missed"],
+                       "no Open on a Room decision row": not any(f.get("room_open_verbs", []))}
                 for name, ok in law.items():
-                    if not ok and f.get("window"):
+                    if not ok and f.get("window") and not board.startswith("0"):
                         fails.append(f"{key}: law: {name}")
                 print(key, "w", f.get("window_width"), "wells", f.get("wells"), "ptr", f["pointer"]["owned"], len(f["pointer"]["missed"]),
                       "hidden", [(v["sel"][-50:], v["why"]) for v in hidden], "ovf", f.get("h_overflow"), f.get("body_overflow_x"), flush=True)
@@ -614,6 +655,23 @@ def run(width: int, height: int) -> tuple[list[str], dict]:
             shoot(page, "T3b-chair-after-last-ack", CH, [".chair [data-testid=arrival-brief] .surface-section-head", f"{CH} [data-testid=send-well]"],
                   seat_on=".chair [data-testid=arrival-brief]",
                   extra={"branch_text": branch[:400]}, checks={"the well stays after the branch change": page.locator(f"{CH} [data-testid=send-well]").count() == 1})
+            # T3 companion (Codex Astra r1 F1): ordinary scrolling (the wheel) brings the rows the
+            # Chair's sticky capture bar covered at 393 into the clear; the receipt survives.
+            target = f"{row(CH, 'Slack #leads')}"
+            page.mouse.move(width / 2, height / 2)
+            page.mouse.wheel(0, 180)
+            page.wait_for_timeout(200)
+            for _ in range(20):
+                clear = page.evaluate("""(sel) => { const e = document.querySelector(sel); if (!e) return false; const r = e.getBoundingClientRect();
+                  const pts = [[r.left + r.width / 2, r.top + r.height / 2], [r.left + 4, r.top + 4], [r.right - 4, r.bottom - 4]];
+                  return pts.every(([x, y]) => { const h = document.elementFromPoint(x, y); return !!h && e.contains(h); }); }""", target)
+                if clear:
+                    break
+                page.mouse.move(width / 2, height / 2)
+                page.mouse.wheel(0, 90)
+                page.wait_for_timeout(150)
+            shoot(page, "T3c-scrolled-clear-of-capture-bar", CH, [target, f"{CH} [data-testid=send-history] .surface-section-head"], seat_on=None,
+                  extra={"cleared_by_wheel": clear}, checks={"the rows reachable by ordinary scrolling": clear})
 
             # Canvas B: a decision. B0: design 6a on glass -- no face renders a lifecycle row.
             # B1: the desk decision window (about 400 px at 1440).
@@ -654,6 +712,10 @@ def run(width: int, height: int) -> tuple[list[str], dict]:
             shoot(page, "T2a-preview-changed-fresh-preview", DD, [f"{opened(DD, 'Slack #leads')} [data-testid=send-refused]",
                                                                   f"{opened(DD, 'Slack #leads')} [data-testid=send-verb]"],
                   seat_on=row(DD, "Slack #leads"))
+            # T2a companion (Codex Astra r1 F4): the changed passage itself, scrolled into view.
+            nov6 = scroll_to_text(page, f"{opened(DD, 'Slack #leads')} [data-testid=send-preview-body]", "Nov 6")
+            shoot(page, "T2a2-preview-changed-passage", DD, [], seat_on=None, extra={"changed_passage_on_screen": nov6},
+                  checks={"the changed passage (Nov 6) on screen": nov6})
             page.locator(f"{opened(DD, 'Slack #leads')} [data-testid=send-verb]").click()
             page.locator(f"{opened(DD, 'Slack #leads')} [data-testid=send-sent]").wait_for(timeout=15_000)
             page.wait_for_timeout(600)
@@ -710,6 +772,10 @@ def run(width: int, height: int) -> tuple[list[str], dict]:
                   extra={"aftercare_rows_on_face": "DIGEST → SLACK" in win_text},
                   checks={"no aftercare Slack rows": "DIGEST → SLACK" not in win_text and "FOLLOW-UP → SLACK" not in win_text,
                           "digest text": "What we decided" in c5})
+            # C5 companion (Codex Astra r1 F4): the digest body itself on screen.
+            dig = scroll_to_text(page, f"{opened(MR, 'Slack #leads')} [data-testid=send-preview-body]", "What we decided")
+            shoot(page, "C5c-digest-body", MR, [], seat_on=None, extra={"digest_body_on_screen": dig},
+                  checks={"the digest body on screen": dig})
             unpick(page, MR, "Slack #leads")
             page.locator(f"{MR} [data-testid=doc-forms] select").select_option("meeting_followup")
             page.locator(f"{MR} [data-testid=destination-row]").first.wait_for(timeout=15_000)
@@ -751,8 +817,10 @@ def run(width: int, height: int) -> tuple[list[str], dict]:
             page.locator(f"[data-testid=update-list-item]:has([data-update-id='{upd}'])").first.click()
             page.locator("[data-seat=update] [data-testid=destination-row]").first.wait_for(timeout=15_000)
             page.wait_for_timeout(800)
-            shoot(page, "E1a-update-well", "[data-seat=update]", ["[data-seat=update] [data-testid=destination-row]", "[data-testid=deliver-line]"],
-                  seat_on="[data-seat=update] [data-testid=send-well]")
+            UW = "[data-seat=update]"
+            pick(page, UW, "Team folder")
+            shoot(page, "E1a-update-well", UW, [row(UW, "Team folder"), f"{opened(UW, 'Team folder')} [data-testid=send-verb]"],
+                  seat_on=row(UW, "Team folder"))
             sig = page.evaluate("""() => [...document.querySelectorAll('[data-p11=well]')].map((w) => ({doc: w.dataset.doc,
                 rows: [...w.querySelectorAll('[data-testid=destination-row]')].map((r) => [...r.querySelectorAll('.surface-token, .gadget-chip-egress, .state-chip')].length)}))""")
             facts[f"E1a-update-well-{width}"]["well_signature"] = sig
@@ -765,7 +833,9 @@ def run(width: int, height: int) -> tuple[list[str], dict]:
                   if (!r) return null; const lead = r.querySelector('.surface-ledger-lead'), prim = r.querySelector('.surface-ledger-primary');
                   return !!lead && !!prim && Math.abs(lead.getBoundingClientRect().top - prim.getBoundingClientRect().top) > 8; }""", sel)
                 facts.setdefault(f"_row_layout_{width}", {})[f"{board}-{width}"] = rows_stacked
-                shoot(page, board, sel, [f"{sel} [data-testid=destination-row]"], seat_on=f"{sel} [data-testid=send-well]")
+                pick(page, sel, "Team folder")
+                shoot(page, board, sel, [row(sel, "Team folder"), f"{opened(sel, 'Team folder')} [data-testid=send-verb]"],
+                      seat_on=row(sel, "Team folder"))
                 close_windows(page)
             ctx.close()
             browser.close()
