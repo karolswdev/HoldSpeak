@@ -1,0 +1,17 @@
+#!/bin/bash
+# One actual atlas case per invocation. 393 uses the atlas's mouse pointer,
+# so these observations do not stand in for the faces lane's touch walks.
+set -eu
+probe_width=${1:?pass 1440 or 393}
+probe_owner_home="$HOME"
+probe_home=$(mktemp -d)
+trap 'rm -rf "$probe_home"' EXIT INT TERM
+export HOME="$probe_home"
+export PLAYWRIGHT_BROWSERS_PATH="$probe_owner_home/Library/Caches/ms-playwright"
+export npm_config_cache="$probe_owner_home/.npm"
+export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH
+uv run --frozen --extra test python scripts/graph_walk.py run \
+  --atlas docs/internal/philo/graph/atlas.json \
+  --case case.j11.write_a_thought.window_open \
+  --brain astra --viewport "$probe_width" --engine none \
+  --out "docs/internal/philo/phase-13/grounding/probes/structure-window-walk-$probe_width"

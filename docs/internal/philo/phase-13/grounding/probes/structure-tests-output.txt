@@ -1,0 +1,71 @@
+tests/unit/test_philo12_brief_read.py::test_exact_id_read_keeps_an_older_brief_after_a_newer_brief_exists
+tests/unit/test_philo12_brief_read.py::test_unknown_exact_id_is_a_404_and_static_routes_keep_priority
+tests/unit/test_philo12_brief_read.py::test_exact_id_route_requires_the_hub_authenticated_principal
+tests/unit/test_philo12_artifact_source.py::test_real_producers_render_stored_artifact_body
+tests/unit/test_philo12_artifact_source.py::test_authored_footer_lookalike_stays
+tests/unit/test_philo12_artifact_source.py::test_footer_lookalike_inside_code_stays
+tests/unit/test_philo12_artifact_source.py::test_synthesis_footer_with_mismatched_lineage_stays_byte_for_byte[windows-different-window]
+tests/unit/test_philo12_artifact_source.py::test_synthesis_footer_with_mismatched_lineage_stays_byte_for_byte[plugin runs-different-run]
+tests/unit/test_philo12_artifact_source.py::test_synthesis_footer_with_duplicate_lineage_id_stays_byte_for_byte
+tests/unit/test_philo12_artifact_source.py::test_synthesis_footer_removal_preserves_authored_prefix_bytes
+tests/unit/test_philo12_artifact_source.py::test_artifact_body_refusals[philo12-empty-   -artifact_body_missing]
+tests/unit/test_philo12_artifact_source.py::test_artifact_not_text_checks_raw_stored_value
+tests/unit/test_philo12_artifact_source.py::test_artifact_missing_id_is_named[artifact:missing-document_not_found]
+tests/unit/test_philo12_artifact_source.py::test_artifact_missing_id_is_named[artifact:-document_kind_unknown]
+tests/unit/test_philo12_artifact_source.py::test_artifact_size_uses_existing_channel_refusal
+
+15 tests collected in 1.89s
+...............                                                          [100%]
+15 passed in 7.51s
+src/desk/floorSendBinding.test.ts > Floor send binding > exposes send only for the four primitive document kinds
+src/desk/floorSendBinding.test.ts > Floor send binding > binds decision to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > binds artifact to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > binds meeting summary to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > binds meeting digest to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > binds meeting followup to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > binds project latest published update to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > binds brief exact stored id to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > defaults a meeting to Summary
+src/desk/floorSendBinding.test.ts > Floor send binding > names the known absence for meeting without a summary
+src/desk/floorSendBinding.test.ts > Floor send binding > names the known absence for project without a published update
+src/desk/floorSendBinding.test.ts > Floor send binding > names the known absence for parked destination
+src/desk/floorSendBinding.test.ts > Floor send binding > keeps a unread fact pending instead of refusing
+src/desk/floorSendBinding.test.ts > Floor send binding > keeps a loading fact pending instead of refusing
+src/desk/floorSendBinding.test.ts > Floor send binding > keeps a failed fact pending instead of refusing
+src/desk/floorSendBinding.test.ts > Floor send binding > keeps destination and brief as explicit nonprimitive projection data
+src/desk/__tests__/applicationManifest.test.ts > DeskOS application manifest > has stable, unique application actions
+src/desk/__tests__/applicationManifest.test.ts > DeskOS application manifest > derives every shell projection from registered applications
+src/desk/__tests__/applicationManifest.test.ts > DeskOS application manifest > keeps aliases pointed at hosted surfaces
+src/desk/__tests__/applicationManifest.test.ts > DeskOS application manifest > keeps Dock order and shortcuts declarative
+src/desk/__tests__/applicationManifest.test.ts > DeskOS application manifest > derives mark-menu application commands
+src/desk/__tests__/applicationManifest.test.ts > DeskOS application manifest > pins the Desk Memory registration: action, windowId, label, glyph, surface
+src/desk/__tests__/applicationManifest.test.ts > DeskOS application manifest > includes Project Memory in the surface-application projection
+src/desk/__tests__/windowMenuRegistry.test.tsx > HS-148-04: registry-derivation pin > head menu labels match the verb registry definitions
+src/desk/__tests__/windowMenuRegistry.test.tsx > HS-148-04: registry-derivation pin > head menu keycaps match the verb registry keys
+src/desk/__tests__/windowMenuRegistry.test.tsx > HS-148-04: registry-derivation pin > adapter output matches registry — the unit pin
+src/desk/__tests__/windowMenuRegistry.test.tsx > HS-148-04: registry-derivation pin > dock chip adapter matches registry verbs
+src/desk/__tests__/windowMenuRegistry.test.tsx > HS-148-04: registry-derivation pin > dock chip adapter toggles Restore when minimized
+src/desk/__tests__/windowMenuRegistry.test.tsx > HS-148-04: registry-derivation pin > compact head menu omits Maximize (no window.maximize entry)
+src/desk/__tests__/windowMenuRegistry.test.tsx > HS-148-04: registry-derivation pin > maximized head menu shows Restore for the maximize verb
+src/desk/__tests__/windowMenuRegistry.test.tsx > HS-148-04: no hardcoded labels (grep-style pin) > head menu labels are not hardcoded strings
+src/desk/__tests__/windowMenuRegistry.test.tsx > HS-148-04: no hardcoded labels (grep-style pin) > dock chip labels are not hardcoded strings
+src/desk/__tests__/window.test.ts > desk windows > stores a rect ephemerally and persists only when arranged
+src/desk/__tests__/window.test.ts > desk windows > resetPanelRect forgets the rect and the saved mark
+src/desk/__tests__/window.test.ts > desk windows > focusPanel moves the id to the front of the order
+src/desk/__tests__/window.test.ts > desk windows > the stacking order persists; minimize does not (HS-97-03)
+src/desk/__tests__/window.test.ts > desk windows > presentPanel keeps a remembered plane; a new window goes on top
+src/desk/__tests__/window.test.ts > desk windows > retirePanel drops a closed window so a reopen presents on top
+src/desk/__tests__/window.test.ts > desk windows > does not migrate the retired panel payload
+src/desk/__tests__/window.test.ts > desk windows > windows coexist: opening the composer keeps the pull-out open
+src/desk/__tests__/window.test.ts > desk windows > object cards coexist; reopening focuses; close targets one card
+src/desk/__tests__/window.test.ts > desk windows > the origin rides the card; editing keeps an open card in-world
+src/desk/__tests__/window.test.ts > one Record verb > a frame with no local start reads as live elsewhere
+src/desk/__tests__/window.test.ts > one Record verb > a locally stamped start is not external when its frame lands
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-13-ground-astra/web
+
+
+ Test Files  4 passed (4)
+      Tests  44 passed (44)
+   Start at  14:38:57
+   Duration  1.10s (transform 283ms, setup 213ms, import 464ms, tests 90ms, environment 865ms)

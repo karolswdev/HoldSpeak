@@ -1,0 +1,5 @@
+CURRENT CALL: {"key":"people","href":"/people","opened":[],"navigated":["/people"]}
+ROUTER SOURCE: no /people product or demoted path; App.tsx wildcard routes home.
+CANONICAL TARGET CONTROL: {"action":"open-people","scope":"probe-relationship"}
+REPRODUCED: current face key falls back; canonical target dispatches with the same scope.
+LIMIT: dispatcher probe, not a rendered click or a populated encrypted People record. No fix applied.

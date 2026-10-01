@@ -1,0 +1,2315 @@
+# Captured stdout; trailing line whitespace normalized for the documentation diff.
+PHILO-13 structure-wiring static probe
+repo=/Users/karol/dev/tools/wt-philo-13-ground-astra
+head=c6bffb2ccdbde636023cb49f632c18c5acf86d7a
+isolated_home=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.g6BUcgxari (removed on exit)
+scope=checked-in source anchors
+--- manifest counts ---
+application_entries=23
+surface_entries=19
+shared_window_ids={'surface-settings': [('configure-settings', 147), ('configure-integrations', 442)], 'surface-concierge': [('open-concierge', 325), ('configure-runs-on', 433)]}
+actions:
+   50 change-places                    window=surface-places                   surface=True
+   66 open-intelligence                window=intelligence:desk                surface=False
+   76 dictate                          window=surface-dictation                surface=True
+   97 ask                              window=ask:desk                         surface=False
+  106 review-meetings                  window=surface-meetings                 surface=True
+  126 inspect-personas-and-coders      window=surface-companion                surface=True
+  147 configure-settings               window=surface-settings                 surface=True
+  175 record-live                      window=surface-live                     surface=True
+  191 configure-cadence                window=surface-cadence                  surface=True
+  218 configure-setup                  window=surface-setup                    surface=True
+  238 open-constitutional-context      window=surface-constitutional-context   surface=True
+  255 open-workbenches                 window=surface-workbenches              surface=True
+  272 design-components                window=surface-components               surface=True
+  288 inspect-activity                 window=surface-activity                 surface=True
+  306 open-project-memory              window=surface-project-memory           surface=True
+  325 open-concierge                   window=surface-concierge                surface=True
+  348 project-setup                    window=surface-project-setup            surface=True
+  365 inspect-processes                window=surface-processes                surface=True
+  382 configure-commands               window=surface-commands                 surface=True
+  399 open-people                      window=surface-people                   surface=True
+  416 review-calendar-snapshot         window=surface-calendar-snapshot        surface=True
+  433 configure-runs-on                window=surface-concierge                surface=False
+  442 configure-integrations           window=surface-settings                 surface=False
+--- registry and host anchors ---
+    48	export const DESK_APPLICATIONS: readonly DeskApplication[] = [
+    49	  {
+    50	    action: "change-places",
+    51	    windowId: "surface-places",
+    52	    label: "Change places",
+    53	    description: "Environments, favorites, atmosphere, wallpaper, and room sound.",
+    54	    glyph: "▧",
+    55	    href: "/",
+    56	    group: "tool",
+    57	    shortcut: "⌘⇧P",
+    58	    surface: {
+    59	      eyebrow: "Places to think",
+    60	      minW: 600,
+    61	      defaultH: 620,
+    62	      load: () => import("../pages/cores/ChangePlacesCore").then((module) => ({ default: module.ChangePlacesCore })),
+    63	    },
+    64	  },
+    65	  {
+    66	    action: "open-intelligence",
+    67	    windowId: "intelligence:desk",
+    68	    label: "Intelligence",
+    69	    description: "Briefs, follow-through, receipts, and reasons.",
+    70	    glyph: "◈",
+    97	    action: "ask",
+    98	    windowId: "ask:desk",
+    99	    label: "Ask AI",
+   100	    description: "Ask across the work on your desk.",
+   101	    glyph: "✦",
+   102	    href: "/ask",
+   103	    group: "app",
+   104	  },
+   105	  {
+   106	    action: "review-meetings",
+   107	    windowId: "surface-meetings",
+   108	    label: "Meetings",
+   109	    description: "Outcomes, recordings, and the typed record.",
+   110	    glyph: "▣",
+   111	    href: "/history",
+   112	    group: "app",
+   113	    dock: { order: 2, launch: "surface" },
+   114	    shortcut: "⌘2",
+   115	    mark: true,
+   116	    surface: {
+   117	      eyebrow: "Meeting memory",
+   118	      minW: 640,
+   119	      load: () =>
+   120	        import("../pages/cores/HistoryCore").then((module) => ({
+   121	          default: module.HistoryCore,
+   122	        })),
+   123	    },
+   147	    action: "configure-settings",
+   148	    windowId: "surface-settings",
+   149	    label: "Settings",
+   150	    description: "Every boundary, stated once.",
+   151	    glyph: "⚙",
+   152	    href: "/settings",
+   153	    group: "app",
+   154	    dock: { order: 4, launch: "surface" },
+   155	    shortcut: "⌘4",
+   156	    mark: true,
+   157	    aliases: [
+   158	      { key: "configure-integrations", scope: "integration:destinations" },
+   159	      { key: "configure-integration" },
+   160	      // PARKED (HS-170-03): configure-runs-on now opens the Concierge window directly.
+   161	      // { key: "configure-runs-on", scope: "models" },
+   162	      { key: "read-runtime-docs", scope: "guide" },
+   163	    ],
+   164	    surface: {
+   165	      eyebrow: "Configuration",
+   166	      minW: 560,
+   167	      defaultH: 600,
+   168	      load: () =>
+   169	        import("../pages/cores/SettingsCore").then((module) => ({
+   170	          default: module.SettingsCore,
+   171	        })),
+   172	    },
+   217	  {
+   218	    action: "configure-setup",
+   219	    windowId: "surface-setup",
+   220	    label: "Setup",
+   221	    description: "What this device is ready for, check by check.",
+   222	    glyph: "⚙",
+   223	    href: "/",
+   224	    // A tool, not one of the four dock primaries: it reaches Go and ⌘K in
+   225	    // the tool cluster and takes no dock seat.
+   226	    group: "tool",
+   227	    surface: {
+   228	      eyebrow: "Readiness",
+   229	      minW: 560,
+   230	      defaultH: 560,
+   231	      load: () =>
+   232	        import("../pages/cores/SetupCore").then((module) => ({
+   233	          default: module.SetupCore,
+   234	        })),
+   235	    },
+   236	  },
+   237	  {
+   238	    action: "open-constitutional-context",
+   239	    windowId: "surface-constitutional-context",
+   240	    label: "Context",
+   241	    description: "The always-on briefing every agent receives.",
+   242	    glyph: "§",
+   243	    href: "/context",
+   244	    group: "tool",
+   245	    surface: {
+   246	      eyebrow: "Owner",
+   247	      minW: 480,
+   248	      load: () =>
+   249	        import("../pages/cores/ConstitutionalContextCore").then((module) => ({
+   250	          default: module.ConstitutionalContextCore,
+   251	        })),
+   252	    },
+   253	  },
+   254	  {
+   255	    action: "open-workbenches",
+   256	    windowId: "surface-workbenches",
+   257	    label: "Workbenches",
+   258	    description: "Mission control for your agent workbenches.",
+   259	    glyph: "⚒",
+   260	    href: "/workbenches",
+   261	    group: "tool",
+   262	    surface: {
+   263	      eyebrow: "Work",
+   264	      minW: 560,
+   265	      load: () =>
+   266	        import("../pages/cores/WorkbenchesHomeCore").then((module) => ({
+   267	          default: module.WorkbenchesHomeCore,
+   268	        })),
+   269	    },
+   306	    action: "open-project-memory",
+   307	    windowId: "surface-project-memory",
+   308	    label: "Desk memory",
+   309	    description: "Search connected evidence across the Desk or within a Project.",
+   310	    glyph: "▤",
+   311	    href: "/project-memory",
+   312	    group: "tool",
+   313	    surface: {
+   314	      eyebrow: "Long memory",
+   315	      minW: 800,
+   316	      load: () =>
+   317	        import("../pages/cores/ProjectMemoryCore").then((module) => ({
+   318	          default: module.ProjectMemoryCore,
+   319	        })),
+   320	    },
+   321	  },
+   322	  // HS-169-02: the streamlined Door (replaces the setup interview)
+   323	  // HS-170-03: the Concierge — the Models surface (replaces ModelLibraryCore + CapabilityAssignmentsCore)
+   324	  {
+   325	    action: "open-concierge",
+   326	    windowId: "surface-concierge",
+   327	    label: "Models",
+   328	    description: "Engines found, the proposed set, Use these.",
+   329	    glyph: "▣",
+   330	    href: "/models",
+   331	    // HS-200-04 (return-to-task): `configure-runs-on` had no hosted surface, so
+   332	    // every "Set up AI" handoff fell back to navigate("/settings") — which
+   333	    // unmounts the calling face and loses an unfinished Thought answer. As an
+   334	    // alias of the hosted Concierge it opens in-world instead: the task stays
+   335	    // mounted underneath and is still there when the window closes.
+   336	    aliases: [{ key: "configure-runs-on" }],
+   337	    surface: {
+   338	      eyebrow: "Models",
+   339	      minW: 560,
+   340	      defaultH: 760,
+   341	      load: () =>
+   342	        import("../features/concierge/ConciergeCore").then((module) => ({
+   343	          default: module.ConciergeCore,
+   344	        })),
+   345	    },
+   365	    action: "inspect-processes",
+   366	    windowId: "surface-processes",
+   367	    label: "Processes",
+   368	    description: "See what the kernel is running.",
+   369	    glyph: "∷",
+   370	    href: "/#processes",
+   371	    group: "tool",
+   372	    surface: {
+   373	      eyebrow: "Kernel",
+   374	      minW: 520,
+   375	      load: () =>
+   376	        import("../pages/cores/ProcessCore").then((module) => ({
+   377	          default: module.ProcessCore,
+   378	        })),
+   379	    },
+   380	  },
+   381	  {
+   382	    action: "configure-commands",
+   383	    windowId: "surface-commands",
+   384	    label: "Commands",
+   385	    description: "Map spoken phrases to registered actions.",
+   386	    glyph: "⌘",
+   387	    href: "/commands",
+   388	    group: "tool",
+   389	    surface: {
+   390	      eyebrow: "Voice commands",
+   391	      minW: 460,
+   392	      load: () =>
+   393	        import("../pages/cores/CommandsCore").then((module) => ({
+   394	          default: module.CommandsCore,
+   395	        })),
+   396	    },
+   397	  },
+   398	  {
+   399	    action: "open-people",
+   400	    windowId: "surface-people",
+   401	    label: "People",
+   402	    description: "Relationships, commitments, and follow-through.",
+   403	    glyph: "♧",
+   404	    href: "/",
+   405	    mark: true,
+   406	    surface: {
+   407	      eyebrow: "Follow-through",
+   408	      minW: 560,
+   409	      load: () =>
+   410	        import("../pages/cores/PeopleCore").then((module) => ({
+   411	          default: module.PeopleCore,
+   412	        })),
+   413	    },
+   414	  },
+   415	  {
+   416	    action: "review-calendar-snapshot",
+   417	    windowId: "surface-calendar-snapshot",
+   418	    label: "Calendar snapshot",
+   419	    description: "Review calendar evidence before it enters the Desk.",
+   420	    glyph: "▦",
+   421	    href: "/calendar-snapshot",
+   422	    surface: {
+   423	      eyebrow: "Calendar",
+   424	      minW: 640,
+   425	      load: () =>
+   426	        import("../pages/cores/CalendarSnapshotReviewCore").then((module) => ({
+   427	          default: module.CalendarSnapshotReviewCore,
+   428	        })),
+   429	    },
+   430	  },
+   431	  // HS-170-03: configure-runs-on now opens the Concierge window.
+   432	  {
+   433	    action: "configure-runs-on",
+   434	    windowId: "surface-concierge",
+   435	    label: "Models",
+   436	    description: "Engines found, the proposed set, Use these.",
+   437	    glyph: "▣",
+   438	    href: "/models",
+   439	    group: "tool",
+   440	  },
+   441	  {
+   442	    action: "configure-integrations",
+   443	    windowId: "surface-settings",
+   444	    label: "Connections",
+   445	    description: "Configure connected destinations and credentials.",
+   446	    glyph: "↗",
+   447	    href: "/settings",
+   448	    group: "tool",
+   449	    subjectRef: "integration:destinations",
+   450	  },
+   451	] as const;
+   453	export const SURFACE_APPLICATIONS: readonly SurfaceApplication[] =
+   454	  DESK_APPLICATIONS.filter(
+   455	    (application): application is (typeof DESK_APPLICATIONS)[number] & {
+   456	      surface: DeskSurfaceSpec;
+   457	    } => "surface" in application && application.surface !== undefined,
+   458	  );
+   459
+   460	export type DockApplication = DeskApplication & {
+   461	  dock: NonNullable<DeskApplication["dock"]>;
+   462	};
+   463
+   464	export const DOCK_APPLICATIONS: readonly DockApplication[] =
+   465	  DESK_APPLICATIONS.filter(
+   466	    (application): application is DockApplication => Boolean(application.dock),
+   467	  ).sort((left, right) => left.dock.order - right.dock.order);
+   468
+   469	export const MARK_APPLICATION_COMMANDS = DESK_APPLICATIONS.filter(
+   470	  (application) => application.mark,
+   471	).map((application) =>
+   472	  application.action === "open-intelligence" || application.action === "open-people"
+   473	    ? `desk.${application.action}`
+   474	    : `go.${application.action}`,
+   475	);
+   476
+   477	export const DESK_APPLICATION_ALIASES = Object.fromEntries(
+   478	  DESK_APPLICATIONS.flatMap((application) =>
+   479	    (application.aliases ?? []).map((alias) => [
+   480	      alias.key,
+   481	      { target: application.action, scope: alias.scope },
+   482	    ]),
+   483	  ),
+   484	) as Record<string, { target: string; scope?: string }>;
+   485
+   486	export function applicationForAction(action: string): DeskApplication | undefined {
+   487	  return DESK_APPLICATIONS.find((application) => application.action === action);
+   488	}
+     1	/** The Go shelf is a projection of the DeskOS application manifest. */
+     2	import { DESK_APPLICATIONS } from "./applications";
+     3
+     4	export const DESK_TOOLS = DESK_APPLICATIONS.filter(
+     5	  (application) => application.group === "app" || application.group === "tool",
+     6	)
+     7	  .sort((left, right) => {
+     8	    if (left.group === right.group) return 0;
+     9	    return left.group === "app" ? -1 : 1;
+    10	  })
+    11	  .map((application) => ({
+    12	  href: application.href,
+    13	  label: application.toolLabel ?? application.label,
+    14	  description: application.description,
+    15	  glyph: application.toolGlyph ?? application.glyph,
+    16	  action: application.action,
+    17	  group: application.group as "app" | "tool",
+    18	  subjectRef: application.subjectRef,
+    19	  windowId: application.windowId,
+    20	  shortcut: application.shortcut,
+    21	  }));
+    22
+   606	  // ── Go (the applications - DESK_TOOLS is the data truth) ────────────
+   607	  // HS-148-02: glyph and group flow from DESK_TOOLS (dock-parity).
+   608	  ...DESK_TOOLS.map((tool): Verb => {
+   609	    const application = applicationForAction(tool.action);
+   610	    const binding =
+   611	      application?.shortcut && application.windowId
+   612	        ? { key: application.shortcut, windowId: application.windowId }
+   613	        : undefined;
+   614	    return {
+   615	      id: `go.${tool.action}`,
+   616	      label: tool.label,
+   617	      menu: "go",
+   618	      scope: "go",
+   619	      group: tool.group,
+   620	      glyph: tool.glyph,
+   621	      key: tool.action === "ask" ? "⌘I" : binding?.key,
+   622	      keywords: tool.description.toLocaleLowerCase().split(/\W+/).slice(0, 6),
+   623	      ghost: never,
+   624	      run: () => {
+   625	        if (tool.action === "ask") {
+   626	          useDesk.getState().openAsk();
+   627	          return;
+   628	        }
+   629	        if (binding && focusOrRestoreApp(binding.windowId)) return;
+   630	        openSurfaceOr(tool.action, tool.href, tool.subjectRef);
+   631	      },
+   632	    };
+   633	  }),
+    33	export function floorMenuEntries(): WorkMenuEntry[] {
+    34	  const floor = verbsFor("floor");
+    35	  const creates = floor.filter((v) => v.group === "new");
+    36	  const verbs = floor.filter(
+    37	    (v) => v.group === "floor" || v.group === "view",
+    38	  );
+    39	  return [
+    40	    {
+    41	      type: "sub",
+    42	      id: "floor.new",
+    43	      label: "New",
+    44	      menuContext: "launcher",
+    45	      entries: creates.map((v) => item(v, FLOOR_CTX)),
+    46	    },
+    47	    {
+    48	      type: "sub",
+    49	      id: "floor.launch",
+    50	      label: "Launch",
+    51	      menuContext: "launcher",
+    52	      entries: verbsFor("go").map((v) => item(v, FLOOR_CTX)),
+    53	    },
+    54	    { type: "sep", id: "floor.sep" },
+    55	    ...verbs.map((v) => item(v, FLOOR_CTX)),
+    56	  ];
+    24	import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
+    25	import { useCompactViewport } from "../useCompactViewport";
+    26	import { Button } from "../../components/signal/Signal";
+    27
+    28	const MENUS: { id: MenuId; label: string }[] = [
+    29	  { id: "desk", label: "Desk" },
+    30	  { id: "object", label: "Object" },
+    31	  { id: "go", label: "Go" },
+    32	  { id: "window", label: "Window" },
+    33	];
+    34
+    35	export function DeskMenuBar() {
+    36	  const settled = useSettleState((s) => s.settled);
+    78	  const menuEntries = (id: MenuId, out: WorkMenuEntry[]): void => {
+    79	    let lastGroup: string | undefined;
+    80	    for (const v of menuVerbs(id)) {
+    81	      if (!offeredHere(v)) continue;
+    82	      if (out.length && v.group !== lastGroup)
+    83	        out.push({ type: "sep", id: `sep-${v.id}` });
+    84	      lastGroup = v.group;
+    85	      out.push({
+    86	        type: "item",
+    87	        id: v.id,
+    88	        label: verbLabel(v, ctx),
+    89	        glyph: v.glyph,
+    90	        keycap: v.key,
+    91	        ghost: v.ghost(ctx),
+    92	        onSelect: () => v.run(ctx),
+    93	      });
+    94	    }
+    95	  };
+    96
+    97	  const entries = (id: MenuId): WorkMenuEntry[] => {
+    98	    const out: WorkMenuEntry[] = [];
+    99	    menuEntries(id, out);
+   100	    // The one phone door carries every menu's verbs, in bar order.
+   101	    if (compact && id === "go")
+   102	      for (const m of MENUS) if (m.id !== "go") menuEntries(m.id, out);
+   103	    return out;
+   104	  };
+   105
+   106	  return (
+   107	    <nav ref={barRef} className="desk-verbbar" aria-label="Desk menus">
+   108	      {(compact ? MENUS.filter((m) => m.id === "go") : MENUS).map((m) => (
+    20	import { ShortcutSheet } from "./ShortcutSheet";
+    21	import { DOCK_APPLICATIONS } from "../../applications";
+    22	import { RoomActions } from "./RoomActions";
+    23
+    24	/** HS-100-11 — the dock IS the launcher: the four applications ride it
+    25	 * always (running mark when their window is open); drawers and tools
+    26	 * moved to the menu-bar bell and the search shelf. */
+    27	const DOCK_APP_IDS = new Set<string>(
+    28	  DOCK_APPLICATIONS.map((application) => application.windowId),
+    29	);
+    30	const ACTIONABLE_LAUNCHERS = new Set(["attention", "delivery-board"]);
+    31
+    32	/** The dock (HS-95-03): every open window as a chip -- tap focuses (or
+    33	 * restores a parked one), x closes, loop resets the layout. Ctrl+` cycles
+    34	 * focus in MRU order, restoring as it lands. Shell furniture: it rides
+    35	 * above the window band, and it is invisible while nothing is open. */
+    36	export function Dock({ center }: { center?: ReactNode } = {}) {
+    37	  const panelMin = useDesk((s) => s.panelMin);
+    38	  const panelOrder = useDesk((s) => s.panelOrder);
+    39	  const windowsById = useDesk((s) => s.windowsById);
+    40	  const windows = useOpenWindows();
+    41	  const launchers = useLaunchers();
+    42	  // HS-111-07 — the HS-101 B8 keyboard grammar (Cmd+1-Cmd+4, Cmd+W, Cmd+M, Ctrl+`,
+    43	  // Cmd+/) moved into desk/keymap.ts, driven by the registry's key
+    44	  // fields: ONE binder (refcounted -- the chrome mounts it too). The
+    45	  // sheet's open state is shared chrome state so the system.sheet
+    46	  // verb can draw it.
+    47	  useKeymap();
+    48	  const sheetOpen = useShortcutSheet((s) => s.open);
+    49	  // HS-135-06: the Chair/Floor dock toggle (counsel ruling B.Q1).
+    50	  const chairSurface = useChairState((s) => s.surface);
+    51	  const toggleSurface = useChairState((s) => s.toggle);
+    52	  const intelligenceAttention = useIntelligenceAttention();
+    53	  // HS-171-04: dock badge = needs-you count (muted excluded).
+    54	  const [needsYouCount, setNeedsYouCount] = useState(0);
+    55	  const refreshNeedsYou = useCallback(() => {
+    56	    void apiFetch<{ count?: number }>("/api/desk/needs-you")
+    57	      .then((data) => setNeedsYouCount(Number(data?.count) || 0))
+    58	      .catch(() => {});
+    59	  }, []);
+    60	  useEffect(() => { refreshNeedsYou(); }, [refreshNeedsYou]);
+    61	  // Refresh the dock badge on the same interval as the shade poll.
+    62	  useEffect(() => {
+    63	    const timer = window.setInterval(refreshNeedsYou, 60_000);
+    64	    return () => window.clearInterval(timer);
+    65	  }, [refreshNeedsYou]);
+    66	  const intelligenceBadge = needsYouCount > 0
+    67	    ? String(needsYouCount)
+    68	    : intelligenceAttention.overdue
+    69	      ? String(intelligenceAttention.overdue)
+    70	      : intelligenceAttention.briefReady ? "•" : null;
+   258	      {/* Floor and List own their pullout mounts. The normal Chair needs the
+   259	          same card seam for the first-value note staged before reveal. */}
+   260	      {!arrivalRequired && !showFloor && chairOpenCards.map((pullout) => (
+   261	        <Pullout key={pullout.id} o={pullout.object!} origin={pullout.origin} />
+   262	      ))}
+   263	      {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}
+   264	      {!arrivalRequired && <DeskToolInspector />}
+   265	      {!arrivalRequired && <MissionControlConveyor />}
+   266	      {!arrivalRequired && <DeliveryBoard />}
+   267	      {!arrivalRequired && <DeliveryDossierWindow />}
+   268	      {!arrivalRequired && <DeliveryTerminalWindow />}
+   269	      {!arrivalRequired && roadmapWindows.map((roadmap) => (
+   270	        <ApplicationBoundary key={roadmap.slug} label="Roadmap">
+   271	          <Suspense fallback={null}>
+   272	              <RoadmapWindow slug={roadmap.slug} origin={roadmap.origin} />
+   273	          </Suspense>
+   274	        </ApplicationBoundary>
+   275	      ))}
+   276	      {!arrivalRequired && repositoryWindows.map((repository) => (
+   277	        <ApplicationBoundary key={repository.id} label="Repository">
+   278	          <Suspense fallback={null}>
+   279	              <RepoWindow repositoryId={repository.id} origin={repository.origin} />
+   280	          </Suspense>
+   281	        </ApplicationBoundary>
+   282	      ))}
+   283	      {!arrivalRequired && workbenchWindows.map((wb) => (
+   284	        <ApplicationBoundary key={wb.id} label="Workbench">
+   285	          <Suspense fallback={null}>
+   286	              <WorkbenchWindow workbenchId={wb.id} origin={wb.origin} />
+   287	          </Suspense>
+   288	        </ApplicationBoundary>
+   289	      ))}
+   290	      {!arrivalRequired && <NewWorkbenchChooser />}
+   291	      {!arrivalRequired && <ScheduleCreateWindow />}
+   292	      {!arrivalRequired && <PanePicker />}
+   293	      {!arrivalRequired && <SessionPullout />}
+   294	      {!arrivalRequired && <AttentionDrawer />}
+   295	      {/* Recovery remains direct and in-place: FirstWords opens Setup through
+   296	          this existing surface registry without restoring the whole Desk. */}
+   297	      <SurfaceWindows
+   298	        key={arrivalRequired ? "first-value-recovery" : "desk"}
+   299	        firstValueRecoveryOnly={arrivalRequired}
+   300	      />
+   301	      {!arrivalRequired && <TrustWindow />}
+   302	      {!arrivalRequired && <Dock center={<RecordOrb />} />}
+   303	      {!arrivalRequired && <SnapGhost />}
+   304	      {!arrivalRequired && <Expose />}
+   305	      {!arrivalRequired && <Switcher />}
+     1	/** Kind-keyed pullout content registry (HS-117-15).
+     2	 * The `satisfies` gate ensures compile-time completeness —
+     3	 * adding a new PrimitiveKind without a registry entry is a type error. */
+     4	import type { PrimitiveKind } from "../../lib/primitives";
+     5	import type { PulloutContent } from "./types";
+     6	import { MeetingPullout } from "./MeetingPullout";
+     7	import { ArtifactPullout } from "./ArtifactPullout";
+     8	import { NotePullout } from "./NotePullout";
+     9	import { KbPullout } from "./KbPullout";
+    10	import { DecisionPullout } from "./DecisionPullout";
+    11	import { RecipePullout } from "./RecipePullout";
+    12	import { ChainPullout } from "./ChainPullout";
+    13	import { WorkflowPullout } from "./WorkflowPullout";
+    14	import { CoderPullout } from "./CoderPullout";
+    15	import { DirectoryPullout } from "./DirectoryPullout";
+    16	import { IntelligencePullout } from "./IntelligencePullout";
+    17	import { FallbackPullout } from "./FallbackPullout";
+    18	import { ThreadPullout } from "./ThreadPullout";
+    19	import { PeoplePullout } from "./PeoplePullout";
+    20
+    21	/**
+    22	 * Pullout-capable kinds use their own content. Window and surface kinds are
+    23	 * redirected by `openPullout` before this registry renders; the fallback
+    24	 * keeps the registry exhaustive for kinds that deliberately have no detail.
+    25	 */
+    26	export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent> = {
+    27	  meeting: MeetingPullout,
+    28	  artifact: ArtifactPullout,
+    29	  note: NotePullout,
+    30	  kb: KbPullout,
+    31	  decision: DecisionPullout,
+    32	  recipe: RecipePullout,
+    33	  chain: ChainPullout,
+    34	  workflow: WorkflowPullout,
+    35	  coder: CoderPullout,
+    36	  directory: DirectoryPullout,
+    37	  thread: ThreadPullout,
+    38	  project: FallbackPullout,
+    39	  repository: FallbackPullout,
+    40	  roadmap: FallbackPullout,
+    41	  story: FallbackPullout,
+    42	  workbench: FallbackPullout,
+    43	  intelligence: IntelligencePullout,
+    44	  people: PeoplePullout,
+    45	  game: FallbackPullout,
+    46	  layout: FallbackPullout,
+    47	} satisfies Record<PrimitiveKind, PulloutContent>;
+    43	const initialWorkspace = loadDeskWorkspace();
+    44	const initialPanelLayout = initialWorkspace.panel;
+    45	const initialPanelRects = initialPanelLayout.rects;
+    46	const surfaceByAction = new Map(
+    47	  SURFACE_APPLICATIONS.map((application) => [application.action, application]),
+    48	);
+    49	const surfaceByWindowId = new Map(
+    50	  SURFACE_APPLICATIONS.map((application) => [application.windowId, application]),
+    51	);
+    52	const initialWindowsById = Object.fromEntries(
+    53	  Object.entries(initialWorkspace.windowsById).filter(([id, instance]) => {
+    54	    const application = surfaceByWindowId.get(id);
+    55	    return application?.action === instance.applicationKey;
+    56	  }),
+    57	);
+    58
+    59	// ---- factory-generated open/close functions -----------------------------
+    60
+    61	const openZone = makeOpenWindow(ZONE_WINDOW_CONFIG);
+    62	const closeZone = makeCloseWindow(ZONE_WINDOW_CONFIG);
+    63	const openInfo = makeOpenWindow(INFO_WINDOW_CONFIG);
+    64	const closeInfo = makeCloseWindow(INFO_WINDOW_CONFIG);
+    65	const openRoadmap = makeOpenWindow(ROADMAP_WINDOW_CONFIG);
+    66	const closeRoadmap = makeCloseWindow(ROADMAP_WINDOW_CONFIG);
+    67	const openRepository = makeOpenWindow(REPOSITORY_WINDOW_CONFIG);
+    68	const closeRepository = makeCloseWindow(REPOSITORY_WINDOW_CONFIG);
+    69	const openWorkbench = makeOpenWindow(WORKBENCH_WINDOW_CONFIG);
+    70	const closeWorkbench = makeCloseWindow(WORKBENCH_WINDOW_CONFIG);
+   137	  openPullout(id, origin) {
+   138	    const resolved = resolveKindFromId(id, get);
+   139	    if (!resolved) {
+   140	      console.warn(`openPullout: unknown id "${id}"`);
+   141	      return;
+   142	    }
+   143	    const desc = PRIMITIVES[resolved.kind];
+   144	    switch (desc.surface.type) {
+   145	      case "pullout": {
+   146	        const open = get().pullouts;
+   147	        if (!open.some((p) => p.id === id))
+   148	          set({ pullouts: [...open, { id, origin: origin ?? null }] });
+   149	        set({ editingId: null });
+   150	        get().focusPanel(`pullout:${id}`);
+   151	        break;
+   152	      }
+   153	      case "window": {
+   154	        const method = `open${desc.surface.windowKey}` as const;
+   155	        (get() as unknown as Record<string, Function>)[method](resolved.resolvedId, origin);
+   156	        break;
+   157	      }
+   158	      case "surface": {
+   159	        const surfaceKey = desc.surface.surfaceKey;
+   160	        void import("../shell").then(({ openSurfaceWhenReady }) =>
+   161	          openSurfaceWhenReady(
+   162	            surfaceKey,
+   163	            resolved.kind === "project"
+   164	              ? `project:${resolved.resolvedId}`
+   165	              : undefined,
+   166	          ),
+   167	        );
+   168	        set({ editingId: null });
+   169	        break;
+   170	      }
+   171	      case "none":
+   172	        break;
+   173	      default:
+   174	        assertNever(desc.surface);
+   175	    }
+   176	  },
+   177	  closePullout(id) {
+   178	    const open = get().pullouts;
+   179	    if (open.length === 0) return;
+   180	    const victim =
+   181	      id ??
+   182	      [...open]
+   183	        .sort(
+   184	          (a, b) =>
+   185	            get().panelOrder.indexOf(`pullout:${a.id}`) -
+   186	            get().panelOrder.indexOf(`pullout:${b.id}`),
+   187	        )
+   188	        .pop()?.id;
+   189	    set({ pullouts: open.filter((p) => p.id !== victim) });
+   190	  },
+   191
+   192	  // ---- factory-generated window pairs -----------------------------------
+   193
+   194	  openZoneWindow(id, origin) {
+   195	    openZone(id, origin, set, get);
+   196	  },
+   197	  closeZoneWindow(id) {
+   198	    closeZone(id, set, get);
+   199	    saveDeskWorkspace(get());
+   200	  },
+   201	  openInfoWindow(ref, origin) {
+   202	    openInfo(ref, origin, set, get);
+   203	  },
+   204	  closeInfoWindow(ref) {
+   205	    closeInfo(ref, set, get);
+   206	  },
+   207	  openRoadmapWindow(slug, origin) {
+   208	    openRoadmap(slug, origin, set, get);
+   209	  },
+   210	  closeRoadmapWindow(slug) {
+   211	    closeRoadmap(slug, set, get);
+   212	  },
+   213	  openRepositoryWindow(id, origin) {
+   214	    openRepository(id, origin, set, get);
+   215	  },
+   216	  closeRepositoryWindow(id) {
+   217	    closeRepository(id, set, get);
+   218	  },
+   219	  openWorkbenchWindow(id, origin) {
+   220	    openWorkbench(id, origin, set, get);
+   221	  },
+   222	  closeWorkbenchWindow(id) {
+   223	    closeWorkbench(id, set, get);
+   224	  },
+   225	  openNewWorkbenchChooser(origin) {
+   226	    set({ newWorkbenchChooser: { origin: origin ?? null } });
+   227	  },
+   228	  closeNewWorkbenchChooser() {
+   229	    set({ newWorkbenchChooser: null });
+   230	  },
+   231
+   232	  // ---- static applications (one normalized lifecycle authority) --------
+   233
+   234	  openSurfaceWindow(key, scope) {
+   235	    const application = surfaceByAction.get(key);
+   236	    if (!application) {
+   237	      console.warn(`openSurfaceWindow: unknown application "${key}"`);
+   238	      return;
+   239	    }
+   240	    const instance = {
+   241	      id: application.windowId,
+   242	      kind: "surface" as const,
+   243	      applicationKey: application.action,
+   244	      scope: scope ?? null,
+   245	      persistence: "workspace" as const,
+   246	    };
+   247	    set({
+   248	      windowsById: {
+   249	        ...get().windowsById,
+   250	        [application.windowId]: instance,
+   251	      },
+   252	    });
+   253	    get().focusPanel(application.windowId);
+   254	    if (application.surface.maximized && !get().panelMax.includes(application.windowId))
+   255	      get().toggleMaximizePanel(application.windowId);
+   256	  },
+   257	  closeSurfaceWindow(key) {
+   258	    const application = surfaceByAction.get(key) ?? surfaceByWindowId.get(key);
+   259	    if (!application) return;
+   260	    const { [application.windowId]: _closed, ...windowsById } = get().windowsById;
+   261	    set({ windowsById });
+   262	    get().retirePanel(application.windowId);
+   263	    saveDeskWorkspace(get());
+   264	  },
+   265	  clearSurfaceWindows() {
+   266	    set({ windowsById: {} });
+   267	    saveDeskWorkspace(get());
+   268	  },
+   300	  focusPanel(id) {
+   301	    const order = compactPanelOrder([
+   302	      ...get().panelOrder.filter((x) => x !== id),
+   303	      id,
+   304	    ]);
+   305	    set({ panelOrder: order });
+   306	    saveDeskWorkspace(get());
+   307	  },
+   308	  presentPanel(id) {
+   309	    if (get().panelOrder.includes(id)) return;
+   310	    get().focusPanel(id);
+   311	  },
+   312	  retirePanel(id) {
+   313	    if (!get().panelOrder.includes(id)) return;
+   314	    const order = get().panelOrder.filter((x) => x !== id);
+   315	    set({ panelOrder: order });
+   316	    saveDeskWorkspace(get());
+   317	  },
+   318	  minimizePanel(id) {
+   319	    if (get().panelMin.includes(id)) return;
+   320	    set({ panelMin: [...get().panelMin, id] });
+   321	  },
+   322	  restorePanel(id) {
+   323	    const panelMin = get().panelMin.filter((x) => x !== id);
+   324	    const order = compactPanelOrder([
+   325	      ...get().panelOrder.filter((x) => x !== id),
+   326	      id,
+   327	    ]);
+   328	    set({ panelMin, panelOrder: order });
+   329	    saveDeskWorkspace(get());
+   330	  },
+   331	  toggleMaximizePanel(id) {
+   332	    const has = get().panelMax.includes(id);
+   333	    const panelMax = has
+   334	      ? get().panelMax.filter((x) => x !== id)
+   335	      : [...get().panelMax, id];
+   336	    const order = compactPanelOrder([
+   337	      ...get().panelOrder.filter((x) => x !== id),
+   338	      id,
+   339	    ]);
+   340	    set({ panelMax, panelOrder: order });
+   341	    saveDeskWorkspace(get());
+   342	  },
+   343	  resetLayout() {
+   344	    set({
+   345	      panelRects: {},
+   346	      panelSaved: [],
+   347	      panelOrder: [],
+   348	      panelMin: [],
+   349	      panelMax: [],
+   350	    });
+   351	    saveDeskWorkspace(get());
+   352	  },
+    90	  useEffect(() => {
+    91	    // The persisted open set belongs to the normal Desk. Hide it before this
+    92	    // recovery-only mount becomes paintable; FirstWords can still open Setup
+    93	    // after the registry below is ready.
+    94	    if (firstValueRecoveryOnly) useDesk.getState().clearSurfaceWindows();
+    95	    setReady(true);
+    96	  }, [firstValueRecoveryOnly]);
+    97
+    98	  useEffect(() => {
+    99	    const offs = rows.map((row) =>
+   100	      registerSurface(row.key, (scope) => {
+   101	        useDesk.getState().openSurfaceWindow(row.key, scope);
+   102	      }),
+   103	    );
+   104	    const aliasOffs = Object.entries(DESK_APPLICATION_ALIASES)
+   105	      .filter(([, alias]) => rows.some((row) => row.key === alias.target))
+   106	      .map(([key, alias]) =>
+   107	        registerSurface(key, (scope) =>
+   108	          useDesk.getState().openSurfaceWindow(alias.target, scope ?? alias.scope),
+   109	        ),
+   110	      );
+   111	    // This runs only after every normal row and applicable alias is present in
+   112	    // the dispatcher. Consume a demoted-route intent only here, then publish
+   113	    // the fact the /meetings proof awaits; first-value recovery has no normal
+   114	    // registry and must not claim or consume either.
+   115	    if (!firstValueRecoveryOnly) {
+   116	      const staged = consumeStagedSurfaceOpen();
+   117	      if (staged) openSurfaceWhenReady(staged.key, staged.scope);
+   118	      setRegistryState("registered");
+   119	    }
+   120	    return () => {
+   121	      offs.forEach((off) => off());
+   122	      aliasOffs.forEach((off) => off());
+   123	    };
+   124	  }, [firstValueRecoveryOnly, rows]);
+   125
+   126	  if (!ready) return null;
+   127
+   128	  return (
+   129	    <div
+   130	      className="desk-surface-windows"
+   131	      data-surface-registry-state={
+   132	        firstValueRecoveryOnly ? "recovery-only" : registryState
+   133	      }
+   134	    >
+   135	      {rows.map((row) => {
+   136	        const instance = windowsById[row.id];
+   137	        if (!instance || instance.applicationKey !== row.key) return null;
+   138	        return (
+   139	          <SurfaceWindowHost
+   140	            key={row.id}
+   141	            row={row}
+   142	            scope={instance.scope ?? undefined}
+   143	            items={items}
+   144	          />
+   145	        );
+   146	      })}
+   147	    </div>
+   148	  );
+   149	}
+   150
+   151	/** One hosted core: owns the head's wing slot so the core can publish
+   152	 * its faces into the window chrome (HS-100-07, the posture rule), the
+   153	 * foot slot so its footer belongs to the frame (HS-129-01), and the
+   154	 * title slot so cores can override the manifest label (HS-158-05). */
+   155	export function SurfaceWindowHost({
+   156	  row,
+   157	  scope,
+   158	  items,
+   159	}: {
+   160	  row: SurfaceRow;
+   161	  scope: string | undefined;
+   162	  items: ReturnType<typeof useDesk.getState>["items"];
+   163	}) {
+   164	  const [wings, setWings] = useState<ReactNode>(null);
+   165	  const [foot, setFoot] = useState<HTMLElement | null>(null);
+   166	  const [titleOverride, setTitleOverride] = useState<string | null>(null);
+   167	  return (
+   168	    <DeskWindowFrame
+   169	      id={row.id}
+   170	      glyph={row.glyph}
+   171	      eyebrow={row.eyebrow}
+   172	      title={titleOverride ?? row.title}
+   173	      minW={row.minW}
+   174	      defaultH={row.defaultH}
+   175	      wings={wings}
+   176	      open
+   177	      unmountOnMinimize
+   178	      onClose={() => useDesk.getState().closeSurfaceWindow(row.key)}
+   179	      className={
+   180	        row.key === "configure-settings"
+   181	          ? "desk-surface-window desk-settings-window"
+   182	          : "desk-surface-window"
+   183	      }
+   184	    >
+   185	      <FootSlotContext.Provider value={foot}>
+   186	        <div className="desk-surface-body">
+   187	          <div data-aftercare-window-slot="top" />
+   188	          <TitleSlotContext.Provider value={setTitleOverride}>
+   189	            <WingSlotContext.Provider value={setWings}>
+   190	              <ApplicationBoundary label={row.title}>
+   191	                <Suspense fallback={<p className="quiet">…</p>}>
+   192	                  <row.Core
+   193	                    scope={scope}
+   194	                    scopeLabel={
+   195	                      scope
+   196	                        ? (objectByRef(items, scope)?.title ?? undefined)
+   197	                        : undefined
+   198	                    }
+   199	                  />
+   200	                </Suspense>
+   201	              </ApplicationBoundary>
+   202	            </WingSlotContext.Provider>
+   203	          </TitleSlotContext.Provider>
+   204	        </div>
+   205	        <footer
+   206	          ref={setFoot}
+   207	          className="desk-surface-foot surface-footer"
+   208	        />
+   209	      </FootSlotContext.Provider>
+   210	    </DeskWindowFrame>
+   211	  );
+   212	}
+     8	/** A hard-cut workspace contract. Older Desk window keys are intentionally
+     9	 * ignored: this is the sole persisted document for window lifecycle state. */
+    10	export const DESK_WORKSPACE_STORAGE_KEY = "hs.desk.workspace.v1";
+    11	export const DESK_WORKSPACE_VERSION = 1 as const;
+    12
+    13	const PANEL_ORDER_LIMIT = 100;
+    14
+    15	export interface DeskWorkspaceDocumentV1 {
+    16	  version: typeof DESK_WORKSPACE_VERSION;
+    17	  windowsById: Record<string, WindowInstance>;
+    18	  panel: {
+    19	    rects: Record<string, PanelRect>;
+    20	    order: string[];
+    21	    max: string[];
+    22	  };
+    23	  zoneWindows: string[];
+    24	  zoneViewPrefs: Record<string, ZoneViewPref>;
+    25	}
+    26
+    27	const emptyWorkspace = (): DeskWorkspaceDocumentV1 => ({
+    28	  version: DESK_WORKSPACE_VERSION,
+    29	  windowsById: {},
+    30	  panel: { rects: {}, order: [], max: [] },
+    31	  zoneWindows: [],
+    32	  zoneViewPrefs: {},
+    33	});
+    34
+    35	const isPanelId = (value: unknown): value is string =>
+    36	  typeof value === "string" && /^[A-Za-z0-9:_-]+$/.test(value);
+    37
+    38	const isPanelRect = (value: unknown): value is PanelRect => {
+    39	  if (!value || typeof value !== "object") return false;
+    40	  const rect = value as PanelRect;
+    41	  return [rect.x, rect.y, rect.w, rect.h].every(Number.isFinite) &&
+    42	    rect.w > 0 && rect.h > 0;
+    43	};
+    44
+    45	const compactIds = (values: unknown, limit = PANEL_ORDER_LIMIT): string[] => {
+    46	  if (!Array.isArray(values)) return [];
+    47	  const unique = Array.from(new Set(values.filter(isPanelId)));
+    48	  return unique.length > limit ? unique.slice(-limit) : unique;
+    49	};
+    50
+    51	const isZoneViewPref = (value: unknown): value is ZoneViewPref => {
+    52	  if (!value || typeof value !== "object") return false;
+    53	  const pref = value as ZoneViewPref;
+    54	  return (
+    55	    (pref.view === "icons" || pref.view === "list") &&
+    56	    (pref.sort === "name" || pref.sort === "kind" || pref.sort === "modified") &&
+    57	    (pref.dir === "asc" || pref.dir === "desc")
+    58	  );
+    59	};
+    60
+    61	function parseWindows(value: unknown): Record<string, WindowInstance> {
+    62	  if (!value || typeof value !== "object") return {};
+    63	  const windows: Record<string, WindowInstance> = {};
+    64	  for (const [id, raw] of Object.entries(value)) {
+    65	    if (!isPanelId(id) || !raw || typeof raw !== "object") continue;
+    66	    const candidate = raw as Partial<WindowInstance>;
+    67	    if (
+    68	      candidate.id !== id ||
+    69	      candidate.kind !== "surface" ||
+    70	      typeof candidate.applicationKey !== "string" ||
+    71	      (candidate.scope !== null && typeof candidate.scope !== "string") ||
+    72	      candidate.persistence !== "workspace"
+    73	    ) continue;
+    74	    windows[id] = candidate as WindowInstance;
+    75	  }
+    76	  return windows;
+    77	}
+    78
+    79	export function loadDeskWorkspace(): DeskWorkspaceDocumentV1 {
+    80	  try {
+    81	    const raw: unknown = JSON.parse(
+    82	      localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY) || "null",
+    83	    );
+    84	    if (!raw || typeof raw !== "object") return emptyWorkspace();
+    85	    const candidate = raw as Partial<DeskWorkspaceDocumentV1>;
+    86	    if (candidate.version !== DESK_WORKSPACE_VERSION)
+    87	      return emptyWorkspace();
+    88
+    89	    const panel = candidate.panel && typeof candidate.panel === "object"
+    90	      ? candidate.panel
+    91	      : { rects: {}, order: [], max: [] };
+    92	    const rects = Object.fromEntries(
+    93	      Object.entries(panel.rects && typeof panel.rects === "object" ? panel.rects : {})
+    94	        .filter(([id, rect]) => isPanelId(id) && isPanelRect(rect)),
+    95	    ) as Record<string, PanelRect>;
+    96	    const zoneViewPrefs = Object.fromEntries(
+    97	      Object.entries(
+    98	        candidate.zoneViewPrefs && typeof candidate.zoneViewPrefs === "object"
+    99	          ? candidate.zoneViewPrefs
+   100	          : {},
+   101	      ).filter(([id, pref]) => isPanelId(id) && isZoneViewPref(pref)),
+   102	    ) as Record<string, ZoneViewPref>;
+   103
+   104	    return {
+   105	      version: DESK_WORKSPACE_VERSION,
+   106	      windowsById: parseWindows(candidate.windowsById),
+   107	      panel: {
+   108	        rects,
+   109	        order: compactIds(panel.order),
+   110	        max: compactIds(panel.max),
+   111	      },
+   112	      zoneWindows: compactIds(candidate.zoneWindows),
+   113	      zoneViewPrefs,
+   114	    };
+   115	  } catch {
+   116	    return emptyWorkspace();
+   117	  }
+   118	}
+   119
+   120	type WorkspaceState = Pick<
+   121	  DeskState,
+   122	  | "windowsById"
+   123	  | "panelRects"
+   124	  | "panelSaved"
+   125	  | "panelOrder"
+   126	  | "panelMax"
+   127	  | "zoneWindows"
+   128	  | "zoneViewPrefs"
+   129	>;
+   130
+   131	export function saveDeskWorkspace(state: WorkspaceState): void {
+   132	  const rects: Record<string, PanelRect> = {};
+   133	  for (const id of state.panelSaved) {
+   134	    const rect = state.panelRects[id];
+   135	    if (rect && isPanelId(id) && isPanelRect(rect)) rects[id] = rect;
+   136	  }
+   137	  const document: DeskWorkspaceDocumentV1 = {
+   138	    version: DESK_WORKSPACE_VERSION,
+   139	    windowsById: state.windowsById,
+   140	    panel: {
+   141	      rects,
+   142	      order: compactIds(state.panelOrder),
+   143	      max: compactIds(state.panelMax),
+   144	    },
+   145	    zoneWindows: state.zoneWindows.map((window) => window.id),
+   146	    zoneViewPrefs: state.zoneViewPrefs,
+   147	  };
+   148	  try {
+   149	    localStorage.setItem(DESK_WORKSPACE_STORAGE_KEY, JSON.stringify(document));
+   150	  } catch {
+   151	    /* storage may be unavailable; the live compositor remains authoritative */
+   152	  }
+   153	}
+     1	/** HS-111-07 - shared chrome transients (a leaf module, no component
+     2	 * imports): the ⌘K palette and the ⌘/ shortcut sheet open state. The
+     3	 * registry's system verbs and the components both drive these, so the
+     4	 * one keymap can toggle them without a component import cycle. */
+     5	import { create } from "zustand";
+     6
+     7	interface Transient {
+     8	  open: boolean;
+     9	  setOpen(open: boolean): void;
+    10	  toggle(): void;
+    11	}
+    12
+    13	const transient = () =>
+    14	  create<Transient>((set) => ({
+    15	    open: false,
+    16	    setOpen: (open) => set({ open }),
+    17	    toggle: () => set((s) => ({ open: !s.open })),
+    18	  }));
+    19
+    20	/** The ⌘K command deck. */
+    21	export const usePalette = transient();
+    22
+    23	/** The ⌘/ shortcut sheet. */
+    24	export const useShortcutSheet = transient();
+--- frontend data route families ---
+## web/src/pages/cores/ActivityCore.tsx
+50:  const status = useResource<ActivityStatusResponse>("/api/activity/status", {});
+52:    "/api/activity/records?limit=100",
+55:  const rules = useResource<ActivityRulesResponse>("/api/activity/project-rules", {});
+57:    "/api/activity/meeting-candidates",
+61:    "/api/activity/enrichment/connectors",
+92:        onClick={() => void invoke("/api/activity/refresh")}
+101:            void invoke("/api/activity/settings", {
+169:                            `/api/activity/enrichment/connectors/${encodeURIComponent(id)}/dry-run?limit=25`,
+182:                            `/api/activity/meeting-candidates/${encodeURIComponent(id)}/start`,
+195:                            `/api/activity/project-rules/${encodeURIComponent(id)}`,
+244:                  void invoke("/api/activity/records", { method: "DELETE" })
+## web/src/pages/cores/AssignmentEditor.tsx
+## web/src/pages/cores/AssignmentModelChooser.tsx
+## web/src/pages/cores/AssignmentSummary.tsx
+## web/src/pages/cores/CadenceCore.tsx
+172:  const heartbeat = useResource<HeartbeatSettings>("/api/settings/heartbeat", {
+180:  const briefRes = useResource<BriefLatest>("/api/brief/latest", null);
+181:  const doorRes = useResource<DoorProjection>("/api/door", {});
+182:  const projectsRes = useResource<{ projects: ProjectItem[] }>("/api/projects", { projects: [] });
+185:  const cadenceStatus = useResource<Record<string, unknown>>("/api/cadence/status", {});
+186:  const loopsResource = useResource<CadenceLoopsResponse>("/api/cadence/loops", {});
+187:  const history = useResource<CadenceHistoryResponse>("/api/cadence/history?limit=20", {});
+224:    await apiFetch("/api/settings/heartbeat", { method: "PUT", json: patch });
+231:      const result = await apiFetch<SweepReceipt>("/api/settings/heartbeat/run-now", {
+245:      await apiFetch("/api/brief/generate", { method: "POST", json: {} });
+255:      await apiFetch(`/api/cadence/loops/${encodeURIComponent(id)}/${verb}`, {
+269:        `/api/cadence/loops/${encodeURIComponent(id)}/reply`,
+## web/src/pages/cores/CalendarSnapshotReviewCore.tsx
+96:      }>("/api/calendar/snapshot/confirm", {
+## web/src/pages/cores/CapabilityAssignmentsCore.tsx
+## web/src/pages/cores/ChangePlacesCore.tsx
+## web/src/pages/cores/CommandsCore.tsx
+43:  const resource = useResource<SettingsResponse>("/api/settings", {});
+66:      const value = await apiFetch<{ settings?: SettingsResponse }>("/api/settings", {
+83:      const value = await apiFetch<CommandTestResponse>("/api/commands/test", {
+## web/src/pages/cores/CompanionCore.tsx
+45:  const recipes = useResource<RecipesResponse>("/api/recipes", {});
+46:  const coders = useResource<CodersStatusResponse>("/api/coders/status", {});
+## web/src/pages/cores/ComponentsCore.tsx
+## web/src/pages/cores/ConstitutionalContextCore.tsx
+35:      const res = await apiFetch<ConstitutionalContextResponse>("/api/constitutional-context");
+49:      const res = await apiFetch<ConstitutionalContextHistoryResponse>("/api/constitutional-context/history");
+60:      const res = await apiFetch<ConstitutionalContextSaveResponse>("/api/constitutional-context", {
+## web/src/pages/cores/ContextualAssignment.tsx
+## web/src/pages/cores/DictationCore.tsx
+72:    "/api/dictation/journal?limit=1",
+83:        "/api/dictation/journal?limit=1",
+86:        `/api/dictation/journal?limit=${Math.max(Number(overview.count) || 0, 1)}`,
+## web/src/pages/cores/HistoryCore.tsx
+80:  const facetsResource = useResource<Record<string, unknown>>("/api/meetings/facets", {});
+97:    `/api/meetings?${meetingParams.toString()}`, {},
+101:  const doorActions = useResource<Record<string, unknown>>("/api/all-action-items", {});
+102:  const doorSpeakers = useResource<Record<string, unknown>>("/api/speakers", {});
+104:  // "/api/meetings/projects" matched no route (only
+109:  const doorProjects = useResource<Record<string, unknown>>("/api/projects", {});
+110:  const doorIntel = useResource<Record<string, unknown>>("/api/intel/jobs", {});
+111:  const doorPlugin = useResource<Record<string, unknown>>("/api/plugin-jobs", {});
+119:  // action exists for it to find. `/api/all-action-items` already reaches
+153:      `/api/meetings/${encodeURIComponent(requestedMeetingId)}`,
+188:     2. MERGE, never replace. The ledger row and `/api/meetings/{id}` are
+217:        `/api/meetings/${encodeURIComponent(selectedId)}`,
+304:        `/api/meetings/${encodeURIComponent(meetingId)}/intelligence/run`,
+339:            `/api/meetings/${encodeURIComponent(meetingId)}`,
+442:          `/api/meetings/${encodeURIComponent(id)}/export?format=${format}`,
+460:      await apiFetch(`/api/meetings/${encodeURIComponent(String(selected.id))}`, {
+## web/src/pages/cores/LiveCore.test.tsx
+## web/src/pages/cores/LiveCore.tsx
+71:  const initial = useResource<MeetingStateResponse>("/api/state", {});
+72:  const runtimeStatus = useResource<RuntimeStatusResponse>("/api/runtime/status", {});
+73:  const intentControl = useResource<IntentControlResponse>("/api/intents/control", {});
+74:  const pluginJobs = useResource<PluginJobsSummaryResponse>("/api/plugin-jobs/summary", {});
+75:  const devices = useResource<DevicesHealthResponse>("/api/devices/health", {});
+287:      await apiFetch("/api/meeting", {
+311:        await apiFetch<Record<string, unknown>>("/api/intents/preview", {
+323:    await perform("/api/bookmark", { label });
+340:        void perform(active ? "/api/meeting/stop" : "/api/meeting/start")
+463:                void apiFetch("/api/intents/profile", {
+552:                void apiFetch("/api/plugin-jobs/process", {
+## web/src/pages/cores/ModelLibraryCore.tsx
+## web/src/pages/cores/PeopleCore.tsx
+159:      const next = await apiFetch<Readiness>("/api/people/readiness");
+162:      const list = await apiFetch<{ relationships?: Relationship[] }>("/api/people/relationships");
+182:    void apiFetch("/api/people/setup", { method: "POST", json: {} })
+190:        apiFetch<{ relationship: Relationship }>(`/api/people/relationships/${encodeURIComponent(id)}`),
+191:        apiFetch<{ one_on_ones: Session[] }>(`/api/people/relationships/${encodeURIComponent(id)}/one-on-ones`),
+208:      const created = await apiFetch<{ relationship: Relationship }>("/api/people/relationships", { method: "POST", json: { display_name, relationship_kind: newKind } });
+280:    void apiFetch<{ upcoming?: UpcomingEvent[] }>("/api/door")
+362:    void apiFetch<{ brief: OneOnOneBrief }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/brief`)
+505:      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/calendar-links`, {
+516:      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/calendar-links`, {
+562:      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/owner-aliases`, {
+574:      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/owner-aliases`, {
+597:  useEffect(() => { void apiFetch<{ projects?: Project[] }>("/api/projects").then((result) => { const rows = result.projects ?? []; setProjects(rows); setProjectId((current) => current || rows[0]?.id || ""); }).catch(onProtectedFailure); }, [relationship.id]);
+598:  const add = async () => { if (!body.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/notes`, { method: "POST", json: { topic: topic.trim(), body: body.trim(), visibility } }); setTopic(""); setBody(""); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
+599:  const linkProject = async () => { if (!projectId) return; try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/projects/${encodeURIComponent(projectId)}`, { method: "POST", json: {} }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
+600:  const unlinkProject = async (id: string) => { try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/projects/${encodeURIComponent(id)}`, { method: "DELETE" }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
+619:  const createRequest = async () => { if (!request.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/requests`, { method: "POST", json: { body: request.trim(), visibility: "shared_intent", source: { kind: "manual" } } }); setRequest(""); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
+620:  const accept = async (id: string) => { try { await apiFetch(`/api/people/requests/${encodeURIComponent(id)}/accept`, { method: "POST", json: {} }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
+707:        apiFetch<{ workbenches?: Workbench[] }>("/api/workbenches"),
+708:        apiFetch<{ items?: ExecutionItem[] }>(`/api/people/commitments/${encodeURIComponent(commitment.id)}/execution`),
+714:  const send = async () => { if (!workbenchId) return; setBusy(true); try { await apiFetch(`/api/people/commitments/${encodeURIComponent(commitment.id)}/workbench`, { method: "POST", json: { workbench_id: workbenchId } }); await load(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
+715:  const satisfy = async () => { setBusy(true); try { await apiFetch(`/api/people/commitments/${encodeURIComponent(commitment.id)}/satisfy`, { method: "POST", json: { rationale: rationale.trim() } }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
+732:  const add = async () => { if (!draft.trim()) return; setBusy(true); try { const active = session ?? (await apiFetch<{ one_on_one: Session }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/one-on-ones`, { method: "POST", json: { visibility } })).one_on_one; await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(active.id)}/agenda`, { method: "POST", json: { body: draft.trim(), visibility, state: "open", source: { kind: "manual" } } }); setDraft(""); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
+733:  const roll = async (item: AgendaItem) => { if (!session) return; try { await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(session.id)}/agenda`, { method: "POST", json: { body: item.body, visibility: item.visibility, state: "open", rolled_from_id: item.id, source: { kind: "manual" } } }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
+738:  const archive = async () => { try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/archive`, { method: "POST", json: {} }); onArchived(); } catch (cause) { onProtectedFailure(cause); } };
+## web/src/pages/cores/ProcessCore.tsx
+## web/src/pages/cores/ProjectMemoryCore.tsx
+## web/src/pages/cores/RuntimeDocsCore.tsx
+## web/src/pages/cores/SettingsCore.tsx
+545:    apiFetch<RuntimeIdentityWire>("/api/system/identity")
+728:      const data = await apiFetch<RemoteWire>("/api/settings/remote");
+745:      await apiFetch("/api/settings/remote", {
+768:      }>("/api/settings/remote/credentials", {
+794:      const result = await apiFetch(`/api/settings/remote/delegations/${encodeURIComponent(identity)}`, {
+831:        `/api/settings/remote/delegations/${encodeURIComponent(identity)}/projects/${encodeURIComponent(projectId)}`,
+863:      const result = await apiFetch<Record<string, unknown>>(`/api/settings/remote/credentials/${id}`, {
+912:      void apiFetch<{ projects?: ProjectFact[] }>("/api/projects")
+1237:  const resource = useResource<SettingsResponse>("/api/settings", {});
+1239:    "/api/authority/policy",
+1243:  const hub = useResource<SettingsHubWire>("/api/settings/hub", {
+1296:    void apiFetch<typeof calSources>("/api/calendar/sources").then(setCalSources);
+1338:    const authoritative = await apiFetch<SettingsResponse>("/api/settings");
+1366:        "/api/settings",
+1462:        await apiFetch(`/api/settings/secrets/${secretId}`, {
+1467:        await apiFetch(`/api/settings/secrets/${secretId}/rotate`, {
+1471:        await apiFetch(`/api/settings/secrets/${secretId}`, {
+1489:        "/api/authority/control-mode",
+2114:                              const result = await apiFetch<Record<string, unknown>>("/api/calendar/snapshot", { method: "POST", body: fd });
+## web/src/pages/cores/SetupCore.tsx
+22:  const resource = useResource<SetupStatus>("/api/setup/status", {});
+34:        "/api/setup/runtime-test",
+## web/src/pages/cores/TopologyMapView.tsx
+## web/src/pages/cores/WorkbenchesHomeCore.tsx
+44:      const res = await apiFetch<WorkbenchesListResponse>("/api/workbenches");
+51:          const runsRes = await apiFetch<WorkbenchRunsResponse>(`/api/workbenches/${wb.id}/runs`);
+## web/src/pages/cores/core-hooks.tsx
+## web/src/pages/cores/core-layout.tsx
+## web/src/pages/cores/frontDoor.tsx
+293:        apiFetch<Recommendation>("/api/front-door/recommendation"),
+294:        apiFetch<{ plan: ApplyPlan | null }>("/api/front-door/apply"),
+330:          "/api/front-door/apply",
+358:      "/api/front-door/apply",
+412:      "/api/front-door/apply",
+## web/src/pages/cores/settingsBespoke.tsx
+## web/src/pages/cores/settingsModels.tsx
+## web/src/pages/cores/settingsPrefs.tsx
+## web/src/pages/cores/settingsTts.tsx
+41:        const data = await apiFetch<TtsStatus>("/api/tts/status");
+63:      }>("/api/tts/download", { method: "POST" });
+## web/src/pages/cores/settingsWallpaper.tsx
+## web/src/features/project-room/api.ts
+24:    `/api/projects/${encodeURIComponent(projectId)}/room`,
+33:    `/api/projects/${encodeURIComponent(projectId)}`,
+39:    `/api/projects/${encodeURIComponent(projectId)}/meetings?limit=200`,
+45:    `/api/decisions?project_id=${encodeURIComponent(projectId)}&limit=500`,
+51:    `/api/projects/${encodeURIComponent(projectId)}/artifacts`,
+57:    `/api/projects/${encodeURIComponent(projectId)}/since-last-meeting`,
+65:    `/api/decisions/${encodeURIComponent(decisionId)}/moment`,
+75:    `/api/decisions/${encodeURIComponent(decisionId)}/${action}`,
+86:    ? `/api/decisions/${encodeURIComponent(decisionId)}/promote/${kind}/draft-with-model`
+87:    : `/api/decisions/${encodeURIComponent(decisionId)}/promote/${kind}`;
+98:    `/api/projects/${encodeURIComponent(projectId)}/room/read`,
+107:    `/api/watches/${encodeURIComponent(watchId)}/pause`,
+114:    `/api/watches/${encodeURIComponent(watchId)}/resume`,
+121:    `/api/watches/${encodeURIComponent(watchId)}/retire`,
+131:  return apiFetch<MemorySearchResponse>(`/api/memory/search?${params}`);
+142:    `/api/projects/${encodeURIComponent(projectId)}/proposals${qs}`,
+152:    `/api/proposals/${encodeURIComponent(proposalId)}/confirm`,
+161:    `/api/proposals/${encodeURIComponent(proposalId)}/dismiss`,
+172:    `/api/projects/${encodeURIComponent(projectId)}/suggested-sources`,
+182:    `/api/projects/${encodeURIComponent(projectId)}/suggested-sources/${encodeURIComponent(ref)}/add`,
+192:    `/api/projects/${encodeURIComponent(projectId)}/suggested-sources/${encodeURIComponent(ref)}/dismiss`,
+219:    `/api/projects/${encodeURIComponent(projectId)}/nudges${qs}`,
+229:    `/api/nudges/${encodeURIComponent(stepId)}/send`,
+238:    `/api/nudges/${encodeURIComponent(stepId)}/dismiss`,
+257:    `/api/projects/${encodeURIComponent(projectId)}/people`,
+332:    `/api/projects/${encodeURIComponent(projectId)}/people`,
+352:    `/api/people/relationships/${encodeURIComponent(relationshipId)}/owner-aliases`,
+## web/src/features/project-room/update/api.ts
+16:    `/api/projects/${encodeURIComponent(projectId)}/updates${params}`,
+27:    `/api/projects/${encodeURIComponent(projectId)}/updates/draft`,
+39:    `/api/updates/${encodeURIComponent(updateId)}`,
+51:    `/api/updates/${encodeURIComponent(updateId)}/regenerate`,
+62:    `/api/updates/${encodeURIComponent(updateId)}/publish`,
+78:    `/api/updates/${encodeURIComponent(updateId)}/delivered`,
+90:    `/api/updates/${encodeURIComponent(updateId)}/markdown`,
+## web/src/features/project-room/prepare/api.ts
+15:const project = (id: string) => `/api/projects/${encodeURIComponent(id)}`;
+67:  const raw = await apiFetch<{ brief: Record<string, unknown> }>(`/api/briefs/${encodeURIComponent(briefId)}`);
+73:  const raw = await apiFetch<{ brief: Record<string, unknown> }>(`/api/briefs/${encodeURIComponent(briefId)}/keep`, {
+82:  const raw = await apiFetch<{ brief: Record<string, unknown> }>(`/api/briefs/${encodeURIComponent(briefId)}/discard`, {
+## web/src/features/project-room/steward/api.ts
+16:    `/api/projects/${encodeURIComponent(projectId)}/steward/runs`,
+30:    `/api/projects/${encodeURIComponent(projectId)}/steward/runs`,
+43:  }>(`/api/steward/runs/${encodeURIComponent(runId)}`);
+53:    `/api/steward/runs/${encodeURIComponent(runId)}/stop`,
+62:    `/api/projects/${encodeURIComponent(projectId)}/steward/policy`,
+82:    `/api/projects/${encodeURIComponent(projectId)}/steward/policy`,
+101:    `/api/projects/${encodeURIComponent(projectId)}/watches`,
+## web/src/features/project-room/door/api.ts
+73:    "/api/projects/door/count",
+84:    "/api/projects/door",
+92:const PROVIDERS = "/api/providers";
+## web/src/features/concierge/api.ts
+283:  const raw = await apiFetch<Record<string, unknown>>("/api/concierge/detect");
+288:  const raw = await apiFetch<Record<string, unknown>>("/api/concierge/propose", {
+298:  const raw = await apiFetch<Record<string, unknown>>("/api/concierge/probe", {
+316:  const raw = await apiFetch<Record<string, unknown>>("/api/concierge/probe", {
+335:  const raw = await apiFetch<Record<string, unknown>>("/api/concierge/apply", {
+356:    raw = await apiFetch<Record<string, unknown>>("/api/setup/discover-models", {
+392:    "/api/inference/model-library/define-endpoint",
+422:    "/api/concierge/summary-selection",
+435:  const raw = await apiFetch<Record<string, unknown>>("/api/concierge/download", {
+## web/src/desk/api.ts
+231:  const data = await apiFetch<Record<string, unknown>>("/api/decisions");
+239:  const response = await apiFetch<Record<string, unknown>>("/api/decisions", {
+246:  const response = await apiFetch<Record<string, unknown>>(`/api/decisions/${encodeURIComponent(id)}`, {
+253:  const response = await apiFetch<Record<string, unknown>>(`/api/decisions/${encodeURIComponent(id)}/status`, {
+260:  const response = await apiFetch<Record<string, unknown>>(`/api/decisions/${encodeURIComponent(id)}/supersede`, { method: "POST" });
+642:    apiFetch<Record<string, unknown>>("/api/meetings?limit=24")
+648:    apiFetch<Record<string, unknown>>("/api/sync/pull?limit=50")
+656:    apiFetch<Record<string, unknown>>("/api/notes")
+670:    apiFetch<Record<string, unknown>>("/api/recipes")
+678:    apiFetch<Record<string, unknown>>("/api/kbs")
+684:    apiFetch<Record<string, unknown>>("/api/directories")
+694:    apiFetch<Record<string, unknown>>("/api/chains")
+702:    apiFetch<Record<string, unknown>>("/api/workflows")
+710:    apiFetch<Record<string, unknown>>("/api/workbenches")
+719:    apiFetch<Record<string, unknown>>("/api/projects")
+733:    apiFetch<Record<string, unknown>>("/api/inference-targets")
+764:    apiFetch<Record<string, unknown>>("/api/models")
+772:    apiFetch<Record<string, unknown>>("/api/threads")
+792:    apiFetch<unknown>("/api/coders/status")
+844:  const data = await apiFetch<Record<string, unknown>>(`/api/workbenches/${encodeURIComponent(id)}`);
+849:  const data = await apiFetch<Record<string, unknown>>(`/api/workbenches/${encodeURIComponent(id)}/runs`);
+854:  const data = await apiFetch<Record<string, unknown>>(`/api/workbenches/${encodeURIComponent(id)}/memory`);
+859:  const data = await apiFetch<Record<string, unknown>>("/api/skills");
+867:  await apiFetch<Record<string, unknown>>(`/api/workbenches/${encodeURIComponent(id)}`, {
+878:  await apiFetch<Record<string, unknown>>(`/api/workbenches/${encodeURIComponent(workbenchId)}/items`, {
+891:    `/api/workbenches/${encodeURIComponent(workbenchId)}/items/${encodeURIComponent(itemId)}`,
+905:    `/api/workbenches/${encodeURIComponent(workbenchId)}/items/${encodeURIComponent(itemId)}`,
+912:    `/api/workbenches/${encodeURIComponent(workbenchId)}/run`,
+921:  await apiFetch<Record<string, unknown>>(`/api/skills/${encodeURIComponent(skillId)}`, {
+930:    `/api/workbenches/${encodeURIComponent(workbenchId)}/memory`,
+940:    `/api/workbenches/${encodeURIComponent(workbenchId)}/memory/${index}/promote`,
+950:    `/api/workbenches/${encodeURIComponent(workbenchId)}/items/${encodeURIComponent(itemId)}/retry-mint`,
+962:    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations`,
+1004:    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations`,
+1017:    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations/${encodeURIComponent(automationId)}`,
+1029:    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations/${encodeURIComponent(automationId)}/test`,
+1045:    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations/${encodeURIComponent(automationId)}/history`,
+1062:    `/api/workbenches/${encodeURIComponent(workbenchId)}/resourceful`,
+1075:    `/api/workbenches/${encodeURIComponent(workbenchId)}/resourceful`,
+1085:    `/api/workbenches/${encodeURIComponent(workbenchId)}/resourceful/history`,
+1102:  return apiFetch(`/api/workbenches/${encodeURIComponent(workbenchId)}/voice/resolve`, {
+## web/src/desk/deliveryDossier.ts
+8: * fetched separately, manifest-bound, from `/api/delivery/evidence/{b}/{a}`.
+153:  return `/api/delivery/evidence/${encodeURIComponent(
+192:        `/api/delivery/stories/${encodeURIComponent(
+215:        `/api/delivery/phases/${encodeURIComponent(project)}/${phase}/dossier${q}`,
+## web/src/desk/deliveryTerminal.ts
+188:    const res = await apiRequest("/api/delivery/terminal/commands", {
+248:      const res = await apiRequest("/api/delivery/terminal/subscriptions", {
+## web/src/desk/roadmap.ts
+45:  const data = await apiFetch<{ roadmaps?: RoadmapProject[] }>("/api/roadmaps");
+50:  return apiFetch<RoadmapDetail>(`/api/roadmaps/${encodeURIComponent(slug)}`);
+57:  return apiFetch(`/api/roadmaps/${encodeURIComponent(slug)}/health`);
+62:    `/api/roadmaps/${encodeURIComponent(slug)}/next`,
+## web/src/desk/repository.ts
+28:  `/api/repositories/${encodeURIComponent(repositoryId)}${suffix}`;
+31:  const data = await apiFetch<{ repositories: RepositoryRecord[] }>("/api/repositories");
+36:  return apiFetch<{ repository: RepositoryRecord }>("/api/repositories", {
+--- backend route to service anchors ---
+holdspeak/web/routes/roadmaps.py:11:from fastapi import APIRouter
+holdspeak/web/routes/roadmaps.py:173:def build_roadmaps_router(ctx: WebContext, *, repo_root: Path | None = None) -> APIRouter:
+holdspeak/web/routes/roadmaps.py:176:    router = APIRouter()
+holdspeak/web/routes/repositories.py:16:from fastapi import APIRouter
+holdspeak/web/routes/repositories.py:182:) -> APIRouter:
+holdspeak/web/routes/repositories.py:184:    router = APIRouter()
+holdspeak/web/routes/primitives/workbenches.py:6:from fastapi import APIRouter, Request
+holdspeak/web/routes/primitives/workbenches.py:19:def build_workbenches_router(ctx: WebContext) -> APIRouter:
+holdspeak/web/routes/primitives/workbenches.py:20:    router = APIRouter()
+holdspeak/web/routes/primitives/workbenches.py:22:    def _svc() -> WorkbenchService:
+holdspeak/web/routes/primitives/workbenches.py:30:        return WorkbenchService(get_database(), observer=get_observer())
+holdspeak/web/routes/primitives/workbenches.py:48:            return JSONResponse({"workbenches": _svc().list_workbenches(_principal(request))})
+holdspeak/web/routes/primitives/workbenches.py:58:            wb = _svc().create_workbench(
+holdspeak/web/routes/primitives/workbenches.py:71:            return JSONResponse({"workbench": _svc().get_workbench(_principal(request), workbench_id)})
+holdspeak/web/routes/primitives/workbenches.py:83:            wb = _svc().update_workbench(_principal(request), workbench_id, **body)
+holdspeak/web/routes/primitives/workbenches.py:93:            _svc().delete_workbench(_principal(request), workbench_id)
+holdspeak/web/routes/primitives/workbenches.py:108:            item = _svc().add_item(
+holdspeak/web/routes/primitives/workbenches.py:126:            return JSONResponse({"item": _svc().update_item(_principal(request), workbench_id, item_id, **body)})
+holdspeak/web/routes/primitives/workbenches.py:137:            _svc().delete_item(_principal(request), workbench_id, item_id)
+holdspeak/web/routes/primitives/workbenches.py:149:            result = _svc().retry_mint(_principal(request), workbench_id, item_id)
+holdspeak/web/routes/primitives/workbenches.py:164:            return JSONResponse({"run": await _svc().run(_principal(request), workbench_id, memory_enabled=bool(body.get("memory_enabled", True)) )})
+holdspeak/web/routes/primitives/workbenches.py:175:            return JSONResponse({"disposition": _svc().cancel_run(_principal(request), parent_operation_id)})
+holdspeak/web/routes/primitives/workbenches.py:187:            result = _svc().resolve_voice(
+holdspeak/web/routes/primitives/workbenches.py:204:            return JSONResponse({"runs": _svc().list_runs(_principal(request), workbench_id)})
+holdspeak/web/routes/primitives/workbenches.py:211:            return JSONResponse({"templates": _svc().list_templates(_principal(request))})
+holdspeak/web/routes/primitives/workbenches.py:218:            return JSONResponse({"skills": _svc().list_skills(_principal(request), recipe_id)})
+holdspeak/web/routes/primitives/workbenches.py:228:            skill = _svc().create_skill(
+holdspeak/web/routes/primitives/workbenches.py:244:            return JSONResponse({"skill": _svc().update_skill(_principal(request), skill_id, **body)})
+holdspeak/web/routes/primitives/workbenches.py:255:            _svc().delete_skill(_principal(request), skill_id)
+holdspeak/web/routes/primitives/workbenches.py:266:            result = _svc().instantiate_template(_principal(request), template_id, body.get("profile_id") or None)
+holdspeak/web/routes/primitives/workbenches.py:276:            return JSONResponse({"entries": _svc().list_memory(_principal(request), workbench_id)})
+holdspeak/web/routes/primitives/workbenches.py:283:            _svc().clear_memory(_principal(request), workbench_id)
+holdspeak/web/routes/primitives/workbenches.py:291:            skill = _svc().promote_memory(_principal(request), workbench_id, index)
+holdspeak/web/routes/calendar_snapshot.py:11:from fastapi import APIRouter, File, Request, UploadFile
+holdspeak/web/routes/calendar_snapshot.py:41:def build_calendar_snapshot_router(ctx: WebContext) -> APIRouter:
+holdspeak/web/routes/calendar_snapshot.py:42:    router = APIRouter(prefix="/api/calendar/snapshot", tags=["calendar-snapshot"])
+holdspeak/web/routes/system/coder_steering_routes.py:9:from fastapi import APIRouter, Request
+holdspeak/web/routes/system/coder_steering_routes.py:36:) -> APIRouter:
+holdspeak/web/routes/system/coder_steering_routes.py:37:    router = APIRouter()
+holdspeak/web/routes/system/coder_steering_routes.py:39:    service = ctx.coder_service if isinstance(ctx.coder_service, CoderService) else CoderService(observer=get_observer())
+holdspeak/web/routes/system/coder_steering_routes.py:524:                service.list_steering_audit,
+holdspeak/web/routes/system/coder_steering_routes.py:570:                service.keep_note,
+holdspeak/web/routes/people.py:6:from fastapi import APIRouter, Body, HTTPException, Request
+holdspeak/web/routes/people.py:42:def build_people_router(ctx: WebContext) -> APIRouter:
+holdspeak/web/routes/people.py:43:    router = APIRouter(prefix="/api/people", tags=["people"])
+holdspeak/web/routes/people.py:46:        # Isolated route fixtures must inject the encrypted service.  There is no
+holdspeak/web/routes/people.py:58:        return WorkbenchService(get_database(), observer=get_observer())
+holdspeak/web/routes/people.py:62:        return operations.for_context(ctx, "project_service")
+holdspeak/web/routes/people.py:67:            return service.readiness(principal(request))
+holdspeak/web/routes/people.py:82:            result = service.resolve_relationship_by_watch_identity(identity)
+holdspeak/web/routes/people.py:91:            return service.setup(principal(request))
+holdspeak/web/routes/people.py:98:            return {"relationships": service.list_relationships(principal(request), include_archived=include_archived)}
+holdspeak/web/routes/people.py:105:            return {"relationship": service.create_relationship(principal(request), body)}
+holdspeak/web/routes/people.py:112:            return {"relationship": service.get_relationship(principal(request), relationship_id)}
+holdspeak/web/routes/people.py:119:            return {"relationship": service.archive_relationship(principal(request), relationship_id)}
+holdspeak/web/routes/people.py:128:            return {"relationship": service.link_project(owner, relationship_id, project_id)}
+holdspeak/web/routes/people.py:137:            return {"relationship": service.unlink_project(principal(request), relationship_id, project_id)}
+holdspeak/web/routes/people.py:147:            return {"brief": service.one_on_one_brief(principal(request), relationship_id, db=db)}
+holdspeak/web/routes/people.py:154:            return {"one_on_ones": service.list_one_on_ones(principal(request), relationship_id)}
+holdspeak/web/routes/people.py:161:            return {"one_on_one": service.create_one_on_one(principal(request), relationship_id, body)}
+holdspeak/web/routes/people.py:168:            return {"agenda_item": service.add_agenda_item(principal(request), session_id, body)}
+holdspeak/web/routes/people.py:175:            return {"request": service.create_request(principal(request), relationship_id, body)}
+holdspeak/web/routes/people.py:182:            return {"notes": service.list_notes(principal(request), relationship_id)}
+holdspeak/web/routes/people.py:189:            return {"note": service.create_note(principal(request), relationship_id, body)}
+holdspeak/web/routes/people.py:196:            return {"relationship": service.link_calendar_series(
+holdspeak/web/routes/people.py:208:            return {"relationship": service.unlink_calendar_series(
+holdspeak/web/routes/people.py:219:            return {"relationship": service.link_owner_alias(
+holdspeak/web/routes/people.py:229:            return {"relationship": service.unlink_owner_alias(
+holdspeak/web/routes/people.py:239:            return {"commitment": service.accept_request(principal(request), request_id, body)}
+holdspeak/web/routes/people.py:246:            return {"history": service.history_summary(principal(request), relationship_id)}
+holdspeak/web/routes/people.py:253:            commitment = service.get_commitment(principal(request), commitment_id)
+holdspeak/web/routes/people.py:276:            commitment = service.get_commitment(owner, commitment_id)
+holdspeak/web/routes/people.py:290:            relationship = service.get_relationship(owner, str(commitment.get("relationship_id") or ""))
+holdspeak/web/routes/people.py:324:                linked = service.attach_execution(
+holdspeak/web/routes/people.py:347:            result = service.transition(
+holdspeak/web/routes/people.py:364:            commitment = service.get_commitment(owner, commitment_id)
+holdspeak/web/routes/people.py:382:            result = service.satisfy_commitment(
+holdspeak/web/routes/meetings/crud.py:3:These read routes delegate through the composition-bound meeting service.
+holdspeak/web/routes/meetings/crud.py:10:from fastapi import APIRouter, Request
+holdspeak/web/routes/meetings/crud.py:23:def _service(ctx: WebContext) -> MeetingService:
+holdspeak/web/routes/meetings/crud.py:28:    service = MeetingService(get_database(), observer=get_observer())  # _service composition
+holdspeak/web/routes/meetings/crud.py:35:    return operations.for_context(ctx, meeting_service=lambda: _service(ctx))
+holdspeak/web/routes/meetings/crud.py:42:def build_crud_router(ctx: WebContext) -> APIRouter:
+holdspeak/web/routes/meetings/crud.py:43:    router = APIRouter()
+holdspeak/web/routes/meetings/crud.py:95:            return JSONResponse(_service(ctx).facets(_principal(request)))
+holdspeak/web/routes/meetings/crud.py:128:            meeting = _service(ctx).rename_meeting(
+holdspeak/web/routes/meetings/crud.py:144:            _service(ctx).delete_meeting(_principal(request), meeting_id)
+holdspeak/web/routes/meetings/crud.py:158:            return JSONResponse(_service(ctx).recover_capture(_principal(request), meeting_id))
+holdspeak/web/routes/meetings/crud.py:167:            return JSONResponse(_service(ctx).list_sync_conflicts(_principal(request), meeting_id))
+holdspeak/web/routes/meetings/crud.py:184:            return JSONResponse(_service(ctx).resolve_sync_conflict(_principal(request), meeting_id, conflict_id, payload))
+holdspeak/web/routes/meetings/crud.py:204:            export = _service(ctx).export_meeting(
+holdspeak/web/routes/primitives/ask.py:4:from fastapi import APIRouter, Request
+holdspeak/web/routes/primitives/ask.py:26:def build_ask_service(ctx: WebContext) -> AskService:
+holdspeak/web/routes/primitives/ask.py:34:    return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal),observer=get_observer())
+holdspeak/web/routes/primitives/ask.py:36:def build_ask_router(ctx: WebContext) -> APIRouter:
+holdspeak/web/routes/primitives/ask.py:37:    router=APIRouter()
+holdspeak/web/routes/primitives/ask.py:41:        return build_ask_service(ctx)
+holdspeak/web/routes/primitives/ask.py:61:            # AskService has always taken one (ask_service.py); only the
+holdspeak/web/routes/follow_through.py:12:from fastapi import APIRouter, Body, HTTPException, Request
+holdspeak/web/routes/follow_through.py:33:    adapter, mirroring door_service._build_owner_person_index.
+holdspeak/web/routes/follow_through.py:43:        people_svc = PeopleService(production_people_store())
+holdspeak/web/routes/follow_through.py:86:def build_follow_through_router(ctx: WebContext) -> APIRouter:
+holdspeak/web/routes/follow_through.py:88:    router = APIRouter(prefix="/api/follow-through", tags=["follow-through"])
+holdspeak/web/routes/follow_through.py:93:        service = FollowThroughService(get_database(), observer=get_observer())
+holdspeak/web/routes/follow_through.py:104:            raw_board = service.board(principal(request), project_id=project_id, owner=owner, state=state)
+holdspeak/web/routes/follow_through.py:113:            return service.complete(
+holdspeak/web/routes/follow_through.py:125:            return service.commit_decision(
+holdspeak/web/routes/monday_brief.py:12:from fastapi import APIRouter, Body, HTTPException, Request
+holdspeak/web/routes/monday_brief.py:75:        people_svc = PeopleService(production_people_store())
+holdspeak/web/routes/monday_brief.py:77:        people_svc = PeopleService(UnavailablePeopleStore())
+holdspeak/web/routes/monday_brief.py:79:    follow_through = FollowThroughService(db)
+holdspeak/web/routes/monday_brief.py:94:def build_monday_brief_router(ctx: WebContext) -> APIRouter:
+holdspeak/web/routes/monday_brief.py:101:    router = APIRouter(prefix="/api/brief", tags=["monday-brief"])
+holdspeak/web/routes/monday_brief.py:108:        return operations.for_context(ctx, monday_brief_service=lambda: MondayBriefService(
+holdspeak/web/routes/monday_brief.py:166:        brief = service.get_by_id(brief_id)
+holdspeak/web/routes/projects.py:11:from fastapi import APIRouter, Request
+holdspeak/web/routes/projects.py:27:def build_projects_router(ctx: WebContext) -> APIRouter:
+holdspeak/web/routes/projects.py:28:    router = APIRouter()
+holdspeak/web/routes/projects.py:58:        return operations.for_context(ctx, "project_service")
+holdspeak/web/routes/projects.py:69:            return JSONResponse(service.list_briefings(principal(request), project_id, limit))
+holdspeak/web/routes/projects.py:88:            return JSONResponse(service.mark_room_read(principal(request), project_id))
+holdspeak/web/routes/projects.py:126:                service.save_ask(
+holdspeak/web/routes/projects.py:155:            return JSONResponse(service.list_unfinished_asks(
+holdspeak/web/routes/projects.py:171:            return await build_ask_service(ctx).ask(
+holdspeak/web/routes/projects.py:180:            return JSONResponse(await service.resume_ask(
+holdspeak/web/routes/projects.py:202:            return JSONResponse(service.record_ask_stop(
+holdspeak/web/routes/projects.py:217:            return JSONResponse(service.discard_ask(
+holdspeak/web/routes/projects.py:324:            return JSONResponse({"meetings": service.list_meetings(principal(request), project_id, limit=limit, offset=offset)})
+holdspeak/web/routes/projects.py:371:        # command_id to the service.
+holdspeak/web/routes/projects.py:396:            return JSONResponse(service.list_resource_relationships(principal(request), resource_ref))
+holdspeak/web/routes/projects.py:437:            return JSONResponse({"projects": service.list_meeting_projects(principal(request), meeting_id)})
+holdspeak/web/routes/projects.py:446:            return JSONResponse(service.since_last_meeting(principal(request), project_id))
+holdspeak/web/routes/projects.py:455:            return JSONResponse(service.summary(principal(request), project_id))
+holdspeak/web/routes/projects.py:464:            return JSONResponse({"action_items": service.list_action_items(principal(request), project_id)})
+holdspeak/web/routes/projects.py:473:            return JSONResponse({"artifacts": service.list_artifacts(principal(request), project_id)})
+holdspeak/web/routes/decisions.py:4:from fastapi import APIRouter, Body, Request
+holdspeak/web/routes/decisions.py:16:def _kernel_service() -> Any:
+holdspeak/web/routes/decisions.py:18:    return _service()
+holdspeak/web/routes/decisions.py:38:def build_decisions_router(ctx: Any) -> APIRouter:
+holdspeak/web/routes/decisions.py:39:    router=APIRouter(prefix="/api/decisions",tags=["decisions"])
+holdspeak/web/routes/decisions.py:45:    def desk_ops() -> Any: return operations.for_context(ctx, "primitive_service")
+holdspeak/web/routes/decisions.py:49:    def service() -> DecisionLifecycleService: return DecisionLifecycleService(_database(), kernel=_kernel_service(), observer=get_observer())
+holdspeak/web/routes/decisions.py:58:        # Probe the two durable owners before invoking either service.  The
+holdspeak/web/routes/decisions.py:63:        # observer failure from the lifecycle service.
+--- runtime frame counts ---
+declared_frames=44
+scanned_emit_types=44
+scanned_consume_types=43
+emitted_without_consumer={'wake_armed': 'Dormant desktop wake-word leg: arming is a host-side hotkey window with no web affordance; the web consumes only its result (wake_preview).'}
+consumed_without_emitter={}
+unmatched_emits=[]
+unmatched_consumers=[]
+    11	import { websocketProtocols, websocketUrl } from "../lib/auth";
+    12
+    13	export type RuntimeFrame<T = unknown> = { type: string; data: T };
+    14	export type RuntimeState =
+    15	  "connecting" | "connected" | "reconnecting" | "offline";
+    16	type Listener = (frame: RuntimeFrame) => void;
+    17
+    18	interface RuntimeBusValue {
+    19	  state: RuntimeState;
+    20	  lastFrame: RuntimeFrame | null;
+    21	  subscribe(type: string, listener: Listener): () => void;
+    22	}
+    23
+    24	const RuntimeBusContext = createContext<RuntimeBusValue | null>(null);
+    25
+    26	export function RuntimeBusProvider({ children }: { children: ReactNode }) {
+    27	  const [state, setState] = useState<RuntimeState>("connecting");
+    28	  const [lastFrame, setLastFrame] = useState<RuntimeFrame | null>(null);
+    29	  const listeners = useRef(new Map<string, Set<Listener>>());
+    30
+    31	  const subscribe = useCallback((type: string, listener: Listener) => {
+    32	    const set = listeners.current.get(type) ?? new Set<Listener>();
+    33	    set.add(listener);
+    34	    listeners.current.set(type, set);
+    35	    return () => {
+    36	      set.delete(listener);
+    37	      if (!set.size) listeners.current.delete(type);
+    38	    };
+    39	  }, []);
+    40
+    41	  useEffect(() => {
+    42	    let socket: WebSocket | null = null;
+    43	    let timer = 0;
+    44	    let ping = 0;
+    45	    let attempt = 0;
+    46	    let disposed = false;
+    47
+    48	    const connect = () => {
+    49	      if (disposed) return;
+    50	      setState(attempt ? "reconnecting" : "connecting");
+    51	      socket = new WebSocket(websocketUrl(), websocketProtocols());
+    52	      socket.addEventListener("open", () => {
+    53	        attempt = 0;
+    54	        setState("connected");
+    55	        ping = window.setInterval(() => {
+    56	          if (socket?.readyState === WebSocket.OPEN) socket.send("ping");
+    57	        }, 15_000);
+    58	      });
+    59	      socket.addEventListener("message", (event) => {
+    60	        if (typeof event.data !== "string") return;
+    61	        try {
+    62	          const frame = JSON.parse(event.data) as RuntimeFrame;
+    63	          if (!frame || typeof frame.type !== "string") return;
+    64	          setLastFrame(frame);
+    65	          for (const listener of listeners.current.get(frame.type) ?? [])
+    66	            listener(frame);
+    67	          for (const listener of listeners.current.get("*") ?? [])
+    68	            listener(frame);
+    69	        } catch {
+    70	          // Ignore malformed or non-protocol frames; the connection remains healthy.
+    71	        }
+    72	      });
+    73	      socket.addEventListener("close", () => {
+    74	        window.clearInterval(ping);
+    75	        if (disposed) return;
+    76	        attempt = Math.min(attempt + 1, 8);
+    77	        setState(navigator.onLine ? "reconnecting" : "offline");
+    78	        timer = window.setTimeout(
+    79	          connect,
+    80	          Math.min(12_000, 500 * 2 ** (attempt - 1)),
+    81	        );
+    82	      });
+    83	      socket.addEventListener("error", () => socket?.close());
+    84	    };
+    85
+    86	    connect();
+    87	    return () => {
+    88	      disposed = true;
+    89	      window.clearTimeout(timer);
+    90	      window.clearInterval(ping);
+    91	      socket?.close();
+    92	    };
+    93	  }, []);
+    38	# --------------------------------------------------------------- vocabulary
+    39
+    40	#: Every live frame type the desk speaks. Sorted; one line each, with the
+    41	#: surface that hears it, so a reader can trace a frame end to end.
+    42	RUNTIME_FRAME_TYPES: tuple[str, ...] = (
+    43	    "actuator_proposed",        # a proposal awaits a decision
+    44	    "actuator_result",          # a proposal was decided/executed
+    45	    "aftercare_ready",          # a finished meeting has aftercare
+    46	    "audio_level",              # live mic level
+    47	    "bookmark",                 # a moment was named mid-meeting
+    48	    "capture_recovery",         # capture degraded and wants a choice
+    49	    "device_health",            # an attached device's battery/RSSI moved
+    50	    "dictation.journal.entry",  # one dictation journal row was stored (HS-176-02)
+    51	                                # payload: {id, created_at, source, transcript,
+    52	                                #           final_text, total_ms, corrections_applied,
+    53	                                #           taught_from, intent_tag, target_profile}
+    54	                                # audience: the owner's own desk sockets — the runtime
+    55	                                #           bus has no other subscriber
+    56	    "dictation_preview",        # dictation is held for preview
+    57	    "desk_changed",             # one desk object was written, by ANY caller
+    58	                                #   (HS-200-45): payload {kind, id, op, origin};
+    59	                                #   the desk re-reads itself, debounced
+    60	    "duration",                 # the live meeting clock
+    61	    "intel_complete",           # a meeting intelligence window landed
+    62	    "intel_status",             # any run's running/ready/error state
+    63	    "intent_controls_updated",  # the intent routing dial moved
+    64	    "learning_event",           # the pipeline learned something
+    65	    "meeting_started",          # a meeting began
+    66	    "meeting_updated",          # title/tags changed mid-meeting
+    67	    "plugin_jobs_processed",    # the deferred plugin queue was drained
+    68	    "runtime_activity",         # the one activity line
+    69	    "runtime_queue",            # the deferred intel queue's real truth
+    70	    "scheduled_recording.arming",    # countdown before a scheduled capture fires
+    71	    "scheduled_recording.cancelled", # a scheduled capture was cancelled mid-countdown
+    72	    "scheduled_recording.missed",    # a scheduled capture's fire time was missed
+    73	    "scheduled_recording.refused",   # a scheduled capture was refused (mic floor held)
+    74	    "scheduled_recording.started",   # a scheduled capture started recording
+    75	    "scheduled_recording.stopped",   # a scheduled capture stopped (auto-stop or manual)
+    76	    "segment",                  # one finalized transcript segment
+    77	    "stopped",                  # the meeting stopped
+    78	    "thread_call_state",         # call mode state transition (HS-154-03)
+    79	                                 # payload: {thread_id, state}
+    80	    "thread_compacted",          # a compaction cut was committed (HS-153-05)
+    81	                                # payload: {thread_id, message_id, cut_at, count}
+    82	    "thread_delta",             # a streaming token/reasoning delta for a thread turn
+    83	                                # payload: {thread_id, message_id, ordinal, kind, text, seq}
+    84	    "thread_guardrail",         # a guardrail evaluation completed (HS-153-03)
+    85	                                # payload: {thread_id, message_id, violations, warnings,
+    86	                                #           guardrails, raw}
+    87	    "thread_status_line",       # in-progress turn status text (HS-152-01)
+    88	                                # payload: {thread_id, text}
+    89	    "thread_tool_pending",      # a tool call awaits resolution (HS-152-01)
+    90	                                # payload: {thread_id, message_id, call_id, name, args_head,
+    91	                                #           class, decision_required, elicitation?}
+    92	    "thread_tool_result",       # a tool call completed (HS-152-01)
+    93	                                # payload: {thread_id, message_id, call_id, name, receipt_id,
+    94	                                #           outcome, kind, summary, sensitive}
+    95	    "thread_turn_done",         # a thread turn completed (succeeded, aborted, or errored)
+    96	                                # payload: {thread_id, message_id, receipt_id, outcome, egress, stats}
+    97	    "thread_turn_started",      # a thread turn began streaming
+    98	                                # payload: {thread_id, message_id, user_message_id, model_id, egress}
+    99	    "wake_armed",               # the wake word armed its capture window
+   100	    "wake_preview",             # a wake capture is held for preview
+   101	    "workbench.item_claimed",   # a run took an item
+   102	    "workbench.item_done",      # an item produced output
+   103	    "workbench.item_failed",    # an item failed
+   104	    "workbench.run_complete",   # the run reached its terminal
+   105	    "workbench.run_start",      # a workbench run began
+   106	)
+   107
+   108	#: Frames the hub emits that no web surface listens for, WITH the reason.
+   109	#: Every entry here is a deliberate, named exception — never a silent one.
+   110	EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
+   111	    "wake_armed": (
+   112	        "Dormant desktop wake-word leg: arming is a host-side hotkey window "
+   113	        "with no web affordance; the web consumes only its result "
+   114	        "(wake_preview)."
+   115	    ),
+   116	}
+   117
+   118	#: Frames the web listens for that the hub never emits, WITH the reason.
+   119	#: Empty is the correct state: a subscription with no emitter is dead code.
+   120	CONSUMED_WITHOUT_EMITTER: dict[str, str] = {}
+   131	# ------------------------------------------------------------------ scanners
+   132
+   133	_EMIT_PATTERNS = (
+   134	    re.compile(r'broadcast\(\s*"([a-z_][a-z0-9_.]*)"'),
+   135	    re.compile(r'BroadcastMessage\(\s*type\s*=\s*"([a-z_][a-z0-9_.]*)"'),
+   136	)
+   137
+   138	_CONSUME_PATTERNS = (
+   139	    re.compile(r'subscribe\(\s*"([a-z_][a-z0-9_.]*)"'),
+   140	    re.compile(r'useRuntimeFrame(?:<[^>]*>)?\(\s*"([a-z_][a-z0-9_.]*)"'),
+   141	    re.compile(r'frame\.type\s*===\s*"([a-z_][a-z0-9_.]*)"'),
+   142	    re.compile(r'"([a-z_][a-z0-9_.]*)"\s*===\s*frame\.type'),
+   143	)
+   144
+   145	_INCLUDES_FRAME_TYPE = re.compile(
+   146	    r"\[([^\]]*)\]\s*\.includes\(\s*frame\.type", re.S
+   147	)
+   148	_CONSUMED_FRAME_TYPE_SET = re.compile(
+   149	    r"(?:export\s+)?const\s+[A-Z][A-Z0-9_]*_FRAME_TYPES\s*=\s*"
+   150	    r"\[([^\]]*)\]\s*as\s+const",
+   151	    re.S,
+   152	)
+   153	_QUOTED = re.compile(r'"([a-z_][a-z0-9_.]*)"')
+   154
+   155
+   156	def _line_of(text: str, offset: int) -> int:
+   157	    return text.count("\n", 0, offset) + 1
+   158
+   159
+   160	def scan_emitters(root: Path | None = None) -> dict[str, list[str]]:
+   161	    """Frame type -> ``path:line`` for every broadcast in ``holdspeak/``."""
+   162	    base = (root or repo_root()) / "holdspeak"
+   163	    found: dict[str, list[str]] = {}
+   164	    for path in sorted(base.rglob("*.py")):
+   165	        if path.resolve() == Path(__file__).resolve():
+   166	            continue  # the registry documents the idioms; it emits nothing
+   167	        text = path.read_text(encoding="utf-8", errors="ignore")
+   168	        for pattern in _EMIT_PATTERNS:
+   169	            for match in pattern.finditer(text):
+   170	                site = f"{path.relative_to(root or repo_root())}:{_line_of(text, match.start())}"
+   171	                found.setdefault(match.group(1), []).append(site)
+   172	    return found
+   173
+   174
+   175	def scan_consumers(root: Path | None = None) -> dict[str, list[str]]:
+   176	    """Frame type -> ``path:line`` for every live consumer in ``web/src/``."""
+   177	    repo = root or repo_root()
+   178	    base = repo / "web" / "src"
+   179	    mirror = (repo / WEB_MIRROR_PATH).resolve()
+   180	    found: dict[str, list[str]] = {}
+   181	    for path in sorted([*base.rglob("*.ts"), *base.rglob("*.tsx")]):
+   182	        if path.resolve() == mirror:
+   183	            continue  # the registry mirror names every frame; it consumes none
+   184	        if ".test." in path.name or "__tests__" in path.parts:
+   185	            continue  # a test that fabricates a frame is not a consumer
+   186	        text = path.read_text(encoding="utf-8", errors="ignore")
+   187	        rel = path.relative_to(repo)
+   188	        for pattern in _CONSUME_PATTERNS:
+   189	            for match in pattern.finditer(text):
+   190	                found.setdefault(match.group(1), []).append(
+   191	                    f"{rel}:{_line_of(text, match.start())}"
+   192	                )
+   193	        for match in _INCLUDES_FRAME_TYPE.finditer(text):
+   194	            line = _line_of(text, match.start())
+   195	            for name in _QUOTED.findall(match.group(1)):
+   196	                found.setdefault(name, []).append(f"{rel}:{line}")
+   197	        for match in _CONSUMED_FRAME_TYPE_SET.finditer(text):
+   198	            line = _line_of(text, match.start())
+   199	            for name in _QUOTED.findall(match.group(1)):
+   200	                found.setdefault(name, []).append(f"{rel}:{line}")
+   201	    return found
+     1	/** HS-200-45 R4: one frame for a changed desk object, one debounced refresh.
+     2	 *
+     3	 * The desk used to learn about its own writes and nothing else: every mutator
+     4	 * in `dataSlice` calls `refresh()` after its own `fetch`, so the browser that
+     5	 * made the write re-read the hub and every OTHER open surface -- a second tab,
+     6	 * the iPad, an agent writing over MCP -- saw nothing until someone pressed
+     7	 * "Refresh from hub" by hand. The 2026-09-13 operational-surface audit (§9)
+     8	 * measured that: "A remote write lands in the DB and sits there."
+     9	 *
+    10	 * The hub now emits ONE `desk_changed` frame after a successful write through
+    11	 * its composed `PrimitiveService` / `WorkbenchService` (notes, decisions, kbs,
+    12	 * directories, workflows, chains, workbenches, items, skills), whoever made it,
+    13	 * plus the writers below those services that announce themselves (reaction and
+    14	 * resourceful projections, coder-materialized notes, the rails journal, the
+    15	 * guardrail seeds). Meeting changes announce themselves from the import worker
+    16	 * when an import ends, success or failure (`MeetingService._run_import_job`),
+    17	 * and from the summary queue after durable running and settled transitions
+    18	 * (`_notify_queue_meeting_changed`). Other meeting writes, project rooms,
+    19	 * thoughts and sync emit no frame; their surfaces carry their own signals.
+    20	 * This hook is the
+    21	 * whole client half: subscribe, and re-read. No per-kind patching and no new
+    22	 * UI -- the existing `refresh()` already loads the desk consistently, and a
+    23	 * patch-by-kind reducer would be a second, divergent model of the same data.
+    24	 *
+    25	 * Debounced trailing, not leading: a burst (a steward run publishing an update,
+    26	 * a zone of notes filed at once) arrives as many frames in a few hundred
+    27	 * milliseconds, and the desk needs the state AFTER the burst, not a re-read per
+    28	 * frame. A frame that arrives during the wait extends it.
+    29	 */
+    30	import { useEffect } from "react";
+    31	import { useRuntimeBus } from "../runtime/RuntimeBus";
+    32	import { useDesk } from "./store";
+    33
+    34	/** Trailing-edge debounce window for a `desk_changed` burst, in ms. */
+    35	export const DESK_CHANGED_DEBOUNCE_MS = 300;
+    36
+    37	export function useDeskChangedRefresh(
+    38	  debounceMs: number = DESK_CHANGED_DEBOUNCE_MS,
+    39	): void {
+    40	  const { subscribe } = useRuntimeBus();
+    41
+    42	  useEffect(() => {
+    43	    let timer: ReturnType<typeof setTimeout> | null = null;
+    44
+    45	    const unsubscribe = subscribe("desk_changed", () => {
+    46	      if (timer !== null) clearTimeout(timer);
+    47	      timer = setTimeout(() => {
+    48	        timer = null;
+    49	        // Read the store imperatively: this hook must not re-subscribe every
+    50	        // time the desk's data changes, which is exactly what depending on a
+    51	        // selected `refresh` would cause.
+    52	        void useDesk.getState().refresh();
+    53	      }, debounceMs);
+    54	    });
+    55
+    56	    return () => {
+    57	      if (timer !== null) clearTimeout(timer);
+    58	      unsubscribe();
+    59	    };
+    60	  }, [subscribe, debounceMs]);
+web/src/desk/processWindow.ts:13:export const PROCESS_POLL_MS = 1_500;
+web/src/desk/processWindow.ts:125:  let timer: ReturnType<typeof setInterval> | null = null;
+web/src/desk/processWindow.ts:139:      timer = setInterval(() => void get().poll(), PROCESS_POLL_MS);
+web/src/pages/cores/frontDoor.tsx:277:  const pollRef = useRef<ReturnType<typeof setInterval>>(undefined);
+web/src/pages/cores/frontDoor.tsx:327:    pollRef.current = setInterval(async () => {
+web/src/desk/delivery.ts:504:const POLL_MS = 15_000; // the collector's single-flight cadence (§11)
+web/src/desk/delivery.ts:505:export { POLL_MS };
+web/src/pages/cores/history/MeetingReview.tsx:119:    const timer = setInterval(() => void load(), 3000);
+web/src/desk/missioncontrol.ts:284:export const POLL_MS = 15_000; // the design's cadence, single-flight
+web/src/pages/cores/HistoryCore.tsx:336:      const poll = setInterval(async () => {
+web/src/desk/pullouts/NotePullout.tsx:135:    const timer = window.setInterval(() => {
+web/src/desk/deliveryTerminal.ts:72:export const TERMINAL_POLL_MS = 1_500;
+web/src/desk/deliveryTerminal.ts:123:let timer: ReturnType<typeof setInterval> | null = null;
+web/src/desk/deliveryTerminal.ts:232:    timer = setInterval(() => void get().poll(), TERMINAL_POLL_MS);
+web/src/desk/steering.ts:71:export const PEEK_POLL_MS = 1_500;
+web/src/desk/steering.ts:216:let timer: ReturnType<typeof setInterval> | null = null;
+web/src/desk/steering.ts:333:    timer = setInterval(() => void get().poll(), PEEK_POLL_MS);
+web/src/desk/surface/Surface.tsx:456:    const t = setInterval(() => setTick((n) => n + 1), 1_000);
+web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx:159:    const timer = window.setInterval(() => { void reload(false).catch(() => undefined); }, 900);
+web/src/desk/chair/ChairHome.tsx:1032:    const t = window.setInterval(tick, 250);
+web/src/desk/hooks/useUndoReceipt.ts:37:  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+web/src/desk/hooks/useUndoReceipt.ts:128:      intervalRef.current = setInterval(() => {
+web/src/desk/chair/_parked/hero/CaptureHero.tsx:71:    const t = window.setInterval(() => {
+web/src/desk/chair/_parked/hero/CaptureHero.tsx:111:    const t = window.setInterval(tick, 250);
+web/src/desk/__tests__/steering.test.ts:6:  PEEK_POLL_MS,
+web/src/desk/__tests__/steering.test.ts:63:    await vi.advanceTimersByTimeAsync(PEEK_POLL_MS);
+web/src/desk/__tests__/steering.test.ts:74:    await vi.advanceTimersByTimeAsync(PEEK_POLL_MS * 2);
+web/src/desk/__tests__/steering.test.ts:78:    await vi.advanceTimersByTimeAsync(PEEK_POLL_MS * 5);
+web/src/desk/__tests__/steering.test.ts:92:    await vi.advanceTimersByTimeAsync(PEEK_POLL_MS);
+web/src/desk/__tests__/steering.test.ts:244:    await vi.advanceTimersByTimeAsync(PEEK_POLL_MS);
+web/src/desk/components/SessionPullout.tsx:89:    const t = setInterval(tick, 500);
+web/src/desk/components/DeliveryBoard.tsx:23:  POLL_MS,
+web/src/desk/components/DeliveryBoard.tsx:362:    const timer = setInterval(tick, POLL_MS);
+web/src/desk/components/SystemShade.tsx:108:    const timer = window.setInterval(() => {
+web/src/desk/components/SystemShade.tsx:154:    const timer = window.setInterval(() => {
+web/src/desk/components/SystemShade.tsx:741:    const timer = window.setInterval(fetchAll, 60_000);
+web/src/desk/components/EditorAIBar.tsx:67:    const id = window.setInterval(sync, 80);
+web/src/desk/components/DeskChrome.tsx:91:    const t = setInterval(() => setNow(new Date()), 30_000);
+web/src/desk/components/window/Dock.tsx:63:    const timer = window.setInterval(refreshNeedsYou, 60_000);
+web/src/desk/components/RecordOrb.tsx:43:    const t = window.setInterval(() => {
+web/src/desk/components/MissionControlConveyor.tsx:23:  POLL_MS,
+web/src/desk/components/MissionControlConveyor.tsx:579:    const timer = setInterval(tick, POLL_MS);
+holdspeak/web/routes/tts.py:21:from fastapi.responses import JSONResponse, StreamingResponse
+holdspeak/web/routes/tts.py:229:            # StreamingResponse starts (otherwise the 200 is already sent).
+holdspeak/web/routes/tts.py:242:            return StreamingResponse(_chain(), media_type="audio/wav")
+--- Phase 12 and deletion seams ---
+    13	## Problem
+    14
+    15	An artifact is stored text (`holdspeak/db/schema.py:342`), but `render_document(db, "artifact:<id>")` refuses `document_kind_unknown` (backend §1; `holdspeak/services/document_sources.py:435-444` lists eight kinds). Meeting synthesis appends raw window and run ids to the body (`holdspeak/plugins/synthesis.py:680-683`). A Floor icon id does not name a document: project versus update, three meeting forms, the brief's stored id (backend finding 1). The Floor's world types accept primitives only (`web/src/desk/world.ts:11`).
+    16
+    17	## Scope
+    18
+    19	- **In:** `_ArtifactSource` and its `DOCUMENT_SOURCES` row (design §4): the stored `body_markdown` by id; only the synthesis-owned source footer left out, matched against the artifact's stored lineage (`artifact_sources` `intent_window` and `plugin_run` rows), authored text and code kept; the label from `artifact_type` with no id; `artifact_body_missing` and `artifact_not_text` (the raw stored value, before the DTO coerces it), added to the descriptor refusal list and the shared face words; `payload_too_large:<channel>` reused; the descriptor kind list (`holdspeak/channel_operations.py:24`) and the registry fence (`tests/unit/test_philo11_document_sources.py:34`) at nine. `GET /api/brief/{brief_id}`, a plain authenticated read for the brief's exact-id handoff (design §5). The Floor binding (design §2): one new, pure web module over explicit **resolved inputs** (`Fact<T>`: unread, loading, failed, known) that answers a `document_ref`, a named refusal (only on a known absence: no summary, no published update, a parked destination) or `pending`; it performs no read. The projection variant for non-primitive items (destinations, the brief) as data. Web-unit fences. The `send` capability in `primitiveCan` for `decision`, `meeting`, `project`, `artifact`.
+    20	- **Out:** the reads that supply the facts (story 03); any face, and the wiring into `world.ts`, `sceneModel.ts`, `engine.ts`, `dropMatrix.ts`, `floorMenu.ts` (stories 03, 04); binary support, attachments, truncation; a revision store or a review gate for artifacts.
+    21
+    22	## Acceptance criteria
+    23
+    24	- [x] `artifact:<id>` renders the stored body by id through each real producer the Floor shows (meeting synthesis, run output, Ask Keep), with no model run; red on main (`document_kind_unknown`).
+    25	- [x] `document_not_found`, `artifact_body_missing`, `artifact_not_text` (a raw non-text stored value) and `payload_too_large:<channel>` refuse by name; each fence red before the fix.
+    26	- [x] No synthesis source footer (removed only when it matches stored lineage; an authored line that looks alike stays) and no internal id in an artifact payload, title, label or file name; the Phase 11 no-internal-id fence runs over nine kinds.
+    27	- [x] The Phase 10 lifecycle fences (preview equals payload, one winner, owner press, `preview_changed`) run over one artifact. A thread prepares an artifact send; an external agent's `channel.send` is refused `owner_principal_required` with a receipt.
+    28	- [x] A `tools/list` fence maps "send this artifact to <destination>" and "prepare it" to a tool and an argument path.
+    29	- [x] `GET /api/brief/{brief_id}` returns that stored brief, also when a later brief exists; an unknown id is a 404.
+    30	- [x] The binding module answers every row of design §2 and each named refusal, one web-unit case each; `unread`, `loading` and `failed` answer `pending`, never a refusal; the projection variant carries destinations and the brief without a new `PrimitiveKind`.
+    31
+    32	## Effort (not a promise)
+    33
+    34	PROVISIONAL: 1–1.5 engineering days.
+    35
+    36	## Test plan
+    37
+    38	- **Integration:** fences through the real hub on an isolated HOME; each artifact minted through its real producer.
+    39	- **Web unit:** the binding module and the projection variant.
+    40	- **Rig:** `op` steps for preview and prepare on `artifact:<id>`.
+    19	## 2. The document binding per icon
+    20
+    21	A generic icon id does not name a document (backend finding 1). Each sendable icon binds one exact `document_ref`:
+    22
+    23	| Icon | `document_ref` | Rule |
+    24	|---|---|---|
+    25	| Decision (`decision`, a desk decision) | `desk_decision:<decision id>` | its own record kind (`web/src/desk/documentSends.tsx:32`) |
+    26	| Meeting | `meeting_summary:<meeting id>` first; `meeting_digest:` and `meeting_followup:` by the picker | the preview opens on **Summary** with the Summary / Digest / Follow-up picker visible (`web/src/meetings/MeetingSendWell.tsx:31-54`); a change of form loads that form's preview for the same destination. Never the transcript. A meeting with no summary cannot send (`no_summary`) |
+    27	| Project | `project_update:<update id>` of its **latest published** update | a project id is not an update id. A project with no published update cannot send (the renderer's `not_published`, `holdspeak/services/channel_contract.py:221`) |
+    28	| Brief (section 5) | `monday_brief:<stored brief id>` | the id of the brief the view shows, never the string `latest` and never the icon's layout key |
+    29	| Artifact (section 4) | `artifact:<artifact id>` | the new source |
+    30
+    31	- **Nothing else on the Floor sends.** Notes, knowledge, personas, zones and the rest stay out (the owner did not pick notes). No document prefix is guessed for them.
+    32	- **The gate.** A `send` capability joins `primitiveCan` (`web/src/lib/primitives.ts:704-711`) for `decision`, `meeting`, `project` and `artifact`. The brief projection (section 5) carries it in its own variant.
+    33	- **Per object, not per kind.** A meeting with no summary and a project with no published update cannot send **this** object. The resolver answers per object (faces F5). The menu (section 3) and the drop (section 6) use the same resolver, so the two paths never disagree.
+    34	- **The binding lives in one pure module** (story 01). A pure function cannot discover facts the Floor does not hold: a Floor project carries no published-update id (`web/src/lib/primitives.ts:213`), and the meeting list carries a status but no summary (`holdspeak/services/meeting_service.py:868`). So the module takes **resolved inputs** and never reads (Astra r1 finding 3):
+    35
+    36	```text
+    37	resolve(input) -> { ref } | { refusal: code } | { pending: "unread" | "loading" | "failed" }
+    38
+    39	input (one of):
+    40	  { kind: "decision", id }
+    41	  { kind: "artifact", id }
+    42	  { kind: "meeting",  id, summary: Fact<boolean> }                    form: summary | digest | followup
+    43	  { kind: "project",  id, latestPublishedUpdateId: Fact<string|null> }
+    44	  { kind: "brief",    briefId }                                        the stored id the projection holds
+    45	  destination: { id, state: "active" | "parked" }
+    46
+    47	Fact<T> = { state: "unread" } | { state: "loading" } | { state: "failed" }
+    48	        | { state: "known", value: T }
+    49	```
+    50
+    51	  Only a **known** absence refuses (`no_summary`, `not_published`, `destination_parked`). `unread`, `loading` and `failed` answer `pending`, never a refusal.
+    52	- **The reads belong to story 03**, in one small shared module that both the menu and the later drop (story 04) consume: a meeting's summary presence from `GET /api/meetings/{meeting_id}` (`holdspeak/web/routes/meetings/crud.py:100`), and a project's latest published-update id from `GET /api/projects/{project_id}/updates` (`holdspeak/web/routes/project_updates.py:61`). The read starts when the menu opens or the drag starts, and its answer is kept for the session view.
+    53	- **No lost Send while a read is not done.** A `pending` object keeps `Send to ▸` and stays a drop target. A pick or a release on a `pending` object waits for the read: `known` → the normal path; known absence → the refusal word on that row or tag, nothing opens; `failed` → the row says `CAN'T CHECK` and the pick still opens the document's own window, whose well tells the truth (UX-CANON A.10).
+    54
+    55	## 3. `Send to ▸` — the menu path (ships with or before the drag)
+    56
+    57	- **Where.** One `sub` entry, `Send to ▸`. The menu species already nests (`WorkMenuEntry` `type: "sub"`, `web/src/desk/components/DeskMenu.tsx:182-201`, `:322-360`). `objectMenuEntries` (`web/src/desk/floorMenu.ts:59-71`) reaches the spatial Floor (`web/src/desk/gl/WorldStage.tsx:303-313`) and the list (`web/src/desk/components/DeskListView.tsx:405`). **The menu bar does not read that list:** it builds flat entries from `menuVerbs` on its own (`web/src/desk/components/DeskMenuBar.tsx:78-82`), and at compact width it shows only the `Go` menu (`DeskMenuBar.tsx:101-108`). (Round one claimed otherwise; Astra r1 finding 2.) Story 03 owns **one shared composition** of the object's menu entries, `Send to ▸` included, and all three rendered entry points: the spatial Floor, the list, and the menu bar (its Object menu and, at compact width, the `Go` menu).
+    58	- **The rows.** His active saved destinations by name, each with its channel word. No destinations: one row, `Add destination`, that opens Settings → Destinations at the form (Phase 10 B2).
+    59	- **Withheld where it cannot run.** On a kind that cannot send (a note, a persona, knowledge), and on an object that cannot send now (a meeting with no summary, a project with no published update), `Send to ▸` is not in the menu (UX-CANON A.11; the menu already carries four ghost rows on a decision, faces F3). The verb registry's "ghosting over hiding" comment (`web/src/desk/verbRegistry.ts:8-12`) is amended: UX-CANON A.11 governs, and a verb that cannot run for this object is withheld (Astra r1 finding 6).
+    60	- **Release of a pick.** Picking a destination opens the document's own window (section 6, "Open") with that destination picked and its preview loaded. He presses Send. A pick never sends and never prepares.
+    61	- **At 393.** The list's row menu carries it; the submenu replaces the panel with a back row first (`DeskMenu.tsx:592`). This is the phone's whole path (faces F1). The list row exposes `onContextMenu` only (`web/src/desk/components/DeskSortableTable.tsx:247`); the long-press in `engine.ts:790-830` belongs to the GL engine, not the list. Story 03 makes a **touch** long-press open the list row menu (or proves the platform already does), and its fence uses a touch gesture. A mouse right-click at phone width does not count (Astra r1 finding 5).
+    62	- **The brief in the list.** The brief projection (section 5) is a row in the list at every width, so the phone sends the brief through `Send to ▸` too. Destinations stay absent from the list.
+    63	- **The project's open path (moved from story 04 to story 03; Astra r1 finding 1).** A pick on a project opens the existing Room at the Update posture on that exact update with the destination picked. Today the opener carries only a project scope (`web/src/desk/store/compositorSlice.ts:158-168`; `openSurfaceWhenReady(key, scope)`, `web/src/desk/shell.ts:34-36`). Story 03 adds one link with the shape `{ projectId, updateId, destinationId }` (`updateId` = the exact published update). It opens that update when the Room's data is ready, **also when the Room is already open** (the open Room switches to that update and posture; it does not stay on what it showed).
+    64	- **Out:** `Send to …` rows in the ⌘K palette (not grounded; BACKLOG).
+    66	## 4. The artifact source: `artifact:<id>`
+    67
+    68	- **One renderer and one registry row.** `_ArtifactSource.render(db, source_id)` in `holdspeak/services/document_sources.py`, and its row in `DOCUMENT_SOURCES` (`:435-444`, eight rows today; this is the ninth). It reads the stored row with `db.plugins.get_artifact(source_id)` (`holdspeak/db/plugins.py:828`) and returns the existing `Document(ref, title, body_md, slug, label)` (`holdspeak/services/channel_contract.py:80`, `:93`). The channel descriptor text that lists the kinds changes in the same commit (`holdspeak/channel_operations.py:24`), and the registry fence pins nine (`tests/unit/test_philo11_document_sources.py:34`).
+    69	- **The body is the stored `body_markdown`.** No model runs. No regeneration from `structured_json`. No rendered HTML. No attachment. A Mermaid or code block in the body is text.
+    70	- **No internal id leaves the machine.** Meeting synthesis appends a source footer of raw window and plugin-run ids (`holdspeak/plugins/synthesis.py:680-683`). The renderer removes **only that synthesis-owned footer**, and only when its lines match the artifact's stored lineage (`artifact_sources` rows of type `intent_window` and `plugin_run`, `holdspeak/db/schema.py:371`; written at `synthesis.py:673-676`). Authored text and code blocks stay as stored. No general text scrubber (Astra r1 finding 6). The Phase 11 fence that no internal id appears in a sent document (`6dc9a76c0`, `tests/unit/test_philo11_document_sources.py`) runs over the ninth kind, through real synthesis output.
+    71	- **The label.** A short word from `artifact_type`, for example `ARTIFACT · REQUIREMENTS`. No id in the label or the file name (the Phase 11 ruling, `6dc9a76c0`).
+    72	- **Named refusals.**
+    73
+    74	| Case | Refusal | Where |
+    75	|---|---|---|
+    76	| No row with that id | `document_not_found` (exists) | the source |
+    77	| An empty or whitespace body | `artifact_body_missing` (new) | the source |
+    78	| A stored body that is not text | `artifact_not_text` (new) | the source, on the raw stored value before the DTO coerces it (`holdspeak/db/plugins.py:708`, `:862`; backend §1) |
+    79	| Too large for the channel | `payload_too_large:<channel>` (exists) | the channel limits, before dispatch (`holdspeak/services/channel_service.py:393`); no new artifact cap |
+    80
+    81	  The two new codes join the descriptor refusal list and the shared face words in the same commit. No upload, no OCR, no binary decoding, no truncation.
+    82	- **Which artifacts show.** The Floor shows the artifacts it shows today. Run listings hide `pending-review` and `rejected` (`holdspeak/db/plugins.py:931`); that stays. No new review gate: his preview and his Send are the approval.
+    83	- **Change.** If the body changes, the well shows the new preview, and he presses Send again (Phase 11 R9). No revision store.
+    84
+    85	## 5. The brief icon: a world-only projection
+    86
+    87	- **One icon for the latest stored brief.** It reads `GET /api/brief/latest` (`holdspeak/web/routes/monday_brief.py:112`). Its layout key is the stable `intelligence:brief`; its send identity is `monday_brief:<the stored id it shows>` (backend §2). Label: `BRIEF <day>`, for example `BRIEF SEP 29`.
+    88	- **Not a primitive.** `WorldObject.kind` and `.ref` require a primitive today (`web/src/desk/world.ts:11`). The Floor gains one explicit projection variant for non-primitive icons (the brief and the destinations), which delegates to existing surfaces. No 21st `PrimitiveKind`, no cast (backend §2, the table's first row).
+    89	- **Place.** Beside the destinations column. He can drag it; its position saves under `intelligence:brief`. No Dock change.
+    90	- **Open.** Opens Intelligence → BRIEF (`openIntelligence({ view: "brief" })`, `web/src/desk/intelligenceNavigation.ts:3`, `:18`). That view already composes the SEND well (`web/src/desk/pullouts/views/BriefView.tsx:461-463`).
+    91	- **The exact-id handoff (Astra r1 finding 4).** Today the navigation carries no brief id (`intelligenceNavigation.ts:5`), and the view fetches `/api/brief/latest` on its own (`BriefView.tsx:174`). A send from the brief icon or row passes `{ view: "brief", briefId, destinationId }`. The view shows that stored brief and keeps it; if `latest` answers another id, the view still shows the handed id. One read by id, `GET /api/brief/{brief_id}`, does not exist today (`holdspeak/web/routes/monday_brief.py:112-132` has `latest`, `generate`, `shelf`); story 01 adds it as a plain authenticated read (the renderer already loads by id, `holdspeak/services/document_sources.py:247`).
+    92	- **No brief yet:** no icon and no list row. Generate stays where it is (the Chair and Intelligence). A drop never generates a brief.
+    93	- **A refresh never switches the document in an open preview.** The well keeps the id it opened with.
+    94	- **Narrow widths:** at compact width the brief is a row in the list (section 3) with `Send to ▸`; no destination icons there.
+    95
+    96	## 6. Drag a document onto a destination
+    97
+    98	- **One rule in the drop matrix.** The drop matrix is kind × kind today (`web/src/desk/dropMatrix.ts:17-48`); the send rule asks the section 2 resolver per object (faces F5). No second drag engine (backend §4).
+    99	- **The tag while held.** `Preview for <destination name>`, for example `Preview for Slack #leads`. Never `Send`: release opens a preview; it does not send (`dropMatrix.ts:13-14`; UX-CANON A.11; faces F4). The target lights with its `_sel` image (`engine.ts:554-560`). The egress chip stays in the well, where the send happens (A.9).
+   100	- **A refusal on the tag.** When the resolver refuses, the tag says why and release does nothing (the glass-drop precedent: never a silent no-op, `web/src/desk/glassDrop.ts:41-47`): `NO SUMMARY` (a meeting with no summary), `NO PUBLISHED UPDATE` (a project), `PARKED` (a destination parked since the last read). The exact words are drawn on canvas G and ratified with it.
+   101	- **Release (Open).** The **dragged document's** window opens at the drop point, with the destination picked and its preview loaded (the mirror of `ground-into`, `engine.ts:1110-1118`; `openPullout(id, origin)`, `web/src/desk/store/compositorSlice.ts:137-152`). The dragged icon goes back to its place (`engine.ts:1123`); a drop never moves or files the document into a destination. Per icon, through the same open paths story 03 builds for the menu:
+   102	  - decision → the decision window (`DecisionPullout`);
+   103	  - meeting → the meeting window, form `Summary`, the picker visible;
+   104	  - project → the Room link `{ projectId, updateId, destinationId }` (section 3; built in story 03);
+   105	  - brief → Intelligence → BRIEF on the exact id (section 5);
+   106	  - artifact → the artifact window, the destination picked.
+   107	- **The selection pushed into a well (story 03; Astra r1 finding 4).** Round one said "export one setter; nothing else changes". That understates it. The pick is a module map keyed by the whole `document_ref` (`picked`, `web/src/desk/surface/send/SendWell.tsx:63-64`, read at `:459`), and the meeting form is read once into component state (`formPick`, `web/src/meetings/MeetingSendWell.tsx:28`, `:34`). The species gains:
+   108	  - **one push seam per well** (pick for a `document_ref`; form for a meeting), named in `web/src/desk/surface/contract.md`;
+   109	  - **an already-open well reacts** to a pushed selection: the open window changes its pick and loads the new preview, without a remount (a second drop on the same document with another destination changes the pick in place);
+   110	  - **the destination is kept across meeting forms:** Summary → Digest → Follow-up keeps the picked destination and loads each form's preview for it (today the pick is keyed by the form's ref and is lost);
+   111	  - **the brief's exact id** (section 5).
+   112	  Each is a rendered-transition fence at both widths, and the receipt after Send names the expected `document_ref` and destination.
+   113	- **No auto-prepare.** Release calls `channel.preview` only (XI.5-exempt; `holdspeak/channel_operations.py:180`, `:200`). No `channel_sends` row and no kernel operation exist until he presses Send (backend finding 4).
+   114	- **Narrow widths:** no destination icons, so no drop. The menu is the path (section 3).
+   115
+   116	## 7. The artifact window
+   117
+   118	- **The SEND well** composes in `ArtifactPullout` on `artifact:<id>`, as on every other document window (Phase 11 R4).
+   119	- **Its three raw `<button>`s become library Buttons** (`web/src/desk/pullouts/ArtifactPullout.tsx:38`, `:57`, `:64`; UX-CANON A.1; faces F10), in the same story.
+   120
+     1	# PHILO-12-05 - The atlas cases
+     2
+     3	- **Project:** holdspeak-philo
+     4	- **Phase:** 12
+     5	- **Status:** backlog
+     6	- **Depends on:** PHILO-12-01, PHILO-12-03, PHILO-12-04
+     7	- **Unblocks:** PHILO-12-06
+     8	- **Owner:** Astra's lane (Luna, xhigh); Muad'Dib checks
+     9	- **Closure finding:** the charter's exit 7
+    10	- **Design:** `design/floor-send.md`
+    11	- **Canvas:** none
+    12
+    13	## Problem
+    14
+    15	The atlas has Send cases on document windows only (Phases 10 and 11). A regression in `Send to ▸`, the drop or the artifact send would not be caught.
+    16
+    17	## Scope
+    18
+    19	- **In:** face cases for `Send to ▸` per sendable kind at 1440 and 393 (the list at 393); the drop per kind at 1440; the tag refusals; the pushed-selection transitions (design §6); the touch list menu at 393; the artifact send (picked, SENT, PREPARED); `.op` siblings where the outcome is durable; each case through `scripts/graph_walk.py`, one case per run.
+    20	- **Out:** real sends (06).
+    21
+    22	## Acceptance criteria
+    23
+    24	- [ ] Each new face case fails on the fixed pre-feature revision `22c0acc4` (main before any Phase 12 merge; the grounding base) and passes on the phase head; each `.op` reads the hub's record and receipt.
+    25	- [ ] The Phase 7, 8, 9, 10 and 11 atlas cases still pass.
+     1	# PHILO-12-06 - The closing use
+     2
+     3	- **Project:** holdspeak-philo
+     4	- **Phase:** 12
+     5	- **Status:** backlog
+     6	- **Depends on:** PHILO-12-01 through PHILO-12-05; the targets he names (the Phase 10 Q6 ruling carries)
+     7	- **Unblocks:** the phase close
+     8	- **Owner:** Muad'Dib's lane; Astra checks
+     9	- **Closure finding:** the charter's exit 8
+    10	- **Design:** `design/floor-send.md`
+    11	- **Canvas:** none
+    12
+    13	## Problem
+    14
+    15	The Floor send is proven only on isolated hubs until a real send from the Floor reaches the far side.
+    16
+    17	## Scope
+    18
+    19	- **In:** two legs, kept apart. (A) The rehearsal: a cold Codex session (the Phase 9 R3 setup: scratch root, HOME and CODEX_HOME with the auth file only, the isolated hub the only MCP server, zero repository reads in the retained log) prepares an artifact send from the MCP catalogue alone; the owner's Send is pressed on the face at 1440 and 393. (B) The real sends, on his own session, to the targets he names: one send from the Floor of each picked kind (decision, meeting summary, project update, brief, artifact) on the channels he has, by drag at 1440 and by `Send to ▸` at 393; each proof read back from the far side, or a named limit with its reason.
+    20	- **Out:** a sitting (owner-reviewed shots only).
+    21
+    22	## Acceptance criteria
+    23
+    24	- [ ] The cold session prepares an artifact send; the face shows PREPARED by that agent; his Send ends SENT (or POSTED) with its proof at both widths, read back from the hub.
+    25	- [ ] Each real send's proof read back from the far side, or its limit named. Secrets and addresses redacted at capture.
+    26
+    27	## Effort (not a promise)
+    28
+    29	PROVISIONAL: about 1 engineering day, plus the real-send legs.
+    21	7. **The remaining visual direction is ratifiable.** The shots show the left-opening, single-line Preview tag; no selection bar for selected destination/brief icons; Send to after Open across spatial, list and Object/Go entry points; withheld unavailable Send; the brief icon and phone row; CHECKING and CAN’T CHECK; and the intended G7 destination, G8 form and G9 update transitions. The `pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/assets/story-02-canvas/shots/sprite-sheet.png` has distinct silhouettes and no brand logos. These satisfy the relevant defaults as canvas proposals. G7–G9 do not yet establish production receipts after those transitions.
+    22
+    23	CONDITIONS:
+    24
+    25	Correct the Room arrival and phone Back drawings; demonstrate actual column wrapping; correct the receipt, visibility and anchor claims. Update the affected captions and fences together. Carry the settled read transitions and tie policy into story 03. These are bounded corrections; no additional subsystem or owner question is needed.
+    26
+    27	MISSED:
+    28
+    29	1. Highest owner cost: reaching Send with the destination obscured, or mistaking a rig-positioned preview for the actual arrival.
+    30	2. Next: a phone submenu whose return action looks like a heading.
+    31	3. Next: workers inheriting simulated receipts or avoided timestamp ties as verified behavior.
+    32
+    33	TUESDAY: The decision → Slack preview → Send design is usable; I would ratify it after the arrival corrections, but would not yet certify the complete phone path.
+    34
+    35	UNKNOWN: I inspected all 71 board shots and the sprite sheet, recomputed recorded totals, and exercised anchor guards in memory. I did not rerun the browser rig, suites, actual atlas cases, live sends or an owner-device walk. HEAD remains `805c5ec30`; the tree is unchanged and clean.   495	class _ArtifactSource:
+   496	    kind = "artifact"
+   497
+   498	    def render(self, db: Any, source_id: str) -> Document:
+   499	        # Read the native SQLite value first.  ``get_artifact`` intentionally
+   500	        # returns a DTO and coerces its body to text for older callers.
+   501	        raw_body = _raw_artifact_body(db, source_id)
+   502	        if raw_body is _MISSING_ARTIFACT:
+   503	            raise _document_not_found("artifact", source_id)
+   504	        if raw_body is None:
+   505	            # The row exists, so a NULL body is a missing body rather than a
+   506	            # missing document.  A non-text value is rejected before the DTO
+   507	            # value can hide its native type.
+   508	            raise ChannelRefused(
+   509	                "artifact_body_missing",
+   510	                f"Artifact {source_id} has no stored body",
+   511	                status=400,
+   512	            )
+   513	        if not isinstance(raw_body, str):
+   514	            raise ChannelRefused(
+   515	                "artifact_not_text",
+   516	                f"Artifact {source_id} body is not text",
+   517	                status=400,
+   518	            )
+   519	        if not raw_body.strip():
+   520	            raise ChannelRefused(
+   521	                "artifact_body_missing",
+   522	                f"Artifact {source_id} has no stored body",
+   523	                status=400,
+   524	            )
+   525
+   526	        artifact = db.plugins.get_artifact(source_id)
+   527	        if artifact is None:
+   528	            raise _document_not_found("artifact", source_id)
+   529
+   530	        title = str(artifact.title or "Artifact").strip() or "Artifact"
+   531	        artifact_type = str(artifact.artifact_type or "plugin_output").strip()
+   532	        type_label = artifact_type.replace("_", " ").upper() or "PLUGIN OUTPUT"
+   533	        return _make_document(
+   534	            ref=f"{self.kind}:{source_id}",
+   535	            title=title,
+   536	            body_md=_without_synthesis_footer(raw_body, artifact.sources),
+   537	            slug=_slug(title, "artifact"),
+   538	            label=f"ARTIFACT · {type_label}",
+   539	        )
+   540
+   541
+   542	DOCUMENT_SOURCES: dict[str, DocumentSource] = {
+   543	    "project_update": _ProjectUpdateSource(),
+   544	    "monday_brief": _MondayBriefSource(),
+   545	    "desk_decision": _DeskDecisionSource(),
+   546	    "meeting_decision": _MeetingDecisionSource(),
+   547	    "decision_record": _DecisionRecordSource(),
+   548	    "meeting_summary": _MeetingSummarySource(),
+   549	    "meeting_digest": _MeetingAftercareSource("meeting_digest"),
+   550	    "meeting_followup": _MeetingAftercareSource("meeting_followup"),
+   551	    "artifact": _ArtifactSource(),
+   552	}
+   553
+   554
+   555	def render_document(db: Any, document_ref: str) -> Document:
+   556	    """Resolve and render ``<kind>:<source_id>`` through the registry."""
+   557	    kind, separator, source_id = str(document_ref or "").partition(":")
+   558	    if not separator or not kind or not source_id:
+   559	        raise ChannelRefused("document_kind_unknown", f"Unknown document kind in {document_ref!r}", status=400)
+   560	    source = DOCUMENT_SOURCES.get(kind)
+   561	    if source is None:
+   562	        raise ChannelRefused("document_kind_unknown", f"Unknown document kind: {kind}", status=400)
+   563	    try:
+   564	        return source.render(db, source_id)
+   565	    except NotFound as exc:
+   566	        raise _document_not_found(kind, source_id) from exc
+   567
+   568
+   569	__all__ = ["DOCUMENT_SOURCES", "DocumentSource", "render_document"]
+   101	    router = APIRouter(prefix="/api/brief", tags=["monday-brief"])
+   102	    principal = lambda request: getattr(request.state, "principal", UNAUTHENTICATED)
+   103
+   104	    def ops() -> operations.OperationRegistry:
+   105	        # In the hub: ctx.operations, and nothing is built here. A partially
+   106	        # wired context (a route test) gets a bare brief service over its own
+   107	        # clock, through this module's database seams.
+   108	        return operations.for_context(ctx, monday_brief_service=lambda: MondayBriefService(
+   109	            get_database(), observer=get_observer(), clock=getattr(ctx, "brief_clock", None),
+   110	        ))
+   111
+   112	    @router.get("/latest")
+   113	    async def latest(request: Request) -> dict[str, Any] | None:
+   114	        registry = ops()
+   115	        brief = registry.invoke(principal(request), "brief.latest", {})
+   116	        if brief is None:
+   117	            return None
+   118	        result = asdict(brief)
+   119	        result["period_label"] = _period_label(result)
+   120	        result["generated_label"] = _generated_label(result)
+   121	        return _compose_overlay(result, registry.target("brief.latest"), request)
+   122
+   123	    @router.post("/generate")
+   124	    async def generate(request: Request) -> dict[str, Any]:
+   125	        registry = ops()
+   126	        result = asdict(registry.invoke(principal(request), "brief.generate", {}))
+   127	        result["period_label"] = _period_label(result)
+   128	        result["generated_label"] = _generated_label(result)
+   129	        return _compose_overlay(result, registry.target("brief.generate"), request)
+   130
+   131	    # HS-132-08 -- brief triage is a durable owner verb, not React state.
+   132	    @router.get("/shelf")
+   133	    async def read_shelf(request: Request) -> dict[str, str]:
+   134	        return ops().invoke(principal(request), "brief.shelf.read", {})
+   135
+   136	    @router.post("/items/{item_id}/shelf")
+   137	    async def write_shelf(
+   138	        request: Request,
+   139	        item_id: str,
+   140	        body: dict[str, Any] = Body(default_factory=dict),
+   141	    ) -> dict[str, Any]:
+   142	        state = body.get("state")
+   143	        if state is not None and not isinstance(state, str):
+   144	            raise HTTPException(status_code=422, detail="state must be a string")
+   145	        try:
+   146	            return ops().invoke(principal(request), "brief.shelf.write", {"item_id": item_id, "state": state})
+   147	        except LookupError as unknown_item:
+   148	            raise HTTPException(status_code=404, detail=str(unknown_item)) from unknown_item
+   149	        except ValueError as unknown_state:
+   150	            raise HTTPException(status_code=422, detail=str(unknown_state)) from unknown_state
+   151
+   152	    @router.get("/{brief_id}")
+   153	    async def read_by_id(request: Request, brief_id: str) -> dict[str, Any]:
+   154	        """Read one stored brief without changing the latest-brief pointer.
+   155
+   156	        This is a plain read for the exact-id handoff from the Desk.  Keep it
+   157	        after the static routes above: Starlette matches routes in declaration
+   158	        order, so ``latest`` and ``shelf`` must continue to win over this
+   159	        parameter route.
+   160	        """
+   161	        if principal(request).kind is PrincipalKind.NONE:
+   162	            raise HTTPException(status_code=401, detail="authentication_required")
+   163
+   164	        registry = ops()
+   165	        service = registry.target("brief.latest")
+   166	        brief = service.get_by_id(brief_id)
+   167	        if brief is None:
+   168	            raise HTTPException(status_code=404, detail="brief_not_found")
+   169
+   170	        result = asdict(brief)
+   171	        result["period_label"] = _period_label(result)
+   172	        result["generated_label"] = _generated_label(result)
+   173	        return _compose_overlay(result, service, request)
+   456	  const removeSelected = async () => {
+   457	    if (!selected) return;
+   458	    setRemoving(true);
+   459	    try {
+   460	      await apiFetch(`/api/meetings/${encodeURIComponent(String(selected.id))}`, {
+   461	        method: "DELETE",
+   462	      });
+   463	      setSelected(null);
+   464	      setReceipt({ text: `DELETED ${clockTime(new Date().toISOString())}` });
+   465	      void meetings.reload();
+   466	    } catch (reason) {
+   140	    @router.delete("/api/meetings/{meeting_id}")
+   141	    async def api_delete_meeting(meeting_id: str, request: Request) -> Any:
+   142	        """Delete a meeting (HS-55-02: e.g. a failed import's honest row)."""
+   143	        try:
+   144	            _service(ctx).delete_meeting(_principal(request), meeting_id)
+   145	            return JSONResponse({"deleted": meeting_id})
+   146	        except NotFound:
+   147	            return JSONResponse({"error": "Meeting not found"}, status_code=404)
+   148	        except Exception as e:
+   149	            log.error(f"Failed to delete meeting: {e}")
+   150	            return JSONResponse(
+   151	                {"error": str(e)}, status_code=500
+   152	            )
+  1061	    def delete_meeting(self, meeting_id: str) -> bool:
+  1062	        """Delete a meeting and all related data. Returns True if found."""
+  1063	        with self._connection() as conn:
+  1064	            result = conn.execute(
+  1065	                "DELETE FROM meetings WHERE id = ?", (meeting_id,)
+  1066	            )
+  1067	            return result.rowcount > 0
+   900	export async function deleteWorkbenchItem(
+   901	  workbenchId: string,
+   902	  itemId: string,
+   903	): Promise<void> {
+   904	  await apiFetch<Record<string, unknown>>(
+   905	    `/api/workbenches/${encodeURIComponent(workbenchId)}/items/${encodeURIComponent(itemId)}`,
+   906	    { method: "DELETE" },
+   907	  );
+   908	}
+    90	    @router.delete("/api/workbenches/{workbench_id}")
+    91	    async def api_delete_workbench(workbench_id: str, request: Request) -> Any:
+    92	        try:
+    93	            _svc().delete_workbench(_principal(request), workbench_id)
+    94	            return JSONResponse({"success": True})
+    95	        except ConflictError as exc:
+    96	            return JSONResponse({"error": str(exc)}, status_code=409)
+    97	        except NotFound:
+    98	            return _not_found("workbench", workbench_id)
+    99	        except Exception as exc:
+   100	            return error_500(exc, log, "Failed to delete workbench")
+   134	    @router.delete("/api/workbenches/{workbench_id}/items/{item_id}")
+   135	    async def api_delete_item(workbench_id: str, item_id: str, request: Request) -> Any:
+   136	        try:
+   137	            _svc().delete_item(_principal(request), workbench_id, item_id)
+   138	            return JSONResponse({"success": True})
+   139	        except NotFound:
+   140	            return _not_found("item", item_id)
+   141	        except ConflictError as exc:
+   142	            return JSONResponse({"error": str(exc)}, status_code=409)
+   143	        except Exception as exc:
+   144	            return error_500(exc, log, "Failed to delete item")
+   159	    def delete_workbench(self, principal: Principal, workbench_id: str) -> bool:
+   160	        if self._db.workbench_items.has_active_items(workbench_id):
+   161	            raise ConflictError(
+   162	                "Cannot delete workbench with active items. Wait for running items to complete."
+   163	            )
+   164	        if not self._db.workbenches.delete(workbench_id):
+   165	            raise NotFound("workbench", workbench_id)
+   166	        self._changed("workbench", workbench_id, "delete")
+   167	        return True
+   218	    def delete_item(self, principal: Principal, workbench_id: str, item_id: str) -> bool:
+   219	        item = self._require_item(workbench_id, item_id)
+   220	        if item.status == "claimed":
+   221	            raise ConflictError("Cannot delete a claimed item")
+   222	        if not self._db.workbench_items.delete(item_id):
+   223	            raise NotFound("item", item_id)
+   224	        self._changed("workbench_item", item_id, "delete")
+   225	        return True
+   154	    def delete(self, workbench_id: str) -> bool:
+   155	        clean_id = str(workbench_id or "").strip()
+   156	        if not clean_id:
+   157	            return False
+   158	        now = _now_iso()
+   159	        with self._connection() as conn:
+   160	            cur = conn.execute(
+   161	                "UPDATE workbenches SET deleted = 1, last_modified = ? WHERE id = ? AND deleted = 0",
+   162	                (now, clean_id),
+   163	            )
+   164	            return bool(cur.rowcount and cur.rowcount > 0)
+   165
+   166	    def purge(self, workbench_id: str) -> bool:
+   167	        with self._connection() as conn:
+   168	            cur = conn.execute("DELETE FROM workbenches WHERE id = ?", (str(workbench_id).strip(),))
+   169	            return bool(cur.rowcount and cur.rowcount > 0)
+   295	    def delete(self, item_id: str) -> bool:
+   296	        clean_id = str(item_id or "").strip()
+   297	        if not clean_id:
+   298	            return False
+   299	        with self._connection() as conn:
+   300	            cur = conn.execute("DELETE FROM workbench_items WHERE id = ?", (clean_id,))
+   301	            return bool(cur.rowcount and cur.rowcount > 0)
+--- static probe complete ---

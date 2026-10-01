@@ -1,0 +1,13 @@
+#!/bin/bash
+# Run from repository root. Focused verification only; no channel send tests.
+set -eu
+probe_home=$(mktemp -d)
+trap 'rm -rf "$probe_home"' EXIT INT TERM
+export HOME="$probe_home"
+uv run --frozen --extra test pytest --collect-only -q tests/unit/test_philo12_brief_read.py tests/unit/test_philo12_artifact_source.py --basetemp "$probe_home/pytest-collect"
+uv run --frozen --extra test pytest -q tests/unit/test_philo12_brief_read.py tests/unit/test_philo12_artifact_source.py --basetemp "$probe_home/pytest-run"
+cd web
+# Homebrew node 25 is broken (missing libllhttp.9.3); use installed Node 22.
+export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH
+./node_modules/.bin/vitest list src/desk/__tests__/applicationManifest.test.ts src/desk/__tests__/window.test.ts src/desk/__tests__/windowMenuRegistry.test.tsx src/desk/floorSendBinding.test.ts
+./node_modules/.bin/vitest run --maxWorkers=2 src/desk/__tests__/applicationManifest.test.ts src/desk/__tests__/window.test.ts src/desk/__tests__/windowMenuRegistry.test.tsx src/desk/floorSendBinding.test.ts

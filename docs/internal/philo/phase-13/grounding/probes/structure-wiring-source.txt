@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# PHILO-13 structure-wiring static probe.
+# Raw capture: structure-wiring-raw.txt (trailing whitespace normalized).
+# Read-only source census; it inspects checked-in text and emits source anchors.
+# Run from any directory inside this checkout:
+#   bash docs/internal/philo/phase-13/grounding/probes/structure-wiring-source.txt
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/../../../../../.." && pwd)"
+cd "$REPO_ROOT"
+
+probe_home="$(mktemp -d)"
+trap 'rm -rf "$probe_home"' EXIT
+export HOME="$probe_home"
+
+if [[ -x "$REPO_ROOT/.venv/bin/python" ]]; then
+  PYTHON="$REPO_ROOT/.venv/bin/python"
+else
+  PYTHON="$(command -v python3)"
+fi
+
+printf '%s\n' 'PHILO-13 structure-wiring static probe'
+printf '%s\n' "repo=$REPO_ROOT"
+printf '%s\n' "head=$(git rev-parse HEAD)"
+printf '%s\n' "isolated_home=$HOME (removed on exit)"
+printf '%s\n' 'scope=checked-in source anchors'
+
+printf '%s\n' '--- manifest counts ---'
+"$PYTHON" - <<'PY'
+import re
+from pathlib import Path
+
+path = Path("web/src/desk/applications.ts")
+text = path.read_text(encoding="utf-8")
+matches = list(re.finditer(r'(?m)^\s+action: "([^"]+)"', text))
+entries = []
+for match in matches:
+    block_end = text.find("\n  },", match.start())
+    block = text[match.start():block_end]
+    window = re.search(r'(?m)^\s+windowId: "([^"]+)"', block)
+    entries.append({
+        "action": match.group(1),
+        "line": text.count("\n", 0, match.start()) + 1,
+        "surface": bool(re.search(r"(?m)^\s+surface:", block)),
+        "window": window.group(1) if window else "?",
+    })
+print(f"application_entries={len(entries)}")
+print(f"surface_entries={sum(row['surface'] for row in entries)}")
+by_window = {}
+for row in entries:
+    by_window.setdefault(row["window"], []).append(row)
+shared = {
+    window: [(row["action"], row["line"]) for row in rows]
+    for window, rows in by_window.items()
+    if len(rows) > 1
+}
+print(f"shared_window_ids={shared}")
+print("actions:")
+for row in entries:
+    print(f"  {row['line']:>3} {row['action']:<32} window={row['window']:<32} surface={row['surface']}")
+PY
+
+printf '%s\n' '--- registry and host anchors ---'
+nl -ba web/src/desk/applications.ts | sed -n '48,70p;97,123p;147,172p;217,269p;306,345p;365,451p;453,488p'
+nl -ba web/src/desk/tools.ts | sed -n '1,22p'
+nl -ba web/src/desk/verbRegistry.ts | sed -n '606,633p'
+nl -ba web/src/desk/floorMenu.ts | sed -n '33,56p'
+nl -ba web/src/desk/components/DeskMenuBar.tsx | sed -n '24,36p;78,108p'
+nl -ba web/src/desk/components/window/Dock.tsx | sed -n '20,70p'
+nl -ba web/src/desk/DeskApp.tsx | sed -n '258,305p'
+nl -ba web/src/desk/pullouts/registry.ts | sed -n '1,50p'
+nl -ba web/src/desk/store/compositorSlice.ts | sed -n '43,70p;137,268p;300,352p'
+nl -ba web/src/desk/components/SurfaceWindows.tsx | sed -n '90,212p'
+nl -ba web/src/desk/store/workspaceStorage.ts | sed -n '8,165p'
+nl -ba web/src/desk/chromeState.ts | sed -n '1,24p'
+
+printf '%s\n' '--- frontend data route families ---'
+for file in web/src/pages/cores/*.tsx; do
+  printf '## %s\n' "$file"
+  rg -n '"/api/[^"` ]+|`/api/[^` ]+' "$file" || true
+done
+for file in \
+  web/src/features/project-room/api.ts \
+  web/src/features/project-room/update/api.ts \
+  web/src/features/project-room/prepare/api.ts \
+  web/src/features/project-room/steward/api.ts \
+  web/src/features/project-room/door/api.ts \
+  web/src/features/concierge/api.ts \
+  web/src/desk/api.ts \
+  web/src/desk/deliveryDossier.ts \
+  web/src/desk/deliveryTerminal.ts \
+  web/src/desk/roadmap.ts \
+  web/src/desk/repository.ts; do
+  printf '## %s\n' "$file"
+  rg -n '"/api/[^"` ]+|`/api/[^` ]+' "$file" || true
+done
+
+printf '%s\n' '--- backend route to service anchors ---'
+rg -n 'APIRouter|Service\(|_service\(|_svc\(|operations\.for_context|service\.' \
+  holdspeak/web/routes/monday_brief.py \
+  holdspeak/web/routes/follow_through.py \
+  holdspeak/web/routes/decisions.py \
+  holdspeak/web/routes/primitives/ask.py \
+  holdspeak/web/routes/projects.py \
+  holdspeak/web/routes/meetings/crud.py \
+  holdspeak/web/routes/people.py \
+  holdspeak/web/routes/calendar_snapshot.py \
+  holdspeak/web/routes/primitives/workbenches.py \
+  holdspeak/web/routes/repositories.py \
+  holdspeak/web/routes/roadmaps.py \
+  holdspeak/web/routes/system/coder_steering_routes.py || true
+
+printf '%s\n' '--- runtime frame counts ---'
+"$PYTHON" - <<'PY'
+from pathlib import Path
+from holdspeak.realtime_frames import (
+    CONSUMED_WITHOUT_EMITTER,
+    EMITTED_WITHOUT_CONSUMER,
+    RUNTIME_FRAME_TYPES,
+    scan_consumers,
+    scan_emitters,
+)
+
+root = Path.cwd()
+emitters = scan_emitters(root)
+consumers = scan_consumers(root)
+print(f"declared_frames={len(RUNTIME_FRAME_TYPES)}")
+print(f"scanned_emit_types={len(emitters)}")
+print(f"scanned_consume_types={len(consumers)}")
+print(f"emitted_without_consumer={EMITTED_WITHOUT_CONSUMER}")
+print(f"consumed_without_emitter={CONSUMED_WITHOUT_EMITTER}")
+print(f"unmatched_emits={sorted(set(emitters) - set(consumers) - set(EMITTED_WITHOUT_CONSUMER))}")
+print(f"unmatched_consumers={sorted(set(consumers) - set(emitters) - set(CONSUMED_WITHOUT_EMITTER))}")
+PY
+nl -ba web/src/runtime/RuntimeBus.tsx | sed -n '11,93p'
+nl -ba holdspeak/realtime_frames.py | sed -n '38,120p;131,201p'
+nl -ba web/src/desk/useDeskChangedRefresh.ts | sed -n '1,60p'
+rg -n 'POLL_MS|setInterval|EventSource|text/event-stream|event-stream' \
+  web/src/desk web/src/pages/cores holdspeak | head -240 || true
+rg -n 'EventSource|text/event-stream|event-stream|StreamingResponse' web/src holdspeak || true
+
+printf '%s\n' '--- Phase 12 and deletion seams ---'
+nl -ba pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/story-01-the-artifact-source-and-the-floor-binding.md | sed -n '13,40p'
+nl -ba pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md | sed -n '19,64p;66,120p'
+nl -ba pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/story-05-the-atlas-cases.md | sed -n '1,25p'
+nl -ba pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/story-06-the-closing-use.md | sed -n '1,29p'
+nl -ba pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/checks/canvas-astra-r1.md | sed -n '21,35p'
+nl -ba holdspeak/services/document_sources.py | sed -n '495,569p'
+nl -ba holdspeak/web/routes/monday_brief.py | sed -n '101,173p'
+nl -ba web/src/pages/cores/HistoryCore.tsx | sed -n '456,466p'
+nl -ba holdspeak/web/routes/meetings/crud.py | sed -n '140,152p'
+nl -ba holdspeak/db/meetings.py | sed -n '1061,1067p'
+nl -ba web/src/desk/api.ts | sed -n '900,908p'
+nl -ba holdspeak/web/routes/primitives/workbenches.py | sed -n '90,100p;134,144p'
+nl -ba holdspeak/services/workbench_service.py | sed -n '159,167p;218,225p'
+nl -ba holdspeak/db/workbenches.py | sed -n '154,169p;295,301p'
+
+printf '%s\n' '--- static probe complete ---'

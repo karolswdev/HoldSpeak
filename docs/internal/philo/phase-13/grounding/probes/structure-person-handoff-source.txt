@@ -1,0 +1,39 @@
+// Run from repo root: NODE22 --input-type=module < this-file
+// Executes the real manifest and shell after stripping TypeScript types.
+// No browser, hub, DB, source mutation, fake model result or network request.
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import ts from './web/node_modules/typescript/lib/typescript.js';
+async function load(path) {
+  const js = ts.transpileModule(fs.readFileSync(path, 'utf8'), {compilerOptions: {
+    target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext,
+  }}).outputText;
+  return import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`);
+}
+const manifest = await load('web/src/desk/applications.ts');
+const shell = await load('web/src/desk/shell.ts');
+const opened = [], navigated = [];
+// Same real manifest projection/aliases that SurfaceWindows registers.
+for (const app of manifest.SURFACE_APPLICATIONS)
+  shell.registerSurface(app.action, scope => opened.push({action:app.action, scope}));
+for (const [key, alias] of Object.entries(manifest.DESK_APPLICATION_ALIASES))
+  shell.registerSurface(key, scope => shell.openSurface(alias.target, scope ?? alias.scope));
+shell.setShellNavigator(path => navigated.push(path));
+const view = fs.readFileSync('web/src/desk/pullouts/views/BriefView.tsx', 'utf8');
+const call = view.match(/openSurfaceOr\("([^"]+)", "([^"]+)", selectedPerson.relationship_id\)/);
+assert.ok(call, 'extract the actual Open person call from the face');
+shell.openSurfaceOr(call[1], call[2], 'probe-relationship');
+assert.deepEqual(opened, []);
+assert.deepEqual(navigated, ['/people']);
+console.log('CURRENT CALL:', JSON.stringify({key:call[1], href:call[2], opened, navigated}));
+const routes = fs.readFileSync('web/src/routes.tsx', 'utf8');
+assert.equal(/path:\s*['"]\/people['"]/.test(routes), false);
+console.log('ROUTER SOURCE: no /people product or demoted path; App.tsx wildcard routes home.');
+// Positive control uses the real target declaration, not a hand-made alias.
+const people = manifest.SURFACE_APPLICATIONS.find(app => app.action === 'open-people');
+assert.ok(people);
+shell.openSurfaceOr(people.action, people.href, 'probe-relationship');
+assert.deepEqual(opened, [{action:'open-people', scope:'probe-relationship'}]);
+console.log('CANONICAL TARGET CONTROL:', JSON.stringify(opened[0]));
+console.log('REPRODUCED: current face key falls back; canonical target dispatches with the same scope.');
+console.log('LIMIT: dispatcher probe, not a rendered click or a populated encrypted People record. No fix applied.');
