@@ -53,9 +53,9 @@ Tuesday: these operation cases protect the owner's document-send loop; the usabl
 
 ## Part 2 lane report — 2026-10-01
 
-LANE: PHILO-11-06, Part 2; worktree `/Users/karol/dev/tools/wt-philo-11-06`; branch `feat/philo-11-06`; PR #712 remains draft. Story 05 is merged. The branch merged `origin/main` at `27d8bf1a` as `5e82b65dd3f103c0f984a199bdfcb765d138ce08`; the 51-path merge diff brought no `web/src` or Phase 11 atlas changes (`assets/story-06-proof/logs/merge-product-diff.json`).
+LANE: PHILO-11-06, Part 2; worktree `/Users/karol/dev/tools/wt-philo-11-06`; branch `feat/philo-11-06`; PR #712 is ready for review. Story 05 is merged. The branch merged `origin/main` at `27d8bf1a` as `5e82b65dd3f103c0f984a199bdfcb765d138ce08`; the 51-path merge diff brought no `web/src` or Phase 11 atlas changes (`assets/story-06-proof/logs/merge-product-diff.json`).
 
-OUTCOME: the requested face, transition, baseline, regression and full-suite walks are recorded. Story 06 remains in progress because the literal criterion that every face row fail on `332d9158` has one intended control exception: C4, “no summary, no well,” passes on both baseline and head at both widths. I left the criterion unchanged and did not weaken a guard. The PR remains draft until the owner resolves that acceptance conflict.
+OUTCOME: the requested face, transition, baseline, regression and full-suite walks are recorded. Story 06 remains in progress because the literal criterion that every face row fail on `332d9158` has one intended control exception: C4, “no summary, no well,” passes on both baseline and head at both widths. I left the criterion unchanged and did not weaken a guard. The PR is ready for review with that acceptance conflict stated; the story remains in progress.
 
 PROOF:
 
