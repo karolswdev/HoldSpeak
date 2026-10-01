@@ -134,6 +134,54 @@ def test_face_case_manifest_covers_every_planned_seat_and_transition() -> None:
     assert all(case["trigger"].get("kind") == "ui" for case in cases)
 
 
+def test_meeting_form_faces_observe_the_rendered_send_state_in_each_seat() -> None:
+    data = json.loads(SLACK.read_text())
+    cases = {case["id"]: case for case in data["cases"]}
+    for kind, seat in (
+        ("meeting_summary", "window"),
+        ("meeting_summary", "chair"),
+        ("meeting_summary", "meetings_record"),
+        ("meeting_digest", "meetings_record"),
+        ("meeting_followup", "meetings_record"),
+    ):
+        for state in ("picked", "sent", "prepared"):
+            case = cases[f"case.p11.{kind}.{seat}.{state}"]
+            observed = case["expected"]["observe_at"]
+            assert "[data-testid=meeting-send-well]" in observed, case["id"]
+            if state == "prepared":
+                assert observed.endswith("[data-testid=prepared-row]"), case["id"]
+            else:
+                assert observed.endswith("[data-testid=send-verbs]"), case["id"]
+
+    chair = [cases[f"case.p11.meeting_summary.chair.{state}"]
+             for state in ("picked", "sent", "prepared")]
+    assert all("[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well]" in json.dumps(case)
+               for case in chair)
+    assert all(".desk-window [data-testid=meeting-send-well]" not in json.dumps(case)
+               for case in chair)
+    assert all(not any(step.get("kind") == "ui" and step.get("action") == "click"
+                       and step.get("selector") == "[data-testid=arrival-meeting-row]"
+                       for step in case["setup"])
+               for case in chair)
+
+
+def test_slack_face_outcomes_observe_the_post_click_rendered_send_receipt() -> None:
+    data = json.loads(SLACK.read_text())
+    cases = {case["id"]: case for case in data["cases"]}
+    for case_id in (
+        "case.p11.slack.posted.face",
+        "case.p11.slack.failed.face",
+        "case.p11.slack.unknown.face",
+    ):
+        case = cases[case_id]
+        assert case["expected"]["observe_at"] == (
+            ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]"
+        )
+        assert case["trigger"]["selector"].endswith("[data-testid=send-verb]")
+        assert any(predicate.get("kind") == "protocol_reads"
+                   for predicate in case["expected"]["predicate"]["predicates"])
+
+
 def test_each_source_uses_real_producer_preview_prepare_send_and_durable_reads() -> None:
     for case in _doc_operation_cases():
         steps = _steps(case)

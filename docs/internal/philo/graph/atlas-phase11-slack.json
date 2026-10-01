@@ -1195,7 +1195,7 @@
             }
           ]
         },
-        "observe_at": ".desk-pullout",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
@@ -1497,7 +1497,7 @@
             }
           ]
         },
-        "observe_at": ".desk-pullout",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
@@ -1779,7 +1779,7 @@
             }
           ]
         },
-        "observe_at": ".desk-pullout",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
         "reads": [
           {
             "method": "GET",
@@ -1984,41 +1984,30 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meetings] [data-testid=arrival-meeting-row]",
-          "optional": true
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meeting-row]",
-          "optional": true
+          "selector": "[data-testid=arrival-meetings] [data-testid=arrival-meeting-row]"
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well]",
-          "optional": true
+          "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well]"
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well] [data-testid=destination-row]",
-          "optional": true
+          "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=destination-row]"
         }
       ],
       "trigger": {
         "kind": "ui",
         "action": "click",
         "adapter": "ui-pointer",
-        "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well] [data-testid=destination-row]",
+        "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=destination-row]",
         "trigger_route": {
           "method": "POST",
           "path": "/api/channels/preview"
-        },
-        "optional": true
+        }
       },
       "expected": {
         "predicate": {
@@ -2060,12 +2049,12 @@
             },
             {
               "kind": "input_value",
-              "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
+              "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
               "equals": "meeting_summary"
             }
           ]
         },
-        "observe_at": "[data-testid=arrival-meetings]",
+        "observe_at": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
@@ -2270,63 +2259,49 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meetings] [data-testid=arrival-meeting-row]",
-          "optional": true
+          "selector": "[data-testid=arrival-meetings] [data-testid=arrival-meeting-row]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=destination-row]"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meeting-row]",
-          "optional": true
+          "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=destination-row]"
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well]",
-          "optional": true
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well] [data-testid=destination-row]",
-          "optional": true
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well] [data-testid=destination-row]",
-          "optional": true
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well] [data-testid=send-open] [data-testid=send-preview]",
-          "optional": true
+          "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=send-open] [data-testid=send-preview]"
         },
         {
           "kind": "ui",
           "action": "scroll_into_view",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well] [data-testid=send-open] [data-testid=send-verb]",
-          "block": "center",
-          "optional": true
+          "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=send-open] [data-testid=send-verb]",
+          "block": "center"
         }
       ],
       "trigger": {
         "kind": "ui",
         "action": "click",
         "adapter": "ui-pointer",
-        "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well] [data-testid=send-open] [data-testid=send-verb]",
+        "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=send-open] [data-testid=send-verb]",
         "trigger_route": {
           "method": "POST",
           "path": "/api/channels/send"
-        },
-        "optional": true
+        }
       },
       "expected": {
         "predicate": {
@@ -2379,12 +2354,12 @@
             },
             {
               "kind": "input_value",
-              "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
+              "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
               "equals": "meeting_summary"
             }
           ]
         },
-        "observe_at": "[data-testid=arrival-meetings]",
+        "observe_at": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
@@ -2607,37 +2582,26 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meetings] [data-testid=arrival-meeting-row]",
-          "optional": true
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meeting-row]",
-          "optional": true
+          "selector": "[data-testid=arrival-meetings] [data-testid=arrival-meeting-row]"
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well]",
-          "optional": true
+          "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well]"
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well] [data-testid=prepared-row]",
-          "optional": true
+          "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=prepared-row]"
         }
       ],
       "trigger": {
         "kind": "ui",
         "action": "click",
         "adapter": "ui-pointer",
-        "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well] [data-testid=prepared-row]",
-        "optional": true
+        "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=prepared-row]"
       },
       "expected": {
         "predicate": {
@@ -2670,7 +2634,7 @@
             },
             {
               "kind": "input_value",
-              "selector": "[data-testid=arrival-meeting-row] [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
+              "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
               "equals": "meeting_summary"
             },
             {
@@ -2679,7 +2643,7 @@
             }
           ]
         },
-        "observe_at": "[data-testid=arrival-meetings]",
+        "observe_at": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=prepared-row]",
         "reads": [
           {
             "method": "GET",
@@ -2977,7 +2941,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-open] [data-testid=send-verbs]",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
@@ -3308,7 +3272,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-open] [data-testid=send-verbs]",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
@@ -3615,7 +3579,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-open] [data-testid=send-verbs]",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
         "reads": [
           {
             "method": "GET",
@@ -3921,7 +3885,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window:has(.meetings-detail-head)",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
@@ -4260,7 +4224,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window:has(.meetings-detail-head)",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
@@ -4575,7 +4539,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window:has(.meetings-detail-head)",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
         "reads": [
           {
             "method": "GET",
@@ -4881,7 +4845,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window:has(.meetings-detail-head)",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
@@ -5220,7 +5184,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window:has(.meetings-detail-head)",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
@@ -5535,7 +5499,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window:has(.meetings-detail-head)",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
         "reads": [
           {
             "method": "GET",
@@ -5860,7 +5824,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window:has(.meetings-detail-head)",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
@@ -6181,7 +6145,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window:has(.meetings-detail-head)",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
@@ -6502,7 +6466,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window:has(.meetings-detail-head)",
+        "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
         "reads": [
           {
             "method": "GET",
