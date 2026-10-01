@@ -36,6 +36,7 @@ PROVISIONAL: about 1 engineering day.
 
 ## Notes
 
+- 2026-10-01 — round two drawn on Astra canvas r1 RATIFY-WITH-CONDITIONS (`checks/canvas-astra-r1.md`, verbatim); paid in `assets/story-02-canvas/README.md` ("Round two").
 - 2026-09-30 — round one drawn: `assets/story-02-canvas/` (README, `index.html`, `harness/`, `shots/`). For Astra's check and the owner's ratification.
 - 2026-09-30 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-30 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

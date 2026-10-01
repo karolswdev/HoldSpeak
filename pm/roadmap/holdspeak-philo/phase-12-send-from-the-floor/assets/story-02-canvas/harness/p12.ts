@@ -60,6 +60,10 @@ const STANDINS: Record<string, AnyRec> = {
   github: { id: "chd_p12_github", name: "Ledger cutover issue", channel: "github", account: { host: "github.com", login: "owner" }, target: { repo: "acme/payments-ledger", kind: "issue", number: 42 }, connection: { state: "connected" } },
   jira: { id: "chd_p12_jira", name: "PAY-118", channel: "jira", account: { site: "acme.atlassian.net", email: "owner@acme.test" }, target: { key: "PAY-118" }, connection: { state: "connected" } },
   confluence: { id: "chd_p12_confluence", name: "Eng updates", channel: "confluence", account: { site: "acme.atlassian.net", email: "owner@acme.test" }, target: { space_id: "ENG" }, connection: { state: "connected" } },
+  slack2: { id: "chd_p12_slack2", name: "Slack #eng", channel: "slack", account: { key_ref: "slack_canvas2", key_present: true }, target: { channel_label: "#eng" } },
+  github2: { id: "chd_p12_github2", name: "Rollback PR", channel: "github", account: { host: "github.com", login: "owner" }, target: { repo: "acme/payments-ledger", kind: "pr", number: 57 }, connection: { state: "connected" } },
+  jira2: { id: "chd_p12_jira2", name: "PAY-121", channel: "jira", account: { site: "acme.atlassian.net", email: "owner@acme.test" }, target: { key: "PAY-121" }, connection: { state: "connected" } },
+  email2: { id: "chd_p12_email2", name: "Finance list", channel: "email", account: { provider: "sendgrid", from_email: "owner@acme.test", from_name: "Owner", key_ref: "email_canvas", key_present: true }, target: { to: ["finance@acme.test"] } },
   email: { id: "chd_p12_email", name: "Leads list", channel: "email", account: { provider: "sendgrid", from_email: "owner@acme.test", from_name: "Owner", key_ref: "email_canvas", key_present: true }, target: { to: ["leads@acme.test"] } },
 };
 const standin = (id: string) => Object.values(STANDINS).find((d) => d.id === id);
@@ -272,9 +276,46 @@ const REFUSAL_WORD: Record<string, string> = { no_summary: "NO SUMMARY", not_pub
 /* ── the open paths (story 03) and the pushed pick ───────────────────────── */
 
 function push(ref: string, destId: string, tries = 0) {
-  if (G.__p12Pick) { G.__p12Pick(ref, destId); return; }
+  if (G.__p12Pick) { G.__p12Pick(ref, destId); arrive(ref); return; }
   if (tries < 100) window.setTimeout(() => push(ref, destId, tries + 1), 100);
 }
+
+/** THE ARRIVAL (Astra canvas r1 finding 1; story 03): a pushed pick brings ITSELF into view once
+ *  its preview has loaded -- the meeting's form picker if the well has one, else the picked row --
+ *  clear of the host's own sticky strip (the Room's Back strip, a window head). The document's
+ *  name (the window title), the picked destination, its preview and Send are then on screen with
+ *  no other scroll. Nothing else moves. */
+function arrive(ref: string, tries = 0) {
+  // The first look waits one render: the old pick's row may still be open in the same tick.
+  if (tries === 0) { window.setTimeout(() => arrive(ref, 1), 150); return; }
+  const well = document.querySelector(`[data-testid=send-well][data-doc="${CSS.escape(ref)}"]`);
+  const open = well?.querySelector("[data-testid=send-open]");
+  const ready = open?.querySelector("[data-testid=send-preview], [data-testid=preview-refused], [data-testid=preview-failed]");
+  if (!well || !open || !ready) {
+    if (tries < 150) window.setTimeout(() => arrive(ref, tries + 1), 100);
+    return;
+  }
+  window.setTimeout(() => {
+    const target = (well.querySelector("[data-testid=doc-forms]") ?? open.closest("li.surface-ledger-row")) as HTMLElement | null;
+    let sc: HTMLElement | null = target?.parentElement ?? null;
+    while (sc && !(sc.scrollHeight > sc.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(sc).overflowY))) sc = sc.parentElement;
+    if (!target || !sc) { G.__p12Arrived = { ref, at: Date.now(), scrolled: false }; return; }   // nothing to scroll: already in view
+    const top0 = target.getBoundingClientRect().top - sc.getBoundingClientRect().top;
+    sc.scrollTop += top0;
+    // Clear the host's own sticky strip: whatever covers the target's head is moved past.
+    for (let i = 0; i < 4; i++) {
+      const r = target.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.left + Math.min(40, r.width / 2), r.top + 3);
+      if (!hit || target.contains(hit)) break;
+      let cover: Element | null = hit;
+      while (cover && cover !== sc && !/(sticky|fixed)/.test(getComputedStyle(cover).position)) cover = cover.parentElement;
+      const bottom = (cover && cover !== sc ? cover : hit).getBoundingClientRect().bottom;
+      sc.scrollTop -= bottom - r.top + 8;
+    }
+    G.__p12Arrived = { ref, at: Date.now() };
+  }, 250);
+}
+G.__p12Arrive = arrive;
 function roomLink(projectId: string, updateId: string, destinationId: string) {
   const token = `${Date.now()}-${Math.random()}`;
   const ds = useDesk.getState();
@@ -384,29 +425,42 @@ G.__p12OpenIcon = (o: AnyRec) => {
 };
 
 const ROW = 128;   // one cell (OBJ_H 116) and its gap, in px
-G.__p12FloorIcons = (input: AnyRec) => {
+G.__p12FloorIcons = (input: AnyRec, placed: AnyRec[] = [], zones: AnyRec[] = []) => {
   if (input.divedZone || input.compact) return [];
   const w = Math.max(320, input.worldWidth || innerWidth);
   const hgt = (document.querySelector(".desk-world") as HTMLElement | null)?.clientHeight || innerHeight;
+  // Cells taken already: every drawer (top-anchored) and every object (centred), 104 x 116 px.
+  type Box = { l: number; t: number; r: number; b: number };
+  const taken: Box[] = [
+    ...zones.map((z) => ({ l: z.u.x * w - 52, t: z.u.y * hgt, r: z.u.x * w + 52, b: z.u.y * hgt + 116 })),
+    ...placed.map((o) => ({ l: o.u.x * w - 52, t: o.u.y * hgt - 58, r: o.u.x * w + 52, b: o.u.y * hgt + 58 })),
+  ];
+  const free = (b: Box) => !taken.some((t) => b.l < t.r && b.r > t.l && b.t < t.b && b.b > t.t);
   // One column at the right edge (the strip right of the zone band). It TIGHTENS (128 px down to
   // 106 px a cell: a label's foot then meets the next sprite's head, never overlaps it) before it
-  // wraps; past that it wraps into the next column to the LEFT (Workbench's disk icons). The first
-  // sprite clears the menu bar; the last label clears the Dock.
+  // wraps. Past that it wraps into the next column to the LEFT (Workbench's disk icons), and a
+  // wrapped cell that would overlap a drawer or an object is skipped (icons never stack; Astra
+  // canvas r1 finding 3). The first sprite clears the menu bar; the last label clears the Dock.
   const n = (brief ? 1 : 0) + dests.length;
   const top = 90, bottom = hgt - 110;   // the world runs under the Dock: the last label ends above it
   const step = n > 1 ? Math.max(106, Math.min(ROW, (bottom - top) / (n - 1))) : ROW;
-  const rows = Math.max(1, Math.floor((bottom - top) / step) + 1);
-  const at = (slot: number) => ({
-    x: 1 - (60 + Math.floor(slot / rows) * 112) / w,
-    y: (top + (slot % rows) * step) / hgt,
-  });
+  const cells: { x: number; y: number }[] = [];
+  for (let c = 0; cells.length < n && c < 8; c++) {
+    const cx = w - 60 - c * 112;
+    for (let y = top; y <= bottom && cells.length < n; y += step) {
+      const box = { l: cx - 52, t: y - 58, r: cx + 52, b: y + 58 };
+      if (c > 0 && !free(box)) continue;
+      cells.push({ x: cx / w, y: y / hgt });
+      taken.push(box);
+    }
+  }
   const icons: AnyRec[] = [];
   const add = (kind: string, id: string, title: string, slot: number) => {
     const saved = input.positions[id];
     const sel = input.selectedIds.includes(id);
     icons.push({
       key: id, kind, id, selectionRef: id, title,
-      u: saved && typeof saved.x === "number" ? saved : at(slot),
+      u: saved && typeof saved.x === "number" ? saved : cells[slot] ?? cells[cells.length - 1],
       phase: 0, tilt: 0, scale: 1, glow: objGlow(kind === "brief" ? "note" : "chain"),
       sprite: spriteUrl(kind, id, sel ? "sel" : "rest"), small: false, selected: sel,
       dragging: input.draggingId === id, isNew: false, editing: false, attention: 0, count: null,
@@ -451,7 +505,7 @@ G.__p12Drop = (obj: AnyRec, target: AnyRec, origin: { x: number; y: number }) =>
 
 G.__p12FormMove = (meetingId: string, from: string, to: string) => {
   const was = G.__p12Picked?.(`${from}:${meetingId}`);
-  if (was) G.__p12Pick?.(`${to}:${meetingId}`, was);
+  if (was) { G.__p12Pick?.(`${to}:${meetingId}`, was); arrive(`${to}:${meetingId}`); }
 };
 
 /* ── the touch long-press on a list row (story 03; the GL engine has its own) ─ */
@@ -460,6 +514,7 @@ let press: { t: number; x: number; y: number; row: Element } | null = null;
 let swallowClick = false;
 document.addEventListener("pointerdown", (e) => {
   if (e.pointerType !== "touch") return;
+  swallowClick = false;
   const row = (e.target as Element)?.closest?.(".desk-sortable-table-row");
   if (!row) return;
   const { clientX: x, clientY: y } = e;

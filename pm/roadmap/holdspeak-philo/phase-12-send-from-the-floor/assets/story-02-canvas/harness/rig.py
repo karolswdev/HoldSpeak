@@ -34,9 +34,11 @@ def seed_hub(hub: str, folder: str, brief: bool = True) -> dict:
     hub_api(hub, "POST", f"/api/projects/{pid}/items", {"item_type": "milestone", "title": "Cutover rehearsal"})
     steps = []
     for n in range(2):   # two published updates: the latest is the one a send names (G6, G9)
-        if n:   # the second update carries one more line, so the boards tell the two apart; and it is
-            # published a second later: published_at ties at the second, and on a tie the list order is
-            # not defined (README N3)
+        if n:   # the second update carries one more line, so the boards tell the two apart.
+            # STAGING, NOT TIE PROOF: the second publish waits 1.2 s so the two published_at values
+            # differ and "latest" is unambiguous on these boards. The tie itself (two publishes in
+            # one second) is ruled -- greatest published_at, then greatest rowid -- and story 03
+            # fences it with a real same-second tie (README N3).
             time.sleep(1.2)
             hub_api(hub, "POST", f"/api/projects/{pid}/items", {"item_type": "milestone", "title": "Old ledger frozen"})
         s1, d = hub_api(hub, "POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"})

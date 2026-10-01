@@ -116,9 +116,11 @@ VISIBLE = r"""(sels) => sels.map((sel) => {
       top = Math.max(top, ar.top); bottom = Math.min(bottom, ar.bottom); left = Math.max(left, ar.left); right = Math.min(right, ar.right);
     }
   }
-  const band = Math.min(r.height, 40);
-  const inside = r.top >= top - 1 && r.top + band <= bottom + 1 && r.left >= left - 1 && r.right <= right + 1;
-  const pts = [[r.left + r.width / 2, r.top + band / 2], [r.left + 2, r.top + 2], [r.right - 2, r.top + band - 2]];
+  // WHOLE element (Astra canvas r1 finding 4): its full box inside the viewport and every clipping
+  // ancestor, and on top at nine points (centre, edge mid-points, corners, 2 px in).
+  const inside = r.top >= top - 1 && r.bottom <= bottom + 1 && r.left >= left - 1 && r.right <= right + 1;
+  const xs = [r.left + 2, r.left + r.width / 2, r.right - 2], ys = [r.top + 2, r.top + r.height / 2, r.bottom - 2];
+  const pts = xs.flatMap((x) => ys.map((y) => [x, y]));
   // A layer that takes no pointer (the drop tag) is checked by its box only.
   const hit = getComputedStyle(e).pointerEvents === 'none' || pts.every(([x, y]) => { const h = document.elementFromPoint(x, y); return !!h && (e.contains(h) || h.contains(e)); });
   return {sel, ok: inside && hit, why: inside ? (hit ? '' : 'covered') : 'clipped', text: (e.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 60)};
@@ -154,11 +156,21 @@ def run(width: int, height: int) -> tuple[list[str], dict]:
             raise RuntimeError(f"seed_db failed: {seeded.stderr[-2000:]}")
         procs.append(subprocess.Popen([PY, "scripts/graph_walk.py", "serve", "--port", str(hub_port), "--token", TOKEN],
                                       cwd=REPO, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+        vlog = Path(home) / "vite.log"
         procs.append(subprocess.Popen([str(WEB / "node_modules/.bin/vite"), "--config", str(HERE / "vite.config.mjs")], cwd=WEB,
                                       env={**os.environ, "HUB": hub, "CANVAS_PORT": str(canvas_port), "CANVAS_MODE": "proposal"},
-                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+                                      stdout=vlog.open("w"), stderr=subprocess.STDOUT))
         wait_http(f"{hub}/api/projects", {"Authorization": f"Bearer {TOKEN}"})
         wait_http(f"http://127.0.0.1:{canvas_port}/")
+        # The seat guard runs as the server starts: every seat file met, or vite exits 1.
+        for _ in range(120):
+            guard = [ln for ln in vlog.read_text().splitlines() if "SEAT GUARD" in ln]
+            if guard or procs[-1].poll() is not None:
+                break
+            time.sleep(0.5)
+        facts[f"_seat_guard_{width}"] = guard
+        if not guard or "every anchor met" not in guard[0]:
+            raise RuntimeError(f"seat guard: {guard or vlog.read_text()[-800:]}")
         seed = rig.seed_hub(hub, folder, brief=False)   # I4 first: no brief yet
         facts["_seed"] = seed
         print(width, "seed", json.dumps(seed), flush=True)
@@ -279,6 +291,7 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
             f["row_points"] = ev(ROW_POINTS)
         if extra:
             f.update(extra)
+        f["arrival"] = any(".desk-window-title" in n for n in (named or [])) and any("send-preview-field" in n for n in (named or []))
         facts[key] = f
         for v, sel in zip(vis, [n for n in (named or []) if n != ".desk-world-canvas"]):
             v["sel"] = sel
@@ -339,14 +352,31 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
         page.locator("[role=menu]").first.wait_for(timeout=10_000)
         page.wait_for_timeout(300)
 
+    def tap(loc):
+        """A touch tap (CDP touch events) at the element's centre: the phone's selection gesture."""
+        loc.evaluate("(e) => e.scrollIntoView({block: 'nearest'})")
+        b = loc.bounding_box()
+        x, y = b["x"] + min(60, b["width"] / 2), b["y"] + b["height"] / 2
+        cdp = page.context.new_cdp_session(page)
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y}]})
+        page.wait_for_timeout(60)
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+        page.wait_for_timeout(450)
+
+    def press_on(loc):
+        """Select: a touch tap at 393, a click at 1440."""
+        if phone:
+            tap(loc)
+        else:
+            loc.click()
+            page.wait_for_timeout(300)
+
     def open_sub():
-        sub = page.locator("[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Send to')").first
-        sub.click()
-        page.wait_for_timeout(500)
+        press_on(page.locator("[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Send to')").first)
+        page.wait_for_timeout(200)
 
     def menu_pick(name: str):
-        page.locator(f"[role=menu] [role=menuitem]:has-text('{name}')").last.click()
-        page.wait_for_timeout(300)
+        press_on(page.locator(f"[role=menu] [role=menuitem]:has-text('{name}')").last)
 
     def send_to(ref: str, title: str, dest: str):
         object_menu(ref, title)
@@ -358,12 +388,9 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
         that stays reachable while a window covers the Floor or the list."""
         ev("(r) => window.__p12Open.select(r)", ref)
         page.wait_for_timeout(300)
-        page.locator(f".desk-verbbar [data-menu-id={'go' if phone else 'object'}] button").first.click()
-        page.wait_for_timeout(600)
-        sub = page.locator("[role=menu] [aria-haspopup=menu]:has-text('Send to')").first
-        sub.scroll_into_view_if_needed()
-        sub.click()
-        page.wait_for_timeout(500)
+        press_on(page.locator(f".desk-verbbar [data-menu-id={'go' if phone else 'object'}] button").first)
+        page.wait_for_timeout(400)
+        open_sub()
         menu_pick(dest)
         ev("() => window.__p12Open.clearSelection()")
 
@@ -395,9 +422,19 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
             loc.first.evaluate("(e, b) => e.scrollIntoView({block: b})", block)
         page.wait_for_timeout(300)
 
-    def seat_row(dest: str):
-        """The picked row's head at the top of its window: the pick, its preview and Send in view."""
-        seat(f"[data-testid=destination-row]:has([data-destination='{dest}'])", "start")
+    def arrival(dest: str) -> list[str]:
+        """What the owner must see on arrival, each WHOLE (VISIBLE): the document's window title, the
+        picked destination's line, the preview's first field and Send. The rig does not scroll:
+        the proposal's arrival (p12.ts `arrive`) brings the pick into view by itself."""
+        row = f"li.surface-ledger-row:has({well(dest)})"
+        return [f".desk-window:has({well(dest)}) .desk-window-title", f"{row} > [data-testid=destination-row]",
+                f"{well(dest)} [data-testid=send-preview-field] dd", f"{well(dest)} [data-testid=send-verb]"]
+
+    def arrived(ref_prefix: str):
+        """Wait for the proposal's arrival to finish (p12.ts sets __p12Arrived); the rig moves nothing."""
+        page.wait_for_function("(p) => (window.__p12Arrived?.ref || '').startsWith(p)", arg=ref_prefix, timeout=20_000)
+        page.wait_for_timeout(500)
+        ev("() => { window.__p12Arrived = null; }")
 
     def place(item_id: str, x: float, y: float):
         """Where he would drag it (a Floor position, saved per browser): the rig sets it through the store."""
@@ -477,6 +514,31 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
         open_sub()
         shoot("F5-six-channels", ["[role=menu] .desk-menu-back"], rows44=True)
         close_menu()
+    # F6 (Astra canvas r1 finding 3): enough destinations to WRAP; the wrapped cells avoid the drawers
+    # and the objects (Personal sits right there), measured by the engine's own hit test.
+    ev("() => window.__p12Fixture.standins(['slack', 'github', 'jira', 'confluence', 'email', 'slack2', 'github2', 'jira2', 'email2'])")
+    page.wait_for_timeout(1500)
+    if not phone:
+        icons = [o for o in ev("() => window.__hsWorldProbe()") if o["id"].startswith(("destination:", "intelligence:brief"))]
+        cols = sorted({round(o["x"]) for o in icons}, reverse=True)
+        wrapped = [o for o in icons if round(o["x"]) != cols[0]]
+        hits = ev("""(icons) => icons.map((o) => { const out = [];
+            for (const dx of [-40, 0, 40]) for (const dy of [-50, 0, 50]) { const h = window.__hsWorldHitProbe(o.x + dx, o.y + dy); out.push(h.type === 'object' && h.ref === o.ref); }
+            return { ref: o.ref, owned: out.filter(Boolean).length }; })""", wrapped)
+        zones = ev("() => window.__hsWorldZoneProbe()")
+        personal = ev("(zs) => zs.map((z) => ({ id: z.id, hit: window.__hsWorldHitProbe(z.x, z.y + 30) }))", zones)
+        overlap = ev("""([icons, zones]) => icons.filter((o) => zones.some((z) => Math.abs(o.x - z.x) < 104 && o.y + 58 > z.y && o.y - 58 < z.y + z.height)).map((o) => o.ref)""", [wrapped, zones])
+        shoot("F6-column-wraps", [".desk-world-canvas"],
+              extra={"columns": cols, "wrapped": [o["ref"] for o in wrapped], "wrapped_hits_9pt": hits, "zone_hits": personal, "wrapped_over_a_zone": overlap},
+              checks={"the column wraps": len(cols) >= 2 and len(wrapped) >= 1,
+                      "every wrapped icon owns its nine points": all(h["owned"] == 9 for h in hits),
+                      "no wrapped icon over a drawer": not overlap,
+                      "every drawer still hits as a drawer": all(z["hit"].get("type", "").startswith("zone") and z["hit"].get("id") == z["id"] for z in personal)})
+    else:
+        object_menu(f"decision:{dec}", DEC_T)
+        open_sub()
+        shoot("F6-column-wraps", ["[role=menu] .desk-menu-back"], rows44=True)
+        close_menu()
     ev("() => window.__p12Fixture.standins(['slack', 'github'])")
     page.wait_for_timeout(1200)
 
@@ -485,8 +547,24 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
     shoot("H1-decision-menu", ["[role=menu] [aria-haspopup=menu]:has-text('Send to')"], rows44=True)
     open_sub()
     f = shoot("H2-send-to-open", ["[role=menu] [role=menuitem]:has-text('Slack #leads')"], rows44=True)
-    if phone and not ev("() => !!document.querySelector('[role=menu] .desk-menu-back')"):
-        fails.append(f"H2-{width}: the submenu does not replace the panel with a back row")
+    if phone:
+        if not ev("() => !!document.querySelector('[role=menu] .desk-menu-back')"):
+            fails.append(f"H2-{width}: the submenu does not replace the panel with a back row")
+        back = ev("""() => { const b = document.querySelector('[role=menu] .desk-menu-back'); const root = document.getElementById('desk-next');
+            const was = root.getAttribute('data-menu-glyphs'); root.setAttribute('data-menu-glyphs', 'none');
+            const m = b.querySelector('.desk-menu-backmark'); const shown = !!m && getComputedStyle(m).display !== 'none' && m.getBoundingClientRect().width > 0;
+            if (was === null) root.removeAttribute('data-menu-glyphs'); else root.setAttribute('data-menu-glyphs', was);
+            return { name: b.getAttribute('aria-label'), text: b.innerText.replace(/\\s+/g, ' ').trim(), mark_shown_with_glyphs_none: shown }; }""")
+        facts.setdefault(f"H2-send-to-open-{width}", {})["back_row"] = back
+        if back["name"] != "Back" or not back["mark_shown_with_glyphs_none"]:
+            fails.append(f"H2-{width}: back row {back}")
+        # H2c: return by touch. The Back row tapped: the panel's top level again, Send to still there.
+        tap(page.locator("[role=menu] .desk-menu-back").first)
+        shoot("H2c-back-returns", ["[role=menu] [aria-haspopup=menu]:has-text('Send to')"], rows44=True,
+              checks={"returned to the top level": not ev("() => !!document.querySelector('[role=menu] .desk-menu-back')")})
+        open_sub()   # and in again, by touch: the path continues
+        if not ev("() => !!document.querySelector('[role=menu] .desk-menu-back')"):
+            fails.append(f"H2c-{width}: Send to did not open again by touch")
     close_menu()
     page.wait_for_timeout(300)
     if not phone:
@@ -520,12 +598,9 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
     # H5: the menu bar Object menu (1440) / the compact Go menu (393), the decision selected.
     ev("(r) => window.__p12Open.select(r)", f"decision:{dec}")
     page.wait_for_timeout(400)
-    page.locator(f".desk-verbbar [data-menu-id={'go' if phone else 'object'}] button").first.click()
-    page.wait_for_timeout(600)
-    sub = page.locator("[role=menu] [aria-haspopup=menu]:has-text('Send to')").first
-    sub.scroll_into_view_if_needed()
-    sub.click()
-    page.wait_for_timeout(500)
+    press_on(page.locator(f".desk-verbbar [data-menu-id={'go' if phone else 'object'}] button").first)
+    page.wait_for_timeout(400)
+    open_sub()
     shoot("H5-menu-bar-send-to", ["[role=menu] [role=menuitem]:has-text('Slack #leads')"], rows44=True)
     close_menu()
     ev("() => window.__p12Open.clearSelection()")
@@ -544,8 +619,8 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
     shoot("H7b-read-failed", ["[role=menu] [role=menuitem]:has-text(\"CAN'T CHECK\")"], rows44=True)
     menu_pick("Team folder")
     page.locator(".desk-window [data-testid=send-well]").first.wait_for(timeout=20_000)
-    page.wait_for_timeout(1500)
-    shoot("H7c-failed-pick-opens-window", [well("Team folder")] if page.locator(well("Team folder")).count() else [".desk-window"])
+    arrived("meeting_summary:")
+    shoot("H7c-failed-pick-opens-window", arrival("Team folder"))
     ev("() => window.__p12Fixture.hold('meeting:m-sync', null)")
     close_all()
     floor()
@@ -563,8 +638,8 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
         shoot("G1-decision-held-over-slack", ["[role=menu] [role=menuitem]:has-text('Slack #leads')"], rows44=True)
         menu_pick("Slack #leads")
     wait_preview("Slack #leads")
-    seat_row("Slack #leads")
-    shoot("G2-released-preview-open", [f"{well('Slack #leads')} [data-testid=send-verb]", f"{well('Slack #leads')} .gadget-chip-egress"],
+    arrived("desk_decision:")
+    shoot("G2-released-preview-open", arrival("Slack #leads") + [f"{well('Slack #leads')} .gadget-chip-egress"],
           checks={"Slack picked": True}, extra={"sends_before_press": rig.hub_api(hub, "GET", "/api/channels/sends")[1]})
     # G7: a second pick on the already-open window: the pick changes in place.
     nwin = len(ev(FACTS)["windows"])
@@ -573,8 +648,8 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
     else:
         bar_send(f"decision:{dec}", "Team folder")   # the window covers the list at 393
     wait_preview("Team folder")
-    seat_row("Team folder")
-    f = shoot("G7-second-pick-in-place", [f"{well('Team folder')} [data-testid=send-verb]"],
+    arrived("desk_decision:")
+    f = shoot("G7-second-pick-in-place", arrival("Team folder"),
               checks={"the pick changed in place": True})
     if len(f["windows"]) != nwin or f["picked"] != ["Team folder"]:
         fails.append(f"G7-{width}: windows {nwin}->{len(f['windows'])}, picked {f['picked']}")
@@ -584,9 +659,10 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
     else:
         bar_send(f"decision:{dec}", "Slack #leads")
     wait_preview("Slack #leads")
-    page.locator(f"{well('Slack #leads')} [data-testid=send-verb]").click()
+    arrived("desk_decision:")
+    press_on(page.locator(f"{well('Slack #leads')} [data-testid=send-verb]"))
     page.locator(f"{well('Slack #leads')} [data-testid=send-sent]").wait_for(timeout=20_000)
-    seat_row("Slack #leads")
+    page.wait_for_timeout(500)
     shoot("G3-sent", [f"{well('Slack #leads')} [data-testid=send-sent]"],
           extra={"shim_sends": ev("() => window.__p12Fixture.sends().map((s) => [s.document_ref, s.destination_name, s.state])")},
           checks={"the send names the decision": any(s[0] == f"desk_decision:{dec}" for s in ev("() => window.__p12Fixture.sends().map((s) => [s.document_ref, s.destination_name])"))})
@@ -646,13 +722,13 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
     else:
         send_to("meeting:m-sync", "Ledger cutover sync", "Slack #leads")
     wait_preview("Slack #leads")
-    seat("[data-testid=doc-forms]", "start")
-    shoot("G5-meeting-summary-picked", ["[data-testid=doc-forms]", f"{well('Slack #leads')} [data-testid=send-verb]"],
+    arrived("meeting_summary:")
+    shoot("G5-meeting-summary-picked", ["[data-testid=doc-forms]"] + arrival("Slack #leads"),
           checks={"the well is the summary": any(w.startswith("meeting_summary:") for w in ev(FACTS)["wells"])})
     page.locator("[data-testid=doc-forms] select").select_option("meeting_digest")
     wait_preview("Slack #leads")
-    seat("[data-testid=doc-forms]", "start")
-    f = shoot("G8-digest-keeps-destination", ["[data-testid=doc-forms]", f"{well('Slack #leads')} [data-testid=send-verb]"])
+    arrived("meeting_digest:")
+    f = shoot("G8-digest-keeps-destination", ["[data-testid=doc-forms]"] + arrival("Slack #leads"))
     if f["picked"] != ["Slack #leads"] or not any(w.startswith("meeting_digest:") for w in f["wells"]):
         fails.append(f"G8-{width}: digest wells {f['wells']} picked {f['picked']}")
     page.locator("[data-testid=doc-forms] select").select_option("meeting_summary")
@@ -667,8 +743,8 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
         send_to(f"project:{pid}", PROJ_T, "Team folder")
     page.locator(f"[data-testid=send-well][data-doc='project_update:{latest}'] {well('Team folder')}").wait_for(timeout=30_000)
     wait_preview("Team folder")
-    seat_row("Team folder")
-    shoot("G6-project-latest-update", [f"{well('Team folder')} [data-testid=send-verb]"],
+    arrived("project_update:")
+    shoot("G6-project-latest-update", arrival("Team folder"),
           checks={"the latest published update": f"project_update:{latest}" in ev(FACTS)["wells"]})
     # G9: the Room already open on the OLDER update; a pick switches it to the linked (latest) update.
     older = seed["updates"][0]
@@ -681,8 +757,8 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
     bar_send(f"project:{pid}", "Slack #leads")
     page.locator(f"[data-testid=send-well][data-doc='project_update:{latest}'] {well('Slack #leads')}").wait_for(timeout=30_000)
     wait_preview("Slack #leads")
-    seat_row("Slack #leads")
-    shoot("G9b-room-switched-to-linked-update", [f"{well('Slack #leads')} [data-testid=send-verb]"],
+    arrived("project_update:")
+    shoot("G9b-room-switched-to-linked-update", arrival("Slack #leads"),
           checks={"switched to the linked update": f"project_update:{latest}" in ev(FACTS)["wells"]})
     close_all()
     floor()
@@ -701,7 +777,7 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
         page.locator(row_of(btitle)).first.locator(".desk-sortable-table-open").click()
     page.locator("[data-testid=send-well][data-doc^='monday_brief:']").first.wait_for(timeout=30_000)
     page.wait_for_timeout(1200)
-    shoot("I2-brief-opened", [".desk-window [data-testid=send-well]"] if not phone else [".desk-window"],
+    shoot("I2-brief-opened", [".desk-window-title"],
           checks={"the handed brief id": f"monday_brief:{seed['brief']}" in ev(FACTS)["wells"]})
     close_all()
     floor()
@@ -710,8 +786,8 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
     else:
         send_to("intelligence:brief", btitle, "Slack #leads")
     wait_preview("Slack #leads")
-    seat_row("Slack #leads")
-    shoot("I3-brief-dropped", [f"{well('Slack #leads')} [data-testid=send-verb]"],
+    arrived("monday_brief:")
+    shoot("I3-brief-dropped", arrival("Slack #leads"),
           checks={"the brief's exact id": f"monday_brief:{seed['brief']}" in ev(FACTS)["wells"]})
     close_all()
     floor()
@@ -732,14 +808,15 @@ def boards(page, width: int, hub: str, port: int, seed: dict, facts: dict, fails
         send_to(f"artifact:{art}", "Cutover requirements", "Team folder")
     wait_preview("Team folder")
     body = page.locator(f"{well('Team folder')} [data-testid=send-preview-body]").inner_text()
-    seat_row("Team folder")
-    shoot("J2-artifact-dropped-on-folder", [f"{well('Team folder')} [data-testid=send-verb]"],
+    arrived("artifact:")
+    shoot("J2-artifact-dropped-on-folder", arrival("Team folder"),
           extra={"preview_body": body[:400]},
           checks={"no synthesis footer in the preview": "Source windows" not in body and "win-7f3a2c" not in body})
-    page.locator(f"{well('Team folder')} [data-testid=send-verb]").click()
+    press_on(page.locator(f"{well('Team folder')} [data-testid=send-verb]"))
     page.locator(f"{well('Team folder')} [data-testid=send-sent]").wait_for(timeout=20_000)
-    seat_row("Team folder")
-    shoot("J2b-artifact-saved", [f"{well('Team folder')} [data-testid=send-sent]"])
+    page.wait_for_timeout(500)
+    shoot("J2b-artifact-saved", [f"{well('Team folder')} [data-testid=send-sent]"],
+          extra={"stand_in_receipt": ev("() => window.__p12Fixture.sends().filter((s) => s.document_ref.startsWith('artifact:')).length")})
     close_all()
 
     # ── F3 / H3: no destinations (the folder parked through the real route; no stand-ins) ──

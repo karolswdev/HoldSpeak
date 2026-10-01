@@ -118,6 +118,8 @@ The proof is new capability through the real hub on an isolated HOME, never a te
 
 ## Where we are
 
+2026-10-01: story 02 round two DRAWN, paying Astra canvas r1 RATIFY-WITH-CONDITIONS (`checks/canvas-astra-r1.md`): the arrival without a rig scroll, the phone's Back row and touch path, the real column wrap (F6), whole-element probes, stand-in receipts labelled, and a seat guard that fails the server. The "latest published update" tie is ruled (greatest `published_at`, then greatest rowid) and carried into story 03. Next: the owner's word.
+
 2026-09-30: story 02, the canvases F–J, round one DRAWN (`assets/story-02-canvas/`, 36 boards at 1440 and 393 on the real product with a harness shim; fences green). Seven points the canvas settles, five notes for stories 03 and 04. Next: Astra's canvas check, then the owner's word.
 
 2026-09-30: the owner RATIFIED the charter ("Ratify, build it") with all eleven defaults. Story 01 (Astra) and story 02, the canvases (Muad'Dib), start now; the Floor faces wait for the canvases' ratification.

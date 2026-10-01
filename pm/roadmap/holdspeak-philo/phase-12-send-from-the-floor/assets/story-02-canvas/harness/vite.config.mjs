@@ -39,8 +39,9 @@ const SEATS = [
   // F1, I1: the Floor layer -- destination icons and the brief icon join the scene AFTER the
   // object grid is laid out (the grid of real objects does not move), hit-tested as objects.
   ["src/desk/gl/sceneModel.ts", null, [
-    ["  const zoneList = worldZones(input.items, input.divedZone);",
-      `  objects.push(...((${G}.__p12FloorIcons?.(input)) ?? []));\n  const zoneList = worldZones(input.items, input.divedZone);`],
+    // After the zones are laid out: the icons take cells that overlap no drawer and no object.
+    ["  return {\n    objects,\n    zones,\n    dived: Boolean(input.divedZone),",
+      `  objects.push(...((${G}.__p12FloorIcons?.(input, objects, zones)) ?? []));\n  return {\n    objects,\n    zones,\n    dived: Boolean(input.divedZone),`],
   ]],
   // G: the send rule in the drop matrix (per object, through the resolver); a refusal
   // tag does not light the target; release opens the dragged document's window.
@@ -68,6 +69,17 @@ const SEATS = [
   ["src/desk/components/AskPanel.tsx", null, [
     ["  if (!selectedIds.length || askOpen) return null;",
       "  if (!selectedIds.length || askOpen || selectedIds.every((r) => /^(destination:|intelligence:brief)/.test(r))) return null;"],
+  ]],
+  // H2 at 393 (Astra canvas r1 finding 2): the submenu's back row reads as a step back, not a
+  // heading. Its mark is NOT in the glyph lane (glyph preferences hide that lane), it says Back,
+  // and its accessible name is "Back".
+  ["src/desk/components/DeskMenu.tsx", null, [
+    ["            className=\"desk-menu-back\"\n            onClick={() => setOpenSub(null)}\n          >\n            {/* HS-148-01: the back row participates in the lane law. */}\n            <span className=\"desk-menu-glyph\" aria-hidden=\"true\">\n              {\"◂\"}\n            </span>\n            <span className=\"desk-menu-label\">{sub.label}</span>",
+      "            className=\"desk-menu-back\"\n            aria-label=\"Back\"\n            data-p12=\"back\"\n            onClick={() => setOpenSub(null)}\n          >\n            <span className=\"desk-menu-backmark\" aria-hidden=\"true\">{\"◂\"}</span>\n            <span className=\"desk-menu-label\">Back<small className=\"quiet\" aria-hidden=\"true\"> · {sub.label}</small></span>"],
+  ]],
+  // J1: the registry still imports ./ArtifactPullout (the resolveId swap below depends on it).
+  ["src/desk/pullouts/registry.ts", null, [
+    ["import { ArtifactPullout } from \"./ArtifactPullout\";", "import { ArtifactPullout } from \"./ArtifactPullout\";"],
   ]],
   // H1, H3, H4: the ONE shared composition of the object menu (spatial Floor and list).
   ["src/desk/floorMenu.ts", null, [
@@ -106,7 +118,7 @@ const SEATS = [
   // G6, G9: the Room link { projectId, updateId, destinationId }, also when the Room is already open.
   ["src/features/project-room/ProjectRoomCore.tsx", `import { fetchUpdates as __p12FetchUpdates } from "./update/api";`, [
     ["  const updateCtrl = useUpdateController(\n    ctrl.projectId, () => void ctrl.load(),\n  );\n",
-      `  const updateCtrl = useUpdateController(\n    ctrl.projectId, () => void ctrl.load(),\n  );\n  useEffect(() => {\n    const on = (e: Event) => {\n      const d = (e as CustomEvent).detail;\n      if (!d || d.projectId !== ctrl.projectId) return;\n      ${G}.__p12RoomLinkTaken = d.token;\n      void __p12FetchUpdates(d.projectId).then((list) => {\n        const u = list.find((x) => x.id === d.updateId);\n        if (!u) return;\n        updateCtrl.openUpdate(u);\n        ${G}.__p12Pick?.(\`project_update:\${u.id}\`, d.destinationId);\n      });\n    };\n    window.addEventListener("p12:room-link", on);\n    return () => window.removeEventListener("p12:room-link", on);\n  }, [ctrl.projectId, updateCtrl.openUpdate]);\n`],
+      `  const updateCtrl = useUpdateController(\n    ctrl.projectId, () => void ctrl.load(),\n  );\n  useEffect(() => {\n    const on = (e: Event) => {\n      const d = (e as CustomEvent).detail;\n      if (!d || d.projectId !== ctrl.projectId) return;\n      ${G}.__p12RoomLinkTaken = d.token;\n      void __p12FetchUpdates(d.projectId).then((list) => {\n        const u = list.find((x) => x.id === d.updateId);\n        if (!u) return;\n        updateCtrl.openUpdate(u);\n        ${G}.__p12Pick?.(\`project_update:\${u.id}\`, d.destinationId);\n        if (d.destinationId) ${G}.__p12Arrive?.(\`project_update:\${u.id}\`);\n      });\n    };\n    window.addEventListener("p12:room-link", on);\n    return () => window.removeEventListener("p12:room-link", on);\n  }, [ctrl.projectId, updateCtrl.openUpdate]);\n`],
   ]],
   // F2: Open on a destination icon lands on THAT destination's row in Settings (story 04).
   ["src/pages/cores/connections/Destinations.tsx", null, [
@@ -114,6 +126,28 @@ const SEATS = [
       `  useEffect(() => {\n    const on = (e: Event) => {\n      const d = (e as CustomEvent).detail;\n      setAdding(false); setEditing(null); setOpen(d.id);\n      window.setTimeout(() => [...document.querySelectorAll("[data-testid=dest-row]")]\n        .find((r) => r.querySelector(\`[data-destination="\${d.name}"]\`))?.scrollIntoView({ block: "center" }), 250);\n    };\n    window.addEventListener("p12:dest-row", on);\n    const pend = ${G}.__p12DestRow; if (pend) { ${G}.__p12DestRow = null; window.setTimeout(() => on(new CustomEvent("x", { detail: pend })), 0); }\n    return () => window.removeEventListener("p12:dest-row", on);\n  }, []);\n  // B2, the arrival: once the group has drawn, bring it into view with the add form open.`],
   ]],
 ];
+
+// The guard's own proof: P12_GUARD_PROBE=<a product path that does not exist> adds one seat the
+// guard must refuse (README, "The anchor guard"). Never set in a canvas run.
+if (process.env.P12_GUARD_PROBE) SEATS.push([process.env.P12_GUARD_PROBE, null, [["__never__", ""]]]);
+
+/** The guard (Astra canvas r1 finding 5): a seat file that is renamed, moved or deleted never
+ *  reaches transform() -- so the server checks EVERY seat at start: the file exists and its
+ *  transform meets every anchor. Any miss stops the server (exit 1) before a board is drawn. */
+const met = new Set();
+async function guard(server) {
+  const miss = [];
+  for (const [suffix] of SEATS) {
+    if (!existsSync(`${web}${suffix}`)) { miss.push(`${suffix}: file not found`); continue; }
+    try { await server.transformRequest(`/${suffix}`); } catch (e) { miss.push(`${suffix}: ${String(e.message || e).slice(0, 160)}`); continue; }
+    if (!met.has(suffix)) miss.push(`${suffix}: transformed without its seats`);
+  }
+  if (miss.length) {
+    console.error(`PHILO-12-02 SEAT GUARD: ${miss.length} seat(s) not met:\n  ${miss.join("\n  ")}`);
+    process.exit(1);
+  }
+  console.log(`PHILO-12-02 SEAT GUARD: ${SEATS.length} files, every anchor met`);
+}
 
 function seats() {
   return {
@@ -123,6 +157,7 @@ function seats() {
       const file = id.split("?")[0];
       for (const [suffix, imp, edits] of SEATS) {
         if (!file.endsWith(`/web/${suffix}`)) continue;
+        met.add(suffix);
         let out = code;
         for (const [anchor, repl, want = 1] of edits) {
           const n = typeof anchor === "string" ? out.split(anchor).length - 1 : (out.match(anchor) || []).length;
@@ -139,6 +174,7 @@ function seats() {
       return null;
     },
     configureServer(server) {
+      server.httpServer?.once("listening", () => { void guard(server); });
       // The proposed art, served beside the product's sprites (nothing written to web/public).
       server.middlewares.use("/desk/sprites/p12", (req, res, next) => {
         const f = `${harness}sprites${(req.url || "").split("?")[0]}`;
