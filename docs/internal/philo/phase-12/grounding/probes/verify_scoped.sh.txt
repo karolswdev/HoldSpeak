@@ -1,0 +1,13 @@
+#!/bin/sh
+set -u
+export HOME="$(mktemp -d)"
+export UV_CACHE_DIR=/tmp/philo12-uv-cache
+printf 'HOME=%s\n' "$HOME"
+if [ "${1:-}" = collect ]; then
+  uv run pytest --collect-only -q tests/unit/test_philo11_document_sources.py tests/unit/test_philo11_channel_contract.py tests/unit/test_philo10_send_contract.py tests/unit/test_artifact_synthesis_persist.py tests/unit/test_run_artifacts.py
+else
+  uv run pytest -q tests/unit/test_philo11_document_sources.py tests/unit/test_philo11_channel_contract.py tests/unit/test_philo10_send_contract.py tests/unit/test_artifact_synthesis_persist.py tests/unit/test_run_artifacts.py
+fi
+philo12_status=$?
+printf 'Exit: %s\n' "$philo12_status"
+exit "$philo12_status"

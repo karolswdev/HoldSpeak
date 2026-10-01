@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 22c0acc40c7d49c2428f177301fdd9d195f80374 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:58234 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jj09nnxu/.local/share/holdspeak/holdspeak.db engine=none
+JOB: j10
+VERDICT: pass terminal=settled
+EVIDENCE: ['docs/internal/philo/phase-12/grounding/probes/walk-1440/20261001T003822Z-case.j10.arrival_generate_brief.generated_empty-astra-1440/before.png', 'docs/internal/philo/phase-12/grounding/probes/walk-1440/20261001T003822Z-case.j10.arrival_generate_brief.generated_empty-astra-1440/after.png']
+NOTE: predicate: 'No changes' in observe_at text

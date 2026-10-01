@@ -1,0 +1,16 @@
+#!/bin/sh
+# CLAUDE.md full-suite fast lane; run only when all workers have stopped edits.
+set -u
+philo12_cache_home="$HOME"
+export HOME="$(mktemp -d)"
+export PATH="/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH"
+export UV_CACHE_DIR=/tmp/philo12-uv-cache
+export PLAYWRIGHT_BROWSERS_PATH="$philo12_cache_home/Library/Caches/ms-playwright"
+export npm_config_cache="$philo12_cache_home/.npm"
+export PUPPETEER_SKIP_DOWNLOAD=true
+printf 'HOME=%s\n' "$HOME"
+printf '%s\n' 'Command: uv run pytest -q -n auto --ignore=tests/e2e/test_metal.py'
+uv run pytest -q -n auto --ignore=tests/e2e/test_metal.py
+philo12_status=$?
+printf 'Exit: %s\n' "$philo12_status"
+exit "$philo12_status"

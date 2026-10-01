@@ -13,6 +13,7 @@ Shots to phase-171-the-heartbeat/assets/story-04-shots/.
 """
 from __future__ import annotations
 
+import re
 import json
 import uuid
 from datetime import datetime, timedelta
@@ -908,8 +909,10 @@ def _run_brief_row_rig(
                 f"Brief row should show item count: {brief_text}"
 
             # Should contain the date (formatted by the shade as e.g. "SEP 05").
-            # The shade formats generated_at via toLocaleDateString.
-            assert "SEP" in brief_text.upper() or "2026" in brief_text, \
+            # The shade formats generated_at, which the seed writes as
+            # datetime('now'), so the month is today's month, not the seed's.
+            assert re.search(r"(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC) \d{1,2}",
+                             brief_text.upper()), \
                 f"Brief row should show a date token: {brief_text}"
 
             # Should have an Open verb (button).
