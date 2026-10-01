@@ -31,9 +31,11 @@ To capture a thought he goes back to the Chair, scrolls and presses `Write a tho
 - [ ] A thought in 1 key press from any window, at 1440; at 393 the same verb from the menu (no hardware key assumed).
 - [ ] A saved thought's title is its first words; three thoughts show three names on the Chair and in the palette. Red on main (`Thought ×3`).
 - [ ] The key does not fire inside a text field that owns it (a fence with focus in an input).
+- [ ] **Gate (review evidence):** this story's PR merge record cites the owner's ratification record of the C1 canvas it is built on (path + his quote); without it the checker refuses the merge.
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
 - **Focused:** web unit on the title rule and the verb's key binding; `uv run python scripts/check_web_baseline.py --run`.
 - **Atlas:** `case.j11.write_a_thought.window_open` still passes; one new case (key → thought → typed → its title on the Chair), at 1440 and 393 (touch), one case per `scripts/graph_walk.py run` invocation.
 - **Shots:** the key from a body window, the titled thoughts, both widths.
@@ -49,5 +51,6 @@ Grounding size: S (`grounding/faces-jobs.md:161`). PROVISIONAL.
 
 ## Notes
 
-- 2026-10-01 — `web/src/desk/newThought.ts` is not named in PROPOSAL §4's map; assigned to this lane (status file, map gaps).
+- 2026-10-01 — `web/src/desk/newThought.ts` is not named in PROPOSAL §4's map; assigned to this lane (status file, "File ownership").
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

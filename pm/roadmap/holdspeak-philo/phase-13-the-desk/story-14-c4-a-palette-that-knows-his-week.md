@@ -27,7 +27,7 @@ The palette knows his people, the words inside his thoughts and meeting attendee
   - Feed relationships (`GET /api/people/relationships`), note and thought bodies and meeting attendees into `terms`.
   - Verb rows from the verb registry: `Prep 1:1 with <report>`, `Send <front document> to <destination>`, `Draft update for <project>`.
   - A `Send …` row opens the front document's window with the destination picked and the exact preview in view, through C5's push seam. It never sends (Article V).
-  - An app ranks above a note of the same name; one Escape closes the shelf.
+  - The query `People` returns the People app first, above the `People & vocabulary` note (today the note ranks first, `grounding/shots/surfaces/110-palette-people-pop-393.png`); one Escape closes the shelf.
 - **Out:** a new search index; any send without his press; palette rows for parked or unwalked surfaces.
 
 ## Acceptance criteria
@@ -35,11 +35,13 @@ The palette knows his people, the words inside his thoughts and meeting attendee
 - [ ] `Priya` → her window (J3: 4 → 2 gestures).
 - [ ] A word inside a thought finds it (J5 find: luck → 2 gestures).
 - [ ] `send` → `Send <front document> to <destination>`; picking it opens the preview in view; zero `channel_sends` rows and zero kernel operations until he presses Send.
-- [ ] At 393 `People` → the People app first; one Escape closes the shelf.
+- [ ] At 393 the query `People` → the People app first, above the `People & vocabulary` note (red on main); one Escape closes the shelf.
 - [ ] At 1440 and 393 (touch); the web baseline has zero branch-new failures.
+- [ ] **Gate (review evidence):** this story's PR merge record cites the owner's ratification record of the C1 canvas it is built on (path + his quote); without it the checker refuses the merge.
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
 - **Focused:** web unit on ranking with the new terms and on the verb rows; `uv run python scripts/check_web_baseline.py --run`.
 - **Glass:** real hub: the three verb rows; the send row's no-send-until-press fence reads the hub's send table.
 - **Atlas:** one case per verb row and one find-in-thought case, at 1440 and 393, one case per `scripts/graph_walk.py run` invocation.
@@ -56,4 +58,5 @@ Grounding size: M (`grounding/faces-jobs.md:154`). PROVISIONAL.
 
 ## Notes
 
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

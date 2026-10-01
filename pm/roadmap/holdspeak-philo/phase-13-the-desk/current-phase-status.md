@@ -1,8 +1,8 @@
 # Phase 13 - The Desk
 
-**Last updated:** 2026-10-01 (DRAFTED by the Fedaykin docs lane for Muad'Dib from PROPOSAL r2 and the five forks the owner ruled; unchecked.)
+**Last updated:** 2026-10-01 (r2: Astra's check r1 DO-NOT-RATIFY paid — disjoint files with named handoffs, B2 covers every window family and named draft, A2's membership oracle, the Parked artboard, the gates as merge-record evidence, C4's query collision; unchecked r2.) Earlier: 2026-10-01 (DRAFTED by the Fedaykin docs lane for Muad'Dib from PROPOSAL r2 and the five forks the owner ruled; unchecked.)
 
-**Status:** DRAFT, 2026-10-01 — UNCHECKED, awaiting Astra; then the owner's ratification.
+**Status:** DRAFT r2, 2026-10-01 — Astra's check r1 DO-NOT-RATIFY paid; awaiting Astra's check of r2; then the owner's ratification.
 
 ## Goal
 
@@ -52,7 +52,21 @@ Carried, unchanged: the Seven Tenets (`docs/internal/CONSTITUTION.md:18-60`); Ar
 
 DRAFT, 2026-10-01, written by the Fedaykin docs lane for Muad'Dib — UNCHECKED, awaiting Astra; then the owner's ratification.
 
+**r2, 2026-10-01:** Astra's check r1 was DO-NOT-RATIFY; its conditions are paid ("Round two" below). r2 is unchecked: awaiting Astra's check of r2; then the owner's ratification.
+
 Source: `docs/internal/philo/phase-13/PROPOSAL.md` (r2; Astra check r1 RATIFY-WITH-CONDITIONS, paid, `docs/internal/philo/phase-13/grounding/checks/proposal-astra.md`). This charter turns it into roadmap form. It does not redesign it. The five forks are ruled (Authority).
+
+## Round two — Astra check r1 (DO-NOT-RATIFY) paid
+
+Astra's check r1 of this charter (Codex `gpt-6-astra`; run `.tmp/two-brains/20261001-165543-check-p13-charter/last.md`; Muad'Dib records it in `checks/`) was **DO-NOT-RATIFY**. Its conditions are paid in r2 on Muad'Dib's rulings:
+
+| Astra r1 | Paid by |
+|---|---|
+| 1 the lane map shares `atlas.json`, the Room headline and `PeopleCore.tsx`; serial merges do not make files disjoint | "File ownership": one owner per path. Two atlas files, `atlas-phase13-astra.json` and `atlas-phase13-muaddib.json` (`scripts/graph_walk.py:6507` takes `--atlas` per run; `run_case(atlas_path, …)` `:6314`; `tests/unit/test_philo_graph_atlas.py:27` globs `atlas*.json`). The Room and `PeopleCore.tsx` are Muad'Dib's; A2 and B4 deliver pure modules (`needsYou.ts`, `people/prepData.ts`) and the faces lane wires them. "Merged serially" is removed; every crossing is a named handoff ("Named handoffs"). The shared `.op` count at `test_philo_graph_atlas.py:493` has one owner (H-B0b). |
+| 2 B2's "Everything" leaves out Delivery Dossier and Terminal and the meeting form draft | story 07: every mounted window family listed with its disposition (returns, or exempt with a reason from the source), Dossier (`web/src/desk/DeskApp.tsx:267`; `web/src/desk/deliveryDossier.ts:182`) and Terminal (`DeskApp.tsx:268`; `web/src/desk/deliveryTerminal.ts:221`) return; every named draft field listed in the acceptance, the meeting SEND well's form and pick included. |
+| 3 A2 has no membership rule or expected result | story 03: "needs you" = the Chair's existing membership (`web/src/desk/chair/ChairHome.tsx:795-812`, `:825-840`) stated as a rule; a real-producer week with expected row ids and count, one mutation with its expected change; a wrong projection fails. |
+| 4 the gates are reviewer holds; A1's Parked face has no canvas | "The gates": each gate is a line the merge record must cite (B0's commit and evidence path for B2; the owner's ratification path + quote for every C face, B1, B3 and A1-F). A1's Parked and Restore face is a named artboard in C1's canvas set (story 11); A1's backend may merge first. |
+| 5 C4's "same name" wording | story 14: the query `People` returns the `People & vocabulary` note above the People app (`grounding/shots/surfaces/110-palette-people-pop-393.png`). C4 app-first + one Escape and C7's Desk/Object/Window at 393 kept, both grounded. |
 
 ## The grounding (main `4c49651e`; no drift in `web/src` or `holdspeak` to `c3855bbf`)
 
@@ -103,11 +117,11 @@ Phase 12 closes as "folded into Phase 13" once this charter is ratified (PROPOSA
 The proof is new capability through the real hub on an isolated HOME, minted through real producers, never a test double that lies about the field a check reads. "At both widths" means 1440x900 (mouse) and 393x852 (touch: `has_touch`, every press a tap). "Red on main" applies where a defect exists.
 
 - [ ] 1. **The unwalked paths are walked (B0).** One atlas case per unwalked path at both widths, passing on main before B2 merges; red-before-green where it finds a defect.
-- [ ] 2. **Nothing is destroyed (A1).** Delete on a meeting and on a Workbench item parks it; Restore from the same face brings it back with its segments, summary, artifacts and run links; no SQL DELETE on the normal path; single and bulk; after reload.
-- [ ] 3. **One truth (A2, A3).** Every "needs you" on a shot is one number from one projection; a narrower count names what it counts. Record shows "Not recording" + the reason on a refused start. No face shows "ON" for a fact that is "OFF" elsewhere unless the two name different facts.
+- [ ] 2. **Nothing is destroyed (A1).** (Its face, A1-F, merges only on the owner's ratified "Parked and Restore" artboard.) Delete on a meeting and on a Workbench item parks it; Restore from the same face brings it back with its segments, summary, artifacts and run links; no SQL DELETE on the normal path; single and bulk; after reload.
+- [ ] 3. **One truth (A2, A3).** "Needs you" is the membership rule of story 03; the seeded week returns its expected row ids and count, and a mutation changes it as expected; every "needs you" on a shot reads it; a narrower count names what it counts. Record shows "Not recording" + the reason on a refused start. No face shows "ON" for a fact that is "OFF" elsewhere unless the two name different facts.
 - [ ] 4. **Close means gone (A4).** After Close, `elementFromPoint` at the old centre hits the Desk at both widths, for every opener that passes a qualified id.
 - [ ] 5. **Everything opens (B1, B3, B4).** J1 dead taps 5 → 0; J1 path 7 → 3 gestures; J3 prep 5 → 1; decision 5 → 2 gestures with its meeting and project; no false "No 1:1 planned".
-- [ ] 6. **The Desk remembers (B2).** Reload or close mid-job: 0 re-navigation, 0 lost drafts, at both widths.
+- [ ] 6. **The Desk remembers (B2).** Every mounted window family returns or is exempt with a source reason; every named draft field survives; reload or close mid-job: 0 re-navigation, 0 lost drafts, at both widths. B2's merge record cites B0's merged commit and evidence path.
 - [ ] 7. **The update writes the week (B5).** The deterministic draft lists the linked meetings' summaries, decisions and owned actions; 111 typed characters → 0.
 - [ ] 8. **The look, as ratified (C1).** The C1 canvas ratified by the owner (his word recorded) before the first C1 face commit; the seven canvas criteria hold on the built shots at both widths.
 - [ ] 9. **Workbench behaviour (C2, C3, C4, C6).** Depth, zoom, right-button menu and Amiga-key shortcuts by mouse, key and touch; a live Dock within ~1 s with every window closed; the palette finds people and thought text and runs verbs; a thought in 1 key press, titled from its first words.
@@ -142,51 +156,95 @@ Numbers follow the build order the brief set (B0 first: it gates B2). The Propos
 
 ## Lanes
 
-Per TWO-BRAINS §4 (`docs/internal/TWO-BRAINS.md:104-128`): one owner brain per story, disjoint files (PROPOSAL §4).
+Per TWO-BRAINS §4 (`docs/internal/TWO-BRAINS.md:104-128`): a lane is a set of stories with **disjoint files** and one owner brain. Every path below has exactly one owner. Where a story needs a file the other lane owns, the owner of the file does that change as a **named handoff** (what is delivered, by which story, consumed by which story). This is the Phase 12 pattern: a pure module in one lane, the wiring in the other (`../phase-12-send-from-the-floor/current-phase-status.md:105`).
 
 | Lane | Stories | Owner | Checker | Worktree | Branch |
 |---|---|---|---|---|---|
 | Data + truth | 01 B0, 02 A1, 03 A2, 09 B4, 10 B5, 13 C3 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-13-astra | feat/philo-13-astra |
-| Faces + frame | 04 A3, 05 A4, 06 B1, 07 B2, 08 B3, 11 C1, 12 C2, 14 C4, 15 C5, 16 C6, 17 C7, 18 C8 | Muad'Dib (Fedaykin, Opus 5.5) | Astra | ../wt-philo-13-muaddib | feat/philo-13-muaddib |
+| Faces + frame | 04 A3, 05 A4, 06 B1, 07 B2, 08 B3, 11 C1, 12 C2, 14 C4, 15 C5, 16 C6, 17 C7, 18 C8; and the named wiring steps A1-F, A2-W, B4-W, C3-W | Muad'Dib (Fedaykin, Opus 5.5) | Astra | ../wt-philo-13-muaddib | feat/philo-13-muaddib |
 
-- **Why this split** (TWO-BRAINS §4): Astra takes the backend, the projections, the live layer and the verification harness (B0's atlas); Muad'Dib takes the faces, the frame, the canvases and the owner-facing close. D1 would have been the faces lane's; it is out (fork 4).
+- **Why this split** (TWO-BRAINS §4): Astra takes the backend, the projections, pure data modules, the live layer and the verification harness (B0's atlas); Muad'Dib takes every face, the frame, the canvases, the store and the owner-facing close. D1 would have been the faces lane's; it is out (fork 4).
+- **The principle for any path not listed:** faces, CSS, store, chair, window, menu, send and pullout files → Muad'Dib; db, services, routes, projections, runtime and pure data modules → Astra.
 - A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call. CI does not gate a merge (the owner, 2026-09-28).
 
-### File ownership (the collision map, PROPOSAL §4)
+### File ownership (one owner per path)
 
-- **Astra owns:** `holdspeak/db/**`, `holdspeak/services/**`, `holdspeak/web/routes/**` for its stories; `web/src/desk/projections.ts`, `web/src/desk/components/window/Dock.tsx` (logic), `web/src/runtime/**`, `web/src/desk/useDeskChangedRefresh.ts`, `web/src/pages/cores/PeopleCore.tsx` (B4), the meeting/Workbench delete/park call sites (`HistoryCore.tsx` delete path, `WorkbenchWindow.tsx` removal path, A1), and the atlas cases of B0.
-- **Muad'Dib owns:** `web/src/desk/chair/**`, `web/src/desk/components/DeskWindow.tsx` and `window/*` except `Dock.tsx` logic, all CSS including `dock.css`, `web/src/desk/store/**` (B2, A4), `recordingSlice.ts` (A3), pullouts, `verbRegistry.ts`, `DeskToolShelf.tsx`, `windowMenuAdapter.tsx`, `send/**`.
-- **Seams:** A2 delivers the one needs-you projection + hook; Muad'Dib wires the Chair in B1. A1's park/restore verbs on faces Muad'Dib owns land through a brief exchange, one lane at a time on the file. Any file touched by both lanes is merged serially: the first lane's PR merges, the second rebases.
+PROPOSAL §4's map, made disjoint by Astra's check r1 and Muad'Dib's rulings (r2):
 
-**Files the stories need that the map does not name** (for Astra's check; each is assigned to the story's lane, and the serial-merge seam applies where both lanes touch it):
-
-| File | Needed by | Lane |
+| Path | Owner | Stories that change it |
 |---|---|---|
-| `docs/internal/philo/graph/atlas.json` | B0 and every story's atlas cases | both — serial merge; B0 first |
-| `web/src/pages/cores/history/helpers.ts` (the Meetings headline, `:216-233`) | A2 (the narrower count) | Data + truth |
-| the Room headline (`web/src/features/project-room/**`) | A2 (narrower count), A3 (raw publish failure), B2 (the update draft) | both — serial merge |
-| `web/src/pages/cores/PeopleCore.tsx` | B4 (owner), A3 (the 503 face), B2 (the 1:1 note draft) | Data + truth owns; A3 and B2 land through a brief exchange |
-| `web/src/pages/cores/settingsPrefs.tsx`, `web/src/desk/components/TrustWindow.tsx` | A3 | Faces + frame |
-| `web/src/desk/components/Pullout.tsx`, `web/src/desk/components/DeskMenuBar.tsx` | A4, C2, C5 | Faces + frame |
-| `web/src/meetings/MeetingSendWell.tsx` | C5 | Faces + frame |
-| `web/src/desk/newThought.ts` | C6 | Faces + frame |
-| `holdspeak/services/project_update_service.py` | B5 | Data + truth (under `holdspeak/services/**`) |
+| `holdspeak/db/**`, `holdspeak/services/**`, `holdspeak/web/routes/**` | Astra | A1, A2, B4, B5, C3; any backend handoff (H-B3, H-C5) |
+| `web/src/desk/projections.ts`, `web/src/desk/attention.ts` (dedup and rank, pure); **new** `web/src/desk/needsYou.ts` (the pure needs-you module and its hook; it imports `web/src/desk/chair/meetingPathBlocker.ts` read-only) | Astra | A2 |
+| **new** `web/src/desk/people/prepData.ts` (the pure Prep client module) | Astra | B4 |
+| `web/src/desk/api.ts` (the park and restore client functions only) | Astra | A1 |
+| `web/src/desk/components/window/Dock.tsx` (badge logic) | Astra | A2 (the badge reads `needsYou.ts`), C3 |
+| `web/src/runtime/**`, `web/src/desk/useDeskChangedRefresh.ts` | Astra | C3 |
+| `docs/internal/philo/graph/atlas-phase13-astra.json` (**new**) | Astra | B0, A1, A2, B4, B5, C3 |
+| `tests/unit/test_philo_graph_atlas.py` (the shared `.op` sibling count, `:493`) | Astra | B0 (handoff H-B0b) |
+| `tests/unit/test_philo13_astra_atlas.py` (**new**) | Astra | B0 and every Astra story's cases |
+| `docs/internal/philo/graph/atlas-phase13-muaddib.json` (**new**) | Muad'Dib | every faces-lane story and wiring step |
+| `tests/unit/test_philo13_muaddib_atlas.py` (**new**) | Muad'Dib | every faces-lane story's cases |
+| `web/src/desk/chair/**` | Muad'Dib | A2-W, B1, C1, C7 |
+| `web/src/desk/components/DeskWindow.tsx`, `window/*` except `Dock.tsx` logic | Muad'Dib | C1, C2, C7 |
+| all CSS, including `dock.css` and `web/src/desk/surface/surface.css` | Muad'Dib | C1, C3-W, C7, C8 |
+| `web/src/desk/store/**` (incl. `recordingSlice.ts`, `compositorSlice.ts`, `workspaceStorage.ts`, `windowFactory.ts`) | Muad'Dib | A3, A4, B2, C2 |
+| `web/src/desk/deliveryDossier.ts`, `web/src/desk/deliveryTerminal.ts` (window open state) | Muad'Dib | B2 |
+| pullouts (`web/src/desk/pullouts/**`), `web/src/desk/components/Pullout.tsx` | Muad'Dib | A3, A4, B1, B3, C5 |
+| `web/src/desk/verbRegistry.ts`, `web/src/desk/components/DeskToolShelf.tsx`, `web/src/desk/components/window/windowMenuAdapter.tsx`, `web/src/desk/components/DeskMenuBar.tsx` | Muad'Dib | C2, C4, C5, C6 |
+| `send/**` (`web/src/desk/surface/send/**`), `web/src/meetings/MeetingSendWell.tsx`, `web/src/desk/documentSends.tsx` | Muad'Dib | C5 |
+| `web/src/pages/cores/HistoryCore.tsx`, `web/src/pages/cores/history/helpers.ts` | Muad'Dib | A1-F, A2-W |
+| `web/src/desk/components/WorkbenchWindow.tsx` | Muad'Dib | A1-F |
+| `web/src/pages/cores/PeopleCore.tsx` | Muad'Dib | A3, B2, B4-W |
+| the Room face (`web/src/features/project-room/ProjectRoomCore.tsx` and its headline) | Muad'Dib | A2-W, A3, B2 |
+| `web/src/desk/components/SystemShade.tsx`, `web/src/desk/components/AttentionDrawer.tsx` (the bell) | Muad'Dib | A2-W |
+| `web/src/pages/cores/settingsPrefs.tsx`, `web/src/desk/components/TrustWindow.tsx` | Muad'Dib | A3 |
+| `web/src/desk/newThought.ts` | Muad'Dib | C6 |
+| `web/src/desk/components/AskPanel.tsx` (the Ask face) | Muad'Dib | A3, B2 |
 
-### The canvas gate (inside the faces lane)
+### Named handoffs (no shared file; one owner does each change)
 
-C1's canvas comes first: it sets the material every later face obeys. Then the B1, B3, C5 and C7 canvases, drawn on C1's material. Astra checks each; **the owner ratifies**; his word is recorded verbatim. No C-story face is built before its canvas is ratified (UX-CANON A.2). Wave A and B0 build while the C1 canvas is on the table.
+| ID | Delivered by (owner, story) | What | Consumed by |
+|---|---|---|---|
+| H-B0a | Astra, B0 (01) | `atlas-phase13-astra.json` created (valid against `atlas.schema.json`); the faces lane creates its own `atlas-phase13-muaddib.json` with its first case; `test_philo_graph_atlas.py:27` globs `atlas*.json`, so neither needs registering | every Astra story's atlas cases |
+| H-B0b | Astra, B0 (01) | `tests/unit/test_philo_graph_atlas.py:493` counts `.op` siblings outside the `atlas-phase13-*` files only; each lane's own test file asserts its own count | every story that adds an `.op` sibling |
+| H-A1 | Astra, A1 (02) | park, Parked read and restore routes + the `web/src/desk/api.ts` client functions | A1-F |
+| A1-F | Muad'Dib, a named wiring step in A1's acceptance, on `feat/philo-13-muaddib` | the Parked filter, Restore and the `PARKED` receipt on Meetings (`HistoryCore.tsx`) and the Workbench window (`WorkbenchWindow.tsx`), built to the C1 artboard "Parked and Restore" | A1's done call |
+| H-A2 | Astra, A2 (03) | `web/src/desk/needsYou.ts`: the membership rule as a pure function + one hook; the Dock badge reads it | A2-W, C3 |
+| A2-W | Muad'Dib, a named wiring step in A2's acceptance, on `feat/philo-13-muaddib` | the Chair (its local `doorCardsToItems`/`hasMeetingAttention` membership code, `ChairHome.tsx:278`, `:309`, `:795-840`, replaced by `needsYou.ts`), the bell/shade and the Room headline read `needsYou.ts`; Meetings and the Room relabel narrower counts | A2's done call |
+| H-B4 | Astra, B4 (09) | the calendar link suggestion and the Prep data in the People service/routes + `web/src/desk/people/prepData.ts` | B4-W |
+| B4-W | Muad'Dib, a named wiring step in B4's acceptance, on `feat/philo-13-muaddib` | `PeopleCore.tsx` shows `NEXT 1:1` and Prep from `prepData.ts` | B4's done call |
+| H-C3 | Astra, C3 (13) | the Dock state (badge logic, frames, invalidation) | C3-W |
+| C3-W | Muad'Dib, a named wiring step in C3's acceptance | the AppIcon states drawn in `dock.css` to the C1 canvas | C3's done call |
+| H-B3 | Astra, on request, only if B3 finds the decision has no meeting/project reference | the reference in the decision route/service | B3 (08) |
+| H-C5 | Astra, on request, only if the latest-update read does not apply the tie rule | the tie rule in the read | C5 (15) |
+
+A story with a wiring step flips `done` only when both halves are merged; the merge record names both commits.
+
+### The gates (explicit review evidence; CI does not gate)
+
+CI does not gate a merge (the owner, 2026-09-28). So each gate is a **line the merge record must carry**; a merge record without it is not a merge on verification, and the checker refuses it.
+
+| Gate | What the merge record must cite |
+|---|---|
+| **B0 → B2** | B2's PR merge record cites B0's merged commit on main and its atlas evidence path (`pm/roadmap/holdspeak-philo/phase-13-the-desk/evidence-story-01.md` and the run directories it names). |
+| **Canvas → every C face** (C1, C2, C3-W, C4, C5, C6, C7, C8) and B1, B3 | the PR merge record cites the owner's ratification record of that face's canvas: its path and his quote. |
+| **A1's face (A1-F)** | the merge record cites the owner's ratification record of C1's artboard "Parked and Restore" (path + quote). A1's backend half (H-A1) may merge before it. |
+
+The canvas set, in order: C1's canvas first (the frame, the chrome, the Chair, the material, and the named artboard **"Parked and Restore"** for A1-F); then B1, B3, C5 and C7, drawn on C1's material. Astra checks each; **the owner ratifies**; his word is recorded verbatim. No face is built before its canvas is ratified (UX-CANON A.2). Wave A's backend, A3, A4 and B0 build while the C1 canvas is on the table.
 
 ## Order / waves
 
 | Step | Data + truth (Astra) | Faces + frame (Muad'Dib) |
 |---|---|---|
-| 1 | 01 B0, 02 A1, 03 A2 | 04 A3, 05 A4, 11 C1 canvas |
-| 2 | 09 B4, 10 B5 | 06 B1 and 08 B3 (after their canvases are ratified); 07 B2 **after 01 B0's cases exist and pass on main** |
-| 3 | 13 C3 (after 03 A2 and 04 A3) | after C1's ratification: 11 C1 build, 12 C2, 14 C4, 15 C5, 16 C6, 17 C7, 18 C8 |
+| 1 | 01 B0 (first: H-B0a, H-B0b), 02 A1 backend (H-A1), 03 A2 (H-A2) | 04 A3, 05 A4, 11 C1 canvas (with the "Parked and Restore" artboard); A2-W |
+| 2 | 09 B4 (H-B4), 10 B5 | A1-F (after the artboard is ratified); B4-W; 06 B1 and 08 B3 (after their canvases are ratified); 07 B2 **after 01 B0 is merged and its cases pass on main** |
+| 3 | 13 C3 (H-C3; after 03 A2 and 04 A3) | after C1's ratification: 11 C1 build, C3-W, 12 C2, 14 C4, 15 C5, 16 C6, 17 C7, 18 C8 |
 
 D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
+
+2026-10-01, round two: Astra's check r1 DO-NOT-RATIFY paid on Muad'Dib's rulings (table under "Round two"). Next: Astra's check of r2; then the owner's ratification.
 
 2026-10-01: DRAFTED (branch `docs/philo-13-charter`) from PROPOSAL r2 and the five forks he ruled. Eighteen stories, all `backlog`. Phase 12 folded (stories 02–06 `blocked`, parked — folded into PHILO-13 C5). D1 parked in BACKLOG. Next: Astra's check of this charter; then the owner's ratification. On ratification, 01 (B0) and 11 (C1, its canvas) flip to `ready`: each lane's long pole.
 
@@ -202,9 +260,9 @@ None.
 
 | Risk | Likelihood | Mitigation | Stop signal |
 |---|---|---|---|
-| B2's shared lifecycle breaks an unwalked window | medium | B0 gates B2 | B2 merges before B0's cases pass on main |
+| B2's shared lifecycle breaks an unwalked window | medium | B0 gates B2; the merge record cites B0's commit and evidence | B2 merges before B0's cases pass on main |
 | C1 grows into a redesign of every body | medium | bodies inherit the material through `DeskWindowFrame`; C1 does not redesign every body (PROPOSAL C1) | a C1 commit that rewrites a body's content |
-| Two lanes in one file | medium | the file map; serial merge | a PR that touches a file the other lane holds open |
+| Two lanes in one file | medium | one owner per path; named handoffs; two atlas files | a PR that changes a path its lane does not own |
 | Palette or menu sends without his press | low | C4/C5 open the preview only | a `channel_sends` row or a kernel operation before Send |
 | A fence passes on a double that lies | medium | mint through real producers; mutate the producer field to show the fence rejects it | a park, needs-you or recording fence that reads a field the real producer does not write |
 | A face word changes and its fence is rewritten to pass | medium | rehome the guard onto live behaviour in the same commit | a guard edited only to match a removal |
@@ -215,6 +273,8 @@ None.
 - 2026-10-01 — the owner ruled the five forks: "All the way"; "Opens its own window"; "Everything"; "Later"; the Send placement default stands.
 - 2026-10-01 — Muad'Dib ruled B5 (the update draft reads the week without the engine).
 - 2026-10-01 — DRAFTED: 18 stories in build order; two lanes; the file map; the canvas gate; Phase 12 02–06 `blocked` (parked — folded into C5), since `parked` is not a status the gate accepts (`.githooks/dw_pmo/model.py:18`) — Fedaykin docs lane for Muad'Dib.
+
+- 2026-10-01 — round two: Astra r1 DO-NOT-RATIFY paid on Muad'Dib's rulings: one owner per path (faces/CSS/store/chair/window/menu/send/pullout → Muad'Dib; db/services/routes/projections/runtime/pure data modules → Astra); two atlas files; named handoffs H-B0a/b, H-A1 + A1-F, H-A2 + A2-W, H-B4 + B4-W, H-C3 + C3-W, H-B3, H-C5; "needs you" = the Chair's existing membership; B2's window families and drafts listed; the Parked artboard in C1's set; gates as merge-record evidence — Fedaykin docs lane for Muad'Dib.
 
 ## Decisions deferred
 

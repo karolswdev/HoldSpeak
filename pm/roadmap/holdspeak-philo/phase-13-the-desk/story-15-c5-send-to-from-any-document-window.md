@@ -30,7 +30,7 @@ The title-bar right-click builds Minimize / Maximize / Close only (`web/src/desk
   - **The reads** where the window does not already hold the fact: meeting summary presence and a project's latest published update, each `pending` / known / failed; `pending` is never a refusal; a failed read shows `CAN'T CHECK` and still opens the well.
   - **The arrival:** the picked row, its preview and Send come into view at both widths, clear of sticky strips.
   - **The artifact window:** its SEND well on `artifact:<id>`; its three raw buttons become library Buttons.
-  - **The tie rule** (Muad'Dib, 2026-09-30, Phase 12 story 03 notes): the latest published update is the greatest `published_at`, then the greatest `rowid`.
+  - **The tie rule** (Muad'Dib, 2026-09-30, Phase 12 story 03 notes): the latest published update is the greatest `published_at`, then the greatest `rowid`. If the read (`holdspeak/web/routes/project_updates.py:61`) does not apply it, handoff **H-C5**: Astra's lane changes the read (its files); this story edits no backend file.
 - **Out:** the Floor icons, the drop, its tag, the brief icon on the Floor, the decision and channel sprites, J2 (parked with Phase 12); `Send` from the palette that sends (C4 opens the preview only); a `Send` Button in each footer (fork 5's alternative, not chosen); notes as documents.
 
 ## Acceptance criteria
@@ -49,9 +49,11 @@ The title-bar right-click builds Minimize / Maximize / Close only (`web/src/desk
 - [ ] **Artifact:** picked, PREPARED and SENT outcomes; no raw `<button>` in `ArtifactPullout` (red on main).
 - [ ] **The real-send leg:** for each retained kind on the channels he has, a real send by `Send to ▸`, read back from the far side, or a named limit with its reason. A cold Codex session prepares one artifact send from the MCP catalogue alone; he presses Send on the face. Secrets redacted at capture. Rehearsed, owner-reviewed shots; never recorded as a sitting.
 - [ ] The Phase 7–11 atlas cases still pass; the web baseline has zero branch-new failures.
+- [ ] **Gate (review evidence):** this story's PR merge record cites the owner's ratification record of its canvas (path + his quote); without it the checker refuses the merge.
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
 - **Focused:** web unit on the composition per kind and per refusal; the reads' states; the push seams; `uv run python scripts/check_web_baseline.py --run`. Story 01's focused Python tests re-run (`grounding/probes/structure-tests-output.txt` lists them).
 - **Glass:** Playwright through the real hub on an isolated HOME at both widths, touch at 393; each fence ends with Send and reads the hub's send row and receipt.
 - **Atlas:** the per-document and transition cases above, one case per `scripts/graph_walk.py run` invocation.
@@ -72,5 +74,6 @@ Grounding size: M (`grounding/faces-jobs.md:155`; `grounding/structure.md:304`).
 
 ## Notes
 
-- 2026-10-01 — `web/src/meetings/MeetingSendWell.tsx` and `web/src/desk/components/DeskMenuBar.tsx` are not named in PROPOSAL §4's map; assigned to this lane (status file, map gaps).
+- 2026-10-01 — `web/src/meetings/MeetingSendWell.tsx` and `web/src/desk/components/DeskMenuBar.tsx` are not named in PROPOSAL §4's map; assigned to this lane (status file, "File ownership").
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

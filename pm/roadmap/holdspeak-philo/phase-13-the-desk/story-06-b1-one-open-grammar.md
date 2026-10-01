@@ -3,7 +3,7 @@
 - **Project:** holdspeak-philo
 - **Phase:** 13
 - **Status:** backlog
-- **Depends on:** PHILO-13-11's C1 canvas ratified (the material); this story's own canvas ratified; PHILO-13-03 (the needs-you hook); PHILO-13-05 (close means gone)
+- **Depends on:** PHILO-13-11's C1 canvas ratified (the material); this story's own canvas ratified; PHILO-13-05 (close means gone)
 - **Unblocks:** none
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
 - **Lane:** Faces + frame (`../wt-philo-13-muaddib`, `feat/philo-13-muaddib`)
@@ -30,7 +30,6 @@ Nothing named on the Chair opens. Brief rows (`web/src/desk/chair/ChairHome.tsx:
   - Commitment rows open their person (`ChairHome.tsx:1990-2030`).
   - Room activity rows open their object.
   - Brief → People: `open-people` with the relationship scope (`BriefView.tsx:490`).
-  - The Chair wired to A2's needs-you hook.
   - The Chair verbs the library Button; the same species in each row.
 - **Out:** the 1:1 link itself and Prep's contents (B4); window memory (B2); the Chair as a desk of windows (C1).
 
@@ -40,11 +39,12 @@ Nothing named on the Chair opens. Brief rows (`web/src/desk/chair/ChairHome.tsx:
 - [ ] J1 dead taps 5 → 0 at 1440 (6 → 0 at 393); J1 known path 7 → 3 gestures (brief row → the decision; `1:1 Priya` → Priya on Prep), counted on the same populated week as `grounding/faces-jobs.md:9`.
 - [ ] J3 prep 5 → 1 gesture from the Chair, on an event linked to the person (the link is B4's; with B4 not merged, the fence links the event through the existing route, `holdspeak/web/routes/people.py:193-204`).
 - [ ] Brief → `Open person` opens People on that relationship (red on main: it goes to `/people` and home).
-- [ ] Every "needs you" on the Chair reads A2's projection.
 - [ ] Every board built as ratified, at both widths.
+- [ ] **Gate (review evidence):** this story's PR merge record cites the owner's ratification record of its canvas (path + his quote); without it the checker refuses the merge.
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
 - **Focused:** web unit on the row opens per kind; the People dispatch; `uv run python scripts/check_web_baseline.py --run`.
 - **Glass:** the J1 and J3 walks re-run with the gesture counter of `grounding/probes/faces-jobs-*` at 1440 and 393 (touch).
 - **Atlas:** one case per row kind (brief, calendar, commitment, Room activity, Brief → People), at 1440 and 393, one case per `scripts/graph_walk.py run` invocation.
@@ -62,4 +62,5 @@ Grounding size: S (faces move 1) to M (structure move 2). PROVISIONAL.
 ## Notes
 
 - 2026-10-01 — B1 and B4 share the J3 prep outcome: B1 owns the open (the row → People at Prep), B4 owns the link and Prep's contents.
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

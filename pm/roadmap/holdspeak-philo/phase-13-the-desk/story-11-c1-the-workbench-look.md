@@ -4,7 +4,7 @@
 - **Phase:** 13
 - **Status:** backlog
 - **Depends on:** the owner's ratification of this charter (the canvas starts in wave one, beside Wave A and B0); the build waits on the owner's ratification of the canvas
-- **Unblocks:** PHILO-13-06, -08, -15, -17 (their canvases are drawn on this material); PHILO-13-12 to -18 (no C-story face is built before its canvas is ratified)
+- **Unblocks:** PHILO-13-06, -08, -15, -17 (their canvases are drawn on this material); PHILO-13-12 to -18 and C3-W (no C face is built before its canvas is ratified); A1-F (its artboard is in this set)
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
 - **Lane:** Faces + frame (`../wt-philo-13-muaddib`, `feat/philo-13-muaddib`)
 - **Proposal:** C1 (PROPOSAL §3, Wave C); fork 1, "All the way"
@@ -24,7 +24,7 @@ The Chair at 1440 reads as a black web dashboard of rows and chips, not a Workbe
 ## Scope
 
 - **In:**
-  - **The canvas** (UX-CANON A.2): the frame (menu bar as a screen title bar, Dock), the window chrome (one gadget set), the material tokens, and the Chair composed of windows, at 1440 and 393. Astra checks; the owner ratifies; his word recorded verbatim.
+  - **The canvas** (UX-CANON A.2): the frame (menu bar as a screen title bar, Dock), the window chrome (one gadget set), the material tokens, the Chair composed of windows, and the named artboard **"Parked and Restore"** (A1-F: the Parked filter, Restore and the `PARKED` receipt on Meetings and the Workbench window), at 1440 and 393. Astra checks; the owner ratifies; his word recorded verbatim.
   - **The build** after ratification: the material as tokens worn by every `DeskWindowFrame` host; the gadget set in the chrome (`DeskWindow.tsx`, `window/*`); the screen title bar; the Chair as windows (`web/src/desk/chair/**`); all CSS.
   - The Dock stays inside the viewport at 1440 with long window titles.
 - **Out:** redesigning every body (bodies inherit the material through `DeskWindowFrame`; PROPOSAL C1); the gadgets' behaviour (C2); live AppIcon data (C3); the phone layout (C7); the type floor sweep (C8); the Floor.
@@ -47,9 +47,12 @@ And:
 - [ ] The build matches the ratified canvas, board beside shot, at both widths (touch at 393).
 - [ ] The Dock fits 1440 with a long window title (red on main, `grounding/shots/surfaces/64-room-pop-1440.png`).
 - [ ] Every verb the library Button; no modal; no prose; no counter of zero; the web baseline has zero branch-new failures.
+- [ ] The "Parked and Restore" artboard is drawn at both widths and ratified with the rest of the set (or on its own, if A1-F is ready first).
+- [ ] **Gate (review evidence):** this story's PR merge record cites the owner's ratification record of its canvas (path + his quote); without it the checker refuses the merge.
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
 - **Canvas:** the harness boards through the real hub on an isolated HOME at both widths; shots under `assets/story-11-canvas/` (the Phase 10–12 pattern, `../phase-12-send-from-the-floor/assets/story-02-canvas/`).
 - **Focused:** a token fence (every `DeskWindowFrame` host wears the material tokens); web unit on the chrome; `uv run python scripts/check_web_baseline.py --run`.
 - **Atlas:** the Chair arrival case (`case.j10.arrival_generate_brief.populated`) and a window-chrome case, at 1440 and 393, one case per `scripts/graph_walk.py run` invocation.
@@ -67,4 +70,5 @@ Grounding size: not sized (new in PROPOSAL r2). PROVISIONAL; the long pole of th
 
 ## Notes
 
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

@@ -33,9 +33,11 @@ At 393 the menu bar (48 px, only Go; the clock wraps), the capture bar and a two
 - [ ] One window at a time; a touch swipe moves to the next open window and back.
 - [ ] No chrome owns a content verb's hit point (`elementFromPoint` at each verb's centre and its 44 px band, touch); the capture-bar overlap and G5 are red on main, green here.
 - [ ] The Desk, Object and Window menus are reachable at 393.
+- [ ] **Gate (review evidence):** this story's PR merge record cites the owner's ratification record of its canvas (path + his quote); without it the checker refuses the merge.
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
 - **Focused:** web unit on the compact layout state; `uv run python scripts/check_web_baseline.py --run`.
 - **Glass:** Playwright at 393×852 with `has_touch`, every press a tap, swipes as touch events; the hit-ownership probe of `grounding/faces-surfaces.md:13`.
 - **Atlas:** the J1 and J2 phone cases at 393, one case per `scripts/graph_walk.py run` invocation; the 1440 runs of the same cases still pass.
@@ -52,4 +54,5 @@ Grounding size: not sized as one move. PROVISIONAL.
 
 ## Notes
 
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

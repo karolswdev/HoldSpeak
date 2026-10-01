@@ -29,7 +29,7 @@ Each face names the one fact it shows, from that fact's source. A refused start 
   - `startRecording` reads `res.ok`; a refused or failed start shows `Not recording` + the reason, with a verb where one exists; no timer.
   - Each status face names the one fact it shows: **configured** (summary on in Settings), **available** (an engine can run now), **stored** (summaries exist). Settings, Trust, the Chair and Meetings each say which; dot colour matches the fact (no green on OFF, A.10).
   - Failure faces in plain words with a verb (A.3, A.10, Tenet 4): Intelligence BRIEF, the Room publish, People (the window keeps the person and the draft; the failure is a row, not the window), Ask with no model (withhold ASK or name the fact, A.11), the voice failure (`Open Setup` as a library Button).
-  - Files: `recordingSlice.ts`, `settingsPrefs.tsx`, `TrustWindow.tsx`, the pullout views. `PeopleCore.tsx` (Astra's, B4) and the Room face land through a brief exchange, merged serially.
+  - Files (all the faces lane's): `recordingSlice.ts`, `settingsPrefs.tsx`, `TrustWindow.tsx`, the pullout views, `PeopleCore.tsx` (the People failure face), the Room face (the publish failure), `AskPanel.tsx`. No other lane's file.
 - **Out:** making the engine work; Meetings' needs-you wording (A2); the People store itself.
 
 ## Acceptance criteria
@@ -42,6 +42,7 @@ Each face names the one fact it shows, from that fact's source. A refused start 
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
 - **Focused:** web unit on `recordingSlice` (non-ok response → idle + reason); the fact labels; `uv run python scripts/check_web_baseline.py --run`.
 - **Glass:** Playwright through the real hub on an isolated HOME: the 501 start; injected 500/503 for the brief, publish and People reads (the J1/J3/J4 recovery legs of `grounding/faces-jobs.md`).
 - **Atlas:** `case.j4.record_start.capture_recording` is BLOCKED today (no `browser_audio_device`, `grounding/faces-jobs.md:36`); a refused-start case that needs no microphone, at 1440 and 393 (touch), one case per invocation.
@@ -59,4 +60,5 @@ Grounding size: Record `res.ok` is part of move 5 (M) (`grounding/faces-jobs.md:
 
 ## Notes
 
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

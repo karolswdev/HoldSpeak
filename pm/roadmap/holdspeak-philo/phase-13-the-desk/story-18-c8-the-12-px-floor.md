@@ -31,9 +31,11 @@ The 12 px floor (ruled 2026-09-21) is broken on 25 of the walked faces: captions
 - [ ] Zero readable text under 12 px on a full-surface scan at 1440 and at 393, over the populated week (the `audit.small` probe of `grounding/faces-surfaces.md:13`).
 - [ ] Zero hard-coded `font-size` under 12 px under `web/src/desk` (a static fence; red on main: 157).
 - [ ] No text clips or overflows its window at either width after the move (the shots).
+- [ ] **Gate (review evidence):** this story's PR merge record cites the owner's ratification record of the C1 canvas it is built on (path + his quote); without it the checker refuses the merge.
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
 - **Focused:** the static font-size fence; `uv run python scripts/check_web_baseline.py --run`.
 - **Glass:** the full-surface scan at 1440 and 393 (touch), every walked surface.
 - **Atlas:** the Chair arrival case and one case per daily window (Intelligence, Speak, Meetings, People, the Room), at 1440 and 393, one case per `scripts/graph_walk.py run` invocation.
@@ -50,4 +52,5 @@ Grounding size: not sized as one move (157 declarations, 25 faces). PROVISIONAL.
 
 ## Notes
 
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

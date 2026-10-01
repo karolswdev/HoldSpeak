@@ -4,8 +4,8 @@
 - **Phase:** 13
 - **Status:** backlog
 - **Depends on:** the owner's ratification of this charter
-- **Unblocks:** PHILO-13-13 (the 1:1 time on the People AppIcon)
-- **Owner:** Astra (Luna, xhigh); Muad'Dib checks
+- **Unblocks:** B4-W (the faces lane's wiring step), PHILO-13-13 (the 1:1 time on the People AppIcon)
+- **Owner:** Astra (Luna, xhigh); Muad'Dib checks. Wiring step B4-W: Muad'Dib (Fedaykin, Opus 5.5) on `feat/philo-13-muaddib`; Astra checks
 - **Lane:** Data + truth (`../wt-philo-13-astra`, `feat/philo-13-astra`)
 - **Proposal:** B4 (PROPOSAL §3, Wave B)
 - **Closure finding:** `grounding/faces-jobs.md` F10 (`:176`), move 8 (`:159`)
@@ -26,9 +26,11 @@ People says `NEXT 1:1 · No 1:1 planned` while the calendar holds `1:1 Priya / K
 - **In:**
   - Suggest the calendar link when an event title holds a report's alias; he confirms once; the link uses the existing route.
   - `NEXT 1:1` reads the linked event.
-  - Prep reads the meeting action items whose owner is the alias, and her project, beside the agenda (`web/src/pages/cores/PeopleCore.tsx`, which this lane owns for B4; `PeopleCore.tsx:304`, `:349`).
+  - Prep data in the People service and routes: the meeting action items whose owner is the alias, and her project, beside the agenda.
+  - **H-B4:** `web/src/desk/people/prepData.ts` (new, pure): the client read of `NEXT 1:1` and Prep (agenda, her open actions, her project). This lane does **not** edit `web/src/pages/cores/PeopleCore.tsx` (the faces lane's).
+  - **B4-W (the faces lane, a named wiring step):** `PeopleCore.tsx` (`:304`, `:349`) shows `NEXT 1:1` and Prep from `prepData.ts`.
   - What a report owes him from the 1:1 is recorded as hers, not his.
-- **Out:** the Chair row's open (B1); the People store's encryption; the People failure face (A3, through a brief exchange on `PeopleCore.tsx`).
+- **Out:** the Chair row's open (B1); the People store's encryption; the People failure face (A3, the faces lane's).
 
 ## Acceptance criteria
 
@@ -36,9 +38,12 @@ People says `NEXT 1:1 · No 1:1 planned` while the calendar holds `1:1 Priya / K
 - [ ] Prep from the Chair in 1 tap (with B1's open), and Prep lists her agenda, her open meeting actions and her project.
 - [ ] A follow-up she owes from the 1:1 reads back from the hub as hers.
 - [ ] Each read uses real producers: the ICS ingest conductor, meeting action items with owners, the People routes.
+- [ ] **H-B4** merged: the service/routes and `prepData.ts` with their focused fences; no face file changed by this lane.
+- [ ] **B4-W** merged by the faces lane. The story flips `done` only when both halves are merged; the merge record names both commits.
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-astra.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_astra_atlas.py`. The B4-W wiring step's face cases go in `atlas-phase13-muaddib.json` (the faces lane's file).
 - **Focused:** People service tests for the alias suggestion, `NEXT 1:1` and the Prep read (`HOME=$(mktemp -d) uv run pytest -q <the touched test files>`); a FILE People key in the HOME (`HOLDSPEAK_PEOPLE_KEYSTORE_FILE`), as the grounding did.
 - **Atlas:** one case (calendar 1:1 → Prep with her actions), at 1440 and 393 (touch), one case per `scripts/graph_walk.py run` invocation.
 - **Shots:** People `Now` and `Prep` on Priya, both widths.
@@ -54,4 +59,5 @@ Grounding size: M (`grounding/faces-jobs.md:159`). PROVISIONAL.
 
 ## Notes
 
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

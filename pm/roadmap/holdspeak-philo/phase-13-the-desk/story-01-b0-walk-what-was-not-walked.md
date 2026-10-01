@@ -4,7 +4,7 @@
 - **Phase:** 13
 - **Status:** backlog
 - **Depends on:** the owner's ratification of this charter
-- **Unblocks:** PHILO-13-07 (B2 does not merge before this story's cases exist and pass on main); every consolidation move that reaches an unwalked path
+- **Unblocks:** PHILO-13-07 (B2's merge record must cite this story's merged commit and `evidence-story-01.md`); every story's atlas cases (H-B0a, H-B0b); every consolidation move that reaches an unwalked path
 - **Owner:** Astra (Luna, xhigh); Muad'Dib checks
 - **Lane:** Data + truth (`../wt-philo-13-astra`, `feat/philo-13-astra`)
 - **Proposal:** B0 (PROPOSAL §3, Wave B)
@@ -35,21 +35,26 @@ Nine paths are unwalked (`grounding/faces-surfaces.md:59`, `:219`; `grounding/fa
 
 ## Scope
 
-- **In:** one atlas case per path above (open, the first useful face, close, and return after reload where the path has a window), set through real production entry points (`api`, `ui`, `fixture`, `cli` steps), at 1440 and at 393 with touch. A repository-backed fixture for the Roadmap/Repository/Delivery paths, made in the run's own HOME. Each case's verdict and a one-line finding table in the story's evidence.
+- **In:**
+  - **H-B0a:** create `docs/internal/philo/graph/atlas-phase13-astra.json`, valid against `atlas.schema.json`; this lane writes only that file. The faces lane creates and owns `atlas-phase13-muaddib.json` with its first case. `tests/unit/test_philo_graph_atlas.py:27` already globs `atlas*.json`, so neither file needs registering.
+  - **H-B0b:** `tests/unit/test_philo_graph_atlas.py:493` (the hard-coded `.op` sibling count, 69) counts siblings outside `atlas-phase13-*` only; `tests/unit/test_philo13_astra_atlas.py` (this lane's) asserts the Astra file's count; the faces lane's `tests/unit/test_philo13_muaddib_atlas.py` asserts its own. After this story no lane edits `test_philo_graph_atlas.py`.
+  - One atlas case per path above (open, the first useful face, close, and return after reload where the path has a window), set through real production entry points (`api`, `ui`, `fixture`, `cli` steps), at 1440 and at 393 with touch. A repository-backed fixture for the Roadmap/Repository/Delivery paths, made in the run's own HOME. Each case's verdict and a one-line finding table in the story's evidence.
 - **Out:** fixing what the walk finds (each defect is ledgered to the story whose face owns it, or to BACKLOG); any consolidation move; the Floor itself (Zone and Info are inventoried boundary surfaces only, `grounding/structure.md:257`).
 
 ## Acceptance criteria
 
-- [ ] Each of the nine paths has an atlas case in `docs/internal/philo/graph/atlas.json` that validates against `docs/internal/philo/graph/atlas.schema.json` (`HOME=$(mktemp -d) uv run --extra dev pytest -q tests/unit/test_philo_graph_atlas.py`).
+- [ ] H-B0a and H-B0b merged first: `atlas-phase13-astra.json` and its count fence exist; the shared count excludes `atlas-phase13-*`; `test_philo_graph_atlas.py` passes.
+- [ ] Each of the nine paths has an atlas case in `docs/internal/philo/graph/atlas-phase13-astra.json` that validates against `docs/internal/philo/graph/atlas.schema.json` (`HOME=$(mktemp -d) uv run --extra dev pytest -q tests/unit/test_philo_graph_atlas.py`).
 - [ ] Each case ran through `scripts/graph_walk.py run`, one case per invocation, at 1440 and at 393, each in a fresh HOME; `provenance.db_path` is under that HOME.
 - [ ] Each case passes on main, or, where it finds a defect, it is red on main with the defect named and a home (story or BACKLOG) recorded. Red-before-green where the defect is in this phase's scope.
 - [ ] The 393 runs drive touch, not the mouse adapter (`grounding/structure.md:37` names the mouse adapter as not touch proof); if the rig has no touch adapter for a step, that is a named limit, not a pass.
-- [ ] Cases exist and pass on main **before** PHILO-13-07 merges (the gate).
+- [ ] Cases exist and pass on main **before** PHILO-13-07 merges. The gate is review evidence: this story's evidence file names each run directory, and B2's merge record cites this story's merged commit and `evidence-story-01.md`.
 
 ## Test plan
 
-- **Atlas:** `HOME="$(mktemp -d)" PLAYWRIGHT_BROWSERS_PATH="$REAL_HOME/Library/Caches/ms-playwright" uv run --extra dev python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case <case id> --brain astra --viewport <1440|393> --engine none --out .tmp/graph-walk/philo-13-01/<label>` — one case per invocation (`agent/skills/holdspeak-capability-verifier/SKILL.md` "Walk a case").
-- **Focused:** `tests/unit/test_philo_graph_atlas.py` only.
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-astra.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_astra_atlas.py`.
+- **Atlas:** `HOME="$(mktemp -d)" PLAYWRIGHT_BROWSERS_PATH="$REAL_HOME/Library/Caches/ms-playwright" uv run --extra dev python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase13-astra.json --case <case id> --brain astra --viewport <1440|393> --engine none --out .tmp/graph-walk/philo-13-01/<label>` — one case per invocation (`agent/skills/holdspeak-capability-verifier/SKILL.md` "Walk a case").
+- **Focused:** `tests/unit/test_philo_graph_atlas.py` and `tests/unit/test_philo13_astra_atlas.py` only.
 - **Shots:** `before.png` / `after.png` per run, read by eye; 1440 and 393 (touch).
 
 ## Worker-brief scars
@@ -64,4 +69,5 @@ Grounding size: not sized there; nine cases at two widths. PROVISIONAL.
 
 ## Notes
 
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

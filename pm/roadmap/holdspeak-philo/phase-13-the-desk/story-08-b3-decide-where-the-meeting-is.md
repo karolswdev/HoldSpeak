@@ -36,9 +36,11 @@ The meeting record has no decision verb (0 found). The only path is ⌘K `New De
 - [ ] Decision from an open meeting: 5 → 2 gestures (`Decide`, type + confirm), at 1440 and 393 (touch).
 - [ ] 0 orphan `New decision` records after an abandoned try (red on main: one per try).
 - [ ] The new decision reads back from the hub with its meeting and its project; the meeting record lists it.
+- [ ] **Gate (review evidence):** this story's PR merge record cites the owner's ratification record of its canvas (path + his quote); without it the checker refuses the merge.
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
 - **Focused:** route/service test that the decision stores its meeting and project refs; web unit on the inline well; `uv run python scripts/check_web_baseline.py --run`.
 - **Atlas:** one case (open meeting → Decide → title → the decision with its meeting), at 1440 and 393, one case per `scripts/graph_walk.py run` invocation, with an `.op` sibling reading the stored decision.
 - **Shots:** the meeting record with Decide, the inline well, the decision, both widths.
@@ -54,5 +56,6 @@ Grounding size: S (`grounding/faces-jobs.md:158`). PROVISIONAL.
 
 ## Notes
 
-- UNKNOWN: whether the desk decision already has a project reference field, or only `context_markdown`. Verify before build; Tenet 1 — no new table if a ref field or context carries it.
+- UNKNOWN: whether the desk decision already has a project reference field, or only `context_markdown`. Verify before build; Tenet 1 — no new table if a ref field or context carries it. If a backend change is needed, it is handoff **H-B3**: Astra's lane changes the decision route/service (its files); this story consumes it and edits no backend file.
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

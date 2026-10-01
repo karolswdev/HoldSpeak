@@ -38,6 +38,7 @@ After Close, the card fades to opacity 0 and stays (`pointer-events: auto`, ≥ 
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
 - **Focused:** web unit on the store (open qualified → close → the instance is gone); `uv run python scripts/check_web_baseline.py --run`.
 - **Glass:** Playwright through the real hub: open → close → `elementFromPoint` at both widths, touch at 393.
 - **Atlas:** one case (open the decision from the brief, close, tap `Retry`), at 1440 and 393, one case per `scripts/graph_walk.py run` invocation.
@@ -54,5 +55,6 @@ Grounding size: not sized as a move. PROVISIONAL.
 
 ## Notes
 
-- 2026-10-01 — `web/src/desk/components/Pullout.tsx` is not named in PROPOSAL §4's map; assigned to this lane (status file, map gaps).
+- 2026-10-01 — `web/src/desk/components/Pullout.tsx` is not named in PROPOSAL §4's map; assigned to this lane (status file, "File ownership").
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

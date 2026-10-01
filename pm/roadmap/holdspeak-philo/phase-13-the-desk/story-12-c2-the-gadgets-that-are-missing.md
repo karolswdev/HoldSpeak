@@ -38,9 +38,11 @@ Focus raises; there is no send-to-back (`web/src/desk/store/compositorSlice.ts:3
 - [ ] Right button anywhere in a window opens that window's menu bar; at 393 a long-press does.
 - [ ] Every menu verb shows its shortcut; each shortcut runs its verb (a fence over the verb registry: no verb without a shortcut is shown with one, no shown shortcut is dead).
 - [ ] Every verb the library Button; shots at 1440 and 393.
+- [ ] **Gate (review evidence):** this story's PR merge record cites the owner's ratification record of the C1 canvas it is built on (path + his quote); without it the checker refuses the merge.
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
 - **Focused:** web unit on the compositor (depth order; zoom's two rects); the shortcut fence over `verbRegistry.ts`; `uv run python scripts/check_web_baseline.py --run`.
 - **Glass:** Playwright through the real hub: each gadget by mouse, key and touch.
 - **Atlas:** one case per gadget, at 1440 and 393, one case per `scripts/graph_walk.py run` invocation.
@@ -57,4 +59,5 @@ Grounding size: not sized as one move. PROVISIONAL.
 
 ## Notes
 
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

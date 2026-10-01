@@ -3,13 +3,13 @@
 - **Project:** holdspeak-philo
 - **Phase:** 13
 - **Status:** backlog
-- **Depends on:** the owner's ratification of this charter
-- **Unblocks:** none (the park/restore verbs on Muad'Dib's faces land through a brief exchange)
-- **Owner:** Astra (Luna, xhigh); Muad'Dib checks
+- **Depends on:** the owner's ratification of this charter (the backend half, H-A1); for the face half (A1-F): the owner's ratification of C1's artboard "Parked and Restore" (story 11)
+- **Unblocks:** A1-F (the faces lane's wiring step)
+- **Owner:** Astra (Luna, xhigh); Muad'Dib checks. Wiring step A1-F: Muad'Dib (Fedaykin, Opus 5.5) on `feat/philo-13-muaddib`; Astra checks
 - **Lane:** Data + truth (`../wt-philo-13-astra`, `feat/philo-13-astra`)
 - **Proposal:** A1 (PROPOSAL §3, Wave A)
 - **Closure finding:** `grounding/structure.md` F1 (`:284`); `grounding/faces-surfaces.md` F3 (`:190`); the owner's standing rule "never delete — park instead"
-- **Canvas:** none (the verbs reuse the existing Delete position and the receipt species; any new face element goes on the C1 material)
+- **Canvas:** the named artboard **"Parked and Restore"** in C1's canvas set (story 11): the Parked filter, Restore and the `PARKED` receipt on Meetings and the Workbench window, at 1440 and 393. Owner-ratified before A1-F merges (UX-CANON A.2). The backend half may merge before it.
 
 `grounding/` = `docs/internal/philo/phase-13/grounding/`.
 
@@ -34,7 +34,8 @@ Meetings and Workbench items hard-delete. The walk deleted a meeting and read th
   - The meeting keeps its segments, summary (intel snapshots), artifacts and links while parked. The item keeps its run and result links.
   - The routes and services for park and restore on both kinds; single and bulk for items. Claimed items stay refused, as today.
   - A truthful receipt (`PARKED 14:59` + `Restore`, not `DELETED`), through the existing receipt species.
-  - The call sites in `HistoryCore.tsx` (delete path) and `WorkbenchWindow.tsx` (removal path), which this lane owns (PROPOSAL §4). The Restore verb on any face Muad'Dib owns lands through a brief exchange, one lane at a time on the file.
+  - **H-A1 (this lane):** the delete → park path in the routes, services and db for both kinds, and the park / Parked read / restore client functions in `web/src/desk/api.ts`. This lane edits no face file.
+  - **A1-F (the faces lane, a named wiring step):** `HistoryCore.tsx` (delete path) and `WorkbenchWindow.tsx` (removal path) call H-A1's client functions; the Parked filter, Restore and the `PARKED` receipt, built to the ratified artboard. Muad'Dib owns both files.
   - The schema snapshot and `docs/generated/*` regenerated where routes or schema change.
 - **Out:** restoring rows deleted before this story (they cannot come back); the Workbench parent purge; a general archive framework (`grounding/structure.md:224`); parking any other kind.
 
@@ -45,9 +46,12 @@ Meetings and Workbench items hard-delete. The walk deleted a meeting and read th
 - [ ] No SQL DELETE on the normal path for either kind (a fence reads the SQL the service runs, or the row after the call).
 - [ ] The receipt says what happened (`PARKED`, with `Restore`), never `DELETED`; every verb the library Button.
 - [ ] Each proof runs producer → park → read → restore through the real routes, single and bulk, after a reload.
+- [ ] **H-A1** merged: the routes, services, db and `api.ts` functions, with their focused fences; no face file changed by this lane.
+- [ ] **A1-F** merged by the faces lane, built to the ratified "Parked and Restore" artboard. **Its merge record cites the owner's ratification record of that artboard (path + his quote).** The story flips `done` only when both halves are merged; the merge record names both commits.
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-astra.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_astra_atlas.py`. The A1-F wiring step's face cases go in `atlas-phase13-muaddib.json` (the faces lane's file).
 - **Focused:** service and route tests for park, the Parked read and restore, on both kinds (`HOME=$(mktemp -d) uv run pytest -q <the touched test files>`); the schema fence.
 - **Atlas:** one case per kind (park → reload → restore), `scripts/graph_walk.py run`, one case per invocation, at 1440 and 393 (touch), each in a fresh HOME.
 - **Shots:** Meetings and the Workbench window before, parked, restored, at 1440 and 393.
@@ -65,4 +69,5 @@ Grounding size: not sized as a move (a prerequisite repair, `grounding/structure
 
 ## Notes
 
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

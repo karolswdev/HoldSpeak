@@ -35,6 +35,7 @@ For a project with a summarized meeting, a decision and two owned actions, the d
 
 ## Test plan
 
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-astra.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_astra_atlas.py`.
 - **Focused:** `project_update_service` tests over a real-producer week (`HOME=$(mktemp -d) uv run pytest -q <the touched test files>`).
 - **Atlas:** one case (Room → Draft update → the draft lists the week), at 1440 and 393 (touch), one case per `scripts/graph_walk.py run` invocation, with an `.op` sibling reading the stored draft.
 - **Shots:** the Room's Update posture with the draft, both widths.
@@ -50,4 +51,5 @@ Grounding size: M (`grounding/faces-jobs.md:157`). PROVISIONAL.
 
 ## Notes
 
+- 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
