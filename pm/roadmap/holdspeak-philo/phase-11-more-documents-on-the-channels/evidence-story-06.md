@@ -1,0 +1,259 @@
+# Evidence - PHILO-11-06
+
+- **Story:** PHILO-11-06 - The atlas cases for the new kinds and Slack
+- **Status:** done
+- **Date:** 2026-10-01
+
+## Proof
+
+### Captured run — 2026-10-01T10:27:35Z
+
+- **Command:** `zsh -lc set -o pipefail
+test_home=$(mktemp -d -t philo11-06-home)
+trap 'rm -rf "$test_home"' EXIT
+export HOME="$test_home"
+mkdir -p "$test_home/pytest-basetemp"
+test_paths="tests/unit/test_philo_graph_atlas.py tests/unit/test_philo7_atlas.py tests/unit/test_philo8_atlas.py tests/unit/test_philo9_atlas.py tests/unit/test_philo9_04_atlas.py tests/unit/test_philo10_atlas.py tests/unit/test_philo11_atlas.py tests/unit/test_philo11_walk_harness.py"
+uv run --python 3.13 pytest --collect-only -q $test_paths 2>&1 | tee pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-proof/logs/r3-r5-atlas-collect.log
+collect_rc=$?
+[[ "$collect_rc" -eq 0 ]] || exit "$collect_rc"
+uv run --python 3.13 pytest -q -n auto --basetemp="$test_home/pytest-basetemp" $test_paths 2>&1 | tee pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-proof/logs/r3-r5-atlas-tests.log
+test_rc=$?
+exit "$test_rc"`
+- **Cwd:** .
+- **Exit code:** 4
+- **Index-tree:** 69174dbe1ae320524940e4320c7256948a564439
+
+```text
+ERROR: file or directory not found: tests/unit/test_philo_graph_atlas.py tests/unit/test_philo7_atlas.py tests/unit/test_philo8_atlas.py tests/unit/test_philo9_atlas.py tests/unit/test_philo9_04_atlas.py tests/unit/test_philo10_atlas.py tests/unit/test_philo11_atlas.py tests/unit/test_philo11_walk_harness.py
+
+
+no tests collected in 0.00s
+```
+
+### Captured run — 2026-10-01T10:28:12Z
+
+- **Command:** `zsh -lc set -o pipefail
+setopt sh_word_split
+test_home=$(mktemp -d -t philo11-06-home)
+trap 'rm -rf "$test_home"' EXIT
+export HOME="$test_home"
+mkdir -p "$test_home/pytest-basetemp"
+test_paths="tests/unit/test_philo_graph_atlas.py tests/unit/test_philo7_atlas.py tests/unit/test_philo8_atlas.py tests/unit/test_philo9_atlas.py tests/unit/test_philo9_04_atlas.py tests/unit/test_philo10_atlas.py tests/unit/test_philo11_atlas.py tests/unit/test_philo11_walk_harness.py"
+uv run --python 3.13 pytest --collect-only -q $test_paths 2>&1 | tee pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-proof/logs/r3-r5-atlas-collect.log
+collect_rc=$?
+[[ "$collect_rc" -eq 0 ]] || exit "$collect_rc"
+uv run --python 3.13 pytest -q -n auto --basetemp="$test_home/pytest-basetemp" $test_paths 2>&1 | tee pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-proof/logs/r3-r5-atlas-tests.log
+test_rc=$?
+exit "$test_rc"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 69174dbe1ae320524940e4320c7256948a564439
+
+```text
+tests/unit/test_philo_graph_atlas.py::test_every_atlas_file_is_read
+tests/unit/test_philo_graph_atlas.py::test_schema_is_a_valid_2020_12_schema
+tests/unit/test_philo_graph_atlas.py::test_atlas_validates_against_its_schema[atlas-phase10.json]
+tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase10.json]
+tests/unit/test_philo_graph_atlas.py::test_atlas_validates_against_its_schema[atlas-phase11-slack.json]
+tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase11-slack.json]
+tests/unit/test_philo_graph_atlas.py::test_atlas_validates_against_its_schema[atlas-phase11.json]
+tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase11.json]
+tests/unit/test_philo_graph_atlas.py::test_atlas_validates_against_its_schema[atlas-phase3.json]
+tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase3.json]
+tests/unit/test_philo_graph_atlas.py::test_atlas_validates_against_its_schema[atlas-phase7.json]
+tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase7.json]
+tests/unit/test_philo_graph_atlas.py::test_atlas_validates_against_its_schema[atlas-phase8.json]
+tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase8.json]
+tests/unit/test_philo_graph_atlas.py::test_atlas_validates_against_its_schema[atlas-phase9-steward.json]
+tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase9-steward.json]
+tests/unit/test_philo_graph_atlas.py::test_atlas_validates_against_its_schema[atlas-phase9.json]
+tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase9.json]
+tests/unit/test_philo_graph_atlas.py::test_atlas_validates_against_its_schema[atlas.json]
+tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas.json]
+tests/unit/test_philo_graph_atlas.py::test_ids_are_unique
+tests/unit/test_philo_graph_atlas.py::test_every_case_state_id_resolves
+tests/unit/test_philo_graph_atlas.py::test_every_case_reference_inside_the_atlas_resolves
+tests/unit/test_philo_graph_atlas.py::test_every_clock_a_case_uses_is_declared
+tests/unit/test_philo_graph_atlas.py::test_every_applicable_case_carries_one_trigger
+tests/unit/test_philo_graph_atlas.py::test_no_timer_edge_is_triggered_by_a_substitute_button
+tests/unit/test_philo_graph_atlas.py::test_every_api_setup_step_exists_in_the_generated_openapi
+tests/unit/test_philo_graph_atlas.py::test_every_fixture_step_exists_and_hashes_as_claimed
+tests/unit/test_philo_graph_atlas.py::test_every_phase1_reference_resolves_to_a_record
+tests/unit/test_philo_graph_atlas.py::test_every_selected_job_has_an_applicable_case_except_j8
+tests/unit/test_philo_graph_atlas.py::test_every_brief_family_is_present
+tests/unit/test_philo_graph_atlas.py::test_quiet_is_never_an_attention_state
+tests/unit/test_philo_graph_atlas.py::test_face_cases_carry_both_ruled_viewports
+tests/unit/test_philo_graph_atlas.py::test_unexercised_states_name_a_mechanism_and_a_cost
+tests/unit/test_philo_graph_atlas.py::test_source_commit_is_the_revision_the_atlas_was_derived_from
+tests/unit/test_philo_graph_atlas.py::test_every_applicable_predicate_is_a_kind_the_rig_implements
+tests/unit/test_philo_graph_atlas.py::test_every_predicate_observes_a_selector_or_a_route
+tests/unit/test_philo_graph_atlas.py::test_protocol_predicates_ask_for_a_new_row
+tests/unit/test_philo_graph_atlas.py::test_every_case_keeps_its_human_sentence
+tests/unit/test_philo_graph_atlas.py::test_operation_siblings_use_headless_reads_and_canonical_steps
+tests/unit/test_philo_graph_atlas.py::test_named_pair_observations_bind_their_read_arguments
+tests/unit/test_philo_graph_atlas.py::test_all_handled_operation_maps_items_by_decision_source
+tests/unit/test_philo_graph_atlas.py::test_breakage_cases_use_evening_wrapper_and_shelf_old_item
+tests/unit/test_philo_graph_atlas.py::test_every_ui_action_is_one_the_rig_implements
+tests/unit/test_philo_graph_atlas.py::test_every_boundary_names_its_substitution
+tests/unit/test_philo_graph_atlas.py::test_summary_cases_use_the_retained_architect_import_fixture
+tests/unit/test_philo_graph_atlas.py::test_summary_run_cases_have_one_run_trigger
+tests/unit/test_philo_graph_atlas.py::test_summary_running_reads_the_claimed_job_wire_status
+tests/unit/test_philo_graph_atlas.py::test_summary_queued_reads_the_run_admission_response
+tests/unit/test_philo_graph_atlas.py::test_protocol_status_can_require_top_level_integer_body_fields
+tests/unit/test_philo_graph_atlas.py::test_summary_preconditions_do_not_require_future_or_consumed_run_state
+tests/unit/test_philo_graph_atlas.py::test_summary_state_reads_do_not_require_a_new_row_after_setup_run
+tests/unit/test_philo_graph_atlas.py::test_summary_manual_retry_requires_failed_producer_and_current_route
+tests/unit/test_philo_graph_atlas.py::test_summary_planned_host_cases_check_real_text_and_control_ownership
+tests/unit/test_philo_graph_atlas.py::test_summary_failure_cases_retain_reply_at_the_provider_boundary
+tests/unit/test_philo_graph_atlas.py::test_summary_imports_wait_for_real_completion_and_retain_title
+tests/unit/test_philo_graph_atlas.py::test_summary_arrival_observations_name_the_rendered_states
+tests/unit/test_philo_graph_atlas.py::test_summary_models_window_closes_before_arrival_steps
+tests/unit/test_philo_graph_atlas.py::test_summary_restart_proof_retains_summary_receipt_and_identity
+tests/unit/test_philo_graph_atlas.py::test_summary_microphone_cases_keep_the_lawful_blocked_boundary
+tests/unit/test_philo_graph_atlas.py::test_summary_cases_do_not_claim_the_old_pangram
+tests/unit/test_philo_graph_atlas.py::test_summary_stop_cases_require_a_real_active_meeting
+tests/unit/test_philo_graph_atlas.py::test_the_two_schemas_agree_on_the_case_contract
+tests/unit/test_philo_graph_atlas.py::test_every_case_validates_against_the_graph_case_schema
+tests/unit/test_philo_graph_atlas.py::test_the_graph_predicate_enum_does_not_outrun_the_rig
+tests/unit/test_philo_graph_atlas.py::test_a_case_without_a_predicate_is_unreachable_with_a_reason
+tests/unit/test_philo_graph_atlas.py::test_every_council_reading_names_its_sources
+tests/unit/test_philo_graph_atlas.py::test_no_precondition_check_compares_two_snapshots
+tests/unit/test_philo_graph_atlas.py::test_every_precondition_check_observes_a_selector_or_a_route
+tests/unit/test_philo_graph_atlas.py::test_no_check_asserts_the_result_the_trigger_must_produce
+tests/unit/test_philo_graph_atlas.py::test_every_protocol_field_path_with_a_placeholder_is_a_json_pointer
+tests/unit/test_philo_graph_atlas.py::test_no_step_acts_on_a_root_placeholder
+tests/unit/test_philo_graph_atlas.py::test_navigation_steps_carry_no_selector
+tests/unit/test_philo_graph_atlas.py::test_every_click_and_fill_names_a_control
+tests/unit/test_philo_graph_atlas.py::test_every_desk_face_case_crosses_the_gate_first
+tests/unit/test_philo_graph_atlas.py::test_no_gate_case_crosses_the_gate_in_setup
+tests/unit/test_philo_graph_atlas.py::test_gate_cases_check_the_gate_not_the_desk
+tests/unit/test_philo_graph_atlas.py::test_every_captured_id_names_the_field_it_reads
+tests/unit/test_philo_graph_atlas.py::test_same_day_generate_again_binds_returned_displayed_and_retained
+tests/unit/test_philo_graph_atlas.py::test_no_populated_brief_case_reads_the_headline
+tests/unit/test_philo_graph_atlas.py::test_the_brief_recipe_fence_refuses_its_mutations
+tests/unit/test_philo_graph_atlas.py::test_the_populated_brief_predicate_needs_the_minted_row
+tests/unit/test_philo_graph_atlas.py::test_j11_kept_verifies_the_saved_words_in_the_store
+tests/unit/test_philo_graph_atlas.py::test_same_day_same_id_fails_a_different_id_by_machine
+tests/unit/test_philo_graph_atlas.py::test_j10_retention_is_proven_after_another_reload
+tests/unit/test_philo_graph_atlas.py::test_summary_failure_settings_reach_the_real_drainer_after_restart
+tests/unit/test_philo_graph_atlas.py::test_summary_no_engine_absence_is_read_inside_the_existing_meetings_scope
+tests/unit/test_philo_graph_atlas.py::test_summary_reload_reads_the_same_already_persisted_summary
+tests/unit/test_philo_graph_atlas.py::test_summary_terminal_cases_read_durable_meeting_not_active_queue[case.j6.run_summary.intel_ready-/intel_job/status]
+tests/unit/test_philo_graph_atlas.py::test_summary_terminal_cases_read_durable_meeting_not_active_queue[case.j6.run_summary.host_named-/run_receipt/attempts/0/host]
+tests/unit/test_philo_graph_atlas.py::test_no_assignment_op_reads_refusal_code_separately_from_error
+tests/unit/test_philo_graph_atlas.py::test_thought_op_save_starts_from_different_working_text
+tests/unit/test_philo_graph_atlas.py::test_philo603_cases_use_the_real_summary_producer_and_surface_slots
+tests/unit/test_philo_graph_atlas.py::test_philo603_placement_fence_rejects_fixed_card_and_overlap
+tests/unit/test_philo_graph_atlas.py::test_philo603_placement_fence_accepts_flow_card_with_nine_point_clearance
+tests/unit/test_philo_graph_atlas.py::test_philo603_placement_fence_checks_every_matching_clear_target
+tests/unit/test_philo7_atlas.py::test_an_empty_fact_list_is_never_a_pass
+tests/unit/test_philo7_atlas.py::test_a_fact_without_a_test_is_never_a_pass
+tests/unit/test_philo7_atlas.py::test_every_fact_must_hold
+tests/unit/test_philo7_atlas.py::test_a_missing_or_unsent_read_fails[reads0]
+tests/unit/test_philo7_atlas.py::test_a_missing_or_unsent_read_fails[reads1]
+tests/unit/test_philo7_atlas.py::test_a_refused_read_never_satisfies_a_success_fact
+tests/unit/test_philo7_atlas.py::test_a_refusal_fact_needs_a_refusal_and_its_code
+tests/unit/test_philo7_atlas.py::test_contains_lacks_and_length_read_rows
+tests/unit/test_philo7_atlas.py::test_the_phase_status_names_nine_new_cases
+tests/unit/test_philo7_atlas.py::test_every_named_case_runs_at_both_widths_with_a_headless_sibling
+tests/unit/test_philo7_atlas.py::test_the_durable_note_cases_have_op_siblings_and_the_boundary_case_is_excluded
+tests/unit/test_philo7_atlas.py::test_every_captured_admitted_write_reads_its_receipt_by_its_own_id
+tests/unit/test_philo7_atlas.py::test_every_admitted_write_the_cases_fire_has_its_receipt_read_somewhere
+tests/unit/test_philo7_atlas.py::test_every_receipt_read_asserts_its_actor
+tests/unit/test_philo7_atlas.py::test_the_supersede_receipt_names_the_successor_the_write_returned
+tests/unit/test_philo7_atlas.py::test_refusal_receipts_are_read_for_each_admitted_family
+tests/unit/test_philo7_atlas.py::test_no_face_case_claims_a_receipt
+tests/unit/test_philo7_atlas.py::test_every_fact_names_a_source_a_test_and_a_read_in_range
+tests/unit/test_philo7_atlas.py::test_two_references_never_collapse_into_one_admitted_write
+tests/unit/test_philo7_atlas.py::test_the_canonical_reference_is_carried
+tests/unit/test_philo7_atlas.py::test_a_successor_id_is_never_answered_by_a_schema_refusal
+tests/unit/test_philo7_atlas.py::test_a_refusal_receipt_is_captured_from_the_refusal_only_when_asked
+tests/unit/test_philo7_atlas.py::test_an_api_capture_matches_by_value_never_by_position
+tests/unit/test_philo7_atlas.py::test_a_width_scoped_step_is_recorded_skipped_at_the_other_width
+tests/unit/test_philo7_atlas.py::test_the_delete_identity_is_a_real_check
+tests/unit/test_philo7_atlas.py::test_a_face_trigger_that_sends_nothing_is_not_a_refusal_check
+tests/unit/test_philo8_atlas.py::test_protocol_reads_passes_on_every_declared_status
+tests/unit/test_philo8_atlas.py::test_protocol_reads_fails_when_one_object_is_still_on_the_hub
+tests/unit/test_philo8_atlas.py::test_protocol_reads_fails_on_a_read_never_sent
+tests/unit/test_philo8_atlas.py::test_protocol_reads_fails_on_a_missing_read
+tests/unit/test_philo8_atlas.py::test_protocol_reads_without_expectations_is_blocked
+tests/unit/test_philo8_atlas.py::test_protocol_reads_row_needs_exactly_one_match
+tests/unit/test_philo8_atlas.py::test_protocol_reads_is_decidable_headless
+tests/unit/test_philo8_atlas.py::test_all_of_needs_every_part
+tests/unit/test_philo8_atlas.py::test_all_of_refuses_a_shape_it_cannot_decide[parts0]
+tests/unit/test_philo8_atlas.py::test_all_of_refuses_a_shape_it_cannot_decide[parts1]
+tests/unit/test_philo8_atlas.py::test_all_of_refuses_a_shape_it_cannot_decide[parts2]
+tests/unit/test_philo8_atlas.py::test_all_of_refuses_a_shape_it_cannot_decide[parts3]
+tests/unit/test_philo8_atlas.py::test_all_of_refuses_a_shape_it_cannot_decide[parts4]
+tests/unit/test_philo8_atlas.py::test_all_of_hands_its_input_value_selector_to_the_snapshot
+tests/unit/test_philo8_atlas.py::test_a_right_click_reaches_the_page_as_a_right_click
+tests/unit/test_philo8_atlas.py::test_a_button_the_rig_cannot_press_is_blocked[step0]
+tests/unit/test_philo8_atlas.py::test_a_button_the_rig_cannot_press_is_blocked[step1]
+tests/unit/test_philo8_atlas.py::test_every_named_case_is_in_the_atlas
+tests/unit/test_philo8_atlas.py::test_every_face_case_runs_at_both_widths_and_every_op_headless
+tests/unit/test_philo8_atlas.py::test_every_op_sibling_pairs_a_face_case
+tests/unit/test_philo8_atlas.py::test_every_face_case_without_an_op_is_excluded_with_a_reason
+tests/unit/test_philo8_atlas.py::test_face_checks_read_what_is_readable_never_text_containment
+tests/unit/test_philo8_atlas.py::test_every_new_predicate_part_is_a_kind_the_rig_implements
+tests/unit/test_philo8_atlas.py::test_every_delete_case_reads_the_hub
+tests/unit/test_philo8_atlas.py::test_two_deletes_read_both_objects
+tests/unit/test_philo8_atlas.py::test_an_in_window_case_is_one_gesture[case.p8.delete_twice.both_gone]
+tests/unit/test_philo8_atlas.py::test_an_in_window_case_is_one_gesture[case.p8.delete_then_leave.gone]
+tests/unit/test_philo8_atlas.py::test_an_in_window_case_is_one_gesture[case.p8.list_delete.undo]
+tests/unit/test_philo8_atlas.py::test_then_takes_ui_steps_only[then0]
+tests/unit/test_philo8_atlas.py::test_then_takes_ui_steps_only[press Delete]
+tests/unit/test_philo8_atlas.py::test_then_takes_ui_steps_only[then2]
+tests/unit/test_philo8_atlas.py::test_the_walk_reaches_then_steps
+tests/unit/test_philo8_atlas.py::test_every_then_step_is_a_legal_ui_step
+tests/unit/test_philo8_atlas.py::test_every_timed_follow_up_is_guarded_at_delivery[case.p8.delete_twice.both_gone]
+tests/unit/test_philo8_atlas.py::test_every_timed_follow_up_is_guarded_at_delivery[case.p8.delete_then_leave.gone]
+tests/unit/test_philo8_atlas.py::test_every_timed_follow_up_is_guarded_at_delivery[case.p8.list_delete.undo]
+tests/unit/test_philo8_atlas.py::test_a_guarded_click_is_one_page_task_and_never_a_playwright_click
+tests/unit/test_philo8_atlas.py::test_a_guarded_press_goes_to_the_focused_element_in_the_same_task
+tests/unit/test_philo8_atlas.py::test_a_guard_or_target_that_fails_at_delivery_blocks[False-reasons0]
+tests/unit/test_philo8_atlas.py::test_a_guard_or_target_that_fails_at_delivery_blocks[False-reasons1]
+tests/unit/test_philo8_atlas.py::test_a_guard_or_target_that_fails_at_delivery_blocks[False-reasons2]
+tests/unit/test_philo8_atlas.py::test_a_guard_or_target_that_fails_at_delivery_blocks[False-reasons3]
+tests/unit/test_philo8_atlas.py::test_a_guard_or_target_that_fails_at_delivery_blocks[True-reasons0]
+tests/unit/test_philo8_atlas.py::test_a_guard_or_target_that_fails_at_delivery_blocks[True-reasons1]
+tests/unit/test_philo8_atlas.py::test_a_guard_or_target_that_fails_at_delivery_blocks[True-reasons2]
+tests/unit/test_philo8_atlas.py::test_a_guard_or_target_that_fails_at_delivery_blocks[True-reasons3]
+tests/unit/test_philo8_atlas.py::test_only_click_and_press_are_guarded
+tests/unit/test_philo8_atlas.py::test_the_list_cases_right_click_the_row
+tests/unit/test_philo8_atlas.py::test_optional_steps_never_decide_a_verdict
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_every_case_state_id_resolves]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_every_case_reference_inside_the_atlas_resolves]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_every_clock_a_case_uses_is_declared]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_every_applicable_case_carries_one_trigger]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_face_cases_carry_both_ruled_viewports]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_every_applicable_predicate_is_a_kind_the_rig_implements]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_every_predicate_observes_a_selector_or_a_route]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_every_case_keeps_its_human_sentence]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_every_ui_action_is_one_the_rig_implements]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_no_precondition_check_compares_two_snapshots]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_every_precondition_check_observes_a_selector_or_a_route]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_no_check_asserts_the_result_the_trigger_must_produce]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_no_step_acts_on_a_root_placeholder]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_navigation_steps_carry_no_selector]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_every_desk_face_case_crosses_the_gate_first]
+tests/unit/test_philo8_atlas.py::test_the_general_fences_hold_for_phase8[test_every_captured_id_names_the_field_it_reads]
+tests/unit/test_philo8_atlas.py::test_every_click_and_fill_names_a_control
+tests/unit/test_philo8_atlas.py::test_every_api_setup_step_exists_in_the_generated_openapi
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_case_state_id_resolves-atlas-phase9.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_case_state_id_resolves-atlas-phase9-steward.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_case_reference_inside_the_atlas_resolves-atlas-phase9.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_case_reference_inside_the_atlas_resolves-atlas-phase9-steward.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_clock_a_case_uses_is_declared-atlas-phase9.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_clock_a_case_uses_is_declared-atlas-phase9-steward.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_applicable_case_carries_one_trigger-atlas-phase9.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_applicable_case_carries_one_trigger-atlas-phase9-steward.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_face_cases_carry_both_ruled_viewports-atlas-phase9.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_face_cases_carry_both_ruled_viewports-atlas-phase9-steward.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_applicable_predicate_is_a_kind_the_rig_implements-atlas-phase9.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_applicable_predicate_is_a_kind_the_rig_implements-atlas-phase9-steward.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_predicate_observes_a_selector_or_a_route-atlas-phase9.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_predicate_observes_a_selector_or_a_route-atlas-phase9-steward.json]
+tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_
+[PMO_EVIDENCE_OUTPUT_TRUNCATED]
+```

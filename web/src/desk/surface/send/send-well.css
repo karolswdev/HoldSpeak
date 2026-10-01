@@ -1,0 +1,140 @@
+/* PHILO-11-04: the SEND well species' own look, as the owner ratified it on
+ * canvas E (phase-11 story 03, harness/species.css). Tokens only; no new
+ * colour. The Phase 10 layout (features/channels/channels.css) stays; these
+ * rules make the species the same in every host (G3).
+ *
+ * Why (G3, on glass in the canvas' round one): the well lands inside hosts
+ * that style bare elements -- the pullouts give every <section> a grid and a
+ * hairline, every <h3> 10 px (window-chrome.css), every <ul> 18 px of
+ * padding; the receipt view sets monospace (intelligence.css). The species
+ * carries its own type and its own row grammar, and no host rule reaches in.
+ *
+ * THE ROW GRAMMAR, every host, every width:
+ *   line 1  [lead 16 px] [name]
+ *   line 2              [chips: channel · target · account · last send · egress]
+ * (destination rows, prepared rows and history rows alike). An open row's
+ * preview sits under it at the name's indent.
+ */
+
+/* The well's own base: the UI face at 14 px; a host's text-transform and
+   letter-spacing never reach in. */
+:is([data-send="well"], [data-send="history"][data-species="send"]) {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text);
+}
+
+/* The section: a plain block (not a pullout's grid + hairline). */
+.desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"][data-species="send"]) section.surface-section,
+:is([data-send="well"], [data-send="history"][data-species="send"]) section.surface-section {
+  display: block;
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* SEND / SENDS / DELIVERY head: the 12 px floor in every host (a pullout's
+   10 px h3 rule does not reach the species' head). */
+.desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"][data-species="send"]) .surface-section-head h3,
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-section-head h3 {
+  margin: 0 0 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* The rows: no host list padding; the one grammar (above). */
+.desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"][data-species="send"]) ul.surface-ledger-rows,
+:is([data-send="well"], [data-send="history"][data-species="send"]) ul.surface-ledger-rows {
+  margin: 0;
+  padding-left: 0;
+}
+.desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"][data-species="send"]) li.surface-ledger-row,
+:is([data-send="well"], [data-send="history"][data-species="send"]) li.surface-ledger-row {
+  font-size: 14px;
+}
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger[data-cols] .surface-ledger-line {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 10px;
+  padding: 6px 6px;
+}
+/* The room ledger's narrow-container indents never apply inside the well. */
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger[data-cols] .surface-ledger-line > * {
+  margin-left: 0 !important;
+}
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger[data-cols] .surface-ledger-lead {
+  grid-column: 1;
+  grid-row: 1;
+  width: 16px;
+  text-align: center;
+}
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger[data-cols] .surface-ledger-primary {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  white-space: normal;
+}
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger[data-cols] .send-cells {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+}
+:is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger-open {
+  padding-left: 26px;
+}
+
+/* The preview: the document in the UI face (a Markdown body with its own
+   headings in the display face), the transport text as text; fields and
+   literals stay mono. No host rule for p / li / h1-h4 / strong reaches in. */
+.desk-next .desk-pullout-body [data-send="well"] .send-preview-body :is(p, li, strong, em, a, blockquote),
+[data-send="well"] .send-preview-body,
+[data-send="well"] .send-preview-body :is(p, li, strong, em, a, blockquote) {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text);
+}
+.desk-next .desk-pullout-body [data-send="well"] .send-preview-body :is(h1, h2, h3, h4),
+[data-send="well"] .send-preview-body :is(h1, h2, h3, h4) {
+  margin: 10px 0 4px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text);
+}
+.desk-next .desk-pullout-body [data-send="well"] .send-preview-body :is(ul, ol),
+[data-send="well"] .send-preview-body :is(ul, ol) {
+  margin: 2px 0 6px;
+  padding-left: 18px;
+}
+[data-send="well"] .send-preview-text {
+  font-family: var(--font-ui);
+  font-size: 14px;
+}
+
+/* G4: the 44 px narrow target in every host. The kit answers to its
+   container, never the viewport (DESIGN_SYSTEM.md rule 2), and the Chair is
+   not a surface container, so the well IS one: inside it, every narrow rule
+   of the kit (the 44 px picker, string field and check token of
+   gadgets.css; the ledger's narrow reflow) answers to the well's own width,
+   whatever the host. */
+[data-send="well"] {
+  container: surface / inline-size;
+}

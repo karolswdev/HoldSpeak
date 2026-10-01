@@ -1,0 +1,4 @@
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.7AF78V1ZDI
+.                                                                        [100%]
+1 passed in 0.89s
+Exit: 0

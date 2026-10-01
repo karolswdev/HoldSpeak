@@ -1,0 +1,88 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.14, pytest-9.0.2, pluggy-1.6.0 -- /Users/karol/dev/tools/wt-philo-11-05a/.venv/bin/python
+holdspeak: HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.9xB9Gi7ZPV
+rootdir: /Users/karol/dev/tools/wt-philo-11-05a
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, xdist-3.8.0, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 22 items / 20 deselected / 2 selected
+
+tests/unit/test_philo11_document_sources.py::test_no_rendered_document_carries_an_internal_id FAILED [ 50%]
+tests/unit/test_philo11_document_sources.py::test_a_decision_record_names_its_sources_as_a_person_recognizes_them FAILED [100%]
+
+=================================== FAILURES ===================================
+_______________ test_no_rendered_document_carries_an_internal_id _______________
+
+db = <holdspeak.db.core.Database object at 0x10c83b4d0>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3073/test_no_rendered_document_carr0')
+
+    def test_no_rendered_document_carries_an_internal_id(db, tmp_path: Path) -> None:
+        refs = mint_documents(
+            db,
+            OWNER,
+            now=datetime(2026, 9, 29, 10, 0, 0),
+            people_keystore_path=tmp_path / "people.key",
+        )
+        source_ids = {ref.split(":", 1)[1] for ref in refs.values()}
+        with db._connection() as conn:
+            source_ids |= {str(r[0]) for r in conn.execute("SELECT source_ref FROM decision_record_sources")}
+            source_ids |= {str(r[0]) for r in conn.execute("SELECT id FROM decision_records")}
+        leaks: list[str] = []
+        for kind, ref in refs.items():
+            document = render_document(db, ref)
+            # The body is the text that is sent; the title and label name the saved file.
+            text = "\n".join((document.body_md, document.title, document.label))
+            for pattern in (_INTERNAL, _HEX_ID):
+                leaks += [f"{kind}: {m.group(0)!r}" for m in pattern.finditer(text)]
+            leaks += [f"{kind}: source id {sid!r}" for sid in source_ids if sid and sid in text]
+>       assert not leaks, leaks
+E       AssertionError: ["desk_decision: source id 'desk-philo11'", "meeting_decision: 'bc5c1e12975d2f314a38'", "meeting_decision: source id 'philo11-meeting'", "meeting_decision: source id 'dec-bc5c1e12975d2f314a38'", "decision_record: 'meeting:'", "decision_record: 'record-'", ...]
+E       assert not ["desk_decision: source id 'desk-philo11'", "meeting_decision: 'bc5c1e12975d2f314a38'", "meeting_decision: source id 'philo11-meeting'", "meeting_decision: source id 'dec-bc5c1e12975d2f314a38'", "decision_record: 'meeting:'", "decision_record: 'record-'", ...]
+
+tests/unit/test_philo11_document_sources.py:247: AssertionError
+_____ test_a_decision_record_names_its_sources_as_a_person_recognizes_them _____
+
+db = <holdspeak.db.core.Database object at 0x10e18ead0>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3073/test_a_decision_record_names_i0')
+
+    def test_a_decision_record_names_its_sources_as_a_person_recognizes_them(db, tmp_path: Path) -> None:
+        refs = mint_documents(
+            db,
+            OWNER,
+            now=datetime(2026, 9, 29, 10, 0, 0),
+            people_keystore_path=tmp_path / "people.key",
+        )
+        body = render_document(db, refs["decision_record"]).body_md
+        meeting = db.meetings.get_meeting(refs["meeting_summary"].split(":", 1)[1])
+        assert "## Sources" in body
+>       assert f"{meeting.title}, {meeting.started_at:%-d %b %Y}" in body, body
+E       AssertionError: # Use one document registry
+E         Lifecycle: superseded
+E         
+E         ## Rationale
+E         One source of truth.
+E         
+E         ## Owner
+E         Avery
+E         
+E         ## Review date
+E         2026-10-10
+E         
+E         ## Sources
+E         - meeting: philo11-meeting
+E         - artifact: philo11-decisions
+E         - successor: record-1d1eccca3e7b4357bb6cc4b7485946b3
+E         
+E         ## Successor
+E         record-1d1eccca3e7b4357bb6cc4b7485946b3
+E         
+E       assert 'Source review, 29 Sep 2026' in '# Use one document registry\nLifecycle: superseded\n\n## Rationale\nOne source of truth.\n\n## Owner\nAvery\n\n## Review date\n2026-10-10\n\n## Sources\n- meeting: philo11-meeting\n- artifact: philo11-decisions\n- successor: record-1d1eccca3e7b4357bb6cc4b7485946b3\n\n## Successor\nrecord-1d1eccca3e7b4357bb6cc4b7485946b3\n'
+
+tests/unit/test_philo11_document_sources.py:260: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo11_document_sources.py::test_no_rendered_document_carries_an_internal_id
+FAILED tests/unit/test_philo11_document_sources.py::test_a_decision_record_names_its_sources_as_a_person_recognizes_them
+======================= 2 failed, 20 deselected in 1.00s =======================

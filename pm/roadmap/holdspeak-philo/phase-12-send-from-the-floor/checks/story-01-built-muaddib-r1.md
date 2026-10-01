@@ -1,0 +1,9 @@
+VERDICT: RATIFY-WITH-CONDITIONS
+F1 (branch red): philo_api_reference.py --check and philo_boundary_census.py --check both fail on 607f8e52f (exit 1) and pass on base 27d8bf1a. The new GET /api/brief/{brief_id} is missing from api-reference (710 → 711 entries), and primitives.ts moved 533 → 534 in boundary-candidates. The lane's generated-checks.sh ran 4 of the 10 Documentation Navigation commands. This is the same miss Phase 11-05b paid.
+F2: the artifact source is a real renderer. The footer is removed only on a lineage match: 9 probes, including authored lookalikes, a footer in the middle of the body, a footer inside a code fence, CRLF, extra lineage, whitespace, BLOB and missing, all behave correctly. The 9-kind no-id fence is additive.
+F3: GET /api/brief/{brief_id} has the same authority as /latest. 401 when unauthenticated, 404 brief_not_found when missing. BUT the handler reaches past the service into service._db._connection() and the private MondayBriefService._load_brief (monday_brief.py:152-177, copying document_sources.py:313). That is against the owner's ruling that reads flow through services.
+F4: the binding is pure (zero imports) and refuses only on a known absence. Ref mapping is correct; 16 passed; tsc clean.
+F5: authority is unchanged. F6: the ledger is honest; no class-(c) failure is plausibly caused by the branch. F7: leaving the census red for story 05 is lawful.
+CONDITIONS:
+C1: regenerate api-reference (json + md) and boundary-candidates; run ALL the Documentation Navigation commands from .github/workflows/test.yml:26-38; add the missing two to generated-checks.sh.
+C2: add a public MondayBriefService.get_by_id(brief_id) (reuse it in document_sources.py:313 as well), and have the route call it. No private reach-in. Fence it: 404 on missing, and the same answer as the old handler.

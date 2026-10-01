@@ -30,7 +30,7 @@ import tempfile
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Iterator, Mapping, Optional
+from typing import Any, Iterator, Mapping, Optional, Protocol
 
 from .errors import NotFound, ServiceError, ValidationError
 
@@ -42,6 +42,9 @@ SIZE_LIMITS: dict[str, tuple[int, str]] = {
     "github": (65_536, "characters"),
     "jira": (32_767, "characters"),
     "confluence": (1_000_000, "bytes"),
+    # Slack's incoming webhook body is one exact text message.  Refuse before
+    # the dispatch boundary; never truncate, split, or upload a second body.
+    "slack": (39_000, "characters"),
 }
 #: An error text that reaches a receipt, a log or the face is cut to this many characters.
 ERROR_LIMIT = 240
@@ -50,7 +53,20 @@ ERROR_LIMIT = 240
 def payload_size(channel: str, payload: bytes) -> tuple[int, int, str]:
     """``(size, limit, unit)`` of *payload* for *channel* (limit 0: no limit)."""
     limit, unit = SIZE_LIMITS.get(channel, (0, "bytes"))
-    size = len(payload.decode("utf-8", errors="replace")) if unit == "characters" else len(payload)
+    if channel == "slack":
+        # Slack's limit applies to the text value, while the frozen payload is
+        # the complete JSON request body.  Count the real producer's field so
+        # receipts and refusal metadata describe the same value the transport
+        # will post.
+        import json
+
+        try:
+            data = json.loads(bytes(payload).decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
+            data = {}
+        size = len(data.get("text", "")) if isinstance(data, dict) else 0
+    else:
+        size = len(payload.decode("utf-8", errors="replace")) if unit == "characters" else len(payload)
     return size, limit, unit
 
 
@@ -68,9 +84,19 @@ class Document:
     ref: str
     title: str
     body_md: str
-    #: What a channel names a file by (the project update's project and revision).
+    #: What a channel names a file by (a source-owned safe slug).
     slug: str = "document"
-    revision: int = 1
+    #: A short source-owned label frozen into a prepared send's provenance.
+    label: str = "DOCUMENT"
+
+
+class DocumentSource(Protocol):
+    """One stored document kind in the explicit Phase 11 registry."""
+
+    kind: str
+
+    def render(self, db: Any, source_id: str) -> Document:
+        """Read one stored source by id and render its Markdown document."""
 
 
 @dataclass(frozen=True)
@@ -198,7 +224,7 @@ def render_update(db: Any, update_id: str) -> Document:
     if row is None:
         raise NotFound("update", str(update_id or ""))
     if str(row.get("lifecycle") or "") != "published":
-        raise ChannelRefused("update_not_published",
+        raise ChannelRefused("not_published",
                              f"Update {update_id} is {row.get('lifecycle')}; only a published update can be sent",
                              status=400)
     with db._connection() as conn:
@@ -206,22 +232,85 @@ def render_update(db: Any, update_id: str) -> Document:
     name = str(project["name"] if project is not None else row["project_id"])
     published = str(row.get("published_at") or "")[:10]
     title = f"{name} — update r{row.get('draft_revision') or 1}" + (f" ({published})" if published else "")
+    revision = int(row.get("draft_revision") or 1)
     return Document(ref=f"project_update:{row['id']}", title=title, body_md=str(row.get("body_md") or ""),
-                    slug=_slug(name), revision=int(row.get("draft_revision") or 1))
+                    slug=_slug(name), label=f"REV {revision}")
 
 
-def naming(db: Any, document_ref: str) -> Document:
-    """What a file is named by (slug, revision) for a frozen document; its bytes stay the frozen ones."""
-    kind, _, ident = str(document_ref or "").partition(":")
-    if kind != "project_update" or not ident:
-        raise ValidationError(f"Unknown document: {document_ref}", code="document_unknown")
-    with db._connection() as conn:
-        row = conn.execute("SELECT u.draft_revision, p.name FROM project_updates u LEFT JOIN projects p"
-                           " ON p.id=u.project_id WHERE u.id=?", (ident,)).fetchone()
-    if row is None:
-        raise NotFound("update", ident)
-    return Document(ref=str(document_ref), title="", body_md="", slug=_slug(row["name"] or ""),
-                    revision=int(row["draft_revision"] or 1))
+def _document_parts(document_ref: str) -> tuple[str, str]:
+    kind, separator, source_id = str(document_ref or "").partition(":")
+    if not separator or not kind or not source_id:
+        raise ChannelRefused("document_kind_unknown", f"Unknown document kind: {document_ref}", status=400)
+    return kind, source_id
+
+
+def render_document(db: Any, document_ref: str) -> Document:
+    """Render one declared document source by its ``<kind>:<id>`` reference.
+
+    The registry is deliberately imported at call time.  The source module
+    uses :class:`Document` and the project-update renderer, so a top-level
+    import would make the two small contract modules depend on each other's
+    initialization order.
+    """
+    from .document_sources import render_document as resolve_source
+
+    try:
+        document = resolve_source(db, document_ref)
+    except ChannelRefused:
+        raise
+    except NotFound:
+        raise ChannelRefused("document_not_found", f"Document {document_ref} was not found", status=404) from None
+    if not isinstance(document, Document):
+        raise TypeError(f"document source returned {type(document).__name__}, expected Document")
+    return document
+
+
+def frozen_document_json(document: Document) -> str:
+    """Serialize only the three provenance fields required by the design."""
+    import json
+
+    return json.dumps({"title": document.title, "slug": document.slug, "label": document.label},
+                      sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def document_from_json(document_ref: str, value: Any) -> Document:
+    """Rebuild a naming document from a prepared row's frozen provenance."""
+    import json
+
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except (TypeError, ValueError):
+            value = {}
+    if not isinstance(value, Mapping):
+        value = {}
+    return Document(ref=str(document_ref), title=str(value.get("title") or ""), body_md="",
+                    slug=str(value.get("slug") or "document"), label=str(value.get("label") or "DOCUMENT"))
+
+
+def naming(db: Any, document_ref: str, document_json: Any = None) -> Document:
+    """Return frozen file naming data, with a legacy-row fallback.
+
+    New rows pass ``document_json`` captured at prepare or at the inline
+    boundary.  A pre-Phase-11 row has no column value, so its historical
+    update naming is resolved as a compatibility fallback only.
+    """
+    if document_json:
+        return document_from_json(document_ref, document_json)
+    kind, source_id = _document_parts(document_ref)
+    # Legacy Phase 10 rows have no provenance column.  Preserve their old
+    # naming lookup exactly: it read the update and project name, but did not
+    # require the update to remain published and did not read its body.
+    if kind == "project_update":
+        with db._connection() as conn:
+            row = conn.execute("SELECT u.draft_revision, p.name FROM project_updates u LEFT JOIN projects p"
+                               " ON p.id=u.project_id WHERE u.id=?", (source_id,)).fetchone()
+        if row is None:
+            raise ChannelRefused("document_not_found", f"Document {document_ref} was not found", status=404)
+        revision = int(row["draft_revision"] or 1)
+        return Document(ref=str(document_ref), title="", body_md="", slug=_slug(row["name"] or ""),
+                        label=f"r{revision}")
+    raise ChannelRefused("document_not_found", f"Document {document_ref} was not found", status=404)
 
 
 # ── the file channel: the one direct writer ────────────────────────────────
@@ -279,9 +368,9 @@ class FileChannel:
         return real
 
     def choose_path(self, folder: str, document: Document, send_id: str) -> str:
-        """``<YYYY-MM-DD>-<slug>-r<revision>-<8 hex of the send id>.md``; ``-2``, ``-3`` ... when taken."""
+        """``<date>-<slug>-<label>-<8 hex of send id>.md``; suffix when taken."""
         day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        stem = f"{day}-{document.slug}-r{document.revision}-{send_id.split('_')[-1][:8]}"
+        stem = f"{day}-{_slug(document.slug)}-{_slug(document.label)}-{send_id.split('_')[-1][:8]}"
         for index in range(1, 100):
             name = stem + ("" if index == 1 else f"-{index}") + ".md"
             path = self.inside(folder, name)
@@ -349,6 +438,11 @@ CHANNELS: dict[str, Any] = {"file": FileChannel()}
 
 # The CLI channels register themselves at the end of their module (either import order works).
 from . import channel_cli  # noqa: E402,F401
+
+# The Slack channel is another explicit registry row.  Keep this import at
+# the end: channel_slack imports the contract types and registers its one
+# implementation after they have been defined.
+from . import channel_slack  # noqa: E402,F401
 
 
 def channel(name: str) -> Any:

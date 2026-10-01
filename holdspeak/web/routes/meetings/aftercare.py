@@ -7,7 +7,7 @@ from ....logging_config import get_logger
 from ....principals import UNAUTHENTICATED
 from ....services.errors import ConflictError, NotFound, ValidationError
 from ....services.meeting_aftercare_service import MeetingAftercareService
-from ....web_requests import _AftercareFileIssueRequest, _ProposalDecisionRequest, _SlackExportRequest
+from ....web_requests import _AftercareFileIssueRequest, _ProposalDecisionRequest
 from ...context import WebContext
 from ...runtime_support import error_500
 log = get_logger("web.routes.meetings")
@@ -44,12 +44,17 @@ def build_aftercare_router(ctx: WebContext) -> APIRouter:
     async def api_decide_meeting_proposal(meeting_id: str, proposal_id: str, payload: _ProposalDecisionRequest, request: Request) -> Any:
         try: return JSONResponse(_svc(ctx).decide_proposal(_principal(request), meeting_id, proposal_id, payload.model_dump()))
         except Exception as exc: return _error(exc, "Failed to decide meeting proposal")
+    @router.post("/api/meetings/{meeting_id}/export/slack")
+    async def api_export_meeting_to_slack(meeting_id: str, request: Request) -> Any:
+        # PHILO-11-02 D1: retain the legacy route as a named capability
+        # refusal while Slack delivery moves to channel document operations.
+        del meeting_id, request
+        return _error(
+            ValidationError("slack_moved_to_channel", code="slack_moved_to_channel"),
+            "Slack export is parked",
+        )
     @router.post("/api/meetings/{meeting_id}/aftercare/file-issue")
     async def api_aftercare_file_issue(meeting_id: str, payload: _AftercareFileIssueRequest, request: Request) -> Any:
         try: return JSONResponse(_svc(ctx).file_issue(_principal(request), meeting_id, payload.model_dump()))
         except Exception as exc: return _error(exc, "Failed to file aftercare issue")
-    @router.post("/api/meetings/{meeting_id}/export/slack")
-    async def api_export_meeting_to_slack(meeting_id: str, payload: _SlackExportRequest, request: Request) -> Any:
-        try: return JSONResponse(_svc(ctx).export_slack(_principal(request), meeting_id, payload.model_dump()))
-        except Exception as exc: return _error(exc, "Failed to propose Slack export")
     return router

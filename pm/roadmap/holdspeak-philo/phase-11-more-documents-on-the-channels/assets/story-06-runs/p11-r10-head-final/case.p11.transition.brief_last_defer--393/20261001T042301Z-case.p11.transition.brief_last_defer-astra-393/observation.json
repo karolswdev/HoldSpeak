@@ -1,0 +1,1375 @@
+{
+  "id": "obs-20261001T042301Z-case.p11.transition.brief_last_defer-astra-393",
+  "run_id": "20261001T042301Z-case.p11.transition.brief_last_defer-astra-393",
+  "case_id": "case.p11.transition.brief_last_defer",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase11-slack.json",
+  "job": "p11",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p11_face_transitions",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:63731",
+      "port": 63731,
+      "pid": 10333,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lgxayy7v",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lgxayy7v/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo11_slack/posted.json": "8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:23:01.080681+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "Slack HTTPS edge: transition recording",
+        "substitute": "cli_runner",
+        "installed_sha256": "8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase11-slack.json",
+      "sha256": "2c756a0a38aa18199d352d473a0d656c1dc792c7e3d7ac086ea8279aa08bf461",
+      "version": "phase11-slack-backend"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDING runner at the CLI channels' process edge (no real gh or acli)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": "8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541"
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T22:23:06.109712"
+        }
+      },
+      "response_sha256": "ba87cfc42407bfbe7b30f47a79bd0cc508436434d74d0a5d81c752184ea99790"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_f6006d3d5e86",
+          "title": "One brief item for Chair transition",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "Review one Chair transition item.",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:23:06Z",
+          "updated_at": "2026-10-01T04:23:06Z",
+          "deleted": false
+        },
+        "operation_id": "op_fa9ca322eba84b3ca4707b4826c0f172",
+        "receipt": {
+          "receipt_id": "rcpt_0c33202bb5454e94bb8285d893945a59",
+          "operation_id": "op_fa9ca322eba84b3ca4707b4826c0f172",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_f6006d3d5e86",
+          "created_at": 1790828586.127397,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_f6006d3d5e86"
+        }
+      },
+      "response_sha256": "f802b96247cf0bbfb0a34d86f29792df99b989cb48fae2ae1ac439dd6bdc3b1d",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_f6006d3d5e86"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "brief.generate",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.generate",
+          "arguments": {}
+        }
+      },
+      "response": {
+        "generated_at": "2026-09-30T22:23:06.162417",
+        "headline": "1 decision waiting.",
+        "id": "brief-5d878a6819a84d55bbfaff522e7b9704",
+        "is_empty": false,
+        "ledger": {
+          "operations": 1,
+          "since": "1790828586.126869"
+        },
+        "period_end": "2026-09-30T22:23:06.162417",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-10-01T04:23:06Z",
+              "detail": null,
+              "id": "brief-item-f98c282a9f9846c98a268d277724fd63",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_f6006d3d5e86",
+              "text": "Review decision: One brief item for Chair transition"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "domain_response": {
+        "generated_at": "2026-09-30T22:23:06.162417",
+        "headline": "1 decision waiting.",
+        "id": "brief-5d878a6819a84d55bbfaff522e7b9704",
+        "is_empty": false,
+        "ledger": {
+          "operations": 1,
+          "since": "1790828586.126869"
+        },
+        "period_end": "2026-09-30T22:23:06.162417",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-10-01T04:23:06Z",
+              "detail": null,
+              "id": "brief-item-f98c282a9f9846c98a268d277724fd63",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_f6006d3d5e86",
+              "text": "Review decision: One brief item for Chair transition"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-30T22:23:06.162417\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-5d878a6819a84d55bbfaff522e7b9704\", \"is_empty\": false, \"ledger\": {\"operations\": 1, \"since\": \"1790828586.126869\"}, \"period_end\": \"2026-09-30T22:23:06.162417\", \"period_start\": \"2026-09-29T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-10-01T04:23:06Z\", \"detail\": null, \"id\": \"brief-item-f98c282a9f9846c98a268d277724fd63\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_f6006d3d5e86\", \"text\": \"Review decision: One brief item for Chair transition\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.08,
+      "captured": {
+        "name": "brief_id",
+        "path": "id",
+        "value": "brief-5d878a6819a84d55bbfaff522e7b9704"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-5d878a6819a84d55bbfaff522e7b9704",
+        "period_start": "2026-09-29T17:00:00",
+        "period_end": "2026-09-30T22:23:06.162417",
+        "headline": "1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-f98c282a9f9846c98a268d277724fd63",
+              "section": "decisions",
+              "text": "Review decision: One brief item for Chair transition",
+              "detail": null,
+              "source_ref": "decision:decision_f6006d3d5e86",
+              "priority": 200,
+              "created_at": "2026-10-01T04:23:06Z"
+            }
+          ]
+        },
+        "generated_at": "2026-09-30T22:23:06.162417",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 28 \u2013 30",
+        "generated_label": "GENERATED SEP 30 22:23",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "cf8b1067995bb7c184ccc239ac8c2e84a0987e221972b21f57946e6370bb9ea9",
+      "captured": {
+        "name": "item_id",
+        "path": "sections.decisions.0.id",
+        "value": "brief-item-f98c282a9f9846c98a268d277724fd63"
+      }
+    },
+    {
+      "kind": "boundary",
+      "label": "Slack HTTPS edge: transition recording",
+      "substitute": "cli_runner",
+      "adapter": "slack-https-edge",
+      "installed_sha256": "8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541",
+      "seam": "holdspeak.services.channel_cli.CLI_RUNNER"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/slack-webhooks",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "key_ref": "slack_5f5bcb853a1451c1bb760874",
+        "saved": true,
+        "operation_id": "op_a2afebbcb7764d18baa96fdd25577005",
+        "receipt": {
+          "receipt_id": "rcpt_7b11a32be4dc476ab6730a2621834b1e",
+          "operation_id": "op_a2afebbcb7764d18baa96fdd25577005",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "slack_webhook:slack_5f5bcb853a1451c1bb760874",
+          "created_at": 1790828586.222194,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_slack_webhook"
+        }
+      },
+      "response_sha256": "84baec870aa6fc4d0961bb2f9dc77557fdba3e5b5159fb8ed387b40de57a5f92",
+      "captured": {
+        "name": "key_ref",
+        "path": "key_ref",
+        "value": "slack_5f5bcb853a1451c1bb760874"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.save_destination",
+      "args": {
+        "channel": "slack",
+        "name": "Slack #leads",
+        "key_ref": "slack_5f5bcb853a1451c1bb760874",
+        "channel_label": "#leads"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.save_destination",
+          "arguments": {
+            "channel": "slack",
+            "name": "Slack #leads",
+            "key_ref": "slack_5f5bcb853a1451c1bb760874",
+            "channel_label": "#leads"
+          }
+        }
+      },
+      "response": {
+        "destination": {
+          "account": {
+            "key_ref": "slack_5f5bcb853a1451c1bb760874"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "connection": null,
+          "created_at": "2026-10-01T04:23:06+00:00",
+          "id": "chd_234977653fb7df83a3f2f3e8",
+          "name": "Slack #leads",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "71600e49d8eae93031630b5b80370e1e01e28876f22cc674da7196b12f0c513a"
+        },
+        "operation_id": "op_8fa4d9cf0eb14fd8876d1a77baf2fcf3",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790828586.229863,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_8fa4d9cf0eb14fd8876d1a77baf2fcf3",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_5be8eb5c1cae474b80740e304f45faff",
+          "result_ref": "channel_destination:chd_234977653fb7df83a3f2f3e8",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "domain_response": {
+        "destination": {
+          "account": {
+            "key_ref": "slack_5f5bcb853a1451c1bb760874"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "connection": null,
+          "created_at": "2026-10-01T04:23:06+00:00",
+          "id": "chd_234977653fb7df83a3f2f3e8",
+          "name": "Slack #leads",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "71600e49d8eae93031630b5b80370e1e01e28876f22cc674da7196b12f0c513a"
+        },
+        "operation_id": "op_8fa4d9cf0eb14fd8876d1a77baf2fcf3",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790828586.229863,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_8fa4d9cf0eb14fd8876d1a77baf2fcf3",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_5be8eb5c1cae474b80740e304f45faff",
+          "result_ref": "channel_destination:chd_234977653fb7df83a3f2f3e8",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"destination\": {\"account\": {\"key_ref\": \"slack_5f5bcb853a1451c1bb760874\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"connection\": null, \"created_at\": \"2026-10-01T04:23:06+00:00\", \"id\": \"chd_234977653fb7df83a3f2f3e8\", \"name\": \"Slack #leads\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"71600e49d8eae93031630b5b80370e1e01e28876f22cc674da7196b12f0c513a\"}, \"operation_id\": \"op_8fa4d9cf0eb14fd8876d1a77baf2fcf3\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790828586.229863, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_8fa4d9cf0eb14fd8876d1a77baf2fcf3\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_5be8eb5c1cae474b80740e304f45faff\", \"result_ref\": \"channel_destination:chd_234977653fb7df83a3f2f3e8\", \"state\": \"succeeded\", \"target_ref\": \"desk:channel.save_destination\"}, \"replaced\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.008,
+      "captured": {
+        "name": "dest_id",
+        "path": "destination.id",
+        "value": "chd_234977653fb7df83a3f2f3e8"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/sends",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "send": {
+          "id": "chs_413a924a5d205537ac093154",
+          "document_ref": "monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704",
+          "destination_id": "chd_234977653fb7df83a3f2f3e8",
+          "destination_name": "Slack #leads",
+          "channel": "slack",
+          "badge": "cloud",
+          "account": {
+            "key_ref": "slack_5f5bcb853a1451c1bb760874"
+          },
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "71600e49d8eae93031630b5b80370e1e01e28876f22cc674da7196b12f0c513a",
+          "payload_digest": "36a4ed0ea60214776dfaf5aebbd66bfe14add3b03be337bd919b5c02a551b987",
+          "document_json": {
+            "label": "BRIEF 2026-09-30",
+            "slug": "brief-2026-09-30",
+            "title": "Monday Brief \u2014 2026-09-30"
+          },
+          "size": 188,
+          "preview": {
+            "text": "*Monday Brief*\nPeriod: 2026-09-29 \u2013 2026-09-30\nGenerated: 30 Sep 2026, 22:23\n\n1 decision waiting.\n\n*Decisions*\n- Review decision: One brief item for Chair transition\n\nPEOPLE \u00b7 UNAVAILABLE\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": "op_efd59c09eab840e682b0e1600cda6d47",
+          "send_operation_id": null,
+          "state": "prepared",
+          "reason": null,
+          "proof": null,
+          "file_path": null,
+          "created_at": "2026-10-01T04:23:06+00:00",
+          "dispatch_started_at": null,
+          "settled_at": null,
+          "dispatch_seq": null
+        },
+        "outcome": "prepared",
+        "operation_id": "op_efd59c09eab840e682b0e1600cda6d47",
+        "receipt": {
+          "receipt_id": "rcpt_fe722cce4e594a52a794068679c6c4b1",
+          "operation_id": "op_efd59c09eab840e682b0e1600cda6d47",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_send:chs_413a924a5d205537ac093154",
+          "created_at": 1790828586.2372139,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "document:monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704"
+        }
+      },
+      "response_sha256": "00ce224ba5d64fc728d4a24ff32024423e9b89e999acb42a234fb5440b038e1e",
+      "captured": {
+        "name": "send_id",
+        "path": "send.id",
+        "value": "chs_413a924a5d205537ac093154"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/send",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "send": {
+          "id": "chs_413a924a5d205537ac093154",
+          "document_ref": "monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704",
+          "destination_id": "chd_234977653fb7df83a3f2f3e8",
+          "destination_name": "Slack #leads",
+          "channel": "slack",
+          "badge": "cloud",
+          "account": {
+            "key_ref": "slack_5f5bcb853a1451c1bb760874"
+          },
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "71600e49d8eae93031630b5b80370e1e01e28876f22cc674da7196b12f0c513a",
+          "payload_digest": "36a4ed0ea60214776dfaf5aebbd66bfe14add3b03be337bd919b5c02a551b987",
+          "document_json": {
+            "label": "BRIEF 2026-09-30",
+            "slug": "brief-2026-09-30",
+            "title": "Monday Brief \u2014 2026-09-30"
+          },
+          "size": 188,
+          "preview": {
+            "text": "*Monday Brief*\nPeriod: 2026-09-29 \u2013 2026-09-30\nGenerated: 30 Sep 2026, 22:23\n\n1 decision waiting.\n\n*Decisions*\n- Review decision: One brief item for Chair transition\n\nPEOPLE \u00b7 UNAVAILABLE\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": "op_efd59c09eab840e682b0e1600cda6d47",
+          "send_operation_id": "op_69724388a58e4ef8ba7e3cb9ddab8824",
+          "state": "sent",
+          "reason": null,
+          "proof": {
+            "destination": "hooks.slack.com:443",
+            "posted_at": "2026-10-01T04:23:06.245521+00:00",
+            "word": "POSTED"
+          },
+          "file_path": null,
+          "created_at": "2026-10-01T04:23:06+00:00",
+          "dispatch_started_at": "2026-10-01T04:23:06.242107+00:00",
+          "settled_at": "2026-10-01T04:23:06+00:00",
+          "dispatch_seq": 1
+        },
+        "outcome": "sent",
+        "operation_id": "op_69724388a58e4ef8ba7e3cb9ddab8824",
+        "receipt": {
+          "receipt_id": "rcpt_1a4ce4fbd6fe4473a4a45675a2500ce1",
+          "operation_id": "op_69724388a58e4ef8ba7e3cb9ddab8824",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_send:chs_413a924a5d205537ac093154",
+          "created_at": 1790828586.2457302,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "channel_send:chs_413a924a5d205537ac093154"
+        }
+      },
+      "response_sha256": "0a1d3d4e7c21c353813a65ba1d571eff73d67e9db09713e062dc4fa0718d9734"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-pointer",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-row]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-well]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "The last brief item is ready in the Chair and already has a sent Slack receipt; the owner presses Defer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lgxayy7v",
+    "decision_id": "decision_f6006d3d5e86",
+    "brief_id": "brief-5d878a6819a84d55bbfaff522e7b9704",
+    "item_id": "brief-item-f98c282a9f9846c98a268d277724fd63",
+    "key_ref": "slack_5f5bcb853a1451c1bb760874",
+    "dest_id": "chd_234977653fb7df83a3f2f3e8",
+    "send_id": "chs_413a924a5d205537ac093154"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-brief-row] button:nth-of-type(2)",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "scroll_into_view",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-history]",
+        "block": "center",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "rect": {
+      "before": {
+        "x": 12,
+        "y": 756,
+        "w": 369,
+        "h": 97
+      },
+      "after": {
+        "x": 12,
+        "y": 322,
+        "w": 369,
+        "h": 97
+      }
+    },
+    "document_text_sha256": {
+      "before": "632300cf6758b63fdecd3336953d09220ef7fbe5bdc8b0a3eb865755d386b0b5",
+      "after": "00e546da7ee7e62dbe454004f74e66aec0ea4c801aafdd93a9c1e6b115606c47"
+    },
+    "document_text_len": {
+      "before": 577,
+      "after": 530
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-history]",
+    "target_present": true,
+    "text": "SENDS 1\n\u2713\nSlack #leads\nPOSTED\n#leads\nSEP 30 22:23",
+    "attrs": {
+      "data-send": "history",
+      "data-species": "send",
+      "data-testid": "send-history"
+    },
+    "rect": {
+      "x": 12,
+      "y": 756,
+      "w": 369,
+      "h": 97
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 756,
+        "w": 369,
+        "h": 97
+      },
+      "in_viewport": false,
+      "samples": [
+        {
+          "x": 14,
+          "y": 758,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock"
+        },
+        {
+          "x": 14,
+          "y": 804,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch"
+        },
+        {
+          "x": 14,
+          "y": 851,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock"
+        },
+        {
+          "x": 197,
+          "y": 758,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch"
+        },
+        {
+          "x": 197,
+          "y": 804,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock > span.desk-room-actions > button.btn.btn--secondary"
+        },
+        {
+          "x": 197,
+          "y": 851,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock"
+        },
+        {
+          "x": 379,
+          "y": 758,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock"
+        },
+        {
+          "x": 379,
+          "y": 804,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock > div.desk-orb-wrap > button.btn--chrome.desk-orb"
+        },
+        {
+          "x": 379,
+          "y": 851,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock"
+        }
+      ],
+      "all_owned": false
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 HOOKS.SLACK.COM:443\nSearch\n10:23 PM\n1 need yo",
+    "url": "http://127.0.0.1:63731/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "632300cf6758b63fdecd3336953d09220ef7fbe5bdc8b0a3eb865755d386b0b5",
+    "document_text_len": 577,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_413a924a5d205537ac093154",
+              "document_ref": "monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704",
+              "destination_id": "chd_234977653fb7df83a3f2f3e8",
+              "destination_name": "Slack #leads",
+              "channel": "slack",
+              "badge": "cloud",
+              "account": {
+                "key_ref": "slack_5f5bcb853a1451c1bb760874"
+              },
+              "target": {
+                "channel_label": "#leads"
+              },
+              "target_digest": "71600e49d8eae93031630b5b80370e1e01e28876f22cc674da7196b12f0c513a",
+              "payload_digest": "36a4ed0ea60214776dfaf5aebbd66bfe14add3b03be337bd919b5c02a551b987",
+              "document_json": {
+                "label": "BRIEF 2026-09-30",
+                "slug": "brief-2026-09-30",
+                "title": "Monday Brief \u2014 2026-09-30"
+              },
+              "size": 188,
+              "preview": {
+                "text": "*Monday Brief*\nPeriod: 2026-09-29 \u2013 2026-09-30\nGenerated: 30 Sep 2026, 22:23\n\n1 decision waiting.\n\n*Decisions*\n- Review decision: One brief item for Chair transition\n\nPEOPLE \u00b7 UNAVAILABLE\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_efd59c09eab840e682b0e1600cda6d47",
+              "send_operation_id": "op_69724388a58e4ef8ba7e3cb9ddab8824",
+              "state": "sent",
+              "reason": null,
+              "proof": {
+                "destination": "hooks.slack.com:443",
+                "posted_at": "2026-10-01T04:23:06.245521+00:00",
+                "word": "POSTED"
+              },
+              "file_path": null,
+              "created_at": "2026-10-01T04:23:06+00:00",
+              "dispatch_started_at": "2026-10-01T04:23:06.242107+00:00",
+              "settled_at": "2026-10-01T04:23:06+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "a40f49e57724279028ef5ad8b2dd19458aae016663a3b7313d5e17c37087e3e5"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "https",
+          "POST",
+          "hooks.slack.com",
+          "/services/[redacted]"
+        ],
+        "body_sha256": "36a4ed0ea60214776dfaf5aebbd66bfe14add3b03be337bd919b5c02a551b987",
+        "pid": 10333,
+        "at": "2026-10-01T04:23:06.244499+00:00",
+        "answer": 0,
+        "auth": null,
+        "user_agent": "HoldSpeak"
+      }
+    ],
+    "at_utc": "2026-10-01T04:23:09.128096+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-history]",
+    "target_present": true,
+    "text": "SENDS 1\n\u2713\nSlack #leads\nPOSTED\n#leads\nSEP 30 22:23",
+    "attrs": {
+      "data-send": "history",
+      "data-species": "send",
+      "data-testid": "send-history"
+    },
+    "rect": {
+      "x": 12,
+      "y": 322,
+      "w": 369,
+      "h": 97
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 322,
+        "w": 369,
+        "h": 97
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 324,
+          "owned": true,
+          "owner": "div.chair > div > div > div > section.surface-section > header.surface-section-head"
+        },
+        {
+          "x": 14,
+          "y": 370,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 417,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 324,
+          "owned": true,
+          "owner": "div.chair > div > div > div > section.surface-section > header.surface-section-head"
+        },
+        {
+          "x": 197,
+          "y": 370,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary"
+        },
+        {
+          "x": 197,
+          "y": 417,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 324,
+          "owned": true,
+          "owner": "div.chair > div > div > div > section.surface-section > header.surface-section-head"
+        },
+        {
+          "x": 379,
+          "y": 370,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 417,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 377,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 HOOKS.SLACK.COM:443\nSearch\n10:23 PM\n1 need yo",
+    "url": "http://127.0.0.1:63731/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "00e546da7ee7e62dbe454004f74e66aec0ea4c801aafdd93a9c1e6b115606c47",
+    "document_text_len": 530,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_413a924a5d205537ac093154",
+              "document_ref": "monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704",
+              "destination_id": "chd_234977653fb7df83a3f2f3e8",
+              "destination_name": "Slack #leads",
+              "channel": "slack",
+              "badge": "cloud",
+              "account": {
+                "key_ref": "slack_5f5bcb853a1451c1bb760874"
+              },
+              "target": {
+                "channel_label": "#leads"
+              },
+              "target_digest": "71600e49d8eae93031630b5b80370e1e01e28876f22cc674da7196b12f0c513a",
+              "payload_digest": "36a4ed0ea60214776dfaf5aebbd66bfe14add3b03be337bd919b5c02a551b987",
+              "document_json": {
+                "label": "BRIEF 2026-09-30",
+                "slug": "brief-2026-09-30",
+                "title": "Monday Brief \u2014 2026-09-30"
+              },
+              "size": 188,
+              "preview": {
+                "text": "*Monday Brief*\nPeriod: 2026-09-29 \u2013 2026-09-30\nGenerated: 30 Sep 2026, 22:23\n\n1 decision waiting.\n\n*Decisions*\n- Review decision: One brief item for Chair transition\n\nPEOPLE \u00b7 UNAVAILABLE\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_efd59c09eab840e682b0e1600cda6d47",
+              "send_operation_id": "op_69724388a58e4ef8ba7e3cb9ddab8824",
+              "state": "sent",
+              "reason": null,
+              "proof": {
+                "destination": "hooks.slack.com:443",
+                "posted_at": "2026-10-01T04:23:06.245521+00:00",
+                "word": "POSTED"
+              },
+              "file_path": null,
+              "created_at": "2026-10-01T04:23:06+00:00",
+              "dispatch_started_at": "2026-10-01T04:23:06.242107+00:00",
+              "settled_at": "2026-10-01T04:23:06+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "a40f49e57724279028ef5ad8b2dd19458aae016663a3b7313d5e17c37087e3e5"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "https",
+          "POST",
+          "hooks.slack.com",
+          "/services/[redacted]"
+        ],
+        "body_sha256": "36a4ed0ea60214776dfaf5aebbd66bfe14add3b03be337bd919b5c02a551b987",
+        "pid": 10333,
+        "at": "2026-10-01T04:23:06.244499+00:00",
+        "answer": 0,
+        "auth": null,
+        "user_agent": "HoldSpeak"
+      }
+    ],
+    "at_utc": "2026-10-01T04:23:10.538851+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+        "status": 200,
+        "body_sha256": "9df27e4f3ac74b4fd600063f7c8b1b4fc6afbd2198d1c5f43e8ae716721fc177",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf"
+      },
+      "why": "chosen by the declared trigger_route POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+      "seen": [
+        {
+          "method": "POST",
+          "path": "/api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+      "status": 200,
+      "body_sha256": "9df27e4f3ac74b4fd600063f7c8b1b4fc6afbd2198d1c5f43e8ae716721fc177",
+      "body": {
+        "item_id": "brief-item-f98c282a9f9846c98a268d277724fd63",
+        "state": "deferred"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-history]",
+    "target_present": true,
+    "text": "SENDS 1\n\u2713\nSlack #leads\nPOSTED\n#leads\nSEP 30 22:23",
+    "attrs": {
+      "data-send": "history",
+      "data-species": "send",
+      "data-testid": "send-history"
+    },
+    "rect": {
+      "x": 12,
+      "y": 322,
+      "w": 369,
+      "h": 97
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 322,
+        "w": 369,
+        "h": 97
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 324,
+          "owned": true,
+          "owner": "div.chair > div > div > div > section.surface-section > header.surface-section-head"
+        },
+        {
+          "x": 14,
+          "y": 370,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 417,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 324,
+          "owned": true,
+          "owner": "div.chair > div > div > div > section.surface-section > header.surface-section-head"
+        },
+        {
+          "x": 197,
+          "y": 370,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary"
+        },
+        {
+          "x": 197,
+          "y": 417,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 324,
+          "owned": true,
+          "owner": "div.chair > div > div > div > section.surface-section > header.surface-section-head"
+        },
+        {
+          "x": 379,
+          "y": 370,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 417,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 377,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 HOOKS.SLACK.COM:443\nSearch\n10:23 PM\n1 need yo",
+    "url": "http://127.0.0.1:63731/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "00e546da7ee7e62dbe454004f74e66aec0ea4c801aafdd93a9c1e6b115606c47",
+    "document_text_len": 530,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_413a924a5d205537ac093154",
+              "document_ref": "monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704",
+              "destination_id": "chd_234977653fb7df83a3f2f3e8",
+              "destination_name": "Slack #leads",
+              "channel": "slack",
+              "badge": "cloud",
+              "account": {
+                "key_ref": "slack_5f5bcb853a1451c1bb760874"
+              },
+              "target": {
+                "channel_label": "#leads"
+              },
+              "target_digest": "71600e49d8eae93031630b5b80370e1e01e28876f22cc674da7196b12f0c513a",
+              "payload_digest": "36a4ed0ea60214776dfaf5aebbd66bfe14add3b03be337bd919b5c02a551b987",
+              "document_json": {
+                "label": "BRIEF 2026-09-30",
+                "slug": "brief-2026-09-30",
+                "title": "Monday Brief \u2014 2026-09-30"
+              },
+              "size": 188,
+              "preview": {
+                "text": "*Monday Brief*\nPeriod: 2026-09-29 \u2013 2026-09-30\nGenerated: 30 Sep 2026, 22:23\n\n1 decision waiting.\n\n*Decisions*\n- Review decision: One brief item for Chair transition\n\nPEOPLE \u00b7 UNAVAILABLE\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_efd59c09eab840e682b0e1600cda6d47",
+              "send_operation_id": "op_69724388a58e4ef8ba7e3cb9ddab8824",
+              "state": "sent",
+              "reason": null,
+              "proof": {
+                "destination": "hooks.slack.com:443",
+                "posted_at": "2026-10-01T04:23:06.245521+00:00",
+                "word": "POSTED"
+              },
+              "file_path": null,
+              "created_at": "2026-10-01T04:23:06+00:00",
+              "dispatch_started_at": "2026-10-01T04:23:06.242107+00:00",
+              "settled_at": "2026-10-01T04:23:06+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "a40f49e57724279028ef5ad8b2dd19458aae016663a3b7313d5e17c37087e3e5"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "https",
+          "POST",
+          "hooks.slack.com",
+          "/services/[redacted]"
+        ],
+        "body_sha256": "36a4ed0ea60214776dfaf5aebbd66bfe14add3b03be337bd919b5c02a551b987",
+        "pid": 10333,
+        "at": "2026-10-01T04:23:06.244499+00:00",
+        "answer": 0,
+        "auth": null,
+        "user_agent": "HoldSpeak"
+      }
+    ],
+    "at_utc": "2026-10-01T04:23:10.399937+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+        "status": 200,
+        "body_sha256": "9df27e4f3ac74b4fd600063f7c8b1b4fc6afbd2198d1c5f43e8ae716721fc177",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf"
+      },
+      "why": "chosen by the declared trigger_route POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+      "seen": [
+        {
+          "method": "POST",
+          "path": "/api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+      "status": 200,
+      "body_sha256": "9df27e4f3ac74b4fd600063f7c8b1b4fc6afbd2198d1c5f43e8ae716721fc177",
+      "body": {
+        "item_id": "brief-item-f98c282a9f9846c98a268d277724fd63",
+        "state": "deferred"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf"
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf answered 200, wanted 200 (body sha256 9df27e4f3ac7); response body matches its declared fields | readable_text: 'POSTED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 322, 'w': 369, 'h': 97} | protocol_reads: GET /api/channels/sends?document_ref=monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704 answered 200 with 1 row(s) {'document_ref': 'monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704', 'state': 'sent', 'channel': 'slack'} | protocol_rows_same: sends row identity before='chs_413a924a5d205537ac093154', after='chs_413a924a5d205537ac093154'",
+    "elapsed_s": 1.207
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf answered 200, wanted 200 (body sha256 9df27e4f3ac7); response body matches its declared fields | readable_text: 'POSTED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 322, 'w': 369, 'h': 97} | protocol_reads: GET /api/channels/sends?document_ref=monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704 answered 200 with 1 row(s) {'document_ref': 'monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704', 'state': 'sent', 'channel': 'slack'} | protocol_rows_same: sends row identity before='chs_413a924a5d205537ac093154', after='chs_413a924a5d205537ac093154'",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.341,
+    "first_satisfied_at_s": 1.207,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_status: POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf answered 200, wanted 200 (body sha256 9df27e4f3ac7); response body matches its declared fields | readable_text: 'POSTED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 322, 'w': 369, 'h': 97} | protocol_reads: GET /api/channels/sends?document_ref=monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704 answered 200 with 1 row(s) {'document_ref': 'monday_brief:brief-5d878a6819a84d55bbfaff522e7b9704', 'state': 'sent', 'channel': 'slack'} | protocol_rows_same: sends row identity before='chs_413a924a5d205537ac093154', after='chs_413a924a5d205537ac093154'"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+      "status": 200,
+      "body_sha256": "9df27e4f3ac74b4fd600063f7c8b1b4fc6afbd2198d1c5f43e8ae716721fc177",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf"
+    },
+    "why": "chosen by the declared trigger_route POST /api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/brief/items/brief-item-f98c282a9f9846c98a268d277724fd63/shelf",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b2/case.p11.transition.brief_last_defer--393/20261001T042301Z-case.p11.transition.brief_last_defer-astra-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b2/case.p11.transition.brief_last_defer--393/20261001T042301Z-case.p11.transition.brief_last_defer-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lgxayy7v/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lgxayy7v/.config/holdspeak/config.json",
+    "CLI_RUNNER 8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDING runner at the CLI channels' process edge (no real gh or acli)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:63731",
+    "CLI_CALL [\"https\", \"POST\", \"hooks.slack.com\", \"/services/[redacted]\"]"
+  ],
+  "duration_s": 9.686
+}

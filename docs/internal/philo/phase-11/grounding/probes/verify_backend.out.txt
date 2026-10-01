@@ -1,0 +1,8 @@
+Scope: existing backend tests; no live external sends
+HOME isolated: True
+Command: /Users/karol/dev/tools/wt-philo-11-ground-astra/.venv/bin/python3 -m pytest -q tests/unit/test_philo10_send_contract.py tests/unit/test_philo10_send_recovery.py tests/unit/test_philo10_send_restart.py tests/unit/test_meeting_exports.py tests/unit/test_decision_record_service.py tests/unit/test_monday_brief_service.py tests/unit/test_slack_export.py tests/integration/test_web_slack_export.py tests/unit/test_thread_tool_gate.py
+........................................................................ [ 39%]
+........................................................................ [ 79%]
+......................................                                   [100%]
+182 passed in 77.51s (0:01:17)
+Exit: 0

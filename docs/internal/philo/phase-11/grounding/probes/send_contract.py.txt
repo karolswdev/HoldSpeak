@@ -1,0 +1,192 @@
+"""PHILO 11 Send grounding probe; run with an isolated HOME.
+
+This uses the real HoldSpeak hub, project update producer, MCP dispatch,
+channel service, and SQLite repositories.  It prepares only.  It never calls
+the owner press and therefore never dispatches a file, CLI command, or email.
+The test helper is used only to boot the real app and issue a real agent
+credential; no service or transport is replaced.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[6]
+sys.path.insert(0, str(ROOT / "tests" / "unit"))
+
+from test_philo5_the_loop import _boot  # noqa: E402
+from test_philo10_send_contract import destination, sends  # noqa: E402
+from test_philo9_steward_admission import _agent, _tool  # noqa: E402
+
+
+def compact(value):
+    """Keep output reproducible enough to review while preserving evidence."""
+    if isinstance(value, dict):
+        return {key: compact(value[key]) for key in sorted(value)}
+    if isinstance(value, list):
+        return [compact(item) for item in value]
+    return value
+
+
+def main() -> None:
+    from holdspeak.runtime import composition
+    from holdspeak.db import reset_database
+    from holdspeak.mcp import tool_authority
+    from holdspeak.services import thread_tools
+
+    with tempfile.TemporaryDirectory(prefix="philo11-send-") as work:
+        root = Path(work)
+        with pytest.MonkeyPatch.context() as monkeypatch:
+            hub = _boot(root, monkeypatch)
+            try:
+                print("HOME_ISOLATED", os.environ.get("HOME", "").startswith(("/tmp", "/private", "/var/folders")))
+                print("DB_PATH", hub.db.db_path)
+
+                from holdspeak import channel_operations
+                from holdspeak.services import channel_contract
+
+                print("CHANNEL_DESCRIPTORS")
+                for descriptor in channel_operations.CHANNEL_OPERATIONS:
+                    if descriptor.name in {
+                        "channel.preview", "channel.prepare", "channel.discard",
+                        "channel.send", "channel.sends",
+                    }:
+                        print(compact({
+                            "name": descriptor.name,
+                            "effect": descriptor.effect,
+                            "admission": descriptor.admission.rule if descriptor.admission else None,
+                            "owner_only": descriptor.owner_only,
+                            "owner_press": descriptor.owner_press,
+                            "service": descriptor.service,
+                            "method": descriptor.method,
+                            "exposure": descriptor.exposure,
+                            "args": descriptor.args_schema,
+                        }))
+
+                print("AUTHORITY_ROWS")
+                for name in (
+                    "project.draft_update", "project.publish_update",
+                    "project.mark_update_delivered", "channel.preview",
+                    "channel.prepare", "channel.discard", "channel.send", "channel.sends",
+                ):
+                    print(name, {
+                        "tool_authority": tool_authority.TOOL_AUTHORITY.get(name),
+                        "thread_excluded": name in tool_authority.THREAD_EXCLUDED,
+                        "thread_class": (thread_tools.tool_class(name)
+                                         if name not in tool_authority.THREAD_EXCLUDED else "excluded"),
+                        "chat_palette": name in thread_tools.CHAT_PALETTE,
+                    })
+
+                # Produce a real project and update through the MCP project
+                # tools.  The owner press here is only publication (the update
+                # remains on disk); it is not a channel dispatch.
+                created = hub.client.post("/api/projects", json={"name": "PHILO 11 probe project"})
+                assert created.status_code == 200, created.text
+                project_id = created.json()["project"]["id"]
+                is_error, drafted = hub.mcp("project.draft_update", {"project_id": project_id})
+                assert not is_error, drafted
+                update_id = drafted["update"]["id"]
+                is_error, published = hub.mcp("project.publish_update", {"update_id": update_id})
+                assert not is_error, published
+                print("MCP_PROJECT_DRAFT", compact(drafted))
+                print("MCP_PROJECT_PUBLISH", compact(published))
+
+                folder = root / "out"
+                destination_id = destination(hub, folder, name="Probe folder")
+                before_generic_count = len(sends(hub))
+                is_error, generic_ref = _tool(hub.client, "channel.prepare", {
+                    "document_ref": f"project_update:{update_id}",
+                    "destination_id": destination_id,
+                })
+                print("MCP_CHANNEL_PREPARE_DOCUMENT_REF", compact({
+                    "is_error": is_error, "body": generic_ref,
+                }))
+                refusal = (generic_ref.get("refusal") or generic_ref.get("context", {}).get("refusal")
+                           if isinstance(generic_ref, dict) else None)
+                assert is_error and refusal == "invalid_arguments", generic_ref
+                assert len(sends(hub)) == before_generic_count
+                is_error, preview = hub.mcp("channel.preview", {
+                    "update_id": update_id, "destination_id": destination_id,
+                })
+                assert not is_error, preview
+                is_error, prepared = hub.mcp("channel.prepare", {
+                    "update_id": update_id, "destination_id": destination_id,
+                })
+                assert not is_error, prepared
+                send_id = prepared["send"]["id"]
+                is_error, listed = hub.mcp("channel.sends", {"send_id": send_id})
+                assert not is_error, listed
+                print("MCP_CHANNEL_PREVIEW", compact(preview))
+                print("MCP_CHANNEL_PREPARE", compact(prepared))
+                print("MCP_CHANNEL_SENDS", compact(listed))
+                print("OUTBOX_FILES_BEFORE_PRESS", sorted(path.name for path in folder.iterdir()))
+
+                # A real agent may prepare.  Its send is attempted through the
+                # real MCP edge, but must be refused before the dispatch
+                # boundary.  No file can be created by this call.
+                agent = _agent(hub, identity="philo11-ground-agent")
+                is_error, agent_prepare = _tool(agent, "channel.prepare", {
+                    "update_id": update_id, "destination_id": destination_id,
+                })
+                print("AGENT_CHANNEL_PREPARE", compact({"is_error": is_error, "body": agent_prepare}))
+                assert not is_error and agent_prepare["send"]["prepared_by"]["kind"] == "agent"
+                is_error, agent_send = _tool(agent, "channel.send", {"send_id": send_id})
+                print("AGENT_CHANNEL_SEND", compact({"is_error": is_error, "body": agent_send}))
+                assert is_error and agent_send["code"] == "owner_principal_required"
+
+                # A project publish attempted by the same real agent is also
+                # checked at the project kernel; use a fresh draft so the
+                # call cannot mutate the already published source.
+                is_error, second_draft = _tool(agent, "project.draft_update", {"project_id": project_id})
+                print("AGENT_PROJECT_DRAFT", compact({"is_error": is_error, "body": second_draft}))
+                if not is_error:
+                    second_id = second_draft["update"]["id"]
+                    is_error, agent_publish = _tool(agent, "project.publish_update", {"update_id": second_id})
+                    print("AGENT_PROJECT_PUBLISH", compact({"is_error": is_error, "body": agent_publish}))
+
+                document = channel_contract.render_update(hub.db, update_id)
+                print("DOCUMENT_DATACLASS", compact({
+                    "fields": list(document.__dataclass_fields__),
+                    "values": document.__dict__,
+                    "body_sha256": channel_contract.sha256(document.body_md.encode()),
+                }))
+                update_row = hub.db.project_updates.get_update(update_id)
+                with hub.db._connection() as conn:
+                    send_row = dict(conn.execute("SELECT * FROM channel_sends WHERE id=?", (send_id,)).fetchone())
+                    deliveries = [dict(row) for row in conn.execute(
+                        "SELECT * FROM project_update_deliveries WHERE update_id=?", (update_id,)
+                    )]
+                    send_columns = [row[1] for row in conn.execute("PRAGMA table_info(channel_sends)")]
+                    delivery_columns = [row[1] for row in conn.execute("PRAGMA table_info(project_update_deliveries)")]
+                print("PROJECT_UPDATE_PRODUCER_ROW", compact({
+                    key: update_row.get(key) for key in (
+                        "id", "project_id", "project_revision", "lifecycle", "draft_revision",
+                        "body_md", "source_manifest_json", "generator", "generator_host",
+                        "generator_model", "published_at",
+                    )
+                }))
+                print("CHANNEL_SEND_ROW", compact({
+                    key: send_row.get(key) for key in (
+                        "id", "document_ref", "destination_id", "channel", "target_digest",
+                        "payload_digest", "prepared_by_kind", "prepared_by_identity",
+                        "prepare_operation_id", "send_operation_id", "state", "file_path",
+                    )
+                }))
+                print("SCHEMA_COLUMNS", {"channel_sends": send_columns, "project_update_deliveries": delivery_columns})
+                print("DELIVERIES_BEFORE_OWNER_PRESS", deliveries)
+                print("SENDS_STATES", [(row["id"], row["state"]) for row in sends(hub)])
+                assert sorted(path.name for path in folder.iterdir()) == []
+                assert all(row["state"] == "prepared" for row in sends(hub))
+                assert deliveries == []
+            finally:
+                reset_database()
+                composition.install(composition.bare(label="philo11-probe"))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,144 @@
+"""PHILO-12 backend grounding: saved destinations and channel wire seams.
+
+This is a diagnostic probe, not a test fence. It uses the real web hub, real
+HTTP/MCP operation registry, and real project-update producer on an isolated
+HOME/database. It creates only a local file destination, prepares but never
+sends it, parks it, and asks an external agent to send it (which must be
+refused before dispatch).
+
+Run from the repository root with an isolated HOME, for example:
+
+    HOME=$(mktemp -d) UV_CACHE_DIR=/tmp/philo12-uv-cache uv run python \
+      docs/internal/philo/phase-12/grounding/probes/destinations_wire_probe.py.txt
+"""
+from __future__ import annotations
+
+import json
+import sys
+import tempfile
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[6]
+sys.path.insert(0, str(ROOT / "tests" / "unit"))
+
+from _philo10_send import _boot, destination, room  # noqa: E402
+from test_philo9_steward_admission import AGENT_ID, _agent, _tool  # noqa: E402
+
+
+def rows(hub: Any, sql: str, args: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
+    with hub.db._connection() as conn:
+        return [dict(row) for row in conn.execute(sql, args)]
+
+
+def main() -> None:
+    with tempfile.TemporaryDirectory(prefix="philo12-destinations-") as tmp:
+        root = Path(tmp)
+        monkeypatch = pytest.MonkeyPatch()
+        try:
+            hub = _boot(root, monkeypatch)
+            _, update_id = room(hub, name="Phase 12 destination probe", body="# Wire probe\n\nStored body.\n")
+            ref = f"project_update:{update_id}"
+            dest = destination(hub, root / "out", name="Probe folder")
+
+            before_preview = len(rows(hub, "SELECT operation_id FROM kernel_operations"))
+            preview = hub.client.post("/api/channels/preview", json={
+                "document_ref": ref, "destination_id": dest,
+            })
+            after_preview = len(rows(hub, "SELECT operation_id FROM kernel_operations"))
+            preview_body = preview.json()
+
+            prepared_response = hub.client.post("/api/channels/sends", json={
+                "document_ref": ref, "destination_id": dest,
+            })
+            prepared_body = prepared_response.json()
+            send_id = prepared_body["send"]["id"]
+            prepare_operation_id = prepared_body["operation_id"]
+            prepare_operation = rows(
+                hub,
+                "SELECT name, state, principal_kind, principal_identity, target_ref "
+                "FROM kernel_operations WHERE operation_id=?",
+                (prepare_operation_id,),
+            )[0]
+            prepare_receipt = rows(
+                hub,
+                "SELECT outcome, state FROM kernel_receipts WHERE operation_id=?",
+                (prepare_operation_id,),
+            )[0]
+            prepared_row = rows(
+                hub,
+                "SELECT id, document_ref, destination_id, state, payload_digest, prepare_operation_id "
+                "FROM channel_sends WHERE id=?",
+                (send_id,),
+            )[0]
+
+            parked_response = hub.client.delete(f"/api/channels/destinations/{dest}")
+            active_rows = hub.client.get("/api/channels/destinations").json()["destinations"]
+            all_rows = hub.client.get("/api/channels/destinations", params={"include_parked": True}).json()["destinations"]
+
+            agent = _agent(hub, identity=AGENT_ID + "-destination-probe")
+            is_error, refused = _tool(agent, "channel.send", {"send_id": send_id})
+            send_refusal_operation = rows(
+                hub,
+                "SELECT name, state, principal_kind, principal_identity "
+                "FROM kernel_operations WHERE operation_id=?",
+                (refused.get("operation_id"),),
+            ) if refused.get("operation_id") else []
+            send_refusal_receipt = rows(
+                hub,
+                "SELECT outcome, state FROM kernel_receipts WHERE operation_id=?",
+                (refused.get("operation_id"),),
+            ) if refused.get("operation_id") else []
+            row_after_agent_send = rows(hub, "SELECT state FROM channel_sends WHERE id=?", (send_id,))[0]
+
+            descriptors = {
+                name: {
+                    "owner_press": hub.root.operations.descriptor(name).owner_press,
+                    "admission": hub.root.operations.descriptor(name).admission.export(),
+                }
+                for name in ("channel.preview", "channel.prepare", "channel.send")
+            }
+            print(json.dumps({
+                "base": "22c0acc40",
+                "preview": {
+                    "http_status": preview.status_code,
+                    "document_ref": preview_body.get("document_ref"),
+                    "destination_id": preview_body.get("destination_id"),
+                    "payload_digest_matches_prepared": preview_body.get("payload_digest") == prepared_body["send"]["payload_digest"],
+                    "kernel_operation_count_before": before_preview,
+                    "kernel_operation_count_after": after_preview,
+                    "kernel_operation_delta": after_preview - before_preview,
+                    "receipt_or_operation_fields": {k: preview_body.get(k) for k in ("operation_id", "receipt")},
+                },
+                "prepare": {
+                    "http_status": prepared_response.status_code,
+                    "operation": prepare_operation,
+                    "receipt": prepare_receipt,
+                    "row": prepared_row,
+                    "prepared_preview_text": prepared_body["send"]["preview"].get("text"),
+                },
+                "park_filter": {
+                    "delete_status": parked_response.status_code,
+                    "default_ids": [d["id"] for d in active_rows],
+                    "default_states": [d["state"] for d in active_rows],
+                    "include_parked_ids": [d["id"] for d in all_rows],
+                    "include_parked_states": [d["state"] for d in all_rows],
+                },
+                "agent_send": {
+                    "is_error": is_error,
+                    "code": refused.get("code"),
+                    "operation": send_refusal_operation,
+                    "receipt": send_refusal_receipt,
+                    "send_row_after_attempt": row_after_agent_send,
+                    "output_files": sorted(str(p.relative_to(root / "out")) for p in (root / "out").iterdir()),
+                },
+                "descriptors": descriptors,
+            }, indent=2, sort_keys=True))
+        finally:
+            monkeypatch.undo()
+
+
+if __name__ == "__main__":
+    main()

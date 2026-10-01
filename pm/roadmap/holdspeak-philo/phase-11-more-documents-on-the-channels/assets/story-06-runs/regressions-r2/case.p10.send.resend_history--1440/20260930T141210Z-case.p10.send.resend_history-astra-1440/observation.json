@@ -1,0 +1,1385 @@
+{
+  "id": "obs-20260930T141210Z-case.p10.send.resend_history-astra-1440",
+  "run_id": "20260930T141210Z-case.p10.send.resend_history-astra-1440",
+  "case_id": "case.p10.send.resend_history",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase10.json",
+  "job": "p10",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p10_send_face",
+  "provenance": {
+    "revision": "8a6b807d6682d9446d9b75216bbd3844d203cdcc",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "5af70edb856e3d3d9620f2924959f5718a9cb4cb408352e0eca3f34f59e21b86",
+      "assets": [
+        "index-DOMEgTb7.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50602",
+      "port": 50602,
+      "pid": 12001,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-johx2bub",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-johx2bub/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo10_atlas/resend-accepted.json": "f792f2751bea269f3e8ea71941786d25e4196cce216c5910b9eff0ae32a34628"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-30T14:12:11.124332+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "the email HTTPS edge: resend-accepted.json",
+        "substitute": "cli_runner",
+        "installed_sha256": "f792f2751bea269f3e8ea71941786d25e4196cce216c5910b9eff0ae32a34628"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase10.json",
+      "sha256": "5f25a4cef1cec66a085c7170ffb67b33b5b7ccd978ebd1b521853abfb45d6fb7",
+      "version": "phase10-send"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDING runner at the CLI channels' process edge (no real gh or acli)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": "f792f2751bea269f3e8ea71941786d25e4196cce216c5910b9eff0ae32a34628"
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T08:12:14.986637"
+        }
+      },
+      "response_sha256": "a58e0894afbae7e8d76b114d42db5881d47e284a3c9c7447192fcd99a80052e9"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "boundary",
+      "label": "the email HTTPS edge: resend-accepted.json",
+      "substitute": "cli_runner",
+      "adapter": "email-https-edge",
+      "installed_sha256": "f792f2751bea269f3e8ea71941786d25e4196cce216c5910b9eff0ae32a34628",
+      "seam": "holdspeak.services.channel_cli.CLI_RUNNER"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-c74c63a6a807",
+          "name": "Atlas send ledger",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-09-30T08:12:15.016574",
+          "updated_at": "2026-09-30T08:12:15.016574",
+          "result_kind": "created",
+          "project_id": "proj-c74c63a6a807",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-c74c63a6a807"
+          ]
+        }
+      },
+      "response_sha256": "1c361a609c93fc2801c82041daf53b4e9ee1bc6727cd65e0c2786d8f1c2a0e76",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-c74c63a6a807"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects/proj-c74c63a6a807/updates/draft",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_659841da220a46eca6da5ffb05609f9c",
+          "project_id": "proj-c74c63a6a807",
+          "project_revision": 1,
+          "review_id": null,
+          "lifecycle": "draft",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-09-30T14:12:15+00:00",
+          "updated_at": "2026-09-30T14:12:15+00:00",
+          "published_at": null,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generatorHost": null,
+          "generatorModel": null
+        }
+      },
+      "response_sha256": "f11b6f2861628a9897890bcb2b800659c6cf9c0d2592b93b6fbab094740af72c",
+      "captured": {
+        "name": "update_id",
+        "path": "update.id",
+        "value": "pupd_659841da220a46eca6da5ffb05609f9c"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/updates/pupd_659841da220a46eca6da5ffb05609f9c/publish",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_659841da220a46eca6da5ffb05609f9c",
+          "project_id": "proj-c74c63a6a807",
+          "project_revision": 2,
+          "review_id": null,
+          "lifecycle": "published",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-09-30T14:12:15+00:00",
+          "updated_at": "2026-09-30T14:12:15+00:00",
+          "published_at": "2026-09-30T14:12:15+00:00",
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "result_kind": "updated",
+          "changed_refs": [
+            "project:proj-c74c63a6a807"
+          ],
+          "generatorHost": null,
+          "generatorModel": null
+        },
+        "operation_id": "op_57a210bdc044410cabc78967afe58827",
+        "receipt": {
+          "receipt_id": "rcpt_374d9123b7814dd9b876d44e16d231eb",
+          "operation_id": "op_57a210bdc044410cabc78967afe58827",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project_update:pupd_659841da220a46eca6da5ffb05609f9c",
+          "created_at": 1790777535.0256379,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project_update:pupd_659841da220a46eca6da5ffb05609f9c"
+        }
+      },
+      "response_sha256": "7058bddc0ffb05f7e5cba21bfcc028a3fa259732c4af4029ef8fd69a91a31343"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/destinations",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "destination": {
+          "id": "chd_0eb4f8c24a4b11cc583c6cf7",
+          "name": "ResendPriya",
+          "channel": "email",
+          "account": {
+            "from_email": "karol@example.com",
+            "from_name": "Karol",
+            "key_ref": "resend-atlas",
+            "provider": "resend"
+          },
+          "target": {
+            "cc": [],
+            "to": [
+              "priya@example.com"
+            ]
+          },
+          "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+          "synced": false,
+          "state": "active",
+          "badge": "cloud",
+          "created_at": "2026-09-30T14:12:15+00:00",
+          "parked_at": null,
+          "connection": null
+        },
+        "replaced": null,
+        "operation_id": "op_bf049023350142f5a5dfe17e9b8296f1",
+        "receipt": {
+          "receipt_id": "rcpt_9ca86961c0df4612822b620f7005200d",
+          "operation_id": "op_bf049023350142f5a5dfe17e9b8296f1",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_destination:chd_0eb4f8c24a4b11cc583c6cf7",
+          "created_at": 1790777535.0319118,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_destination"
+        }
+      },
+      "response_sha256": "daddfdc4142601e01472b77170b68da07845dbcee5ed8079840f38bcccb3be9c",
+      "captured": {
+        "name": "key_ref",
+        "path": "destination.account.key_ref",
+        "value": "resend-atlas"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/channels/destinations",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "destinations": [
+          {
+            "id": "chd_0eb4f8c24a4b11cc583c6cf7",
+            "name": "ResendPriya",
+            "channel": "email",
+            "account": {
+              "from_email": "karol@example.com",
+              "from_name": "Karol",
+              "key_ref": "resend-atlas",
+              "provider": "resend"
+            },
+            "target": {
+              "cc": [],
+              "to": [
+                "priya@example.com"
+              ]
+            },
+            "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+            "synced": false,
+            "state": "active",
+            "badge": "cloud",
+            "created_at": "2026-09-30T14:12:15+00:00",
+            "parked_at": null,
+            "connection": null
+          }
+        ]
+      },
+      "response_sha256": "2ea355d5354d5c87c72af86c4932527fa3068322b15355d033c0a920101f9c64",
+      "captured": {
+        "name": "dest_id",
+        "path": "destinations",
+        "value": "chd_0eb4f8c24a4b11cc583c6cf7",
+        "match": {
+          "name": "ResendPriya"
+        }
+      }
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/channels/email-keys/resend-atlas",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "key_ref": "resend-atlas",
+        "provider": "resend",
+        "saved": true,
+        "operation_id": "op_6570de977eb24103a4b2483ef4314fe4",
+        "receipt": {
+          "receipt_id": "rcpt_0f1acb3152064db5bbc7b0dfc3a0f27b",
+          "operation_id": "op_6570de977eb24103a4b2483ef4314fe4",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "email_key:resend:resend-atlas",
+          "created_at": 1790777535.03599,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_email_key"
+        }
+      },
+      "response_sha256": "332ead990f3975143967d3b857797b824856a5d4917376417b3135d0dcd93fc9"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/preview",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "document_ref": "project_update:pupd_659841da220a46eca6da5ffb05609f9c",
+        "title": "Atlas send ledger \u2014 update r1 (2026-09-30)",
+        "destination_id": "chd_0eb4f8c24a4b11cc583c6cf7",
+        "channel": "email",
+        "badge": "cloud",
+        "payload_digest": "ab1bff554d6566c083380de7007e6e6836ba2844649c495cc4fcacb3aeda737a",
+        "size": 439,
+        "preview": {
+          "from": "Karol <karol@example.com>",
+          "to": [
+            "priya@example.com"
+          ],
+          "cc": [],
+          "subject": "Atlas send ledger \u2014 update r1 (2026-09-30)",
+          "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+        }
+      },
+      "response_sha256": "d19bea47ecb3194550e8e9beda7d5fd88616316679c54718a7d72e4240171669",
+      "captured": {
+        "name": "digest",
+        "path": "payload_digest",
+        "value": "ab1bff554d6566c083380de7007e6e6836ba2844649c495cc4fcacb3aeda737a"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/send",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "send": {
+          "id": "chs_b17d418f4568216507e86dbc",
+          "document_ref": "project_update:pupd_659841da220a46eca6da5ffb05609f9c",
+          "destination_id": "chd_0eb4f8c24a4b11cc583c6cf7",
+          "destination_name": "ResendPriya",
+          "channel": "email",
+          "badge": "cloud",
+          "account": {
+            "from_email": "karol@example.com",
+            "from_name": "Karol",
+            "key_ref": "resend-atlas",
+            "provider": "resend"
+          },
+          "target": {
+            "cc": [],
+            "to": [
+              "priya@example.com"
+            ]
+          },
+          "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+          "payload_digest": "ab1bff554d6566c083380de7007e6e6836ba2844649c495cc4fcacb3aeda737a",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+          },
+          "size": 439,
+          "preview": {
+            "from": "Karol <karol@example.com>",
+            "to": [
+              "priya@example.com"
+            ],
+            "cc": [],
+            "subject": "Atlas send ledger \u2014 update r1 (2026-09-30)",
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": null,
+          "send_operation_id": "op_48abd140550b4612beb3dc0c84d2b5bc",
+          "state": "sent",
+          "reason": null,
+          "proof": {
+            "message_id": "re-atlas-4ef9-0001",
+            "provider": "resend",
+            "scope": "accepted for processing, not delivery",
+            "word": "ACCEPTED BY RESEND"
+          },
+          "file_path": null,
+          "created_at": "2026-09-30T14:12:15.040648+00:00",
+          "dispatch_started_at": "2026-09-30T14:12:15.040648+00:00",
+          "settled_at": "2026-09-30T14:12:15+00:00",
+          "dispatch_seq": 1
+        },
+        "outcome": "sent",
+        "operation_id": "op_48abd140550b4612beb3dc0c84d2b5bc",
+        "receipt": {
+          "receipt_id": "rcpt_a18bfacd2e594745b147a8a94d60ae3f",
+          "operation_id": "op_48abd140550b4612beb3dc0c84d2b5bc",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_send:chs_b17d418f4568216507e86dbc",
+          "created_at": 1790777535.043547,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "document:project_update:pupd_659841da220a46eca6da5ffb05609f9c"
+        }
+      },
+      "response_sha256": "f908afcd8f953f0de5c973e9458992860553a04a2a4095e48048422fe21a0a3d",
+      "captured": {
+        "name": "sent_op",
+        "path": "operation_id",
+        "value": "op_48abd140550b4612beb3dc0c84d2b5bc"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-project.open.proj-c74c63a6a807']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=room-body]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=updates-verb]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=update-list]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-johx2bub",
+    "project_id": "proj-c74c63a6a807",
+    "update_id": "pupd_659841da220a46eca6da5ffb05609f9c",
+    "key_ref": "resend-atlas",
+    "dest_id": "chd_0eb4f8c24a4b11cc583c6cf7",
+    "digest": "ab1bff554d6566c083380de7007e6e6836ba2844649c495cc4fcacb3aeda737a",
+    "sent_op": "op_48abd140550b4612beb3dc0c84d2b5bc"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=update-list-item] [data-update-id='pupd_659841da220a46eca6da5ffb05609f9c']",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=delivery-history] [data-testid=delivery-row]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "scroll_into_view",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=delivery-history] [data-testid=delivery-row]",
+        "block": "center",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "\u2713\nResendPriya\nACCEPTED BY RESEND\nID re-atlas-4ef9-0001\nSEP 30 08:12"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "role": "button",
+        "tabindex": "0",
+        "class": "surface-ledger-line",
+        "data-testid": "delivery-row"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 39,
+        "y": 366,
+        "w": 770,
+        "h": 26
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "f5ab21cdd87657f31eb27080d1e6d3e65a2d32f24d999fa489bdd793463cffdd",
+      "after": "983cde68d6e84404354d4cc5f70d76a2b23f147c933e3316528c94839cb3a9b1"
+    },
+    "document_text_len": {
+      "before": 573,
+      "after": 1026
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=delivery-history] [data-testid=delivery-row]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 API.RESEND.COM:443\nSearch\n",
+    "url": "http://127.0.0.1:50602/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "f5ab21cdd87657f31eb27080d1e6d3e65a2d32f24d999fa489bdd793463cffdd",
+    "document_text_len": 573,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=project_update:pupd_659841da220a46eca6da5ffb05609f9c",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_b17d418f4568216507e86dbc",
+              "document_ref": "project_update:pupd_659841da220a46eca6da5ffb05609f9c",
+              "destination_id": "chd_0eb4f8c24a4b11cc583c6cf7",
+              "destination_name": "ResendPriya",
+              "channel": "email",
+              "badge": "cloud",
+              "account": {
+                "from_email": "karol@example.com",
+                "from_name": "Karol",
+                "key_ref": "resend-atlas",
+                "provider": "resend"
+              },
+              "target": {
+                "cc": [],
+                "to": [
+                  "priya@example.com"
+                ]
+              },
+              "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+              "payload_digest": "ab1bff554d6566c083380de7007e6e6836ba2844649c495cc4fcacb3aeda737a",
+              "document_json": {
+                "label": "REV 1",
+                "slug": "atlas-send-ledger",
+                "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+              },
+              "size": 439,
+              "preview": {
+                "from": "Karol <karol@example.com>",
+                "to": [
+                  "priya@example.com"
+                ],
+                "cc": [],
+                "subject": "Atlas send ledger \u2014 update r1 (2026-09-30)",
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": null,
+              "send_operation_id": "op_48abd140550b4612beb3dc0c84d2b5bc",
+              "state": "sent",
+              "reason": null,
+              "proof": {
+                "message_id": "re-atlas-4ef9-0001",
+                "provider": "resend",
+                "scope": "accepted for processing, not delivery",
+                "word": "ACCEPTED BY RESEND"
+              },
+              "file_path": null,
+              "created_at": "2026-09-30T14:12:15.040648+00:00",
+              "dispatch_started_at": "2026-09-30T14:12:15.040648+00:00",
+              "settled_at": "2026-09-30T14:12:15+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "8115af53aeb3ac06695f3b6e3a57f40a5db7524fb7c2c611409adedf4c6119ae"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-c74c63a6a807/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_659841da220a46eca6da5ffb05609f9c",
+              "project_id": "proj-c74c63a6a807",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-09-30T14:12:15+00:00",
+              "updated_at": "2026-09-30T14:12:15+00:00",
+              "published_at": "2026-09-30T14:12:15+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [
+                {
+                  "id": "pdel_b17d418f45682165",
+                  "update_id": "pupd_659841da220a46eca6da5ffb05609f9c",
+                  "project_id": "proj-c74c63a6a807",
+                  "delivered_at": "2026-09-30T14:12:15.040648+00:00",
+                  "delivered_to": "ResendPriya",
+                  "operation_id": "op_48abd140550b4612beb3dc0c84d2b5bc",
+                  "channel": "email",
+                  "send_id": "chs_b17d418f4568216507e86dbc",
+                  "outcome": "sent",
+                  "proof_json": "{\"message_id\":\"re-atlas-4ef9-0001\",\"provider\":\"resend\",\"scope\":\"accepted for processing, not delivery\",\"word\":\"ACCEPTED BY RESEND\"}"
+                }
+              ],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "d394ca23967f0ee6da52015e8182a659a2aeb8e72ca7c5c085dd4c580e33ce43"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "https",
+          "POST",
+          "api.resend.com",
+          "/emails"
+        ],
+        "body_sha256": "ab1bff554d6566c083380de7007e6e6836ba2844649c495cc4fcacb3aeda737a",
+        "pid": 12001,
+        "at": "2026-09-30T14:12:15.042573+00:00",
+        "answer": 0,
+        "auth": "Bearer",
+        "user_agent": "HoldSpeak"
+      }
+    ],
+    "at_utc": "2026-09-30T14:12:18.076659+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=delivery-history] [data-testid=delivery-row]",
+    "target_present": true,
+    "text": "\u2713\nResendPriya\nACCEPTED BY RESEND\nID re-atlas-4ef9-0001\nSEP 30 08:12",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "delivery-row"
+    },
+    "rect": {
+      "x": 39,
+      "y": 366,
+      "w": 770,
+      "h": 26
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 39,
+        "y": 366,
+        "w": 770,
+        "h": 26
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 41,
+          "y": 368,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 41,
+          "y": 379,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 41,
+          "y": 390,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 424,
+          "y": 368,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 424,
+          "y": 379,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 424,
+          "y": 390,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 807,
+          "y": 368,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 807,
+          "y": 379,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 807,
+          "y": 390,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 API.RESEND.COM:443\nSearch\n",
+    "url": "http://127.0.0.1:50602/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "983cde68d6e84404354d4cc5f70d76a2b23f147c933e3316528c94839cb3a9b1",
+    "document_text_len": 1026,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=project_update:pupd_659841da220a46eca6da5ffb05609f9c",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_b17d418f4568216507e86dbc",
+              "document_ref": "project_update:pupd_659841da220a46eca6da5ffb05609f9c",
+              "destination_id": "chd_0eb4f8c24a4b11cc583c6cf7",
+              "destination_name": "ResendPriya",
+              "channel": "email",
+              "badge": "cloud",
+              "account": {
+                "from_email": "karol@example.com",
+                "from_name": "Karol",
+                "key_ref": "resend-atlas",
+                "provider": "resend"
+              },
+              "target": {
+                "cc": [],
+                "to": [
+                  "priya@example.com"
+                ]
+              },
+              "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+              "payload_digest": "ab1bff554d6566c083380de7007e6e6836ba2844649c495cc4fcacb3aeda737a",
+              "document_json": {
+                "label": "REV 1",
+                "slug": "atlas-send-ledger",
+                "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+              },
+              "size": 439,
+              "preview": {
+                "from": "Karol <karol@example.com>",
+                "to": [
+                  "priya@example.com"
+                ],
+                "cc": [],
+                "subject": "Atlas send ledger \u2014 update r1 (2026-09-30)",
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": null,
+              "send_operation_id": "op_48abd140550b4612beb3dc0c84d2b5bc",
+              "state": "sent",
+              "reason": null,
+              "proof": {
+                "message_id": "re-atlas-4ef9-0001",
+                "provider": "resend",
+                "scope": "accepted for processing, not delivery",
+                "word": "ACCEPTED BY RESEND"
+              },
+              "file_path": null,
+              "created_at": "2026-09-30T14:12:15.040648+00:00",
+              "dispatch_started_at": "2026-09-30T14:12:15.040648+00:00",
+              "settled_at": "2026-09-30T14:12:15+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "8115af53aeb3ac06695f3b6e3a57f40a5db7524fb7c2c611409adedf4c6119ae"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-c74c63a6a807/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_659841da220a46eca6da5ffb05609f9c",
+              "project_id": "proj-c74c63a6a807",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-09-30T14:12:15+00:00",
+              "updated_at": "2026-09-30T14:12:15+00:00",
+              "published_at": "2026-09-30T14:12:15+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [
+                {
+                  "id": "pdel_b17d418f45682165",
+                  "update_id": "pupd_659841da220a46eca6da5ffb05609f9c",
+                  "project_id": "proj-c74c63a6a807",
+                  "delivered_at": "2026-09-30T14:12:15.040648+00:00",
+                  "delivered_to": "ResendPriya",
+                  "operation_id": "op_48abd140550b4612beb3dc0c84d2b5bc",
+                  "channel": "email",
+                  "send_id": "chs_b17d418f4568216507e86dbc",
+                  "outcome": "sent",
+                  "proof_json": "{\"message_id\":\"re-atlas-4ef9-0001\",\"provider\":\"resend\",\"scope\":\"accepted for processing, not delivery\",\"word\":\"ACCEPTED BY RESEND\"}"
+                }
+              ],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "d394ca23967f0ee6da52015e8182a659a2aeb8e72ca7c5c085dd4c580e33ce43"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "https",
+          "POST",
+          "api.resend.com",
+          "/emails"
+        ],
+        "body_sha256": "ab1bff554d6566c083380de7007e6e6836ba2844649c495cc4fcacb3aeda737a",
+        "pid": 12001,
+        "at": "2026-09-30T14:12:15.042573+00:00",
+        "answer": 0,
+        "auth": "Bearer",
+        "user_agent": "HoldSpeak"
+      }
+    ],
+    "at_utc": "2026-09-30T14:12:19.516019+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=delivery-history] [data-testid=delivery-row]",
+    "target_present": true,
+    "text": "\u2713\nResendPriya\nACCEPTED BY RESEND\nID re-atlas-4ef9-0001\nSEP 30 08:12",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "delivery-row"
+    },
+    "rect": {
+      "x": 39,
+      "y": 366,
+      "w": 770,
+      "h": 26
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 39,
+        "y": 366,
+        "w": 770,
+        "h": 26
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 41,
+          "y": 368,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 41,
+          "y": 379,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 41,
+          "y": 390,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 424,
+          "y": 368,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 424,
+          "y": 379,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 424,
+          "y": 390,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 807,
+          "y": 368,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 807,
+          "y": 379,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 807,
+          "y": 390,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 API.RESEND.COM:443\nSearch\n",
+    "url": "http://127.0.0.1:50602/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "983cde68d6e84404354d4cc5f70d76a2b23f147c933e3316528c94839cb3a9b1",
+    "document_text_len": 1026,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=project_update:pupd_659841da220a46eca6da5ffb05609f9c",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_b17d418f4568216507e86dbc",
+              "document_ref": "project_update:pupd_659841da220a46eca6da5ffb05609f9c",
+              "destination_id": "chd_0eb4f8c24a4b11cc583c6cf7",
+              "destination_name": "ResendPriya",
+              "channel": "email",
+              "badge": "cloud",
+              "account": {
+                "from_email": "karol@example.com",
+                "from_name": "Karol",
+                "key_ref": "resend-atlas",
+                "provider": "resend"
+              },
+              "target": {
+                "cc": [],
+                "to": [
+                  "priya@example.com"
+                ]
+              },
+              "target_digest": "990695d5a325b5384b0ed72d1e31a12c2e20492656db2a20610bf37107c5effd",
+              "payload_digest": "ab1bff554d6566c083380de7007e6e6836ba2844649c495cc4fcacb3aeda737a",
+              "document_json": {
+                "label": "REV 1",
+                "slug": "atlas-send-ledger",
+                "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+              },
+              "size": 439,
+              "preview": {
+                "from": "Karol <karol@example.com>",
+                "to": [
+                  "priya@example.com"
+                ],
+                "cc": [],
+                "subject": "Atlas send ledger \u2014 update r1 (2026-09-30)",
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": null,
+              "send_operation_id": "op_48abd140550b4612beb3dc0c84d2b5bc",
+              "state": "sent",
+              "reason": null,
+              "proof": {
+                "message_id": "re-atlas-4ef9-0001",
+                "provider": "resend",
+                "scope": "accepted for processing, not delivery",
+                "word": "ACCEPTED BY RESEND"
+              },
+              "file_path": null,
+              "created_at": "2026-09-30T14:12:15.040648+00:00",
+              "dispatch_started_at": "2026-09-30T14:12:15.040648+00:00",
+              "settled_at": "2026-09-30T14:12:15+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "8115af53aeb3ac06695f3b6e3a57f40a5db7524fb7c2c611409adedf4c6119ae"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-c74c63a6a807/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_659841da220a46eca6da5ffb05609f9c",
+              "project_id": "proj-c74c63a6a807",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-09-30T14:12:15+00:00",
+              "updated_at": "2026-09-30T14:12:15+00:00",
+              "published_at": "2026-09-30T14:12:15+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [
+                {
+                  "id": "pdel_b17d418f45682165",
+                  "update_id": "pupd_659841da220a46eca6da5ffb05609f9c",
+                  "project_id": "proj-c74c63a6a807",
+                  "delivered_at": "2026-09-30T14:12:15.040648+00:00",
+                  "delivered_to": "ResendPriya",
+                  "operation_id": "op_48abd140550b4612beb3dc0c84d2b5bc",
+                  "channel": "email",
+                  "send_id": "chs_b17d418f4568216507e86dbc",
+                  "outcome": "sent",
+                  "proof_json": "{\"message_id\":\"re-atlas-4ef9-0001\",\"provider\":\"resend\",\"scope\":\"accepted for processing, not delivery\",\"word\":\"ACCEPTED BY RESEND\"}"
+                }
+              ],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "d394ca23967f0ee6da52015e8182a659a2aeb8e72ca7c5c085dd4c580e33ce43"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "https",
+          "POST",
+          "api.resend.com",
+          "/emails"
+        ],
+        "body_sha256": "ab1bff554d6566c083380de7007e6e6836ba2844649c495cc4fcacb3aeda737a",
+        "pid": 12001,
+        "at": "2026-09-30T14:12:15.042573+00:00",
+        "answer": 0,
+        "auth": "Bearer",
+        "user_agent": "HoldSpeak"
+      }
+    ],
+    "at_utc": "2026-09-30T14:12:19.383019+00:00",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'ACCEPTED BY RESEND' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 366, 'w': 770, 'h': 26} | readable_text: 'ID re-atlas-4ef9-0001' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 366, 'w': 770, 'h': 26} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_659841da220a46eca6da5ffb05609f9c answered 200 with 1 row(s) {'state': 'sent', 'destination_id': 'chd_0eb4f8c24a4b11cc583c6cf7', 'proof.provider': 'resend', 'proof.word': 'ACCEPTED BY RESEND'}; GET /api/projects/proj-c74c63a6a807/updates answered 200 with 1 row(s) {'id': 'pupd_659841da220a46eca6da5ffb05609f9c', 'deliveries.0.channel': 'email', 'deliveries.0.outcome': 'sent'} | cli_calls: 1 call(s) starting ['https', 'POST', 'api.resend.com', '/emails'] at the recording runner (pids [12001]; 1 call(s) in all), wanted 1",
+    "elapsed_s": 1.197
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'ACCEPTED BY RESEND' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 366, 'w': 770, 'h': 26} | readable_text: 'ID re-atlas-4ef9-0001' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 366, 'w': 770, 'h': 26} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_659841da220a46eca6da5ffb05609f9c answered 200 with 1 row(s) {'state': 'sent', 'destination_id': 'chd_0eb4f8c24a4b11cc583c6cf7', 'proof.provider': 'resend', 'proof.word': 'ACCEPTED BY RESEND'}; GET /api/projects/proj-c74c63a6a807/updates answered 200 with 1 row(s) {'id': 'pupd_659841da220a46eca6da5ffb05609f9c', 'deliveries.0.channel': 'email', 'deliveries.0.outcome': 'sent'} | cli_calls: 1 call(s) starting ['https', 'POST', 'api.resend.com', '/emails'] at the recording runner (pids [12001]; 1 call(s) in all), wanted 1",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.33,
+    "first_satisfied_at_s": 1.197,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: readable_text: 'ACCEPTED BY RESEND' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 366, 'w': 770, 'h': 26} | readable_text: 'ID re-atlas-4ef9-0001' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 366, 'w': 770, 'h': 26} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_659841da220a46eca6da5ffb05609f9c answered 200 with 1 row(s) {'state': 'sent', 'destination_id': 'chd_0eb4f8c24a4b11cc583c6cf7', 'proof.provider': 'resend', 'proof.word': 'ACCEPTED BY RESEND'}; GET /api/projects/proj-c74c63a6a807/updates answered 200 with 1 row(s) {'id': 'pupd_659841da220a46eca6da5ffb05609f9c', 'deliveries.0.channel': 'email', 'deliveries.0.outcome': 'sent'} | cli_calls: 1 call(s) starting ['https', 'POST', 'api.resend.com', '/emails'] at the recording runner (pids [12001]; 1 call(s) in all), wanted 1"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:50602) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:50602) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/channels/destinations",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/connections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-c74c63a6a807/updates",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.resend_history--1440/20260930T141210Z-case.p10.send.resend_history-astra-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.resend_history--1440/20260930T141210Z-case.p10.send.resend_history-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-johx2bub/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-johx2bub/.config/holdspeak/config.json",
+    "CLI_RUNNER f792f2751bea269f3e8ea71941786d25e4196cce216c5910b9eff0ae32a34628",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDING runner at the CLI channels' process edge (no real gh or acli)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50602",
+    "CLI_CALL [\"https\", \"POST\", \"api.resend.com\", \"/emails\"]"
+  ],
+  "duration_s": 8.865
+}

@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:51325 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fk68toij/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p10
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b3/case.p10.send.destination_picked--1440/20261001T043130Z-case.p10.send.destination_picked-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b3/case.p10.send.destination_picked--1440/20261001T043130Z-case.p10.send.destination_picked-astra-1440/after.png']
+NOTE: predicate: all_of: protocol_status: POST /api/channels/preview answered 200, wanted 200 (body sha256 5e038eaccd3c); response body matches its declared fields | readable_text: 'Send' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 75, 'y': 366, 'w': 714, 'h': 24} | readable_text: 'THIS DEVICE' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 75, 'y': 366, 'w': 714, 'h': 24} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_2fd1bbf2d7e2460cbd6f7843f0789c95 answered 200 with 0 row(s) {}

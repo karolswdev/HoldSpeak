@@ -63,6 +63,17 @@ def test_the_derivation_sees_the_known_codes_of_each_kind() -> None:
     assert "owner_principal_required" in codes.declared_refusals()
 
 
+@pytest.mark.parametrize("code, kind", [
+    ("slack_webhook_invalid", "refused"),
+    ("invalid_payload", "failed"),
+    ("rollup_error", "unknown"),
+])
+def test_slack_codes_are_derived_from_the_backend_source(code: str, kind: str) -> None:
+    entry = codes.emitted().get(code, {})
+    assert kind in entry.get("kinds", set()), (code, entry)
+    assert any(where.startswith("holdspeak/services/channel_slack.py:") for where in entry.get("where", [])), entry
+
+
 def test_the_face_reads_its_tables_through_the_word_functions() -> None:
     """The tables are the ones refusedWord / failedWord / unknownWord read (no second table)."""
     ts = (REPO / "web/src/features/channels/channels.ts").read_text()

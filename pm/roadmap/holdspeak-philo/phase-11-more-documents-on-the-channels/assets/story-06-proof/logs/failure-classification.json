@@ -1,0 +1,41 @@
+{
+  "full_summary": "4 failed, 13628 passed, 117 skipped, 4 xfailed, 19 warnings in 3576.27s",
+  "serial_r1": "2 failed, 2 passed in 16.06s",
+  "serial_r2": "2 failed, 2 passed in 14.83s",
+  "final_focused": "411 collected; 411 passed, 3 warnings in 7.11s",
+  "full_rerun_after_test_only_loader_extraction": false,
+  "failures": [
+    {
+      "node": "tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence",
+      "full": "failed",
+      "serial_r1": "failed",
+      "serial_r2": "failed",
+      "classification": "b",
+      "disposition": "Branch-new test integration defect, fixed: tracked program reads moved into _philo11_proof_inputs.py; all writes remain in tmp_path tests. The unchanged guard passes in the final 411-test selection. No allowlist exception or guard relaxation."
+    },
+    {
+      "node": "tests/e2e/test_hs176_loop_glass.py::test_speak_loop_1440",
+      "full": "failed",
+      "serial_r1": "passed",
+      "serial_r2": "passed",
+      "classification": "c",
+      "disposition": "Both exact nodes pass twice serially with unchanged guards. Exact parallel cause unknown; retained here and previously in story 01."
+    },
+    {
+      "node": "tests/e2e/test_hs176_loop_glass.py::test_speak_loop_393",
+      "full": "failed",
+      "serial_r1": "passed",
+      "serial_r2": "passed",
+      "classification": "c",
+      "disposition": "Both exact nodes pass twice serially with unchanged guards. Exact parallel cause unknown; retained here and previously in story 01."
+    },
+    {
+      "node": "tests/unit/test_philo10_face_words.py::test_every_emitted_code_has_a_face_word",
+      "full": "failed",
+      "serial_r1": "failed",
+      "serial_r2": "failed",
+      "classification": "b",
+      "disposition": "Inherited 20 missing face-word pairs. All 12 inputs match dispatched head 8a6b807d. Story 05 owns the face changes; guard unchanged and still red here."
+    }
+  ]
+}

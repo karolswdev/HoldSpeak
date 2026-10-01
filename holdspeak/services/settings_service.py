@@ -35,7 +35,6 @@ SECRET_PATHS = {
         "meeting",
         "intel_retry_failure_webhook_header_value",
     ),
-    "slack_webhook_url": ("meeting", "slack_webhook_url"),
     "companion_webhook_url": ("meeting", "companion_webhook_url"),
 }
 
@@ -158,6 +157,9 @@ def redacted_settings(
     meeting_payload = payload.get("meeting")
     if isinstance(meeting_payload, dict):
         meeting_payload["intel_enabled"] = False
+        # Keep the dataclass byte so old config files load, but never expose
+        # the retired Settings webhook field.
+        meeting_payload.pop("slack_webhook_url", None)
     if include_meeting_placement:
         # The provenance rides both the read and the write's echo, so a surface
         # that changes the dial sees the new placement without a reload.
@@ -178,7 +180,6 @@ def redacted_settings(
         state = {"configured": bool(value)}
         if secret_id in {
             "failure_webhook_url",
-            "slack_webhook_url",
             "companion_webhook_url",
         }:
             host = urlparse(value).hostname
@@ -197,6 +198,9 @@ def strip_secret_mutations(payload: dict[str, Any]) -> dict[str, Any]:
             clean[section].pop(field, None)
     if isinstance(clean.get("meeting"), dict):
         clean["meeting"].pop("intel_retry_failure_webhook_header_name", None)
+        # A stale Settings client may echo this retained field. It is ignored
+        # on writes even after the credential registration is removed.
+        clean["meeting"].pop("slack_webhook_url", None)
     return clean
 
 
@@ -601,28 +605,9 @@ class SettingsService:
             webhook_header_value or None
         )
 
-        # HS-61-01: the Send-to-Slack incoming-webhook URL. Empty = the
-        # feature is off; anything else must pass THE shared rule (https
-        # with a host; plain http for loopback only). The URL's host is
-        # exactly what the Slack connector may POST to.
-        slack_url = str(
-            meeting_data.get(
-                "slack_webhook_url", current.meeting.slack_webhook_url or ""
-            )
-            or ""
-        ).strip()
-        if slack_url:
-            from holdspeak.slack_export import slack_webhook_host
-
-            try:
-                slack_webhook_host(slack_url)
-            except ValueError as exc:
-                return {"success": False, "error": f"slack_webhook_url: {exc}"}
-        meeting_data["slack_webhook_url"] = slack_url
-
-        # HSM-14: the iPad desk's Webhook connector URL. Same consent posture
-        # as Slack — empty = the connector is off; anything else must pass THE
-        # shared rule (https with a host; plain http for loopback only). The
+        # HSM-14: the iPad desk's generic Webhook connector URL. Empty turns
+        # the connector off. Other values use HTTPS with a host, or plain
+        # HTTP for loopback. Slack uses its channel's separate URL rule. The
         # URL's host is exactly what the Webhook connector may POST to, and the
         # URL is a credential: it stays on the host and never rides a payload.
         companion_webhook_url = str(
@@ -1023,12 +1008,10 @@ class SettingsService:
         # settings mutation conservatively invalidates reusable grants;
         # per-action approvals retain their own exact snapshots.
         authority_before = (
-            current.meeting.slack_webhook_url,
             current.meeting.companion_webhook_url,
             current.meeting.companion_github_repo,
         )
         authority_after = (
-            updated.meeting.slack_webhook_url,
             updated.meeting.companion_webhook_url,
             updated.meeting.companion_github_repo,
         )

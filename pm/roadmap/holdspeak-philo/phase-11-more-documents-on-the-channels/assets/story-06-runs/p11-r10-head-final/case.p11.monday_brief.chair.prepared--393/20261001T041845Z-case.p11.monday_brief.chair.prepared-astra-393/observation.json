@@ -1,0 +1,1027 @@
+{
+  "id": "obs-20261001T041845Z-case.p11.monday_brief.chair.prepared-astra-393",
+  "run_id": "20261001T041845Z-case.p11.monday_brief.chair.prepared-astra-393",
+  "case_id": "case.p11.monday_brief.chair.prepared",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase11.json",
+  "job": "p11",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.documents.p11_sources",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:60297",
+      "port": 60297,
+      "pid": 2242,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-mhx77lxl",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-mhx77lxl/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:18:45.102200+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase11.json",
+      "sha256": "a19947bc5525674138d73b58769edc85c70e35c67d4eca151fe6b143a9f0e8b0",
+      "version": "phase11-documents"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T22:18:50.729078"
+        }
+      },
+      "response_sha256": "a5457d89fe81f6f162eb0fbf87d9747a69ee970340b6582b3c480b5d14307301"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_e3f1e6571713",
+          "title": "P11BriefDecision",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "P11BriefDecisionText.",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:18:50Z",
+          "updated_at": "2026-10-01T04:18:50Z",
+          "deleted": false
+        },
+        "operation_id": "op_18ea598544e8488b8beb623c01944b2e",
+        "receipt": {
+          "receipt_id": "rcpt_f45381503bb145e9ab390a4b1f526835",
+          "operation_id": "op_18ea598544e8488b8beb623c01944b2e",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_e3f1e6571713",
+          "created_at": 1790828330.794807,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_e3f1e6571713"
+        }
+      },
+      "response_sha256": "3af8f0e492cecb7a16e95a77368e11c3c8617b1b08ed5637b376c80c8308165d",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_e3f1e6571713"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-11d80615c3604e17a819d029717cc9da",
+        "period_start": "2026-09-29T17:00:00",
+        "period_end": "2026-09-30T22:18:50.797686",
+        "headline": "1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-54e3fd9e35fa4aed85faf3584460454e",
+              "section": "decisions",
+              "text": "Review decision: P11BriefDecision",
+              "detail": null,
+              "source_ref": "decision:decision_e3f1e6571713",
+              "priority": 200,
+              "created_at": "2026-10-01T04:18:50Z"
+            }
+          ]
+        },
+        "generated_at": "2026-09-30T22:18:50.797686",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 1,
+          "since": "1790828330.793092"
+        },
+        "period_label": "SEP 28 \u2013 30",
+        "generated_label": "GENERATED SEP 30 22:18",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "6336a25e3d03f0c2dabb8461ce44975ba2926f9c5f1848347b94b13740ab7ae5",
+      "captured": {
+        "name": "brief_id",
+        "path": "id",
+        "value": "brief-11d80615c3604e17a819d029717cc9da"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/destinations",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "destination": {
+          "id": "chd_3d3c1ee36f8bd3ce6e11f030",
+          "name": "P11-Folder",
+          "channel": "file",
+          "account": {},
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-mhx77lxl"
+          },
+          "target_digest": "97260879210e4588621e95822869ab62d3f9134fed9a44a0965a7abce6a63b5d",
+          "synced": false,
+          "state": "active",
+          "badge": "local",
+          "created_at": "2026-10-01T04:18:50+00:00",
+          "parked_at": null,
+          "connection": null
+        },
+        "replaced": null,
+        "operation_id": "op_e6f399d9abed4285aa32bc4960922f8d",
+        "receipt": {
+          "receipt_id": "rcpt_9be833b1abcb4ccf8cba3a74294c936a",
+          "operation_id": "op_e6f399d9abed4285aa32bc4960922f8d",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_destination:chd_3d3c1ee36f8bd3ce6e11f030",
+          "created_at": 1790828330.8678641,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_destination"
+        }
+      },
+      "response_sha256": "085e3ca8712b26ed6918a884f1bfd461cf98869fbf02c6d1aa720fd3f290e402",
+      "captured": {
+        "name": "dest_id",
+        "path": "destination.id",
+        "value": "chd_3d3c1ee36f8bd3ce6e11f030"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/sends",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "send": {
+          "id": "chs_56b65ebb5e106790451fc262",
+          "document_ref": "monday_brief:brief-11d80615c3604e17a819d029717cc9da",
+          "destination_id": "chd_3d3c1ee36f8bd3ce6e11f030",
+          "destination_name": "P11-Folder",
+          "channel": "file",
+          "badge": "local",
+          "account": {},
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-mhx77lxl"
+          },
+          "target_digest": "97260879210e4588621e95822869ab62d3f9134fed9a44a0965a7abce6a63b5d",
+          "payload_digest": "4a6be04cce01c66603d74c78068ee0cda2f0bedd57986689b00e0dd05c996425",
+          "document_json": {
+            "label": "BRIEF 2026-09-30",
+            "slug": "brief-2026-09-30",
+            "title": "Monday Brief \u2014 2026-09-30"
+          },
+          "size": 173,
+          "preview": {
+            "text": "# Monday Brief\nPeriod: 2026-09-29 \u2013 2026-09-30\nGenerated: 30 Sep 2026, 22:18\n\n1 decision waiting.\n\n## Decisions\n- Review decision: P11BriefDecision\n\nPEOPLE \u00b7 UNAVAILABLE\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": "op_8ce6d3246bac4111a245a72bf93b755d",
+          "send_operation_id": null,
+          "state": "prepared",
+          "reason": null,
+          "proof": null,
+          "file_path": null,
+          "created_at": "2026-10-01T04:18:50+00:00",
+          "dispatch_started_at": null,
+          "settled_at": null,
+          "dispatch_seq": null
+        },
+        "outcome": "prepared",
+        "operation_id": "op_8ce6d3246bac4111a245a72bf93b755d",
+        "receipt": {
+          "receipt_id": "rcpt_d55bcde9061746b9820b44218bcfa1d2",
+          "operation_id": "op_8ce6d3246bac4111a245a72bf93b755d",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_send:chs_56b65ebb5e106790451fc262",
+          "created_at": 1790828330.876467,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "document:monday_brief:brief-11d80615c3604e17a819d029717cc9da"
+        }
+      },
+      "response_sha256": "765d415a591a6af8c9bd80f30182d0e22010e57b2005f1734cee8a3c8d3e30c9"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".chair [data-seat=brief] [data-testid=prepared-row]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-mhx77lxl",
+    "decision_id": "decision_e3f1e6571713",
+    "brief_id": "brief-11d80615c3604e17a819d029717cc9da",
+    "dest_id": "chd_3d3c1ee36f8bd3ce6e11f030"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": ".chair [data-seat=brief] [data-testid=prepared-row]",
+    "done": true
+  },
+  "diff": {
+    "attrs": {
+      "before": {
+        "role": "button",
+        "tabindex": "0",
+        "class": "surface-ledger-line",
+        "data-testid": "prepared-row",
+        "aria-expanded": "true",
+        "aria-label": "P11-Folder, PREPARED"
+      },
+      "after": {
+        "role": "button",
+        "tabindex": "0",
+        "class": "surface-ledger-line",
+        "data-testid": "prepared-row",
+        "aria-expanded": "false",
+        "aria-label": "P11-Folder, PREPARED"
+      }
+    },
+    "rect": {
+      "before": {
+        "x": 12,
+        "y": 594,
+        "w": 369,
+        "h": 77
+      },
+      "after": {
+        "x": 12,
+        "y": 275,
+        "w": 369,
+        "h": 77
+      }
+    },
+    "focus": {
+      "before": "body",
+      "after": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+    },
+    "focus_label": {
+      "before": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n10:18 PM\n1 need you\nNO CAL",
+      "after": "P11-Folder, PREPARED"
+    },
+    "document_text_sha256": {
+      "before": "66a7de8465f4c458c4ed6a4b0ed47e4df7c782d64a0b3c25f827a2dd2256dc07",
+      "after": "d2c6f161d461fdc00255bcca078e7a816ba5f71b3e2adc04f986306d9f5a1fda"
+    },
+    "document_text_len": {
+      "before": 851,
+      "after": 572
+    }
+  },
+  "before": {
+    "observe_at": ".chair [data-seat=brief] [data-testid=prepared-row]",
+    "target_present": true,
+    "text": "\u25c6\nP11-Folder\n\u25c6\nPREPARED\nBY YOU\nBRIEF SEP 30\nSEP 30 22:18\nTHIS DEVICE",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "prepared-row",
+      "aria-expanded": "true",
+      "aria-label": "P11-Folder, PREPARED"
+    },
+    "rect": {
+      "x": 12,
+      "y": 594,
+      "w": 369,
+      "h": 77
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 594,
+        "w": 369,
+        "h": 77
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 596,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 14,
+          "y": 632,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 14,
+          "y": 669,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 197,
+          "y": 596,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar > button.btn.btn--ghost"
+        },
+        {
+          "x": 197,
+          "y": 632,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar > button.btn.btn--ghost"
+        },
+        {
+          "x": 197,
+          "y": 669,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 379,
+          "y": 596,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 379,
+          "y": 632,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 379,
+          "y": 669,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        }
+      ],
+      "all_owned": false
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n10:18 PM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:60297/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "66a7de8465f4c458c4ed6a4b0ed47e4df7c782d64a0b3c25f827a2dd2256dc07",
+    "document_text_len": 851,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=monday_brief:brief-11d80615c3604e17a819d029717cc9da",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_56b65ebb5e106790451fc262",
+              "document_ref": "monday_brief:brief-11d80615c3604e17a819d029717cc9da",
+              "destination_id": "chd_3d3c1ee36f8bd3ce6e11f030",
+              "destination_name": "P11-Folder",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-mhx77lxl"
+              },
+              "target_digest": "97260879210e4588621e95822869ab62d3f9134fed9a44a0965a7abce6a63b5d",
+              "payload_digest": "4a6be04cce01c66603d74c78068ee0cda2f0bedd57986689b00e0dd05c996425",
+              "document_json": {
+                "label": "BRIEF 2026-09-30",
+                "slug": "brief-2026-09-30",
+                "title": "Monday Brief \u2014 2026-09-30"
+              },
+              "size": 173,
+              "preview": {
+                "text": "# Monday Brief\nPeriod: 2026-09-29 \u2013 2026-09-30\nGenerated: 30 Sep 2026, 22:18\n\n1 decision waiting.\n\n## Decisions\n- Review decision: P11BriefDecision\n\nPEOPLE \u00b7 UNAVAILABLE\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_8ce6d3246bac4111a245a72bf93b755d",
+              "send_operation_id": null,
+              "state": "prepared",
+              "reason": null,
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T04:18:50+00:00",
+              "dispatch_started_at": null,
+              "settled_at": null,
+              "dispatch_seq": null
+            }
+          ]
+        },
+        "body_sha256": "adb3465d0ff91ac58d0035f5af1d5fa8e21a5f8bdff3f7d3bdba5a209507d6f8"
+      }
+    ],
+    "at_utc": "2026-10-01T04:18:54.026705+00:00"
+  },
+  "after": {
+    "observe_at": ".chair [data-seat=brief] [data-testid=prepared-row]",
+    "target_present": true,
+    "text": "\u25c6\nP11-Folder\n\u25c6\nPREPARED\nBY YOU\nBRIEF SEP 30\nSEP 30 22:18\nTHIS DEVICE",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "prepared-row",
+      "aria-expanded": "false",
+      "aria-label": "P11-Folder, PREPARED"
+    },
+    "rect": {
+      "x": 12,
+      "y": 275,
+      "w": 369,
+      "h": 77
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 275,
+        "w": 369,
+        "h": 77
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 277,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 313,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 350,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 277,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 313,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-cells > span.surface-token"
+        },
+        {
+          "x": 197,
+          "y": 350,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 277,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 313,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 350,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 319,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "P11-Folder, PREPARED",
+    "url": "http://127.0.0.1:60297/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d2c6f161d461fdc00255bcca078e7a816ba5f71b3e2adc04f986306d9f5a1fda",
+    "document_text_len": 572,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=monday_brief:brief-11d80615c3604e17a819d029717cc9da",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_56b65ebb5e106790451fc262",
+              "document_ref": "monday_brief:brief-11d80615c3604e17a819d029717cc9da",
+              "destination_id": "chd_3d3c1ee36f8bd3ce6e11f030",
+              "destination_name": "P11-Folder",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-mhx77lxl"
+              },
+              "target_digest": "97260879210e4588621e95822869ab62d3f9134fed9a44a0965a7abce6a63b5d",
+              "payload_digest": "4a6be04cce01c66603d74c78068ee0cda2f0bedd57986689b00e0dd05c996425",
+              "document_json": {
+                "label": "BRIEF 2026-09-30",
+                "slug": "brief-2026-09-30",
+                "title": "Monday Brief \u2014 2026-09-30"
+              },
+              "size": 173,
+              "preview": {
+                "text": "# Monday Brief\nPeriod: 2026-09-29 \u2013 2026-09-30\nGenerated: 30 Sep 2026, 22:18\n\n1 decision waiting.\n\n## Decisions\n- Review decision: P11BriefDecision\n\nPEOPLE \u00b7 UNAVAILABLE\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_8ce6d3246bac4111a245a72bf93b755d",
+              "send_operation_id": null,
+              "state": "prepared",
+              "reason": null,
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T04:18:50+00:00",
+              "dispatch_started_at": null,
+              "settled_at": null,
+              "dispatch_seq": null
+            }
+          ]
+        },
+        "body_sha256": "adb3465d0ff91ac58d0035f5af1d5fa8e21a5f8bdff3f7d3bdba5a209507d6f8"
+      }
+    ],
+    "at_utc": "2026-10-01T04:18:55.154372+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:60297) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:60297) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".chair [data-seat=brief] [data-testid=prepared-row]",
+    "target_present": true,
+    "text": "\u25c6\nP11-Folder\n\u25c6\nPREPARED\nBY YOU\nBRIEF SEP 30\nSEP 30 22:18\nTHIS DEVICE",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "prepared-row",
+      "aria-expanded": "false",
+      "aria-label": "P11-Folder, PREPARED"
+    },
+    "rect": {
+      "x": 12,
+      "y": 275,
+      "w": 369,
+      "h": 77
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 275,
+        "w": 369,
+        "h": 77
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 277,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 313,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 350,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 277,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 313,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-cells > span.surface-token"
+        },
+        {
+          "x": 197,
+          "y": 350,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 277,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 313,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 350,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 319,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "P11-Folder, PREPARED",
+    "url": "http://127.0.0.1:60297/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d2c6f161d461fdc00255bcca078e7a816ba5f71b3e2adc04f986306d9f5a1fda",
+    "document_text_len": 572,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=monday_brief:brief-11d80615c3604e17a819d029717cc9da",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_56b65ebb5e106790451fc262",
+              "document_ref": "monday_brief:brief-11d80615c3604e17a819d029717cc9da",
+              "destination_id": "chd_3d3c1ee36f8bd3ce6e11f030",
+              "destination_name": "P11-Folder",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-mhx77lxl"
+              },
+              "target_digest": "97260879210e4588621e95822869ab62d3f9134fed9a44a0965a7abce6a63b5d",
+              "payload_digest": "4a6be04cce01c66603d74c78068ee0cda2f0bedd57986689b00e0dd05c996425",
+              "document_json": {
+                "label": "BRIEF 2026-09-30",
+                "slug": "brief-2026-09-30",
+                "title": "Monday Brief \u2014 2026-09-30"
+              },
+              "size": 173,
+              "preview": {
+                "text": "# Monday Brief\nPeriod: 2026-09-29 \u2013 2026-09-30\nGenerated: 30 Sep 2026, 22:18\n\n1 decision waiting.\n\n## Decisions\n- Review decision: P11BriefDecision\n\nPEOPLE \u00b7 UNAVAILABLE\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_8ce6d3246bac4111a245a72bf93b755d",
+              "send_operation_id": null,
+              "state": "prepared",
+              "reason": null,
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T04:18:50+00:00",
+              "dispatch_started_at": null,
+              "settled_at": null,
+              "dispatch_seq": null
+            }
+          ]
+        },
+        "body_sha256": "adb3465d0ff91ac58d0035f5af1d5fa8e21a5f8bdff3f7d3bdba5a209507d6f8"
+      }
+    ],
+    "at_utc": "2026-10-01T04:18:55.021085+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:60297) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:60297) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'PREPARED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 275, 'w': 369, 'h': 77} | readable_text: 'BY YOU' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 275, 'w': 369, 'h': 77} | protocol_reads: GET /api/channels/sends?document_ref=monday_brief:brief-11d80615c3604e17a819d029717cc9da answered 200 with 1 row(s) {'document_ref': 'monday_brief:brief-11d80615c3604e17a819d029717cc9da', 'destination_id': 'chd_3d3c1ee36f8bd3ce6e11f030', 'channel': 'file', 'state': 'prepared', 'prepared_by.kind': 'owner'}",
+    "elapsed_s": 0.934
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'PREPARED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 275, 'w': 369, 'h': 77} | readable_text: 'BY YOU' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 275, 'w': 369, 'h': 77} | protocol_reads: GET /api/channels/sends?document_ref=monday_brief:brief-11d80615c3604e17a819d029717cc9da answered 200 with 1 row(s) {'document_ref': 'monday_brief:brief-11d80615c3604e17a819d029717cc9da', 'destination_id': 'chd_3d3c1ee36f8bd3ce6e11f030', 'channel': 'file', 'state': 'prepared', 'prepared_by.kind': 'owner'}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.067,
+    "first_satisfied_at_s": 0.934,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: readable_text: 'PREPARED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 275, 'w': 369, 'h': 77} | readable_text: 'BY YOU' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 275, 'w': 369, 'h': 77} | protocol_reads: GET /api/channels/sends?document_ref=monday_brief:brief-11d80615c3604e17a819d029717cc9da answered 200 with 1 row(s) {'document_ref': 'monday_brief:brief-11d80615c3604e17a819d029717cc9da', 'destination_id': 'chd_3d3c1ee36f8bd3ce6e11f030', 'channel': 'file', 'state': 'prepared', 'prepared_by.kind': 'owner'}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:60297) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:60297) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b2/case.p11.monday_brief.chair.prepared--393/20261001T041845Z-case.p11.monday_brief.chair.prepared-astra-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b2/case.p11.monday_brief.chair.prepared--393/20261001T041845Z-case.p11.monday_brief.chair.prepared-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-mhx77lxl/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-mhx77lxl/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:60297"
+  ],
+  "duration_s": 10.194
+}

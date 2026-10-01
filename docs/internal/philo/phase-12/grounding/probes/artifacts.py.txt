@@ -1,0 +1,167 @@
+"""PHILO-12 grounding probe: real artifact producers and channel bytes.
+
+Run with an isolated HOME, for example:
+
+    HOME="$(mktemp -d)" UV_CACHE_DIR=/tmp/philo12-uv-cache \
+      uv run python docs/internal/philo/phase-12/grounding/probes/artifacts.py.txt
+
+The probe uses the real Database, PluginArtifactRepository, MIR synthesizer,
+and run-artifact persistence helper. It prints only facts from the isolated
+database; it does not use credentials, a live hub, or the owner's database.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import tempfile
+from datetime import datetime
+from pathlib import Path
+
+from holdspeak.db import Database, reset_database
+from holdspeak.meeting_session import MeetingState
+from holdspeak.plugins.synthesis import synthesize_and_persist
+from holdspeak.services.channel_contract import ChannelRefused, Document, FileChannel, render_document
+from holdspeak.services.support import _persist_run_artifact
+
+
+def report(name: str, artifact: object) -> None:
+    stored = db.plugins.get_artifact(str(artifact))
+    if stored is None:
+        print(json.dumps({"name": name, "missing": True}, sort_keys=True))
+        return
+    body = str(stored.body_markdown or "")
+    print(json.dumps({
+        "name": name,
+        "id": stored.id,
+        "origin": stored.origin,
+        "artifact_type": stored.artifact_type,
+        "title": stored.title,
+        "body_chars": len(body),
+        "body_bytes_utf8": len(body.encode("utf-8")),
+        "body_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+        "body_head": body[:160],
+        "sources": stored.sources,
+        "structured_keys": sorted(stored.structured_json),
+    }, sort_keys=True, ensure_ascii=False))
+
+
+reset_database()
+root = Path(os.environ.get("HOME") or tempfile.mkdtemp(prefix="philo12-artifact-home-"))
+root.mkdir(parents=True, exist_ok=True)
+db = Database(root / "holdspeak.db")
+print(json.dumps({"name": "isolation", "home": str(root), "db_path": str(root / "holdspeak.db")}, sort_keys=True))
+
+# Real MIR synthesis producer: a stored successful plugin run is synthesized,
+# deduped, rendered, and persisted by synthesize_and_persist.
+db.meetings.save_meeting(MeetingState(
+    id="probe-meeting",
+    started_at=datetime(2026, 9, 30, 8, 0, 0),
+    title="Phase 12 probe",
+))
+db.plugins.record_intent_window(
+    meeting_id="probe-meeting", window_id="probe-meeting:w0001",
+    start_seconds=0, end_seconds=30, transcript_hash="probe-hash",
+    intent_scores={"architecture": 0.9},
+)
+db.plugins.record_plugin_run(
+    meeting_id="probe-meeting", window_id="probe-meeting:w0001",
+    plugin_id="requirements_extractor", plugin_version="1",
+    status="success", idempotency_key="probe-plugin-run",
+    output={"summary": "Keep the artifact body stable.", "confidence_hint": 0.9},
+)
+drafts, _lineages = synthesize_and_persist(db, "probe-meeting")
+report("mir_synthesis", drafts[0].artifact_id)
+first_read = db.plugins.get_artifact(drafts[0].artifact_id)
+second_read = db.plugins.get_artifact(drafts[0].artifact_id)
+print(json.dumps({
+    "name": "repeated_storage_read",
+    "artifact_id": drafts[0].artifact_id,
+    "body_equal": bool(first_read and second_read and first_read.body_markdown == second_read.body_markdown),
+}, sort_keys=True))
+
+# Real run-output producer used by recipe/chain/workflow support code.
+run_id = _persist_run_artifact(
+    db=db, kind="recipe", name="Probe recipe", user_input="probe input",
+    output="A durable run result.",
+    sources=[{"source_type": "recipe", "source_ref": "probe-recipe"}],
+)
+report("run_output", run_id)
+
+# The Phase 11 registry has no artifact row yet. This is a real contract read,
+# so keep the named refusal as grounding evidence instead of constructing a
+# fake source Document for the artifact.
+try:
+    render_document(db, "artifact:probe-binary")
+except ChannelRefused as exc:
+    print(json.dumps({
+        "name": "artifact_document_registry",
+        "code": exc.code,
+    }, sort_keys=True))
+
+# Canonical storage accepts arbitrary Python values by stringifying the body.
+# This records the current binary/non-text behavior for the grounding audit.
+db.plugins.record_artifact(
+    artifact_id="probe-binary", meeting_id="", artifact_type="run_output",
+    title="Binary input", body_markdown=b"\x00\xff\x80", status="draft",
+    plugin_id="probe", plugin_version="1",
+    sources=[{"source_type": "input", "source_ref": "probe-binary-input"}],
+)
+report("bytes_argument", "probe-binary")
+stored_binary = db.plugins.get_artifact("probe-binary")
+if stored_binary is not None:
+    document = Document(
+        ref="artifact:probe-binary", title=stored_binary.title,
+        body_md=stored_binary.body_markdown,
+    )
+    payload = FileChannel.serialize(document)
+    print(json.dumps({
+        "name": "bytes_argument_file_payload",
+        "payload_bytes": len(payload),
+        "payload_head_hex": payload[:32].hex(),
+        "payload_utf8_decodes": True,
+    }, sort_keys=True))
+
+# A lone surrogate is a distinct non-UTF-8 case. The current persistence seam
+# rejects it with the driver's raw UnicodeEncodeError before a named refusal.
+try:
+    db.plugins.record_artifact(
+        artifact_id="probe-surrogate", meeting_id="", artifact_type="run_output",
+        title="Surrogate input", body_markdown="ok\udcff", status="draft",
+        plugin_id="probe", plugin_version="1",
+        sources=[{"source_type": "input", "source_ref": "probe-surrogate-input"}],
+    )
+    report("surrogate_argument", "probe-surrogate")
+    surrogate = db.plugins.get_artifact("probe-surrogate")
+    if surrogate is not None:
+        try:
+            FileChannel.serialize(Document(
+                ref="artifact:probe-surrogate", title=surrogate.title,
+                body_md=surrogate.body_markdown,
+            ))
+        except Exception as exc:
+            print(json.dumps({
+                "name": "surrogate_file_payload",
+                "exception_type": type(exc).__name__,
+                "exception": str(exc),
+            }, sort_keys=True, ensure_ascii=True))
+except Exception as exc:
+    print(json.dumps({
+        "name": "surrogate_argument",
+        "exception_type": type(exc).__name__,
+        "exception": str(exc),
+    }, sort_keys=True, ensure_ascii=True))
+
+with db._connection() as conn:
+    rows = conn.execute(
+        "SELECT id, origin, artifact_type, length(body_markdown) AS body_chars, "
+        "length(CAST(body_markdown AS BLOB)) AS body_bytes FROM artifacts "
+        "ORDER BY id"
+    ).fetchall()
+print(json.dumps({
+    "name": "storage_rows",
+    "rows": [dict(row) for row in rows],
+    "schema": "artifacts(id,meeting_id,origin,artifact_type,title,body_markdown,structured_json,confidence,status,plugin_id,plugin_version,source_run_id,source_item_id,created_at,updated_at)",
+}, sort_keys=True, ensure_ascii=False))
+
+reset_database()

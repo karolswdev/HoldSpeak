@@ -1,0 +1,21 @@
+{
+  "provider": "replayed",
+  "model": "philo11-atlas",
+  "summary": "The meeting agreed to use one document registry and to check frozen bytes before review.",
+  "topics": [
+    "document registry",
+    "frozen bytes"
+  ],
+  "action_items": [
+    {
+      "task": "Check the frozen bytes before the next review",
+      "owner": "Avery",
+      "due": "2026-10-07"
+    }
+  ],
+  "raw_text": "```json\n{\"decisions\":[{\"decision\":\"Use one document registry for the channel sources\",\"rationale\":\"The channel needs one durable source table\",\"source_timestamp\":4.0}],\"open_questions\":[]}\n```",
+  "capabilities": [
+    "meeting.deferred_analysis",
+    "meeting.plugin.decision_capture"
+  ]
+}

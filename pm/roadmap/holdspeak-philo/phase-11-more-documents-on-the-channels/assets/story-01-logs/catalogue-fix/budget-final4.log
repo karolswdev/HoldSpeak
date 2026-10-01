@@ -1,0 +1,3 @@
+246 catalogue entries: all non-description fields unchanged.
+SPY RUN 1 on_loop= False
+{"context_ceiling": 16384, "engine_off_loop": true, "headroom": 269, "input_tokens": 15603, "palette_tools": 31, "reserved_output_tokens": 512, "source": "actual inference_adoption_route_evidence and material snapshot rows", "total_tokens": 16115}

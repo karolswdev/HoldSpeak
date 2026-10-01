@@ -10,6 +10,7 @@ import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openNewThought } from "../newThought";
 import { BriefEgress, briefReceipt } from "./briefEgress";
+import { BriefHeadVerbs, BriefSendWells } from "../documentSendsLazy";
 import { generatedLabelLocal } from "../pullouts/views/BriefView";
 import { openSurface, openSurfaceOr, openCoderSession, openProjectRoom } from "../shell";
 import { reportWriteFailure, clearWriteFailure } from "../hooks/useWriteReceipt";
@@ -58,6 +59,7 @@ import { unfinishedThoughts, type UnfinishedThought } from "../thoughts";
 import type { Meeting } from "../../lib/primitives";
 import { fromWireMeeting } from "../api";
 import { MeetingSummarySlab } from "../../meetings/MeetingSummarySlab";
+import { MeetingSendWellLazy } from "../../meetings/MeetingSendWellLazy";
 import { TranscriptWell } from "../../pages/cores/history/TranscriptWell";
 import {
   RefusalToken,
@@ -724,7 +726,7 @@ function Arrival() {
   /* PHILO-4-01 (ratified canvas, ask 1): the head verbs of the BRIEF
      section in EVERY branch — the egress badge, then Generate. Disabled
      only while a read or a generation is open. */
-  const briefVerbs = (
+  const briefHeadVerbs = (
     <>
       {/* Article III / UX-CANON A.9 — the destination is named ON the
           row, BEFORE the verb that reaches it. */}
@@ -740,6 +742,12 @@ function Arrival() {
       </Button>
     </>
   );
+  /* PHILO-11-05a (canvas A4): with a brief, PREPARED ×K leads the verbs and,
+     while a send waits, the chip and the verbs are one group that wraps under
+     the label at narrow width (desk/documentSends.tsx `BriefHeadVerbs`). */
+  const briefVerbs = brief
+    ? <BriefHeadVerbs brief={brief}>{briefHeadVerbs}</BriefHeadVerbs>
+    : briefHeadVerbs;
   /* The one status line of a generation: open (GENERATING…, the READING…
      idiom) or failed (BRIEF DID NOT GENERATE · <cause>). */
   const generateStatus = generating ? (
@@ -1384,6 +1392,10 @@ function Arrival() {
             </span>
           ) : null}
           {generateStatus}
+          {/* PHILO-11-05a (canvas A, T3): the brief's SEND well. Keyed, so the
+              same well (its pick, its receipt) stays when the last item is
+              triaged and the Chair changes branch below. */}
+          {brief ? <BriefSendWells key="brief-send" brief={brief} /> : null}
         </div>
       ) : !briefLoading && brief ? (
         /* A brief with nothing untriaged still happened — tonight, or on a
@@ -1421,6 +1433,7 @@ function Arrival() {
             ) : null}
             {generateStatus}
           </SurfaceSection>
+          <BriefSendWells key="brief-send" brief={brief} />
         </div>
       ) : null}
 
@@ -2247,6 +2260,12 @@ function ArrivalMeetingWells({
             ))}
           </div>
         </SurfaceWell>
+      ) : null}
+      {/* PHILO-11-05 (canvas C6b): the meeting's SEND well under its summary,
+          in both branches that show one (the healthy slab and the retained
+          summary with status facts). No summary, no well (C4). */}
+      {summary ? (
+        <MeetingSendWellLazy meetingId={meeting.id} title={meeting.title} startedAt={meeting.startedAt} />
       ) : null}
       {segments.length > 0 ? (
         <TranscriptWell

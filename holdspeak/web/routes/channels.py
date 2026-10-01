@@ -10,6 +10,7 @@ POST   /api/channels/sends/{send_id}/discard           channel.discard
 POST   /api/channels/send                              channel.send
 GET    /api/channels/sends                             channel.sends
 PUT    /api/channels/email-keys/{key_ref}              channel.save_email_key (the key HELD, never an argument)
+POST   /api/channels/slack-webhooks                   channel.save_slack_webhook (the URL HELD, never an argument)
 
 An admitted route answers with its ``operation_id`` and terminal ``receipt``; a
 refusal of an admitted operation carries them (``_room_kernel``).
@@ -70,8 +71,13 @@ def build_channels_router(ctx: WebContext) -> APIRouter:
                 return refused
             status = (404 if isinstance(exc, NotFound)
                       else int(exc.context.get("status") or (400 if isinstance(exc, ValidationError) else 409)))
+            # Named pre-boundary refusals may carry measured facts.  Slack's
+            # size fence exposes ``size`` and ``limit`` so the owner knows why
+            # the real producer stopped before any byte left.
+            context = {k: v for k, v in exc.context.items()
+                       if k not in {"status", "operation_id", "receipt"}}
             return JSONResponse({"success": False, "code": exc.code, "error_code": exc.code, "message": exc.detail,
-                                 **refusal_fields(exc)}, status_code=status)
+                                 **context, **refusal_fields(exc)}, status_code=status)
         except Exception as exc:
             return error_500(exc, log, f"{name} failed")
 
@@ -133,9 +139,9 @@ def build_channels_router(ctx: WebContext) -> APIRouter:
         return refused if refused is not None else await call(request, "channel.send", data)
 
     @router.get("/api/channels/sends")
-    async def api_channel_sends(request: Request, update_id: Optional[str] = None,
+    async def api_channel_sends(request: Request, document_ref: Optional[str] = None,
                                 send_id: Optional[str] = None) -> Any:
-        args = {k: v for k, v in (("update_id", update_id), ("send_id", send_id)) if v}
+        args = {k: v for k, v in (("document_ref", document_ref), ("send_id", send_id)) if v}
         return await call(request, "channel.sends", args)
 
     @router.put("/api/channels/email-keys/{key_ref}")
@@ -149,5 +155,16 @@ def build_channels_router(ctx: WebContext) -> APIRouter:
         if (bad := path_refusal(request, "channel.save_email_key", "key_ref", data)) is not None:
             return bad
         return await call(request, "channel.save_email_key", {**data, "key_ref": key_ref}, held={"api_key": key})
+
+    @router.post("/api/channels/slack-webhooks")
+    async def api_channel_save_slack_webhook(request: Request) -> Any:
+        # The URL is HELD: remove it before operation validation and journaling.
+        # The operation mints the key_ref; the ordinary destination route
+        # consumes it after this secret save.
+        data, refused = await body(request, "channel.save_slack_webhook")
+        if refused is not None:
+            return refused
+        webhook_url = data.pop("webhook_url", None)
+        return await call(request, "channel.save_slack_webhook", data, held={"webhook_url": webhook_url})
 
     return router

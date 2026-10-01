@@ -2167,13 +2167,13 @@
         {
           "path": "web/src/features/project-room/ProjectRoomCore.tsx",
           "symbol": "function ItemsSection",
-          "line": 1045,
+          "line": 1046,
           "claim": "the ITEMS section, after NEEDS YOU, omitted when empty, UNAVAILABLE + Retry on a failed read"
         },
         {
           "path": "web/src/features/channels/SendWell.tsx",
           "symbol": "export function DeliveryHistory",
-          "line": 593,
+          "line": 29,
           "claim": "To + Mark delivered above the body of a published update, and the delivery history (PHILO-10-04: under the SEND well, story 01's one table)"
         },
         {
@@ -2221,13 +2221,13 @@
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
           "symbol": "data-testid={`credential-row-${cred.id}`}",
-          "line": 974,
+          "line": 973,
           "claim": "one ledger row per credential"
         },
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
           "symbol": "data-testid=\"palette-token\"",
-          "line": 979,
+          "line": 978,
           "claim": "the row's palette token reads the issued name"
         },
         {

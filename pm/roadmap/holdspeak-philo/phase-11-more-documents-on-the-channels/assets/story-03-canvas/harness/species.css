@@ -1,0 +1,164 @@
+/* PHILO-11-03 round two (Codex Astra r1 F1, F2): THE SETTLED APPEARANCE of
+ * the SEND well species. Story 04 moves each rule into the library
+ * (web/src/features/channels/channels.css for the well; the SurfaceSection
+ * head rule into web/src/desk/surface/surface.css). Tokens only; no new
+ * colour. Loaded in the proposal only.
+ *
+ * Why these rules exist (G3, on glass in round one): the well lands inside
+ * hosts that style bare elements -- the pullouts give every <section> a grid
+ * and a hairline, every <h3> 10 px (window-chrome.css:195-215), every <ul>
+ * 18 px of padding; the receipt view sets monospace (intelligence.css:89).
+ * The same row drew inline in one window and stacked in another; the record
+ * preview drew in monospace. The species now carries its own type and its
+ * own row grammar, and no host rule reaches in.
+ *
+ * THE ROW GRAMMAR, decided once, every host, every width:
+ *   line 1  [lead 16 px] [name]
+ *   line 2              [chips: channel · target · account · last send · egress]
+ * (destination rows, prepared rows and history rows alike). An open row's
+ * preview sits under it at the name's indent.
+ */
+
+/* The well's own base: the UI face at 14 px; hosts' text-transform and
+   letter-spacing never reach in. */
+:is([data-p11="well"], [data-p11="history"]) {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text);
+}
+
+/* The section: a plain block (not the pullout's grid + hairline). */
+.desk-next .desk-pullout-body :is([data-p11="well"], [data-p11="history"]) section.surface-section,
+:is([data-p11="well"], [data-p11="history"]) section.surface-section {
+  display: block;
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* SEND / SENDS head: the 12 px floor in every host (the pullout's 10 px rule
+   does not apply to the species' head). */
+.desk-next .desk-pullout-body :is([data-p11="well"], [data-p11="history"]) .surface-section-head h3,
+:is([data-p11="well"], [data-p11="history"]) .surface-section-head h3 {
+  margin: 0 0 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* The rows: no host list padding; one grammar (above). */
+.desk-next .desk-pullout-body :is([data-p11="well"], [data-p11="history"]) ul.surface-ledger-rows,
+:is([data-p11="well"], [data-p11="history"]) ul.surface-ledger-rows {
+  margin: 0;
+  padding-left: 0;
+}
+.desk-next .desk-pullout-body :is([data-p11="well"], [data-p11="history"]) li.surface-ledger-row,
+:is([data-p11="well"], [data-p11="history"]) li.surface-ledger-row {
+  font-size: 14px;
+}
+:is([data-p11="well"], [data-p11="history"]) .surface-ledger[data-cols] .surface-ledger-line {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 10px;
+  padding: 6px 6px;
+}
+/* The room ledger's narrow-container indents never apply inside the well. */
+:is([data-p11="well"], [data-p11="history"]) .surface-ledger[data-cols] .surface-ledger-line > * {
+  margin-left: 0 !important;
+}
+:is([data-p11="well"], [data-p11="history"]) .surface-ledger[data-cols] .surface-ledger-lead {
+  grid-column: 1;
+  grid-row: 1;
+  width: 16px;
+  text-align: center;
+}
+:is([data-p11="well"], [data-p11="history"]) .surface-ledger[data-cols] .surface-ledger-primary {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  white-space: normal;
+}
+:is([data-p11="well"], [data-p11="history"]) .surface-ledger[data-cols] .p11-cells {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+}
+:is([data-p11="well"], [data-p11="history"]) .surface-ledger-open {
+  padding-left: 26px;
+}
+
+/* The preview: the document in the UI face (a Markdown body with its own
+   headings), the transport text as text; fields and literals stay mono.
+   No host rule for p / li / h1-h4 / strong reaches in. */
+.desk-next .desk-pullout-body [data-p11="well"] .send-preview-body :is(p, li, strong, em, a, blockquote),
+[data-p11="well"] .send-preview-body,
+[data-p11="well"] .send-preview-body :is(p, li, strong, em, a, blockquote) {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text);
+}
+.desk-next .desk-pullout-body [data-p11="well"] .send-preview-body :is(h1, h2, h3, h4),
+[data-p11="well"] .send-preview-body :is(h1, h2, h3, h4) {
+  margin: 10px 0 4px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text);
+}
+.desk-next .desk-pullout-body [data-p11="well"] .send-preview-body :is(ul, ol),
+[data-p11="well"] .send-preview-body :is(ul, ol) {
+  margin: 2px 0 6px;
+  padding-left: 18px;
+}
+[data-p11="well"] .send-preview-text {
+  font-family: var(--font-ui);
+  font-size: 14px;
+}
+
+/* The meeting's form picker: the 44 px narrow target in every host (the
+   Chair has no surface container, so the rule is by viewport too). */
+@media (max-width: 420px) {
+  [data-p11="forms"] .gadget-cycle,
+  .desk-next [data-p11="forms"] .gadget-cycle select,
+  [data-p11="forms"] .gadget-cycle select {
+    min-height: 44px;
+  }
+}
+@container surface (max-width: 419px) {
+  [data-p11="forms"] .gadget-cycle,
+  .desk-next [data-p11="forms"] .gadget-cycle select,
+  [data-p11="forms"] .gadget-cycle select {
+    min-height: 44px;
+  }
+}
+
+/* The SurfaceSection head with a proposal chip (the Chair's BRIEF head with
+   PREPARED ×K): at narrow width the label keeps the first line and the
+   chips and verbs wrap under it (never the label squeezed into a column).
+   Story 04: the library head rule for every head whose actions overflow. */
+@media (max-width: 420px) {
+  .surface-section-head:has([data-p11="chip"]) {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .surface-section-head:has([data-p11="chip"]) > h3 {
+    flex: 1 0 100%;
+  }
+}

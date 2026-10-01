@@ -3731,7 +3731,7 @@
     },
     {
       "path": "holdspeak/mcp/families/people.py",
-      "line": 426,
+      "line": 424,
       "kinds": [
         "http_client"
       ],
@@ -3741,7 +3741,7 @@
     },
     {
       "path": "holdspeak/mcp/families/people.py",
-      "line": 428,
+      "line": 426,
       "kinds": [
         "http_client"
       ],
@@ -3751,7 +3751,7 @@
     },
     {
       "path": "holdspeak/mcp/families/people.py",
-      "line": 483,
+      "line": 481,
       "kinds": [
         "http_client"
       ],
@@ -5673,7 +5673,7 @@
     },
     {
       "path": "holdspeak/services/thread_tools.py",
-      "line": 412,
+      "line": 416,
       "kinds": [
         "model_transport"
       ],
@@ -5683,7 +5683,7 @@
     },
     {
       "path": "holdspeak/services/thread_tools.py",
-      "line": 424,
+      "line": 428,
       "kinds": [
         "model_transport"
       ],
@@ -6823,7 +6823,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 925,
+      "line": 933,
       "kinds": [
         "http_client"
       ],
@@ -6833,7 +6833,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1076,
+      "line": 1084,
       "kinds": [
         "http_client"
       ],
@@ -6843,7 +6843,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1584,
+      "line": 1597,
       "kinds": [
         "http_client"
       ],
@@ -6853,7 +6853,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1868,
+      "line": 1881,
       "kinds": [
         "http_client"
       ],
@@ -6863,7 +6863,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1922,
+      "line": 1935,
       "kinds": [
         "http_client"
       ],
@@ -6873,7 +6873,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1975,
+      "line": 1988,
       "kinds": [
         "http_client"
       ],
@@ -7253,7 +7253,7 @@
     },
     {
       "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-      "line": 74,
+      "line": 75,
       "kinds": [
         "http_client"
       ],
@@ -7263,7 +7263,7 @@
     },
     {
       "path": "web/src/desk/pullouts/MeetingPullout.tsx",
-      "line": 51,
+      "line": 52,
       "kinds": [
         "http_client"
       ],
@@ -7273,7 +7273,7 @@
     },
     {
       "path": "web/src/desk/pullouts/MeetingPullout.tsx",
-      "line": 55,
+      "line": 56,
       "kinds": [
         "http_client"
       ],
@@ -7283,7 +7283,7 @@
     },
     {
       "path": "web/src/desk/pullouts/MeetingPullout.tsx",
-      "line": 116,
+      "line": 117,
       "kinds": [
         "http_client"
       ],
@@ -7303,7 +7303,7 @@
     },
     {
       "path": "web/src/desk/pullouts/views/BriefView.tsx",
-      "line": 270,
+      "line": 271,
       "kinds": [
         "http_client"
       ],
@@ -7313,7 +7313,7 @@
     },
     {
       "path": "web/src/desk/pullouts/views/BriefView.tsx",
-      "line": 286,
+      "line": 287,
       "kinds": [
         "http_client"
       ],
@@ -8143,7 +8143,7 @@
     },
     {
       "path": "web/src/lib/primitives.ts",
-      "line": 533,
+      "line": 534,
       "kinds": [
         "http_client"
       ],
@@ -8573,7 +8573,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 206,
+      "line": 205,
       "kinds": [
         "model_transport"
       ],
@@ -8583,7 +8583,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 746,
+      "line": 745,
       "kinds": [
         "http_client"
       ],
@@ -8593,7 +8593,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 795,
+      "line": 794,
       "kinds": [
         "http_client"
       ],
@@ -8603,7 +8603,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 831,
+      "line": 830,
       "kinds": [
         "http_client"
       ],
@@ -8613,7 +8613,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 1463,
+      "line": 1462,
       "kinds": [
         "http_client"
       ],
@@ -8623,7 +8623,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 1468,
+      "line": 1467,
       "kinds": [
         "http_client"
       ],
@@ -8633,7 +8633,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 1472,
+      "line": 1471,
       "kinds": [
         "http_client"
       ],
@@ -8903,7 +8903,7 @@
     },
     {
       "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-      "line": 114,
+      "line": 110,
       "kinds": [
         "http_client"
       ],
@@ -8913,7 +8913,7 @@
     },
     {
       "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-      "line": 160,
+      "line": 156,
       "kinds": [
         "http_client"
       ],
@@ -8923,7 +8923,7 @@
     },
     {
       "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-      "line": 164,
+      "line": 160,
       "kinds": [
         "http_client"
       ],
@@ -8953,7 +8953,7 @@
     },
     {
       "path": "web/src/pages/cores/history/useMeetingData.tsx",
-      "line": 164,
+      "line": 163,
       "kinds": [
         "http_client"
       ],
@@ -8963,7 +8963,7 @@
     },
     {
       "path": "web/src/pages/cores/history/useMeetingData.tsx",
-      "line": 169,
+      "line": 168,
       "kinds": [
         "http_client"
       ],
@@ -8973,27 +8973,7 @@
     },
     {
       "path": "web/src/pages/cores/history/useMeetingData.tsx",
-      "line": 183,
-      "kinds": [
-        "http_client"
-      ],
-      "excerpt": "await apiFetch(`/api/meetings/${encodeURIComponent(id)}/export/slack`, {",
-      "line_sha256": "53e99236bb1d91958267e48396db4fd58b7ce8a455a8de2dca7ba337021b8ea6",
-      "review": "candidate_only"
-    },
-    {
-      "path": "web/src/pages/cores/history/useMeetingData.tsx",
-      "line": 188,
-      "kinds": [
-        "http_client"
-      ],
-      "excerpt": "await apiFetch(`/api/meetings/${encodeURIComponent(id)}/proposals`),",
-      "line_sha256": "2a9d89843103067f3fa40d28f69e0f2b69c19ed53be5e051c4a6ca1dd6c87600",
-      "review": "candidate_only"
-    },
-    {
-      "path": "web/src/pages/cores/history/useMeetingData.tsx",
-      "line": 204,
+      "line": 184,
       "kinds": [
         "http_client"
       ],
@@ -9003,7 +8983,7 @@
     },
     {
       "path": "web/src/pages/cores/history/useMeetingData.tsx",
-      "line": 219,
+      "line": 199,
       "kinds": [
         "http_client"
       ],

@@ -1,0 +1,12 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase8.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:65265 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-i25cmgpa/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p8
+VERDICT: blocked terminal=None
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b3/case.p8.zone_rename.name_taken_list--1440/20261001T042615Z-case.p8.zone_rename.name_taken_list-astra-1440/blocked.png']
+NOTE: BLOCKED: ui step click on '[aria-controls=desk-tool-shelf]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("[aria-controls=desk-tool-shelf]").first
+    - locator resolved to <button type="button" aria-expanded="false" aria-controls=

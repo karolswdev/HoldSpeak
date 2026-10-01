@@ -203,3 +203,17 @@ def test_filed_proposal_never_executes_until_approved_and_enabled(client, db, se
     assert result.result["issue"] == 7
     audit = db.actuators.list_audit(pid)
     assert [a.to_status for a in audit] == ["proposed", "approved", "executed"]
+
+
+@pytest.mark.integration
+def test_github_approvals_keep_todays_behavior(client, db, settings_path, seeded):
+    """GitHub approval remains a state transition; it has no route executor."""
+    filed = client.post(
+        "/api/meetings/m1/aftercare/file-issue",
+        json={"action_item_id": "a-accepted", "repo": "acme/app"},
+    ).json()["proposal"]
+    res = client.post(
+        f"/api/meetings/m1/proposals/{filed['id']}/decision",
+        json={"decision": "approved", "decided_by": "karol"},
+    )
+    assert res.json()["proposal"]["status"] == "approved"

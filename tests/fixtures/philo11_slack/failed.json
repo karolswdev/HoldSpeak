@@ -1,0 +1,12 @@
+{
+  "about": "PHILO-11-02 recording HTTPS edge and memory key store; no Slack network or OS keychain.",
+  "answers": [],
+  "https": [
+    {
+      "host": "hooks.slack.com",
+      "path": "/services/T_ATLAS/B_ATLAS/synthetic",
+      "status": 400,
+      "body": "invalid_payload"
+    }
+  ]
+}

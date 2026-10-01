@@ -1,0 +1,15 @@
+{
+  "blocked": [],
+  "finished_at": "2026-10-01T12:01:15.580232+00:00",
+  "label": "REHEARSED; OWNER REVIEW PENDING",
+  "mode": "real",
+  "named_limits": {
+    "artifact": "the ninth registry kind (artifact) is not a Phase 11 kind; it is outside this story",
+    "confluence": "the owner has no account yet; the contract is proven by Phase 10 story 02's fences",
+    "email": "the owner has not yet given the Resend details (2026-10-01); the contract is proven by Phase 10 stories 03 and 07 and the Phase 11 fences",
+    "jira": "the owner has no account yet; the contract is proven by Phase 10 story 02's fences",
+    "slack": "the owner has given no webhook (2026-10-01); the contract is proven by story 02's recording-edge fences and story 06's atlas cases; the Slack text length of each real brief is recorded below"
+  },
+  "outcome": "completed",
+  "started_at": "2026-10-01T12:01:02.138146+00:00"
+}

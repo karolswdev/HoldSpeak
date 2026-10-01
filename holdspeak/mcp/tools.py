@@ -46,7 +46,7 @@ class ToolError(ValueError):
 TOOLS: list[dict[str, Any]] = [
     {
         "name": "desk.list",
-        "description": "List HoldSpeak desk primitives of one kind. Find a note: kind=notes; each row has its id (read it with desk.get). List the zones: kind=directories; each row has member_ids, the objects filed in it. List the knowledge bases: kind=kbs. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 12 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout, people) are managed through dedicated tools or are read-only.",
+        "description": "List desk primitives by kind. Find a note with kind=notes. Read each result by its id with desk.get. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains.",
         "inputSchema": {
             "type": "object",
             "properties": {"kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)}},
@@ -56,12 +56,12 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "desk.get",
-        "description": "Get one HoldSpeak desk primitive by kind and id. Read a note: kind=notes and id from desk.list kind=notes. Read a zone and what is filed in it: kind=directories. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 12 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout, people) are managed through dedicated tools or are read-only.",
+        "description": "Get one desk primitive by kind and ID. Read a note with kind=notes and the id from desk.list. Read a zone and its filed objects with kind=directories. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
-                "id": {"type": "string", "description": "The object's id, from desk.list with the same kind."},
+                "id": {"type": "string", "description": "Object ID from desk.list for the same kind."},
             },
             "required": ["kind", "id"],
             "additionalProperties": False,
@@ -70,14 +70,10 @@ TOOLS: list[dict[str, Any]] = [
     {
         "name": "desk.create",
         "description": (
-            "Create a desk primitive. Pass fields appropriate to its kind in data. "
-            "Write a note: kind=notes, data title, body_markdown and tags. "
-            "Make a zone: kind=directories, data name (and parent_id to put it in another zone). "
-            "Make a knowledge base: kind=kbs, data name. "
-            "Put a decision on my review list: kind=decisions, data title and status=proposed. "
-            "Write the reason for a decision (kind=decisions) in data context_markdown: why, and the facts behind it. "
-            "Write what you will do in data decision_markdown and what follows from it in consequences_markdown. "
-            "Keep the title short; do not put the reason in the title. "
+            "Create a desk primitive. Write a note with kind=notes and data containing a title, body_markdown and tags. "
+            "Make a zone with kind=directories, a name and optional parent_id. "
+            "Put a decision on my review list with kind=decisions and status=proposed. "
+            "Write the reason for a decision with kind=decisions in data.context_markdown. "
             "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {
@@ -85,13 +81,10 @@ TOOLS: list[dict[str, Any]] = [
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
                 "data": {"type": "object", "description": (
-                    "Primitive fields. Each kind names its own optional id field (a new id is made when it is "
-                    "absent); a field named id is refused. notes: note_id, title, body_markdown, tags. "
-                    "directories: directory_id, name, parent_id (a zone id from desk.list kind=directories). "
-                    "kbs: kb_id, name, member_ids (kind:id references, for example note:<id>). "
-                    "decisions: title (the decision in a few words), status (proposed puts it on the review list), "
-                    "context_markdown (its reason: why, and the facts behind it), decision_markdown (what you will do), "
-                    "consequences_markdown (what follows from it), deciders, alternatives, tags."
+                    "Fields: notes note_id,title,body_markdown,tags; directories (zones) directory_id,name,parent_id "
+                    "from desk.list; kbs kb_id,name,member_ids kind:id; decisions title,status=proposed,"
+                    "context_markdown(reason/facts),decision_markdown(what),consequences_markdown(result),"
+                    "deciders,alternatives,tags. Kind IDs generate if absent; data.id refused."
                 )},
             },
             "required": ["kind"],
@@ -101,20 +94,18 @@ TOOLS: list[dict[str, Any]] = [
     {
         "name": "desk.update",
         "description": (
-            "Update a desk primitive. Only supplied fields in data change. "
-            "Rename a zone: kind=directories, data name (the name only). "
-            "Move a zone: kind=directories, data parent_id (null moves it to the desk root). "
-            "Edit a note: kind=notes, data title, body_markdown or tags. "
-            "Change a decision: kind=decisions, data context_markdown (its reason), decision_markdown "
-            "(what you will do) or consequences_markdown (what follows from it); the new text replaces the old. "
-            "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
+            "Update a desk primitive. Rename a zone with kind=directories and name. "
+            "Move a zone with kind=directories and parent_id. Set parent_id to null to move it to the desk root. "
+            "Edit a note with kind=notes and title, body_markdown or tags. "
+            "Change a decision with kind=decisions. Supply context_markdown, decision_markdown or consequences_markdown "
+            "to replace the old text. Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
-                "id": {"type": "string", "description": "The object's id, from desk.list with the same kind."},
-                "data": {"type": "object", "description": "The fields to change, as for desk.create of the same kind."},
+                "id": {"type": "string", "description": "Object ID from desk.list for the same kind."},
+                "data": {"type": "object", "description": "Fields to change, as for desk.create."},
             },
             "required": ["kind", "id", "data"],
             "additionalProperties": False,
@@ -185,7 +176,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "meeting.list",
-        "description": "List or search archived meetings with optional archive filters.",
+        "description": "List or search archived meetings; optional filters.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -200,7 +191,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "meeting.get",
-        "description": "Get the complete stored detail for one meeting.",
+        "description": "Get one stored meeting.",
         "inputSchema": {
             "type": "object",
             "properties": {"meeting_id": {"type": "string"}, "include": {"type": "string"}},
@@ -273,9 +264,9 @@ TOOLS.extend([
     _workbench_tool("recipe.get", "Get an Agent recipe.", {"recipe_id": {"type": "string"}}, ["recipe_id"]),
     _workbench_tool("recipe.run", "Run an Agent recipe and return its lifecycle-backed result and minted artifact reference.", {"recipe_id": {"type": "string"}, "input": {"type": "string"}, "options": _RECIPE_RUN_OPTIONS_SCHEMA}, ["recipe_id"]),
     _workbench_tool("recipe.chat", "Ask an Agent recipe a question.", {"recipe_id": {"type": "string"}, "question": {"type": "string"}, "options": _RECIPE_CHAT_OPTIONS_SCHEMA}, ["recipe_id", "question"]),
-    _workbench_tool("zone.file", "File a primitive in a Zone. File a note into a zone: directory_id from desk.list kind=directories and primitive_id note:<id>. A primitive is in one zone only: filing it again moves it.", {"directory_id": {"type": "string", "description": "The zone id, from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "The object to file, as kind:id: for a note, note:<id> with the id from desk.list kind=notes."}}, ["directory_id", "primitive_id"]),
-    _workbench_tool("zone.unfile", "Remove a primitive from a Zone. Take a note out of a zone: the zone id and note:<id>.", {"directory_id": {"type": "string", "description": "The zone id, from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "The filed object, as kind:id: for a note, note:<id> with the id from desk.list kind=notes."}}, ["directory_id", "primitive_id"]),
-    _workbench_tool("zone.list_members", "List Zone members. List the notes in a zone: each member names its primitive_id (note:<id>).", {"directory_id": {"type": "string", "description": "The zone id, from desk.list kind=directories."}}, ["directory_id"]),
+    _workbench_tool("zone.file", "File a primitive in a Zone. File a note into a zone by setting directory_id from desk.list kind=directories and primitive_id to note:<id>. Filing a primitive again moves it.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "Object kind:id; for example note:<id> with its ID from desk.list kind=notes."}}, ["directory_id", "primitive_id"]),
+    _workbench_tool("zone.unfile", "Remove a primitive from a Zone: directory_id and kind:id primitive_id.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "Filed object kind:id; ID from desk.list (for example note:<id> with its ID from desk.list kind=notes)."}}, ["directory_id", "primitive_id"]),
+    _workbench_tool("zone.list_members", "List Zone members. List the notes in a zone. Each member has a primitive_id such as note:<id>.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}}, ["directory_id"]),
     _workbench_tool("kb.add_member", "Add a resource reference to a knowledge base. Add a note to a knowledge base: kb_id and ref note:<id>.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}, "ref": {"type": "string", "description": "A kind:id reference: for a note, note:<id> with the id from desk.list kind=notes."}}, ["kb_id", "ref"]),
     _workbench_tool("kb.remove_member", "Remove a resource reference from a knowledge base.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}, "ref": {"type": "string", "description": "The reference to remove, as kind:id: for a note, note:<id> with the id from desk.list kind=notes."}}, ["kb_id", "ref"]),
     _workbench_tool("kb.list_members", "List knowledge-base members.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}}, ["kb_id"]),
@@ -415,11 +406,11 @@ TOOLS.extend([
     _mcp_tool("desk.needs_you", "What needs me: every project room's attention items in one list (overdue milestones, reviews and proposals waiting, commitments ...), with one count. Muted projects are marked and not counted. Returns {count, projects, items, next, coverage, complete} -- coverage names every expected source that was not observed.", {}),
     _mcp_tool("settings.hub", "Read the settings hub row facts: module state tokens for the settings truth table.", {}),
     _mcp_tool(
-        "decision_record.list", "List durable decision records, newest first.",
+        "decision_record.list", "List decision records, newest first.",
         {"limit": {"type": "integer", "minimum": 1, "maximum": 500}, "offset": {"type": "integer", "minimum": 0}},
     ),
     _mcp_tool(
-        "decision_record.get", "Get one decision record with sources, work, and revisions.",
+        "decision_record.get", "Get a decision record with sources, work, revisions.",
         {"record_id": {"type": "string"}}, ["record_id"],
     ),
     _mcp_tool(
@@ -431,7 +422,7 @@ TOOLS.extend([
         {"decision_id": {"type": "string"}}, ["decision_id"],
     ),
     _mcp_tool(
-        "decision_record.search", "Search decision records and their affected-work labels.",
+        "decision_record.search", "Search decision records and affected work.",
         {"query": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 500}}, ["query"],
     ),
     _mcp_tool(
@@ -464,20 +455,20 @@ TOOLS.extend([
     ),
     _mcp_tool(
         "follow_through.board",
-        "Read the Follow-Through board, optionally filtered by project, owner, or lane.",
+        "Read Follow-Through cards; filter project/owner/lane.",
         {
-            "project_id": {"type": "string", "description": "Optional project identifier."},
-            "owner": {"type": "string", "description": "Optional accountable owner."},
-            "state": {"type": "string", "enum": ["now", "waiting", "unassigned", "overdue"], "description": "Optional board lane."},
+            "project_id": {"type": "string", "description": "Optional project."},
+            "owner": {"type": "string", "description": "Optional owner."},
+            "state": {"type": "string", "enum": ["now", "waiting", "unassigned", "overdue"], "description": "Optional lane."},
         },
     ),
     _mcp_tool(
         "follow_through.complete",
-        "Apply a completion verb to a Follow-Through action card.",
+        "Apply a completion verb to a Follow-Through card.",
         {
-            "card_id": {"type": "string", "description": "Action card identifier."},
-            "verb": {"type": "string", "enum": ["done", "dismiss", "snooze", "delegate", "reopen", "due"], "description": "Write-through board verb (`due` sets payload.due_at, HS-200-13)."},
-            "payload": {"type": "object", "description": "Verb data: until for snooze, to for delegate."},
+            "card_id": {"type": "string", "description": "Card ID."},
+            "verb": {"type": "string", "enum": ["done", "dismiss", "snooze", "delegate", "reopen", "due"], "description": "Board verb; due sets payload.due_at."},
+            "payload": {"type": "object", "description": "Verb data; until/snooze, to/delegate."},
         },
         ["card_id", "verb"],
     ),
@@ -485,16 +476,16 @@ TOOLS.extend([
         "follow_through.commit_decision",
         "Create an accountable commitment from an accepted decision.",
         {
-            "decision_id": {"type": "string", "description": "Accepted decision identifier."},
-            "owner": {"type": "string", "description": "Optional accountable owner."},
-            "due_at": {"type": "string", "description": "Optional ISO-8601 due date."},
+            "decision_id": {"type": "string", "description": "Accepted decision ID."},
+            "owner": {"type": "string", "description": "Optional owner."},
+            "due_at": {"type": "string", "description": "Optional ISO-8601 date."},
         },
         ["decision_id"],
     ),
     _mcp_tool(
         "monday_brief.get",
-        "Read the latest persisted Monday Brief; set generate to true when no brief exists and one should be composed.",
-        {"generate": {"type": "boolean", "default": False, "description": "Generate the current brief when no persisted brief exists."}},
+        "Read the latest persisted Monday Brief; generate=true when none exists.",
+        {"generate": {"type": "boolean", "default": False, "description": "Generate if no persisted brief."}},
     ),
     _mcp_tool(
         "monday_brief.generate",

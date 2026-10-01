@@ -1,0 +1,11 @@
+PASS: live
+BRAIN: astra
+SOURCE: 4a08e4bd4cef9633c10a78d9fba9c83105d2c3ea dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=.tmp/philo11-06/r2-mutation-atlases/wrong-pair.json
+RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:53921 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uh3cmvg8/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p11
+VERDICT: fail terminal=settled
+EVIDENCE: []
+NOTE: placeholder(s) ['send_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)
+NOTE: predicate: all_of part op_facts: fact #4 failed: observe_at sends.0.reason = 'channel_not_found', wanted 'invalid_payload'
+NOTE: a nonzero diff with the wrong result is a finding, not a pass (changed: ['op_digest', 'op_reads']).

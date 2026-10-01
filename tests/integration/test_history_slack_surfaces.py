@@ -99,20 +99,20 @@ def client(settings_path) -> TestClient:
 
 
 @pytest.mark.integration
-def test_aftercare_flag_is_false_when_unconfigured(client, db, seeded):
+def test_aftercare_does_not_advertise_legacy_slack(client, db, seeded):
     res = client.get("/api/meetings/m1/aftercare")
     assert res.status_code == 200
-    assert res.json()["slack_configured"] is False
+    assert "slack_configured" not in res.json()
 
 
 @pytest.mark.integration
-def test_aftercare_flag_is_true_and_never_the_url(client, db, settings_path, seeded):
+def test_aftercare_keeps_the_legacy_url_out_of_the_response(client, db, settings_path, seeded):
     config = Config.load()
     config.meeting.slack_webhook_url = URL
     config.save(path=settings_path)
     res = client.get("/api/meetings/m1/aftercare")
-    assert res.json()["slack_configured"] is True
-    # The flag is a bool; the credential never rides the response.
+    assert "slack_configured" not in res.json()
+    # The retired credential never rides the response.
     assert "secret-credential" not in res.text
     assert "hooks.slack.com" not in res.text
 
@@ -131,18 +131,25 @@ def _flat(path: Path) -> str:
     return " ".join(path.read_text().split())
 
 
-def test_history_buttons_are_gated_on_the_flag():
-    page = _flat(_HISTORY / "AftercareGadgets.tsx")
+def test_the_aftercare_slack_rows_are_gone():
+    """PHILO-11-05 (R7, canvas C5): the DIGEST → SLACK / FOLLOW-UP → SLACK rows
+    only proposed; they are removed with their component. The digest and the
+    follow-up are forms of the meeting's ONE SEND well. The component is
+    PARKED, not deleted (owner law; the sealed graph passes cite its path):
+    nothing mounts or exports it."""
+    import subprocess
+    mounts = subprocess.run(["git", "grep", "-l", "AftercareGadgets", "--", "web/src"], cwd=_REPO,
+                            capture_output=True, text=True).stdout.split()
+    assert mounts == ["web/src/pages/cores/history/AftercareGadgets.tsx"], mounts
+    detail = _flat(_HISTORY / "MeetingDetail.tsx")
+    assert "AftercareGadgets" not in detail
+    assert "<MeetingSendWell" in detail
+    assert "DIGEST → SLACK" not in detail and "FOLLOW-UP → SLACK" not in detail
+    well = _flat(_REPO / "web/src/meetings/MeetingSendWell.tsx")
+    for kind in ("meeting_summary", "meeting_digest", "meeting_followup"):
+        assert f'"{kind}"' in well, kind
     data = _flat(_HISTORY / "useMeetingData.tsx")
-    # HS-111-03: the two prose Slack buttons became AFTERCARE gadget
-    # rows (DIGEST → SLACK / FOLLOW-UP → SLACK, verb SEND); the wiring
-    # and the capability gate are unchanged.
-    assert "DIGEST → SLACK" in page and "FOLLOW-UP → SLACK" in page
-    assert "aftercare.slack_configured" in page
-    assert 'proposeSlack("digest")' in page and 'proposeSlack("followup")' in page
     assert '"/api/authority/policy"' in data
-    # The BASIS row tokens the central control mode (posture, not prose).
-    assert 'controlModeLabel(String(authority.control_mode ?? "neutral"))' in page
 
 
 def test_proposal_rows_render_the_central_policy_and_refusal_truth():
@@ -161,12 +168,12 @@ def test_proposal_rows_render_the_central_policy_and_refusal_truth():
     assert "return null" in flat  # section-absent at zero
 
 
-def test_history_app_wires_the_export_route():
+def test_history_app_no_longer_calls_the_parked_export_route():
+    """PHILO-11-05: the parked `/export/slack` route has no caller on the face."""
     js = (_HISTORY / "useMeetingData.tsx").read_text()
-    assert "proposeSlack" in js
-    assert "/export/slack" in js
-    # HS-100-08: proposals live ON the outcomes face — no tab to flip to;
-    # proposing refreshes the same face's proposal rows.
+    assert "proposeSlack" not in js
+    assert "/export/slack" not in js
+    # HS-100-08: proposals live ON the outcomes face; deciding refreshes the same rows.
     assert "setProposals(" in js
 
 
@@ -176,7 +183,8 @@ def test_settings_field_ships_the_honest_copy():
     # the Prefs surface: the UI shows configured-ness (SET/—) and the
     # write-only path, never the URL, and the token states the residency.
     page = (_REPO / "web/src/pages/cores/SettingsCore.tsx").read_text()
-    assert 'slack_webhook_url: "Slack webhook"' in page
+    # PHILO-11-05 (R7, canvas D4): no Slack webhook row in Credentials; Slack lives in Destinations.
+    assert "Slack webhook" not in page
     assert "<SecretRow" in page and "configured={Boolean(state.configured)}" in page
     assert "values stay on this hub" in page
     # HS-132-12: the JsonRecord alias was inlined; the typed settings read

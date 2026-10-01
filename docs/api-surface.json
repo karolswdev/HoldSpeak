@@ -748,6 +748,16 @@
       ]
     },
     {
+      "path": "/api/brief/{brief_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.monday_brief",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/briefs/{brief_id}",
       "methods": [
         "GET"
@@ -1126,6 +1136,16 @@
     },
     {
       "path": "/api/channels/sends/{send_id}/discard",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.channels",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/channels/slack-webhooks",
       "methods": [
         "POST"
       ],
@@ -3533,9 +3553,7 @@
         "POST"
       ],
       "module": "web.routes.meetings.aftercare",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/meetings/{meeting_id}/follow-through-proposals",

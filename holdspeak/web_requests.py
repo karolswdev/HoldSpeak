@@ -51,13 +51,6 @@ class _AftercareFileIssueRequest(BaseModel):
     repo: str
 
 
-class _SlackExportRequest(BaseModel):
-    # HS-61-01: export one aftercare artifact to Slack as an actuator
-    # *proposal* (proposed state). `what` picks the artifact: "digest" or
-    # "followup". Nothing is sent until the proposal is separately approved.
-    what: str = ""
-
-
 class _CompanionSlackRequest(BaseModel):
     # HSM-14: a companion (the iPad desk) proposes sending ARBITRARY text to
     # Slack through the host's actuator framework. `text` is both the preview

@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 709 (plus static mounts). iOS-consumed: 89. Web-consumed: 544.
+Routes: 711 (plus static mounts). iOS-consumed: 89. Web-consumed: 545.
 
 ## device_audio_ws
 
@@ -191,6 +191,7 @@ Routes: 709 (plus static mounts). iOS-consumed: 89. Web-consumed: 544.
 | GET | `/api/channels/sends` | web |
 | POST | `/api/channels/sends` | web |
 | POST | `/api/channels/sends/{send_id}/discard` | web |
+| POST | `/api/channels/slack-webhooks` | web |
 
 ## web.routes.concierge
 
@@ -484,7 +485,7 @@ Routes: 709 (plus static mounts). iOS-consumed: 89. Web-consumed: 544.
 |---|---|---|
 | GET | `/api/meetings/{meeting_id}/aftercare` | ios, web |
 | POST | `/api/meetings/{meeting_id}/aftercare/file-issue` | ios |
-| POST | `/api/meetings/{meeting_id}/export/slack` | web |
+| POST | `/api/meetings/{meeting_id}/export/slack` | server only |
 | GET | `/api/meetings/{meeting_id}/followup-draft` | server only |
 | GET | `/api/meetings/{meeting_id}/proposals` | ios, web |
 | POST | `/api/meetings/{meeting_id}/proposals/{proposal_id}/decision` | ios, web |
@@ -594,6 +595,7 @@ Routes: 709 (plus static mounts). iOS-consumed: 89. Web-consumed: 544.
 | POST | `/api/brief/items/{item_id}/shelf` | web |
 | GET | `/api/brief/latest` | web |
 | GET | `/api/brief/shelf` | web |
+| GET | `/api/brief/{brief_id}` | web |
 
 ## web.routes.pages
 

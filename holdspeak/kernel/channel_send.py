@@ -18,7 +18,7 @@ from typing import Any, Mapping
 #: owner sends).
 CHANNEL_ADMITTED: frozenset[str] = frozenset({
     "channel.save_destination", "channel.remove_destination", "channel.prepare",
-    "channel.discard", "channel.send", "channel.save_email_key",
+    "channel.discard", "channel.send", "channel.save_email_key", "channel.save_slack_webhook",
 })
 #: The one Send operation an AGENT's own call completes (its own identity, no grant).
 AGENT_PREPARE_OPERATIONS: frozenset[str] = frozenset({"channel.prepare"})

@@ -1,0 +1,24 @@
+VERDICT: RATIFY-WITH-CONDITIONS
+
+FINDINGS:
+
+1. **The round-two canvas repairs are shown.** A4 wraps at 393, C6b’s picker is reachable, T2a2 and C5c show their content, B4b withholds the dead `Open`, and E1a–d use the settled well style. T3c visibly keeps the POSTED receipt after ordinary scrolling at both widths. The rig records 90 renders, 142/142 named elements, 241 controls with no misses, 274/274 rows, and no proposal text below 12 px (`pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-03-canvas/README.md:11`, `pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-03-canvas/shots/T3c-scrolled-clear-of-capture-bar-393.png`, `pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-03-canvas/shots/T3c-scrolled-clear-of-capture-bar-1440.png`, `pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-03-canvas/README.md:121`). G1 and G5 are honestly ledgered (`pm/roadmap/holdspeak/BACKLOG.md:1458`). The canvas-only boundary is clear; named anchors fail the build if their counts change (`pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-03-canvas/harness/vite.config.mjs:83`). The owner’s one remaining question—ratify the art—is his to answer; the size/limit wire detail is not.
+
+2. **The size/limit amendment is recorded in the canvas note, not the contract. Tenet 3.** The README says the refusal carries `size` and `limit`, but design §5 still specifies only `payload_too_large:slack`, and story 02’s acceptance criterion names only that refusal. T1 shows `41,099 / 39,000`; those fields currently come from the harness shim, not the settled wire (`pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-03-canvas/README.md:100`, `pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/design/document-sources.md:95`, `pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/story-02-the-slack-channel-and-the-aftercare-rewrite.md:28`, `pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-03-canvas/harness/shim.ts:361`, `pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-03-canvas/shots/T1-over-slack-limit-refused-393.png`).
+
+3. **T3’s receipt is visible but its transition fence does not check it. Tenets 3 and 7.** After the last Ack, the canvas checks only that one `send-well` remains; T3c checks scrolling and a section heading. Story 05’s criterion likewise says only that the well remains. A passing fence could therefore lose the actual receipt when the Chair changes branch (`pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-03-canvas/harness/shoot.py:651`, `pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/story-05-the-faces.md:26`).
+
+CONDITIONS:
+
+1. Amend the authoritative Slack refusal contract and stories 01/02 together to specify `size` and `limit`; fence the fields through the real refusal producer, with the fence failing before the fix.
+2. Add a story 05 rendered-transition criterion and fence that checks the same send receipt after the Chair branch change, at both widths, against the hub record. Do not use well presence as the receipt assertion.
+
+MISSED:
+
+1. **Highest cost:** the note at README line 100 says the wire amendment is recorded, but the wire and story acceptance still omit the fields. T1 currently demonstrates the shim’s answer.
+2. **Next:** the T3 visual is stronger than its fence; well presence does not prove receipt survival.
+3. **Later verification:** the actual atlas pass below covers the Phase 10 update flow only. It cannot stand in for new document kinds or Slack.
+
+TUESDAY: Yes on the drawing: from the Chair, the owner can open the prepared Monday brief, see Slack `#leads`, and press Send; at 393, ordinary scrolling clears the capture bar. The Slack delivery itself is still a stand-in.
+
+UNKNOWN: I ran real `case.p10.send.receipt_after_return` at 1440 and 393; both passed with `dirty=false` and temporary-HOME databases. The 1440 observation records send row `chs_5d333dd868fa5bf943ba8dbe` and delivery row `pdel_5d333dd868fa5bf9`, both `sent` under the same operation ([1440 observation](/tmp/holdspeak-atlas-out.ZbOpNC/20260930T042708Z-case.p10.send.receipt_after_return-astra-1440/observation.json), [393 observation](/tmp/holdspeak-atlas-out.aak8lw/20260930T042802Z-case.p10.send.receipt_after_return-astra-393/observation.json)). These are Phase 10 update cases; Phase 11 atlas cases remain future work under story 06, whose acceptance requires real cases to fail on main and pass on the phase head (`pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/story-06-the-atlas-cases.md:19`). No real Slack dispatch was verified. The worktree is clean; I changed nothing.

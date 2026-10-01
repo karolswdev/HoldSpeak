@@ -1,0 +1,1073 @@
+{
+  "boards": {
+    "B1-decision-window-picked-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "THIS DEVICE"
+      ],
+      "footer_verbs": [
+        "Copy",
+        "Dictate about this",
+        "Edit"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "last_chips": [],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "2af92291e69739fe8d2faa259045748e268521337aa3ae1b4d6b1a0a9d3f0b53",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=desk-decision] [data-testid=destination-row]:has([data-destination='Team folder'])",
+          "text": "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pyte",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
+          "text": "Send",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              363,
+              107.8
+            ],
+            "text": "●\nTeam folder\nFILE\n/private/va"
+          },
+          {
+            "target": [
+              46.8,
+              44
+            ],
+            "text": "Send"
+          }
+        ],
+        "reached_by_scroll": []
+      },
+      "prepared": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder"
+      ],
+      "preview_fonts": [
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter"
+      ],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "Decision context"
+          },
+          {
+            "fs": 10,
+            "text": "Decision"
+          },
+          {
+            "fs": 10,
+            "text": "Consequences"
+          },
+          {
+            "fs": 10,
+            "text": "Zone"
+          },
+          {
+            "fs": 10,
+            "text": "Knowledge"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "desk_decision:decision_03d2c46abf36"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "B2-decision-saved-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder ✓ SAVED 13:41 THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "THIS DEVICE"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-8437ae99.md SEP 30 13:41"
+      ],
+      "history_head": "SENDS 1",
+      "kernel_send": {
+        "name": "channel.send",
+        "operation_id": "op_fba36cdfeebb49909c60d6c50fea6ce9",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "receipt_outcome": "succeeded",
+        "receipt_state": "succeeded",
+        "receipts": 1,
+        "result_ref": "channel_send:chs_8437ae9911d579ca84ce5f77",
+        "state": "succeeded",
+        "target_ref": "document:desk_decision:decision_03d2c46abf36"
+      },
+      "last_chips": [
+        "✓ SAVED 13:41"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "2cbbb17ff181050d9e46abf38411236022d8220af06380824e48ef9adb4391a6",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='Team folder'] [data-receipt=latest]",
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=desk-decision] [data-testid=destination-row]:has([data-destination='Team folder']) [data-testid=send-last-sent]",
+          "text": "✓ SAVED 13:41",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              363,
+              107.8
+            ],
+            "text": "●\nTeam folder\nFILE\n/private/va"
+          },
+          {
+            "target": [
+              90,
+              44
+            ],
+            "text": "Send again"
+          }
+        ],
+        "reached_by_scroll": []
+      },
+      "prepared": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder"
+      ],
+      "preview_fonts": [
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter"
+      ],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-8437ae99.md"
+        }
+      ],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "Decision context"
+          },
+          {
+            "fs": 10,
+            "text": "Decision"
+          },
+          {
+            "fs": 10,
+            "text": "Consequences"
+          },
+          {
+            "fs": 10,
+            "text": "Zone"
+          },
+          {
+            "fs": 10,
+            "text": "Knowledge"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "desk_decision:decision_03d2c46abf36"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "B2b-decision-history-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "○ Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder ✓ SAVED 13:41 THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-8437ae99.md SEP 30 13:41"
+      ],
+      "history_head": "SENDS 1",
+      "last_chips": [
+        "✓ SAVED 13:41"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "2699d382a3dd0fe2d16b982915c9b7d52f254e4aa30ebf2f320389dd3aa3ae7c",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=desk-decision] [data-testid=send-history] .surface-section-head",
+          "text": "SENDS 1",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=desk-decision] [data-testid=history-row]",
+          "text": "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pyt",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              363,
+              107.8
+            ],
+            "text": "○\nTeam folder\nFILE\n/private/va"
+          }
+        ],
+        "reached_by_scroll": []
+      },
+      "prepared": [],
+      "preview_fields": [],
+      "preview_fonts": [],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "Decision context"
+          },
+          {
+            "fs": 10,
+            "text": "Decision"
+          },
+          {
+            "fs": 10,
+            "text": "Consequences"
+          },
+          {
+            "fs": 10,
+            "text": "Zone"
+          },
+          {
+            "fs": 10,
+            "text": "Knowledge"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "desk_decision:decision_03d2c46abf36"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "B3-decision-edited-send-again-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder ✓ SAVED 13:41 THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "THIS DEVICE"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-8437ae99.md SEP 30 13:41"
+      ],
+      "history_head": "SENDS 1",
+      "last_chips": [
+        "✓ SAVED 13:41"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "1f5da898e3480f3361ebaef84ef54f1e93f0ddeae1d3cee621ced854f0ee59e1",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-mark=b3-edit]",
+          "text": "Freeze the old ledger on Nov 5. All writes go to the new ledger after that day.",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [],
+        "reached_by_scroll": []
+      },
+      "prepared": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder"
+      ],
+      "preview_fonts": [
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter"
+      ],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-8437ae99.md"
+        }
+      ],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "Decision context"
+          },
+          {
+            "fs": 10,
+            "text": "Decision"
+          },
+          {
+            "fs": 10,
+            "text": "Consequences"
+          },
+          {
+            "fs": 10,
+            "text": "Zone"
+          },
+          {
+            "fs": 10,
+            "text": "Knowledge"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "verb": "Send again",
+      "wells": [
+        "desk_decision:decision_03d2c46abf36"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "B3b-decision-edited-sent-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder ✓ SAVED 13:41 THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "THIS DEVICE"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-bca281c5.md SEP 30 13:41",
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-8437ae99.md SEP 30 13:41"
+      ],
+      "history_head": "SENDS 2",
+      "kernel_send": {
+        "name": "channel.send",
+        "operation_id": "op_259d28f0bce540c5a6302370f5d5a24f",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "receipt_outcome": "succeeded",
+        "receipt_state": "succeeded",
+        "receipts": 1,
+        "result_ref": "channel_send:chs_bca281c5e6fcab763bd6ed4a",
+        "state": "succeeded",
+        "target_ref": "document:desk_decision:decision_03d2c46abf36"
+      },
+      "last_chips": [
+        "✓ SAVED 13:41"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "a6f98b69d2073b9f77979caad6b9dbeb9a3328358f4b8e0d05ed6f1055550c26",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='Team folder'] [data-receipt=latest]",
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              363,
+              107.8
+            ],
+            "text": "●\nTeam folder\nFILE\n/private/va"
+          },
+          {
+            "target": [
+              90,
+              44
+            ],
+            "text": "Send again"
+          }
+        ],
+        "reached_by_scroll": []
+      },
+      "prepared": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder"
+      ],
+      "preview_fonts": [
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter"
+      ],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-bca281c5.md"
+        }
+      ],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "Decision context"
+          },
+          {
+            "fs": 10,
+            "text": "Decision"
+          },
+          {
+            "fs": 10,
+            "text": "Consequences"
+          },
+          {
+            "fs": 10,
+            "text": "Zone"
+          },
+          {
+            "fs": 10,
+            "text": "Knowledge"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "desk_decision:decision_03d2c46abf36"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "T2a-preview-changed-fresh-preview-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder ✓ SAVED 13:41 THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "THIS DEVICE"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-bca281c5.md SEP 30 13:41",
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-8437ae99.md SEP 30 13:41"
+      ],
+      "history_head": "SENDS 2",
+      "kernel_refusal": {
+        "name": "channel.send",
+        "operation_id": "op_ae5b155bc0254187ae35c520d376c2a2",
+        "receipt_outcome": "preview_changed",
+        "receipt_state": "refused",
+        "state": "refused",
+        "target_ref": "document:desk_decision:decision_03d2c46abf36"
+      },
+      "last_chips": [
+        "✓ SAVED 13:41"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "1ec81bbdb7f6b630f9dcfbbb52f7cfd75fa5047bd3523cc171e8c8af4026ee5e",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-refused]",
+          "text": "✗ REFUSED PREVIEW CHANGED NOTHING SENT",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='Team folder'] [data-testid=send-verb]",
+          "text": "Send again",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              363,
+              107.8
+            ],
+            "text": "●\nTeam folder\nFILE\n/private/va"
+          },
+          {
+            "target": [
+              90,
+              44
+            ],
+            "text": "Send again"
+          }
+        ],
+        "reached_by_scroll": []
+      },
+      "prepared": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder"
+      ],
+      "preview_fonts": [
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter"
+      ],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": "preview_changed",
+          "state": "send-refused",
+          "text": "✗ REFUSED PREVIEW CHANGED NOTHING SENT"
+        }
+      ],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "Decision context"
+          },
+          {
+            "fs": 10,
+            "text": "Decision"
+          },
+          {
+            "fs": 10,
+            "text": "Consequences"
+          },
+          {
+            "fs": 10,
+            "text": "Zone"
+          },
+          {
+            "fs": 10,
+            "text": "Knowledge"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "desk_decision:decision_03d2c46abf36"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "T2a2-preview-changed-passage-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder ✓ SAVED 13:41 THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "THIS DEVICE"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-bca281c5.md SEP 30 13:41",
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-8437ae99.md SEP 30 13:41"
+      ],
+      "history_head": "SENDS 2",
+      "last_chips": [
+        "✓ SAVED 13:41"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "9578229ebc3c9f1e69e19118a993e1cc14774bd658ad8ca91a38475eece70699",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": "[data-mark=changed-passage]",
+          "text": "Freeze the old ledger on Nov 6. All writes go to the new ledger after that day.",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [],
+        "reached_by_scroll": []
+      },
+      "prepared": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder"
+      ],
+      "preview_fonts": [
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter"
+      ],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": "preview_changed",
+          "state": "send-refused",
+          "text": "✗ REFUSED PREVIEW CHANGED NOTHING SENT"
+        }
+      ],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "Decision context"
+          },
+          {
+            "fs": 10,
+            "text": "Decision"
+          },
+          {
+            "fs": 10,
+            "text": "Consequences"
+          },
+          {
+            "fs": 10,
+            "text": "Zone"
+          },
+          {
+            "fs": 10,
+            "text": "Knowledge"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "desk_decision:decision_03d2c46abf36"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "T2b-preview-changed-sent-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "● Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder ✓ SAVED 13:41 THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "THIS DEVICE"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-596efd4d.md SEP 30 13:41",
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-bca281c5.md SEP 30 13:41",
+        "✓ Team folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-8437ae99.md SEP 30 13:41"
+      ],
+      "history_head": "SENDS 3",
+      "kernel_send": {
+        "name": "channel.send",
+        "operation_id": "op_2bc4246c8a8347a196e9e3bb07e5263d",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "receipt_outcome": "succeeded",
+        "receipt_state": "succeeded",
+        "receipts": 1,
+        "result_ref": "channel_send:chs_596efd4d36d690cb16a45e4f",
+        "state": "succeeded",
+        "target_ref": "document:desk_decision:decision_03d2c46abf36"
+      },
+      "last_chips": [
+        "✓ SAVED 13:41"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "ef23bd13d4cfb6f52803f43774d402a456aea2d081369d74974a08ccca11fd1b",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='Team folder'] [data-receipt=latest]",
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              363,
+              107.8
+            ],
+            "text": "●\nTeam folder\nFILE\n/private/va"
+          },
+          {
+            "target": [
+              90,
+              44
+            ],
+            "text": "Send again"
+          }
+        ],
+        "reached_by_scroll": []
+      },
+      "prepared": [],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder"
+      ],
+      "preview_fonts": [
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter"
+      ],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [
+        {
+          "code": null,
+          "state": "sent",
+          "text": "✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-596efd4d.md"
+        }
+      ],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "disabled": false,
+          "text": "Send again"
+        }
+      ],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 10,
+            "text": "Decision context"
+          },
+          {
+            "fs": 10,
+            "text": "Decision"
+          },
+          {
+            "fs": 10,
+            "text": "Consequences"
+          },
+          {
+            "fs": 10,
+            "text": "Zone"
+          },
+          {
+            "fs": 10,
+            "text": "Knowledge"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "desk_decision:decision_03d2c46abf36"
+      ],
+      "window": true,
+      "window_width": 393
+    }
+  },
+  "decision": "decision_03d2c46abf36",
+  "hub_sends": [
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2026-09-30T19:41:33.048219+00:00",
+      "destination_id": "chd_b1acf298c3b6e9976e447999",
+      "destination_name": "Team folder",
+      "dispatch_seq": 1,
+      "dispatch_started_at": "2026-09-30T19:41:33.048219+00:00",
+      "document_json": {
+        "label": "DECISION",
+        "slug": "freeze-the-old-ledger-on-nov-3",
+        "title": "Freeze the old ledger on Nov 3"
+      },
+      "document_ref": "desk_decision:decision_03d2c46abf36",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-8437ae99.md",
+      "id": "chs_8437ae9911d579ca84ce5f77",
+      "payload_digest": "590f49620fd211ff89fddf8da7787dca6350be5eac21da51830ae87205fb1899",
+      "prepare_operation_id": null,
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "text": "# Freeze the old ledger on Nov 3\nStatus: accepted\n\n## Deciders\nKarol, Priya\n\n## Context\nThe cutover rehearsal showed two write paths into the old ledger.\n\n## Decision\nFreeze the old ledger on Nov 3. All writes go to the new ledger after that day.\n\n## Consequences\n- Finance runs one extra reconciliation.\n- Rollback window closes Nov 10.\n"
+      },
+      "proof": {
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-8437ae99.md",
+        "sha256": "590f49620fd211ff89fddf8da7787dca6350be5eac21da51830ae87205fb1899",
+        "size": 338
+      },
+      "reason": null,
+      "send_operation_id": "op_fba36cdfeebb49909c60d6c50fea6ce9",
+      "settled_at": "2026-09-30T19:41:33+00:00",
+      "size": 338,
+      "state": "sent",
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder"
+      },
+      "target_digest": "bf5dc879820a75d18ce9b2e6bae126d6a750ecdbfc08f5f0646c12939dfb191d"
+    },
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2026-09-30T19:41:38.802291+00:00",
+      "destination_id": "chd_b1acf298c3b6e9976e447999",
+      "destination_name": "Team folder",
+      "dispatch_seq": 2,
+      "dispatch_started_at": "2026-09-30T19:41:38.802291+00:00",
+      "document_json": {
+        "label": "DECISION",
+        "slug": "freeze-the-old-ledger-on-nov-3",
+        "title": "Freeze the old ledger on Nov 3"
+      },
+      "document_ref": "desk_decision:decision_03d2c46abf36",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-bca281c5.md",
+      "id": "chs_bca281c5e6fcab763bd6ed4a",
+      "payload_digest": "d13fc6384fc9b2ac34c0fdac723f38ca95ec3e1e0afdaf1b995615dd750c5887",
+      "prepare_operation_id": null,
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "text": "# Freeze the old ledger on Nov 3\nStatus: accepted\n\n## Deciders\nKarol, Priya\n\n## Context\nThe cutover rehearsal showed two write paths into the old ledger.\n\n## Decision\nFreeze the old ledger on Nov 5. All writes go to the new ledger after that day.\n\n## Consequences\n- Finance runs one extra reconciliation.\n- Rollback window closes Nov 10.\n"
+      },
+      "proof": {
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-bca281c5.md",
+        "sha256": "d13fc6384fc9b2ac34c0fdac723f38ca95ec3e1e0afdaf1b995615dd750c5887",
+        "size": 338
+      },
+      "reason": null,
+      "send_operation_id": "op_259d28f0bce540c5a6302370f5d5a24f",
+      "settled_at": "2026-09-30T19:41:38+00:00",
+      "size": 338,
+      "state": "sent",
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder"
+      },
+      "target_digest": "bf5dc879820a75d18ce9b2e6bae126d6a750ecdbfc08f5f0646c12939dfb191d"
+    },
+    {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "created_at": "2026-09-30T19:41:44.393706+00:00",
+      "destination_id": "chd_b1acf298c3b6e9976e447999",
+      "destination_name": "Team folder",
+      "dispatch_seq": 3,
+      "dispatch_started_at": "2026-09-30T19:41:44.393706+00:00",
+      "document_json": {
+        "label": "DECISION",
+        "slug": "freeze-the-old-ledger-on-nov-3",
+        "title": "Freeze the old ledger on Nov 3"
+      },
+      "document_ref": "desk_decision:decision_03d2c46abf36",
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-596efd4d.md",
+      "id": "chs_596efd4d36d690cb16a45e4f",
+      "payload_digest": "d69afdf141d4370f72b7889e9f1f27e386cacceef078a62f25a898f9fdab5c7e",
+      "prepare_operation_id": null,
+      "prepared_by": {
+        "identity": "owner-session",
+        "kind": "owner"
+      },
+      "preview": {
+        "text": "# Freeze the old ledger on Nov 3\nStatus: accepted\n\n## Deciders\nKarol, Priya\n\n## Context\nThe cutover rehearsal showed two write paths into the old ledger.\n\n## Decision\nFreeze the old ledger on Nov 6. All writes go to the new ledger after that day.\n\n## Consequences\n- Finance runs one extra reconciliation.\n- Rollback window closes Nov 10.\n"
+      },
+      "proof": {
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder/2026-09-30-freeze-the-old-ledger-on-nov-3-decision-596efd4d.md",
+        "sha256": "d69afdf141d4370f72b7889e9f1f27e386cacceef078a62f25a898f9fdab5c7e",
+        "size": 338
+      },
+      "reason": null,
+      "send_operation_id": "op_2bc4246c8a8347a196e9e3bb07e5263d",
+      "settled_at": "2026-09-30T19:41:44+00:00",
+      "size": 338,
+      "state": "sent",
+      "target": {
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3076/test_the_decision_window_well_1/Reports/Teamfolder"
+      },
+      "target_digest": "bf5dc879820a75d18ce9b2e6bae126d6a750ecdbfc08f5f0646c12939dfb191d"
+    }
+  ]
+}

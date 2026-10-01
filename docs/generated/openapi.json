@@ -1385,17 +1385,6 @@
         "title": "_ResultsRequest",
         "type": "object"
       },
-      "_SlackExportRequest": {
-        "properties": {
-          "what": {
-            "default": "",
-            "title": "What",
-            "type": "string"
-          }
-        },
-        "title": "_SlackExportRequest",
-        "type": "object"
-      },
       "_SpeakerUpdateRequest": {
         "properties": {
           "avatar": {
@@ -4930,6 +4919,51 @@
         ]
       }
     },
+    "/api/brief/{brief_id}": {
+      "get": {
+        "description": "Read one stored brief without changing the latest-brief pointer.\n\nThis is a plain read for the exact-id handoff from the Desk.  Keep it\nafter the static routes above: Starlette matches routes in declaration\norder, so ``latest`` and ``shelf`` must continue to win over this\nparameter route.",
+        "operationId": "read_by_id_api_brief__brief_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "brief_id",
+            "required": true,
+            "schema": {
+              "title": "Brief Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Read By Id Api Brief  Brief Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read By Id",
+        "tags": [
+          "monday-brief"
+        ]
+      }
+    },
     "/api/briefs/{brief_id}": {
       "get": {
         "operationId": "api_get_brief_api_briefs__brief_id__get",
@@ -6226,7 +6260,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "update_id",
+            "name": "document_ref",
             "required": false,
             "schema": {
               "anyOf": [
@@ -6237,7 +6271,7 @@
                   "type": "null"
                 }
               ],
-              "title": "Update Id"
+              "title": "Document Ref"
             }
           },
           {
@@ -6335,6 +6369,24 @@
           }
         },
         "summary": "Api Channel Discard"
+      }
+    },
+    "/api/channels/slack-webhooks": {
+      "post": {
+        "operationId": "api_channel_save_slack_webhook_api_channels_slack_webhooks_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Channel Save Slack Webhook Api Channels Slack Webhooks Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Channel Save Slack Webhook"
       }
     },
     "/api/coders/clear-stale": {
@@ -15705,16 +15757,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/_SlackExportRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "content": {

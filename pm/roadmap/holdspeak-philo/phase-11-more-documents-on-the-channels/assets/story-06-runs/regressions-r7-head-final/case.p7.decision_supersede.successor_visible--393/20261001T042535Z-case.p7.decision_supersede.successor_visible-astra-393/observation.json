@@ -1,0 +1,1055 @@
+{
+  "id": "obs-20261001T042535Z-case.p7.decision_supersede.successor_visible-astra-393",
+  "run_id": "20261001T042535Z-case.p7.decision_supersede.successor_visible-astra-393",
+  "case_id": "case.p7.decision_supersede.successor_visible",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase7.json",
+  "job": "p7",
+  "edge_ids": [
+    "edge.face.decision_supersede"
+  ],
+  "state_id": "state.desk_presentation.p7_decision_lifecycle",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64801",
+      "port": 64801,
+      "pid": 12662,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3s493kca",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3s493kca/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:25:35.516068+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase7.json",
+      "sha256": "3da3105d83caa95a8688defd8920381332fea7637c5dce0400dc85b737778428",
+      "version": "phase7-desk"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_26ec805ac3d6",
+          "title": "Atlas old decision",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:25:38Z",
+          "updated_at": "2026-10-01T04:25:38Z",
+          "deleted": false
+        },
+        "operation_id": "op_bb453951a922457188a66601e83c2069",
+        "receipt": {
+          "receipt_id": "rcpt_a86b56e79c5d497cbbbd0074cdb7656e",
+          "operation_id": "op_bb453951a922457188a66601e83c2069",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_26ec805ac3d6",
+          "created_at": 1790828738.2033331,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_26ec805ac3d6"
+        }
+      },
+      "response_sha256": "b295cc7f5fedae77ef3a05e854888738dd5afcbc04d3711272cd77417ff361b5",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_26ec805ac3d6"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions/decision_26ec805ac3d6/supersede",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_fbe2f08eede3",
+          "title": "Superseding Atlas old decision",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:25:38Z",
+          "updated_at": "2026-10-01T04:25:38Z",
+          "deleted": false
+        },
+        "operation_id": "op_5a4a0a6968af4e78812252d5bd66edfa",
+        "receipt": {
+          "receipt_id": "rcpt_ce2fb8c5476843cb8c1da5f7d1d75f0a",
+          "operation_id": "op_5a4a0a6968af4e78812252d5bd66edfa",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_fbe2f08eede3",
+          "created_at": 1790828738.207724,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_26ec805ac3d6"
+        }
+      },
+      "response_sha256": "595f7325af2866fc968401377592e57047f7af48f401676db28de0158b8fc2c7",
+      "captured": {
+        "name": "successor_id",
+        "path": "decision.id",
+        "value": "decision_fbe2f08eede3"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.63,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3s493kca",
+    "decision_id": "decision_26ec805ac3d6",
+    "successor_id": "decision_fbe2f08eede3"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[id='desk-palette-option-decision:decision_fbe2f08eede3']",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "proposed \u21bb\nSupersedes Atlas old decision\nSEND\nNO DESTINATION\nAdd destination"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "desk-decision-card"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 15,
+        "y": 357,
+        "w": 363,
+        "h": 204
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+      "after": "div#pullout:decision_fbe2f08eede3"
+    },
+    "focus_label": {
+      "before": "Search tools and Desk items",
+      "after": "Superseding Atlas old decision"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Superseding Atlas old decision",
+          "rect": {
+            "x": 0,
+            "y": 304,
+            "w": 393,
+            "h": 373
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "d22bb8194078fed9142d884dc129c55df5876ecf00aac77ba0c605c147cd217f",
+      "after": "d59339a14ea6fc77c3163a9aad843d458af7859e04221f9bce00f70c2ba6130a"
+    },
+    "document_text_len": {
+      "before": 326,
+      "after": 436
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+          "value": "Superseding Atlas old decision"
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[role=region][aria-label='Superseding Atlas old decision'] .desk-decision-card",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [
+      {
+        "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+        "value": "Superseding Atlas old decision"
+      }
+    ],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:64801/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d22bb8194078fed9142d884dc129c55df5876ecf00aac77ba0c605c147cd217f",
+    "document_text_len": 326,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_26ec805ac3d6",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_26ec805ac3d6",
+            "title": "Atlas old decision",
+            "status": "superseded",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": "decision_fbe2f08eede3",
+            "tags": [],
+            "created_at": "2026-10-01T04:25:38Z",
+            "updated_at": "2026-10-01T04:25:38Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "20edc0373abd07f1699e352238fa05cbd9b07b6d757f64da7783532439417fe1"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_fbe2f08eede3",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_fbe2f08eede3",
+            "title": "Superseding Atlas old decision",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-10-01T04:25:38Z",
+            "updated_at": "2026-10-01T04:25:38Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "6ce606330829b56e3b0bb0afee179525f47c4e4766cecaccbb81452a13c83b34"
+      }
+    ],
+    "at_utc": "2026-10-01T04:25:44.005924+00:00"
+  },
+  "after": {
+    "observe_at": "[role=region][aria-label='Superseding Atlas old decision'] .desk-decision-card",
+    "target_present": true,
+    "text": "proposed \u21bb\nSupersedes Atlas old decision\nSEND\nNO DESTINATION\nAdd destination",
+    "attrs": {
+      "class": "desk-decision-card"
+    },
+    "rect": {
+      "x": 15,
+      "y": 357,
+      "w": 363,
+      "h": 204
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 357,
+        "w": 363,
+        "h": 204
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 359,
+          "owned": true,
+          "owner": "div#pullout:decision_fbe2f08eede3 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 17,
+          "y": 459,
+          "owned": true,
+          "owner": "div#pullout:decision_fbe2f08eede3 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > button.btn.btn--ghost"
+        },
+        {
+          "x": 17,
+          "y": 559,
+          "owned": true,
+          "owner": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div > div > section.surface-section > div.send-line"
+        },
+        {
+          "x": 197,
+          "y": 359,
+          "owned": true,
+          "owner": "div#pullout:decision_fbe2f08eede3 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 197,
+          "y": 459,
+          "owned": true,
+          "owner": "div#pullout:decision_fbe2f08eede3 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > button.btn.btn--ghost"
+        },
+        {
+          "x": 197,
+          "y": 559,
+          "owned": true,
+          "owner": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div > div > section.surface-section > div.send-line"
+        },
+        {
+          "x": 376,
+          "y": 359,
+          "owned": true,
+          "owner": "div#pullout:decision_fbe2f08eede3 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 376,
+          "y": 459,
+          "owned": true,
+          "owner": "div#pullout:decision_fbe2f08eede3 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > button.btn.btn--ghost"
+        },
+        {
+          "x": 376,
+          "y": 559,
+          "owned": true,
+          "owner": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div > div > section.surface-section > div.send-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:decision_fbe2f08eede3",
+    "focus_label": "Superseding Atlas old decision",
+    "url": "http://127.0.0.1:64801/",
+    "windows": [
+      {
+        "title": "Superseding Atlas old decision",
+        "rect": {
+          "x": 0,
+          "y": 304,
+          "w": 393,
+          "h": 373
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "d59339a14ea6fc77c3163a9aad843d458af7859e04221f9bce00f70c2ba6130a",
+    "document_text_len": 436,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_26ec805ac3d6",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_26ec805ac3d6",
+            "title": "Atlas old decision",
+            "status": "superseded",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": "decision_fbe2f08eede3",
+            "tags": [],
+            "created_at": "2026-10-01T04:25:38Z",
+            "updated_at": "2026-10-01T04:25:38Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "20edc0373abd07f1699e352238fa05cbd9b07b6d757f64da7783532439417fe1"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_fbe2f08eede3",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_fbe2f08eede3",
+            "title": "Superseding Atlas old decision",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-10-01T04:25:38Z",
+            "updated_at": "2026-10-01T04:25:38Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "6ce606330829b56e3b0bb0afee179525f47c4e4766cecaccbb81452a13c83b34"
+      }
+    ],
+    "at_utc": "2026-10-01T04:25:45.156275+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:64801) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:64801) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/desk/relationships/decision%3Adecision_fbe2f08eede3",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/documentSends-BsqDYTzC.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-D9YE7g0K.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/api-DoUhuCdb.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/documentSends-DlI3R3H-.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-BdagargR.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note10.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/destinations",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/connections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[role=region][aria-label='Superseding Atlas old decision'] .desk-decision-card",
+    "target_present": true,
+    "text": "proposed \u21bb\nSupersedes Atlas old decision\nSEND\nNO DESTINATION\nAdd destination",
+    "attrs": {
+      "class": "desk-decision-card"
+    },
+    "rect": {
+      "x": 15,
+      "y": 357,
+      "w": 363,
+      "h": 204
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 357,
+        "w": 363,
+        "h": 204
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 359,
+          "owned": true,
+          "owner": "div#pullout:decision_fbe2f08eede3 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 17,
+          "y": 459,
+          "owned": true,
+          "owner": "div#pullout:decision_fbe2f08eede3 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > button.btn.btn--ghost"
+        },
+        {
+          "x": 17,
+          "y": 559,
+          "owned": true,
+          "owner": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div > div > section.surface-section > div.send-line"
+        },
+        {
+          "x": 197,
+          "y": 359,
+          "owned": true,
+          "owner": "div#pullout:decision_fbe2f08eede3 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 197,
+          "y": 459,
+          "owned": true,
+          "owner": "div#pullout:decision_fbe2f08eede3 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > button.btn.btn--ghost"
+        },
+        {
+          "x": 197,
+          "y": 559,
+          "owned": true,
+          "owner": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div > div > section.surface-section > div.send-line"
+        },
+        {
+          "x": 376,
+          "y": 359,
+          "owned": true,
+          "owner": "div#pullout:decision_fbe2f08eede3 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 376,
+          "y": 459,
+          "owned": true,
+          "owner": "div#pullout:decision_fbe2f08eede3 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > button.btn.btn--ghost"
+        },
+        {
+          "x": 376,
+          "y": 559,
+          "owned": true,
+          "owner": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div > div > section.surface-section > div.send-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:decision_fbe2f08eede3",
+    "focus_label": "Superseding Atlas old decision",
+    "url": "http://127.0.0.1:64801/",
+    "windows": [
+      {
+        "title": "Superseding Atlas old decision",
+        "rect": {
+          "x": 0,
+          "y": 304,
+          "w": 393,
+          "h": 373
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "d59339a14ea6fc77c3163a9aad843d458af7859e04221f9bce00f70c2ba6130a",
+    "document_text_len": 436,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_26ec805ac3d6",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_26ec805ac3d6",
+            "title": "Atlas old decision",
+            "status": "superseded",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": "decision_fbe2f08eede3",
+            "tags": [],
+            "created_at": "2026-10-01T04:25:38Z",
+            "updated_at": "2026-10-01T04:25:38Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "20edc0373abd07f1699e352238fa05cbd9b07b6d757f64da7783532439417fe1"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_fbe2f08eede3",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_fbe2f08eede3",
+            "title": "Superseding Atlas old decision",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-10-01T04:25:38Z",
+            "updated_at": "2026-10-01T04:25:38Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "6ce606330829b56e3b0bb0afee179525f47c4e4766cecaccbb81452a13c83b34"
+      }
+    ],
+    "at_utc": "2026-10-01T04:25:45.019737+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:64801) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:64801) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/desk/relationships/decision%3Adecision_fbe2f08eede3",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/documentSends-BsqDYTzC.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-D9YE7g0K.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/api-DoUhuCdb.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/documentSends-DlI3R3H-.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-BdagargR.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note10.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/destinations",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/connections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "'Supersedes Atlas old decision' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 357, 'w': 363, 'h': 204}",
+    "elapsed_s": 0.965
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'Supersedes Atlas old decision' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 357, 'w': 363, 'h': 204}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.101,
+    "first_satisfied_at_s": 0.965,
+    "completion_bound_s": 45.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'Supersedes Atlas old decision' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 357, 'w': 363, 'h': 204}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:64801) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:64801) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/desk/relationships/decision%3Adecision_fbe2f08eede3",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/documentSends-BsqDYTzC.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/SendWell-D9YE7g0K.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/api-DoUhuCdb.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/documentSends-DlI3R3H-.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/SendWell-BdagargR.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note10.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/destinations",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/connections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b4/case.p7.decision_supersede.successor_visible--393/20261001T042535Z-case.p7.decision_supersede.successor_visible-astra-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b4/case.p7.decision_supersede.successor_visible--393/20261001T042535Z-case.p7.decision_supersede.successor_visible-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3s493kca/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3s493kca/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64801"
+  ],
+  "duration_s": 10.566
+}

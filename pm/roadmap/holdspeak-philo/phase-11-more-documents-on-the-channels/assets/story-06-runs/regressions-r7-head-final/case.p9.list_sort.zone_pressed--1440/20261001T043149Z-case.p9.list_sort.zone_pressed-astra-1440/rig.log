@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase9.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:51561 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-llpw7fwl/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p9
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b1/case.p9.list_sort.zone_pressed--1440/20261001T043149Z-case.p9.list_sort.zone_pressed-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b1/case.p9.list_sort.zone_pressed--1440/20261001T043149Z-case.p9.list_sort.zone_pressed-astra-1440/after.png']
+NOTE: predicate: aria-pressed='true', wanted 'true'

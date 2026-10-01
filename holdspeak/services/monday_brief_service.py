@@ -1434,6 +1434,14 @@ class MondayBriefService:
             ).fetchone()
             return self._load_brief(conn, row) if row is not None else None
 
+    def get_by_id(self, brief_id: str) -> MondayBrief | None:
+        """Return the stored brief with exactly *brief_id*, if it exists."""
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM monday_briefs WHERE id = ?", (brief_id,)
+            ).fetchone()
+            return self._load_brief(conn, row) if row is not None else None
+
     # ── brief-item triage shelf (HS-132-08) ──────────────────────────────
 
     def shelve(self, principal: Any, item_id: str, state: str | None) -> dict[str, Any]:

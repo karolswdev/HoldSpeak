@@ -1,0 +1,147 @@
+Base: 3552be416c9d5d968adc162941f1f81a3c7c0b44
+/Users/karol/dev/tools/wt-philo-11-02/.tmp/philo11-02/baseline-3552/holdspeak/__init__.py
+Command: /Users/karol/dev/tools/wt-philo-11-02/.venv/bin/python -m pytest -q --basetemp /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-baseline-n1ga3vie/pytest tests/integration/test_philo11_slack_rewrite.py
+FFFFF.F                                                                  [100%]
+=================================== FAILURES ===================================
+_________ test_old_config_loads_but_aftercare_does_not_advertise_slack _________
+
+client = <starlette.testclient.TestClient object at 0x10ea7f230>
+settings_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-baseline-n1ga3vie/pytest/test_old_config_loads_but_afte0/config.json')
+seeded = <holdspeak.db.core.Database object at 0x10d3674d0>
+
+    def test_old_config_loads_but_aftercare_does_not_advertise_slack(
+        client: TestClient, settings_path: Path, seeded: Database
+    ) -> None:
+        _save_legacy_config(settings_path)
+    
+        response = client.get("/api/meetings/m-rewrite/aftercare")
+    
+        assert response.status_code == 200
+>       assert "slack_configured" not in response.json()
+E       AssertionError: assert 'slack_configured' not in {'decisions': [], 'is_empty': False, 'meeting_date': '2026-09-30T10:00:00', 'meeting_id': 'm-rewrite', ...}
+E        +  where {'decisions': [], 'is_empty': False, 'meeting_date': '2026-09-30T10:00:00', 'meeting_id': 'm-rewrite', ...} = json()
+E        +    where json = <Response [200 OK]>.json
+
+tests/integration/test_philo11_slack_rewrite.py:105: AssertionError
+_________ test_settings_read_and_write_keep_the_retained_field_private _________
+
+db = <holdspeak.db.core.Database object at 0x110916e90>
+settings_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-baseline-n1ga3vie/pytest/test_settings_read_and_write_k0/config.json')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x109a622c0>
+
+    def test_settings_read_and_write_keep_the_retained_field_private(
+        db: Database, settings_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _save_legacy_config(settings_path, mode="neutral")
+        config = Config.load(settings_path)
+    
+        # Reproduce the charter red case: removing only the credential registrations
+        # leaves the retained Config field exposed by both serializers and writable.
+        monkeypatch.delitem(settings_service.SECRET_PATHS, "slack_webhook_url", raising=False)
+        monkeypatch.delitem(credential_service.SECRET_PATHS, "slack_webhook_url", raising=False)
+    
+        settings_payload = settings_service.redacted_settings(config)
+        credential_payload = credential_service.redacted_settings(config)
+>       assert SENTINEL not in repr(settings_payload)
+E       assert 'https://hoo...O-NOT-RETURN' not in "{'config_ve...d': False}}}"
+E         
+E         'https://hooks.slac...TINEL/DO-NOT-RETURN' is contained here:
+E         ?           ----------------- ^^^^^^^^^^^^^
+E           ok_url': 'https://hooks.slack.com/services/SENTINEL/DO-NOT-RETURN', 'companion_github_repo': '', 'diarization_enabled': False, 'diarize_mic': False, 'cross_meeting_recognition': True, 'similarity_threshold': 0.75}, 'dictation': {'pipeline': {'enabled': True, 'stages': ['intent-router', 'kb-enricher'], 'max_total_latency_ms': 600, 'target_profile_override': 'auto', 'rewrite_passes': 1, 'corrections_enabled': True, 'target_detect_llm_enabled': False, 'target_detect_ll...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests/integration/test_philo11_slack_rewrite.py:123: AssertionError
+________________ test_settings_write_ignores_the_retained_field ________________
+
+db = <holdspeak.db.core.Database object at 0x1109dc7d0>
+settings_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-baseline-n1ga3vie/pytest/test_settings_write_ignores_th0/config.json')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11094ec30>
+
+    def test_settings_write_ignores_the_retained_field(
+        db: Database, settings_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _save_legacy_config(settings_path, mode="neutral")
+        monkeypatch.delitem(settings_service.SECRET_PATHS, "slack_webhook_url", raising=False)
+        monkeypatch.delitem(credential_service.SECRET_PATHS, "slack_webhook_url", raising=False)
+    
+        before = Config.load(settings_path).meeting.slack_webhook_url
+        SettingsService(db).update_settings(
+            UNAUTHENTICATED,
+            {"meeting": {"slack_webhook_url": "https://hooks.slack.com/services/ATTACKER"}},
+        )
+>       assert Config.load(settings_path).meeting.slack_webhook_url == before
+E       AssertionError: assert 'https://hook...ices/ATTACKER' == 'https://hook...DO-NOT-RETURN'
+E         
+E         - https://hooks.slack.com/services/SENTINEL/DO-NOT-RETURN
+E         + https://hooks.slack.com/services/ATTACKER
+
+tests/integration/test_philo11_slack_rewrite.py:141: AssertionError
+_____________ test_posture_aftercare_route_is_gone_and_never_posts _____________
+
+client = <starlette.testclient.TestClient object at 0x111e14050>
+settings_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-baseline-n1ga3vie/pytest/test_posture_aftercare_route_i0/config.json')
+seeded = <holdspeak.db.core.Database object at 0x110a92350>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11093e9c0>
+
+    def test_posture_aftercare_route_is_gone_and_never_posts(
+        client: TestClient,
+        settings_path: Path,
+        seeded: Database,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _save_legacy_config(settings_path)
+        calls: list[tuple[str, object]] = []
+    
+        def fake_post(url: str, body: object, *, timeout: float):
+            calls.append((url, body))
+            return webhook_module.WebhookResponse(status=200, body="ok")
+    
+        monkeypatch.setattr(webhook_module, "_default_post", fake_post)
+        response = client.post(
+            "/api/meetings/m-rewrite/export/slack", json={"what": "digest"}
+        )
+    
+>       assert response.status_code == 404
+E       assert 200 == 404
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests/integration/test_philo11_slack_rewrite.py:162: AssertionError
+_______________________ test_desk_slack_target_is_parked _______________________
+
+client = <starlette.testclient.TestClient object at 0x1131fe490>
+settings_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-baseline-n1ga3vie/pytest/test_desk_slack_target_is_park0/config.json')
+seeded = <holdspeak.db.core.Database object at 0x111e15090>
+
+    def test_desk_slack_target_is_parked(
+        client: TestClient, settings_path: Path, seeded: Database
+    ) -> None:
+        _save_legacy_config(settings_path)
+    
+        response = client.post(
+            "/api/desk/actuators/slack/propose", json={"text": "free text"}
+        )
+    
+>       assert response.status_code == 400
+E       assert 200 == 400
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests/integration/test_philo11_slack_rewrite.py:175: AssertionError
+____________________ test_legacy_slack_connector_is_removed ____________________
+
+    def test_legacy_slack_connector_is_removed() -> None:
+        import holdspeak.slack_export as slack_export
+    
+>       assert not hasattr(slack_export, "build_slack_connector")
+E       AssertionError: assert not True
+E        +  where True = hasattr(<module 'holdspeak.slack_export' from '/Users/karol/dev/tools/wt-philo-11-02/.tmp/philo11-02/baseline-3552/holdspeak/slack_export.py'>, 'build_slack_connector')
+
+tests/integration/test_philo11_slack_rewrite.py:208: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/test_philo11_slack_rewrite.py::test_old_config_loads_but_aftercare_does_not_advertise_slack
+FAILED tests/integration/test_philo11_slack_rewrite.py::test_settings_read_and_write_keep_the_retained_field_private
+FAILED tests/integration/test_philo11_slack_rewrite.py::test_settings_write_ignores_the_retained_field
+FAILED tests/integration/test_philo11_slack_rewrite.py::test_posture_aftercare_route_is_gone_and_never_posts
+FAILED tests/integration/test_philo11_slack_rewrite.py::test_desk_slack_target_is_parked
+FAILED tests/integration/test_philo11_slack_rewrite.py::test_legacy_slack_connector_is_removed
+6 failed, 1 passed in 5.35s

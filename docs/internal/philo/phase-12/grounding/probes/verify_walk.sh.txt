@@ -1,0 +1,13 @@
+#!/bin/sh
+# Run one actual atlas case per invocation, in an isolated HOME.
+set -eu
+philo12_cache_home="$HOME"
+export HOME="$(mktemp -d)"
+export PATH="/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH"
+export UV_CACHE_DIR=/tmp/philo12-uv-cache
+export PLAYWRIGHT_BROWSERS_PATH="$philo12_cache_home/Library/Caches/ms-playwright"
+uv run --extra dev python scripts/graph_walk.py run \
+  --atlas docs/internal/philo/graph/atlas.json \
+  --case case.j10.arrival_generate_brief.generated_empty \
+  --brain astra --viewport "$1" --engine none \
+  --out "docs/internal/philo/phase-12/grounding/probes/walk-$1"

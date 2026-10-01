@@ -1,0 +1,15 @@
+{
+  "db": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-_2n1zlmt/hub-home/.local/share/holdspeak/holdspeak.db",
+  "documents": {
+    "decision_record": "decision_record:record-15440dbbbd2c41c88b37380f174d6209",
+    "desk_decision": "desk_decision:philo11-07-desk",
+    "meeting_decision": "meeting_decision:dec-712ef9fe655ad09e4a35",
+    "meeting_digest": "meeting_digest:philo11-07-meeting",
+    "meeting_followup": "meeting_followup:philo11-07-meeting",
+    "meeting_summary": "meeting_summary:philo11-07-meeting",
+    "monday_brief": "monday_brief:brief-91e1dcfe9eb7495f9eea0caaa6164a0e",
+    "project_update": "project_update:philo11-07-update"
+  },
+  "people_keystore": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-_2n1zlmt/hub-home/people.key",
+  "seeded_at": "2026-10-01T12:15:35.883212+00:00"
+}

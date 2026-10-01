@@ -1,0 +1,617 @@
+{
+  "boards": {
+    "1-brief-prepared-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "○ HoldSpeak folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox THIS DEVICE",
+        "○ HoldSpeak folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "THIS DEVICE",
+        "THIS DEVICE",
+        "THIS DEVICE"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "last_chips": [],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "cc8fd5cb09ecd0d33e8d46a3ca4d63225026f6cd181f2bab4748e44fc63582c0",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".chair [data-seat=brief] [data-testid=prepared-row]",
+          "text": "◆ HoldSpeak folder ◆ PREPARED BY CODEX-SEND-AGENT BRIEF OCT 1 OCT 1 05:57 THIS D",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": ".chair [data-seat=brief] [data-testid=prepared-send]",
+          "text": "Send",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              369,
+              77
+            ],
+            "text": "◆\nHoldSpeak folder\n◆\nPREPARED\n"
+          },
+          {
+            "target": [
+              46.8,
+              44
+            ],
+            "text": "Send"
+          },
+          {
+            "target": [
+              68.4,
+              44
+            ],
+            "text": "Discard"
+          },
+          {
+            "target": [
+              369,
+              107
+            ],
+            "text": "○\nHoldSpeak folder\nFILE\n/priva"
+          }
+        ],
+        "reached_by_scroll": [
+          {
+            "points_under_host_bar": 6,
+            "text": "○\nHoldSpeak folder\nFILE\n/priva",
+            "wheel_steps": 2
+          }
+        ]
+      },
+      "prepared": [
+        "◆ HoldSpeak folder ◆ PREPARED BY CODEX-SEND-AGENT BRIEF OCT 1 OCT 1 05:57 THIS DEVICE"
+      ],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox"
+      ],
+      "preview_fonts": [
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter"
+      ],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 11,
+            "text": "RANKED"
+          },
+          {
+            "fs": 11,
+            "text": "OVERDUE"
+          },
+          {
+            "fs": 11,
+            "text": "DUE TODAY"
+          },
+          {
+            "fs": 11,
+            "text": "NOT RUN"
+          },
+          {
+            "fs": 11,
+            "text": "NO DUE DATE"
+          },
+          {
+            "fs": 11,
+            "text": "WAITING"
+          },
+          {
+            "fs": 10,
+            "text": "CHECKED JUST NOW"
+          },
+          {
+            "fs": 10,
+            "text": "DOOR"
+          },
+          {
+            "fs": 10,
+            "text": "DUE TODAY"
+          },
+          {
+            "fs": 10,
+            "text": "MTG"
+          },
+          {
+            "fs": 10,
+            "text": "NO DUE DATE · UNASSIGNED"
+          },
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "1 WORDS"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "monday_brief:brief-13bfb494d72e4bddb00c8ba73b9774db",
+        "meeting_summary:philo11-07-meeting"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "2-record-prepared-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "○ HoldSpeak folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "THIS DEVICE",
+        "THIS DEVICE"
+      ],
+      "h_overflow": false,
+      "history": [],
+      "history_head": null,
+      "last_chips": [],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "8963859f963b7c2c146f417bf2d042644c8634a9092ce5f203626846ca332135",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+          "text": "◆ HoldSpeak folder ◆ PREPARED BY CODEX-SEND-AGENT D-DA2614 OCT 1 05:57 THIS DEVI",
+          "why": ""
+        },
+        {
+          "ok": true,
+          "sel": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-send]",
+          "text": "Send",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              341,
+              77.8
+            ],
+            "text": "◆\nHoldSpeak folder\n◆\nPREPARED\n"
+          },
+          {
+            "target": [
+              46.8,
+              44
+            ],
+            "text": "Send"
+          },
+          {
+            "target": [
+              68.4,
+              44
+            ],
+            "text": "Discard"
+          }
+        ],
+        "reached_by_scroll": []
+      },
+      "prepared": [
+        "◆ HoldSpeak folder ◆ PREPARED BY CODEX-SEND-AGENT D-DA2614 OCT 1 05:57 THIS DEVICE"
+      ],
+      "preview_fields": [
+        "FOLDER /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox"
+      ],
+      "preview_fonts": [
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter",
+        "Inter"
+      ],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [
+        {
+          "disabled": false,
+          "text": "Send"
+        }
+      ],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 11,
+            "text": "Brief"
+          },
+          {
+            "fs": 11,
+            "text": "Follow-through"
+          },
+          {
+            "fs": 11,
+            "text": "Decisions"
+          },
+          {
+            "fs": 11,
+            "text": "← RESULTS"
+          },
+          {
+            "fs": 10,
+            "text": "D-"
+          },
+          {
+            "fs": 10,
+            "text": "da26145444f0"
+          },
+          {
+            "fs": 10,
+            "text": "Move the queue in two steps (PHILO-11-07"
+          },
+          {
+            "fs": 10,
+            "text": "Rationale"
+          },
+          {
+            "fs": 10,
+            "text": "Alternatives"
+          },
+          {
+            "fs": 10,
+            "text": "Owner"
+          },
+          {
+            "fs": 10,
+            "text": "Review"
+          },
+          {
+            "fs": 10,
+            "text": "PROVENANCE"
+          },
+          {
+            "fs": 11,
+            "text": "[GO]"
+          },
+          {
+            "fs": 10,
+            "text": "AFFECTED WORK"
+          },
+          {
+            "fs": 10,
+            "text": "SUPERSESSION"
+          },
+          {
+            "fs": 10,
+            "text": "THIS"
+          },
+          {
+            "fs": 10,
+            "text": "REVISIONS"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "decision_record:record-da26145444f0487a91746e220a8514a3"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "3-brief-saved-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "○ HoldSpeak folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox ✓ SAVED 05:58 THIS DEVICE",
+        "○ HoldSpeak folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE",
+        "THIS DEVICE"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ HoldSpeak folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-brief-2026-10-01-brief-2026-10-01-2cb7f0e7.md OCT 1 05:58"
+      ],
+      "history_head": "SENDS 1",
+      "last_chips": [
+        "✓ SAVED 05:58"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "9885a83dbfc75ee94750529a7f7551d6d4fedf3727c4e6a0f60cb37c6c6815d3",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".chair [data-seat=brief] [data-testid=prepared-result]",
+          "text": "· HoldSpeak folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000g",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              369,
+              107
+            ],
+            "text": "○\nHoldSpeak folder\nFILE\n/priva"
+          }
+        ],
+        "reached_by_scroll": []
+      },
+      "prepared": [
+        "· HoldSpeak folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-brief-2026-10-01-brief-2026-10-01-2cb7f0e7.md BY CODEX-SEND-AGENT BRIEF OCT 1 OCT 1 05:58"
+      ],
+      "preview_fields": [],
+      "preview_fonts": [],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 11,
+            "text": "RANKED"
+          },
+          {
+            "fs": 11,
+            "text": "OVERDUE"
+          },
+          {
+            "fs": 11,
+            "text": "DUE TODAY"
+          },
+          {
+            "fs": 11,
+            "text": "NOT RUN"
+          },
+          {
+            "fs": 11,
+            "text": "NO DUE DATE"
+          },
+          {
+            "fs": 11,
+            "text": "WAITING"
+          },
+          {
+            "fs": 10,
+            "text": "CHECKED JUST NOW"
+          },
+          {
+            "fs": 10,
+            "text": "DOOR"
+          },
+          {
+            "fs": 10,
+            "text": "DUE TODAY"
+          },
+          {
+            "fs": 10,
+            "text": "MTG"
+          },
+          {
+            "fs": 10,
+            "text": "NO DUE DATE · UNASSIGNED"
+          },
+          {
+            "fs": 10,
+            "text": "TRANSCRIPT"
+          },
+          {
+            "fs": 10,
+            "text": "1 WORDS"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "monday_brief:brief-13bfb494d72e4bddb00c8ba73b9774db",
+        "meeting_summary:philo11-07-meeting"
+      ],
+      "window": true,
+      "window_width": 393
+    },
+    "4-record-saved-393": {
+      "body_overflow_x": false,
+      "destinations": [
+        "○ HoldSpeak folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox ✓ SAVED 05:58 THIS DEVICE"
+      ],
+      "egress_chips": [
+        "THIS DEVICE"
+      ],
+      "h_overflow": false,
+      "history": [
+        "✓ HoldSpeak folder SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-move-the-queue-in-two-steps-philo-11-07-test-decision-09458726.md OCT 1 05:58"
+      ],
+      "history_head": "SENDS 1",
+      "last_chips": [
+        "✓ SAVED 05:58"
+      ],
+      "mark_delivered_in_new_kind": false,
+      "masked_sha": "84daef875404e8b4cf49c420754931eafce56de86540ac87b7481b086aaead51",
+      "modal": false,
+      "named": [
+        {
+          "ok": true,
+          "sel": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-result]",
+          "text": "· HoldSpeak folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000g",
+          "why": ""
+        }
+      ],
+      "no_answer_shown": false,
+      "pointer": {
+        "missed": [],
+        "owned": [
+          {
+            "target": [
+              341,
+              107.8
+            ],
+            "text": "○\nHoldSpeak folder\nFILE\n/priva"
+          }
+        ],
+        "reached_by_scroll": []
+      },
+      "prepared": [
+        "· HoldSpeak folder ✓ SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-move-the-queue-in-two-steps-philo-11-07-test-decision-09458726.md BY CODEX-SEND-AGENT D-DA2614 OCT 1 05:58"
+      ],
+      "preview_fields": [],
+      "preview_fonts": [],
+      "raw_buttons": {
+        "inherited": [],
+        "touched": []
+      },
+      "receipts": [],
+      "room_open_verbs": [],
+      "row_grammar": [
+        "ok",
+        "ok",
+        "ok"
+      ],
+      "send_head": "SEND",
+      "send_verbs": [],
+      "small_text": {
+        "inherited": [
+          {
+            "fs": 11,
+            "text": "BACK"
+          },
+          {
+            "fs": 11,
+            "text": "Brief"
+          },
+          {
+            "fs": 11,
+            "text": "Follow-through"
+          },
+          {
+            "fs": 11,
+            "text": "Decisions"
+          },
+          {
+            "fs": 11,
+            "text": "← RESULTS"
+          },
+          {
+            "fs": 10,
+            "text": "D-"
+          },
+          {
+            "fs": 10,
+            "text": "da26145444f0"
+          },
+          {
+            "fs": 10,
+            "text": "Move the queue in two steps (PHILO-11-07"
+          },
+          {
+            "fs": 10,
+            "text": "Rationale"
+          },
+          {
+            "fs": 10,
+            "text": "Alternatives"
+          },
+          {
+            "fs": 10,
+            "text": "Owner"
+          },
+          {
+            "fs": 10,
+            "text": "Review"
+          },
+          {
+            "fs": 10,
+            "text": "PROVENANCE"
+          },
+          {
+            "fs": 11,
+            "text": "[GO]"
+          },
+          {
+            "fs": 10,
+            "text": "AFFECTED WORK"
+          },
+          {
+            "fs": 10,
+            "text": "SUPERSESSION"
+          },
+          {
+            "fs": 10,
+            "text": "THIS"
+          },
+          {
+            "fs": 10,
+            "text": "REVISIONS"
+          }
+        ],
+        "touched": []
+      },
+      "stale_words": [],
+      "wells": [
+        "decision_record:record-da26145444f0487a91746e220a8514a3"
+      ],
+      "window": true,
+      "window_width": 393
+    }
+  },
+  "width": 393
+}
