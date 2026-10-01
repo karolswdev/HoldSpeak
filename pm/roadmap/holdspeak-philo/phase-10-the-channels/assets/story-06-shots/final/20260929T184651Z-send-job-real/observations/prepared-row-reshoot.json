@@ -1,0 +1,122 @@
+{
+  "copy": {
+    "history_rows_removed_in_copy": 2,
+    "sends_put_back_to_prepared": [
+      "chs_d4f01b8303a6af98746d49a7",
+      "chs_93330c71d13c77689e103ad0"
+    ]
+  },
+  "findings": [],
+  "no_send": [],
+  "page_errors": [],
+  "sha256": "24f1cb95afcf7824bbe53b8b6aa37b0509e73d712cc6cfefe1cc9133170c22c0",
+  "shots": [
+    "shots/2b-prepared-row-file-1440.png",
+    "shots/2b-prepared-row-github-1440.png",
+    "shots/2b-prepared-row-file-393.png",
+    "shots/2b-prepared-row-github-393.png"
+  ],
+  "source": "db-proof.sqlite (a COPY; the retained file is unchanged)",
+  "widths": {
+    "393": {
+      "file": {
+        "by": "BY CODEX-SEND-AGENT",
+        "named": [
+          {
+            "ok": true,
+            "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='HoldSpeak folder']) > [data-testid=prepared-row] [data-destination='HoldSpeak folder']",
+            "text": "HoldSpeak folder",
+            "why": ""
+          },
+          {
+            "ok": true,
+            "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='HoldSpeak folder']) > [data-testid=prepared-row] [data-testid=prepared-by]",
+            "text": "BY CODEX-SEND-AGENT",
+            "why": ""
+          },
+          {
+            "ok": true,
+            "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='HoldSpeak folder']) [data-testid=prepared-send]",
+            "text": "Send",
+            "why": ""
+          }
+        ],
+        "shot": "shots/2b-prepared-row-file-393.png"
+      },
+      "github": {
+        "by": "BY CODEX-SEND-AGENT",
+        "named": [
+          {
+            "ok": true,
+            "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='HoldSpeak issue 699']) > [data-testid=prepared-row] [data-destination='HoldSpeak issue 699']",
+            "text": "HoldSpeak issue 699",
+            "why": ""
+          },
+          {
+            "ok": true,
+            "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='HoldSpeak issue 699']) > [data-testid=prepared-row] [data-testid=prepared-by]",
+            "text": "BY CODEX-SEND-AGENT",
+            "why": ""
+          },
+          {
+            "ok": true,
+            "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='HoldSpeak issue 699']) [data-testid=prepared-send]",
+            "text": "Send",
+            "why": ""
+          }
+        ],
+        "shot": "shots/2b-prepared-row-github-393.png"
+      }
+    },
+    "1440": {
+      "file": {
+        "by": "BY CODEX-SEND-AGENT",
+        "named": [
+          {
+            "ok": true,
+            "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='HoldSpeak folder']) > [data-testid=prepared-row] [data-destination='HoldSpeak folder']",
+            "text": "HoldSpeak folder",
+            "why": ""
+          },
+          {
+            "ok": true,
+            "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='HoldSpeak folder']) > [data-testid=prepared-row] [data-testid=prepared-by]",
+            "text": "BY CODEX-SEND-AGENT",
+            "why": ""
+          },
+          {
+            "ok": true,
+            "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='HoldSpeak folder']) [data-testid=prepared-send]",
+            "text": "Send",
+            "why": ""
+          }
+        ],
+        "shot": "shots/2b-prepared-row-file-1440.png"
+      },
+      "github": {
+        "by": "BY CODEX-SEND-AGENT",
+        "named": [
+          {
+            "ok": true,
+            "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='HoldSpeak issue 699']) > [data-testid=prepared-row] [data-destination='HoldSpeak issue 699']",
+            "text": "HoldSpeak issue 699",
+            "why": ""
+          },
+          {
+            "ok": true,
+            "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='HoldSpeak issue 699']) > [data-testid=prepared-row] [data-testid=prepared-by]",
+            "text": "BY CODEX-SEND-AGENT",
+            "why": ""
+          },
+          {
+            "ok": true,
+            "sel": "li.surface-ledger-row:has(> [data-testid=prepared-row] [data-destination='HoldSpeak issue 699']) [data-testid=prepared-send]",
+            "text": "Send",
+            "why": ""
+          }
+        ],
+        "shot": "shots/2b-prepared-row-github-1440.png"
+      }
+    }
+  }
+}

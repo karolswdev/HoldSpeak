@@ -1,0 +1,54 @@
+{
+  "destinations": {
+    "file": {
+      "account": {},
+      "badge": "local",
+      "channel": "file",
+      "connection": null,
+      "created_at": "2026-09-29T18:46:54+00:00",
+      "id": "chd_f985761be45e3a3b129a47d5",
+      "name": "HoldSpeak folder",
+      "parked_at": null,
+      "state": "active",
+      "synced": false,
+      "target": {
+        "folder": "/Users/karol/Documents/HoldSpeak"
+      },
+      "target_digest": "c24a02dfb6a8954ab8dfb2e2d2963faec070aa9c481f83b1753364d8f4f044e1"
+    },
+    "github": {
+      "account": {
+        "host": "github.com",
+        "login": "karolswdev"
+      },
+      "badge": "cloud",
+      "channel": "github",
+      "connection": {
+        "id": "wpc_github",
+        "last_checked_at": null,
+        "state": "never_checked"
+      },
+      "created_at": "2026-09-29T18:46:55+00:00",
+      "id": "chd_f4aee0b4f23de7a376c5f772",
+      "name": "HoldSpeak issue 699",
+      "parked_at": null,
+      "state": "active",
+      "synced": false,
+      "target": {
+        "host": "github.com",
+        "kind": "issue",
+        "number": 699,
+        "repo": "karolswdev/HoldSpeak"
+      },
+      "target_digest": "3a5c4690e6a738b153260114b0068723953850a9d2c872ec1dbd0a633caa248f"
+    }
+  },
+  "project_id": "proj-70d22f932464",
+  "published": {
+    "id": null,
+    "lifecycle": null,
+    "published_at": null
+  },
+  "seeded_at": "2026-09-29T18:46:55.082036+00:00",
+  "update_id": "pupd_4025ddcf2420404dab9c41e1509c6f4e"
+}

@@ -1382,6 +1382,12 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 | The real-pointer passes in `tests/e2e/test_philo9_04_desk_debts_glass.py` run about 15× slower with motion on: 5.65 s against 0.38 s per nine-point sample under reduced motion (Codex Astra's measure). Run the rig's pointer passes with reduced motion (`reduced_motion="reduce"` on the browser context) wherever motion is not what the test proves, then lower the `timeout(900)` on the Launch-submenu fence and the `timeout(600)` on the sort-Button and row-menu fences. | test speed (Tenet 3) | `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/checks/story-04-built-astra-r2.md` | UNASSIGNED |
 | At 393 the open row menu covers the dock (the keep-in-view rule keeps it inside the viewport, not above the dock). Stated as a limit on the ratified canvas (`assets/story-04-list-canvas/README.md` "Limits"). | face | the ratified canvas | recorded; no action |
 
+## PHILO-10-06 follow-ups — 2026-09-29 (Codex Astra r1 on #700, `pm/roadmap/holdspeak-philo/phase-10-the-channels/checks/story-06-built-astra-r1.md` finding 5)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| The prepared file preview shows FOLDER only, not FILE. The ratified Send canvas (`pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-04-send-canvas/README.md:39`) shows the file name before Send, the same name as the receipt. Production chooses the name at the dispatch boundary (`holdspeak/services/channel_service.py:469`, `choose_path`), so a prepared row has `file_path: null`. Inherited from main `05d01ffb`; story 06 did not introduce it. Seen in the real run's shot 2 at both widths. | face deviation from the ratified canvas (Tenet 3; UX-CANON A.2) | Codex Astra r1 on #700 | **RULED 2026-09-29 by the owner: "Folder is fine"**: an ACCEPTED CANVAS CHANGE. The prepared preview shows FOLDER; the file name shows in the receipt. No repair. Closed. |
+
 ## PHILO-10-05 follow-ups — 2026-09-29 (the Fedaykin lane, `pm/roadmap/holdspeak-philo/phase-10-the-channels/evidence-story-05.md`)
 
 | Item | Kind | Source | Home |
