@@ -1,0 +1,776 @@
+[
+ {
+  "key": "delivery",
+  "ms": 1765,
+  "top": "Delivery",
+  "text": "\u25a4 DELIVERY HUB\u21bb INTEGRATION Companion repo owner/repo \u2715 NO LIVE SOURCE SOURCES \u00b7 WORK \u00b7 READ 15:09:55",
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Delivery",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 881,
+     "y": 243,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Delivery",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 901,
+     "y": 243,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Delivery",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 921,
+     "y": 243,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Refresh",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 25,
+     "h": 24,
+     "x": 1390,
+     "y": 238,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak GitHub repo",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 20,
+     "h": 20,
+     "x": 1385,
+     "y": 323,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "owner/repo",
+     "mic": true
+    }
+   ],
+   "small": [
+    {
+     "t": "\u25a4 Delivery",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 94
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/100-objwin-delivery-pop-1440.png"
+ },
+ {
+  "key": "panes",
+  "ms": 1748,
+  "top": null,
+  "text": null,
+  "audit": {
+   "missing": ".fs-top"
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/101-objwin-panes-pop-1440.png"
+ },
+ {
+  "key": "schedule",
+  "ms": 1772,
+  "top": "Schedule recording",
+  "text": "Schedule recording RECORDING STARTS ON ITS OWN AT THE SET TIME Title Mode \u21bb Once Recurring When Duration \u21bb 15 min 30 min 60 min 90 min 2 hours Cancel Schedule",
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Schedule recording",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 1035,
+     "y": 68,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Schedule recording",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 1055,
+     "y": 68,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Schedule recording",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 1075,
+     "y": 68,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak Title",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 44,
+     "h": 44,
+     "x": 1320,
+     "y": 154,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 32,
+     "h": 34,
+     "x": 1371,
+     "y": 159,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Cancel",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 1264,
+     "y": 463,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Schedule",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 76,
+     "h": 24,
+     "x": 1333,
+     "y": 463,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "Scheduled recording",
+     "mic": true
+    }
+   ],
+   "small": [],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 98
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/102-objwin-schedule-pop-1440.png"
+ },
+ {
+  "key": "this-device-chip",
+  "ms": 1767,
+  "top": "Data boundaries",
+  "text": "Data boundaries All data stays on this device Current scope this device Open to the network no \u00b7 Token: not set Enabled destinations None MEETING SUMMARY OFF Destination Summary route unavailable Operation Generate meeting summary Where it goes unavailable Data Meeting transcript Allowed by Assigned summary route Runs without you Only runs for an explicit summary request How to stop sending Change the summary assignment Last receipt None recorded DICTATION INTELLIGENCE OFF Destination This machine Operation Rewrite final dictation Where it goes Configured runtime destination Data Final dictation text and selected context Allowed by Enabled pipeline and Runs on selection Runs without you Only",
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Data boundaries",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 975,
+     "y": 78,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Data boundaries",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 995,
+     "y": 78,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Data boundaries",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 1015,
+     "y": 78,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Review privacy settings",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 162,
+     "h": 27,
+     "x": 977,
+     "y": 3105,
+     "owns": null,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "Off",
+     "fs": 10
+    },
+    {
+     "t": "Off",
+     "fs": 10
+    },
+    {
+     "t": "Off",
+     "fs": 10
+    },
+    {
+     "t": "Off",
+     "fs": 10
+    },
+    {
+     "t": "Off",
+     "fs": 10
+    },
+    {
+     "t": "Off",
+     "fs": 10
+    },
+    {
+     "t": "Off",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 2631
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/103-objwin-this-device-chip-pop-1440.png"
+ },
+ {
+  "key": "menubar-count",
+  "error": "TimeoutError('Locator.click: Timeout 30000ms exceeded.\\nCall log:\\n  - waiting for locator(\".desk-menubar [class*=traffic], .desk-menubar [class*=attention]\").first\\n')",
+  "ms": 31720,
+  "top": null,
+  "text": null,
+  "audit": {
+   "missing": ".fs-top"
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/104-objwin-menubar-count-pop-1440.png"
+ },
+ {
+  "key": "places",
+  "ms": 1763,
+  "top": "Change places",
+  "text": "Change places Rainy City All places Favorites View on Floor Hide the menus ENVIRONMENTS RAINY CITY A cinematic night storm above a lamplit city street. IN USE LANTERN GARDEN A rain-dark flagstone path lit through a fine garden drizzle. CHOOSE AFTER-HOURS RADIO Walnut, warm meters, and rain over a sleeping city. CHOOSE MIDNIGHT ARCHIVE Green reading lamps in a long hall of wooden drawers. CHOOSE NIGHT TRAIN A lamplit compartment. Forests passing in the rain. CHOOSE DEEP-SEA STATION Brass instruments, blue water, and distant silhouettes. CHOOSE STORM GREENHOUSE Wet stone, terracotta, and violet light through iron rafters. CHOOSE LAST LAUNDROMAT Slow drums and fluorescent quiet. Open all night.",
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Change places",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Change places",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Change places",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "All places",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 90,
+     "h": 24,
+     "x": 228,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorites",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 83,
+     "h": 24,
+     "x": 324,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "View on Floor",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 112,
+     "h": 24,
+     "x": 413,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Hide the menus",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 119,
+     "h": 24,
+     "x": 530,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "RAINY CITY A cinematic night storm above a lamplit city stre",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 45,
+     "y": 199,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Rainy City",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 285,
+     "y": 211,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "LANTERN GARDEN A rain-dark flagstone path lit through a fine",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 349,
+     "y": 199,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Lantern Garden",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 589,
+     "y": 211,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "AFTER-HOURS RADIO Walnut, warm meters, and rain over a sleep",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 45,
+     "y": 468,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite After-Hours Radio",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 285,
+     "y": 480,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "MIDNIGHT ARCHIVE Green reading lamps in a long hall of woode",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 349,
+     "y": 468,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Midnight Archive",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 589,
+     "y": 480,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "NIGHT TRAIN A lamplit compartment. Forests passing in the ra",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 45,
+     "y": 736,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Night Train",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 285,
+     "y": 748,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "DEEP-SEA STATION Brass instruments, blue water, and distant ",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 349,
+     "y": 736,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Deep-Sea Station",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 589,
+     "y": 748,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "STORM GREENHOUSE Wet stone, terracotta, and violet light thr",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 45,
+     "y": 1005,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Storm Greenhouse",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 285,
+     "y": 1017,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "LAST LAUNDROMAT Slow drums and fluorescent quiet. Open all n",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 349,
+     "y": 1005,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Last Laundromat",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 589,
+     "y": 1017,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "QUIET DESK The unanimated Desk field with no atmospheric sce",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 45,
+     "y": 1274,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Quiet Desk",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 285,
+     "y": 1286,
+     "owns": null,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "Rainy City",
+     "fs": 11
+    },
+    {
+     "t": "A cinematic night storm above a lamplit ",
+     "fs": 11
+    },
+    {
+     "t": "IN USE",
+     "fs": 9
+    },
+    {
+     "t": "Lantern Garden",
+     "fs": 11
+    },
+    {
+     "t": "A rain-dark flagstone path lit through a",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "After-Hours Radio",
+     "fs": 11
+    },
+    {
+     "t": "Walnut, warm meters, and rain over a sle",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "Midnight Archive",
+     "fs": 11
+    },
+    {
+     "t": "Green reading lamps in a long hall of wo",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "Night Train",
+     "fs": 11
+    },
+    {
+     "t": "A lamplit compartment. Forests passing i",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "Deep-Sea Station",
+     "fs": 11
+    },
+    {
+     "t": "Brass instruments, blue water, and dista",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "Storm Greenhouse",
+     "fs": 11
+    },
+    {
+     "t": "Wet stone, terracotta, and violet light ",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "Last Laundromat",
+     "fs": 11
+    },
+    {
+     "t": "Slow drums and fluorescent quiet. Open a",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "Quiet Desk",
+     "fs": 11
+    },
+    {
+     "t": "The unanimated Desk field with no atmosp",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "SAVED ON THIS BROWSER \u00b7 APPLIES LIVE TO ",
+     "fs": 9
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 856
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/105-objwin-places-pop-1440.png"
+ },
+ {
+  "key": "record-orb",
+  "ms": 3756,
+  "top": "Live meeting",
+  "text": "Live meeting \u2699\ufe0e Ready to record Start meeting Link \u00b7 connected TRANSCRIPT \u25cf Start a meeting to begin READY",
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Live meeting",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Live meeting",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Live meeting",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Configure meeting",
+     "lib": true,
+     "cls": "btn--chrome desk-wing desk-wing-door",
+     "w": 27,
+     "h": 24,
+     "x": 412,
+     "y": 81,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Start meeting",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 112,
+     "h": 24,
+     "x": 537,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 98
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/106-objwin-record-orb-pop-1440.png"
+ }
+]

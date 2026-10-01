@@ -1,0 +1,60 @@
+{
+ "db": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13pop.mdVn7UpXR4/.local/share/holdspeak/holdspeak.db",
+ "before": {
+  "meeting": [
+   [
+    "m-hiring",
+    "Hiring debrief: staff engineer"
+   ]
+  ],
+  "segments": [
+   [
+    2
+   ]
+  ],
+  "intel": [
+   [
+    1
+   ]
+  ],
+  "artifacts": [
+   [
+    2
+   ]
+  ],
+  "item": [
+   [
+    "wbi_a700c58e5f2b",
+    "Write cutover comms"
+   ]
+  ]
+ },
+ "shot_record": "docs/internal/philo/phase-13/grounding/shots/surfaces/67-ledger-delete-meeting-before-pop-1440.png",
+ "after_first_press": "Meetings\nOUTCOMES\nREVIEW\nRECORD\nARTIFACTS\n\u2699\ufe0e\nNothing needs you\nRecord meeting\nImport\nHAS OPEN ACTIONS\nLedger cutover sync\nOCT 01 \u00b7 SAVED\nArchitecture review: tracing\nSEP 30 \u00b7 SAVED\n1:1 Avery\nSEP 29 \u00b7 SAVED\nHiring debrief: staff engineer\nSEP 28 \u00b7 SAVED\nHiring debrief: staff engineer\nSEP 28\n\u00b7\n45 MIN\n\u00b7\nSAVED\nSUMMARY\n\nStrong system design. Weak on incident handling. Decision: second interview on operations.\n\nHIRING\nSEND\n\u21bb\nSummary\nDigest\nFollow-up\n\u25cb\nTeam updates folder\nFILE\n/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13pop.mdVn7UpXR4/Updates-out\nTHIS DEVICE\nTRANSCRIPT 2\nME\n\nStrong sy",
+ "shot_confirm": "docs/internal/philo/phase-13/grounding/shots/surfaces/68-ledger-delete-meeting-confirm-pop-1440.png",
+ "delete_buttons_after_press": 1,
+ "delete_texts": [
+  "Delete?"
+ ],
+ "confirmed_with": "Delete?",
+ "after_delete_text": "Meetings\nOUTCOMES\nREVIEW\nRECORD\nARTIFACTS\n\u2699\ufe0e\nNothing needs you\nRecord meeting\nImport\nHAS OPEN ACTIONS\nLedger cutover sync\nOCT 01\n\u00b7\n30 MIN\n\u00b7\n4 WORDS\n\u00b7\nSAVED\nOpen\nArchitecture review: tracing\nSEP 30\n\u00b7\n60 MIN\n\u00b7\n5 WORDS\n\u00b7\nSAVED\nOpen\n1:1 Avery\nSEP 29\n\u00b7\n30 MIN\n\u00b7\n8 WORDS\n\u00b7\nSAVED\nOpen\nNO SUMMARY ROUTE \u00b7 NO ASSIGNMENT\nDELETED 14:59",
+ "shot_after": "docs/internal/philo/phase-13/grounding/shots/surfaces/69-ledger-delete-meeting-after-pop-1440.png",
+ "after_meeting": {
+  "meeting": [],
+  "segments": [
+   [
+    0
+   ]
+  ],
+  "intel": [
+   [
+    0
+   ]
+  ],
+  "artifacts": [
+   [
+    0
+   ]
+  ]
+ }
+}

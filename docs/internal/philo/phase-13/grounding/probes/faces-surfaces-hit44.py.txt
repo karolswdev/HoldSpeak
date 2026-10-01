@@ -1,0 +1,23 @@
+"""44 px hit ownership at 393 by real elementFromPoint at centre and +-20 px."""
+import sys, json
+sys.path.insert(0, '.')
+from fslib import *
+from walk import enter_desk, press, try_open
+JS = r"""(scope) => { const root = scope ? document.querySelector(scope) : document.body; if (!root) return null;
+  const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.top >= 0 && r.bottom <= innerHeight; };
+  const res = []; for (const b of root.querySelectorAll('button.btn')) { if (!vis(b)) continue; const r = b.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2; const own = (x, y) => { const h = document.elementFromPoint(x, y); return !!h && (h === b || b.contains(h)); };
+    res.push({b: (b.getAttribute('aria-label') || b.innerText).trim().slice(0, 28), h: Math.round(r.height), centre: own(cx, cy), up20: own(cx, cy - 20), down20: own(cx, cy + 20), left: own(r.left + 2, cy), right: own(r.right - 2, cy)}); }
+  return res; }"""
+out = {}
+with browser(393) as page:
+    enter_desk(page, 'pop')
+    out['chair'] = page.evaluate(JS, '.chair')
+    for key, strat in [('meetings', 'go:Meetings'), ('settings', 'go:Settings'), ('models', 'go:Models')]:
+        try_open(page, strat, 'pop'); page.wait_for_timeout(1200)
+        out[key] = page.evaluate(JS, f'.desk-window[aria-label="{ {"meetings":"Meetings","settings":"Settings","models":"Models"}[key] }"]')
+        page.keyboard.press('Meta+w'); page.wait_for_timeout(400)
+summ = {k: {'plated': len(v or []), 'centre_owned': sum(1 for x in v or [] if x['centre']), 'owns_44_band': sum(1 for x in v or [] if x['up20'] and x['down20'])} for k, v in out.items()}
+print(json.dumps(summ, indent=1)); print(json.dumps({k: (v or [])[:4] for k, v in out.items()}, indent=0)[:2500])
+out['summary'] = summ
+dump('hit44-393', out)

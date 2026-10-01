@@ -1,0 +1,102 @@
+"""Phase 13 faces-surfaces: the pullouts (object windows opened from the
+Floor's list view) and the Desk-menu creations (New Workflow / New Thread /
+New Note / New Decision) at one width.
+
+usage: pullouts.py <1440|393>
+"""
+from __future__ import annotations
+
+import json
+import sys
+import time
+
+sys.path.insert(0, __import__("os").path.dirname(__file__))
+from fslib import audit, browser, dump, settle, shot  # noqa: E402
+from walk import WIN_JS, enter_desk, press, try_open  # noqa: E402
+
+ROWS = [
+    ("meeting", "Ledger cutover sync"),
+    ("artifact", "Meeting decisions"),
+    ("note", "Ledger cutover risks"),
+    ("decision", "Freeze the old ledger on Nov 5"),
+    ("recipe-agent", "Chase"),
+    ("kb", "Everyday context"),
+]
+NEW = ["New Workflow", "New Thread", "New Decision"]
+
+TAG = """() => { const ws = [...document.querySelectorAll('.desk-window')].filter(e => e.getBoundingClientRect().width > 0);
+  ws.forEach(e => e.classList.remove('fs-top')); if (!ws.length) return null;
+  const top = ws.reduce((a, b) => (parseInt(getComputedStyle(b).zIndex) || 0) >= (parseInt(getComputedStyle(a).zIndex) || 0) ? b : a);
+  top.classList.add('fs-top'); return top.getAttribute('aria-label'); }"""
+
+
+def to_list(page, width):
+    press(page, page.locator(".desk-dock").get_by_role("button", name="Floor").first)
+    settle(page, 1200)
+    if width > 600 and not page.locator("tr.desk-sortable-table-row").count():
+        page.locator("nav.desk-verbbar").get_by_text("Desk", exact=True).first.click()
+        settle(page, 250)
+        page.get_by_role("menuitem", name="List view").first.click()
+        settle(page, 900)
+
+
+def measure(page, rec, key, width, idx):
+    title = page.evaluate(TAG)
+    rec["title"] = title
+    win = page.evaluate(WIN_JS.replace(".desk-window.is-front", ".desk-window.fs-top"))
+    rec["win"] = win
+    rec["audit"] = audit(page, ".desk-window.fs-top")
+    rec["shot"] = shot(page, f"{idx:02d}-pullout-{key}-pop-{width}")
+    rec["errors"] = page._fs_errors[:6]  # type: ignore[attr-defined]
+
+
+def main():
+    width = int(sys.argv[1])
+    out = []
+    for i, (key, label) in enumerate(ROWS):
+        rec = {"key": key, "label": label}
+        with browser(width) as page:
+            enter_desk(page, "pop")
+            to_list(page, width)
+            row = page.locator("tr.desk-sortable-table-row", has_text=label).first
+            if not row.count():
+                rec["error"] = "row not in the list view"
+                out.append(rec)
+                continue
+            row.evaluate("e => e.scrollIntoView({block: 'center'})")
+            n0 = page.evaluate("() => document.querySelectorAll('.desk-window').length")
+            t0 = time.monotonic()
+            if width > 600:
+                row.locator("td").nth(1).dblclick()
+            else:
+                row.locator("td").nth(1).tap()
+            for _ in range(60):
+                if page.evaluate("() => document.querySelectorAll('.desk-window').length") > n0:
+                    break
+                page.wait_for_timeout(100)
+            rec["open_ms"] = round((time.monotonic() - t0) * 1000)
+            settle(page, 900)
+            measure(page, rec, key, width, 80 + i)
+        w = rec.get("win") or {}
+        print(f"{key:14s} title={rec.get('title')} open_ms={rec.get('open_ms')} nodes={w.get('nodes')} verbs={w.get('verbsInView')} ghosts={w.get('ghosts')} notOwned={w.get('notOwned')} raw={[b['name'] for b in (rec.get('audit') or {}).get('buttons', []) if b.get('lib') is False][:6]} small={len((rec.get('audit') or {}).get('small') or [])} noMic={[x['ph'] for x in (rec.get('audit') or {}).get('inputs', []) if not x['mic']]}", flush=True)
+        out.append(rec)
+    if width > 600:
+        for j, name in enumerate(NEW):
+            rec = {"key": name}
+            with browser(width) as page:
+                enter_desk(page, "pop")
+                n0 = page.evaluate("() => document.querySelectorAll('.desk-window').length")
+                ok = try_open(page, f"desk:{name}", "pop")
+                page.wait_for_timeout(1500)
+                rec["opened"] = ok
+                rec["windows_delta"] = page.evaluate("() => document.querySelectorAll('.desk-window').length") - n0
+                settle(page, 600)
+                measure(page, rec, name.lower().replace(" ", "-"), width, 90 + j)
+            w = rec.get("win") or {}
+            print(f"{name:14s} title={rec.get('title')} delta={rec.get('windows_delta')} nodes={w.get('nodes')} ghosts={w.get('ghosts')} raw={[b['name'] for b in (rec.get('audit') or {}).get('buttons', []) if b.get('lib') is False][:6]}", flush=True)
+            out.append(rec)
+    dump(f"pullouts-pop-{width}", out)
+
+
+if __name__ == "__main__":
+    main()

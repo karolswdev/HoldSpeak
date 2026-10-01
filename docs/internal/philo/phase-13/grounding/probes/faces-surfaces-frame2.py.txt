@@ -1,0 +1,25 @@
+import sys, json, re
+sys.path.insert(0, '.')
+from fslib import *
+from walk import enter_desk, press, try_open
+out = {}
+STATE = """() => ({windows: [...document.querySelectorAll('.desk-window, [role=menu], [class*=shade], [class*=drawer]')].filter(e => e.getBoundingClientRect().width > 0).map(e => (e.getAttribute('aria-label') || e.className.toString().slice(0, 40)) + ' :: ' + e.innerText.replace(/\\s+/g, ' ').slice(0, 400))})"""
+for w in (1440, 393):
+    for key, act in [
+        ('mark-menu', lambda p: press(p, p.locator('.desk-menubar button').first)),
+        ('bell', lambda p: press(p, p.locator('.desk-menubar button').filter(has_text=re.compile(r'^\s*\S?\s*\d+\s*$')).first)),
+        ('desk-memory-badge', lambda p: press(p, p.locator('.desk-dock button').filter(has_text=re.compile(r'^\s*\d+\s*$')).first)),
+        ('write-thought', lambda p: press(p, p.get_by_role('button', name='Write a thought').first)),
+    ]:
+        with browser(w) as page:
+            enter_desk(page, 'pop')
+            try:
+                act(page); page.wait_for_timeout(1200); settle(page, 400)
+            except Exception as exc:
+                out[f'{key}-{w}-err'] = repr(exc)[:160]
+            out[f'{key}-{w}'] = page.evaluate(STATE)
+            out[f'{key}-{w}-shot'] = shot(page, f'13{["mark-menu","bell","desk-memory-badge","write-thought"].index(key)}-frame2-{key}-pop-{w}')
+            out[f'{key}-{w}-audit'] = audit(page)
+for k, v in out.items():
+    if not k.endswith('audit'): print(k, json.dumps(v)[:500])
+dump('frame2', out)

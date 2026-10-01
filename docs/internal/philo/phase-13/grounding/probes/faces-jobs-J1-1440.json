@@ -1,0 +1,477 @@
+{
+ "job": "J1",
+ "width": 1440,
+ "touch": false,
+ "clicks": 17,
+ "dead_clicks": 5,
+ "seconds": 42.7,
+ "windows_seen": [
+  "Freeze the old ledger on Nov 5",
+  "Intelligence",
+  "People"
+ ],
+ "page_errors": [
+  "console:Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+  "console:Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+  "console:Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+  "console:Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+ ],
+ "log": [
+  {
+   "t": 1.9,
+   "note": "arrival",
+   "first_useful_pixel_s": 1.85,
+   "brief_attached_s": 1.87,
+   "headline": "7 need you NEXT \u00b7 1:1 PRIYA / KAROL \u00b7 16:39 RANKED OVERDUE DUE TODAY NOT RUN NO DUE DATE WAITING \u25cf 12 OF 12 AVAILABLE CHECKED 4 MIN AGO",
+   "above_fold": [
+    "arrival-needs-you-row:DOOR",
+    "arrival-needs-you-row:DOOR",
+    "arrival-needs-you-row:MTG",
+    "arrival-needs-you-row:MTG",
+    "arrival-needs-you-row:MTG",
+    "arrival-meeting-row:16:39",
+    "arrival-meeting-row:18:39",
+    "arrival-meeting-row:FRI 16:39"
+   ]
+  },
+  {
+   "t": 1.9,
+   "shot": "J1-01-arrive-1440.png",
+   "windows": []
+  },
+  {
+   "t": 3.1,
+   "note": "brief on the Chair",
+   "rows": [
+    "Review decision: Cursor pagination for every list endpoint\nAck\nDefer",
+    "Review decision: OpenTelemetry is the trace standard\nAck\nDefer",
+    "Review decision: Freeze the old ledger on Nov 5\nAck\nDefer"
+   ],
+   "more": "2 more",
+   "scroll_needed_px": 812
+  },
+  {
+   "t": 3.1,
+   "shot": "J1-02-brief-chair-1440.png",
+   "windows": []
+  },
+  {
+   "t": 4.8,
+   "gesture": "press",
+   "what": "tap the brief item 'Review decision: Freeze the old ledger' (first try)",
+   "dead": true,
+   "opened": [],
+   "windows": []
+  },
+  {
+   "t": 6.1,
+   "gesture": "press",
+   "what": "2 more",
+   "dead": false,
+   "opened": [
+    "Intelligence"
+   ],
+   "windows": [
+    "Intelligence"
+   ]
+  },
+  {
+   "t": 6.1,
+   "note": "after 2 more",
+   "rows": 3,
+   "windows": [
+    "Intelligence"
+   ]
+  },
+  {
+   "t": 6.1,
+   "shot": "J1-03-brief-more-1440.png",
+   "windows": [
+    "Intelligence"
+   ]
+  },
+  {
+   "t": 6.5,
+   "shot": "J1-04-intelligence-brief-1440.png",
+   "windows": [
+    "Intelligence"
+   ]
+  },
+  {
+   "t": 8.2,
+   "gesture": "press",
+   "what": "tap 'Freeze the old ledger' in Intelligence BRIEF",
+   "dead": true,
+   "opened": [],
+   "windows": [
+    "Intelligence"
+   ]
+  },
+  {
+   "t": 8.2,
+   "note": "footer after select",
+   "footer": "SELECTED \u00b7 decision \u00b7 decision 94582473c9ff Acknowledge Defer Speak"
+  },
+  {
+   "t": 9.5,
+   "gesture": "press",
+   "what": "Search (palette)",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Intelligence"
+   ]
+  },
+  {
+   "t": 10.0,
+   "gesture": "type",
+   "what": "type 'freeze'"
+  },
+  {
+   "t": 10.1,
+   "note": "palette options",
+   "query": "freeze",
+   "options": [
+    "decision:decision_94582473c9ff :: \u25cb Freeze the old ledger on Nov 5 DECISION"
+   ]
+  },
+  {
+   "t": 11.4,
+   "gesture": "press",
+   "what": "open the decision from the palette",
+   "dead": false,
+   "opened": [
+    "Freeze the old ledger on Nov 5"
+   ],
+   "windows": [
+    "Intelligence",
+    "Freeze the old ledger on Nov 5"
+   ]
+  },
+  {
+   "t": 11.4,
+   "shot": "J1-05-decision-open-1440.png",
+   "windows": [
+    "Intelligence",
+    "Freeze the old ledger on Nov 5"
+   ]
+  },
+  {
+   "t": 13.1,
+   "gesture": "press",
+   "what": "tap today's '1:1 Priya / Karol' on the Chair (first try)",
+   "dead": true,
+   "opened": [],
+   "windows": [
+    "Intelligence",
+    "Freeze the old ledger on Nov 5"
+   ]
+  },
+  {
+   "t": 14.4,
+   "gesture": "press",
+   "what": "close the decision window (it covers Intelligence PEOPLE)",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Intelligence"
+   ],
+   "ghosts": [
+    {
+     "id": "pullout:decision_94582473c9ff",
+     "rect": [
+      1010,
+      383,
+      384,
+      455
+     ]
+    }
+   ]
+  },
+  {
+   "t": 20.8,
+   "gesture": "press",
+   "what": "Intelligence BRIEF: PEOPLE -> Priya Nair",
+   "dead": true,
+   "opened": [],
+   "windows": [
+    "Intelligence"
+   ],
+   "blocked": "-body\">\u2026</div> from <div tabindex=\"-1\" role=\"region\" id=\"pullout:decision_94582473c9ff\" aria-label=\"Freeze the old ledger on Nov 5\" class=\"desk-pullout is-card desk-window desk-window-shell is-floating is-front\">\u2026</div> subtree intercepts pointer events\n  - retrying click action\n    - waiting 500ms\n",
+   "ghosts": [
+    {
+     "id": "pullout:decision_94582473c9ff",
+     "rect": [
+      1010,
+      383,
+      384,
+      455
+     ]
+    }
+   ]
+  },
+  {
+   "t": 20.8,
+   "note": "the closed decision card is still in the DOM at opacity 0 and swallows the tap",
+   "ghost": "0"
+  },
+  {
+   "t": 20.8,
+   "note": "person signals",
+   "signals": null
+  },
+  {
+   "t": 22.1,
+   "gesture": "press",
+   "what": "Search (palette)",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Intelligence"
+   ],
+   "ghosts": [
+    {
+     "id": "pullout:decision_94582473c9ff",
+     "rect": [
+      1010,
+      383,
+      384,
+      455
+     ]
+    }
+   ]
+  },
+  {
+   "t": 22.6,
+   "gesture": "type",
+   "what": "type 'people'"
+  },
+  {
+   "t": 22.6,
+   "note": "palette options",
+   "query": "people",
+   "options": [
+    "note:hs-seed-people-vocabulary :: \u25cb People & vocabulary NOTE",
+    "desk.open-people :: \u25b8 Open People VERB",
+    "project.open.proj-4f8e754b9881 :: \u25a3 Open Payments ledger cutover PROJECT"
+   ]
+  },
+  {
+   "t": 24.0,
+   "gesture": "press",
+   "what": "palette: Open People",
+   "dead": false,
+   "opened": [
+    "People"
+   ],
+   "windows": [
+    "Intelligence",
+    "People"
+   ],
+   "ghosts": [
+    {
+     "id": "pullout:decision_94582473c9ff",
+     "rect": [
+      1010,
+      383,
+      384,
+      455
+     ]
+    }
+   ]
+  },
+  {
+   "t": 25.3,
+   "gesture": "press",
+   "what": "People: Priya Nair",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Intelligence",
+    "People"
+   ],
+   "ghosts": [
+    {
+     "id": "pullout:decision_94582473c9ff",
+     "rect": [
+      1010,
+      383,
+      384,
+      455
+     ]
+    }
+   ]
+  },
+  {
+   "t": 25.3,
+   "note": "Priya's window",
+   "text": "People Encrypted Local storage Notes only New relationship Back Priya Nair Now Prep 1:1s Context History Info YOU OWE Review the rollout plan before Friday Open OPEN REQUESTS Add Send me the EU shard backup plan by Tuesday Accept Send me the EU shard backup plan by Tuesday Accept NEXT 1:1 \u25cb No 1:1 planned"
+  },
+  {
+   "t": 25.3,
+   "shot": "J1-06-today-opened-1440.png",
+   "windows": [
+    "Intelligence",
+    "People"
+   ]
+  },
+  {
+   "t": 27.0,
+   "gesture": "press",
+   "what": "tap the DUE TODAY row 'Review the rollout plan before Friday' (first try)",
+   "dead": true,
+   "opened": [],
+   "windows": [
+    "Intelligence",
+    "People"
+   ],
+   "ghosts": [
+    {
+     "id": "pullout:decision_94582473c9ff",
+     "rect": [
+      1010,
+      383,
+      384,
+      455
+     ]
+    }
+   ]
+  },
+  {
+   "t": 27.0,
+   "note": "windows mid-job",
+   "windows": [
+    {
+     "title": "Intelligence",
+     "id": "pullout:desk",
+     "rect": [
+      1022,
+      64,
+      400,
+      784
+     ]
+    },
+    {
+     "title": "People",
+     "id": "surface-people",
+     "rect": [
+      24,
+      72,
+      640,
+      619
+     ]
+    }
+   ],
+   "storage": {
+    "hs.desk.workspace.v1": "{\"version\":1,\"windowsById\":{\"surface-people\":{\"id\":\"surface-people\",\"kind\":\"surface\",\"applicationKey\":\"open-people\",\"scope\":null,\"persistence\":\"workspace\"}},\"panel\":{\"rects\":{},\"order\":[\"pullout:intelligence:desk\",\"pullout:desk\",\"pullout:decision:decision_94582473c9ff\",\"pullout:decision_94582473c9ff",
+    "hs.desk.palette-recents": "[\"desk.open-people\",\"decision:decision_94582473c9ff\"]",
+    "hs.desk.intelligence-view": "brief"
+   }
+  },
+  {
+   "t": 31.3,
+   "note": "RELOAD mid-job",
+   "reload_s": 4.35,
+   "before": [
+    "Intelligence",
+    "People"
+   ],
+   "after": [
+    "People"
+   ],
+   "kept": [
+    "People"
+   ],
+   "lost": [
+    "Intelligence"
+   ]
+  },
+  {
+   "t": 31.3,
+   "shot": "J1-07-after-reload-1440.png",
+   "windows": [
+    "People"
+   ]
+  },
+  {
+   "t": 36.1,
+   "note": "brief read fails",
+   "chair_brief": "BRIEF THIS DEVICE Generate BRIEF DID NOT LOAD \u00b7 HTTP 500 Retry",
+   "retry": 1
+  },
+  {
+   "t": 36.1,
+   "shot": "J1-08-brief-failed-1440.png",
+   "windows": [
+    "People"
+   ]
+  },
+  {
+   "t": 37.8,
+   "gesture": "press",
+   "what": "Dock Intelligence",
+   "dead": false,
+   "opened": [
+    "Intelligence"
+   ],
+   "windows": [
+    "Intelligence",
+    "People"
+   ]
+  },
+  {
+   "t": 39.3,
+   "note": "Intelligence brief under failure",
+   "text": "BRIEF FOLLOW-THROUGH DECISIONS \u26a0\ufe0e injected Try again"
+  },
+  {
+   "t": 39.3,
+   "shot": "J1-09-intelligence-brief-failed-1440.png",
+   "windows": [
+    "Intelligence",
+    "People"
+   ]
+  },
+  {
+   "t": 41.0,
+   "gesture": "press",
+   "what": "Intelligence: Try again",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Intelligence",
+    "People"
+   ]
+  },
+  {
+   "t": 41.0,
+   "note": "Intelligence after Try again",
+   "text": "BRIEF FOLLOW-THROUGH DECISIONS SEP 28 - OCT 01 GENERATED OCT 01 14:39 THIS WEEK 3 MEETINGS NEXT 1:1 PRIYA / KAROL 16:39 SINCE WEDNESDAY MEETING RECORDED Checkou"
+  },
+  {
+   "t": 42.3,
+   "gesture": "press",
+   "what": "Chair: Retry (brief)",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Intelligence",
+    "People"
+   ]
+  },
+  {
+   "t": 42.3,
+   "note": "after retry",
+   "chair_brief": "BRIEF \u00b7 5 THINGS WAITING THIS DEVICE Generate Review decision: Cursor pagination for every list endpoint Ack Defer Review decision: OpenTelemetry is the trace standard Ack Defer Review decision: Freez",
+   "ghosts": []
+  },
+  {
+   "t": 42.4,
+   "shot": "J1-10-brief-recovered-1440.png",
+   "windows": [
+    "Intelligence",
+    "People"
+   ]
+  }
+ ]
+}

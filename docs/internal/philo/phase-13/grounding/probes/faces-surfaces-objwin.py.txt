@@ -1,0 +1,36 @@
+import sys, json, time
+sys.path.insert(0, '.')
+from fslib import *
+from walk import enter_desk, press, try_open, WIN_JS
+width = int(sys.argv[1])
+TAG = """() => { const ws = [...document.querySelectorAll('.desk-window, [role=dialog], [class*=drawer], [class*=board]')].filter(e => e.getBoundingClientRect().width > 0);
+  if (!ws.length) return null; const top = ws.reduce((a, b) => (parseInt(getComputedStyle(b).zIndex) || 0) >= (parseInt(getComputedStyle(a).zIndex) || 0) ? b : a);
+  document.querySelectorAll('.fs-top').forEach(e => e.classList.remove('fs-top')); top.classList.add('fs-top'); return (top.getAttribute('aria-label') || top.className.toString().slice(0, 60)); }"""
+CASES = [
+  ('delivery', lambda p: press(p, p.locator('.desk-dock').get_by_role('button', name='Delivery').first)),
+  ('panes', lambda p: press(p, p.locator('.desk-dock').get_by_role('button', name='Panes').first)),
+  ('schedule', lambda p: press(p, p.get_by_role('button', name='Schedule', exact=True).first)),
+  ('this-device-chip', lambda p: press(p, p.locator('.desk-menubar').get_by_text('THIS DEVICE').first)),
+  ('menubar-count', lambda p: press(p, p.locator('.desk-menubar [class*=traffic], .desk-menubar [class*=attention]').first)),
+  ('places', lambda p: press(p, p.locator('.desk-dock').get_by_role('button', name='Change places').first)),
+  ('record-orb', lambda p: press(p, p.locator('.desk-dock').get_by_role('button', name='Record a meeting').first)),
+]
+out = []
+for i, (key, act) in enumerate(CASES):
+    rec = {'key': key}
+    with browser(width) as page:
+        enter_desk(page, 'pop')
+        t0 = time.monotonic()
+        try:
+            act(page)
+        except Exception as exc:
+            rec['error'] = repr(exc)[:200]
+        page.wait_for_timeout(1200); settle(page, 500)
+        rec['ms'] = round((time.monotonic() - t0) * 1000)
+        rec['top'] = page.evaluate(TAG)
+        rec['text'] = page.evaluate("() => { const e = document.querySelector('.fs-top'); return e ? e.innerText.replace(/\\s+/g, ' ').slice(0, 700) : null; }")
+        rec['audit'] = audit(page, '.fs-top')
+        rec['shot'] = shot(page, f'{100 + i}-objwin-{key}-pop-{width}')
+    print(key, '|', rec.get('top'), '|', (rec.get('text') or '')[:300], '|', rec.get('error', ''), flush=True)
+    out.append(rec)
+dump(f'objwin-pop-{width}', out)

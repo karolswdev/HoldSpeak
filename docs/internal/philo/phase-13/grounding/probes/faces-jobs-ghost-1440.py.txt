@@ -1,0 +1,17 @@
+import json
+page.locator(".desk-dock-launch[aria-label^='Intelligence']").click(); page.wait_for_timeout(1500)
+page.locator("[aria-controls=desk-tool-shelf]").first.click(); page.wait_for_timeout(500)
+page.locator("[aria-controls=desk-palette-listbox]").fill("freeze"); page.wait_for_timeout(600)
+page.locator("[id^='desk-palette-option-decision:']").click(); page.wait_for_timeout(1500)
+sel = "[id^='pullout:decision_']"
+def st():
+    return page.evaluate("(s) => { const e = document.querySelector(s); if (!e) return 'GONE'; const cs = getComputedStyle(e); const r = e.getBoundingClientRect(); return {cls: e.className, op: cs.opacity, vis: cs.visibility, pe: cs.pointerEvents, disp: cs.display, rect: [r.x|0,r.y|0,r.width|0,r.height|0], anims: e.getAnimations().length}; }", sel)
+print("open", st()); print("count", page.evaluate("(s) => document.querySelectorAll(s).length", sel)); print("store", page.evaluate("() => document.querySelectorAll('.desk-pullout').length"))
+btn = page.locator(f"{sel} [aria-label^='Close ']")
+print("close btns", btn.count(), btn.first.get_attribute("aria-label"))
+btn.first.click(); 
+for ms in (100, 500, 1500, 4000):
+    page.wait_for_timeout(ms); print(ms, st())
+
+print("after count", page.evaluate("(s) => document.querySelectorAll(s).length", sel))
+print(page.evaluate("(s) => { const e = document.querySelector(s); return e ? e.getAnimations().map(a => [a.playState, a.effect && a.effect.getTiming ? JSON.stringify(a.effect.getTiming()) : '', a.animationName || a.id]) : null }", sel))

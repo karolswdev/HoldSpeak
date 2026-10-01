@@ -1,0 +1,60 @@
+{
+ "before_items": [
+  [
+   "wbi_3ecacb231cbe",
+   "Draft rollback runbook"
+  ]
+ ],
+ "open_ms": 460,
+ "windows": [
+  "Ledger cutover bench :: Ledger cutover bench ITEMS RUNS MEMORY \u25b8 Run \u00b7 Bind an agent first \u25b4 Collapse AGENT #2563EB Chase #6B7280 Desk #9333EA Draft #0F766E Interview #059669 Plan #D97706 Project RUNS ON Item assignment No default model Choose default RESOLVES WITH Reference assignment No default model Choose default STARTS WHEN Manual Schedule Event Idle Starts only when you press Run. SKILLS \u25c7 Skills appear when an agent is bound ~/.holdspeak/workbenches/workbench_7f0804c026b5/ P3 Draft rollback runbook NEEDS REVIEW P3 Add 1 ITEM",
+  "Workbenches :: Workbenches + Create Ledger cutover bench 1 PENDING Choose default Manual"
+ ],
+ "verbs": [
+  "Close Ledger cutover bench|btn--chrome desk-light desk-li",
+  "Minimize Ledger cutover bench|btn--chrome desk-light desk-li",
+  "Maximize Ledger cutover bench|btn--chrome desk-light desk-li",
+  "Edit Workbench name|btn--chrome surface-edit-in-pl",
+  "ITEMS|btn--chrome desk-wing is-on",
+  "RUNS|btn--chrome desk-wing",
+  "MEMORY|btn--chrome desk-wing",
+  "Run: Bind an agent first|desk-chip",
+  "Collapse configuration|wb-config-collapse desk-chip q",
+  "Speak Search agents|btn--chrome desk-mic is-idle",
+  "#2563EB Chase|btn--chrome surface-row-open",
+  "#6B7280 Desk|btn--chrome surface-row-open",
+  "#9333EA Draft|btn--chrome surface-row-open",
+  "#0F766E Interview|btn--chrome surface-row-open",
+  "#059669 Plan|btn--chrome surface-row-open",
+  "#D97706 Project|btn--chrome surface-row-open",
+  "Choose default|btn btn--ghost btn--sm ",
+  "Choose default|btn btn--ghost btn--sm ",
+  "Manual|desk-chip",
+  "Schedule|desk-chip",
+  "Event|desk-chip",
+  "Idle|desk-chip",
+  "P3 Draft rollback runbook NEEDS REVIEW|wb-card-head",
+  "Speak|btn--chrome desk-mic is-idle",
+  "P3|desk-chip wb-priority-cycle",
+  "Add|desk-chip is-primary"
+ ],
+ "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/70-workbench-window-pop-1440.png",
+ "after_row_press": [
+  "Remove"
+ ],
+ "shot_menu": "docs/internal/philo/phase-13/grounding/shots/surfaces/71-workbench-item-menu-pop-1440.png",
+ "pressed": "Remove",
+ "shot_confirm": "docs/internal/philo/phase-13/grounding/shots/surfaces/71b-workbench-item-confirm-pop-1440.png",
+ "confirm_face": "un.\n\nSKILLS\n\u25c7\nSkills appear when an agent is bound\n~/.holdspeak/workbenches/workbench_7f0804c026b5/\nP3\nDraft rollback runbook\nNEEDS REVIEW\nDismiss\nRemove\nP3\nAdd\nRemoved Draft rollback runbook\nUndo\n08s",
+ "db_at_1s": [
+  [
+   "wbi_3ecacb231cbe",
+   "Draft rollback runbook"
+  ]
+ ],
+ "db_at_12s": [],
+ "face_at_12s": "Schedule\nEvent\nIdle\n\nStarts only when you press Run.\n\nSKILLS\n\u25c7\nSkills appear when an agent is bound\n~/.holdspeak/workbenches/workbench_7f0804c026b5/\n\u25cb\nNo items yet\nAdd an item\nP3\nAdd\nRemoval committed",
+ "shot_after": "docs/internal/philo/phase-13/grounding/shots/surfaces/72-workbench-item-deleted-pop-1440.png",
+ "after_text": "Ledger cutover bench\nITEMS\nRUNS\nMEMORY\n\u25b8 Run\n\u00b7 Bind an agent first\n\u25b4 Collapse\nAGENT\n#2563EB\nChase\n#6B7280\nDesk\n#9333EA\nDraft\n#0F766E\nInterview\n#059669\nPlan\n#D97706\nProject\nRUNS ON\nItem assignment\nNo default model\nChoose default\nRESOLVES WITH\nReference assignment\nNo default model\nChoose default\nSTARTS WHEN\nManual\nSchedule\nEvent\nIdle\n\nStarts only when you press Run.\n\nSKILLS\n\u25c7\nSkills appear when an agent is bound\n~/.holdspeak/workbenches/workbench_7f0804c026b5/\n\u25cb\nNo items yet\nAdd an item\nP3\nAdd\nRemoval committed",
+ "after_items": []
+}

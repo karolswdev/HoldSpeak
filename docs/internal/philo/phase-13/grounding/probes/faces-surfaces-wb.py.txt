@@ -1,0 +1,56 @@
+import sys, json, sqlite3, time
+sys.path.insert(0, '.')
+from fslib import *
+from walk import enter_desk, press, try_open
+H = hub_home('pop'); assert not H.startswith('/Users/karol'), H
+DB = f"{H}/.local/share/holdspeak/holdspeak.db"
+def q(sql):
+    c = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
+    try: return c.execute(sql).fetchall()
+    finally: c.close()
+w = int(sys.argv[1]); do_delete = len(sys.argv) > 2
+out = {'before_items': q("select id,title from workbench_items")}
+with browser(w) as page:
+    page.on('dialog', lambda d: (out.setdefault('dialogs', []).append(d.message), d.accept()))
+    enter_desk(page, 'pop')
+    try_open(page, 'go:Workbenches', 'pop'); page.wait_for_selector('.desk-window[aria-label=Workbenches]'); settle(page, 800)
+    card = page.locator('.desk-window[aria-label=Workbenches]').get_by_text('Ledger cutover bench').first
+    t0 = time.monotonic()
+    if w > 600: card.dblclick()
+    else: card.tap()
+    for _ in range(80):
+        if page.evaluate("() => [...document.querySelectorAll('.desk-window')].some(e => /Ledger cutover bench/.test(e.getAttribute('aria-label') || ''))"): break
+        page.wait_for_timeout(100)
+    out['open_ms'] = round((time.monotonic() - t0) * 1000)
+    if not page.evaluate("() => [...document.querySelectorAll('.desk-window')].some(e => /Ledger cutover bench/.test(e.getAttribute('aria-label') || ''))"):
+        press(page, card); settle(page, 1500)
+    settle(page, 1200)
+    out['windows'] = page.evaluate("() => [...document.querySelectorAll('.desk-window')].map(e => e.getAttribute('aria-label') + ' :: ' + e.innerText.replace(/\\s+/g,' ').slice(0, 900))")
+    out['verbs'] = page.evaluate("() => { const f = [...document.querySelectorAll('.desk-window')].find(e => /Ledger cutover bench/.test(e.getAttribute('aria-label') || '')); return f ? [...f.querySelectorAll('button')].map(b => (b.getAttribute('aria-label') || b.innerText).trim().replace(/\\s+/g, ' ').slice(0, 40) + '|' + ((typeof b.className === 'string') ? b.className.slice(0, 30) : '')) : null; }")
+    out['shot'] = shot(page, f'70-workbench-window-pop-{w}')
+    if do_delete:
+        f = page.locator('.desk-window[aria-label="Ledger cutover bench"]').first
+        row = f.get_by_text('Draft rollback runbook').first
+        press(page, row)
+        settle(page, 600)
+        out['after_row_press'] = page.evaluate("() => [...document.querySelectorAll('[role=menu] [role^=menuitem], .desk-window button')].map(b => b.innerText.trim()).filter(t => /Delete|Remove|Park|Archive/i.test(t))")
+        out['shot_menu'] = shot(page, f'71-workbench-item-menu-pop-{w}')
+        for name in ['Delete', 'Remove', 'Delete item']:
+            b = page.get_by_role('menuitem', name=name)
+            if not b.count(): b = f.get_by_role('button', name=name)
+            if b.count() and b.first.is_visible():
+                press(page, b.first); out['pressed'] = name; settle(page, 700)
+                out['shot_confirm'] = shot(page, f'71b-workbench-item-confirm-pop-{w}')
+                out['confirm_face'] = f.inner_text()[-200:]
+                again = f.get_by_role('button', name=name, exact=True)
+                out['db_at_1s'] = q("select id,title from workbench_items")
+                page.wait_for_timeout(11000)
+                out['db_at_12s'] = q("select id,title from workbench_items")
+                out['face_at_12s'] = f.inner_text()[-200:]
+                break
+        settle(page, 1200)
+        out['shot_after'] = shot(page, f'72-workbench-item-deleted-pop-{w}')
+        out['after_text'] = f.inner_text()[:600] if f.count() else None
+        out['after_items'] = q("select id,title from workbench_items")
+print(json.dumps(out, indent=1, default=str)[:6000])
+dump(f'workbench-{w}' + ('-delete' if do_delete else ''), out)

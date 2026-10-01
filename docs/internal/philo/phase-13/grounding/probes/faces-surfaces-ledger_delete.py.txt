@@ -1,0 +1,46 @@
+"""Hard-delete proof on the THROWAWAY HOME only: delete one meeting and one
+Workbench item through the real faces, then read the throwaway DB."""
+import sys, json, sqlite3
+sys.path.insert(0, '.')
+from fslib import *
+from walk import enter_desk, press, try_open
+H = hub_home('pop'); assert not H.startswith('/Users/karol'), H
+DB = f"{H}/.local/share/holdspeak/holdspeak.db"
+def q(sql):
+    c = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
+    try: return c.execute(sql).fetchall()
+    finally: c.close()
+out = {'db': DB}
+out['before'] = {'meeting': q("select id,title from meetings where id='m-hiring'"), 'segments': q("select count(*) from segments where meeting_id='m-hiring'"),
+                 'intel': q("select count(*) from intel_snapshots where meeting_id='m-hiring'"), 'artifacts': q("select count(*) from artifacts where meeting_id='m-hiring'"),
+                 'item': q("select id,title from workbench_items where id='wbi_a700c58e5f2b'")}
+with browser(1440) as page:
+    page.on('dialog', lambda d: (out.setdefault('dialogs', []).append(d.message), d.accept()))
+    enter_desk(page, 'pop')
+    try_open(page, 'go:Meetings', 'pop'); page.wait_for_selector('.desk-window[aria-label=Meetings]'); settle(page, 800)
+    win = page.locator('.desk-window[aria-label=Meetings]')
+    row = win.locator('text=Hiring debrief: staff engineer').first
+    row.evaluate("e => e.scrollIntoView({block: 'center'})")
+    li = page.evaluate("() => { const t = [...document.querySelectorAll('.desk-window[aria-label=Meetings] *')].find(e => e.children.length === 0 && e.textContent.trim() === 'Hiring debrief: staff engineer'); let r = t; for (let i = 0; i < 6 && r; i++) { if (r.querySelector && [...r.querySelectorAll('button')].some(b => b.innerText.trim() === 'Open')) break; r = r.parentElement; } const b = [...r.querySelectorAll('button')].find(b => b.innerText.trim() === 'Open'); b.setAttribute('data-fsopen', '1'); return true; }")
+    press(page, page.locator('[data-fsopen="1"]').first); settle(page, 1200)
+    out['shot_record'] = shot(page, '67-ledger-delete-meeting-before-pop-1440')
+    press(page, win.get_by_role('button', name='Delete').first); settle(page, 800)
+    out['after_first_press'] = win.inner_text()[:600]
+    out['shot_confirm'] = shot(page, '68-ledger-delete-meeting-confirm-pop-1440')
+    # a confirm step in-world?
+    conf = win.get_by_role('button', name='Delete')
+    out['delete_buttons_after_press'] = conf.count()
+    cand = page.locator('.desk-window[aria-label=Meetings] button', has_text='Delete')
+    texts = [cand.nth(i).inner_text() for i in range(cand.count())]
+    out['delete_texts'] = texts
+    for name in ['Delete?', 'Delete meeting', 'Confirm']:
+        b = win.get_by_role('button', name=name, exact=True)
+        if b.count() and b.first.is_visible():
+            press(page, b.first); out['confirmed_with'] = name; break
+    settle(page, 1500)
+    out['after_delete_text'] = win.inner_text()[:500]
+    out['shot_after'] = shot(page, '69-ledger-delete-meeting-after-pop-1440')
+out['after_meeting'] = {'meeting': q("select id,title from meetings where id='m-hiring'"), 'segments': q("select count(*) from segments where meeting_id='m-hiring'"),
+                        'intel': q("select count(*) from intel_snapshots where meeting_id='m-hiring'"), 'artifacts': q("select count(*) from artifacts where meeting_id='m-hiring'")}
+print(json.dumps(out, indent=1, default=str))
+dump('ledger-delete-meeting', out)

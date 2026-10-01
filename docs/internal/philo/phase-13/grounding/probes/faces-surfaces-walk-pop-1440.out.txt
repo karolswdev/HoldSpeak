@@ -1,0 +1,23 @@
+intelligence       by=desk:Open Intelligence ttfup=454 nodes=35 verbs=9 notOwned=0 ghosts=3 small=15 zeros=[] inputsNoMic=[] raw=13 dialogs=[] off=False err=0 
+speak              by=go:Speak ttfup=650 nodes=31 verbs=14 notOwned=0 ghosts=0 small=5 zeros=[] inputsNoMic=['Talk, or type here'] raw=1 dialogs=[] off=False err=0 
+ask                by=go:Ask AI ttfup=337 nodes=21 verbs=6 notOwned=0 ghosts=0 small=3 zeros=[] inputsNoMic=[] raw=1 dialogs=[] off=False err=0 
+meetings           by=go:Meetings ttfup=639 nodes=48 verbs=19 notOwned=0 ghosts=0 small=12 zeros=[] inputsNoMic=[] raw=0 dialogs=[] off=False err=0 
+agents             by=go:Agents and coder sessions ttfup=630 nodes=11 verbs=6 notOwned=0 ghosts=0 small=2 zeros=[] inputsNoMic=[] raw=0 dialogs=[] off=False err=0 
+settings           by=go:Settings ttfup=641 nodes=41 verbs=14 notOwned=0 ghosts=0 small=0 zeros=[] inputsNoMic=[] raw=9 dialogs=[] off=False err=0 
+live               by=route:/live ttfup=1834 nodes=9 verbs=5 notOwned=0 ghosts=0 small=0 zeros=[] inputsNoMic=[] raw=0 dialogs=[] off=False err=0 
+rhythm             by=go:Rhythm ttfup=645 nodes=26 verbs=5 notOwned=0 ghosts=0 small=0 zeros=[] inputsNoMic=[] raw=4 dialogs=[] off=False err=0 
+setup              by=go:Setup ttfup=636 nodes=54 verbs=7 notOwned=0 ghosts=0 small=32 zeros=[] inputsNoMic=[] raw=0 dialogs=[] off=False err=0 
+context            by=go:Context ttfup=639 nodes=10 verbs=5 notOwned=0 ghosts=1 small=3 zeros=['0', '0'] inputsNoMic=[] raw=0 dialogs=[] off=False err=0 
+workbenches        by=go:Workbenches ttfup=637 nodes=6 verbs=4 notOwned=0 ghosts=0 small=2 zeros=[] inputsNoMic=[] raw=1 dialogs=[] off=False err=0 
+components         by=route:/design/components ttfup=10197 nodes=54 verbs=13 notOwned=0 ghosts=3 small=26 zeros=[] inputsNoMic=[] raw=14 dialogs=[] off=False err=0 
+activity           by=go:Activity ttfup=637 nodes=10 verbs=9 notOwned=0 ghosts=0 small=1 zeros=[] inputsNoMic=[] raw=0 dialogs=[] off=False err=0 
+desk-memory        by=go:Desk memory ttfup=638 nodes=58 verbs=17 notOwned=0 ghosts=1 small=9 zeros=[] inputsNoMic=[] raw=0 dialogs=[] off=False err=0 
+models             by=go:Models ttfup=634 nodes=49 verbs=15 notOwned=0 ghosts=1 small=6 zeros=[] inputsNoMic=[] raw=7 dialogs=[] off=False err=0 
+new-project        by=desk:New Project ttfup=628 nodes=21 verbs=9 notOwned=0 ghosts=1 small=3 zeros=[] inputsNoMic=[] raw=3 dialogs=[] off=False err=0 
+processes          by=go:Processes ttfup=633 nodes=14 verbs=3 notOwned=0 ghosts=0 small=2 zeros=[] inputsNoMic=[] raw=1 dialogs=[] off=False err=0 
+commands           by=go:Commands ttfup=638 nodes=8 verbs=6 notOwned=0 ghosts=0 small=1 zeros=[] inputsNoMic=[] raw=0 dialogs=[] off=False err=0 
+people             by=desk:Open People ttfup=645 nodes=16 verbs=10 notOwned=0 ghosts=1 small=0 zeros=[] inputsNoMic=[] raw=0 dialogs=[] off=False err=0 
+calendar-snapshot  by=None ttfup=None nodes=None verbs=None notOwned=0 ghosts=0 small=0 zeros=None inputsNoMic=[] raw=0 dialogs=None off=None err=0 
+models-runs-on     by=route:/profiles ttfup=1834 nodes=49 verbs=15 notOwned=0 ghosts=1 small=6 zeros=[] inputsNoMic=[] raw=7 dialogs=[] off=False err=0 
+connections        by=go:Connections ttfup=737 nodes=77 verbs=23 notOwned=0 ghosts=1 small=0 zeros=[] inputsNoMic=[] raw=1 dialogs=[] off=False err=0 
+change-places      by=go:Change places ttfup=638 nodes=19 verbs=19 notOwned=0 ghosts=0 small=28 zeros=[] inputsNoMic=[] raw=0 dialogs=[] off=False err=0 

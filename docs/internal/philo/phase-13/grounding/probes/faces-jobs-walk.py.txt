@@ -1,0 +1,124 @@
+"""PHILO-13 faces-jobs walker: one job, one width, one fresh browser, the shared seeded hub.
+Usage: uv run python walk.py <J1..J5> <1440|393>
+At 393 every transition is a real touchscreen tap (has_touch context); at 1440 a mouse click.
+Writes shots/jobs/J<n>-<step>-<width>.png and probes/faces-jobs-J<n>-<width>.json.
+"""
+import json, re, sys, time
+sys.path.insert(0, "/Users/karol/dev/tools/wt-philo-13-ground/.tmp/p13jobs")
+from lib import *
+from playwright.sync_api import sync_playwright
+
+PROBES = Path("/Users/karol/dev/tools/wt-philo-13-ground/docs/internal/philo/phase-13/grounding/probes")
+JOB, W = sys.argv[1], int(sys.argv[2])
+TOUCH = W <= 420
+
+class Walk:
+    def __init__(self, page, errs):
+        self.page, self.errs = page, errs
+        self.t0 = time.monotonic(); self.log = []; self.clicks = 0; self.dead = 0; self.n = 0
+        self.windows_seen = set()
+    def now(self): return round(time.monotonic() - self.t0, 1)
+    def act(self, loc, what, dead=False, kind="press"):
+        """One owner gesture: a tap at 393, a click at 1440."""
+        loc = loc.first
+        try:
+            loc.wait_for(state="visible", timeout=8000)
+        except Exception:
+            loc.scroll_into_view_if_needed(timeout=5000)
+        before = [w["title"] for w in windows(self.page)]
+        blocked = None
+        if TOUCH:
+            tap(self.page, loc)
+        else:
+            try:
+                loc.click(timeout=5000)
+            except Exception as e:
+                blocked = str(e).split("Call log")[-1][-300:]
+                loc.click(force=True)
+        self.page.wait_for_timeout(1300)
+        after = [w["title"] for w in windows(self.page)]
+        self.windows_seen.update(after)
+        self.clicks += 1
+        if dead: self.dead += 1
+        opened = [t for t in after if t not in before]
+        g = ghosts(self.page)
+        self.log.append({"t": self.now(), "gesture": kind, "what": what, "dead": dead, "opened": opened, "windows": after, **({"blocked": blocked} if blocked else {}), **({"ghosts": g} if g else {})})
+        return opened
+    def key(self, keys, what):
+        self.page.keyboard.press(keys); self.page.wait_for_timeout(900); self.clicks += 1
+        self.log.append({"t": self.now(), "gesture": "key " + keys, "what": what, "windows": [w["title"] for w in windows(self.page)]})
+    def type(self, loc, text, what):
+        loc.first.fill(text); self.page.wait_for_timeout(500); self.clicks += 1
+        self.log.append({"t": self.now(), "gesture": "type", "what": what})
+    def note(self, msg, **kw):
+        self.log.append({"t": self.now(), "note": msg, **kw})
+    def shot(self, step):
+        self.n += 1
+        name = f"{JOB}-{self.n:02d}-{step}-{W}"
+        self.log.append({"t": self.now(), "shot": shot(self.page, name), "windows": [w["title"] for w in windows(self.page)]})
+        return name
+    def fact(self, js, arg=None):
+        return self.page.evaluate(js, arg) if arg is not None else self.page.evaluate(js)
+
+def text(page, sel):
+    loc = page.locator(sel)
+    return " ".join(loc.first.inner_text().split()) if loc.count() else None
+
+def pal_open(wk, q, opt_id, what):
+    p = wk.page
+    wk.act(p.locator("[aria-controls=desk-tool-shelf]"), "Search (palette)")
+    wk.type(p.locator("[aria-controls=desk-palette-listbox]"), q, f"type '{q}'")
+    opts = p.evaluate("() => [...document.querySelectorAll('#desk-palette-listbox [role=option]')].map(o => o.id.replace('desk-palette-option-','') + ' :: ' + o.innerText.replace(/\\n/g,' ').slice(0,60))")
+    wk.note("palette options", query=q, options=opts)
+    return wk.act(p.locator(f"[id='desk-palette-option-{opt_id}']"), what)
+
+def dock(wk, label, what=None):
+    p = wk.page
+    loc = p.locator(f".desk-dock-launch[aria-label^='{label}']")
+    return wk.act(loc, what or f"Dock {label}")
+
+def win(page, title):
+    return page.locator(".desk-window, .desk-pullout").filter(has=page.locator(".desk-window-title, .desk-pullout-title", has_text=title))
+
+def close_all(wk):
+    p = wk.page
+    for _ in range(8):
+        vis = [w for w in windows(p)]
+        if not vis: break
+        wid = vis[-1]["id"]
+        b = p.locator(f"[id='{wid}'] [aria-label^='Close ']")
+        if not b.count(): break
+        wk.act(b.first, f"close window {vis[-1]['title']}")
+
+def ghosts(page):
+    """Closed windows still in the DOM at opacity 0 that still take pointer events."""
+    return page.evaluate("() => [...document.querySelectorAll('.desk-window, .desk-pullout')].filter(e => { const cs = getComputedStyle(e); return parseFloat(cs.opacity) === 0 && cs.pointerEvents !== 'none' && cs.display !== 'none' && e.getBoundingClientRect().width > 0; }).map(e => ({id: e.id, rect: [e.getBoundingClientRect().x|0, e.getBoundingClientRect().y|0, e.getBoundingClientRect().width|0, e.getBoundingClientRect().height|0]}))")
+
+def reload(wk, why):
+    p = wk.page
+    t = time.monotonic(); p.reload(wait_until="commit")
+    p.locator(".chair, .desk-next").first.wait_for(timeout=30000); p.wait_for_timeout(2500)
+    wk.clicks += 1
+    wk.log.append({"t": wk.now(), "gesture": "reload", "what": why, "reload_s": round(time.monotonic() - t, 2), "windows": [w["title"] for w in windows(p)]})
+
+def workspace(page):
+    return page.evaluate("() => { const o = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/desk|panel|window|workspace|chair/i.test(k)) o[k] = (localStorage.getItem(k)||'').slice(0,300); } return o; }")
+
+exec(open(f"/Users/karol/dev/tools/wt-philo-13-ground/.tmp/p13jobs/job_{JOB}.py").read())
+
+with sync_playwright() as pw:
+    b, ctx, page, errs = open_page(pw, W, touch=TOUCH)
+    wk = Walk(page, errs)
+    try:
+        run(wk)
+    except Exception as e:
+        wk.note("WALK ABORTED", error=str(e)[:600])
+        try: wk.shot("aborted")
+        except Exception: pass
+    out = {"job": JOB, "width": W, "touch": TOUCH, "clicks": wk.clicks, "dead_clicks": wk.dead,
+           "seconds": wk.now(), "windows_seen": sorted(wk.windows_seen), "page_errors": errs[:10], "log": wk.log}
+    (PROBES / f"faces-jobs-{JOB}-{W}.json").write_text(json.dumps(out, indent=1))
+    print(json.dumps({k: out[k] for k in ("job","width","clicks","dead_clicks","seconds","windows_seen","page_errors")}, indent=1))
+    for e in wk.log:
+        print(" ", json.dumps(e)[:400])
+    b.close()

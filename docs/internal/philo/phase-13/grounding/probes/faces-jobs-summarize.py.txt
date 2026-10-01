@@ -1,0 +1,27 @@
+import json, re
+from pathlib import Path
+P = Path("/Users/karol/dev/tools/wt-philo-13-ground/docs/internal/philo/phase-13/grounding/probes")
+TYPED_DEFAULT = {"type an agenda item": 38, "type a note": 47, "type the note": 47, "type a follow-up request": 43, "type the decision": 51, "the draft was lost": 47}
+rows = []
+for job in ("J1","J2","J3","J4","J5"):
+    for w in (1440, 393):
+        f = P / f"faces-jobs-{job}-{w}.json"
+        if not f.exists(): continue
+        d = json.loads(f.read_text())
+        presses = sum(1 for e in d["log"] if e.get("gesture") == "press")
+        reloads = [e for e in d["log"] if e.get("gesture") == "reload"]
+        chars = 0
+        for e in d["log"]:
+            if e.get("gesture") == "type":
+                m = re.search(r"\((\d+) chars\)", e["what"]) or re.search(r"'([^']*)'", e["what"])
+                if m and m.group(1).isdigit(): chars += int(m.group(1))
+                elif m: chars += len(m.group(1))
+                else: chars += next((v for k, v in TYPED_DEFAULT.items() if e["what"].startswith(k)), 40)
+        opened = sum(len(e.get("opened") or []) for e in d["log"])
+        dead = sum(1 for e in d["log"] if e.get("dead"))
+        ghost = sum(1 for e in d["log"] if e.get("ghosts"))
+        klm = round(1.1 * presses + 0.28 * chars + 1.35 * opened + sum(2 + e.get("reload_s", 3) for e in reloads))
+        rows.append((job, w, d["clicks"], presses, sum(1 for e in d["log"] if e.get("gesture") == "type"), len(reloads), dead, ghost, opened, d["seconds"], klm, ", ".join(d["windows_seen"])))
+print("| Job | Width | Gestures | Presses | Typing | Reloads | Dead taps | Taps with a ghost present | Windows opened | Rig s | KLM s | Windows seen |")
+print("|---|---|---|---|---|---|---|---|---|---|---|---|")
+for r in rows: print("| " + " | ".join(str(x) for x in r) + " |")

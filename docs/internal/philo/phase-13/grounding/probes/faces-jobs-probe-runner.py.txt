@@ -1,0 +1,10 @@
+import sys; sys.path.insert(0, "/Users/karol/dev/tools/wt-philo-13-ground/.tmp/p13jobs")
+from lib import *
+from playwright.sync_api import sync_playwright
+w = int(sys.argv[1]); script = sys.argv[2]
+with sync_playwright() as pw:
+    b, ctx, page, errs = open_page(pw, w, touch=(w<=420))
+    goto(page)
+    exec(open(script).read())
+    print("ERRS", errs[:5])
+    b.close()

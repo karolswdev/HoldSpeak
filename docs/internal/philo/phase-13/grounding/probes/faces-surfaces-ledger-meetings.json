@@ -1,0 +1,175 @@
+{
+ "list-1440": {
+  "footer": [
+   654,
+   690
+  ],
+  "body": [
+   113,
+   654
+  ],
+  "items": [
+   [
+    "NO SUMMARY ROUTE \u00b7 NO ASSIGNME",
+    33,
+    664,
+    312,
+    682
+   ],
+   [
+    "4 RECORDS",
+    440,
+    664,
+    511,
+    682
+   ]
+  ],
+  "overlaps": [],
+  "head": "Meetings\nOUTCOMES\nREVIEW\nRECORD\nARTIFACTS\n\u2699\ufe0e\nNothing needs you\nRecord meeting\nImport\nHAS OPEN ACTIONS\nLedger cutover sync\nOCT 01\n\u00b7\n30 MIN\n\u00b7\n4 WORDS\n\u00b7\nSAVED\nOpen\nArchitecture review: tracing\nSEP 30\n\u00b7\n60 MIN\n\u00b7\n5 WORDS\n\u00b7\nSAVED\nOpen\n1:1 Avery\nSEP 29\n\u00b7\n30 MIN\n\u00b7\n8 WORDS\n\u00b7\nSAVED\nOpen\nHiring debrief: staff "
+ },
+ "record-1440": {
+  "footer": [
+   654,
+   690
+  ],
+  "body": [
+   113,
+   654
+  ],
+  "items": [
+   [
+    "NO SUMMARY ROUTE \u00b7 NO ASSIGNME",
+    33,
+    664,
+    312,
+    682
+   ],
+   [
+    "4 RECORDS",
+    369,
+    664,
+    441,
+    682
+   ],
+   [
+    "MD",
+    498,
+    661,
+    530,
+    685
+   ],
+   [
+    "SRT",
+    534,
+    661,
+    574,
+    685
+   ],
+   [
+    "Delete",
+    578,
+    661,
+    639,
+    685
+   ]
+  ],
+  "overlaps": [],
+  "head": "Meetings\nOUTCOMES\nREVIEW\nRECORD\nARTIFACTS\n\u2699\ufe0e\nNothing needs you\nRecord meeting\nImport\nHAS OPEN ACTIONS\nLedger cutover sync\nOCT 01 \u00b7 SAVED\nArchitecture review: tracing\nSEP 30 \u00b7 SAVED\n1:1 Avery\nSEP 29 \u00b7 SAVED\nHiring debrief: staff engineer\nSEP 28 \u00b7 SAVED\nLedger cutover sync\nOCT 01\n\u00b7\n30 MIN\n\u00b7\nSAVED\nSUMM"
+ },
+ "windows-1440": [
+  "Meetings :: Meetings OUTCOMES REVIEW RECORD ARTIFACTS \u2699\ufe0e Nothing needs you Record meeting Import HAS OPEN ACTIONS Ledger cutover sync OCT 01 \u00b7 SAVED Architecture review: tr"
+ ],
+ "shot-1440": "docs/internal/philo/phase-13/grounding/shots/surfaces/61-ledger-meeting-record-pop-1440.png",
+ "shot-end-1440": "docs/internal/philo/phase-13/grounding/shots/surfaces/62-ledger-meeting-record-end-pop-1440.png",
+ "list-393": {
+  "footer": [
+   629,
+   678
+  ],
+  "body": [
+   131,
+   629
+  ],
+  "items": [
+   [
+    "NO SUMMARY ROUTE \u00b7 NO ASSIGNME",
+    9,
+    630,
+    288,
+    648
+   ],
+   [
+    "4 RECORDS",
+    153,
+    656,
+    224,
+    674
+   ]
+  ],
+  "overlaps": [],
+  "head": "Meetings\nOUTCOMES\nREVIEW\nRECORD\nARTIFACTS\n\u2699\ufe0e\nNothing needs you\nRecord meeting\nImport\nHAS OPEN ACTIONS\nLedger cutover sync\nOCT 01\n\u00b7\n30 MIN\n\u00b7\n4 WORDS\n\u00b7\nSAVED\nOpen\nArchitecture review: tracing\nSEP 30\n\u00b7\n60 MIN\n\u00b7\n5 WORDS\n\u00b7\nSAVED\nOpen\n1:1 Avery\nSEP 29\n\u00b7\n30 MIN\n\u00b7\n8 WORDS\n\u00b7\nSAVED\nOpen\nHiring debrief: staff "
+ },
+ "record-393": {
+  "footer": [
+   595,
+   678
+  ],
+  "body": [
+   131,
+   595
+  ],
+  "items": [
+   [
+    "NO SUMMARY ROUTE \u00b7 NO ASSIGNME",
+    9,
+    613,
+    288,
+    631
+   ],
+   [
+    "4 RECORDS",
+    153,
+    656,
+    224,
+    674
+   ],
+   [
+    "MD",
+    211,
+    610,
+    255,
+    634
+   ],
+   [
+    "SRT",
+    259,
+    610,
+    303,
+    634
+   ],
+   [
+    "Delete",
+    307,
+    610,
+    368,
+    634
+   ]
+  ],
+  "overlaps": [
+   [
+    "NO SUMMARY ROUTE \u00b7 NO ASSIGNME",
+    "MD"
+   ],
+   [
+    "NO SUMMARY ROUTE \u00b7 NO ASSIGNME",
+    "SRT"
+   ]
+  ],
+  "head": "Meetings\nOUTCOMES\nREVIEW\nRECORD\nARTIFACTS\n\u2699\ufe0e\nNothing needs you\nRecord meeting\nImport\nHAS OPEN ACTIONS\nLedger cutover sync\nOCT 01\n\u00b7\n30 MIN\n\u00b7\nSAVED\nSUMMARY\n\nDual-write is stable. The team agreed to freeze the old ledger on Nov 5. Jordan owns the rollback plan.\n\nCUTOVER\nROLLBACK\nSEND\n\u21bb\nSummary\nDigest\nF"
+ },
+ "windows-393": [
+  "Meetings :: Meetings OUTCOMES REVIEW RECORD ARTIFACTS \u2699\ufe0e Nothing needs you Record meeting Import HAS OPEN ACTIONS Ledger cutover sync OCT 01 \u00b7 30 MIN \u00b7 SAVED SUMMARY Dual-w"
+ ],
+ "shot-393": "docs/internal/philo/phase-13/grounding/shots/surfaces/61-ledger-meeting-record-pop-393.png",
+ "shot-end-393": "docs/internal/philo/phase-13/grounding/shots/surfaces/62-ledger-meeting-record-end-pop-393.png"
+}

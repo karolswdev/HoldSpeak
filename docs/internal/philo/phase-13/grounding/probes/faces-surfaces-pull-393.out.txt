@@ -1,0 +1,6 @@
+meeting        title=Ledger cutover sync open_ms=1392 nodes=39 verbs=14 ghosts=[] notOwned=[] raw=['Team updates folder, FILE'] small=5 noMic=[]
+artifact       title=Meeting decisions open_ms=1369 nodes=28 verbs=13 ghosts=[] notOwned=[] raw=['Copy', 'Dictate about this'] small=4 noMic=[]
+note           title=Ledger cutover risks open_ms=1220 nodes=33 verbs=18 ghosts=[] notOwned=[] raw=[] small=3 noMic=[]
+decision       title=Freeze the old ledger on Nov 5 open_ms=1317 nodes=46 verbs=19 ghosts=[] notOwned=[] raw=['Team updates folder, FILE'] small=6 noMic=[]
+recipe-agent   title=Chase open_ms=1323 nodes=40 verbs=17 ghosts=['Ask'] notOwned=[] raw=['Ask', 'Assignments'] small=3 noMic=[]
+kb             title=Everyday context open_ms=1368 nodes=38 verbs=22 ghosts=[] notOwned=[] raw=[] small=2 noMic=[]

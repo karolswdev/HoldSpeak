@@ -1,0 +1,8 @@
+page.locator(".desk-dock-launch[aria-label^='Intelligence']").tap(); page.wait_for_timeout(1500)
+print(windows(page))
+c = page.locator("[id='pullout:desk'] [aria-label^='Close ']")
+print("close", c.count())
+c.first.tap(); page.wait_for_timeout(1500)
+print(page.evaluate("() => { const e = document.getElementById('pullout:desk'); if (!e) return 'GONE'; const cs = getComputedStyle(e); return [cs.opacity, cs.pointerEvents, cs.display, JSON.stringify(e.getBoundingClientRect())]; }"))
+t = page.locator("[data-testid=arrival-needs-you-row]").first; bb = t.bounding_box()
+print(page.evaluate("([x,y]) => { const e = document.elementFromPoint(x,y); return e.closest('[id]') ? e.closest('[id]').id : e.tagName }", [bb["x"]+20, bb["y"]+bb["height"]/2]))

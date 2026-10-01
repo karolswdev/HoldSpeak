@@ -1,0 +1,235 @@
+"""PHILO-13 grounding, faces half, Job A: one real hub on a throwaway HOME,
+populated with a working week for a Senior Software Architect with three
+reports, kept alive for the Tuesday-spine walks.
+
+Run from the repository root, with HOME set to a fresh mktemp dir:
+
+    H=$(mktemp -d); trap 'rm -rf "$H"' EXIT INT TERM
+    HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright \
+      npm_config_cache=/Users/karol/.npm \
+      uv run python docs/internal/philo/phase-13/grounding/probes/faces-jobs-serve.py.txt
+
+It writes $HOME/hub.json ({url, token, ids}) and serves until $HOME/stop exists.
+
+Every record comes from a real producer: the HTTP routes for projects,
+updates, decisions, notes, people (encrypted sidecar on a FILE key in this
+HOME), the folder destination, the calendar source (an ICS file in this HOME
+through PUT /api/settings and the real ingest conductor) and the brief
+(POST /api/brief/generate). Meetings with summaries and their decision
+artifact go through the real meeting repository (db.meetings.save_meeting,
+db.plugins.record_artifact + backfill_decisions), as the Phase 11 glass rigs
+mint them: no route creates a summarized meeting while the engine is off.
+The Ask Keep artifact goes through AskService.keep (no model runs).
+
+No engine is assigned (the engine is OFF for this walk). The hub has no
+recorder: POST /api/meeting/start cannot open a microphone.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sys
+import time
+import urllib.request
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT = Path.cwd()
+assert (ROOT / "holdspeak").is_dir(), "run from the repository root"
+sys.path.insert(0, str(ROOT))
+
+import pytest  # noqa: E402
+
+HOME = Path(os.environ["HOME"]).resolve()
+assert "/Users/karol" != str(HOME) and str(HOME).startswith(("/private/var/folders", "/var/folders", "/tmp", "/private/tmp")), HOME
+TOKEN = "philo13-jobs"
+
+keyfile = HOME / "people.key"
+keyfile.write_text("{}")
+keyfile.chmod(0o600)
+os.environ["HOLDSPEAK_PEOPLE_KEYSTORE_FILE"] = str(keyfile)
+
+from tests.e2e.glass_infra import _boot, _ensure_build  # noqa: E402
+
+_ensure_build()
+mp = pytest.MonkeyPatch()
+server, base = _boot(HOME, mp, token=TOKEN)
+
+
+def api(method: str, path: str, body: dict | None = None) -> dict:
+    req = urllib.request.Request(
+        base + path, method=method,
+        data=json.dumps(body).encode() if body is not None else None,
+        headers={"authorization": f"Bearer {TOKEN}", "content-type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        raw = resp.read().decode()
+        return json.loads(raw) if raw.strip().startswith(("{", "[")) else {"_text": raw}
+
+
+from holdspeak.db import get_database  # noqa: E402
+from holdspeak.db.decisions import backfill_decisions  # noqa: E402
+from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment  # noqa: E402
+
+db = get_database()
+assert str(Path(db.db_path).resolve()).startswith(str(HOME)), db.db_path
+ids: dict = {"home": str(HOME), "db": str(db.db_path)}
+
+api("PUT", "/api/setup/onboarding", {"disposition": "completed"})
+
+# ── projects + published updates (the Room's own routes) ──
+projects = {}
+for name, body in (
+    ("Payments ledger cutover", "# Payments ledger cutover\n\n- Dry run 2 passed on staging.\n- Freeze date proposed: Nov 5.\n- Risk: reconciliation lag on the EU shard.\n"),
+    ("Platform API v3", "# Platform API v3\n\n- Pagination contract agreed.\n- OpenTelemetry adopted for traces.\n- Next: SDK beta for two internal teams.\n"),
+    ("Observability uplift", "# Observability uplift\n\n- Dashboards for checkout are live.\n- Alert noise down 40%.\n"),
+):
+    pid = api("POST", "/api/projects", {"name": name})["project"]["id"]
+    up = api("POST", f"/api/projects/{pid}/updates/draft", {})["update"]["id"]
+    api("PUT", f"/api/updates/{up}", {"body_md": body})
+    api("POST", f"/api/updates/{up}/publish", {})
+    projects[name] = {"id": pid, "published_update": up}
+ids["projects"] = projects
+
+# ── meetings this week, through the real repository ──
+now = datetime.now()
+def ago(days: float, hour: int) -> datetime:
+    d = (now - timedelta(days=days)).replace(hour=hour, minute=0, second=0, microsecond=0)
+    return d if d < now else now - timedelta(hours=1)
+
+def item(mid: str, i: int, task: str, owner: str) -> dict:
+    return {"id": f"{mid}-a{i}", "task": task, "owner": owner, "due": None, "status": "pending",
+            "review_state": "accepted", "source_timestamp": None, "created_at": now.isoformat(timespec="seconds")}
+
+meetings = [
+    ("p13-cutover-sync", "Ledger cutover sync", ago(2, 10), ["Ledger cutover", "Reconciliation"],
+     "We agreed to freeze the old ledger on Nov 5. Reconciliation lag on the EU shard is the top risk. Priya owns the dry-run report.",
+     [("Send the dry-run report", "Priya"), ("Size the EU shard backfill", "Marcus")], "Payments ledger cutover"),
+    ("p13-api-review", "API v3 design review", ago(1, 14), ["Pagination", "Tracing"],
+     "Cursor pagination is the contract. OpenTelemetry is the trace standard. Dana drafts the SDK beta plan.",
+     [("Draft the SDK beta plan", "Dana")], "Platform API v3"),
+    ("p13-incident", "Checkout latency review", ago(0, 8), ["Incident", "Checkout"],
+     "Latency came from a cold cache after deploy. Add a warm-up step. Marcus owns the runbook change.",
+     [("Add cache warm-up to the deploy runbook", "Marcus")], "Observability uplift"),
+]
+for mid, title, started, topics, summary, actions, proj in meetings:
+    db.meetings.save_meeting(MeetingState(
+        id=mid, started_at=started, ended_at=started + timedelta(minutes=45), title=title,
+        segments=[TranscriptSegment(text=summary, speaker="Karol", start_time=1.0, end_time=9.0)],
+        intel=IntelSnapshot(timestamp=1.0, topics=topics, summary=summary,
+                            action_items=[item(mid, i, t, o) for i, (t, o) in enumerate(actions)]),
+    ))
+    api("POST", f"/api/projects/{projects[proj]['id']}/meetings/{mid}", {})
+# one meeting with no summary (recorded, engine off)
+db.meetings.save_meeting(MeetingState(
+    id="p13-vendor", started_at=ago(0, 9), ended_at=ago(0, 9) + timedelta(minutes=30), title="Vendor call: card network",
+    segments=[TranscriptSegment(text="We discussed the card network SLA.", speaker="Karol", start_time=1.0, end_time=5.0)],
+))
+ids["meetings"] = [m[0] for m in meetings] + ["p13-vendor"]
+
+# meeting decisions (the real projection from a decisions artifact)
+db.plugins.record_artifact(
+    artifact_id="p13-api-decisions", meeting_id="p13-api-review", artifact_type="decisions",
+    title="Meeting decisions",
+    structured_json={"decisions": [{"decision": "Cursor pagination for every list endpoint", "rationale": "Stable under inserts."},
+                                   {"decision": "OpenTelemetry is the trace standard", "rationale": "One vendor-neutral format."}]},
+    plugin_id="philo13-fixture",
+)
+with db._connection() as conn:
+    backfill_decisions(conn)
+
+# ── desk decisions (POST /api/decisions) ──
+ids["decisions"] = {}
+for title, status, text in (
+    ("Freeze the old ledger on Nov 5", "proposed", "Freeze writes to the old ledger at 00:00 UTC on Nov 5."),
+    ("Adopt OpenTelemetry for API v3", "accepted", "All v3 services emit OTel traces."),
+):
+    d = api("POST", "/api/decisions", {"title": title, "status": status, "decision_markdown": text,
+                                       "context_markdown": "From this week's meetings."})["decision"]
+    ids["decisions"][title] = d["id"]
+
+# ── notes ──
+for title, body in (
+    ("Q4 hiring plan", "- One senior backend\n- One SRE\n"),
+    ("Arch review prep", "- Ledger cutover risks\n- API v3 pagination\n"),
+):
+    api("POST", "/api/notes", {"title": title, "body_markdown": body})
+
+# ── people: three reports + one peer, 1:1s, notes, commitments ──
+api("POST", "/api/people/setup", {})
+people = {}
+for name, kind, role, proj in (
+    ("Priya Nair", "direct_report", "Staff engineer, payments", "Payments ledger cutover"),
+    ("Marcus Chen", "direct_report", "Senior SRE", "Observability uplift"),
+    ("Dana Okafor", "direct_report", "Senior engineer, platform", "Platform API v3"),
+    ("Lena Ortiz", "peer", "Engineering manager, checkout", None),
+):
+    rid = api("POST", "/api/people/relationships", {"display_name": name, "relationship_kind": kind,
+                                                     "role_context": role, "cadence": "weekly"})["relationship"]["id"]
+    if proj:
+        api("POST", f"/api/people/relationships/{rid}/projects/{projects[proj]['id']}", {})
+    api("POST", f"/api/people/relationships/{rid}/owner-aliases", {"alias": name.split()[0]})
+    people[name] = rid
+s = api("POST", f"/api/people/relationships/{people['Priya Nair']}/one-on-ones",
+        {"agenda": "Cutover readiness; growth goals", "private_prep": "Ask about on-call load."})["one_on_one"]
+api("POST", f"/api/people/one-on-ones/{s['id']}/agenda", {"body": "Dry-run report: what is still red?"})
+api("POST", f"/api/people/one-on-ones/{s['id']}/agenda", {"body": "Promotion packet timeline"})
+api("POST", f"/api/people/relationships/{people['Priya Nair']}/notes",
+    {"topic": "Growth", "body": "Wants to lead the EU shard work."})
+req = api("POST", f"/api/people/relationships/{people['Priya Nair']}/requests",
+          {"body": "Review the rollout plan before Friday"})["request"]
+api("POST", f"/api/people/requests/{req['id']}/accept", {})
+req2 = api("POST", f"/api/people/relationships/{people['Marcus Chen']}/requests",
+           {"body": "Approve the runbook change"})["request"]
+api("POST", f"/api/people/requests/{req2['id']}/accept", {})
+ids["people"] = people
+ids["one_on_one"] = s["id"]
+
+# ── calendar: an ICS file in this HOME, today and tomorrow ──
+utc = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+ics = HOME / "week.ics"
+lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//HoldSpeak//PHILO13 jobs//EN"]
+for uid, starts, mins, title in (
+    ("p13-ev-1on1", utc + timedelta(hours=2), 30, "1:1 Priya / Karol"),
+    ("p13-ev-sync", utc + timedelta(hours=4), 45, "Ledger cutover sync"),
+    ("p13-ev-arch", utc + timedelta(hours=26), 60, "Architecture review"),
+):
+    lines += ["BEGIN:VEVENT", f"UID:{uid}", f"DTSTART:{starts.strftime('%Y%m%dT%H%M%SZ')}",
+              f"DTEND:{(starts + timedelta(minutes=mins)).strftime('%Y%m%dT%H%M%SZ')}", f"SUMMARY:{title}", "END:VEVENT"]
+lines += ["END:VCALENDAR", ""]
+ics.write_text("\r\n".join(lines), encoding="utf-8")
+api("PUT", "/api/settings", {"calendar": {"sources": [{"id": "p13-week", "label": "Work", "url": str(ics), "enabled": True}]}})
+from holdspeak.calendar_ingest_conductor import CalendarIngestConductor  # noqa: E402
+ids["calendar_refresh"] = CalendarIngestConductor().refresh()
+
+# ── artifacts: Ask Keep (no model) ──
+from holdspeak.principals import Principal, PrincipalKind  # noqa: E402
+from holdspeak.services.ask_service import AskService  # noqa: E402
+kept = AskService(db, hub_model=lambda: "").keep(
+    Principal(PrincipalKind.OWNER, "philo13-owner"),
+    "# Cutover risk register\n\n1. EU shard reconciliation lag\n2. Card network SLA during freeze\n3. Rollback window is 2 hours\n",
+    [], lens="Payments ledger cutover")
+ids["artifact"] = kept["artifact_id"]
+
+# ── the saved folder destination, inside this HOME ──
+out = HOME / "out" / "team"
+out.mkdir(parents=True, exist_ok=True)
+ids["destination"] = api("POST", "/api/channels/destinations",
+                         {"name": "Team folder", "channel": "file", "folder": str(out)})["destination"]["id"]
+ids["destination_folder"] = str(out)
+
+# ── the brief, generated last so it sees the week ──
+brief = api("POST", "/api/brief/generate", {})
+ids["brief"] = brief.get("id")
+ids["brief_items"] = sum(len(v) for v in (brief.get("sections") or {}).values())
+
+(HOME / "hub.json").write_text(json.dumps({"url": base, "token": TOKEN, "ids": ids}, indent=1))
+print("HUB", base, flush=True)
+print(json.dumps(ids, indent=1), flush=True)
+try:
+    while not (HOME / "stop").exists():
+        time.sleep(1)
+finally:
+    server.stop()
+    mp.undo()
+    print("STOPPED", flush=True)

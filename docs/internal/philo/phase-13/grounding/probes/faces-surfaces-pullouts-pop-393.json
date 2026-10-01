@@ -1,0 +1,1908 @@
+[
+ {
+  "key": "meeting",
+  "label": "Ledger cutover sync",
+  "open_ms": 1392,
+  "title": "Ledger cutover sync",
+  "win": {
+   "title": "Ledger cutover sync",
+   "rect": [
+    0,
+    48,
+    393,
+    629
+   ],
+   "offscreen": false,
+   "nodes": 39,
+   "words": [
+    "Ledger cutover sync",
+    "Review meeting",
+    "2h ago \u00b7 30 min \u00b7 2 segments",
+    "Dual-write is stable. The team agreed to freeze the old ledg",
+    "CUTOVER",
+    "ROLLBACK",
+    "SEND",
+    "\u21bb",
+    "\u25cb",
+    "Team updates folder",
+    "FILE",
+    "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs1",
+    "THIS DEVICE",
+    "Action items",
+    "Write the rollback runbook",
+    "Artifacts",
+    "Ledger cutover sync: notes",
+    "Notes",
+    "Meeting decisions",
+    "Decisions",
+    "Filed \u00b7 Desk root \u00b7 1 Project",
+    "Zone",
+    "+",
+    "Decisions",
+    "+",
+    "Inbox",
+    "+",
+    "Meetings",
+    "+",
+    "Personal",
+    "+",
+    "Reference",
+    "+",
+    "Work",
+    "Knowledge",
+    "+",
+    "Everyday context",
+    "Dictate about this",
+    "Record follow-up"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 14,
+   "platedUnder44": 1,
+   "ghosts": [],
+   "scrollH": 627,
+   "clientH": 627,
+   "text": "Ledger cutover sync\nReview meeting\n\n2h ago \u00b7 30 min \u00b7 2 segments\n\nDual-write is stable. The team agreed to freeze the old ledger on Nov 5. Jordan owns the rollback plan.\n\nCUTOVER\nROLLBACK\nSEND\n\u21bb\nSummary\nDigest\nFollow-up\n\u25cb\nTeam updates folder\nFILE\n/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13pop.mdVn7UpXR4/Updates-out\nTHIS DEVICE\nACTION ITEMS\nWrite the rollback runbook\nARTIFACTS\nLedger cutover sync: notes\nNotes\nMeeting decisions\nDecisions\nFiled \u00b7 Desk root \u00b7 1 Project\nDictate about this\nRecord follow-up"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Ledger cutover sync",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 13,
+     "y": 62,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Ledger cutover sync",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 33,
+     "y": 62,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Review meeting",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 119,
+     "h": 24,
+     "x": 261,
+     "y": 57,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Team updates folder, FILE",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 363,
+     "h": 108,
+     "x": 15,
+     "y": 345,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Ledger cutover sync: notes Notes",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 325,
+     "h": 38,
+     "x": 43,
+     "y": 597,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Meeting decisions Decisions",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 325,
+     "h": 38,
+     "x": 43,
+     "y": 646,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 94,
+     "h": 27,
+     "x": 23,
+     "y": 760,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 69,
+     "h": 27,
+     "x": 123,
+     "y": 760,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 90,
+     "h": 27,
+     "x": 198,
+     "y": 760,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 89,
+     "h": 27,
+     "x": 23,
+     "y": 793,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 97,
+     "h": 27,
+     "x": 118,
+     "y": 793,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 67,
+     "h": 27,
+     "x": 221,
+     "y": 793,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 137,
+     "h": 27,
+     "x": 23,
+     "y": 850,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Remove from Payments ledger cutover Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet in-zone",
+     "w": 185,
+     "h": 27,
+     "x": 23,
+     "y": 907,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Payments ledger cutover Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 211,
+     "y": 907,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Platform observability Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 162,
+     "h": 27,
+     "x": 23,
+     "y": 940,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Platform observability Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 188,
+     "y": 940,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Staff hiring loop Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 127,
+     "h": 27,
+     "x": 23,
+     "y": 973,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Staff hiring loop Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 153,
+     "y": 973,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Dictate about this",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 126,
+     "h": 27,
+     "x": 114,
+     "y": 641,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Record follow-up",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 124,
+     "h": 27,
+     "x": 244,
+     "y": 641,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "Action items",
+     "fs": 10
+    },
+    {
+     "t": "Artifacts",
+     "fs": 10
+    },
+    {
+     "t": "Zone",
+     "fs": 10
+    },
+    {
+     "t": "Knowledge",
+     "fs": 10
+    },
+    {
+     "t": "Projects",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 646
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/80-pullout-meeting-pop-393.png",
+  "errors": []
+ },
+ {
+  "key": "artifact",
+  "label": "Meeting decisions",
+  "open_ms": 1369,
+  "title": "Meeting decisions",
+  "win": {
+   "title": "Meeting decisions",
+   "rect": [
+    0,
+    504,
+    393,
+    173
+   ],
+   "offscreen": false,
+   "nodes": 28,
+   "words": [
+    "Meeting decisions",
+    "Decisions",
+    "Filed \u00b7 Desk root",
+    "Zone",
+    "+",
+    "Decisions",
+    "+",
+    "Inbox",
+    "+",
+    "Meetings",
+    "+",
+    "Personal",
+    "+",
+    "Reference",
+    "+",
+    "Work",
+    "Knowledge",
+    "+",
+    "Everyday context",
+    "Projects",
+    "+",
+    "Payments ledger cutover",
+    "Inspect",
+    "+",
+    "Platform observability",
+    "Inspect",
+    "Copy",
+    "Dictate about this"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 13,
+   "platedUnder44": 0,
+   "ghosts": [],
+   "scrollH": 171,
+   "clientH": 171,
+   "text": "Meeting decisions\nDECISIONS\nFiled \u00b7 Desk root\nCopy\nDictate about this"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Meeting decisions",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 13,
+     "y": 518,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Meeting decisions",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 33,
+     "y": 518,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 94,
+     "h": 27,
+     "x": 23,
+     "y": 650,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 69,
+     "h": 27,
+     "x": 123,
+     "y": 650,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 90,
+     "h": 27,
+     "x": 198,
+     "y": 650,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 89,
+     "h": 27,
+     "x": 23,
+     "y": 683,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 97,
+     "h": 27,
+     "x": 118,
+     "y": 683,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 67,
+     "h": 27,
+     "x": 221,
+     "y": 683,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 137,
+     "h": 27,
+     "x": 23,
+     "y": 740,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Payments ledger cutover Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 181,
+     "h": 27,
+     "x": 23,
+     "y": 797,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Payments ledger cutover Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 207,
+     "y": 797,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Platform observability Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 162,
+     "h": 27,
+     "x": 23,
+     "y": 830,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Platform observability Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 188,
+     "y": 830,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Staff hiring loop Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 127,
+     "h": 27,
+     "x": 23,
+     "y": 863,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Staff hiring loop Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 153,
+     "y": 863,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Copy",
+     "lib": false,
+     "cls": "desk-chip quiet",
+     "w": 56,
+     "h": 27,
+     "x": 181,
+     "y": 641,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Dictate about this",
+     "lib": false,
+     "cls": "desk-chip quiet",
+     "w": 126,
+     "h": 27,
+     "x": 242,
+     "y": 641,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "Decisions",
+     "fs": 10
+    },
+    {
+     "t": "Zone",
+     "fs": 10
+    },
+    {
+     "t": "Knowledge",
+     "fs": 10
+    },
+    {
+     "t": "Projects",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 238
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/81-pullout-artifact-pop-393.png",
+  "errors": []
+ },
+ {
+  "key": "note",
+  "label": "Ledger cutover risks",
+  "open_ms": 1220,
+  "title": "Ledger cutover risks",
+  "win": {
+   "title": "Ledger cutover risks",
+   "rect": [
+    0,
+    464,
+    393,
+    213
+   ],
+   "offscreen": false,
+   "nodes": 33,
+   "words": [
+    "Ledger cutover risks",
+    "reconciliation job slow",
+    "rollback plan owner: Jordan",
+    "Filed \u00b7 Desk root",
+    "Zone",
+    "+",
+    "Decisions",
+    "+",
+    "Inbox",
+    "+",
+    "Meetings",
+    "+",
+    "Personal",
+    "+",
+    "Reference",
+    "+",
+    "Work",
+    "Knowledge",
+    "+",
+    "Everyday context",
+    "Projects",
+    "+",
+    "Payments ledger cutover",
+    "Inspect",
+    "+",
+    "Platform observability",
+    "Inspect",
+    "+",
+    "Staff hiring loop",
+    "Inspect",
+    "Copy",
+    "Dictate about this",
+    "Develop this thought"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 18,
+   "platedUnder44": 3,
+   "ghosts": [],
+   "scrollH": 211,
+   "clientH": 211,
+   "text": "Ledger cutover risks\nreconciliation job slow\nrollback plan owner: Jordan\nFiled \u00b7 Desk root\nCopy\nDictate about this\nDevelop this thought"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Ledger cutover risks",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 13,
+     "y": 478,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Ledger cutover risks",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 33,
+     "y": 478,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 94,
+     "h": 27,
+     "x": 23,
+     "y": 633,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 69,
+     "h": 27,
+     "x": 123,
+     "y": 633,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 90,
+     "h": 27,
+     "x": 198,
+     "y": 633,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 89,
+     "h": 27,
+     "x": 23,
+     "y": 666,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 97,
+     "h": 27,
+     "x": 118,
+     "y": 666,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 67,
+     "h": 27,
+     "x": 221,
+     "y": 666,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 137,
+     "h": 27,
+     "x": 23,
+     "y": 723,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Payments ledger cutover Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 181,
+     "h": 27,
+     "x": 23,
+     "y": 780,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Payments ledger cutover Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 207,
+     "y": 780,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Platform observability Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 162,
+     "h": 27,
+     "x": 23,
+     "y": 813,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Platform observability Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 188,
+     "y": 813,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Staff hiring loop Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 127,
+     "h": 27,
+     "x": 23,
+     "y": 846,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Staff hiring loop Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 153,
+     "y": 846,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Copy",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 21,
+     "y": 638,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Dictate about this",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 148,
+     "h": 24,
+     "x": 72,
+     "y": 638,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Develop this thought",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 162,
+     "h": 24,
+     "x": 223,
+     "y": 638,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "Zone",
+     "fs": 10
+    },
+    {
+     "t": "Knowledge",
+     "fs": 10
+    },
+    {
+     "t": "Projects",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 302
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/82-pullout-note-pop-393.png",
+  "errors": []
+ },
+ {
+  "key": "decision",
+  "label": "Freeze the old ledger on Nov 5",
+  "open_ms": 1317,
+  "title": "Freeze the old ledger on Nov 5",
+  "win": {
+   "title": "Freeze the old ledger on Nov 5",
+   "rect": [
+    0,
+    87,
+    393,
+    590
+   ],
+   "offscreen": false,
+   "nodes": 46,
+   "words": [
+    "Freeze the old ledger on Nov 5",
+    "accepted",
+    "\u21bb",
+    "karol",
+    "Decision context",
+    "Dual-write is stable.",
+    "Decision",
+    "Freeze writes to the old ledger on Nov 5.",
+    "Consequences",
+    "Month-end runs on the new ledger.",
+    "SEND",
+    "\u25cb",
+    "Team updates folder",
+    "FILE",
+    "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs1",
+    "THIS DEVICE",
+    "Filed \u00b7 Desk root",
+    "Zone",
+    "+",
+    "Decisions",
+    "+",
+    "Inbox",
+    "+",
+    "Meetings",
+    "+",
+    "Personal",
+    "+",
+    "Reference",
+    "+",
+    "Work",
+    "Knowledge",
+    "+",
+    "Everyday context",
+    "Projects",
+    "+",
+    "Payments ledger cutover",
+    "Inspect",
+    "+",
+    "Platform observability",
+    "Inspect",
+    "+",
+    "Staff hiring loop",
+    "Inspect",
+    "Copy",
+    "Dictate about this",
+    "Edit"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 19,
+   "platedUnder44": 4,
+   "ghosts": [],
+   "scrollH": 588,
+   "clientH": 588,
+   "text": "Freeze the old ledger on Nov 5\naccepted \u21bbkarol\nDECISION CONTEXT\n\nDual-write is stable.\n\nDECISION\n\nFreeze writes to the old ledger on Nov 5.\n\nCONSEQUENCES\n\nMonth-end runs on the new ledger.\n\nSEND\n\u25cb\nTeam updates folder\nFILE\n/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13pop.mdVn7UpXR4/Updates-out\nTHIS DEVICE\nFiled \u00b7 Desk root\nCopy\nDictate about this\nEdit"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Freeze the old ledger on Nov 5",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 13,
+     "y": 101,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Freeze the old ledger on Nov 5",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 33,
+     "y": 101,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "accepted \u21bb",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 90,
+     "h": 24,
+     "x": 15,
+     "y": 154,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Team updates folder, FILE",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 363,
+     "h": 108,
+     "x": 15,
+     "y": 453,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 94,
+     "h": 27,
+     "x": 23,
+     "y": 633,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 69,
+     "h": 27,
+     "x": 123,
+     "y": 633,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 90,
+     "h": 27,
+     "x": 198,
+     "y": 633,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 89,
+     "h": 27,
+     "x": 23,
+     "y": 666,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 97,
+     "h": 27,
+     "x": 118,
+     "y": 666,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 67,
+     "h": 27,
+     "x": 221,
+     "y": 666,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 137,
+     "h": 27,
+     "x": 23,
+     "y": 723,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Payments ledger cutover Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 181,
+     "h": 27,
+     "x": 23,
+     "y": 780,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Payments ledger cutover Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 207,
+     "y": 780,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Platform observability Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 162,
+     "h": 27,
+     "x": 23,
+     "y": 813,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Platform observability Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 188,
+     "y": 813,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Staff hiring loop Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 127,
+     "h": 27,
+     "x": 23,
+     "y": 846,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Staff hiring loop Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 153,
+     "y": 846,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Copy",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 119,
+     "y": 638,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Dictate about this",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 148,
+     "h": 24,
+     "x": 170,
+     "y": 638,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Edit",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 321,
+     "y": 638,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "Decision context",
+     "fs": 10
+    },
+    {
+     "t": "Decision",
+     "fs": 10
+    },
+    {
+     "t": "Consequences",
+     "fs": 10
+    },
+    {
+     "t": "Zone",
+     "fs": 10
+    },
+    {
+     "t": "Knowledge",
+     "fs": 10
+    },
+    {
+     "t": "Projects",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 517
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/83-pullout-decision-pop-393.png",
+  "errors": []
+ },
+ {
+  "key": "recipe-agent",
+  "label": "Chase",
+  "open_ms": 1323,
+  "title": "Chase",
+  "win": {
+   "title": "Chase",
+   "rect": [
+    0,
+    48,
+    393,
+    629
+   ],
+   "offscreen": false,
+   "nodes": 40,
+   "words": [
+    "Chase",
+    "#2563EB",
+    "Chase",
+    "Continue in thread",
+    "Thread assignment",
+    "No default model",
+    "Choose default",
+    "Instructions",
+    "You can read the desk and act on people and follow-through. ",
+    "Ask",
+    "Run assignment",
+    "No default model",
+    "Choose default",
+    "Runs on",
+    "Assignment:recipe",
+    "\u00b7 Creates artifact",
+    "Assignments",
+    "Filed \u00b7 Desk root",
+    "Zone",
+    "+",
+    "Decisions",
+    "+",
+    "Inbox",
+    "+",
+    "Meetings",
+    "+",
+    "Personal",
+    "+",
+    "Reference",
+    "+",
+    "Work",
+    "Knowledge",
+    "+",
+    "Everyday context",
+    "Projects",
+    "+",
+    "Payments ledger cutover",
+    "Inspect",
+    "Dictate about this",
+    "Edit"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 17,
+   "platedUnder44": 3,
+   "ghosts": [
+    "Ask"
+   ],
+   "scrollH": 627,
+   "clientH": 627,
+   "text": "Chase\n#2563EB\nChase\nContinue in thread\nThread assignment\nNo default model\nChoose default\nInstructions\nAsk\nRun assignment\nNo default model\nChoose default\nRuns on Assignment:recipe \u00b7 Creates artifact\nAssignments\nFiled \u00b7 Desk root\nDictate about this\nEdit"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Chase",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 13,
+     "y": 62,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Chase",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 33,
+     "y": 62,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Continue in thread",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm desk-pullout-agent-chat",
+     "w": 168,
+     "h": 34,
+     "x": 113,
+     "y": 210,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Choose default",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 125,
+     "h": 44,
+     "x": 243,
+     "y": 287,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak to fill ask chase material",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 34,
+     "h": 34,
+     "x": 27,
+     "y": 432,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Ask",
+     "lib": false,
+     "cls": "desk-chip",
+     "w": 48,
+     "h": 27,
+     "x": 318,
+     "y": 436,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Choose default",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 125,
+     "h": 44,
+     "x": 174,
+     "y": 496,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assignments",
+     "lib": false,
+     "cls": "desk-chip quiet",
+     "w": 95,
+     "h": 27,
+     "x": 283,
+     "y": 579,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 94,
+     "h": 27,
+     "x": 23,
+     "y": 678,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 69,
+     "h": 27,
+     "x": 123,
+     "y": 678,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 90,
+     "h": 27,
+     "x": 198,
+     "y": 678,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 89,
+     "h": 27,
+     "x": 23,
+     "y": 711,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 97,
+     "h": 27,
+     "x": 118,
+     "y": 711,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 67,
+     "h": 27,
+     "x": 221,
+     "y": 711,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 137,
+     "h": 27,
+     "x": 23,
+     "y": 768,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Payments ledger cutover Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 181,
+     "h": 27,
+     "x": 23,
+     "y": 825,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Payments ledger cutover Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 207,
+     "y": 825,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Platform observability Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 162,
+     "h": 27,
+     "x": 23,
+     "y": 858,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Platform observability Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 188,
+     "y": 858,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Staff hiring loop Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 127,
+     "h": 27,
+     "x": 23,
+     "y": 891,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Staff hiring loop Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 153,
+     "y": 891,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Dictate about this",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 148,
+     "h": 24,
+     "x": 170,
+     "y": 638,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Edit",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 321,
+     "y": 638,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "Material",
+     "mic": true
+    }
+   ],
+   "small": [
+    {
+     "t": "Zone",
+     "fs": 10
+    },
+    {
+     "t": "Knowledge",
+     "fs": 10
+    },
+    {
+     "t": "Projects",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 484
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/84-pullout-recipe-agent-pop-393.png",
+  "errors": []
+ },
+ {
+  "key": "kb",
+  "label": "Everyday context",
+  "open_ms": 1368,
+  "title": "Everyday context",
+  "win": {
+   "title": "Everyday context",
+   "rect": [
+    0,
+    265,
+    393,
+    413
+   ],
+   "offscreen": false,
+   "nodes": 38,
+   "words": [
+    "Everyday context",
+    "About me",
+    "Note",
+    "Current priorities",
+    "Note",
+    "How I like help",
+    "Note",
+    "People & vocabulary",
+    "Note",
+    "Meeting preferences",
+    "Note",
+    "Filed \u00b7 Desk root",
+    "Zone",
+    "+",
+    "Decisions",
+    "+",
+    "Inbox",
+    "+",
+    "Meetings",
+    "+",
+    "Personal",
+    "+",
+    "Reference",
+    "+",
+    "Work",
+    "Projects",
+    "+",
+    "Payments ledger cutover",
+    "Inspect",
+    "+",
+    "Platform observability",
+    "Inspect",
+    "+",
+    "Staff hiring loop",
+    "Inspect",
+    "Copy",
+    "Dictate about this",
+    "Edit"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 22,
+   "platedUnder44": 3,
+   "ghosts": [],
+   "scrollH": 411,
+   "clientH": 411,
+   "text": "Everyday context\nAbout me\nNote\nCurrent priorities\nNote\nHow I like help\nNote\nPeople & vocabulary\nNote\nMeeting preferences\nNote\nFiled \u00b7 Desk root\nCopy\nDictate about this\nEdit"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Everyday context",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 13,
+     "y": 279,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Everyday context",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 33,
+     "y": 279,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "About me Note",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 325,
+     "h": 38,
+     "x": 43,
+     "y": 322,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Current priorities Note",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 325,
+     "h": 38,
+     "x": 43,
+     "y": 371,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "How I like help Note",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 325,
+     "h": 38,
+     "x": 43,
+     "y": 421,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "People & vocabulary Note",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 325,
+     "h": 38,
+     "x": 43,
+     "y": 470,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Meeting preferences Note",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 325,
+     "h": 38,
+     "x": 43,
+     "y": 520,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 94,
+     "h": 27,
+     "x": 23,
+     "y": 633,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 69,
+     "h": 27,
+     "x": 123,
+     "y": 633,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 90,
+     "h": 27,
+     "x": 198,
+     "y": 633,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 89,
+     "h": 27,
+     "x": 23,
+     "y": 666,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 97,
+     "h": 27,
+     "x": 118,
+     "y": 666,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 67,
+     "h": 27,
+     "x": 221,
+     "y": 666,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Payments ledger cutover Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 181,
+     "h": 27,
+     "x": 23,
+     "y": 723,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Payments ledger cutover Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 207,
+     "y": 723,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Platform observability Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 162,
+     "h": 27,
+     "x": 23,
+     "y": 756,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Platform observability Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 188,
+     "y": 756,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assign to Staff hiring loop Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 127,
+     "h": 27,
+     "x": 23,
+     "y": 789,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Staff hiring loop Project",
+     "lib": true,
+     "cls": "btn--chrome desk-chip quiet",
+     "w": 68,
+     "h": 27,
+     "x": 153,
+     "y": 789,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Copy",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 119,
+     "y": 638,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Dictate about this",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 148,
+     "h": 24,
+     "x": 170,
+     "y": 638,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Edit",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 321,
+     "y": 638,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "Zone",
+     "fs": 10
+    },
+    {
+     "t": "Projects",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 305
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/85-pullout-kb-pop-393.png",
+  "errors": []
+ }
+]

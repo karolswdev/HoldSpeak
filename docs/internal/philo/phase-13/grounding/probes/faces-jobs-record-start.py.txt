@@ -1,0 +1,8 @@
+log = []
+page.on("response", lambda r: log.append((r.request.method, r.url.split('?')[0][-40:], r.status)) if "/api/meeting" in r.url else None)
+page.locator("[data-testid=arrival-record-meeting]").click()
+for i in range(8):
+    page.wait_for_timeout(1500)
+    print(i, page.evaluate("() => { const o = document.querySelector('.desk-orb'); return (o ? o.className : '') + ' | ' + [...document.querySelectorAll('.desk-receipt-row, [data-testid*=write], [class*=write-fail], [class*=receipt]')].filter(e=>e.getBoundingClientRect().width).map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,100)).join(' || ') }"))
+print(log)
+page.screenshot(path="/Users/karol/dev/tools/wt-philo-13-ground/.tmp/p13jobs/record2.png")

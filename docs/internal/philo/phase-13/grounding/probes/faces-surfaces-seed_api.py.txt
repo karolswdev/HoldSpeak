@@ -1,0 +1,25 @@
+import json, sys, urllib.request, os
+sys.path.insert(0, os.path.dirname(__file__))
+from fslib import hub_url, hub_home
+U = hub_url('pop'); H = hub_home('pop')
+def api(m, p, b=None):
+    r = urllib.request.Request(U+p, data=json.dumps(b).encode() if b is not None else None, method=m,
+        headers={"X-HoldSpeak-Token": "fs13", "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(r, timeout=60) as resp: return resp.status, json.loads(resp.read() or b'{}')
+    except urllib.error.HTTPError as e: return e.code, e.read().decode()[:500]
+def mcp(name, args):
+    s, b = api("POST", "/api/mcp", {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":name,"arguments":args}})
+    return s, b
+out = {}
+s, wb = api("POST", "/api/workbenches", {"name": "Ledger cutover bench", "description": "Agents on the cutover"})
+out['wb'] = (s, str(wb)[:300])
+wid = wb['workbench']['id'] if isinstance(wb, dict) and 'workbench' in wb else None
+for t in ["Draft rollback runbook", "Check reconciliation timings", "Write cutover comms"]:
+    s, it = api("POST", f"/api/workbenches/{wid}/items", {"title": t})
+    out.setdefault('items', []).append((s, str(it)[:200]))
+folder = os.path.join(H, "Updates-out"); os.makedirs(folder, exist_ok=True)
+out['dest'] = mcp("channel.save_destination", {"name": "Team updates folder", "channel": "file", "folder": folder})
+out['dest'] = str(out['dest'])[:400]
+s, d = api("GET", "/api/channels/destinations"); out['dest_list'] = (s, str(d)[:400])
+print(json.dumps(out, indent=1))
