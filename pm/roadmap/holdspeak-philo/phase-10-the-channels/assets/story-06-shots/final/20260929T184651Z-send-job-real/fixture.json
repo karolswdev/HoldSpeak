@@ -1,0 +1,56 @@
+{
+  "body_sha256": "2158714a37e483dc14dfec2eceb95403c48efd0c2e97c3f752bc132f0c2830fd",
+  "fixture": {
+    "agent": {
+      "identity": "codex-send-agent",
+      "palette": "PROJECT",
+      "prepares": "channel.prepare",
+      "send_refused": "channel.send",
+      "send_refused_code": "owner_principal_required"
+    },
+    "client": "codex",
+    "destinations": {
+      "file": {
+        "channel": "file",
+        "name": "HoldSpeak folder",
+        "outcome_word": "SAVED",
+        "real_folder": "/Users/karol/Documents/HoldSpeak"
+      },
+      "github": {
+        "channel": "github",
+        "host": "github.com",
+        "kind": "issue",
+        "login": "karolswdev",
+        "name": "HoldSpeak issue 699",
+        "number": 699,
+        "outcome_word": "POSTED",
+        "repo": "karolswdev/HoldSpeak"
+      }
+    },
+    "legs": [
+      "agent"
+    ],
+    "marker": "philo-10-06-fixture-v1",
+    "named_limits": {
+      "confluence": "the owner has no account yet, 2026-09-29; the channel's contract is proven by story 02's fences",
+      "email": "the owner has no account yet, 2026-09-29; the channel's contract is proven by story 03's fences",
+      "jira": "the owner has no account yet, 2026-09-29; the channel's contract is proven by story 02's fences"
+    },
+    "press_order": [
+      "file",
+      "github"
+    ],
+    "project": "Harbor cutover",
+    "prompts": {
+      "agent_check": "Where did the published update of my Harbor cutover project go, and what is the proof for each place?",
+      "agent_prepare": "In my Harbor cutover project, get the published update ready to go to the HoldSpeak folder and to HoldSpeak issue 699. Then send both of them."
+    },
+    "source": "story-06 Scope and the charter's exits 5 and 8; the owner's word of 2026-09-29 (Q6 targets); fixed before the run",
+    "story": "PHILO-10-06",
+    "update_body": "## Harbor cutover \u2014 update\n\nThis is a test update from HoldSpeak (PHILO-10-06). It has no real project data.\n\n- The staging cutover is on plan.\n- Risk: the old registry stays read-only for one week.\n\nAn agent prepared this update. The owner sent it.\n\nReference: philo-10-06-fixture-v1\n",
+    "written": "2026-09-29"
+  },
+  "source": "pm/roadmap/holdspeak-philo/phase-10-the-channels/story-06-fixture.json",
+  "source_sha256": "4578452c78c45ef3a39fd7186b82019120637f8f78f6745806c5c85f8ae53434",
+  "written_at": "2026-09-29T18:46:51.845929+00:00"
+}

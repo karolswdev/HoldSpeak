@@ -144,7 +144,7 @@ The journal carries the destination's id (`destination:<id>`) and the payload di
 | PHILO-10-03 | The email channel — a provider interface | in-progress | [story-03-the-email-channel](./story-03-the-email-channel.md) | — |
 | PHILO-10-04 | The Send face and the destinations setup (canvas first) | done | [story-04-the-send-face-and-the-destinations](./story-04-the-send-face-and-the-destinations.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-10-05 | The atlas cases for Send | done | [story-05-the-atlas-cases-for-send](./story-05-the-atlas-cases-for-send.md) | [evidence-story-05](./evidence-story-05.md) |
-| PHILO-10-06 | Prepare it cold, send it yourself | backlog | [story-06-prepare-it-cold-send-it-yourself](./story-06-prepare-it-cold-send-it-yourself.md) | — |
+| PHILO-10-06 | Prepare it cold, send it yourself | done | [story-06-prepare-it-cold-send-it-yourself](./story-06-prepare-it-cold-send-it-yourself.md) | [evidence-story-06](./evidence-story-06.md) |
 | PHILO-10-07 | Resend, the second email provider | done | [story-07-the-resend-provider](./story-07-the-resend-provider.md) | [evidence-story-07](./evidence-story-07.md) |
 
 The owner ratified the charter on 2026-09-28. The stories stay `backlog` until the orchestrator briefs each one against the design (`design/send-lifecycle.md`), the Codex Astra check of the email delta and, for the face, its ratified canvases.
@@ -165,6 +165,12 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 2026-09-29, story 07 round two (PR #701): Codex Astra r1 DO-NOT-RATIFY paid — Resend is FAILED only on its whole, consistent error envelope (Codex's three probes UNKNOWN through the real routes, red 8/11 before); five Resend atlas cases at 1440 and 393 through a recording HTTPS edge and a memory key store in the rig's hub (10/10, the Phase 10 file 52/52); the atlas anchors moved by story 07 re-anchored.
 
 2026-09-29, story 07 DONE on its lane (branch `feat/philo-10-07`, the owner's closing-review ruling "We can have SendGrid and Resend"): `ResendProvider` is one class and one `EMAIL_PROVIDERS` row (`POST https://api.resend.com/emails`, its id the proof, ACCEPTED BY RESEND, a pinned (status, name) list); each provider's key has its own keychain slot (`<provider>:<key_ref>`); the Check reads its own provider's answer; the Destination form picks SendGrid or Resend.
+
+2026-09-29, story 06: the owner reviewed the closing shots — "Reviewed — with changes". The FOLDER-not-FILE prepared preview is ruled "Folder is fine" (an accepted canvas change). His change, a RESEND email provider beside SendGrid before the close, is a separate lane.
+
+2026-09-29, story 06 round two (PR #700): Codex Astra r1 RATIFY-WITH-CONDITIONS paid — exact-byte read-back only (an extra newline is red), the prepared rows re-shot on screen at 393 from a copy of the retained DB (no send), the inherited FOLDER-not-FILE preview deviation on the BACKLOG for the owner. No new real send.
+
+2026-09-29, story 06 DONE on the lane (branch `feat/philo-10-06`): the closing use. A cold Codex session (AGENT, PROJECT credential, zero reads) prepared the published update for the folder and issue 699; its two sends were refused `owner_principal_required` with receipts; the owner's Send, pressed on the face by the driver AS THE OWNER by his word, made two REAL sends, each read back apart from the hub (the file's bytes; `gh api` on the comment). Exactly once: a ledger plus the folder and issue reads; a second real run is refused. Jira, Confluence and email are named limits (no account yet): exit 5 met with qualification for them. Shots at 1440 and 393 wait for the owner's review.
 
 2026-09-29, story 05 round three (PR #698): Codex Astra r1 RATIFY-WITH-CONDITIONS paid — an unsupported code expression fails the face-word fence (6/6 mutations red), a failed build stops both wrapper branches (proved over 16 combinations), the summaries corrected.
 
