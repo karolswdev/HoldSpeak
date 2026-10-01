@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 12
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** the owner's ratification; design `floor-send.md` (the wire the harness shim serves). May start before Phase 11 closes.
 - **Unblocks:** PHILO-12-03, PHILO-12-04
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Astra checks
@@ -36,5 +36,6 @@ PROVISIONAL: about 1 engineering day.
 
 ## Notes
 
+- 2026-09-30 — round one drawn: `assets/story-02-canvas/` (README, `index.html`, `harness/`, `shots/`). For Astra's check and the owner's ratification.
 - 2026-09-30 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-30 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

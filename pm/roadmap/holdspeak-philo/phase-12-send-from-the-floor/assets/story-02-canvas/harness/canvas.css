@@ -1,0 +1,6 @@
+/* PHILO-12-02 canvas only: the seat spacing for the artifact window's SEND well.
+ * Every species style is the product's. Tokens only; no new colour. */
+[data-p12="seat"] { margin-top: 12px; min-width: 0; }
+/* G1, G4 (story 04): the drop tag holds one line; a refusal wears the warning look. */
+.desk-drop-verb { white-space: nowrap; }
+.desk-drop-verb[data-refused] { background: var(--surface-2); color: var(--warn); border: 1px solid var(--warn); }

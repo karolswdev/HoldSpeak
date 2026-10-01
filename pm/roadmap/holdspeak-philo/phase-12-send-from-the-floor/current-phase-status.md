@@ -91,7 +91,7 @@ The proof is new capability through the real hub on an isolated HOME, never a te
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | PHILO-12-01 | The artifact source and the Floor binding | backlog | [story-01-the-artifact-source-and-the-floor-binding](./story-01-the-artifact-source-and-the-floor-binding.md) | — |
-| PHILO-12-02 | The canvases F–J | backlog | [story-02-the-canvases](./story-02-the-canvases.md) | — |
+| PHILO-12-02 | The canvases F–J | in-progress | [story-02-the-canvases](./story-02-the-canvases.md) | — |
 | PHILO-12-03 | Send to, the artifact window and the decision sprite | backlog | [story-03-send-to-the-artifact-window-and-the-decision-sprite](./story-03-send-to-the-artifact-window-and-the-decision-sprite.md) | — |
 | PHILO-12-04 | Destinations on the Floor and the drop | backlog | [story-04-destinations-on-the-floor-and-the-drop](./story-04-destinations-on-the-floor-and-the-drop.md) | — |
 | PHILO-12-05 | The atlas cases | backlog | [story-05-the-atlas-cases](./story-05-the-atlas-cases.md) | — |
@@ -117,6 +117,8 @@ The proof is new capability through the real hub on an isolated HOME, never a te
 - A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call. CI does not gate a merge (the owner, 2026-09-28).
 
 ## Where we are
+
+2026-09-30: story 02, the canvases F–J, round one DRAWN (`assets/story-02-canvas/`, 36 boards at 1440 and 393 on the real product with a harness shim; fences green). Seven points the canvas settles, five notes for stories 03 and 04. Next: Astra's canvas check, then the owner's word.
 
 2026-09-30: the owner RATIFIED the charter ("Ratify, build it") with all eleven defaults. Story 01 (Astra) and story 02, the canvases (Muad'Dib), start now; the Floor faces wait for the canvases' ratification.
 
