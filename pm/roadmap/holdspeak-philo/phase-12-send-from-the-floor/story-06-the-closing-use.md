@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 12
-- **Status:** backlog
+- **Status:** blocked — parked, folded into PHILO-13 C5 (owner 2026-10-01)
 - **Depends on:** PHILO-12-01 through PHILO-12-05; the targets he names (the Phase 10 Q6 ruling carries)
 - **Unblocks:** the phase close
 - **Owner:** Muad'Dib's lane; Astra checks
@@ -35,4 +35,5 @@ PROVISIONAL: about 1 engineering day, plus the real-send legs.
 
 ## Notes
 
+- 2026-10-01 — parked — folded into PHILO-13 C5 (owner, 2026-10-01: "Fold it into the Desk work"). Never done. What carries and what stays parked: `../phase-13-the-desk/current-phase-status.md`, "The Phase 12 fold".
 - 2026-09-30 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
