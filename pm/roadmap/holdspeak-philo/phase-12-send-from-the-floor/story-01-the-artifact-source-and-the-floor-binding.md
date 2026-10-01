@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 12
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** the owner's ratification; Phase 11's merges (story 06 part 2, story 07)
 - **Unblocks:** PHILO-12-03, PHILO-12-04, PHILO-12-05
 - **Owner:** Astra's lane (Luna, xhigh); Muad'Dib checks
@@ -21,13 +21,13 @@ An artifact is stored text (`holdspeak/db/schema.py:342`), but `render_document(
 
 ## Acceptance criteria
 
-- [ ] `artifact:<id>` renders the stored body by id through each real producer the Floor shows (meeting synthesis, run output, Ask Keep), with no model run; red on main (`document_kind_unknown`).
-- [ ] `document_not_found`, `artifact_body_missing`, `artifact_not_text` (a raw non-text stored value) and `payload_too_large:<channel>` refuse by name; each fence red before the fix.
-- [ ] No synthesis source footer (removed only when it matches stored lineage; an authored line that looks alike stays) and no internal id in an artifact payload, title, label or file name; the Phase 11 no-internal-id fence runs over nine kinds.
-- [ ] The Phase 10 lifecycle fences (preview equals payload, one winner, owner press, `preview_changed`) run over one artifact. A thread prepares an artifact send; an external agent's `channel.send` is refused `owner_principal_required` with a receipt.
-- [ ] A `tools/list` fence maps "send this artifact to <destination>" and "prepare it" to a tool and an argument path.
-- [ ] `GET /api/brief/{brief_id}` returns that stored brief, also when a later brief exists; an unknown id is a 404.
-- [ ] The binding module answers every row of design §2 and each named refusal, one web-unit case each; `unread`, `loading` and `failed` answer `pending`, never a refusal; the projection variant carries destinations and the brief without a new `PrimitiveKind`.
+- [x] `artifact:<id>` renders the stored body by id through each real producer the Floor shows (meeting synthesis, run output, Ask Keep), with no model run; red on main (`document_kind_unknown`).
+- [x] `document_not_found`, `artifact_body_missing`, `artifact_not_text` (a raw non-text stored value) and `payload_too_large:<channel>` refuse by name; each fence red before the fix.
+- [x] No synthesis source footer (removed only when it matches stored lineage; an authored line that looks alike stays) and no internal id in an artifact payload, title, label or file name; the Phase 11 no-internal-id fence runs over nine kinds.
+- [x] The Phase 10 lifecycle fences (preview equals payload, one winner, owner press, `preview_changed`) run over one artifact. A thread prepares an artifact send; an external agent's `channel.send` is refused `owner_principal_required` with a receipt.
+- [x] A `tools/list` fence maps "send this artifact to <destination>" and "prepare it" to a tool and an argument path.
+- [x] `GET /api/brief/{brief_id}` returns that stored brief, also when a later brief exists; an unknown id is a 404.
+- [x] The binding module answers every row of design §2 and each named refusal, one web-unit case each; `unread`, `loading` and `failed` answer `pending`, never a refusal; the projection variant carries destinations and the brief without a new `PrimitiveKind`.
 
 ## Effort (not a promise)
 
@@ -41,5 +41,8 @@ PROVISIONAL: 1–1.5 engineering days.
 
 ## Notes
 
+- 2026-09-30 — built and verified on `feat/philo-12-01`; [evidence](evidence-story-01.md), [lane record and full-suite ledger](lane-01-astra.md). Built counsel was outstanding at this point; it is recorded below.
+
 - 2026-09-30 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
+- 2026-09-30 — built counsel r1 (`checks/story-01-built-muaddib-r1.md`) is RATIFY-WITH-CONDITIONS; C1 and C2 are paid in the Round Two lane report.
 - 2026-09-30 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "atlas_version": "phase12-artifact-source",
+  "extends": "docs/internal/philo/graph/atlas.json",
+  "source_commit": "27d8bf1acffa2a93637e42724949f0426b1dd9b6",
+  "cases": [
+    {
+      "id": "case.p12.artifact.preview",
+      "job": "p12",
+      "edge_ids": [
+        "edge.tool.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p12_artifact_source",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; Ask Keep produces the stored artifact. No model or external delivery."
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/ask/keep",
+          "body": {
+            "output": "# Architecture note\n\nUse the stored text.\n\n```python\nprint(\"kept\")\n```\n",
+            "lens": "Architecture note",
+            "prompt": "Keep the note",
+            "context": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "artifact_id",
+          "capture_path": "artifact_id",
+          "why": "Mint the artifact through Ask Keep, the real producer."
+        },
+        {
+          "kind": "op",
+          "name": "channel.save_destination",
+          "args": {
+            "name": "Walk folder",
+            "channel": "file",
+            "folder": "{hub_home}"
+          },
+          "adapter": "mcp-tool",
+          "capture_as": "destination_id",
+          "capture_path": "destination.id"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "channel.preview",
+        "args": {
+          "document_ref": "artifact:{artifact_id}",
+          "destination_id": "{destination_id}"
+        },
+        "adapter": "mcp-tool"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "path": "preview.text",
+              "value": "# Architecture note\n\nUse the stored text.\n\n```python\nprint(\"kept\")\n```\n"
+            },
+            {
+              "source": "observe",
+              "path": "sends",
+              "length": 0
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "artifact:{artifact_id}"
+          }
+        },
+        "reads": [],
+        "words": "The real artifact renders unchanged in preview, and no send row is created."
+      },
+      "completion_bound_s": 10,
+      "viewports": []
+    },
+    {
+      "id": "case.p12.artifact.prepare.op",
+      "job": "p12",
+      "edge_ids": [
+        "edge.tool.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p12_artifact_source",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; Ask Keep produces the stored artifact. No model or external delivery."
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/ask/keep",
+          "body": {
+            "output": "# Architecture note\n\nUse the stored text.\n\n```python\nprint(\"kept\")\n```\n",
+            "lens": "Architecture note",
+            "prompt": "Keep the note",
+            "context": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "artifact_id",
+          "capture_path": "artifact_id",
+          "why": "Mint the artifact through Ask Keep, the real producer."
+        },
+        {
+          "kind": "op",
+          "name": "channel.save_destination",
+          "args": {
+            "name": "Walk folder",
+            "channel": "file",
+            "folder": "{hub_home}"
+          },
+          "adapter": "mcp-tool",
+          "capture_as": "destination_id",
+          "capture_path": "destination.id"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "channel.prepare",
+        "args": {
+          "document_ref": "artifact:{artifact_id}",
+          "destination_id": "{destination_id}"
+        },
+        "adapter": "mcp-tool"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "path": "send.document_ref",
+              "value": "artifact:{artifact_id}"
+            },
+            {
+              "source": "trigger",
+              "path": "send.preview.text",
+              "value": "# Architecture note\n\nUse the stored text.\n\n```python\nprint(\"kept\")\n```\n"
+            },
+            {
+              "source": "observe",
+              "path": "sends",
+              "length": 1
+            },
+            {
+              "source": "observe",
+              "path": "sends",
+              "contains": {
+                "state": "prepared",
+                "document_ref": "artifact:{artifact_id}",
+                "destination_id": "{destination_id}"
+              }
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "artifact:{artifact_id}"
+          }
+        },
+        "reads": [],
+        "words": "The exact stored artifact is prepared once through MCP, with a durable prepared row; it has not been sent."
+      },
+      "completion_bound_s": 10,
+      "viewports": []
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.p12_artifact_source",
+      "family": "desk_presentation",
+      "values": {
+        "artifact": "stored Ask Keep text",
+        "source": "ninth document source"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/services/ask_service.py",
+          "symbol": "def keep",
+          "line": 459,
+          "claim": "Ask Keep stores the artifact body and lineage."
+        }
+      ],
+      "reachable_by": [
+        "case.p12.artifact.preview",
+        "case.p12.artifact.prepare.op"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.python_wall",
+      "source": "datetime.datetime.now() inside the hub process",
+      "mechanism": "none: these cases use wall time without moving a clock",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

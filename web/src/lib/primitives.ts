@@ -61,7 +61,8 @@ export type PrimitiveCapability =
   | "edit"
   | "rename"
   | "duplicate"
-  | "delete";
+  | "delete"
+  | "send";
 
 /** Static metadata for each kind — drives the type-legible Desk language. */
 export interface PrimitiveDescriptor {
@@ -454,7 +455,7 @@ export const PRIMITIVES = {
     blurb: "A captured conversation with transcript and intelligence.",
     icon: "M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-5 4z",
     authorable: false,
-    capabilities: ["ask"],
+    capabilities: ["ask", "send"],
     surface: { type: "pullout" },
   },
   artifact: {
@@ -466,7 +467,7 @@ export const PRIMITIVES = {
       "A synthesized output (summary, decisions, actions …) from a meeting.",
     icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h6",
     authorable: false,
-    capabilities: ["ask"],
+    capabilities: ["ask", "send"],
     surface: { type: "pullout" },
   },
   note: {
@@ -488,7 +489,7 @@ export const PRIMITIVES = {
     blurb: "Architecture decision record",
     icon: "M5 3h14v18H5zM8 8h8M8 12h8M8 16h5",
     authorable: true,
-    capabilities: ["duplicate", "delete"],
+    capabilities: ["duplicate", "delete", "send"],
     surface: { type: "pullout" },
   },
   directory: {
@@ -522,7 +523,7 @@ export const PRIMITIVES = {
     blurb: "A body of work with meetings, decisions, and cited memory.",
     icon: "M4 4h16v16H4zM8 2v4M16 2v4M8 10h8M8 14h5",
     authorable: false,
-    capabilities: [],
+    capabilities: ["send"],
     surface: { type: "surface", surfaceKey: "open-project-memory" },
   },
   repository: {
