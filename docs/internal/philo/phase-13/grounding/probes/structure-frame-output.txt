@@ -1,0 +1,223 @@
+# PHILO-13 structure probe output: frame, window manager, persistence
+
+## Scope and method
+
+Static source audit on base `4c49651e1` in worktree
+`/Users/karol/dev/tools/wt-philo-13-ground-astra`. The companion source file
+is the reproducible command list. No hub, DB, browser walk, test suite, or
+write-producing command was used. Line anchors below are source anchors from
+the same base; re-check if a sibling lane changes the files.
+
+## What the window manager already has
+
+The shared manager is real and concentrated in `DeskWindow.tsx`. Its module
+contract says every window adopts `useDeskWindow` through `DeskWindowFrame`
+(`web/src/desk/components/DeskWindow.tsx:1-12,155-157`). The hook presents a
+window without blindly raising a rehydrated plane, clamps a saved rectangle,
+and places an unsaved rectangle into the work band
+(`web/src/desk/components/DeskWindow.tsx:192-259`). Its cleanup explicitly
+forgets an unarranged rectangle and retires the panel order entry
+(`web/src/desk/components/DeskWindow.tsx:285-293`).
+
+The existing Workbench-grade primitives are concrete:
+
+| Primitive | Source evidence | What exists now |
+|---|---|---|
+| Depth | `web/src/desk/components/DeskWindow.tsx:568-578,463-475`; `web/src/desk/store/compositorSlice.ts:300-317` | `panelOrder` is MRU-like; the last open, non-minimized registered id is front and receives the window z band. `focusPanel` moves an id to the end. |
+| Maximize / restore | `web/src/desk/components/DeskWindow.tsx:737-753,807-847`; `web/src/desk/store/compositorSlice.ts:331-341` | `panelMax` replaces the normal rect with the work band, while the saved rect remains available for restore. Head double-click and chrome verbs toggle it. |
+| Edge snap | `web/src/desk/components/window/windowGeometry.ts:113-147`; `web/src/desk/components/window/windowCommands.ts:20-32`; `web/src/desk/components/window/SnapGhost.tsx:6-41` | Drag release supports corner quarters and left/right halves. A translucent landing ghost is published during drag; Window-menu commands snap the front window. |
+| Overview | `web/src/desk/components/window/windowGeometry.ts:186-216`; `web/src/desk/components/window/Expose.tsx:23-25,55-149` | Expose lays open windows into a non-overlapping pick grid and restores/focuses from a Button cell. |
+| Keyboard / MRU | `web/src/desk/components/window/windowRegistry.ts:60-133`; `web/src/desk/components/window/Switcher.tsx:14-55` | Front close/minimize, MRU cycle, reverse cycle, and application focus/restore exist. The transient switcher names the landing. |
+| Compact form | `web/src/desk/components/DeskWindow.tsx:205-209,737-753` | At `(max-width: 720px)` desktop placement is skipped and the frame becomes a sheet. The desktop rect remains in store but is not the compact layout. |
+
+This is a solid seam to extend. There is no named zoom API; “zoom” is the
+maximized full-work-band state. There is no named virtual-screen or per-screen
+arrangement in the manager source inspected. The workspace document has only
+`panel.rects`, `panel.order`, `panel.max`, normalized windows, zone ids, and
+zone view preferences (`web/src/desk/store/workspaceStorage.ts:15-33`). The
+other view state is list/spatial (`web/src/desk/store/types.ts:37-38,222-227`),
+not an Amiga-style screen/workspace model. The final `rg` in the source probe
+is an absence check against these manager paths, not live proof.
+
+## Remembered and lost state
+
+| Event | Remembered | Lost or reset | Evidence and consequence |
+|---|---|---|---|
+| Static surface window close → reopen | Its saved rect and max flag remain in the workspace document. `closeSurfaceWindow` removes the `windowsById` entry and retires the active order id (`web/src/desk/store/compositorSlice.ts:257-264`). | The surface is closed, its open instance/scope is absent until reopened, and its active order entry is removed. | Reopening recreates a normalized instance and focuses it, adding it to the current order (`web/src/desk/store/compositorSlice.ts:234-255`); `DeskWindow` reuses the saved rect when present (`web/src/desk/components/DeskWindow.tsx:213-222`). |
+| Static surface reload | `windowsById`, saved rects, order, max flags, zone ids, and zone view preferences load from `hs.desk.workspace.v1` (`web/src/desk/store/workspaceStorage.ts:8-11,79-114`; `web/src/desk/store/compositorSlice.ts:43-57,119-128`). `SurfaceWindows` mounts each saved normalized row (`web/src/desk/components/SurfaceWindows.tsx:79-145`). | `panelMin` starts empty, by design (`web/src/desk/store/compositorSlice.ts:120-125`); minimized state is session-only (`web/src/desk/components/DeskWindow.tsx:724-732`). | Static app windows can come back at their saved plane, but not parked/minimized. |
+| Dynamic object card close → reopen | A saved panel rectangle can survive and be reused if the user arranged that id. | `pullouts` are an in-memory array, and `infoWindows`, `roadmapWindows`, `repositoryWindows`, and `workbenchWindows` are also in-memory arrays (`web/src/desk/store/types.ts:153-172`; initial values `web/src/desk/store/compositorSlice.ts:126-132`). Their open instances are not fields in `DeskWorkspaceDocumentV1`. Unarranged geometry is intentionally reset at frame cleanup (`web/src/desk/components/DeskWindow.tsx:285-293`). | Reopen restores a live object card only while its owner reopens it. The object/data may still exist, but the working context is gone. |
+| Dynamic object card reload | Nothing in those arrays is rehydrated. `windowFactory` only appends/removes the live array and focuses a panel (`web/src/desk/store/windowFactory.ts:30-68`). | Pullout, Info, Roadmap, Repository, Workbench, chooser, Ask/chat/editor/inspector state do not have a reload contract in the workspace document. `DeskApp` reads the dynamic arrays directly (`web/src/desk/DeskApp.tsx:95-107,269-294`). | A morning or meeting return requires finding and reopening each dynamic face. This is the highest persistence gap. |
+| Component remount in the same page | The Zustand desk store remains authoritative; normalized `windowsById` and saved geometry are not reset by `SurfaceWindows` remount. A frame presents the existing id again (`web/src/desk/components/DeskWindow.tsx:200-205`). | The frame cleanup retires the id, resets unsaved geometry, and local component state in the body naturally starts again (`web/src/desk/components/DeskWindow.tsx:285-293`). Minimized windows restore on open to avoid a stranded surface (`web/src/desk/components/DeskWindow.tsx:724-732`). | Saved arrangements survive a remount; a never-arranged seat and body-local input/fetch state do not. This is a source inference, not a live remount walk. |
+| First-value recovery remount | Recovery intentionally limits the registry to setup rows (`web/src/desk/components/SurfaceWindows.tsx:67-88,115-119`). | Its effect calls `clearSurfaceWindows`, which writes `windowsById: {}` to the workspace (`web/src/desk/components/SurfaceWindows.tsx:90-95`; `web/src/desk/store/compositorSlice.ts:265-268`). | If the recovery-only branch is entered, the last normalized open set is deliberately cleared. This may be right for first use, but it is a sharp return/recovery boundary to make explicit in the charter. |
+
+The persistence document is strict and versioned, but it is not yet a single
+window lifecycle authority. Static surface windows use the normalized
+`WindowInstance` contract (`web/src/desk/store/types.ts:26-35`) while the
+older/dynamic families continue to use five separate arrays. `saveDeskWorkspace`
+serializes only normalized windows, panel rects/order/max, zone ids, and zone
+view preferences (`web/src/desk/store/workspaceStorage.ts:120-153`).
+
+## Shared window species and hand-rolled bodies
+
+The frame shell is genuinely shared. There are 19 production
+files with `<DeskWindowFrame>` calls under `web/src/desk` (source probe count,
+tests excluded), including SurfaceWindows, Pullout, Info, Repo, Roadmap,
+Workbench, Ask, Delivery, Trust, Zone, and Thought workspace hosts. The shell
+owns the title/icon/action/wings slots, lifecycle, focus, chrome verbs, and
+resize edges (`web/src/desk/components/DeskWindow.tsx:496-542,705-753,800-882`).
+Its close/minimize/maximize controls are library `Button` species
+(`web/src/desk/components/DeskWindow.tsx:823-850`), and the shell's right-click
+menu is the shared `WorkMenu` (`web/src/desk/components/DeskWindow.tsx:861-875`).
+The Button species itself centralizes the actual button element, disabled and
+loading grammar, and chrome variant (`web/src/components/signal/Signal.tsx:21-74`).
+
+The frame also has reusable system furniture: `windowGeometry`,
+`windowRegistry`, Dock, Expose, Switcher, SnapGhost, and command adapters are
+split under `web/src/desk/components/window/` and re-exported by
+`DeskWindow.tsx:28-88`. Surface-hosted applications have an additional
+convergence seam: `SurfaceWindows` provides a shared frame, Surface body,
+ApplicationBoundary, title/wing slots, and portaled footer slot
+(`web/src/desk/components/SurfaceWindows.tsx:151-210`). The surface barrel
+exports SurfaceLedger/Rows, gadgets, chips, Disclosure, ProgressPlan,
+SurfaceFooter, and MicButton (`web/src/desk/surface/index.ts:1-149`), while
+SurfaceFooter portals egress/receipt/verbs into the frame foot
+(`web/src/desk/surface/SurfaceFooter.tsx:6-32`).
+
+The content species are still mostly host-owned. `DeskWindowFrame` exposes a
+generic `children` slot (`web/src/desk/components/DeskWindow.tsx:539-564,877`),
+so the 19 bodies can choose their own structure and CSS. The largest
+production body/style hotspots, excluding tests and `_parked`, are:
+
+| Area | Size from source probe | Why it matters |
+|---|---:|---|
+| `web/src/desk/components/WorkbenchWindow.tsx` | 1,930 TSX lines | Compound Workbench body and item/card/config flows are a second large window system inside the shared shell. |
+| `web/src/desk/pullouts/ThreadPullout.tsx` | 1,812 TSX lines | Thread/chat pullout owns a large custom body and interaction surface. |
+| `web/src/desk/chair/ChairHome.tsx` | 2,792 TSX lines | Arrival/home orchestration is a large face host outside the normalized surface body. |
+| `web/src/desk/surface/Surface.tsx` | 1,362 TSX lines | Shared surface kit is substantial and is the best existing convergence seam. |
+| `web/src/desk/components/DeskWindow.tsx` | 882 TSX lines | The frame seam still carries hook, frame, compatibility re-exports, and lifecycle orchestration. |
+| `web/src/desk/surface/surface.css` | 4,290 CSS lines | The shared surface material is the largest desk stylesheet. |
+| `web/src/desk/pullouts/thread-pullout.css` | 1,306 CSS lines | Thread body styling is a large specialized grammar. |
+| `web/src/desk/components/chrome-menus.css` | 966 CSS lines | Frame/menu chrome rules are broad and separate from body material. |
+
+The production desk census is 265 TypeScript/TSX files plus 43 CSS files,
+61,596 TypeScript/TSX lines plus 18,296 CSS lines, 79,892 lines total, using
+the exclusions above. This is a size signal, not a claim that all lines are
+frame debt. The shared frame is a good seam; body convergence is incomplete.
+
+## Canon scanner link, with scope kept honest
+
+`scripts/ux_canon_scan.py:1-24` states that the scanner reads `web/src`,
+skips tests, and writes nothing on a plain run. Its face classification is
+`features/`, `pages/cores/`, and `desk/` (`scripts/ux_canon_scan.py:42-52,114-136`).
+The reproducible plain run on this base reported:
+
+```text
+Scanned 259 files, found 245 violations across 252 faces.
+Totals per rule:
+  A1: 102
+  A3-prose: 43
+  B: 30
+  emoji: 24
+  A8: 23
+  raw-ids: 17
+  C: 4
+  A3-sentence: 2
+Top 10 faces:
+  WorkbenchWindow                 tuesday=3  debt= 75  score= 225  loudest=A1
+  ProjectRoomCore                 tuesday=7  debt= 24  score= 168  loudest=A3-prose
+  ThreadPullout                   tuesday=6  debt= 19  score= 114  loudest=A1
+  PeopleCore                      tuesday=6  debt= 12  score=  72  loudest=raw-ids
+  DeskToolInspector               tuesday=1  debt= 49  score=  49  loudest=A3-prose
+  ReviewPosture                   tuesday=4  debt= 11  score=  44  loudest=A3-prose
+  SystemShade                     tuesday=5  debt=  7  score=  35  loudest=A3-prose
+  SettingsCore                    tuesday=7  debt=  4  score=  28  loudest=A8
+  AskPanel                        tuesday=1  debt= 19  score=  19  loudest=A3-prose
+  SessionPullout                  tuesday=1  debt= 19  score=  19  loudest=A3-prose
+```
+
+These totals are the whole scanner surface. They must not be repeated as a
+`DeskWindowFrame` count or treated as a frame-only diagnosis. The frame's
+chrome evidence is direct: it calls the library Button at
+`web/src/desk/components/DeskWindow.tsx:823-850`; content callers need their
+own file/line review. The 19-host-file count above is a direct source census,
+not a scanner total.
+
+## Ranked owner-cost findings
+
+1. **J1/J2/J3/J4/J5 — return context is not one product promise.** Static
+   registry surfaces persist their open instance, scope, geometry, order, and
+   max state. Pullouts, Info, Roadmap, Repository, and Workbench windows do
+   not persist their open instances because their arrays are absent from
+   `DeskWorkspaceDocumentV1` (`web/src/desk/store/workspaceStorage.ts:15-33,120-153`;
+   `web/src/desk/store/types.ts:153-176`). A Senior Architect can arrange a
+   meeting/project/thought context and still return to a Desk that requires
+   reconstructing those windows. This fails Tenets 3, 6, and 7 and
+   Constitution Article VII.3 (the user's arrangement persists).
+
+Body convergence is an inspection target. A generic children slot and file
+size do not themselves establish a Tenet 5 violation. Direct raw controls and
+rendered inconsistencies need their own evidence; the consolidated finding in
+`../structure.md` names a direct example and treats scanner hits as candidates.
+
+## Source boundaries with no finding yet
+
+- **J1/J2/J3/J4 — named screens remain an ambition candidate.** The current
+  manager has one global panel order, one max set, and one workspace document
+  (`web/src/desk/store/types.ts:209-221`;
+  `web/src/desk/store/workspaceStorage.ts:15-24`). Expose is a picker grid
+  over that one set, not a screen switcher
+  (`web/src/desk/components/window/Expose.tsx:23-25,55-149`). List/spatial is
+  a view mode, not an arrangement identity (`web/src/desk/store/types.ts:37-38`).
+  The plan explicitly lists screens and automatic arrangement as candidates,
+  so this has no Tenet or Article failure assigned.
+
+- **J1/J2 — first-value recovery has an intentional open-set boundary to
+  verify.** The recovery-only SurfaceWindows effect clears `windowsById` and
+  writes the empty set (`web/src/desk/components/SurfaceWindows.tsx:90-95`;
+  `web/src/desk/store/compositorSlice.ts:265-268`). The source comments make
+  this intentional for first use, and the same effect is reached through the
+  `arrivalRequired` remount in DeskApp (`web/src/desk/DeskApp.tsx:297-300`).
+  No producer trace here demonstrates that an ordinary return reaches
+  `arrivalRequired`, so this is a boundary for the charter to verify, not a
+  destructive owner-cost finding or canon failure.
+
+- **No owner-cost finding established for stale panel ids.** Workspace
+  loading validates id shape and compacts arrays, but does not cross-check
+  `panel.order` or `panel.max` against registered windows
+  (`web/src/desk/store/workspaceStorage.ts:35-49,89-114`). The front scan
+  ignores ids absent from `windowRegistry`
+  (`web/src/desk/components/DeskWindow.tsx:570-576`). That may be deliberate
+  tolerance for dynamic window ids; this source audit found no observed impact
+  and assigns no action or Tenet finding.
+
+## Synthesis handoff
+
+The lane's ranked findings and seven costed ambition moves live in
+`../structure.md`. This supplemental source audit does not authorize a screen
+model or new body framework. Reuse the normalized lifecycle and existing
+SurfaceLedger, gadgets and SurfaceFooter before adding another abstraction.
+
+## Tuesday
+
+The current frame gives the owner a credible Workbench shell: depth, drag,
+resize, snap, maximize, Dock, Expose, MRU, and a shared Button grammar are
+already source-backed. On a Tuesday, the owner can operate a window once it is
+open. He cannot rely on one return story for all the windows he uses. Named
+daily arrangements remain an ambition candidate from the plan, not a Tuesday
+gate or canon requirement. The highest-value next seam is the normalized
+lifecycle, with body convergence and any screen model following it.
+
+## Unknown
+
+No live desktop walk was performed, so pointer hit ownership, 1440/393 visual
+quality, actual browser reload timing, and whether the recovery branch is
+reachable in the owner's current data are unverified. No producer trace shows
+an ordinary return entering `arrivalRequired`; the recovery clear is therefore
+an intentional first-use boundary pending reachability evidence. No owner
+impact was established for stale panel ids. No claim here closes a face or a
+loop. The source probe also cannot prove that body-local drafts are or are not
+written to the hub; it records only that their open/window context is not in
+the workspace document.
+
+HOLD FOR SHIP — this is a draft source probe for Astra's verification and
+Muad'Dib's check. No story flip, staging, contract, commit, or push was done.

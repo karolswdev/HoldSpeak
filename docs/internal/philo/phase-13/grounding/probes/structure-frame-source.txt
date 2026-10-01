@@ -1,0 +1,58 @@
+# PHILO-13 structure probe: frame, window manager, and persistence
+#
+# Worktree: /Users/karol/dev/tools/wt-philo-13-ground-astra
+# Base: 4c49651e1 (main, #721)
+# Scope: static source only; no hub, DB, browser walk, tests, or writes
+# Output companion: structure-frame-output.txt
+# Raw capture: structure-frame-raw.txt (trailing whitespace normalized).
+#
+# Run from the worktree. Every command below is read-only. The final scanner
+# is a plain run: scripts/ux_canon_scan.py documents that it writes nothing
+# unless an explicit output flag is passed.
+
+cd /Users/karol/dev/tools/wt-philo-13-ground-astra
+
+# Canonical manager and frame: lifecycle, geometry, persistence seam, chrome.
+nl -ba web/src/desk/components/DeskWindow.tsx | sed -n '1,20p;155,234p;280,302p;350,405p;560,589p;614,755p;800,882p'
+
+# Versioned workspace document and the compositor's initial/open/close paths.
+nl -ba web/src/desk/store/workspaceStorage.ts | sed -n '1,153p'
+nl -ba web/src/desk/store/compositorSlice.ts | sed -n '37,57p;119,153p;232,351p'
+nl -ba web/src/desk/store/types.ts | sed -n '26,35p;153,222p'
+
+# Dynamic and normalized hosts, including the recovery-only remount.
+nl -ba web/src/desk/components/SurfaceWindows.tsx | sed -n '72,149p;151,212p'
+nl -ba web/src/desk/DeskApp.tsx | sed -n '95,121p;258,306p'
+nl -ba web/src/desk/store/windowFactory.ts | sed -n '1,116p'
+
+# Existing Workbench primitives: depth, maximize, snap, overview, MRU.
+nl -ba web/src/desk/components/window/windowGeometry.ts | sed -n '14,148p;186,223p'
+nl -ba web/src/desk/components/window/windowCommands.ts | sed -n '1,40p'
+nl -ba web/src/desk/components/window/windowRegistry.ts | sed -n '1,133p'
+nl -ba web/src/desk/components/window/Expose.tsx | sed -n '11,149p'
+nl -ba web/src/desk/components/window/Switcher.tsx | sed -n '1,56p'
+
+# Shared species and all production frame call sites (tests excluded).
+rg -l '<DeskWindowFrame' web/src/desk --glob '!**/*.test.*' --glob '!**/__tests__/**' | sort
+printf 'DeskWindowFrame host-file count: '
+rg -l '<DeskWindowFrame' web/src/desk --glob '!**/*.test.*' --glob '!**/__tests__/**' | wc -l
+nl -ba web/src/components/signal/Signal.tsx | sed -n '1,74p'
+nl -ba web/src/desk/surface/index.ts | sed -n '1,149p'
+nl -ba web/src/desk/surface/SurfaceFooter.tsx | sed -n '1,32p'
+
+# Complexity census. Excludes *.test.*, __tests__, and _parked; includes
+# production TypeScript/TSX/CSS under web/src/desk.
+find web/src/desk -type f \( -name '*.ts' -o -name '*.tsx' \) ! -name '*.test.ts' ! -name '*.test.tsx' ! -path '*/__tests__/*' ! -path '*/_parked/*' -print0 | xargs -0 wc -l | sort -n | tail -25
+find web/src/desk -type f -name '*.css' ! -path '*/_parked/*' -print0 | xargs -0 wc -l | sort -n | tail -20
+find web/src/desk -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.css' \) ! -name '*.test.ts' ! -name '*.test.tsx' ! -path '*/__tests__/*' ! -path '*/_parked/*' | wc -l
+find web/src/desk -type f \( -name '*.ts' -o -name '*.tsx' \) ! -name '*.test.ts' ! -name '*.test.tsx' ! -path '*/__tests__/*' ! -path '*/_parked/*' | wc -l
+find web/src/desk -type f -name '*.css' ! -path '*/_parked/*' | wc -l
+
+# Canon scanner link and honest whole-tree baseline. This does not attribute
+# its totals to DeskWindow: it scans web/src, not just the frame or desk.
+nl -ba scripts/ux_canon_scan.py | sed -n '1,25p;42,52p;114,136p'
+python3 scripts/ux_canon_scan.py
+
+# Static search for a named virtual-screen/workspace model. A no-match result
+# is evidence of absence from this source surface only, not a live assertion.
+rg -n "screen(Id|s)?|virtual|workspace(Id|s)?|desktop(Id|s)?" web/src/desk/store web/src/desk/components/window web/src/desk/components/DeskWindow.tsx --glob '!**/*.test.*' || true

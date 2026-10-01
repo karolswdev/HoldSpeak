@@ -1,0 +1,370 @@
+PHILO-13 structure wiring — static census and seams
+=====================================================
+
+Probe base: `4c49651e10a9eff28a1ee8e47cb898609d591935`.
+Probe source: `probes/structure-wiring-source.txt`.
+Scope: registry item 1, window/frame wiring, live state item 4, and the Phase
+12/backend and deletion part of item 5. This is a source census. It proves
+that code paths are named and connected; it does not prove a running hub,
+database row, browser paint, real producer, receipt, or owner walk. The faces
+lane must supply those observations. No tests, hub, database, walk, or send
+was run for this artifact.
+
+Reported summary (authored static analysis, not raw command output).
+Actual command output is in `structure-wiring-raw.txt`:
+
+    application_entries=23
+    duplicate_actions={}
+    duplicate_window_ids=surface-concierge@[325,433], surface-settings@[147,442]
+    declared_frames=44
+    scanned_emit_types=44 scanned_consume_types=43
+    exceptions={wake_armed: documented dormant host wake leg}
+    consumed_without_emitter={}
+    unmatched_emits=[]
+    unmatched_consumers=[]
+    SSE/EventSource search: no web consumer; StreamingResponse only TTS audio
+
+The checked plan calls the following one Tuesday spine. Findings and
+ambition candidates use these job labels:
+
+* J1 morning: arrive, read the brief, open what needs attention.
+* J2 meeting: start, live, summary, decision, send the update.
+* J3 report 1:1: prepare, take notes, create follow-ups.
+* J4 project: open the Room, see change, publish an update.
+* J5 thought: capture by voice and find it later.
+
+1. Registry census — all 23 entries
+-----------------------------------
+
+`web/src/desk/applications.ts:48-451` contains 23 entries. `SURFACE_APPLICATIONS`
+is the `surface` projection at `:453-458`; the Go shelf is the app/tool
+projection in `web/src/desk/tools.ts:4-21`; `verbRegistry.ts:606-633` turns
+that projection into `go.*`; `floorMenu.ts:49-53` exposes the same Go verbs in
+Floor Launch. Thus an entry without `group` can still be a deep link or a
+handoff, but it is absent from the general Go shelf.
+
+| # | action / window | mounted component | data route or service seam | reachability; static result |
+|---:|---|---|---|---|
+| 1 | `change-places` / `surface-places` (`applications.ts:49-63`) | `ChangePlacesCore` | `ChangePlacesCore.tsx:1-60`; `atmospherePreference` and `WallpaperModule`, browser-local | Go tool, `⌘⇧P`, Room Actions (`RoomActions.tsx:27`). Deliberately no hub data; local utility, not an orphan. |
+| 2 | `open-intelligence` / `intelligence:desk` (`:66-74`) | `IntelligencePullout` through `openPullout` | brief `/api/brief/latest`, `/api/brief/generate`, `/api/brief/items/.../shelf` (`pullouts/views/BriefView.tsx:174-287`); follow-through `/api/follow-through/board` (`FollowThroughView.tsx:126-174`); decisions `/api/decision-records...` (`DecisionsView.tsx:94-125`) | Dock intelligence launch, Mark (`DeskChrome.tsx:210-214`), intelligence verbs. Pullout has live routes. |
+| 3 | `dictate` / `surface-dictation` (`:76-94`) | `DictationCore` | `/api/dictation/journal` (`DictationCore.tsx:71-86`); readiness and project knowledge in `pages/cores/dictation/*` | Dock order 1, Go, `⌘1`, Mark. Live journal path; engine-off status must remain honest. |
+| 4 | `ask` / `ask:desk` (`:97-104`) | `AskPanel` (`DeskApp.tsx:249`) | `/api/ask`, `/api/ask/keep`, project ask tasks and resume/stop/discard (`desk/ask.ts:179-523`) | Go app and `⌘I`; `verbRegistry.ts:625-628` opens the panel. No surface row by design; live routes exist. |
+| 5 | `review-meetings` / `surface-meetings` (`:106-123`) | `HistoryCore` | meetings/facets/list/detail, actions, speakers, projects, intel and plugin jobs (`HistoryCore.tsx:80-111,152-217`); run status poll `:304-365` | Dock order 2, Go, `⌘2`, Mark, `/history` route. Live detail path; hard-delete debt in §6. |
+| 6 | `inspect-personas-and-coders` / `surface-companion` (`:126-144`) | `CompanionCore` | `/api/recipes`, `/api/coders/status` (`CompanionCore.tsx:45-46`); coder steering routes (`desk/steering.ts:567-731`) | Dock order 3, Go, `⌘3`, Mark, `/companion`. Live when coder host is available; failure is a valid unavailable state, not a dead route. |
+| 7 | `configure-settings` / `surface-settings` (`:147-172`) | `SettingsCore` | settings/remote/credentials/delegations, authority policy/control, calendar sources/snapshot, hub (`SettingsCore.tsx:728-912,1237-1490,2114-2115`) | Dock order 4, Go, `⌘4`, Mark; aliases `configure-integrations`, `configure-integration`, `read-runtime-docs` register to this surface (`applications.ts:157-163`; `SurfaceWindows.tsx:104-110`). Live settings and connection routes. |
+| 8 | `record-live` / `surface-live` (`:175-188`) | `LiveCore` | `/api/state`, runtime status, intent controls, plugin jobs, devices (`LiveCore.tsx:71-75`); meeting/bookmark/intent/plugin writes (`:267-340,463,552`) | `/live` route and handoffs from Meeting/History/RecordOrb (`rg` results; `routes.tsx:44`). No Go group; reachable by explicit live/start actions. |
+| 9 | `configure-cadence` / `surface-cadence` (`:191-205`) | `CadenceCore` | heartbeat, brief latest, door, projects, cadence status/loops/history (`CadenceCore.tsx:172-187`); writes `:224-269` | Go tool and `/cadence` route. Live settings/brief/loop data. |
+| 10 | `configure-setup` / `surface-setup` (`:217-235`) | `SetupCore` | `/api/setup/status`, `/api/setup/runtime-test` (`SetupCore.tsx:22-34`) | Go tool and first-value recovery (`SurfaceWindows.tsx:63-70`). Live readiness. Entry was explicitly unparked; keep it distinct from New Project. |
+| 11 | `open-constitutional-context` / `surface-constitutional-context` (`:238-252`) | `ConstitutionalContextCore` | `/api/constitutional-context`, `/history`, save (`ConstitutionalContextCore.tsx:35-60`) | Go tool; href `/context` is fallback-only, with no `/context` demoted-route entry. Normal path is the registered surface. Live durable context. |
+| 12 | `open-workbenches` / `surface-workbenches` (`:255-269`) | `WorkbenchesHomeCore` | `/api/workbenches` and `/{id}/runs` (`WorkbenchesHomeCore.tsx:44-51`) | Go tool and `/workbenches`. Live list/runs; detail is a separate object window. |
+| 13 | `design-components` / `surface-components` (`:272-285`) | `ComponentsCore` | executable local catalog; no API references in `ComponentsCore.tsx` | `/design/components` demoted route (`routes.tsx:75`); no Go group and no live hub data. This is a local component instrument, not a data application; verify Tuesday value before expanding it. |
+| 14 | `inspect-activity` / `surface-activity` (`:288-303`) | `ActivityCore` | activity status/records/rules/candidates/connectors (`ActivityCore.tsx:50-61`); refresh/settings/dry-run/start/DELETE records `:92-244` | Go tool and `/activity`. Live routes; destructive record verb needs park policy (§6). |
+| 15 | `open-project-memory` / `surface-project-memory` (`:306-320`) | `ProjectMemoryCore` re-exports `ProjectRoomCore` (`ProjectMemoryCore.tsx:1-16`) | project room, meetings, decisions, artifacts, since-last-meeting (`features/project-room/api.ts:22-59`); update, prepare/brief, steward, proposals, suggestions, nudges (`api.ts:63-260`, `update/api.ts:9-91`, `prepare/api.ts:17-95`, `steward/api.ts:8-104`) | Go tool and project-scoped handoff `openProjectRoom` (`desk/shell.ts:103-112`). Live room data; the one Room surface is the consolidation seam. |
+| 16 | `open-concierge` / `surface-concierge` (`:324-345`) | `ConciergeCore` | detect/propose/probe/apply, discover models, endpoint definition, summary selection/download (`features/concierge/api.ts:283-435`) | href `/models` is fallback-only (no `/models` demoted route); direct Settings/Chair/Dictation handoffs (`rg` paths); no Go group. Live when provider discovery is available. Alias `configure-runs-on` targets this surface (`:331-336`). |
+| 17 | `project-setup` / `surface-project-setup` (`:348-362`) | `DoorCore` | door count/door/providers and project creation (`features/project-room/door/api.ts:72-92` and controller) | `/setup` route and explicit first-value/creation verb (`verbRegistry.ts:258`, `FirstWords.tsx:477`). No Go group; live project door. Do not merge with readiness Setup. |
+| 18 | `inspect-processes` / `surface-processes` (`:365-379`) | `ProcessCore` | kernel events/read (`desk/processWindow.ts:97-139`) every 1,500 ms | Go tool; href `/#processes` is fallback-only (no demoted route). Live poll, no frame consumer; counts and kernel cursor are real path. |
+| 19 | `configure-commands` / `surface-commands` (`:382-395`) | `CommandsCore` | settings read/write and `/api/commands/test` (`CommandsCore.tsx:43-83`) | Go tool and `/commands`. Live settings and command test. |
+| 20 | `open-people` / `surface-people` (`:399-413`) | `PeopleCore` | readiness, relationships, one-on-ones, briefs, links, aliases, notes, requests, commitments (`PeopleCore.tsx:159-208,362,505-738`) | Mark and direct `desk.open-people` Desk verb (`verbRegistry.ts:354-362`), Room/Intelligence handoffs; no general Go group. Live relationship data. |
+| 21 | `review-calendar-snapshot` / `surface-calendar-snapshot` (`:416-429`) | `CalendarSnapshotReviewCore` | caller supplies snapshot; confirm POST `/api/calendar/snapshot/confirm` (`CalendarSnapshotReviewCore.tsx:91-96`) | Settings/GlassDrop handoffs (`GlassDropLayer.tsx:68`); href `/calendar-snapshot` is fallback-only (no demoted route). Review has one write route and no independent read in this core; do not call that “no data” without the caller's snapshot. |
+| 22 | `configure-runs-on` / `surface-concierge` (`:431-440`) | no core on this entry; alias registration opens `ConciergeCore` | same Concierge routes as #16; no `surface` field on this manifest row | Go tool because `group: tool`; `DESK_APPLICATION_ALIASES` maps it to `open-concierge` (`:477-484`) and `SurfaceWindows` registers it (`:104-110`). Secondary alias/shared host, not a runtime orphan; keep one canonical host declaration plus alias metadata. |
+| 23 | `configure-integrations` / `surface-settings` (`:442-450`) | no core on this entry; alias registration opens `SettingsCore` | same Settings connection routes as #7; `subjectRef: integration:destinations` | Go tool and alias to `configure-settings`; secondary alias/shared host, not a runtime orphan. Keep one canonical host declaration plus alias metadata. |
+
+Registry conclusions:
+
+* The census is 23 entries, 19 rows with `surface`, two non-surface application
+  entries (`Intelligence`, `Ask`), and two secondary alias entries (#22/#23).
+  The shared window IDs are `surface-concierge` (#16/#22) and
+  `surface-settings` (#7/#23). The action names themselves are unique.
+  `applicationForAction()` is first-match (`applications.ts:486-488`), while
+  alias registration makes those actions open the canonical host. This is
+  reachable today but is a source of drift and makes a static “one action =
+  one host” reading false.
+* `Change places` and `Components` have no hub route. That is deliberate local
+  utility/catalog state, but their Tuesday value must be demonstrated before
+  adding more local surfaces (Tenets 3, 7). `Calendar snapshot` is a review
+  handoff with a POST, not an orphan; its input read is upstream.
+* Reachability is not the same as useful work. Grouped rows reach Go/Launch;
+  ungrouped rows rely on deep routes or explicit handoffs. Static source cannot
+  measure time-to-first-useful-pixel, stale data, or whether a core's fallback
+  paints; faces must walk those paths.
+* One static handoff is broken: `BriefView.tsx:490` calls
+  `openSurfaceOr("people", "/people", relationship_id)`, but the canonical
+  action is `open-people` (`applications.ts:399-413`), no `people` alias or
+  registered surface exists, and `routes.tsx:41-76` has no `/people` route.
+  `openSurfaceOr` therefore has no registered opener and the fallback is also
+  absent; `App.tsx:68` wildcard navigation lands at `/`. This is a J1 → J3
+  dead handoff found statically, not observed in a browser. Do not silently
+  count the brief's “Open person” as reachable.
+
+Backend family index — route → service/source
+---------------------------------------------
+
+The frontend paths above terminate in these checked-in backend adapters. This
+index keeps the census from treating a URL string as proof of a live producer;
+the adapter and service are the smallest source seams to verify in a hub walk.
+
+| family | route adapter | bound service or source |
+|---|---|---|
+| brief / exact brief | `holdspeak/web/routes/monday_brief.py:101-110,152-173` | `MondayBriefService` through `operations.for_context`; exact-id read uses the bound `brief.latest` service. |
+| follow-through / decisions | `holdspeak/web/routes/follow_through.py:86-125`; `holdspeak/web/routes/decisions.py:1-30` | `FollowThroughService`; `DecisionLifecycleService` and its kernel service. |
+| dictation | `holdspeak/web/routes/dictation/pipeline.py:1-35`; `dictation/kb.py:21-47`; `dictation/floor.py:1-35` | `DictationService`, project-KB plugin and the browser mic arbiter; readiness is service-backed. |
+| Ask / ask tasks | `holdspeak/web/routes/primitives/ask.py:1-40,53-79`; `holdspeak/web/routes/projects.py:121-217` | `AskService` for ask/keep/cancel; `ProjectService` plus AskService for task lifecycle. |
+| settings / model / commands / setup | `holdspeak/web/routes/system/settings.py:1-27,104-120`; `model_library.py:73-125`; `system/voice.py:339`; `setup.py:48-73,188` | `SettingsService`, model-library/inference services, voice command adapter, and setup routes. |
+| meetings | `holdspeak/web/routes/meetings/crud.py:20-30,45-152`; `meetings/aftercare.py:35-43`; `meetings/insights.py:29-45` | composition-bound `MeetingService`, aftercare/proposal services, and insight reads. DELETE goes to `MeetingService.delete_meeting` then DB hard delete (§6). |
+| people / calendar snapshot | `holdspeak/web/routes/people.py:42-62,67-141`; `calendar_snapshot.py:41-42,133-180` | `PeopleService` (with WorkbenchService for commitment execution); calendar snapshot service functions and extracted event resolution. |
+| projects / Room / updates | `holdspeak/web/routes/projects.py:29-88,227-299`; `project_updates.py:61` | `ProjectService` and operation-bound project reads; project update routes supply exact published-update facts. |
+| workbenches | `holdspeak/web/routes/primitives/workbenches.py:20-31,48-168` | `WorkbenchService`, backed by workbench DB and observer; parent soft-delete/item hard-delete split is explicit. |
+| delivery / repository / roadmap | `delivery_*.py` adapters (for example `delivery_attempts.py:79-102` and `delivery_terminal.py:118-173`); `repositories.py:185-235`; `roadmaps.py:173-217` | Delivery registry/services; repository `DeliveryRegistry` and contained git subprocesses; roadmap reads `.githooks/dw` through `_run`. |
+| coder steering | `holdspeak/web/routes/system/coder_steering_routes.py:36-41,260-278,515-570` | `CoderService` and command/target adapters; backend read owner used by the 1.5 s steering poll. |
+
+This backend index is still static. “Bound service” means the route imports or
+constructs that service; it does not mean the owner's configured service is
+running or has a row.
+
+2. Object-window census and retained window behavior
+----------------------------------------------------
+
+`DeskApp.tsx:258-305` mounts all of the following outside the application
+registry. “Object window” here includes persistent document windows and the
+always-mounted Desk furniture that owns a window frame. `DeskWindow.tsx:1-9`
+states the common contract: drag, resize, focus-to-front, persisted rectangle,
+panel min/max; `SurfaceWindowHost` uses the same frame and unmounts a surface
+core on minimize (`SurfaceWindows.tsx:168-201`).
+
+| mounted item | source / route family | wiring and data status |
+|---|---|---|
+| `DeskToolInspector` | `DeskToolInspector.tsx:153-223` → authority policy, project resources, actuator propose/decision | always mounted; live project/authority data, writes have named actuator routes. |
+| `MissionControlConveyor` | `desk/missioncontrol.ts:354-420` → `/api/missioncontrol/story/propose`, proposals/decision, evidence, state/sessions/events/receipts | always mounted; collector polls at 15 s (`missioncontrol.ts:284`, `MissionControlConveyor.tsx:579`). |
+| `DeliveryBoard` | `desk/delivery.ts:535-587` → delivery snapshot/nodes/attempts; settings editor (`DeliveryBoard.tsx:268-364`) | always mounted; 15 s collector poll (`delivery.ts:504-505`). |
+| `DeliveryDossierWindow` | `desk/deliveryDossier.ts:153-215` → evidence asset, story and phase dossier endpoints | always mounted, frame owns dossier; live delivery evidence reads. |
+| `DeliveryTerminalWindow` | `desk/deliveryTerminal.ts:188-257` → terminal commands/subscriptions | always mounted; 1.5 s poll (`deliveryTerminal.ts:72,123,229-233`), a wired polling path; runtime availability unverified here. |
+| Roadmap window | `RoadmapWindow.tsx`; `desk/roadmap.ts:45-62` → roadmaps/detail/health/next | `roadmapWindows` factory array (`DeskApp.tsx:269-275`); per-document open/close and origin. |
+| Repository window | `RepoWindow.tsx`; `desk/repository.ts:28-88` → repository list/tree/file/stage/commit/status/branches/checkout | `repositoryWindows` (`DeskApp.tsx:276-282`); has write verbs and must be checked for authority/receipt in faces. |
+| Workbench window | `WorkbenchWindow.tsx`; `desk/api.ts:843-915,950-1102` → detail/runs/memory/items/run/retry/automations/resourceful/voice | `workbenchWindows` (`DeskApp.tsx:283-289`); item DELETE is hard delete (§6). |
+| `NewWorkbenchChooser` | `WorkbenchTemplatePicker.tsx:31-64` → `/api/workbench-templates`, instantiate, `/api/workbenches` | pre-persistence chooser (`DeskApp.tsx:290`; `dataSlice.ts:303-309`); avoids a blank workbench orphan. |
+| `ScheduleCreateWindow` | `scheduledRecordingSlice.ts:30-71` → `/api/scheduled-recordings` list/create/delete/cancel | frame-mounted, opened by store state; lifecycle events are applied from the runtime bus (`scheduledRecordingSlice.ts:95-177`). |
+| `PanePicker` / `SessionPullout` | `SessionPullout.tsx:236,653`; `desk/steering.ts:567-731` → coder steering panes/nodes/peek, select, relay, spawn/kill | frame-mounted; coder host path polls 1.5 s (`steering.ts:71,216-333`). |
+| `AttentionDrawer` | `AttentionDrawer.tsx:33-324`; `desk/projections.ts:101-137` → `/api/desk/projections?attention_state=needs_attention...` | frame-mounted projection; counts are live projection data, not a local counter. |
+| `SurfaceWindows` | `SurfaceWindows.tsx:98-145,168-210` → all `SURFACE_APPLICATIONS`, lazy core | canonical registry host. It registers each surfaced action and only aliases whose target row exists. Persisted instances with stale/mismatched keys are dropped (`compositorSlice.ts:52-57`). |
+| `TrustWindow` | `TrustWindow.tsx:60-65` → `/api/setup/status` | always-mounted trust/readiness window; direct setup read. |
+| Pullout/Info/Zone/Inline/Ask frames | `Pullout.tsx:57-104`, `InfoWindow.tsx:85-257`, `ZoneWindow.tsx:106-194`, `InlineEditor.tsx:38-71`, `AskPanel.tsx:271-548` | mounted from Chair/Floor or store state; use the same `DeskWindowFrame` species. Their object data is `dataSlice.loadAll` (`desk/api.ts:625-800`) plus the component-specific routes above. |
+| frame furniture: Dock, SnapGhost, Expose, Switcher | `DeskApp.tsx:302-305`, all from `DeskWindow.tsx` | Dock uses `DOCK_APPLICATIONS` and `/api/desk/needs-you` every 60 s (`Dock.tsx:21,56-64`); Expose/Switcher/SnapGhost are compositor projections, no independent service read. |
+
+Window persistence and loss:
+
+* The sole workspace key is `hs.desk.workspace.v1` (`workspaceStorage.ts:8-25`)
+  with `windowsById`, saved panel rectangles/order/max, zone window IDs and
+  zone view preferences. The parser accepts only `kind: "surface"`,
+  `persistence: "workspace"` instances (`:61-76`) and compositor startup
+  filters them against the current surfaced action/window maps
+  (`compositorSlice.ts:43-57`). Stale rows are ignored rather than shown.
+* A surface open creates a normalized instance and focuses it
+  (`compositorSlice.ts:234-256`); close removes the instance and retires its
+  panel (`:257-264`). The rectangle can remain in saved panel geometry until
+  reset because `retirePanel` removes order only (`:312-317`) and
+  `saveDeskWorkspace` writes only IDs in `panelSaved` (`workspaceStorage.ts:131-149`).
+  This means close loses the open document state, while a saved geometry may
+  survive. A reload restores open surfaced instances, order, max state and
+  saved geometry, but not unsaved pullouts, Ask state, transient palette or
+  shortcut state (`chromeState.ts:1-24`), and not the five factory window arrays
+  as `windowsById` records (they have their own store state/origin).
+* This is a credible Workbench base: one frame, a normalized surface registry,
+  z-order, drag/resize, min/max and persisted rectangles. A Workbench-grade
+  next seam is explicit workspace “screens”/named layouts and a durable
+  document identity for object windows; snap/Expose/Switcher are currently
+  compositor UI, not a saved screen model. Do not add a second persistence
+  store before the owner sees a Tuesday loss case (Tenets 1, 3, 6).
+
+3. Pullout registry — every kind and handoff
+---------------------------------------------
+
+`web/src/desk/pullouts/registry.ts:26-47` is exhaustive over 20
+`PrimitiveKind`s. `openPullout` resolves the kind and dispatches to a pullout,
+factory window, registered surface, or no-op (`compositorSlice.ts:137-175`).
+The basic object data is loaded by the one `loadAll()` sweep
+(`desk/api.ts:625-800`): meetings `/api/meetings?limit=24`, artifacts
+`/api/sync/pull?limit=50`, notes `/api/notes`, decisions `/api/decisions`,
+recipes `/api/recipes`, KBs `/api/kbs`, directories `/api/directories`, chains
+`/api/chains`, workflows `/api/workflows`, workbenches `/api/workbenches`,
+projects `/api/projects`, threads `/api/threads`, repositories/roadmaps and
+coders (`desk/api.ts:641-799`).
+
+| registry kind → content | detail/data route or service | open path and static result |
+|---|---|---|
+| `meeting` → `MeetingPullout` | `/api/meetings/{id}`, `/artifacts` (`MeetingPullout.tsx:52-56,117-120`); send well reads meeting forms | `openPullout("meeting:id")` adds a pullout and focuses it (`compositorSlice.ts:145-151`). |
+| `artifact` → `ArtifactPullout` | base artifact from `/api/sync/pull`; document source `artifact:<id>` is the Phase 12 backend in §5; current `ArtifactPullout.tsx:13-72` has body/lineage/copy/dictate only and **does not compose a SendWell** | pullout path; Phase 12 artifact-window SEND well remains backlog/retained design work, not a current live face. |
+| `note` → `NotePullout` | `/api/notes` from `loadAll`; model readiness `/api/models` (`NotePullout.tsx:129`) | pullout path; writes use primitive routes. |
+| `kb` → `KbPullout` | `/api/kbs` from `loadAll`, membership `/api/kbs/{id}/members/{ref}` (`dataSlice.ts:698-707`) | pullout path. |
+| `decision` → `DecisionPullout` | `/api/decisions` and status (`DecisionPullout.tsx:75`), SendWell document ref | pullout path. |
+| `recipe` → `RecipePullout` | `/api/recipes`; run `/api/recipes/{id}/run` (`dataSlice.ts:759-778`); thread creation documented in component | pullout path; run result may create artifact and refresh. |
+| `chain` → `ChainPullout` | `/api/chains`, run `/api/chains/{id}/run` (`dataSlice.ts:759-778`) | pullout path. |
+| `workflow` → `WorkflowPullout` | `/api/workflows`, run `/api/workflows/{id}/run` (`dataSlice.ts:759-778`) | pullout path. |
+| `coder` → `CoderPullout` | `/api/coders/status`, steering/relay routes (`desk/steering.ts:567-731`) | pullout path; host may be unavailable, which must render as named unavailability. |
+| `directory` → `DirectoryPullout` | `/api/directories`; member put/delete (`dataSlice.ts:684-721`) | pullout path and zone window handoff for directory focus. |
+| `intelligence` → `IntelligencePullout` | Brief, follow-through and decision-record routes listed in registry row #2 | `intelligence:desk` is a pullout, not a surface row; Dock/Mark/verbs open it. |
+| `thread` → `ThreadPullout` | `/api/threads`, runtime bus thread frames; tool endpoints in component | pullout path; live streaming frames are consumed by the component. |
+| `people` → `PeoplePullout` | relationship/one-on-one routes in `PeopleCore.tsx:159-738` | primitive descriptor is a surface (`primitives.ts:649`); `openPullout` redirects to `open-people` instead of rendering this content when descriptor says surface. The registry entry is exhaustive but this named content is not the ordinary path. |
+| `project` → `FallbackPullout` | `/api/projects`; `open-project-memory` Room, scoped `project:{id}` (`desk/shell.ts:103-112`) | descriptor is a surface; `openPullout` redirects to registered Desk memory. Fallback is compile-time coverage, not expected rendered detail. |
+| `repository` → `FallbackPullout` | repository list/tree/file routes (`desk/repository.ts:28-88`) | descriptor is a window; dispatches `openRepositoryWindow` (`compositorSlice.ts:153-156`). Fallback content is not the live path. |
+| `roadmap` → `FallbackPullout` | roadmaps/detail/health/next (`desk/roadmap.ts:45-62`) | descriptor is a window; dispatches `openRoadmapWindow`. |
+| `story` → `FallbackPullout` | delivery dossier/story route (`desk/deliveryDossier.ts:192-215`) | `PrimitiveDescriptor.story` is `surface: {type: "none"}` (`primitives.ts:607-616`), so `openPullout` reaches its `none` branch (`compositorSlice.ts:171-172`) and does not open the dossier. Fallback is compile-time coverage only. |
+| `workbench` → `FallbackPullout` | workbench detail/runs/memory/items/run (`desk/api.ts:843-915`) | descriptor is a window; dispatches `openWorkbenchWindow`. |
+| `game` → `FallbackPullout` | no registry API reader found; no current game surface | explicit fallback/no-op detail. Candidate to park until a Tuesday job exists (Tenet 3). |
+| `layout` → `FallbackPullout` | no registry API reader found; layout is a frame/compositor concern | explicit fallback/no-op detail; do not promote it to a product application without a job. |
+
+This registry has no silent missing `PrimitiveKind`: the `satisfies` gate at
+`:26-47` covers all 20 kinds. The risk is semantic: fallback entries make the
+registry look richer than the rendered path, and People/Project/Repository/
+Roadmap/Workbench are redirected before their fallback content appears. That
+is useful routing, but the census and any future metrics must count the actual
+host, not the fallback name.
+
+4. Live state, event bus, SSE and polling
+-----------------------------------------
+
+The browser receives one authenticated WebSocket from
+`RuntimeBusProvider` (`web/src/runtime/RuntimeBus.tsx:41-93`): JSON frames are
+dispatched to exact-type and wildcard listeners (`:59-68`), reconnecting with
+backoff. `main.tsx:16-25` mounts the provider and `DeskChangedRefresh`.
+Server vocabulary and static producer/consumer scans live in
+`holdspeak/realtime_frames.py:40-120,131-201`; the mirrored web names are
+`web/src/runtime/frames.ts:14-59`.
+
+Static frame result:
+
+* The registry declares 44 frame names (`realtime_frames.py:42-106`). The
+  documented only-emitter exception is `wake_armed` (`:108-116`): the dormant
+  host wake window has no web affordance; the web consumes `wake_preview`.
+  `CONSUMED_WITHOUT_EMITTER` is empty (`:118-120`). This is a source scanner,
+  not proof that every production branch emits at runtime.
+* `desk_changed` is the cross-surface refresh frame. The client debounces 300
+  ms and calls the store's full `refresh()` (`useDeskChangedRefresh.ts:37-60`).
+  Its comment records the boundary honestly: notes/decisions/KBs/directories/
+  workflows/chains/workbenches and selected worker writes announce; other
+  meeting writes, project rooms, thoughts and sync do not (`:10-23`). Those
+  surfaces carry their own signals, so this is a reachability boundary to
+  observe, not a claim of universal liveness.
+* `HistoryCore` consumes `desk_changed` and `aftercare_ready` (`HistoryCore.tsx:
+  248-281`); `LiveCore` consumes meeting/runtime/intel/capture/intent/plugin/
+  device frames (`LiveCore.tsx:145-247`); Workbench lifecycle consumers are in
+  `web/src/desk/components/workbench/runLifecycle.ts` and `WorkbenchWindow.tsx:1139-1152`.
+* There is no browser `EventSource` or `text/event-stream` consumer. The only
+  `StreamingResponse` is TTS audio (`holdspeak/web/routes/tts.py:21,229-242`),
+  not a Desk event stream. SSE is therefore not an available Desk seam today.
+
+Data polling found in source (clock/elapsed animation timers are excluded):
+
+| consumer | interval | data path / reason |
+|---|---:|---|
+| Process window | 1,500 ms | `/api/kernel/events` and `/api/kernel/read` (`desk/processWindow.ts:97-139`) |
+| Coder steering peek | 1,500 ms | coder/relay peek (`desk/steering.ts:71,216-333,728-731`) |
+| Delivery terminal | 1,500 ms | command/subscription state (`desk/deliveryTerminal.ts:72,123,229-233`) |
+| Meeting intelligence completion | 3,000 ms, max 120 s | detail `intel_status` after a drainer is running (`HistoryCore.tsx:321-365`) |
+| Meeting review | 3,000 ms | review read (`history/MeetingReview.tsx:97-119`) |
+| Mission Control conveyor | 15,000 ms | missioncontrol state/sessions/events/receipts (`missioncontrol.ts:284`, `MissionControlConveyor.tsx:579`) |
+| Delivery board | 15,000 ms | delivery collector (`delivery.ts:504-505`, `DeliveryBoard.tsx:349-364`) |
+| Thought workspace | 900 ms | project-room reload (`ThoughtWorkspaceWindow.tsx:159`) |
+| Steward controller | controller-defined poll | steward run state (`useStewardController.ts:61,112`) |
+| Dock needs-you | 60,000 ms | `/api/desk/needs-you` (`Dock.tsx:56-64`) |
+
+The event bus can remove or widen polling only where a server producer and a
+receipt-bearing consumer exist. Replacing a poll with a guessed frame would
+violate Article VI; first add a named event to the registry and a real producer
+at the service write seam.
+
+5. Phase 12 fold and retained window behavior
+----------------------------------------------
+
+Phase 12 story 01 is marked done (`story-01...md:1-11`, evidence file
+`evidence-story-01.md`). Its backend source is live and bounded:
+
+* `_ArtifactSource.render` reads raw stored body, refuses missing/NULL/blank or
+  non-text bodies by name, gets the artifact, removes only a matching synthesis
+  footer, and returns `artifact:<id>` (`holdspeak/services/document_sources.py:
+  495-539`). `DOCUMENT_SOURCES` has the ninth `artifact` row and dispatches it
+  through `render_document` (`:542-569`). This is the source the retained
+  Artifact-window SEND well would use; current `ArtifactPullout` has no SEND
+  well. It does not create a new data operation.
+* The exact brief handoff is `GET /api/brief/{brief_id}`
+  (`holdspeak/web/routes/monday_brief.py:152-173`), while latest/generate stay
+  separate (`:112-129`). This supports a retained brief window keeping the
+  stored ID instead of silently switching to a later latest brief.
+* The Phase 12 design keeps one SEND well species and says it adds no
+  operation, authority class, table or migration (`design/floor-send.md:7`).
+  The binding table is decision, meeting summary/digest/follow-up, latest
+  published project update, exact stored brief ID and artifact ID
+  (`:21-53`). The pure binding accepts resolved facts and returns `pending` for
+  unread/loading/failed; it refuses only known absence. The reads belong to
+  story 03, so story 01 does not prove that the live Floor/window has facts.
+* F–J are canvas artifacts under `assets/story-02-canvas/README.md`, explicitly
+  DRAFT and “nothing here is built in product code” (`README.md:3`). The check
+  `checks/canvas-astra-r1.md:21-35` calls them proposals and says G7–G9 do not
+  establish production receipts. The atlas story 05 remains backlog and asks
+  each case through the real graph walk (`story-05-the-atlas-cases.md:1-25`);
+  the closing story 06 remains backlog and requires real owner sends, far-side
+  proof or a named limit (`story-06-the-closing-use.md:1-29`). Neither is a
+  production proof in this census.
+* The window-side intent that can carry is `Send to ▸` from an in-window
+  document, the existing SEND well, ArtifactPullout, the exact brief read and
+  the resolved document refs. The design's listed origins are Floor, list and
+  menu bar (`floor-send.md:55-64`); it explicitly has no in-window origin
+  design. Therefore a Phase 13 proposal must re-ground an in-window origin on
+  the existing window frame, not treat F–J as ratified UI.
+* The Floor destination column, parked destination disappearance and drag/drop
+  are parked. They are not deleted: the design describes them as a separate
+  world layer and drop rule (`floor-send.md:9-18,96-114`). Retained behavior
+  must be mapped to the parked atlas/closing obligations: the old atlas's
+  `Send to ▸`/drop/pushed-selection cases become candidate in-window cases;
+  old `.op` and closing receipts remain required only when the retained
+  behavior is implemented. A simulated canvas receipt (`README.md:64-66`) is
+  not a live receipt.
+
+6. Hard-delete seams and park requirement
+-----------------------------------------
+
+Meetings have a direct hard-delete path: History calls DELETE and renders
+`DELETED` (`web/src/pages/cores/HistoryCore.tsx:456-465`); the route invokes
+the service (`holdspeak/web/routes/meetings/crud.py:140-152`); the DB executes
+`DELETE FROM meetings` (`holdspeak/db/meetings.py:1061-1067`), with related
+rows subject to schema cascades. There is no park/archive branch in this path.
+
+Workbench behavior has two different meanings under one DELETE vocabulary:
+
+* `DELETE /api/workbenches/{id}` is exposed by the route
+  (`holdspeak/web/routes/primitives/workbenches.py:90-100`) and service
+  (`workbench_service.py:159-167`), but the DB method updates `deleted=1`
+  (`db/workbenches.py:154-164`): parent workbenches are retained/soft deleted.
+  A separate `purge()` hard DELETE exists (`:166-169`).
+* `DELETE /api/workbenches/{id}/items/{item_id}` is wired from the Workbench
+  window (`web/src/desk/api.ts:900-908`) through route/service
+  (`workbenches.py:134-144`, `workbench_service.py:218-225`) to
+  `DELETE FROM workbench_items` (`db/workbenches.py:295-301`). Workbench
+  items are hard-deleted unless claimed (claimed items are refused).
+
+This conflicts with the owner standing ruling in `AGENTS.md`, “Never delete;
+park instead.” Highest-cost findings are therefore J2 (meeting record loss) and J4
+(project/workbench history loss), Tenets 3, 5 and 7, Article V/VI. Smallest
+seams are: replace History's DELETE action with a park/retire verb and a named
+receipt; add an item park state/route at the existing workbench item route,
+then keep purge as an explicit maintenance boundary. A static audit cannot
+claim those routes exist today.
+
+7. Synthesis handoff
+---------------------
+
+The lane's verified findings, consolidation map, costs and ambition choices
+are in `../structure.md`. This supplemental file is the static source census;
+it does not set a competing ranking or charter. Missing SSE, local utilities,
+alias rows and descriptor redirects are source boundaries, not established
+product defects. Browser and durable-effect evidence must be read separately.
+
+8. Unknowns and verification handoff
+-------------------------------------
+
+Not verified here: which rows actually paint at 1440/393; touch ownership;
+time-to-first-useful-pixel; whether each service route returns live data in the
+owner's configured environment; current backend frame emissions at runtime;
+real artifact producers (meeting synthesis, run output, Ask Keep); DB park
+schema; and actual atlas/closing far-side proofs. These require the faces
+walk, isolated hub/DB evidence and the other-brain check. This file remains
+static research, not a claim that the Desk works end to end.

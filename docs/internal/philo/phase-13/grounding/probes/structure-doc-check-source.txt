@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Bounded documentation census/anchor check. No application imports or writes."""
+from pathlib import Path
+import json
+import re
+import struct
+import subprocess
+
+root = Path.cwd()
+ground = root / 'docs/internal/philo/phase-13/grounding'
+manifest = (root / 'web/src/desk/applications.ts').read_text().split('export const DESK_APPLICATIONS:')[1].split('] as const;')[0]
+actions = re.findall(r'^    action: "([^"]+)"', manifest, re.M)
+inventory = (ground / 'inventory.md').read_text()
+assert len(actions) == 23, actions
+assert all(f'`{action}`' in inventory for action in actions), 'missing registry action'
+registry = (root / 'web/src/desk/pullouts/registry.ts').read_text()
+pullouts = sorted(set(re.findall(r'^  \w+: (\w+Pullout),', registry, re.M)))
+assert len(pullouts) == 14, pullouts
+assert all(name in inventory for name in pullouts), 'missing pullout'
+print(f'Inventory: {len(actions)} registry actions; {len(pullouts)} named pullout components present.')
+for name in ('DeliveryDossierWindow', 'DeliveryTerminalWindow', 'RoadmapWindow', 'RepoWindow', 'WorkbenchWindow', 'ScheduleCreateWindow', 'TrustWindow', 'Dock', 'Expose', 'Switcher', 'SnapGhost'):
+    assert name in inventory, name
+print('Inventory: named object windows and frame anchors present.')
+for filename in ('inventory.md', 'structure.md'):
+    path = ground / filename
+    if not path.exists():
+        print(f'{filename}: not yet authored (S0-only check).')
+        continue
+    text = path.read_text()
+    assert 'UNCHECKED — awaiting Muad' in text, filename
+    assert '<!--' not in text, ('unfinished placeholder', filename)
+    refs = set(re.findall(r'((?:web|holdspeak|docs|tests|scripts|pm|agent)/[^\s`|\[\](),;]+?):(\d+(?:[-,]\d+)*)', text))
+    for rel, ranges in sorted(refs):
+        target = root / rel
+        assert target.is_file(), (filename, rel, ranges)
+        for line in re.findall(r'\d+', ranges):
+            assert 1 <= int(line) <= len(target.read_text().splitlines()), (filename, rel, line)
+    links = re.findall(r'\]\(([^)]+)\)', text)
+    for link in links:
+        if '://' in link or link.startswith('#'):
+            continue
+        target = path.parent / link.split('#')[0]
+        assert target.exists(), (filename, link)
+    print(f'{filename}: {len(refs)} distinct source anchors/ranges valid; {len(links)} links checked for local targets.')
+
+report = (ground / 'structure.md').read_text()
+assert all(f'`{action}`' in report for action in actions), 'missing application disposition'
+ambition = report.split('## 7. Ambition')[1].split('## Open forks')[0]
+assert len(re.findall(r'^\| \*\*\d+\.', ambition, re.M)) == 7
+forks = report.split('## Open forks')[1].split('## Lane record')[0]
+assert len(re.findall(r'^\d+\. ', forks, re.M)) == 4
+print('Structure: all 23 dispositions, seven ambition moves, four owner forks.')
+
+observations = sorted((ground / 'probes').rglob('observation.json'))
+assert len(observations) == 4
+seen = set()
+for path in observations:
+    observation = json.loads(path.read_text())
+    assert observation['verdict'] == 'pass' and observation['complete']
+    assert observation['terminal_outcome']['state'] == 'settled'
+    assert observation['provenance']['engine_mode'] == 'none'
+    assert observation['trigger']['adapter'] == 'ui-pointer'
+    if observation['case_id'] == 'case.j1.first_words_keep_as_note.kept':
+        created = observation['after']['trigger_response']['body']['note']
+        reads = observation['after']['api_reads']
+        notes = next(read['payload']['notes'] for read in reads if read['path'] == '/api/notes' and read['status'] == 200)
+        assert any(note['id'] == created['id'] and note['body_markdown'] == 'one sentence' and not note['deleted'] for note in notes)
+    seen.add((observation['case_id'], observation['viewport']))
+    for name in ('before.png', 'after.png'):
+        data = (path.parent / name).read_bytes()
+        assert data[:8] == b'\x89PNG\r\n\x1a\n'
+        width, height = struct.unpack('>II', data[16:24])
+        # graph_walk.py:6415-6417 uses CSS width and device_scale_factor=2.
+        expected_height = 900 if observation['viewport'] >= 1000 else 852
+        assert (width, height) == (2 * observation['viewport'], 2 * expected_height)
+assert seen == {(case, width) for case in (
+    'case.j1.first_words_keep_as_note.kept',
+    'case.j11.write_a_thought.window_open',
+) for width in (1440, 393)}
+print('Evidence: four settled actual-atlas observations; eight PNG dimensions match the rig at 2x; both Keep rows read back by exact ID. Mouse, not touch proof.')
+
+changed = subprocess.check_output(['git', 'diff', '--name-only', '4c49651e', '--'], text=True).splitlines()
+untracked = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'], text=True).splitlines()
+prefix = 'docs/internal/philo/phase-13/grounding/'
+for rel in changed + untracked:
+    assert rel in (prefix + 'inventory.md', prefix + 'structure.md') or rel.startswith(prefix + 'probes/structure-'), rel
+print('Scope: tracked differences and untracked files stay within the lane allowlist.')
+print('PASS. This checks census, anchors, links and evidence shape, not claim truth or usability.')

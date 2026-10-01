@@ -1,0 +1,3 @@
+#!/bin/bash
+set -eu
+python3 scripts/ux_canon_scan.py --json docs/internal/philo/phase-13/grounding/probes/structure-canon-output.json

@@ -1,0 +1,8 @@
+Inventory: 23 registry actions; 14 named pullout components present.
+Inventory: named object windows and frame anchors present.
+inventory.md: 276 distinct source anchors/ranges valid; 0 links checked for local targets.
+structure.md: 259 distinct source anchors/ranges valid; 31 links checked for local targets.
+Structure: all 23 dispositions, seven ambition moves, four owner forks.
+Evidence: four settled actual-atlas observations; eight PNG dimensions match the rig at 2x; both Keep rows read back by exact ID. Mouse, not touch proof.
+Scope: tracked differences and untracked files stay within the lane allowlist.
+PASS. This checks census, anchors, links and evidence shape, not claim truth or usability.

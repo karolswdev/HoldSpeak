@@ -1,0 +1,2138 @@
+# Captured stdout; trailing line whitespace normalized for the documentation diff.
+     1	// The desk-window contract (Phase 93 UI remediation; HS-95-02 makes it an
+     2	// OS): floating desk panels are windows, not fixtures. The `useDeskWindow`
+     3	// hook below carries the physics — drag (by the head), resize (corner
+     4	// grip), focus-to-front, persisted rect — and `DeskWindowFrame` is the ONE
+     5	// container every window renders through: one chrome (icon · title ·
+     6	// actions · minimize/maximize/close), a children content slot, lifecycle
+     7	// state in the store (`panelMin`/`panelMax`, persisted in the same
+     8	// versioned workspace document as the rects), and the phone's bottom-sheet form.
+     9	// The hook is module-private on purpose: windows do not hand-wire physics.
+    10	//
+    11	// HS-117-04 — decomposed into focused modules under `window/`. This file
+    12	// retains useDeskWindow + DeskWindowFrame + re-exports for API stability.
+    13	import {
+    14	  useEffect,
+    15	  useLayoutEffect,
+    16	  useRef,
+    17	  useState,
+    18	  type ReactNode,
+    19	} from "react";
+    20	import { motion, useReducedMotion } from "motion/react";
+   155	/** The desk-window physics (Phase 93). Module-private since HS-95-02:
+   156	 * every window adopts it through `DeskWindowFrame`, never by hand. */
+   157	function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
+   158	  const minW = opts.minW ?? 320;
+   159	  const minH = opts.minH ?? 220;
+   160	  const open = opts.open ?? true;
+   161	  const rect = useDesk((s) => s.panelRects[id]);
+   162	  const orderIndex = useDesk((s) => s.panelOrder.indexOf(id));
+   163	  const arranged = useDesk((s) => s.panelSaved.includes(id));
+   164	  // A fit-content card pins its height DURING the first resize drag,
+   165	  // before the arrangement persists on pointer-up.
+   166	  const [liveResize, setLiveResize] = useState(false);
+   167	  const elRef = useRef<HTMLElement | null>(null);
+   168
+   169	  const measure = (): PanelRect => {
+   170	    const cur = useDesk.getState().panelRects[id];
+   171	    if (cur) return cur;
+   172	    const el = elRef.current;
+   173	    const r = el?.getBoundingClientRect();
+   174	    if (!el || !r || !r.width) return { x: MARGIN, y: 64, w: opts.defaultW ?? 400, h: opts.defaultH ?? 480 };
+   175	    // The entrance spring translates the panel; strip the live transform so
+   176	    // a mid-animation measure still yields the settled rect.
+   177	    let tx = 0;
+   178	    let ty = 0;
+   179	    try {
+   180	      const t = getComputedStyle(el).transform;
+   181	      if (t && t !== "none") {
+   182	        const m = new DOMMatrixReadOnly(t);
+   183	        tx = m.m41;
+   184	        ty = m.m42;
+   185	      }
+   186	    } catch {
+   187	      /* environments without DOMMatrix just measure as-is */
+   188	    }
+   189	    return { x: r.left - tx, y: r.top - ty, w: opts.defaultW ?? r.width, h: opts.defaultH ?? r.height };
+   190	  };
+   191
+   192	  // HS-97-02 — a window lands well. Opening places the window through
+   193	  // the engine (seeded at its CSS default home, moved off other title
+   194	  // bars, always whole inside the working band); a persisted rect is
+   195	  // clamped into the band and otherwise untouched (the arrangement is
+   196	  // sacred). Sheets (compact viewports) own their own form.
+   197	  // Round 9: a LAYOUT effect — the window never paints a frame at its
+   198	  // CSS home before the engine seats it (the teleport flash), and an
+   199	  // origin window's entrance motion starts before first paint.
+   200	  useLayoutEffect(() => {
+   201	    if (!open) return;
+   202	    // Present, don't blindly raise: a window rehydrating on reload keeps
+   203	    // its remembered plane in the stacking order (HS-97-03).
+   204	    useDesk.getState().presentPanel(id);
+   205	    if (
+   206	      typeof window.matchMedia === "function" &&
+   207	      window.matchMedia("(max-width: 720px)").matches
+   208	    )
+   209	      return;
+   210	    const s = useDesk.getState();
+   211	    const vw = window.innerWidth || 1280;
+   212	    const vh = window.innerHeight || 800;
+   213	    const cur = s.panelRects[id];
+   214	    if (cur) {
+   215	      const kept = clampIntoBand(cur, vw, vh, minW, minH);
+   216	      if (
+   217	        kept.x !== cur.x ||
+   218	        kept.y !== cur.y ||
+   219	        kept.w !== cur.w ||
+   220	        kept.h !== cur.h
+   221	      )
+   222	        s.setPanelRect(id, kept, s.panelSaved.includes(id));
+   223	    } else {
+   224	      const others = registrySnapshot
+   225	        .filter((w) => w.id !== id && !s.panelMin.includes(w.id))
+   226	        .map((w) => s.panelRects[w.id])
+   227	        .filter((r): r is PanelRect => Boolean(r));
+   228	      const seed = measure();
+   229	      // Lazy cores may still be a Suspense fallback at measure time; a
+   230	      // window's geometry comes from its CSS constraint (max-height),
+   231	      // never from the transient content height. The default seat is
+   232	      // capped below the full band so title bars can stagger — a
+   233	      // full-band window is a choice (resize/maximize), not a default
+   234	      // (HS-97-09).
+   280	          ],
+   281	          { duration: 240, easing: "cubic-bezier(.2, .8, .2, 1)" },
+   282	        );
+   283	      }
+   284	    }
+   285	    return () => {
+   286	      // An unarranged (never persisted) rect is ephemeral: forget it so
+   287	      // the panel is re-placed from its default home next time. Closing
+   288	      // also leaves the stacking order, so a reopen presents on top.
+   289	      const st = useDesk.getState();
+   290	      if (!st.panelSaved.includes(id) && st.panelRects[id])
+   291	        st.resetPanelRect(id);
+   292	      st.retirePanel(id);
+   293	    };
+   294	    // eslint-disable-next-line react-hooks/exhaustive-deps
+   295	  }, [id, open]);
+   296
+   297	  // One compositor listener re-seats open windows after a viewport change.
+   298	  // The 150ms debounce keeps browser resize storms out of the layout path.
+   299	  useEffect(() => {
+   300	    if (!open || typeof window === "undefined") return;
+   301	    return subscribeResizeClamp();
+   302	  }, [open]);
+   350	  const dragBind = useDrag(
+   351	    ({ event, first, last, movement: [mx, my], memo }) => {
+   352	      // Buttons and inputs inside the head keep their own gestures.
+   353	      if (first) {
+   354	        const t = event?.target as HTMLElement | null;
+   355	        if (t?.closest("button, a, input, textarea, select, [role='button']"))
+   356	          return { skip: true };
+   357	      }
+   358	      if (memo?.skip) return memo;
+   359	      const base: PanelRect = memo?.base ?? measure();
+   360	      if (Math.abs(mx) + Math.abs(my) > 3) {
+   361	        // A snap region shows its landing tile as a live ghost while
+   362	        // dragging (HS-97-05); releasing inside it lands exactly there
+   363	        // (HS-95-03); anywhere else parks the dragged rect as before.
+   364	        const ev = event as PointerEvent | undefined;
+   365	        const tile =
+   366	          ev && typeof ev.clientX === "number"
+   367	            ? snapForPointer(
+   368	                ev.clientX,
+   369	                ev.clientY,
+   370	                window.innerWidth || 1280,
+   371	                window.innerHeight || 800,
+   372	              )
+   373	            : null;
+   374	        publishGhost(last ? null : tile);
+   375	        useDesk
+   376	          .getState()
+   377	          .setPanelRect(
+   378	            id,
+   379	            (last ? tile : null) ??
+   380	              clampRect(
+   381	                { ...base, x: base.x + mx, y: base.y + my },
+   382	                minW,
+   383	                minH,
+   384	              ),
+   385	            last,
+   386	          );
+   387	      } else if (last) {
+   388	        publishGhost(null);
+   389	      }
+   390	      return { base, skip: false };
+   391	    },
+   392	    { pointer: { buttons: 1 } },
+   393	  );
+   394
+   395	  const resizeBind = useDrag(
+   396	    ({ movement: [mx, my], last, memo }) => {
+   397	      const base: PanelRect = memo?.base ?? measure();
+   398	      setLiveResize(!last);
+   399	      useDesk
+   400	        .getState()
+   401	        .setPanelRect(
+   402	          id,
+   403	          clampRect({ ...base, w: base.w + mx, h: base.h + my }, minW, minH),
+   404	          last,
+   405	        );
+   560	    onClose,
+   561	    unmountOnMinimize,
+   562	    entrance = true,
+   563	    rootStyle,
+   564	    children,
+   565	  } = props;
+   566	  const minimized = useDesk((s) => s.panelMin.includes(id));
+   567	  const maximized = useDesk((s) => s.panelMax.includes(id));
+   568	  // HS-97-04 — the front window is the last id in the stacking order
+   569	  // that is open (announced) and not minimized; it alone wears depth.
+   570	  const isFront = useDesk((s) => {
+   571	    for (let i = s.panelOrder.length - 1; i >= 0; i--) {
+   572	      const oid = s.panelOrder[i];
+   573	      if (s.panelMin.includes(oid)) continue;
+   574	      if (!windowRegistry.has(oid)) continue;
+   575	      return oid === id;
+   576	    }
+   577	    return false;
+   578	  });
+   579	  const compact = useCompactViewport();
+   580	  const reducedMotion = useReducedMotion();
+   581	  const win = useDeskWindow(id, {
+   582	    minW,
+   583	    minH,
+   584	    defaultW,
+   585	    defaultH,
+   586	    fitContent,
+   587	    origin,
+   588	    open: open && !minimized,
+   589	  });
+   614	  // HS-97-04 — motion tells the story: close animates out; minimize
+   615	  // contracts toward the window's dock chip and restore returns from
+   616	  // it. WAAPI (compositor-only transform/opacity), skipped under
+   617	  // reduced motion or where unavailable (jsdom).
+   618	  const shellRef = useRef<HTMLDivElement | null>(null);
+   619	  const leavingRef = useRef(false);
+   620	  const dockChip = () => chipEls.get(id) ?? null;
+   621	  const flyToChip = (el: HTMLElement, chip: Element, reverse: boolean) => {
+   622	    const c = chip.getBoundingClientRect();
+   623	    const r = el.getBoundingClientRect();
+   624	    const dx = c.x + c.width / 2 - (r.x + r.width / 2);
+   625	    const dy = c.y + c.height / 2 - (r.y + r.height / 2);
+   626	    const away = { transform: `translate(${dx}px, ${dy}px) scale(0.06)`, opacity: 0 };
+   627	    const home = { transform: "translate(0, 0) scale(1)", opacity: 1 };
+   628	    return el.animate(reverse ? [away, home] : [home, away], {
+   629	      duration: 220,
+   630	      easing: "cubic-bezier(.2, .8, .2, 1)",
+   631	      fill: "forwards",
+   632	    });
+   633	  };
+   634	  const requestClose = () => {
+   635	    const el = shellRef.current;
+   636	    if (leavingRef.current) return;
+   637	    if (!el || typeof el.animate !== "function" || reducedMotion) {
+   638	      closeRef.current();
+   639	      return;
+   640	    }
+   641	    leavingRef.current = true;
+   642	    // Round 9 — a window born from a desk object returns INTO it; the
+   643	    // rest keep the quiet scale-fade.
+   644	    const r = origin && !compact ? el.getBoundingClientRect() : null;
+   645	    const anim = el.animate(
+   646	      origin && r
+   647	        ? [
+   648	            { opacity: 1, transform: "translate(0, 0) scale(1)" },
+   649	            {
+   650	              opacity: 0,
+   651	              transform: `translate(${origin.x - (r.x + r.width / 2)}px, ${
+   652	                origin.y - (r.y + r.height / 2)
+   653	              }px) scale(0.05)`,
+   654	            },
+   655	          ]
+   656	        : [
+   657	            { opacity: 1, transform: "scale(1)" },
+   658	            { opacity: 0, transform: "scale(0.96)" },
+   659	          ],
+   660	      {
+   661	        duration: origin && r ? 200 : 140,
+   662	        easing: origin && r ? "cubic-bezier(.4, 0, .8, .4)" : "ease-in",
+   663	        fill: "forwards",
+   664	      },
+   665	    );
+   666	    anim.onfinish = () => {
+   667	      leavingRef.current = false;
+   668	      closeRef.current();
+   669	    };
+   670	  };
+   671	  const requestMinimize = () => {
+   672	    const el = shellRef.current;
+   673	    const chip = dockChip();
+   674	    const done = () => useDesk.getState().minimizePanel(id);
+   675	    if (!el || typeof el.animate !== "function" || reducedMotion || !chip) {
+   676	      done();
+   677	      return;
+   678	    }
+   679	    const anim = flyToChip(el, chip, false);
+   680	    anim.onfinish = () => {
+   681	      anim.cancel(); // release the forwards fill before display:none
+   682	      done();
+   683	    };
+   684	  };
+   685	  const prevMinRef = useRef(false);
+   686	  useEffect(() => {
+   687	    const was = prevMinRef.current;
+   688	    prevMinRef.current = minimized;
+   689	    if (!was || minimized) return;
+   690	    // Restore: the window returns from its dock chip.
+   691	    const el = shellRef.current;
+   692	    const chip = dockChip();
+   693	    if (el && typeof el.animate === "function" && !reducedMotion && chip)
+   694	      flyToChip(el, chip, true);
+   695	    // eslint-disable-next-line react-hooks/exhaustive-deps
+   696	  }, [minimized]);
+   697
+   698	  useEffect(() => {
+   699	    if (!open) return;
+   700	    announceWindow(id, name, glyph, () => requestClose());
+   701	    return () => retractWindow(id);
+   702	    // eslint-disable-next-line react-hooks/exhaustive-deps
+   703	  }, [open, id, name, glyph]);
+   704
+   705	  // HS-96-05 — window focus management (the ui-styling a11y pattern,
+   706	  // WITHOUT a modal trap: windows coexest is the law). Opening moves
+   707	  // focus into the window; closing returns it to the opener; Escape
+   708	  // anywhere inside closes this window.
+   709	  const openerRef = useRef<HTMLElement | null>(null);
+   710	  useEffect(() => {
+   711	    if (!open) return;
+   712	    openerRef.current =
+   713	      document.activeElement instanceof HTMLElement
+   714	        ? document.activeElement
+   715	        : null;
+   716	    shellRef.current?.focus({ preventScroll: true });
+   717	    return () => {
+   718	      const opener = openerRef.current;
+   719	      if (opener && document.contains(opener))
+   720	        opener.focus({ preventScroll: true });
+   721	    };
+   722	  }, [open, id]);
+   723
+   724	  // Opening always PRESENTS the window. A stale in-session minimize
+   725	  // (window closed while parked, reopened later) would otherwise open it
+   726	  // invisibly parked — a stranded surface. Minimize is session-scoped by
+   727	  // design and never persisted (HS-97-03); rects/order/maximize persist.
+   728	  useEffect(() => {
+   729	    if (open && useDesk.getState().panelMin.includes(id))
+   730	      useDesk.getState().restorePanel(id);
+   731	    // eslint-disable-next-line react-hooks/exhaustive-deps
+   732	  }, [open, id]);
+   733
+   734	  if (!open) return null;
+   735	  if (minimized && unmountOnMinimize) return null;
+   736
+   737	  const maxed = maximized && !compact;
+   738	  const style: React.CSSProperties = {
+   739	    ...rootStyle,
+   740	    ...(compact
+   741	      ? { zIndex: (win.style.zIndex as number) ?? 42 }
+   742	      : maxed
+   743	        ? {
+   744	            top: "var(--desk-work-top)",
+   745	            left: MARGIN,
+   746	            right: MARGIN,
+   747	            bottom: "var(--desk-work-bottom)",
+   748	            width: "auto",
+   749	            height: "auto",
+   750	            maxHeight: "none",
+   751	            zIndex: win.style.zIndex,
+   752	          }
+   753	        : win.style),
+   754	    ...(minimized ? { display: "none" } : null),
+   755	  };
+   800	      }}
+   801	      role="region"
+   802	      aria-label={name}
+   803	    >
+   804	      <header
+   805	        className={`desk-pullout-head desk-window-handle${wings ? " has-wings" : ""}`}
+   806	        {...(compact || maxed ? {} : win.handleProps)}
+   807	        onDoubleClick={(e) => {
+   808	          // HS-97-05 — double-click the head toggles maximize (buttons
+   809	          // inside the head keep their own clicks).
+   810	          if (compact) return;
+   811	          const t = e.target as HTMLElement | null;
+   812	          if (t?.closest("button, a, input, textarea, select")) return;
+   813	          useDesk.getState().toggleMaximizePanel(id);
+   814	        }}
+   815	        onContextMenu={(e) => {
+   816	          // HS-99-02 — the bar owns its window verbs on right-click.
+   817	          const t = e.target as HTMLElement | null;
+   818	          if (t?.closest("button, a, input, textarea, select")) return;
+   819	          e.preventDefault();
+   820	          setHeadMenu({ x: e.clientX, y: e.clientY });
+   821	        }}
+   822	      >
+   823	        <span className="desk-traffic">
+   824	          <Button
+   825	            variant="chrome"
+   826	            className="desk-light desk-light-close"
+   827	            aria-label={`Close ${name}`}
+   828	            onClick={requestClose}
+   829	          >
+   830	            <VerbGlyph kind="light-close" />
+   831	          </Button>
+   832	          <Button
+   833	            variant="chrome"
+   834	            className="desk-light desk-light-min"
+   835	            aria-label={`Minimize ${name}`}
+   836	            onClick={requestMinimize}
+   837	          >
+   838	            <VerbGlyph kind="light-min" />
+   839	          </Button>
+   840	          {!compact ? (
+   841	            <Button
+   842	              variant="chrome"
+   843	              className="desk-light desk-light-max"
+   844	              aria-label={maximized ? `Restore ${name}` : `Maximize ${name}`}
+   845	              onClick={() => useDesk.getState().toggleMaximizePanel(id)}
+   846	            >
+   847	              <VerbGlyph kind={maximized ? "light-restore" : "light-max"} />
+   848	            </Button>
+   849	          ) : (
+   850	            <span aria-hidden="true" />
+   851	          )}
+   852	        </span>
+   853	        {leading}
+   854	        {icon}
+   855	        {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
+   856	            title (Article VII.1); the prop survives for callers/AT. */}
+   857	        <span className="desk-pullout-title desk-window-title">{title}</span>
+   858	        {wings}
+   859	        {actions ? <span className="desk-window-actions">{actions}</span> : null}
+   860	      </header>
+   861	      {headMenu ? (
+   862	        <WorkMenu
+   863	          className="desk-head-menu"
+   864	          label={`${name} window menu`}
+   865	          x={headMenu.x}
+   866	          y={headMenu.y}
+   867	          entries={headMenuEntries({
+   868	            maximized,
+   869	            compact,
+   870	            requestMinimize,
+   871	            toggleMaximize: () => useDesk.getState().toggleMaximizePanel(id),
+   872	            requestClose,
+   873	          })}
+   874	          onClose={() => setHeadMenu(null)}
+   875	        />
+   876	      ) : null}
+   877	      {children}
+   878	      {!maxed && !compact ? win.grip : null}
+   879	      {!maxed && !compact ? win.edges : null}
+   880	    </motion.div>
+   881	  );
+   882	}
+     1	import type {
+     2	  DeskState,
+     3	  PanelRect,
+     4	  WindowInstance,
+     5	  ZoneViewPref,
+     6	} from "./types";
+     7
+     8	/** A hard-cut workspace contract. Older Desk window keys are intentionally
+     9	 * ignored: this is the sole persisted document for window lifecycle state. */
+    10	export const DESK_WORKSPACE_STORAGE_KEY = "hs.desk.workspace.v1";
+    11	export const DESK_WORKSPACE_VERSION = 1 as const;
+    12
+    13	const PANEL_ORDER_LIMIT = 100;
+    14
+    15	export interface DeskWorkspaceDocumentV1 {
+    16	  version: typeof DESK_WORKSPACE_VERSION;
+    17	  windowsById: Record<string, WindowInstance>;
+    18	  panel: {
+    19	    rects: Record<string, PanelRect>;
+    20	    order: string[];
+    21	    max: string[];
+    22	  };
+    23	  zoneWindows: string[];
+    24	  zoneViewPrefs: Record<string, ZoneViewPref>;
+    25	}
+    26
+    27	const emptyWorkspace = (): DeskWorkspaceDocumentV1 => ({
+    28	  version: DESK_WORKSPACE_VERSION,
+    29	  windowsById: {},
+    30	  panel: { rects: {}, order: [], max: [] },
+    31	  zoneWindows: [],
+    32	  zoneViewPrefs: {},
+    33	});
+    34
+    35	const isPanelId = (value: unknown): value is string =>
+    36	  typeof value === "string" && /^[A-Za-z0-9:_-]+$/.test(value);
+    37
+    38	const isPanelRect = (value: unknown): value is PanelRect => {
+    39	  if (!value || typeof value !== "object") return false;
+    40	  const rect = value as PanelRect;
+    41	  return [rect.x, rect.y, rect.w, rect.h].every(Number.isFinite) &&
+    42	    rect.w > 0 && rect.h > 0;
+    43	};
+    44
+    45	const compactIds = (values: unknown, limit = PANEL_ORDER_LIMIT): string[] => {
+    46	  if (!Array.isArray(values)) return [];
+    47	  const unique = Array.from(new Set(values.filter(isPanelId)));
+    48	  return unique.length > limit ? unique.slice(-limit) : unique;
+    49	};
+    50
+    51	const isZoneViewPref = (value: unknown): value is ZoneViewPref => {
+    52	  if (!value || typeof value !== "object") return false;
+    53	  const pref = value as ZoneViewPref;
+    54	  return (
+    55	    (pref.view === "icons" || pref.view === "list") &&
+    56	    (pref.sort === "name" || pref.sort === "kind" || pref.sort === "modified") &&
+    57	    (pref.dir === "asc" || pref.dir === "desc")
+    58	  );
+    59	};
+    60
+    61	function parseWindows(value: unknown): Record<string, WindowInstance> {
+    62	  if (!value || typeof value !== "object") return {};
+    63	  const windows: Record<string, WindowInstance> = {};
+    64	  for (const [id, raw] of Object.entries(value)) {
+    65	    if (!isPanelId(id) || !raw || typeof raw !== "object") continue;
+    66	    const candidate = raw as Partial<WindowInstance>;
+    67	    if (
+    68	      candidate.id !== id ||
+    69	      candidate.kind !== "surface" ||
+    70	      typeof candidate.applicationKey !== "string" ||
+    71	      (candidate.scope !== null && typeof candidate.scope !== "string") ||
+    72	      candidate.persistence !== "workspace"
+    73	    ) continue;
+    74	    windows[id] = candidate as WindowInstance;
+    75	  }
+    76	  return windows;
+    77	}
+    78
+    79	export function loadDeskWorkspace(): DeskWorkspaceDocumentV1 {
+    80	  try {
+    81	    const raw: unknown = JSON.parse(
+    82	      localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY) || "null",
+    83	    );
+    84	    if (!raw || typeof raw !== "object") return emptyWorkspace();
+    85	    const candidate = raw as Partial<DeskWorkspaceDocumentV1>;
+    86	    if (candidate.version !== DESK_WORKSPACE_VERSION)
+    87	      return emptyWorkspace();
+    88
+    89	    const panel = candidate.panel && typeof candidate.panel === "object"
+    90	      ? candidate.panel
+    91	      : { rects: {}, order: [], max: [] };
+    92	    const rects = Object.fromEntries(
+    93	      Object.entries(panel.rects && typeof panel.rects === "object" ? panel.rects : {})
+    94	        .filter(([id, rect]) => isPanelId(id) && isPanelRect(rect)),
+    95	    ) as Record<string, PanelRect>;
+    96	    const zoneViewPrefs = Object.fromEntries(
+    97	      Object.entries(
+    98	        candidate.zoneViewPrefs && typeof candidate.zoneViewPrefs === "object"
+    99	          ? candidate.zoneViewPrefs
+   100	          : {},
+   101	      ).filter(([id, pref]) => isPanelId(id) && isZoneViewPref(pref)),
+   102	    ) as Record<string, ZoneViewPref>;
+   103
+   104	    return {
+   105	      version: DESK_WORKSPACE_VERSION,
+   106	      windowsById: parseWindows(candidate.windowsById),
+   107	      panel: {
+   108	        rects,
+   109	        order: compactIds(panel.order),
+   110	        max: compactIds(panel.max),
+   111	      },
+   112	      zoneWindows: compactIds(candidate.zoneWindows),
+   113	      zoneViewPrefs,
+   114	    };
+   115	  } catch {
+   116	    return emptyWorkspace();
+   117	  }
+   118	}
+   119
+   120	type WorkspaceState = Pick<
+   121	  DeskState,
+   122	  | "windowsById"
+   123	  | "panelRects"
+   124	  | "panelSaved"
+   125	  | "panelOrder"
+   126	  | "panelMax"
+   127	  | "zoneWindows"
+   128	  | "zoneViewPrefs"
+   129	>;
+   130
+   131	export function saveDeskWorkspace(state: WorkspaceState): void {
+   132	  const rects: Record<string, PanelRect> = {};
+   133	  for (const id of state.panelSaved) {
+   134	    const rect = state.panelRects[id];
+   135	    if (rect && isPanelId(id) && isPanelRect(rect)) rects[id] = rect;
+   136	  }
+   137	  const document: DeskWorkspaceDocumentV1 = {
+   138	    version: DESK_WORKSPACE_VERSION,
+   139	    windowsById: state.windowsById,
+   140	    panel: {
+   141	      rects,
+   142	      order: compactIds(state.panelOrder),
+   143	      max: compactIds(state.panelMax),
+   144	    },
+   145	    zoneWindows: state.zoneWindows.map((window) => window.id),
+   146	    zoneViewPrefs: state.zoneViewPrefs,
+   147	  };
+   148	  try {
+   149	    localStorage.setItem(DESK_WORKSPACE_STORAGE_KEY, JSON.stringify(document));
+   150	  } catch {
+   151	    /* storage may be unavailable; the live compositor remains authoritative */
+   152	  }
+   153	}
+    37	export function loadPanelLayout(): PanelLayout {
+    38	  return loadDeskWorkspace().panel;
+    39	}
+    40
+    41	// ---- pre-computed initial values ----------------------------------------
+    42
+    43	const initialWorkspace = loadDeskWorkspace();
+    44	const initialPanelLayout = initialWorkspace.panel;
+    45	const initialPanelRects = initialPanelLayout.rects;
+    46	const surfaceByAction = new Map(
+    47	  SURFACE_APPLICATIONS.map((application) => [application.action, application]),
+    48	);
+    49	const surfaceByWindowId = new Map(
+    50	  SURFACE_APPLICATIONS.map((application) => [application.windowId, application]),
+    51	);
+    52	const initialWindowsById = Object.fromEntries(
+    53	  Object.entries(initialWorkspace.windowsById).filter(([id, instance]) => {
+    54	    const application = surfaceByWindowId.get(id);
+    55	    return application?.action === instance.applicationKey;
+    56	  }),
+    57	);
+   119	export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) => ({
+   120	  panelRects: initialPanelRects,
+   121	  panelSaved: Object.keys(initialPanelRects),
+   122	  panelOrder: initialPanelLayout.order,
+   123	  panelMin: [],
+   124	  panelMax: initialPanelLayout.max,
+   125	  windowsById: initialWindowsById,
+   126	  pullouts: [],
+   127	  zoneWindows: initialWorkspace.zoneWindows.map((id) => ({ id, origin: null })),
+   128	  zoneViewPrefs: initialWorkspace.zoneViewPrefs,
+   129	  infoWindows: [],
+   130	  roadmapWindows: [],
+   131	  repositoryWindows: [],
+   132	  workbenchWindows: [],
+   133	  newWorkbenchChooser: null,
+   134
+   135	  // ---- pullouts (hand-written: custom close with optional id) -----------
+   136
+   137	  openPullout(id, origin) {
+   138	    const resolved = resolveKindFromId(id, get);
+   139	    if (!resolved) {
+   140	      console.warn(`openPullout: unknown id "${id}"`);
+   141	      return;
+   142	    }
+   143	    const desc = PRIMITIVES[resolved.kind];
+   144	    switch (desc.surface.type) {
+   145	      case "pullout": {
+   146	        const open = get().pullouts;
+   147	        if (!open.some((p) => p.id === id))
+   148	          set({ pullouts: [...open, { id, origin: origin ?? null }] });
+   149	        set({ editingId: null });
+   150	        get().focusPanel(`pullout:${id}`);
+   151	        break;
+   152	      }
+   153	      case "window": {
+   232	  // ---- static applications (one normalized lifecycle authority) --------
+   233
+   234	  openSurfaceWindow(key, scope) {
+   235	    const application = surfaceByAction.get(key);
+   236	    if (!application) {
+   237	      console.warn(`openSurfaceWindow: unknown application "${key}"`);
+   238	      return;
+   239	    }
+   240	    const instance = {
+   241	      id: application.windowId,
+   242	      kind: "surface" as const,
+   243	      applicationKey: application.action,
+   244	      scope: scope ?? null,
+   245	      persistence: "workspace" as const,
+   246	    };
+   247	    set({
+   248	      windowsById: {
+   249	        ...get().windowsById,
+   250	        [application.windowId]: instance,
+   251	      },
+   252	    });
+   253	    get().focusPanel(application.windowId);
+   254	    if (application.surface.maximized && !get().panelMax.includes(application.windowId))
+   255	      get().toggleMaximizePanel(application.windowId);
+   256	  },
+   257	  closeSurfaceWindow(key) {
+   258	    const application = surfaceByAction.get(key) ?? surfaceByWindowId.get(key);
+   259	    if (!application) return;
+   260	    const { [application.windowId]: _closed, ...windowsById } = get().windowsById;
+   261	    set({ windowsById });
+   262	    get().retirePanel(application.windowId);
+   263	    saveDeskWorkspace(get());
+   264	  },
+   265	  clearSurfaceWindows() {
+   266	    set({ windowsById: {} });
+   267	    saveDeskWorkspace(get());
+   268	  },
+   269
+   270	  // ---- zone view prefs --------------------------------------------------
+   271
+   272	  setZoneViewPref(id, pref) {
+   273	    const current = get().zoneViewPrefs[id] || {
+   274	      view: "icons",
+   275	      sort: "name",
+   276	      dir: "asc",
+   277	    };
+   278	    const next = { ...get().zoneViewPrefs, [id]: { ...current, ...pref } };
+   279	    set({ zoneViewPrefs: next });
+   280	    saveDeskWorkspace(get());
+   281	  },
+   282
+   283	  // ---- panel geometry ---------------------------------------------------
+   284
+   285	  setPanelRect(id, rect, persist = false) {
+   286	    const panelRects = { ...get().panelRects, [id]: rect };
+   287	    const panelSaved =
+   288	      persist && !get().panelSaved.includes(id)
+   289	        ? [...get().panelSaved, id]
+   290	        : get().panelSaved;
+   291	    set({ panelRects, panelSaved });
+   292	    if (persist) saveDeskWorkspace(get());
+   293	  },
+   294	  resetPanelRect(id) {
+   295	    const { [id]: _dropped, ...rest } = get().panelRects;
+   296	    const panelSaved = get().panelSaved.filter((x) => x !== id);
+   297	    set({ panelRects: rest, panelSaved });
+   298	    saveDeskWorkspace(get());
+   299	  },
+   300	  focusPanel(id) {
+   301	    const order = compactPanelOrder([
+   302	      ...get().panelOrder.filter((x) => x !== id),
+   303	      id,
+   304	    ]);
+   305	    set({ panelOrder: order });
+   306	    saveDeskWorkspace(get());
+   307	  },
+   308	  presentPanel(id) {
+   309	    if (get().panelOrder.includes(id)) return;
+   310	    get().focusPanel(id);
+   311	  },
+   312	  retirePanel(id) {
+   313	    if (!get().panelOrder.includes(id)) return;
+   314	    const order = get().panelOrder.filter((x) => x !== id);
+   315	    set({ panelOrder: order });
+   316	    saveDeskWorkspace(get());
+   317	  },
+   318	  minimizePanel(id) {
+   319	    if (get().panelMin.includes(id)) return;
+   320	    set({ panelMin: [...get().panelMin, id] });
+   321	  },
+   322	  restorePanel(id) {
+   323	    const panelMin = get().panelMin.filter((x) => x !== id);
+   324	    const order = compactPanelOrder([
+   325	      ...get().panelOrder.filter((x) => x !== id),
+   326	      id,
+   327	    ]);
+   328	    set({ panelMin, panelOrder: order });
+   329	    saveDeskWorkspace(get());
+   330	  },
+   331	  toggleMaximizePanel(id) {
+   332	    const has = get().panelMax.includes(id);
+   333	    const panelMax = has
+   334	      ? get().panelMax.filter((x) => x !== id)
+   335	      : [...get().panelMax, id];
+   336	    const order = compactPanelOrder([
+   337	      ...get().panelOrder.filter((x) => x !== id),
+   338	      id,
+   339	    ]);
+   340	    set({ panelMax, panelOrder: order });
+   341	    saveDeskWorkspace(get());
+   342	  },
+   343	  resetLayout() {
+   344	    set({
+   345	      panelRects: {},
+   346	      panelSaved: [],
+   347	      panelOrder: [],
+   348	      panelMin: [],
+   349	      panelMax: [],
+   350	    });
+   351	    saveDeskWorkspace(get());
+    26	/** Normalized lifecycle metadata for a first-class Desk application window.
+    27	 * Static applications migrate first; dynamic object-window adapters can join
+    28	 * this registry without creating another writable lifecycle store. */
+    29	export interface WindowInstance {
+    30	  id: string;
+    31	  kind: "surface";
+    32	  applicationKey: string;
+    33	  scope: string | null;
+    34	  persistence: "workspace";
+    35	}
+   153	  /** Open object cards (HS-101 round 9): real windows -- they COEXIST,
+   154	   * each remembering the tap point it opened from (the origin its
+   155	   * open/close motion flies to). Order is open order; the panel order
+   156	   * decides stacking. */
+   157	  pullouts: { id: string; origin: { x: number; y: number } | null }[];
+   158	  /** Open zone windows (drawers opened into real desk windows). They coexist
+   159	   * like pullouts and persist in the versioned workspace document. */
+   160	  zoneWindows: { id: string; origin: { x: number; y: number } | null }[];
+   161	  /** Per-zone remembered expression in the workspace: the window remembers. */
+   162	  zoneViewPrefs: Record<string, ZoneViewPref>;
+   163	  /** HS-105-04 -- open Info cards (transient inspection windows; they
+   164	   * coexist but do not persist across reload). Ref is `kind:id`, bare
+   165	   * id, or `zone:<id>`. */
+   166	  infoWindows: { ref: string; origin: { x: number; y: number } | null }[];
+   167	  /** Delivery Workbench projects open as their own Desk application window. */
+   168	  roadmapWindows: { slug: string; origin: { x: number; y: number } | null }[];
+   169	  /** Registered git sources open as physical desk drawers. */
+   170	  repositoryWindows: { id: string; origin: { x: number; y: number } | null }[];
+   171	  /** Agent workbenches open as their own desk windows. */
+   172	  workbenchWindows: { id: string; origin: { x: number; y: number } | null }[];
+   173	  /** The pre-persistence "new workbench" chooser (HS-130-09): open before
+   174	   * any record exists so exactly one Workbench is persisted per creation
+   175	   * gesture. Null when closed. */
+   176	  newWorkbenchChooser: { origin: { x: number; y: number } | null } | null;
+   177	  /** The zone a live drag is hovering (the drop affordance, HS-73-05). */
+   178	  hoverZoneId: string | null;
+   179	  /** The freshly-created zone whose rename is focused. */
+   180	  renamingZoneId: string | null;
+   181	  /** PHILO-8-01 — the refused rename, drawn as a chip under the zone's name
+   182	   * field while that field is open (409 `NAME TAKEN`; any other refusal
+   183	   * `NOT SAVED`, the hub's reason in `detail`). */
+   184	  zoneRenameError: ZoneRenameError | null;
+   185	  /** The lasso'd/selected objects -- the Ask atom's context (HSM-16-04). */
+   186	  selectedIds: string[];
+   187	  /** The Ask composer is open (in-world, desk visible -- never a modal). */
+   188	  askOpen: boolean;
+   189	  /** HS-83-02 -- the persona whose CONVERSATION is open (null = none). */
+   190	  chatPersonaId: string | null;
+   191	  /** Non-document Desk tool/resource shown in the shared inspector. */
+   192	  toolInspector: {
+   193	    kind: "project" | "integration" | "target";
+   194	    id: string;
+   195	  } | null;
+   196	  /** One recording verb (UX remediation): the chrome Record chip and the
+   197	   * orb drive the SAME hub recorder and mirror the same state. */
+   198	  recording: "idle" | "recording" | "busy";
+   199	  recordingExternal: boolean;
+   200	  recordingStartedAt: number | null;
+   201	  /** HS-136-03: scheduled recording state visible on the Chair. */
+   202	  scheduledRecordings: ScheduledRecording[];
+   203	  /** HS-136-03: arming countdown state (hub-authoritative). */
+   204	  scheduledArming: ScheduledArmingState | null;
+   205	  /** HS-136-03: the schedule-create window (DeskWindow, no modal). */
+   206	  scheduleCreateWindow: { origin: { x: number; y: number } | null } | null;
+   207	  /** Zone tray widths in px (resized zones only). */
+   208	  zoneWidths: Record<string, number>;
+   209	  /** Desk-window geometry per panel id (moved/resized panels only). */
+   210	  panelRects: Record<string, PanelRect>;
+   211	  /** Panel ids whose rect the user arranged -- the persisted subset. */
+   212	  panelSaved: string[];
+   213	  /** Window focus order; the last id renders in front. Persisted
+   214	   * (HS-97-03: the arrangement is sacred, stacking included). */
+   215	  panelOrder: string[];
+   216	  /** Minimized windows (parked in the tray/dock), session-scoped. */
+   217	  panelMin: string[];
+   218	  /** Maximized windows (full stage; the saved rect is kept), persisted. */
+   219	  panelMax: string[];
+   220	  /** Normalized, compositor-owned application windows keyed by window id. */
+   221	  windowsById: Record<string, WindowInstance>;
+   222	  /** HS-93-08 -- which expression of the Desk renders (spatial or list). */
+    72	export function SurfaceWindows({
+    73	  firstValueRecoveryOnly = false,
+    74	}: {
+    75	  /** First value registers only its explicit Setup recovery and starts with
+    76	      no persisted Desk windows competing on glass. */
+    77	  firstValueRecoveryOnly?: boolean;
+    78	} = {}) {
+    79	  const windowsById = useDesk((s) => s.windowsById);
+    80	  const items = useDesk((s) => s.items);
+    81	  const [ready, setReady] = useState(!firstValueRecoveryOnly);
+    82	  // `ready` is first-value paint recovery. This separate fact names the
+    83	  // completed normal-surface registration that the demoted-route dispatcher
+    84	  // actually depends on; Setup-only recovery must never claim it.
+    85	  const [registryState, setRegistryState] = useState<"pending" | "registered">("pending");
+    86	  const rows = firstValueRecoveryOnly
+    87	    ? FIRST_VALUE_RECOVERY_SURFACES
+    88	    : SURFACES;
+    89
+    90	  useEffect(() => {
+    91	    // The persisted open set belongs to the normal Desk. Hide it before this
+    92	    // recovery-only mount becomes paintable; FirstWords can still open Setup
+    93	    // after the registry below is ready.
+    94	    if (firstValueRecoveryOnly) useDesk.getState().clearSurfaceWindows();
+    95	    setReady(true);
+    96	  }, [firstValueRecoveryOnly]);
+    97
+    98	  useEffect(() => {
+    99	    const offs = rows.map((row) =>
+   100	      registerSurface(row.key, (scope) => {
+   101	        useDesk.getState().openSurfaceWindow(row.key, scope);
+   102	      }),
+   103	    );
+   104	    const aliasOffs = Object.entries(DESK_APPLICATION_ALIASES)
+   105	      .filter(([, alias]) => rows.some((row) => row.key === alias.target))
+   106	      .map(([key, alias]) =>
+   107	        registerSurface(key, (scope) =>
+   108	          useDesk.getState().openSurfaceWindow(alias.target, scope ?? alias.scope),
+   109	        ),
+   110	      );
+   111	    // This runs only after every normal row and applicable alias is present in
+   112	    // the dispatcher. Consume a demoted-route intent only here, then publish
+   113	    // the fact the /meetings proof awaits; first-value recovery has no normal
+   114	    // registry and must not claim or consume either.
+   115	    if (!firstValueRecoveryOnly) {
+   116	      const staged = consumeStagedSurfaceOpen();
+   117	      if (staged) openSurfaceWhenReady(staged.key, staged.scope);
+   118	      setRegistryState("registered");
+   119	    }
+   120	    return () => {
+   121	      offs.forEach((off) => off());
+   122	      aliasOffs.forEach((off) => off());
+   123	    };
+   124	  }, [firstValueRecoveryOnly, rows]);
+   125
+   126	  if (!ready) return null;
+   127
+   128	  return (
+   129	    <div
+   130	      className="desk-surface-windows"
+   131	      data-surface-registry-state={
+   132	        firstValueRecoveryOnly ? "recovery-only" : registryState
+   133	      }
+   134	    >
+   135	      {rows.map((row) => {
+   136	        const instance = windowsById[row.id];
+   137	        if (!instance || instance.applicationKey !== row.key) return null;
+   138	        return (
+   139	          <SurfaceWindowHost
+   140	            key={row.id}
+   141	            row={row}
+   142	            scope={instance.scope ?? undefined}
+   143	            items={items}
+   144	          />
+   145	        );
+   146	      })}
+   147	    </div>
+   148	  );
+   149	}
+   151	/** One hosted core: owns the head's wing slot so the core can publish
+   152	 * its faces into the window chrome (HS-100-07, the posture rule), the
+   153	 * foot slot so its footer belongs to the frame (HS-129-01), and the
+   154	 * title slot so cores can override the manifest label (HS-158-05). */
+   155	export function SurfaceWindowHost({
+   156	  row,
+   157	  scope,
+   158	  items,
+   159	}: {
+   160	  row: SurfaceRow;
+   161	  scope: string | undefined;
+   162	  items: ReturnType<typeof useDesk.getState>["items"];
+   163	}) {
+   164	  const [wings, setWings] = useState<ReactNode>(null);
+   165	  const [foot, setFoot] = useState<HTMLElement | null>(null);
+   166	  const [titleOverride, setTitleOverride] = useState<string | null>(null);
+   167	  return (
+   168	    <DeskWindowFrame
+   169	      id={row.id}
+   170	      glyph={row.glyph}
+   171	      eyebrow={row.eyebrow}
+   172	      title={titleOverride ?? row.title}
+   173	      minW={row.minW}
+   174	      defaultH={row.defaultH}
+   175	      wings={wings}
+   176	      open
+   177	      unmountOnMinimize
+   178	      onClose={() => useDesk.getState().closeSurfaceWindow(row.key)}
+   179	      className={
+   180	        row.key === "configure-settings"
+   181	          ? "desk-surface-window desk-settings-window"
+   182	          : "desk-surface-window"
+   183	      }
+   184	    >
+   185	      <FootSlotContext.Provider value={foot}>
+   186	        <div className="desk-surface-body">
+   187	          <div data-aftercare-window-slot="top" />
+   188	          <TitleSlotContext.Provider value={setTitleOverride}>
+   189	            <WingSlotContext.Provider value={setWings}>
+   190	              <ApplicationBoundary label={row.title}>
+   191	                <Suspense fallback={<p className="quiet">…</p>}>
+   192	                  <row.Core
+   193	                    scope={scope}
+   194	                    scopeLabel={
+   195	                      scope
+   196	                        ? (objectByRef(items, scope)?.title ?? undefined)
+   197	                        : undefined
+   198	                    }
+   199	                  />
+   200	                </Suspense>
+   201	              </ApplicationBoundary>
+   202	            </WingSlotContext.Provider>
+   203	          </TitleSlotContext.Provider>
+   204	        </div>
+   205	        <footer
+   206	          ref={setFoot}
+   207	          className="desk-surface-foot surface-footer"
+   208	        />
+   209	      </FootSlotContext.Provider>
+   210	    </DeskWindowFrame>
+   211	  );
+   212	}
+    95	function DeskFaces() {
+    96	  const compact = useCompactViewport();
+    97	  const items = useDesk((s) => s.items);
+    98	  const updatedAt = useDesk((s) => s.updatedAt);
+    99	  const roadmapWindows = useDesk((s) => s.roadmapWindows);
+   100	  const repositoryWindows = useDesk((s) => s.repositoryWindows);
+   101	  const workbenchWindows = useDesk((s) => s.workbenchWindows);
+   102	  const setup = useDesk((s) => s.setup);
+   103	  const loading = useDesk((s) => s.loading);
+   104	  const viewMode = useDesk((s) => s.viewMode);
+   105	  const editingId = useDesk((s) => s.editingId);
+   106	  const pullouts = useDesk((s) => s.pullouts);
+   107	  const askOpen = useDesk((s) => s.askOpen);
+   108	  const error = useDesk((s) => s.error);
+   109	  const { refresh } = useDesk.getState();
+   110	  const [refreshFailure, setRefreshFailure] = useState<string | null>(null);
+   111	  const [atmosphereId] = useAtmospherePreference();
+   112	  const settled = useSettleState((s) => s.settled);
+   113	  useEffect(() => () => useSettleState.getState().setSettled(false), []);
+   114
+   115	  const refreshDesk = useCallback(async () => {
+   116	    setRefreshFailure(null);
+   117	    try {
+   118	      await refresh();
+   119	      const open = new URLSearchParams(window.location.search).get("open");
+   120	      if (open) useDesk.getState().openPullout(open);
+   121	    } catch (caught) {
+   258	      {/* Floor and List own their pullout mounts. The normal Chair needs the
+   259	          same card seam for the first-value note staged before reveal. */}
+   260	      {!arrivalRequired && !showFloor && chairOpenCards.map((pullout) => (
+   261	        <Pullout key={pullout.id} o={pullout.object!} origin={pullout.origin} />
+   262	      ))}
+   263	      {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}
+   264	      {!arrivalRequired && <DeskToolInspector />}
+   265	      {!arrivalRequired && <MissionControlConveyor />}
+   266	      {!arrivalRequired && <DeliveryBoard />}
+   267	      {!arrivalRequired && <DeliveryDossierWindow />}
+   268	      {!arrivalRequired && <DeliveryTerminalWindow />}
+   269	      {!arrivalRequired && roadmapWindows.map((roadmap) => (
+   270	        <ApplicationBoundary key={roadmap.slug} label="Roadmap">
+   271	          <Suspense fallback={null}>
+   272	              <RoadmapWindow slug={roadmap.slug} origin={roadmap.origin} />
+   273	          </Suspense>
+   274	        </ApplicationBoundary>
+   275	      ))}
+   276	      {!arrivalRequired && repositoryWindows.map((repository) => (
+   277	        <ApplicationBoundary key={repository.id} label="Repository">
+   278	          <Suspense fallback={null}>
+   279	              <RepoWindow repositoryId={repository.id} origin={repository.origin} />
+   280	          </Suspense>
+   281	        </ApplicationBoundary>
+   282	      ))}
+   283	      {!arrivalRequired && workbenchWindows.map((wb) => (
+   284	        <ApplicationBoundary key={wb.id} label="Workbench">
+   285	          <Suspense fallback={null}>
+   286	              <WorkbenchWindow workbenchId={wb.id} origin={wb.origin} />
+   287	          </Suspense>
+   288	        </ApplicationBoundary>
+   289	      ))}
+   290	      {!arrivalRequired && <NewWorkbenchChooser />}
+   291	      {!arrivalRequired && <ScheduleCreateWindow />}
+   292	      {!arrivalRequired && <PanePicker />}
+   293	      {!arrivalRequired && <SessionPullout />}
+   294	      {!arrivalRequired && <AttentionDrawer />}
+   295	      {/* Recovery remains direct and in-place: FirstWords opens Setup through
+   296	          this existing surface registry without restoring the whole Desk. */}
+   297	      <SurfaceWindows
+   298	        key={arrivalRequired ? "first-value-recovery" : "desk"}
+   299	        firstValueRecoveryOnly={arrivalRequired}
+   300	      />
+   301	      {!arrivalRequired && <TrustWindow />}
+   302	      {!arrivalRequired && <Dock center={<RecordOrb />} />}
+   303	      {!arrivalRequired && <SnapGhost />}
+   304	      {!arrivalRequired && <Expose />}
+   305	      {!arrivalRequired && <Switcher />}
+   306	    </div>
+     1	/** Generic window factory for the five structurally identical window types
+     2	 * (HS-117-02). Each config produces open/close methods. Persistence belongs
+     3	 * to the compositor's versioned workspace document, never to a window type.
+     4	 * Pullouts stay hand-written (custom close with optional id, dispatch routing). */
+     5	import type { DeskState, PanelRect } from "./types";
+     6	import { play as sfx } from "../../lib/sfx";
+     7
+     8	/** Configuration for one window type. */
+     9	export interface WindowTypeConfig<K extends string> {
+    10	  /** State field name: "zoneWindows" | "infoWindows" | ... */
+    11	  field: keyof DeskState;
+    12	  /** The key field on each window entry: "id" | "slug" | "ref" */
+    13	  key: K;
+    14	  /** Panel id prefix: "zone:" | "info:" | ... */
+    15	  panelPrefix: string;
+    16	  /** Extra logic on open (e.g. workbench default sizing). */
+    17	  onOpen?: (
+    18	    value: string,
+    19	    get: () => DeskState,
+    20	    set: (partial: Partial<DeskState>) => void,
+    21	  ) => void;
+    22	}
+    23
+    24	type WindowEntry<K extends string> = Record<K, string> & {
+    25	  origin: { x: number; y: number } | null;
+    26	};
+    27
+    28	// ---- factory ------------------------------------------------------------
+    29
+    30	/** Build the open method for one window type. */
+    31	export function makeOpenWindow<K extends string>(
+    32	  config: WindowTypeConfig<K>,
+    33	) {
+    34	  return function openWindow(
+    35	    this: void,
+    36	    value: string,
+    37	    origin: { x: number; y: number } | undefined,
+    38	    set: (partial: Partial<DeskState>) => void,
+    39	    get: () => DeskState,
+    40	  ): void {
+    41	    const open = get()[config.field] as unknown as WindowEntry<K>[];
+    42	    const panelId = `${config.panelPrefix}${value}`;
+    43	    if (!open.some((w) => w[config.key] === value)) {
+    44	      const entry = { [config.key]: value, origin: origin ?? null } as unknown as WindowEntry<K>;
+    45	      const next = [...open, entry];
+    46	      set({ [config.field]: next } as unknown as Partial<DeskState>);
+    47	      if (config.onOpen) config.onOpen(value, get, set);
+    48	      sfx("latch");
+    49	    }
+    50	    get().focusPanel(panelId);
+    51	  };
+    52	}
+    53
+    54	/** Build the close method for one window type. */
+    55	export function makeCloseWindow<K extends string>(
+    56	  config: WindowTypeConfig<K>,
+    57	) {
+    58	  return function closeWindow(
+    59	    this: void,
+    60	    value: string,
+    61	    set: (partial: Partial<DeskState>) => void,
+    62	    get: () => DeskState,
+    63	  ): void {
+    64	    const prev = get()[config.field] as unknown as WindowEntry<K>[];
+    65	    const next = prev.filter((w) => w[config.key] !== value);
+    66	    if (next.length < prev.length) sfx("latch");
+    67	    set({ [config.field]: next } as unknown as Partial<DeskState>);
+    68	  };
+    69	}
+    70
+    71	// ---- the five window configs --------------------------------------------
+    72
+    73	export const ZONE_WINDOW_CONFIG: WindowTypeConfig<"id"> = {
+    74	  field: "zoneWindows",
+    75	  key: "id",
+    76	  panelPrefix: "zone:",
+    77	};
+    78
+    79	export const INFO_WINDOW_CONFIG: WindowTypeConfig<"ref"> = {
+    80	  field: "infoWindows",
+    81	  key: "ref",
+    82	  panelPrefix: "info:",
+    83	};
+    84
+    85	export const ROADMAP_WINDOW_CONFIG: WindowTypeConfig<"slug"> = {
+    86	  field: "roadmapWindows",
+    87	  key: "slug",
+    88	  panelPrefix: "roadmap:",
+    89	};
+    90
+    91	export const REPOSITORY_WINDOW_CONFIG: WindowTypeConfig<"id"> = {
+    92	  field: "repositoryWindows",
+    93	  key: "id",
+    94	  panelPrefix: "repository:",
+    95	};
+    96
+    97	export const WORKBENCH_WINDOW_CONFIG: WindowTypeConfig<"id"> = {
+    98	  field: "workbenchWindows",
+    99	  key: "id",
+   100	  panelPrefix: "workbench:",
+   101	  onOpen(value: string, get: () => DeskState, set: (partial: Partial<DeskState>) => void) {
+   102	    const panelId = `workbench:${value}`;
+   103	    if (!get().panelRects[panelId]) {
+   104	      const vw = window.innerWidth || 1280;
+   105	      const vh = window.innerHeight || 800;
+   106	      const w = Math.min(640, vw - 40);
+   107	      const h = Math.min(520, vh - 100);
+   108	      const rect: PanelRect = {
+   109	        x: Math.round((vw - w) / 2),
+   110	        y: Math.round((vh - h) * 0.3),
+   111	        w,
+   112	        h,
+   113	      };
+   114	      get().setPanelRect(panelId, rect);
+   115	    }
+   116	  },
+    14	/** The usable desktop is one contract: below the system bar, above the dock.
+    15	 * CSS owns the dimensions so shell changes cannot make window physics drift. */
+    16	export function workBand() {
+    17	  const fallback = {
+    18	    top: DESK_WINDOW.snapTop,
+    19	    bottom: DESK_WINDOW.snapBottom,
+    20	  };
+    21	  if (typeof window === "undefined" || typeof document === "undefined")
+    22	    return fallback;
+    23	  const style = getComputedStyle(document.documentElement);
+    24	  const top = parseFloat(style.getPropertyValue("--desk-work-top"));
+    25	  const bottom = parseFloat(style.getPropertyValue("--desk-work-bottom"));
+    26	  return {
+    27	    top: Number.isFinite(top) ? top : fallback.top,
+    28	    bottom: Number.isFinite(bottom) ? bottom : fallback.bottom,
+    29	  };
+    30	}
+    31
+    32	/** HS-97-02 — the open-placement engine. A window opening without a
+    33	 * persisted rect lands FULLY inside the working band (below the chrome,
+    34	 * clear of the dock), seeded at its CSS default home but moved off other
+    35	 * windows' title bars by a min-overlap scan (head occlusion dominates,
+    36	 * then overlap area, then distance from home). Pure, pinned by test. */
+    37	export function placeWindow(
+    38	  seed: PanelRect,
+    39	  existing: PanelRect[],
+    40	  vw: number,
+    41	  vh: number,
+    42	  minW = 320,
+    43	  minH = 220,
+    44	): PanelRect {
+    45	  const { top, bottom } = workBand();
+    46	  const w = Math.max(minW, Math.min(seed.w, vw - MARGIN * 2));
+    47	  const h = Math.max(minH, Math.min(seed.h, Math.max(minH, vh - top - bottom)));
+    48	  const maxX = Math.max(MARGIN, vw - MARGIN - w);
+    49	  const maxY = Math.max(top, vh - bottom - h);
+    50	  const sx = Math.min(Math.max(seed.x, MARGIN), maxX);
+    51	  const sy = Math.min(Math.max(seed.y, top), maxY);
+    52	  const overlap = (
+    53	    ax: number,
+    54	    ay: number,
+    55	    aw: number,
+    56	    ah: number,
+    57	    b: PanelRect,
+    58	    bh: number,
+    59	  ) => {
+    60	    const ox = Math.max(0, Math.min(ax + aw, b.x + b.w) - Math.max(ax, b.x));
+    61	    const oy = Math.max(0, Math.min(ay + ah, b.y + bh) - Math.max(ay, b.y));
+    62	    return ox * oy;
+    63	  };
+    64	  const score = (x: number, y: number) => {
+    65	    let heads = 0;
+    66	    let area = 0;
+    67	    for (const r of existing) {
+    68	      area += overlap(x, y, w, h, r, r.h);
+    69	      if (overlap(x, y, w, HEAD, r, HEAD) > 0) heads++;
+    70	    }
+    71	    return heads * 1e9 + area * 10 + Math.hypot(x - sx, y - sy);
+    72	  };
+    73	  let best = { x: sx, y: sy, s: score(sx, sy) };
+    74	  const STEP = 32;
+    75	  for (let y = top; y <= maxY; y += STEP) {
+    76	    for (let x = MARGIN; x <= maxX; x += STEP) {
+    77	      const s = score(x, y);
+    78	      if (s < best.s - 0.5) best = { x, y, s };
+    79	    }
+    80	  }
+    81	  if (best.s >= 1e9) {
+    82	    // Saturated: every position occludes a title bar somewhere. The
+    83	    // cascade survives exactly here — step down-right off the home seat.
+    84	    const step = CASCADE * Math.min(existing.length, 8);
+    85	    return {
+    86	      x: Math.min(Math.max(sx + step, MARGIN), maxX),
+    87	      y: Math.min(Math.max(sy + step, top), maxY),
+    88	      w,
+    89	      h,
+    90	    };
+    91	  }
+    92	  return { x: best.x, y: best.y, w, h };
+    93	}
+    94
+    95	/** HS-97-02 — clamp-on-open: a persisted rect (possibly from a larger
+    96	 * viewport) lands whole inside the working band; the arrangement is
+    97	 * otherwise untouched. */
+    98	export function clampIntoBand(
+    99	  r: PanelRect,
+   100	  vw: number,
+   101	  vh: number,
+   102	  minW = 320,
+   103	  minH = 220,
+   104	): PanelRect {
+   105	  const { top, bottom } = workBand();
+   106	  const w = Math.max(minW, Math.min(r.w, vw - MARGIN * 2));
+   107	  const h = Math.max(minH, Math.min(r.h, Math.max(minH, vh - top - bottom)));
+   108	  const x = Math.min(Math.max(r.x, MARGIN), Math.max(MARGIN, vw - MARGIN - w));
+   109	  const y = Math.min(Math.max(r.y, top), Math.max(top, vh - bottom - h));
+   110	  return { x, y, w, h };
+   111	}
+   112
+   113	/** HS-95-03 — edge snap: releasing a window drag at a screen edge tiles
+   114	 * it. Corners take quarters, the left/right flanks take halves; anywhere
+   115	 * else returns null (a free park). Pure, pinned by test. */
+   116	export function snapForPointer(
+   117	  px: number,
+   118	  py: number,
+   119	  vw: number,
+   120	  vh: number,
+   121	): PanelRect | null {
+   122	  const EDGE = 26;
+   123	  const CORNER = 150;
+   124	  const { top, bottom } = workBand(); // below chrome, clear of dock
+   125	  const halfW = Math.floor((vw - MARGIN * 3) / 2);
+   126	  const halfH = Math.floor((vh - top - bottom - MARGIN) / 2);
+   127	  const left = px <= CORNER;
+   128	  const right = px >= vw - CORNER;
+   129	  const high = py <= CORNER + top;
+   130	  const low = py >= vh - CORNER;
+   131	  if (left && high) return { x: MARGIN, y: top, w: halfW, h: halfH };
+   132	  if (right && high)
+   133	    return { x: vw - MARGIN - halfW, y: top, w: halfW, h: halfH };
+   134	  if (left && low)
+   135	    return { x: MARGIN, y: top + halfH + MARGIN, w: halfW, h: halfH };
+   136	  if (right && low)
+   137	    return {
+   138	      x: vw - MARGIN - halfW,
+   139	      y: top + halfH + MARGIN,
+   140	      w: halfW,
+   141	      h: halfH,
+   142	    };
+   143	  if (px <= EDGE)
+   144	    return { x: MARGIN, y: top, w: halfW, h: vh - top - bottom };
+   145	  if (px >= vw - EDGE)
+   146	    return { x: vw - MARGIN - halfW, y: top, w: halfW, h: vh - top - bottom };
+   147	  return null;
+   148	}
+   186	/** HS-97-06 — the expose grid: N non-overlapping cells inside the
+   187	 * working band, last row centered. Pure, pinned by test. */
+   188	export function exposeLayout(
+   189	  count: number,
+   190	  vw: number,
+   191	  vh: number,
+   192	): PanelRect[] {
+   193	  const band = workBand();
+   194	  const top = band.top + 8;
+   195	  const bottom = band.bottom + 8;
+   196	  const GAP = 18;
+   197	  const cols = Math.max(1, Math.ceil(Math.sqrt(count)));
+   198	  const rows = Math.max(1, Math.ceil(count / cols));
+   199	  const bandW = vw - MARGIN * 2;
+   200	  const bandH = vh - top - bottom;
+   201	  const w = Math.floor((bandW - GAP * (cols - 1)) / cols);
+   202	  const h = Math.floor((bandH - GAP * (rows - 1)) / rows);
+   203	  const cells: PanelRect[] = [];
+   204	  for (let i = 0; i < count; i++) {
+   205	    const r = Math.floor(i / cols);
+   206	    const inRow = r === rows - 1 ? count - r * cols : cols;
+   207	    const rowW = inRow * w + (inRow - 1) * GAP;
+   208	    const x0 = MARGIN + Math.floor((bandW - rowW) / 2);
+   209	    cells.push({
+   210	      x: x0 + (i - r * cols) * (w + GAP),
+   211	      y: top + r * (h + GAP),
+   212	      w,
+   213	      h,
+   214	    });
+   215	  }
+   216	  return cells;
+   217	}
+   218
+   219	/** MRU order over the currently-open windows (front last, like the z
+   220	 * band). Windows never focused yet sort first. */
+   221	export function mruOrder(ids: string[], order: string[]): string[] {
+   222	  return [...ids].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+   223	}
+     1	import { useDesk } from "../../store";
+     2	import { flashSwitcher } from "./Switcher";
+     3	import { snapForPointer } from "./windowGeometry";
+     4	import {
+     5	  cycleWindows as cycleWindowsRaw,
+     6	  cycleWindowsReverse as cycleWindowsReverseRaw,
+     7	  frontWindowId,
+     8	} from "./windowRegistry";
+     9
+    10	/** Window command handlers live below the React frame/barrel so the command
+    11	 * registry and keymap do not form a component import cycle. */
+    12	export function cycleWindows(): void {
+    13	  cycleWindowsRaw(flashSwitcher);
+    14	}
+    15
+    16	export function cycleWindowsReverse(): void {
+    17	  cycleWindowsReverseRaw(flashSwitcher);
+    18	}
+    19
+    20	export function snapFrontWindow(side: "left" | "right"): void {
+    21	  const id = frontWindowId();
+    22	  if (!id || typeof window === "undefined") return;
+    23	  const state = useDesk.getState();
+    24	  const vw = window.innerWidth || 1280;
+    25	  const vh = window.innerHeight || 800;
+    26	  const rect = snapForPointer(side === "left" ? 0 : vw, vh / 2, vw, vh);
+    27	  if (!rect) return;
+    28	  if (state.panelMax.includes(id)) state.toggleMaximizePanel(id);
+    29	  if (state.panelMin.includes(id)) state.restorePanel(id);
+    30	  state.setPanelRect(id, rect, true);
+    31	  state.focusPanel(id);
+    32	}
+    33
+    34	export function maximizeFrontWindow(): void {
+    35	  const id = frontWindowId();
+    36	  if (!id) return;
+    37	  const state = useDesk.getState();
+    38	  if (state.panelMin.includes(id)) state.restorePanel(id);
+    39	  if (!state.panelMax.includes(id)) state.toggleMaximizePanel(id);
+    40	  else state.focusPanel(id);
+     1	// Window registry — module-level Maps + pub/sub for open windows.
+     2	// Extracted from DeskWindow.tsx (HS-117-04).
+     3	import { useSyncExternalStore } from "react";
+     4	import { useDesk } from "../../store";
+     5	import { mruOrder } from "./windowGeometry";
+     6
+     7	/** Dock chip elements by window id — the minimize/restore motion's
+     8	 * target (HS-97-04). Populated by the Dock's ref callbacks. */
+     9	export const chipEls = new Map<string, HTMLElement>();
+    10
+    11	/** Window shell elements by id — the expose's fan targets (HS-97-06). */
+    12	export const shellEls = new Map<string, HTMLElement>();
+    13
+    14	/** Open windows announce themselves (title/icon/close) so the dock can
+    15	 * name and drive them without a parallel registry. */
+    16	export const windowRegistry = new Map<
+    17	  string,
+    18	  { label: string; glyph: string; close: () => void }
+    19	>();
+    20	export const registryListeners = new Set<() => void>();
+    21	export let registrySnapshot: {
+    22	  id: string;
+    23	  label: string;
+    24	  glyph: string;
+    25	  close: () => void;
+    26	}[] = [];
+    27
+    28	export function publishRegistry() {
+    29	  registrySnapshot = Array.from(windowRegistry.entries()).map(
+    30	    ([id, v]) => ({ id, ...v }),
+    31	  );
+    32	  for (const l of registryListeners) l();
+    33	}
+    34
+    35	export function announceWindow(
+    36	  id: string,
+    37	  label: string,
+    38	  glyph: string,
+    39	  close: () => void,
+    40	) {
+    41	  windowRegistry.set(id, { label, glyph, close });
+    42	  publishRegistry();
+    43	}
+    44
+    45	export function retractWindow(id: string) {
+    46	  windowRegistry.delete(id);
+    47	  publishRegistry();
+    48	}
+    49
+    50	export function useOpenWindows() {
+    51	  return useSyncExternalStore(
+    52	    (cb) => {
+    53	      registryListeners.add(cb);
+    54	      return () => registryListeners.delete(cb);
+    55	    },
+    56	    () => registrySnapshot,
+    57	  );
+    58	}
+    59
+    60	/** HS-101 B8 — the front window: the last non-minimized id in the
+    61	 * stacking order that is actually open (the Cmd+W/Cmd+M target). */
+    62	export function frontWindowId(): string | null {
+    63	  const s = useDesk.getState();
+    64	  for (let i = s.panelOrder.length - 1; i >= 0; i--) {
+    65	    const id = s.panelOrder[i];
+    66	    if (s.panelMin.includes(id)) continue;
+    67	    if (registrySnapshot.some((w) => w.id === id)) return id;
+    68	  }
+    69	  const open = registrySnapshot.filter((w) => !s.panelMin.includes(w.id));
+    70	  return open.length ? open[open.length - 1].id : null;
+    71	}
+    72
+    73	/** How many windows are open right now (ghost-reason source). */
+    74	export function openWindowCount(): number {
+    75	  return registrySnapshot.length;
+    76	}
+    77
+    78	/* -- HS-111-07: the window verbs the registry runs (one truth; the
+    79	   keymap and every menu face reach them through verbRegistry). -- */
+    80
+    81	/** Cmd+W — close the front window. */
+    82	export function closeFrontWindow(): void {
+    83	  const id = frontWindowId();
+    84	  if (id) registrySnapshot.find((w) => w.id === id)?.close();
+    85	}
+    86
+    87	/** Cmd+M — minimize the front window. */
+    88	export function minimizeFrontWindow(): void {
+    89	  const id = frontWindowId();
+    90	  if (id) useDesk.getState().minimizePanel(id);
+    91	}
+    92
+    93	/** Ctrl+` — MRU cycle: the least-recent open window comes forward, and
+    94	 * the switcher strip names the landing (HS-97-06). */
+    95	export function cycleWindows(flashSwitcher: (target: string) => void): void {
+    96	  const ids = mruOrder(
+    97	    registrySnapshot.map((w) => w.id),
+    98	    useDesk.getState().panelOrder,
+    99	  );
+   100	  if (ids.length < 1) return;
+   101	  const next = ids[0];
+   102	  const s = useDesk.getState();
+   103	  if (s.panelMin.includes(next)) s.restorePanel(next);
+   104	  else s.focusPanel(next);
+   105	  flashSwitcher(next);
+   106	}
+   107
+   108	/** Ctrl+Shift+` — reverse the MRU cycle, landing on the window immediately
+   109	 * behind the frontmost one. */
+   110	export function cycleWindowsReverse(
+   111	  flashSwitcher: (target: string) => void,
+   112	): void {
+   113	  const ids = mruOrder(
+   114	    registrySnapshot.map((w) => w.id),
+   115	    useDesk.getState().panelOrder,
+   116	  );
+   117	  if (ids.length < 1) return;
+   118	  const next = ids[Math.max(0, ids.length - 2)];
+   119	  const s = useDesk.getState();
+   120	  if (s.panelMin.includes(next)) s.restorePanel(next);
+   121	  else s.focusPanel(next);
+   122	  flashSwitcher(next);
+   123	}
+   124
+   125	/** Cmd+1-Cmd+4 — an application whose window is already open focuses (or
+   126	 * restores) instead of re-opening. False = not open; launch instead. */
+   127	export function focusOrRestoreApp(windowId: string): boolean {
+   128	  if (!registrySnapshot.some((w) => w.id === windowId)) return false;
+   129	  const s = useDesk.getState();
+   130	  if (s.panelMin.includes(windowId)) s.restorePanel(windowId);
+   131	  s.focusPanel(windowId);
+   132	  return true;
+   133	}
+    11	/** HS-97-06 — expose state (module-level so the dock verb and the
+    12	 * keyboard share one truth). */
+    13	let exposeActive = false;
+    14	const exposeListeners = new Set<() => void>();
+    15
+    16	export function toggleExpose(force?: boolean) {
+    17	  const next = force ?? !exposeActive;
+    18	  if (next === exposeActive) return;
+    19	  exposeActive = next;
+    20	  for (const l of exposeListeners) l();
+    21	}
+    22
+    23	/** The expose (HS-97-06): fans every open window into a pick grid --
+    24	 * live shells scale into their cells (compositor transforms), minimized
+    25	 * windows join as dimmed cards; click or Enter focuses, Escape cancels. */
+    26	export function Expose() {
+    27	  const active = useSyncExternalStore(
+    28	    (cb) => {
+    29	      exposeListeners.add(cb);
+    30	      return () => exposeListeners.delete(cb);
+    31	    },
+    32	    () => exposeActive,
+    33	  );
+    34	  const windows = useOpenWindows();
+    35	  const panelMin = useDesk((s) => s.panelMin);
+    36	  const reducedMotion = useReducedMotion();
+    37	  const firstBtnRef = useRef<HTMLButtonElement | null>(null);
+    38	  const fannedRef = useRef<
+    39	    { el: HTMLElement; anim: Animation }[]
+    40	  >([]);
+    41
+    42	  useEffect(() => {
+    43	    // Ctrl+Up itself now arrives through desk/keymap.ts (the one binder,
+    44	    // registry verb desk.overview); the expose keeps only its Escape.
+    45	    const onKey = (e: KeyboardEvent) => {
+    46	      if (e.key === "Escape" && exposeActive) {
+    47	        e.preventDefault();
+    48	        toggleExpose(false);
+    49	      }
+    50	    };
+    51	    document.addEventListener("keydown", onKey);
+    52	    return () => document.removeEventListener("keydown", onKey);
+    53	  }, []);
+    54
+    55	  const entries = windows.map((w) => ({
+    56	    ...w,
+    57	    minimized: panelMin.includes(w.id),
+    58	  }));
+    59	  const vw = typeof window === "undefined" ? 1280 : window.innerWidth || 1280;
+    60	  const vh = typeof window === "undefined" ? 800 : window.innerHeight || 800;
+    61	  const cells = exposeLayout(Math.max(entries.length, 1), vw, vh);
+    62
+    63	  useEffect(() => {
+    64	    if (!active) return;
+    65	    const fanned: { el: HTMLElement; anim: Animation }[] = [];
+    66	    entries.forEach((en, i) => {
+    67	      if (en.minimized) return;
+    68	      const el = shellEls.get(en.id);
+    69	      if (!el || typeof el.animate !== "function") return;
+    70	      const r = el.getBoundingClientRect();
+    71	      if (!r.width) return;
+    72	      const cell = cells[i];
+    73	      const s = Math.min(cell.w / r.width, cell.h / r.height, 1);
+    74	      const dx = cell.x + cell.w / 2 - (r.x + r.width / 2);
+    75	      const dy = cell.y + cell.h / 2 - (r.y + r.height / 2);
+    76	      const anim = el.animate(
+    77	        [
+    78	          { transform: "translate(0, 0) scale(1)" },
+    79	          { transform: `translate(${dx}px, ${dy}px) scale(${s})` },
+    80	        ],
+    81	        {
+    82	          duration: reducedMotion ? 0 : 220,
+    83	          easing: "cubic-bezier(.2, .8, .2, 1)",
+    84	          fill: "forwards",
+    85	        },
+    86	      );
+    87	      fanned.push({ el, anim });
+    88	    });
+    89	    fannedRef.current = fanned;
+    90	    firstBtnRef.current?.focus();
+    91	    return () => {
+    92	      for (const { el, anim } of fannedRef.current) {
+    93	        try {
+    94	          const current = getComputedStyle(el).transform;
+    95	          anim.cancel();
+    96	          if (!reducedMotion && current && current !== "none")
+    97	            el.animate(
+    98	              [{ transform: current }, { transform: "none" }],
+    99	              { duration: 180, easing: "cubic-bezier(.2, .8, .2, 1)" },
+   100	            );
+   101	        } catch {
+   102	          /* jsdom or torn-down element: nothing to unwind */
+   103	        }
+   104	      }
+   105	      fannedRef.current = [];
+   106	    };
+   107	    // eslint-disable-next-line react-hooks/exhaustive-deps
+   108	  }, [active]);
+   109
+   110	  if (!active || entries.length === 0) return null;
+   111	  return (
+   112	    <>
+   113	      <div className="desk-expose-scrim" aria-hidden="true" />
+   114	      <div
+   115	        className="desk-expose"
+   116	        // A region, not a dialog: the desk's no-modal law holds -- no
+   117	        // trap, Escape and the backdrop dismiss (Phase 73 lock).
+   118	        role="group"
+   119	        aria-label="Window overview"
+   120	        onClick={(e) => {
+   121	          if (e.target === e.currentTarget) toggleExpose(false);
+   122	        }}
+   123	      >
+   124	        {entries.map((en, i) => (
+   125	          <Button
+   126	            variant="chrome"
+   127	            key={en.id}
+   128	            ref={i === 0 ? firstBtnRef : undefined}
+   129	            className={"desk-expose-cell" + (en.minimized ? " is-min" : "")}
+   130	            style={{
+   131	              top: cells[i].y,
+   132	              left: cells[i].x,
+   133	              width: cells[i].w,
+   134	              height: cells[i].h,
+   135	            }}
+   136	            aria-label={`Focus ${en.label}`}
+   137	            onClick={() => {
+   138	              toggleExpose(false);
+   139	              const s = useDesk.getState();
+   140	              if (s.panelMin.includes(en.id)) s.restorePanel(en.id);
+   141	              else s.focusPanel(en.id);
+   142	            }}
+   143	          >
+   144	            <span className="desk-expose-name">
+   145	              <span aria-hidden="true">{en.glyph}</span> {en.label}
+   146	            </span>
+   147	          </Button>
+   148	        ))}
+   149	      </div>
+     1	// Switcher — the transient MRU strip shown during Ctrl+` cycling.
+     2	// Extracted from DeskWindow.tsx (HS-117-04).
+     3	import { useSyncExternalStore } from "react";
+     4	import { registrySnapshot } from "./windowRegistry";
+     5
+     6	/** HS-97-06 — the transient switcher strip's state. */
+     7	let switcherState: {
+     8	  items: { id: string; label: string; glyph: string }[];
+     9	  target: string;
+    10	} | null = null;
+    11	let switcherTimer: ReturnType<typeof setTimeout> | undefined;
+    12	const switcherListeners = new Set<() => void>();
+    13
+    14	export function flashSwitcher(target: string) {
+    15	  switcherState = {
+    16	    items: registrySnapshot.map((w) => ({
+    17	      id: w.id,
+    18	      label: w.label,
+    19	      glyph: w.glyph,
+    20	    })),
+    21	    target,
+    22	  };
+    23	  for (const l of switcherListeners) l();
+    24	  clearTimeout(switcherTimer);
+    25	  switcherTimer = setTimeout(() => {
+    26	    switcherState = null;
+    27	    for (const l of switcherListeners) l();
+    28	  }, 900);
+    29	}
+    30
+    31	/** The visible MRU switcher (HS-97-06): while Ctrl+` cycles, a strip
+    32	 * names every open window with the landing target highlighted, fading
+    33	 * once the cycle settles. */
+    34	export function Switcher() {
+    35	  const st = useSyncExternalStore(
+    36	    (cb) => {
+    37	      switcherListeners.add(cb);
+    38	      return () => switcherListeners.delete(cb);
+    39	    },
+    40	    () => switcherState,
+    41	  );
+    42	  if (!st) return null;
+    43	  return (
+    44	    <div className="desk-switcher" role="status">
+    45	      {st.items.map((w) => (
+    46	        <span
+    47	          key={w.id}
+    48	          className={
+    49	            "desk-switcher-chip" + (w.id === st.target ? " is-target" : "")
+    50	          }
+    51	        >
+    52	          <span aria-hidden="true">{w.glyph}</span> {w.label}
+    53	        </span>
+    54	      ))}
+    55	    </div>
+    56	  );
+web/src/desk/components/AskPanel.tsx
+web/src/desk/components/AttentionDrawer.tsx
+web/src/desk/components/DeliveryBoard.tsx
+web/src/desk/components/DeliveryDossierWindow.tsx
+web/src/desk/components/DeliveryTerminalWindow.tsx
+web/src/desk/components/DeskToolInspector.tsx
+web/src/desk/components/InfoWindow.tsx
+web/src/desk/components/InlineEditor.tsx
+web/src/desk/components/NewWorkbenchChooser.tsx
+web/src/desk/components/Pullout.tsx
+web/src/desk/components/RepoWindow.tsx
+web/src/desk/components/RoadmapWindow.tsx
+web/src/desk/components/ScheduleCreateWindow.tsx
+web/src/desk/components/SessionPullout.tsx
+web/src/desk/components/SurfaceWindows.tsx
+web/src/desk/components/TrustWindow.tsx
+web/src/desk/components/WorkbenchWindow.tsx
+web/src/desk/components/ZoneWindow.tsx
+web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx
+DeskWindowFrame call-site count:       19
+     1	// HS-111-08 — the legacy Signal dialect retired (audit §1/§4): Switch,
+     2	// Tabs, StatusPill, InlineMessage, Disclosure, Dialog, ChoiceCard,
+     3	// Checkbox, Toolbar, EmptyState, and Skeleton died with the gadget-kit
+     4	// conformance sweep. What remains is the surviving roster:
+     5	// - Button — the VERB species (TransportKey is the instrument key; the
+     6	//   split of duties is deliberate: Button = verb, TransportKey =
+     7	//   momentary instrument control).
+     8	// - Field/TextInput/TextArea/Select — legacy input faces kept ONLY for
+     9	//   the InlineEditor native cluster (rides to HS-111-10); new code
+    10	//   composes StringGadget/PadGadget/CycleGadget.
+    11	// - Panel — the document-shell card (non-desk routes).
+    12	import {
+    13	  type ComponentPropsWithRef,
+    14	  type InputHTMLAttributes,
+    15	  type ReactNode,
+    16	  type SelectHTMLAttributes,
+    17	  type TextareaHTMLAttributes,
+    18	  useId,
+    19	} from "react";
+    20
+    21	/** HS-202-03 — the CHROME variant.
+    22	 *
+    23	 * Some verbs are not plated buttons: a menu row, a wing tab, a dock chip, a
+    24	 * formatting-rail key, the mic, the record orb.  Their material is drawn by
+    25	 * the strip they ride (`chrome-menus.css` keys off `.desk-menu-list button`,
+    26	 * `pullout.css` off `.desk-wing`, `window-chrome.css` off `.desk-dock-*`,
+    27	 * and so on), so for `variant="chrome"` the plate classes (`btn`,
+    28	 * `btn--secondary`, `btn--sm`) are WITHHELD and only the marker
+    29	 * `btn--chrome` is stamped: the strip keeps its own ink to the pixel.
+    30	 *
+    31	 * What the variant DOES carry is the species (UX-CANON A.1 — every verb is
+    32	 * the library Button): one element, one `type="button"` default, one
+    33	 * `loading` / `disabled` / `aria-busy` grammar.  Before HS-202-03 the
+    34	 * surface inventory of 2026-09-20 (§3.3) found these shared controls were
+    35	 * the WORST raw-HTML sites in the product — every menu item, every wing
+    36	 * tab, the dock itself — so a stranger's first five minutes met raw HTML at
+    37	 * every turn.
+    38	 *
+    39	 * It is not a licence to draw a new look: a `chrome` verb always carries the
+    40	 * className of a strip that already owns its material, and `Signal.test.tsx`
+    41	 * plus `desk/__tests__/hs202ChromeSpecies.test.tsx` fence the no-plate rule.
+    42	 */
+    43	export function Button({
+    44	  variant = "secondary",
+    45	  dense = false,
+    46	  loading = false,
+    47	  children,
+    48	  className = "",
+    49	  disabled,
+    50	  type = "button",
+    51	  ...props
+    52	}: ComponentPropsWithRef<"button"> & {
+    53	  variant?: "primary" | "secondary" | "ghost" | "danger" | "chrome";
+    54	  dense?: boolean;
+    55	  loading?: boolean;
+    56	}) {
+    57	  // A raw <button> in a form submits; the species never does unless asked.
+    58	  return (
+    59	    <button
+    60	      type={type}
+    61	      className={
+    62	        variant === "chrome"
+    63	          ? `btn--chrome ${className}`.trim()
+    64	          : `btn btn--${variant}${dense ? " btn--sm" : ""} ${className}`
+    65	      }
+    66	      disabled={disabled || loading}
+    67	      aria-busy={loading || undefined}
+    68	      {...props}
+    69	    >
+    70	      {loading ? <span className="signal-spinner" aria-hidden="true" /> : null}
+    71	      {children}
+    72	    </button>
+    73	  );
+    74	}
+     1	// HS-156-03 — the surface barrel: the ONE supported import path for feature code.
+     2
+     3	export {
+     4	  SurfaceVerbs,
+     5	  SurfaceIdentity,
+     6	  SurfaceSection,
+     7	  SurfaceRows,
+     8	  SurfaceRow,
+     9	  SurfaceState,
+    10	  SurfaceColumns,
+    11	  SurfaceSplit,
+    12	  MetricStrip,
+    13	  SurfaceFacts,
+    14	  SurfaceCode,
+    15	  SurfaceWell,
+    16	  PaneWell,
+    17	  SurfaceTraffic,
+    18	  SurfaceTrafficTurn,
+    19	  SurfaceGroup,
+    20	  SurfaceSettingRow,
+    21	  SurfaceToggle,
+    22	  SurfaceStream,
+    23	  SurfaceStreamDay,
+    24	  SurfaceStreamEntry,
+    25	  SurfaceLedger,
+    26	  SurfaceLedgerRow,
+    27	  SurfaceLibrary,
+    28	  SurfaceLibraryTile,
+    29	  SurfaceLibraryGhost,
+    30	  SurfaceSwitchboard,
+    31	  SurfaceBay,
+    32	  EditInPlace,
+    33	  ConfirmVerb,
+    34	  ScrollHint,
+    35	  useScrollHint,
+    36	  computeScrollHint,
+    37	  type ScrollHintState,
+    38	} from "./Surface";
+    39
+    40	export {
+    41	  GadgetGroup,
+    42	  GadgetRow,
+    43	  CheckGadget,
+    44	  CycleGadget,
+    45	  type CycleOption,
+    46	  MxRadio,
+    47	  type MxOption,
+    48	  StringGadget,
+    49	  PadGadget,
+    50	  FoldGadget,
+    51	  StepperGadget,
+    52	  PropGadget,
+    53	  GadgetTable,
+    54	  LedMeter,
+    55	  LampGadget,
+    56	  TransportKey,
+    57	  TransportRow,
+    58	  EgressChip,
+    59	  SecretRow,
+    60	} from "./gadgets";
+    61
+    62	export { SurfaceFooter } from "./SurfaceFooter";
+    63	export { Material } from "./Material";
+    64	export { useRovingRows } from "./roving";
+    65
+    66	export {
+    67	  SurfaceWings,
+    68	  type WingSpec,
+    69	  WingSlotContext,
+    70	  useWindowWings,
+    71	} from "./wings";
+    72
+    73	export {
+    74	  CitationChips,
+    75	  groundedMatchCount,
+    76	  sourceLabel,
+    77	  openSourceRef,
+    78	} from "./citations";
+    79
+    80	export {
+    81	  humanTime,
+    82	  deSnake,
+    83	  presentValue,
+    84	  streamDate,
+    85	  streamDayLabel,
+    86	  streamTime,
+    87	  isSameStreamDay,
+    88	} from "./format";
+    89
+    90	export { FootSlotContext } from "./foot";
+    91	export { TitleSlotContext, useWindowTitle } from "./title";
+    92	export { SPARSE_THRESHOLD } from "./sparse";
+    93
+    94	export { FilterTokens, type FilterTokenOption } from "./FilterTokens";
+    95
+    96	export {
+    97	  LedgerFilterBar,
+    98	  useLedgerFilter,
+    99	  type LedgerFilterToken,
+   100	  type UseLedgerFilterOpts,
+   101	} from "./LedgerFilter";
+   102
+   103	export {
+   104	  StateChip,
+   105	  type ChipState,
+   106	  ActionNotice,
+   107	  Disclosure,
+   108	  ProgressPlan,
+   109	  type PlanStep,
+   110	  ChoiceCardGroup,
+   111	  ChoiceCard,
+   112	  ChoiceCardShell,
+   113	  type ChoiceCardShellProps,
+   114	  Popover,
+   115	  ProvenanceChip,
+   116	  Receipt,
+   117	  ClaimAxes,
+   118	  claimKindToken,
+   119	  claimSupportToken,
+   120	  claimAcceptanceToken,
+   121	  claimUnknownToken,
+   122	  type ClaimAxisToken,
+   123	  type ClaimUnknownValue,
+   124	  type ClaimAxesProps,
+   125	  TaskResume,
+   126	  TaskResumeList,
+   127	  type TaskResumeState,
+   128	  type TaskResumeProps,
+   129	  CoverageRow,
+   130	  CoverageLedger,
+   131	  coverageEmblem,
+   132	  type CoverageRowProps,
+   133	  type CoverageLedgerProps,
+   134	  ProjectButton,
+   135	  type ProjectButtonProps,
+   136	  LedgerRemainder,
+   137	  type LedgerRemainderProps,
+   138	} from "./patterns";
+   139
+   140	export { MicButton, type MicState } from "./controls/MicButton";
+   141
+   142	export {
+   143	  TopologySurface,
+   144	  type GraphNode,
+   145	  type GraphFlow,
+   146	  type TopologySurfaceProps,
+   147	} from "./graph/TopologySurface";
+   148
+   149	export { countToken, countLabel } from "./count";
+     1	import { createPortal } from "react-dom";
+     2	import { useContext, type ReactNode } from "react";
+     3	import { FootSlotContext } from "./foot";
+     4	import "./surface-footer.css";
+     5
+     6	export function SurfaceFooter({
+     7	  egress,
+     8	  receipt,
+     9	  verbs,
+    10	  className,
+    11	}: {
+    12	  egress?: ReactNode;
+    13	  receipt?: ReactNode;
+    14	  verbs?: ReactNode;
+    15	  /** HS-169-02 — a face-scoped hook: the layout is portaled into the
+    16	   *  frame's foot slot, so a face cannot reach it by descendant selector. */
+    17	  className?: string;
+    18	}) {
+    19	  // HS-129-05 — the layout sits inside the frame-owned foot so its narrow
+    20	  // container query can reflow the slots without making another footer root.
+    21	  const contents = (
+    22	    <div className={className ? `surface-footer-layout ${className}` : "surface-footer-layout"}>
+    23	      <div className="surface-footer-egress">{egress}</div>
+    24	      <div className="surface-footer-receipt">{receipt}</div>
+    25	      <div className="surface-footer-verbs">{verbs}</div>
+    26	    </div>
+    27	  );
+    28	  const target = useContext(FootSlotContext);
+    29	  return target
+    30	    ? createPortal(contents, target)
+    31	    : <footer className="surface-footer">{contents}</footer>;
+    32	}
+     579 web/src/desk/components/AskPanel.tsx
+     609 web/src/desk/delivery.ts
+     652 web/src/desk/gl/interiors/sceneKit.ts
+     676 web/src/desk/components/DeskMenu.tsx
+     697 web/src/desk/components/MissionControlConveyor.tsx
+     711 web/src/desk/components/DeskToolShelf.tsx
+     773 web/src/desk/surface/send/SendWell.tsx
+     783 web/src/desk/components/SessionPullout.tsx
+     789 web/src/desk/steering.ts
+     820 web/src/desk/verbRegistry.ts
+     825 web/src/desk/components/SystemShade.tsx
+     882 web/src/desk/components/DeskWindow.tsx
+     884 web/src/desk/surface/gadgets.tsx
+     909 web/src/desk/store/dataSlice.ts
+    1107 web/src/desk/api.ts
+    1116 web/src/desk/components/ThreadComposer.tsx
+    1168 web/src/desk/threads.ts
+    1237 web/src/desk/gl/engine.ts
+    1347 web/src/desk/gl/lanternGardenScene.ts
+    1362 web/src/desk/surface/Surface.tsx
+    1812 web/src/desk/pullouts/ThreadPullout.tsx
+    1930 web/src/desk/components/WorkbenchWindow.tsx
+    1939 web/src/desk/gl/rainyCityScene.ts
+    2792 web/src/desk/chair/ChairHome.tsx
+   61596 total
+     299 web/src/desk/components/session-pullout.css
+     312 web/src/desk/desk.css
+     333 web/src/desk/components/dock.css
+     395 web/src/desk/surface/surface-footer.css
+     414 web/src/desk/components/delivery.css
+     415 web/src/desk/components/list-view.css
+     464 web/src/desk/thought-workspace/thought-workspace.css
+     504 web/src/desk/components/speak.css
+     561 web/src/desk/components/attention.css
+     689 web/src/desk/chair/chair.css
+     701 web/src/desk/components/workbench-config.css
+     738 web/src/desk/components/mission-control.css
+     746 web/src/desk/components/window-chrome.css
+     822 web/src/desk/components/pullout.css
+     833 web/src/desk/pullouts/intelligence.css
+     966 web/src/desk/components/chrome-menus.css
+    1104 web/src/desk/surface/gadgets.css
+    1306 web/src/desk/pullouts/thread-pullout.css
+    4290 web/src/desk/surface/surface.css
+   18296 total
+     308
+     265
+      43
+     1	#!/usr/bin/env python3
+     2	"""
+     3	ux_canon_scan.py -- Mechanical UX-canon violation scanner for HoldSpeak faces.
+     4
+     5	Scans web/src (tsx + css; skips __tests__ and *.test.*) for canon violations
+     6	per the owner's rulings in docs/internal/UX-CANON.md, the surface contract,
+     7	and the design system.
+     8
+     9	Usage:
+    10	    python scripts/ux_canon_scan.py [--root DIR]
+    11	        [--write-census DIR | --json PATH --md PATH --ranking PATH]
+    12	        [--write-ceiling PATH [--ceiling-reason TEXT]]
+    13
+    14	A plain run prints the totals and writes NOTHING.  Every file the scanner
+    15	produces is behind an explicit flag (HS-200-44): a guard that dirtied the
+    16	tree on every run is how other phases' evidence was rewritten by accident.
+    17
+    18	Outputs (only when asked for):
+    19	    violations.md   — per-face section with file:line and rule
+    20	    violations.json — machine-readable for guards
+    21	    ranking.md      — faces by Tuesday use x canon debt
+    22	    the ceiling     — the ratchet file the guard test reads; a per-rule
+    23	                      number may fall freely and may only RISE with a new
+    24	                      --ceiling-reason (the dated, down-only shape of HS-200-03)
+    25	"""
+    42	FACE_DIRS = ("features/", "pages/cores/", "desk/")
+    43
+    44	# Tuesday-use ranking from THE-TUESDAY-ARC.md section 0 and the 169 recon.
+    45	# Higher = more Tuesday use.  Surfaces a Senior Architect managing 3 people
+    46	# meets weekly come first.
+    47	TUESDAY_USE: dict[str, int] = {
+    48	    # Tier 1 -- weekly contact surfaces
+    49	    "settingsModels": 8,
+    50	    "ConnectionsPane": 8,
+    51	    "SettingsCore": 7,
+    52	    "DoorCore": 7,
+   114
+   115	def classify_face(rel: str) -> str | None:
+   116	    """Return a face name from a relative path, or None if not a face file."""
+   117	    # Only tsx files are faces (css files contribute to their parent face)
+   118	    if not rel.endswith(".tsx"):
+   119	        return None
+   120	    stem = Path(rel).stem
+   121	    # Files under features/**, pages/cores/**, desk/** that render
+   122	    # a window/core/lane
+   123	    for d in FACE_DIRS:
+   124	        if rel.startswith(d):
+   125	            return stem
+   126	    return None
+   127
+   128
+   129	def face_for_file(rel: str) -> str | None:
+   130	    """For any file (tsx or css), return the face it belongs to."""
+   131	    if rel.endswith(".tsx"):
+   132	        return classify_face(rel)
+   133	    # CSS: the face is the nearest tsx in the same directory, or the directory name
+   134	    parent = str(Path(rel).parent)
+   135	    stem = Path(rel).stem
+   136	    return stem  # best effort: surface.css -> surface
+Scanned 259 files, found 245 violations across 252 faces.
+  (nothing written: pass --write-census DIR, --json/--md/--ranking, or --write-ceiling)
+
+Totals per rule:
+  A1: 102
+  A3-prose: 43
+  B: 30
+  emoji: 24
+  A8: 23
+  raw-ids: 17
+  C: 4
+  A3-sentence: 2
+
+Top 10 faces:
+  WorkbenchWindow                 tuesday=3  debt= 75  score= 225  loudest=A1
+  ProjectRoomCore                 tuesday=7  debt= 24  score= 168  loudest=A3-prose
+  ThreadPullout                   tuesday=6  debt= 19  score= 114  loudest=A1
+  PeopleCore                      tuesday=6  debt= 12  score=  72  loudest=raw-ids
+  DeskToolInspector               tuesday=1  debt= 49  score=  49  loudest=A3-prose
+  ReviewPosture                   tuesday=4  debt= 11  score=  44  loudest=A3-prose
+  SystemShade                     tuesday=5  debt=  7  score=  35  loudest=A3-prose
+  SettingsCore                    tuesday=7  debt=  4  score=  28  loudest=A8
+  AskPanel                        tuesday=1  debt= 19  score=  19  loudest=A3-prose
+  SessionPullout                  tuesday=1  debt= 19  score=  19  loudest=A1
+web/src/desk/components/DeskWindow.tsx:8:// versioned workspace document as the rects), and the phone's bottom-sheet form.
+web/src/desk/store/compositorSlice.ts:9:} from "./workspaceStorage";
+web/src/desk/store/compositorSlice.ts:245:      persistence: "workspace" as const,
+web/src/desk/components/window/windowGeometry.ts:14:/** The usable desktop is one contract: below the system bar, above the dock.
+web/src/desk/components/window/windowGeometry.ts:113:/** HS-95-03 — edge snap: releasing a window drag at a screen edge tiles
+web/src/desk/store/workspaceStorage.ts:8:/** A hard-cut workspace contract. Older Desk window keys are intentionally
+web/src/desk/store/workspaceStorage.ts:10:export const DESK_WORKSPACE_STORAGE_KEY = "hs.desk.workspace.v1";
+web/src/desk/store/workspaceStorage.ts:72:      candidate.persistence !== "workspace"
+web/src/desk/store/index.ts:28:} from "./workspaceStorage";
+web/src/desk/store/types.ts:34:  persistence: "workspace";
+web/src/desk/store/types.ts:47:/** Every current/retired layout key reset must sweep. Only workspace.v1 is
+web/src/desk/store/types.ts:51:  "hs.desk.workspace.v1",
+web/src/desk/store/types.ts:159:   * like pullouts and persist in the versioned workspace document. */
+web/src/desk/store/types.ts:161:  /** Per-zone remembered expression in the workspace: the window remembers. */
+web/src/desk/store/windowFactory.ts:3: * to the compositor's versioned workspace document, never to a window type.

@@ -1,0 +1,24 @@
+Scanned 259 files, found 245 violations across 252 faces.
+  violations.json: docs/internal/philo/phase-13/grounding/probes/structure-canon-output.json
+
+Totals per rule:
+  A1: 102
+  A3-prose: 43
+  B: 30
+  emoji: 24
+  A8: 23
+  raw-ids: 17
+  C: 4
+  A3-sentence: 2
+
+Top 10 faces:
+  WorkbenchWindow                 tuesday=3  debt= 75  score= 225  loudest=A1
+  ProjectRoomCore                 tuesday=7  debt= 24  score= 168  loudest=A3-prose
+  ThreadPullout                   tuesday=6  debt= 19  score= 114  loudest=A1
+  PeopleCore                      tuesday=6  debt= 12  score=  72  loudest=raw-ids
+  DeskToolInspector               tuesday=1  debt= 49  score=  49  loudest=A3-prose
+  ReviewPosture                   tuesday=4  debt= 11  score=  44  loudest=A3-prose
+  SystemShade                     tuesday=5  debt=  7  score=  35  loudest=A3-prose
+  SettingsCore                    tuesday=7  debt=  4  score=  28  loudest=A8
+  AskPanel                        tuesday=1  debt= 19  score=  19  loudest=A3-prose
+  SessionPullout                  tuesday=1  debt= 19  score=  19  loudest=A1
