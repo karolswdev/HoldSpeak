@@ -1,8 +1,8 @@
 # Phase 13 - The Desk
 
-**Last updated:** 2026-10-01 (r2: Astra's check r1 DO-NOT-RATIFY paid — disjoint files with named handoffs, B2 covers every window family and named draft, A2's membership oracle, the Parked artboard, the gates as merge-record evidence, C4's query collision; unchecked r2.) Earlier: 2026-10-01 (DRAFTED by the Fedaykin docs lane for Muad'Dib from PROPOSAL r2 and the five forks the owner ruled; unchecked.)
+**Last updated:** 2026-10-01 (r3: Astra r2 paid (close→reopen place, Trust returns, H-B0b contract); Astra r3 RATIFY-WITH-CONDITIONS paid (anchor `:492`, this status). Earlier r2: Astra's check r1 DO-NOT-RATIFY paid — disjoint files with named handoffs, B2 covers every window family and named draft, A2's membership oracle, the Parked artboard, the gates as merge-record evidence, C4's query collision; unchecked r2.) Earlier: 2026-10-01 (DRAFTED by the Fedaykin docs lane for Muad'Dib from PROPOSAL r2 and the five forks the owner ruled; unchecked.)
 
-**Status:** DRAFT r2, 2026-10-01 — Astra's check r1 DO-NOT-RATIFY paid; awaiting Astra's check of r2; then the owner's ratification.
+**Status:** r3, 2026-10-01 — CHECKED by Astra (r1 DO-NOT-RATIFY, r2 DO-NOT-RATIFY, r3 RATIFY-WITH-CONDITIONS; all paid, `checks/`). Awaiting the owner's ratification.
 
 ## Goal
 
@@ -180,7 +180,7 @@ PROPOSAL §4's map, made disjoint by Astra's check r1 and Muad'Dib's rulings (r2
 | `web/src/desk/components/window/Dock.tsx` (badge logic) | Astra | A2 (the badge reads `needsYou.ts`), C3 |
 | `web/src/runtime/**`, `web/src/desk/useDeskChangedRefresh.ts` | Astra | C3 |
 | `docs/internal/philo/graph/atlas-phase13-astra.json` (**new**) | Astra | B0, A1, A2, B4, B5, C3 |
-| `tests/unit/test_philo_graph_atlas.py` (the shared `.op` sibling count, `:493`) | Astra | B0 (handoff H-B0b) |
+| `tests/unit/test_philo_graph_atlas.py` (the shared `.op` sibling count, `:492`) | Astra | B0 (handoff H-B0b) |
 | `tests/unit/test_philo13_astra_atlas.py` (**new**) | Astra | B0 and every Astra story's cases |
 | `docs/internal/philo/graph/atlas-phase13-muaddib.json` (**new**) | Muad'Dib | every faces-lane story and wiring step |
 | `tests/unit/test_philo13_muaddib_atlas.py` (**new**) | Muad'Dib | every faces-lane story's cases |
