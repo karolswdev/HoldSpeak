@@ -33,6 +33,66 @@ def _make_document(
     return Document(ref=ref, title=title, body_md=body_md, slug=slug, label=label)
 
 
+_SYNTHESIS_FOOTER = re.compile(
+    r"(?:^|\n)(?P<footer>- Source windows: (?P<windows>[^\n]*)\n"
+    r"- Source plugin runs: (?P<runs>[^\n]*))\s*\Z"
+)
+
+
+def _without_synthesis_footer(body: str, sources: list[dict[str, Any]]) -> str:
+    """Remove only the footer emitted by meeting synthesis for this lineage.
+
+    The body is authored/stored text.  A footer-shaped paragraph remains when
+    it does not exactly match the artifact's own ``intent_window`` and
+    ``plugin_run`` source rows, including when it appears inside a code block.
+    """
+    windows = {
+        str(source.get("source_ref") or "").strip()
+        for source in sources
+        if str(source.get("source_type") or "").strip().lower() == "intent_window"
+        and str(source.get("source_ref") or "").strip()
+    }
+    plugin_runs = {
+        str(source.get("source_ref") or "").strip()
+        for source in sources
+        if str(source.get("source_type") or "").strip().lower() == "plugin_run"
+        and str(source.get("source_ref") or "").strip()
+    }
+    if not windows and not plugin_runs:
+        return body
+
+    candidate = body.rstrip("\n")
+    match = _SYNTHESIS_FOOTER.search(candidate)
+    if match is None:
+        return body
+    expected_windows = ", ".join(sorted(windows)) if windows else "none"
+    expected_plugin_runs = ", ".join(sorted(plugin_runs)) if plugin_runs else "none"
+    if match.group("windows") != expected_windows:
+        return body
+    if match.group("runs") != expected_plugin_runs:
+        return body
+
+    prefix = candidate[: match.start()]
+    # The match consumes the newline that separates the stored body from the
+    # synthesis footer. Remove that separator only; keep authored spacing in
+    # the body before it.
+    if prefix.endswith("\n"):
+        prefix = prefix[:-1]
+    return prefix
+
+
+_MISSING_ARTIFACT = object()
+
+
+def _raw_artifact_body(db: Any, source_id: str) -> Any:
+    """Read the stored body before ``get_artifact`` coerces it to ``str``."""
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT body_markdown FROM artifacts WHERE id = ?", (source_id,)
+        ).fetchone()
+    return _MISSING_ARTIFACT if row is None else row["body_markdown"]
+
+
 def _document_not_found(kind: str, source_id: str) -> ChannelRefused:
     return ChannelRefused(
         "document_not_found",
@@ -434,6 +494,53 @@ class _MeetingAftercareSource:
         )
 
 
+class _ArtifactSource:
+    kind = "artifact"
+
+    def render(self, db: Any, source_id: str) -> Document:
+        # Read the native SQLite value first.  ``get_artifact`` intentionally
+        # returns a DTO and coerces its body to text for older callers.
+        raw_body = _raw_artifact_body(db, source_id)
+        if raw_body is _MISSING_ARTIFACT:
+            raise _document_not_found("artifact", source_id)
+        if raw_body is None:
+            # The row exists, so a NULL body is a missing body rather than a
+            # missing document.  A non-text value is rejected before the DTO
+            # value can hide its native type.
+            raise ChannelRefused(
+                "artifact_body_missing",
+                f"Artifact {source_id} has no stored body",
+                status=400,
+            )
+        if not isinstance(raw_body, str):
+            raise ChannelRefused(
+                "artifact_not_text",
+                f"Artifact {source_id} body is not text",
+                status=400,
+            )
+        if not raw_body.strip():
+            raise ChannelRefused(
+                "artifact_body_missing",
+                f"Artifact {source_id} has no stored body",
+                status=400,
+            )
+
+        artifact = db.plugins.get_artifact(source_id)
+        if artifact is None:
+            raise _document_not_found("artifact", source_id)
+
+        title = str(artifact.title or "Artifact").strip() or "Artifact"
+        artifact_type = str(artifact.artifact_type or "plugin_output").strip()
+        type_label = artifact_type.replace("_", " ").upper() or "PLUGIN OUTPUT"
+        return _make_document(
+            ref=f"{self.kind}:{source_id}",
+            title=title,
+            body_md=_without_synthesis_footer(raw_body, artifact.sources),
+            slug=_slug(title, "artifact"),
+            label=f"ARTIFACT · {type_label}",
+        )
+
+
 DOCUMENT_SOURCES: dict[str, DocumentSource] = {
     "project_update": _ProjectUpdateSource(),
     "monday_brief": _MondayBriefSource(),
@@ -443,6 +550,7 @@ DOCUMENT_SOURCES: dict[str, DocumentSource] = {
     "meeting_summary": _MeetingSummarySource(),
     "meeting_digest": _MeetingAftercareSource("meeting_digest"),
     "meeting_followup": _MeetingAftercareSource("meeting_followup"),
+    "artifact": _ArtifactSource(),
 }
 
 

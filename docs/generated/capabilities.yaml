@@ -9480,7 +9480,8 @@
         "stored document producers"
       ],
       "docs": [
-        "pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/design/document-sources.md"
+        "pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/design/document-sources.md",
+        "pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md"
       ],
       "domain": "channels",
       "egress": "The owner sends the rendered document to the saved destination. The brief includes People sections; meeting forms omit the transcript.",
@@ -9497,12 +9498,15 @@
         "not_published",
         "no_summary",
         "preview_changed",
-        "owner_principal_required"
+        "owner_principal_required",
+        "artifact_body_missing",
+        "artifact_not_text",
+        "payload_too_large:<channel>"
       ],
       "id": "channels.document_sources",
-      "implementation_revision": "PHILO-11-01 on base 332d91586bdbd7fe40e3c2c00851a46adc4650e4; the inventory snapshot above remains its historical census baseline.",
+      "implementation_revision": "PHILO-12-01 on base 27d8bf1acffa2a93637e42724949f0426b1dd9b6; the inventory snapshot above remains its historical census baseline.",
       "inputs": [
-        "document_ref: project_update, monday_brief, desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, or meeting_followup",
+        "document_ref: project_update, monday_brief, desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, meeting_followup, or artifact",
         "saved destination id",
         "preview digest or prepared send id"
       ],
@@ -9512,7 +9516,7 @@
         "channel.discard"
       ],
       "limitations": [
-        "New document faces belong to later Phase 11 stories.",
+        "The Floor artifact window and menu/drop integration belong to Phase 12 stories 03 and 04.",
         "External delivery of each new kind and owner observation are not claimed.",
         "Meeting digest and follow-up now use the channel renderer. Slack is limited to 39,000 text characters; no split or truncation."
       ],
@@ -9538,14 +9542,14 @@
         "linux_x11": "unknown",
         "macos": "supported_with_setup"
       },
-      "purpose": "Send an update, brief, decision, or meeting summary to a saved destination.",
+      "purpose": "Send an update, brief, decision, meeting summary, or artifact to a saved destination.",
       "release_availability": "unreleased",
       "replacement": null,
       "side_effect": "external_irreversible",
       "sources": [
         {
-          "claim": "One table resolves eight stored document kinds.",
-          "line": 370,
+          "claim": "One table resolves nine stored document kinds; artifact text comes from its durable producer.",
+          "line": 557,
           "path": "holdspeak/services/document_sources.py",
           "symbol": "render_document"
         },
@@ -9557,7 +9561,7 @@
         }
       ],
       "status": "built_unreleased",
-      "status_reason": "The eight stored sources run through the channel contract. The file-channel rig passed for each kind; owner use and new document faces are not claimed.",
+      "status_reason": "Nine stored sources run through the channel contract. The artifact reads stored text and removes only its lineage-matched synthesis footer. Floor face integration and owner use are not claimed.",
       "surfaces": [
         "HTTP channel operations",
         "MCP channel tools",
@@ -9575,6 +9579,28 @@
           },
           "node": "test_each_document_previews_prepares_and_lists_through_the_real_rig",
           "path": "tests/integration/test_philo11_document_rig.py"
+        },
+        {
+          "assertion": "Meeting synthesis, run output, and Ask Keep render their stored body; only the lineage-matched synthesis footer is removed.",
+          "execution": {
+            "cases": 1,
+            "record": "pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/assets/story-01-logs/source-green.log",
+            "run": "2026-10-01",
+            "status": "passed"
+          },
+          "node": "test_real_producers_render_stored_artifact_body",
+          "path": "tests/unit/test_philo12_artifact_source.py"
+        },
+        {
+          "assertion": "The real hub previews artifact bytes without an operation or send row, then prepares exactly those bytes.",
+          "execution": {
+            "cases": 1,
+            "record": "pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/assets/story-01-logs/lifecycle-green.log",
+            "run": "2026-10-01",
+            "status": "passed"
+          },
+          "node": "test_artifact_preview_equals_frozen_payload_and_is_read_only",
+          "path": "tests/unit/test_philo12_artifact_lifecycle.py"
         }
       ],
       "trust_boundary": "The service reads the stored source by id. A prepared send freezes its bytes and names; inline Send checks the preview digest before dispatch."

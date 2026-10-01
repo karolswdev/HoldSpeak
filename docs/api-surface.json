@@ -748,6 +748,16 @@
       ]
     },
     {
+      "path": "/api/brief/{brief_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.monday_brief",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/briefs/{brief_id}",
       "methods": [
         "GET"

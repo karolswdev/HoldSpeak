@@ -1,4 +1,4 @@
-"""PHILO-11-01 — the eight stored channel document sources."""
+"""PHILO-11-01 — the nine stored channel document sources."""
 from __future__ import annotations
 
 import re
@@ -14,6 +14,7 @@ from holdspeak.services.document_sources import DOCUMENT_SOURCES, render_documen
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo11_documents import OWNER, TRANSCRIPT_SENTINEL, mint_documents  # noqa: E402
+from _philo12_artifacts import mint_meeting_synthesis  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -31,7 +32,7 @@ def db(tmp_path: Path):
     reset_database()
 
 
-def test_registry_declares_the_eight_kinds() -> None:
+def test_registry_declares_the_nine_kinds() -> None:
     assert tuple(DOCUMENT_SOURCES) == (
         "project_update",
         "monday_brief",
@@ -41,16 +42,18 @@ def test_registry_declares_the_eight_kinds() -> None:
         "meeting_summary",
         "meeting_digest",
         "meeting_followup",
+        "artifact",
     )
 
 
-def test_real_producers_render_all_eight_sources(db, tmp_path: Path) -> None:
+def test_real_producers_render_all_nine_sources(db, tmp_path: Path) -> None:
     refs = mint_documents(
         db,
         OWNER,
         now=datetime(2026, 9, 29, 10, 0, 0),
         people_keystore_path=tmp_path / "people.key",
     )
+    refs["artifact"] = mint_meeting_synthesis(db)
     rendered = {kind: render_document(db, ref) for kind, ref in refs.items()}
 
     assert set(rendered) == set(DOCUMENT_SOURCES)
@@ -232,18 +235,25 @@ def test_no_rendered_document_carries_an_internal_id(db, tmp_path: Path) -> None
         now=datetime(2026, 9, 29, 10, 0, 0),
         people_keystore_path=tmp_path / "people.key",
     )
+    refs["artifact"] = mint_meeting_synthesis(db)
     source_ids = {ref.split(":", 1)[1] for ref in refs.values()}
+    artifact_source_ids: set[str] = set()
     with db._connection() as conn:
         source_ids |= {str(r[0]) for r in conn.execute("SELECT source_ref FROM decision_record_sources")}
         source_ids |= {str(r[0]) for r in conn.execute("SELECT id FROM decision_records")}
+        artifact_source_ids = {str(r[0]) for r in conn.execute("SELECT source_ref FROM artifact_sources")}
     leaks: list[str] = []
     for kind, ref in refs.items():
         document = render_document(db, ref)
         # The body is the text that is sent; the title and label name the saved file.
         text = "\n".join((document.body_md, document.title, document.label))
+        if kind == "artifact":
+            text += "\n" + document.slug
         for pattern in (_INTERNAL, _HEX_ID):
             leaks += [f"{kind}: {m.group(0)!r}" for m in pattern.finditer(text)]
         leaks += [f"{kind}: source id {sid!r}" for sid in source_ids if sid and sid in text]
+        if kind == "artifact":
+            leaks += [f"{kind}: artifact lineage id {sid!r}" for sid in artifact_source_ids if sid and sid in text]
     assert not leaks, leaks
 
 

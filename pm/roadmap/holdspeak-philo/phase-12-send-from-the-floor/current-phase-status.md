@@ -1,6 +1,6 @@
 # Phase 12 - Send from the Floor
 
-**Last updated:** 2026-09-30 (RATIFIED by the owner, "Ratify, build it". Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid, `checks/charter-astra-r1.md`.) Earlier: 2026-09-30 (DRAFTED by the Fedaykin docs lane for Muad'Dib; unchecked.)
+**Last updated:** 2026-09-30 (PHILO-12-01 built and verified; full-suite fallout classified; awaiting Muad'Dib's counsel on built.) Earlier: 2026-09-30 (RATIFIED by the owner, "Ratify, build it". Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid, `checks/charter-astra-r1.md`.) Earlier: 2026-09-30 (DRAFTED by the Fedaykin docs lane for Muad'Dib; unchecked.)
 
 **Status:** RATIFIED by the owner 2026-09-30 ("Ratify, build it", all eleven defaults) after Astra's check r1 (RATIFY-WITH-CONDITIONS, paid).
 
@@ -76,7 +76,7 @@ No change. `artifact:<id>` is a new `document_ref` value on the existing operati
 
 The proof is new capability through the real hub on an isolated HOME, never a test double that lies about the field a check reads. "At both widths" means 1440x900 and 393x852. "Red on main" applies where a defect exists (the decision's note sprite; the artifact window's raw buttons; `artifact:<id>` refused `document_kind_unknown`).
 
-- [ ] 1. **The artifact is a document.** `artifact:<id>` renders the stored body by id, through each real producer the Floor shows (meeting synthesis, run output, Ask Keep), with no model run. Red on main (`document_kind_unknown`), green here. Refusals by name: `document_not_found`, `artifact_body_missing`, `artifact_not_text` (checked on the raw stored value), `payload_too_large:<channel>`. The synthesis source footer is not in the payload, and the Phase 11 no-internal-id fence passes over nine kinds. The Phase 10 lifecycle fences run over one artifact. Over MCP alone, a fence maps "send this artifact to <destination>" and "prepare it" to a tool and an argument path; an external agent's `channel.send` is refused `owner_principal_required`.
+- [x] 1. **The artifact is a document.** `artifact:<id>` renders the stored body by id, through each real producer the Floor shows (meeting synthesis, run output, Ask Keep), with no model run. Red on main (`document_kind_unknown`), green here. Refusals by name: `document_not_found`, `artifact_body_missing`, `artifact_not_text` (checked on the raw stored value), `payload_too_large:<channel>`. The synthesis source footer is not in the payload, and the Phase 11 no-internal-id fence passes over nine kinds. The Phase 10 lifecycle fences run over one artifact. Over MCP alone, a fence maps "send this artifact to <destination>" and "prepare it" to a tool and an argument path; an external agent's `channel.send` is refused `owner_principal_required`.
 - [ ] 2. **Each icon binds its exact document.** The binding module answers the design §2 table over its resolved inputs, one case per row, the named refusals (known no summary, known no published update, a parked destination), and `pending` (never a refusal) for unread, loading and failed facts. A glass fence per kind presses Send after a drop or a menu pick and reads the hub's send row: its `document_ref` is the expected one (a project sends the exact published update the link named; a meeting sends Summary unless the picker changed it; the brief sends the handed id even when `latest` answers another). A pick on an object whose read is still loading opens the right window when the read lands; a failed read still opens the document's window.
 - [ ] 2a. **A selection pushed into an open window.** Rendered-transition fences at both widths, each ending with Send and its receipt: a second pick on an already-open window changes its pick and preview in place; Summary → Digest → Follow-up keeps the destination and sends the chosen form; the Room already open on another update switches to the linked update; Intelligence → BRIEF keeps the handed brief id.
 - [ ] 3. **`Send to ▸` works on every entry point.** On the spatial Floor, the list and the menu bar (its Object menu, and the `Go` menu at compact width), from one shared composition, for each sendable kind (the brief as a list row), at both widths. At 393 the list row menu opens by a **touch** long-press in the fence; a mouse right-click does not count. Withheld on a kind that cannot send and on an object that cannot send now. With no destinations, one `Add destination` row opens Settings at the form. A pick opens the document's window with the destination picked and the preview loaded; zero `channel_sends` rows and zero kernel operations exist until Send.
@@ -90,7 +90,7 @@ The proof is new capability through the real hub on an isolated HOME, never a te
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-12-01 | The artifact source and the Floor binding | backlog | [story-01-the-artifact-source-and-the-floor-binding](./story-01-the-artifact-source-and-the-floor-binding.md) | — |
+| PHILO-12-01 | The artifact source and the Floor binding | done | [story-01-the-artifact-source-and-the-floor-binding](./story-01-the-artifact-source-and-the-floor-binding.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-12-02 | The canvases F–J | backlog | [story-02-the-canvases](./story-02-the-canvases.md) | — |
 | PHILO-12-03 | Send to, the artifact window and the decision sprite | backlog | [story-03-send-to-the-artifact-window-and-the-decision-sprite](./story-03-send-to-the-artifact-window-and-the-decision-sprite.md) | — |
 | PHILO-12-04 | Destinations on the Floor and the drop | backlog | [story-04-destinations-on-the-floor-and-the-drop](./story-04-destinations-on-the-floor-and-the-drop.md) | — |
@@ -117,6 +117,8 @@ The proof is new capability through the real hub on an isolated HOME, never a te
 - A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call. CI does not gate a merge (the owner, 2026-09-28).
 
 ## Where we are
+
+2026-09-30: PHILO-12-01 is built and verified on `feat/philo-12-01`. Exit 1 is paid; the binding half of exit 2 is built, while its glass path stays with stories 03–04. 238 focused Python tests, 115 inventory fences and 3,020 web tests pass. The full Python run is red: 10 failed / 13,592 passed; three inventory failures are corrected and seven behavioral failures have two serial passes each. The full result and limits are in [Astra's lane record](lane-01-astra.md) and [evidence](evidence-story-01.md). DRAFT / UNCHECKED, awaiting Muad'Dib's counsel on built. No face integration or merge is claimed.
 
 2026-09-30: the owner RATIFIED the charter ("Ratify, build it") with all eleven defaults. Story 01 (Astra) and story 02, the canvases (Muad'Dib), start now; the Floor faces wait for the canvases' ratification.
 

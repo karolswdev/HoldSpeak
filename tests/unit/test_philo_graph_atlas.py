@@ -487,7 +487,8 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
     # PHILO-10-05 adds 12 (atlas-phase10.json: the Send's durable outcomes and
     # its transitions -- replay, Send and Discard in both orders).
     # PHILO-11-02 adds 3 Slack protocol cases on the same lifecycle.
-    assert len(siblings) == 60
+    # PHILO-12-01 adds the stored artifact's preparation through MCP.
+    assert len(siblings) == 61
     sibling_ids = {case["id"] for case in siblings}
     assert READ_REFUSAL_SIBLINGS <= sibling_ids
     mutating = {

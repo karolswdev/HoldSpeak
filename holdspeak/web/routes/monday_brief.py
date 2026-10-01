@@ -13,7 +13,7 @@ from fastapi import APIRouter, Body, HTTPException, Request
 
 from ... import operations
 from ...db import get_database, get_observer
-from ...principals import UNAUTHENTICATED
+from ...principals import PrincipalKind, UNAUTHENTICATED
 from ...services.monday_brief_service import MondayBriefService
 from ...services.person_overlay import compose_person_overlay
 from ..context import WebContext
@@ -148,5 +148,32 @@ def build_monday_brief_router(ctx: WebContext) -> APIRouter:
             raise HTTPException(status_code=404, detail=str(unknown_item)) from unknown_item
         except ValueError as unknown_state:
             raise HTTPException(status_code=422, detail=str(unknown_state)) from unknown_state
+
+    @router.get("/{brief_id}")
+    async def read_by_id(request: Request, brief_id: str) -> dict[str, Any]:
+        """Read one stored brief without changing the latest-brief pointer.
+
+        This is a plain read for the exact-id handoff from the Desk.  Keep it
+        after the static routes above: Starlette matches routes in declaration
+        order, so ``latest`` and ``shelf`` must continue to win over this
+        parameter route.
+        """
+        if principal(request).kind is PrincipalKind.NONE:
+            raise HTTPException(status_code=401, detail="authentication_required")
+
+        registry = ops()
+        service = registry.target("brief.latest")
+        with service._db._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM monday_briefs WHERE id = ?", (brief_id,)
+            ).fetchone()
+            if row is None:
+                raise HTTPException(status_code=404, detail="brief_not_found")
+            brief = service._load_brief(conn, row)
+
+        result = asdict(brief)
+        result["period_label"] = _period_label(result)
+        result["generated_label"] = _generated_label(result)
+        return _compose_overlay(result, service, request)
 
     return router
