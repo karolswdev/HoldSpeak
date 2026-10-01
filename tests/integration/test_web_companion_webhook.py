@@ -147,6 +147,107 @@ def test_propose_preview_is_the_wire_body(client, db, settings_path):
 
 
 @pytest.mark.integration
+def test_identical_content_dedupes(client, db, settings_path):
+    """The live generic webhook retains the companion idempotency fence."""
+    _configure(settings_path)
+    a = client.post(PROPOSE, json={"text": "same"}).json()["proposal"]
+    b = client.post(PROPOSE, json={"text": "same"}).json()["proposal"]
+    assert a["id"] == b["id"]
+    c = client.post(PROPOSE, json={"text": "different"}).json()["proposal"]
+    assert c["id"] != a["id"]
+
+
+@pytest.mark.integration
+def test_source_identity_returns_the_receipt_to_the_desk_subject(
+    client, db, settings_path, posts
+):
+    _configure(settings_path)
+    db.notes.upsert(
+        note_id="n1",
+        title="Release checklist",
+        body_markdown="release is ready",
+    )
+    proposed = client.post(
+        PROPOSE,
+        json={
+            "text": "release is ready",
+            "title": "Release checklist",
+            "source_ref": "note:n1",
+            "source_label": "Release checklist",
+        },
+    )
+    assert proposed.status_code == 200
+    proposal = proposed.json()["proposal"]
+    assert proposal["window_id"] == "note:n1"
+    assert proposal["payload"]["_source"] == {
+        "ref": "note:n1",
+        "label": "Release checklist",
+    }
+
+    final = _decide(client, proposal["id"], "approved").json()["proposal"]
+    assert final["status"] == "executed"
+    receipt = db.projections.list(subject_ref="note:n1")["projections"][0]
+    assert receipt["projection_kind"] == "receipt"
+    assert receipt["subject_label"] == "Release checklist"
+    assert receipt["title"] == "Custom webhook post succeeded"
+    assert receipt["detail_url"] == "/?open=note:n1"
+
+
+@pytest.mark.integration
+def test_source_identity_must_be_a_known_qualified_kind(client, db, settings_path):
+    _configure(settings_path)
+    response = client.post(
+        PROPOSE,
+        json={"text": "ship", "source_ref": "unknown:n1"},
+    )
+    assert response.status_code == 400
+    assert "unknown resource kind" in response.json()["error"]
+
+
+@pytest.mark.integration
+def test_source_identity_must_resolve_to_live_material(client, db, settings_path):
+    _configure(settings_path)
+    response = client.post(
+        PROPOSE,
+        json={"text": "ship", "source_ref": "note:missing"},
+    )
+    assert response.status_code == 400
+    assert response.json()["error"] == "Unknown Note source: missing"
+
+
+@pytest.mark.integration
+def test_posture_change_never_widens_an_existing_proposal(
+    client, db, settings_path, posts, broadcasts
+):
+    _configure(settings_path)
+    proposal = client.post(PROPOSE, json={"text": "captured normal"}).json()[
+        "proposal"
+    ]
+    assert proposal["policy_snapshot"]["mode"] == "neutral"
+    _set_control_mode(settings_path, "yolo")
+
+    repeated = client.post(PROPOSE, json={"text": "captured normal"}).json()[
+        "proposal"
+    ]
+    assert repeated["id"] == proposal["id"]
+    assert repeated["status"] == "proposed"
+    assert repeated["policy_snapshot"]["mode"] == "neutral"
+    assert posts == []
+
+    final = _decide(client, proposal["id"], "approved").json()["proposal"]
+    assert final["status"] == "executed"
+    assert final["policy_snapshot"]["mode"] == "neutral"
+    assert final["policy_snapshot"]["authority_basis"] == "per_action_decision"
+
+
+@pytest.mark.integration
+def test_decision_on_unknown_proposal_404(client, db, settings_path):
+    _configure(settings_path)
+    res = _decide(client, "ghost", "approved")
+    assert res.status_code == 404
+
+
+@pytest.mark.integration
 def test_approval_posts_the_preview_byte_equal(client, db, settings_path, posts, broadcasts):
     _configure(settings_path)
     proposal = client.post(PROPOSE, json={"text": "the brief"}).json()["proposal"]
@@ -205,6 +306,21 @@ def test_the_url_never_rides_a_response_or_broadcast(client, db, settings_path, 
 
 
 @pytest.mark.integration
+def test_the_wire_events_ride_for_qlippy(client, db, settings_path, posts, broadcasts):
+    """The live generic webhook path still emits a safe execution receipt."""
+    _configure(settings_path)
+    pid = client.post(PROPOSE, json={"text": "ping"}).json()["proposal"]["id"]
+    _decide(client, pid, "approved")
+    kinds = [kind for kind, _data in broadcasts.events]
+    assert "actuator_proposed" in kinds
+    assert "actuator_result" in kinds
+    result = next(data for kind, data in broadcasts.events if kind == "actuator_result")
+    assert result["status"] == "executed"
+    assert result["target"] == "webhook"
+    assert "payload" not in result
+
+
+@pytest.mark.integration
 def test_companion_status_reports_webhook_configured(client, db, settings_path):
     assert client.get("/api/desk/actuators/status").json()["webhook_configured"] is False
     _configure(settings_path)
@@ -214,8 +330,34 @@ def test_companion_status_reports_webhook_configured(client, db, settings_path):
 
 @pytest.mark.integration
 def test_slack_and_webhook_decisions_do_not_cross(client, db, settings_path):
-    # a webhook proposal cannot be decided on the slack route, and vice-versa
+    # A live webhook proposal cannot be decided through the parked Slack
+    # endpoint. The endpoint returns its named capability refusal, and does
+    # not consume the webhook proposal.
     _configure(settings_path)
     pid = client.post(PROPOSE, json={"text": "ping"}).json()["proposal"]["id"]
     crossed = client.post(f"/api/desk/actuators/slack/{pid}/decision", json={"decision": "approved"})
-    assert crossed.status_code == 404
+    assert crossed.status_code == 400
+    assert crossed.json()["error"] == "slack_moved_to_channel"
+
+    # A historical Slack proposal is still readable, but the live webhook
+    # decision route refuses to act on it by target. This keeps the original
+    # cross-target guard on a real persisted proposal.
+    historical = db.actuators.record_proposal(
+        meeting_id=None,
+        origin="desk",
+        window_id="legacy:slack",
+        plugin_id="webhook_post",
+        plugin_version="1",
+        idempotency_key="legacy-slack-cross-target-1",
+        target="slack",
+        action="post_message",
+        preview="historical Slack message",
+        payload={"body": {"text": "historical Slack message"}},
+        required_capabilities=["actuator"],
+        fixed_destination=True,
+    )
+    reverse = client.post(
+        f"/api/desk/actuators/webhook/{historical.id}/decision",
+        json={"decision": "approved"},
+    )
+    assert reverse.status_code == 404

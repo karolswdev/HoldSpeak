@@ -1,0 +1,10 @@
+PASS: live
+BRAIN: astra
+SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
+RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:49719 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_uvo9syn/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p10
+VERDICT: pass terminal=settled
+EVIDENCE: []
+NOTE: placeholder(s) ['send_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)
+NOTE: predicate: all_of: op_facts: all 8 facts hold: the trigger outcome holds; observe_at updates.0.deliveries holds; observe_at updates.0.deliveries.0.outcome holds; observe_at updates.0.deliveries.0.operation_id holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_kind holds | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [6690]; 3 call(s) in all), wanted 1

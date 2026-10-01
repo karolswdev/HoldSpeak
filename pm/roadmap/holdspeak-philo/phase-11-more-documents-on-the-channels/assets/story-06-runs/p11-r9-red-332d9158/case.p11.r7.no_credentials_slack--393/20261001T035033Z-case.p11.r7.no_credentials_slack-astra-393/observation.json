@@ -1,0 +1,1167 @@
+{
+  "id": "obs-20261001T035033Z-case.p11.r7.no_credentials_slack-astra-393",
+  "run_id": "20261001T035033Z-case.p11.r7.no_credentials_slack-astra-393",
+  "case_id": "case.p11.r7.no_credentials_slack",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase11-slack.json",
+  "job": "p11",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p11_r7_exclusions",
+  "provenance": {
+    "revision": "332d91586bdbd7fe40e3c2c00851a46adc4650e4",
+    "revision_source": "environment",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "18f299869d984fd50e4ce99c6855356a2ed7d5c1317b688ef4c2d2bbd54e4ddb",
+      "assets": [
+        "index-CRd8xHI_.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:65519",
+      "port": 65519,
+      "pid": 82653,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5r9wjqik",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5r9wjqik/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T03:50:33.673914+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase11-slack.json",
+      "sha256": "e6ee25cfc0e05f09e7b04d91bb2866f65ca0a040d7b20b189ff0539961f320d7",
+      "version": "phase11-slack-backend"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T21:50:39.258084"
+        }
+      },
+      "response_sha256": "0dfadd9fa5f98ca1d9ed8807f218e89201a9f8b4b20cef186c8b33e23bef6240"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "Settings Connections is opened on an isolated hub with the old Slack credential row absent.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5r9wjqik"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[id='desk-palette-option-go.configure-integrations']",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "scroll_into_view",
+        "adapter": "ui-pointer",
+        "selector": ".desk-window section.gadget-group:has(>.gadget-sheet>.prefs-egress-line)",
+        "block": "center",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "CREDENTIALS\nNOT SET\nvalues stay on this hub\nWeb pairing token\nSET\nReplace\nRotate\nDelete\nDevice audio key\n\u2014\nReplace\nRotate\nTelegram bot token\n\u2014\nReplace\nTelegram pairing code\n\u2014\nReplace\nRotate\nSlack webhook\n\u2014\nReplace\nCustom webhook\n\u2014\nReplace"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "gadget-group"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 15,
+        "y": 136,
+        "w": 363,
+        "h": 500
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+      "after": "div#surface-settings"
+    },
+    "focus_label": {
+      "before": "Search tools and Desk items",
+      "after": "Settings"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Settings",
+          "rect": {
+            "x": 0,
+            "y": 48,
+            "w": 393,
+            "h": 631
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "9d0295e3de4d699a298a4a90017ec5061f3de72ae407832eaed4f325b6480c24",
+      "after": "908848d5706aa6ac7f92c1846d24da0444e63a5c49775fa7642cac0d3c037e60"
+    },
+    "document_text_len": {
+      "before": 339,
+      "after": 907
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+          "value": "Connections"
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": ".desk-window section.gadget-group:has(>.gadget-sheet>.prefs-egress-line)",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [
+      {
+        "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+        "value": "Connections"
+      }
+    ],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:65519/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "9d0295e3de4d699a298a4a90017ec5061f3de72ae407832eaed4f325b6480c24",
+    "document_text_len": 339,
+    "replay_identity": null,
+    "at_utc": "2026-10-01T03:50:41.454044+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-window section.gadget-group:has(>.gadget-sheet>.prefs-egress-line)",
+    "target_present": true,
+    "text": "CREDENTIALS\nNOT SET\nvalues stay on this hub\nWeb pairing token\nSET\nReplace\nRotate\nDelete\nDevice audio key\n\u2014\nReplace\nRotate\nTelegram bot token\n\u2014\nReplace\nTelegram pairing code\n\u2014\nReplace\nRotate\nSlack webhook\n\u2014\nReplace\nCustom webhook\n\u2014\nReplace",
+    "attrs": {
+      "class": "gadget-group"
+    },
+    "rect": {
+      "x": 15,
+      "y": 136,
+      "w": 363,
+      "h": 500
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 136,
+        "w": 363,
+        "h": 500
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 138,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > h4.gadget-group-label"
+        },
+        {
+          "x": 17,
+          "y": 386,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > div.gadget-sheet > div.gadget-secret"
+        },
+        {
+          "x": 17,
+          "y": 634,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > div.gadget-sheet > div.gadget-secret"
+        },
+        {
+          "x": 197,
+          "y": 138,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > h4.gadget-group-label"
+        },
+        {
+          "x": 197,
+          "y": 386,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.prefs-module > section.gadget-group > div.gadget-sheet > div.gadget-secret > span"
+        },
+        {
+          "x": 197,
+          "y": 634,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > div.gadget-sheet > div.gadget-secret"
+        },
+        {
+          "x": 376,
+          "y": 138,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > h4.gadget-group-label"
+        },
+        {
+          "x": 376,
+          "y": 386,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > div.gadget-sheet > div.gadget-secret"
+        },
+        {
+          "x": 376,
+          "y": 634,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > div.gadget-sheet > div.gadget-secret"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 525,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "275px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#surface-settings",
+    "focus_label": "Settings",
+    "url": "http://127.0.0.1:65519/",
+    "windows": [
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 631
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "908848d5706aa6ac7f92c1846d24da0444e63a5c49775fa7642cac0d3c037e60",
+    "document_text_len": 907,
+    "replay_identity": null,
+    "at_utc": "2026-10-01T03:51:11.822056+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:65519) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:65519) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/_built/assets/core-layout-DOllse7S.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/settingsWallpaper-CDlYyUh6.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/atmosphereControls-nB4jNh-k.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-D2j70b_S.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/core-hooks-rOwBgGsK.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/api-CzcYCSym.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SettingsCore-BFFlo0J7.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-DraW8HIw.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/authority/policy",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/hub",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/calendar/sources",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/connections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/destinations",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/connections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-window section.gadget-group:has(>.gadget-sheet>.prefs-egress-line)",
+    "target_present": true,
+    "text": "CREDENTIALS\nNOT SET\nvalues stay on this hub\nWeb pairing token\nSET\nReplace\nRotate\nDelete\nDevice audio key\n\u2014\nReplace\nRotate\nTelegram bot token\n\u2014\nReplace\nTelegram pairing code\n\u2014\nReplace\nRotate\nSlack webhook\n\u2014\nReplace\nCustom webhook\n\u2014\nReplace",
+    "attrs": {
+      "class": "gadget-group"
+    },
+    "rect": {
+      "x": 15,
+      "y": 136,
+      "w": 363,
+      "h": 500
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 136,
+        "w": 363,
+        "h": 500
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 138,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > h4.gadget-group-label"
+        },
+        {
+          "x": 17,
+          "y": 386,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > div.gadget-sheet > div.gadget-secret"
+        },
+        {
+          "x": 17,
+          "y": 634,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > div.gadget-sheet > div.gadget-secret"
+        },
+        {
+          "x": 197,
+          "y": 138,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > h4.gadget-group-label"
+        },
+        {
+          "x": 197,
+          "y": 386,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.prefs-module > section.gadget-group > div.gadget-sheet > div.gadget-secret > span"
+        },
+        {
+          "x": 197,
+          "y": 634,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > div.gadget-sheet > div.gadget-secret"
+        },
+        {
+          "x": 376,
+          "y": 138,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > h4.gadget-group-label"
+        },
+        {
+          "x": 376,
+          "y": 386,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > div.gadget-sheet > div.gadget-secret"
+        },
+        {
+          "x": 376,
+          "y": 634,
+          "owned": true,
+          "owner": "div#surface-settings > div.desk-surface-body > div.prefs-module > section.gadget-group > div.gadget-sheet > div.gadget-secret"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 525,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "275px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#surface-settings",
+    "focus_label": "Settings",
+    "url": "http://127.0.0.1:65519/",
+    "windows": [
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 631
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "93fda4b0595741803877f29fa15e507b380aad04e6006e2a5dcf60a0ddc103eb",
+    "document_text_len": 907,
+    "replay_identity": null,
+    "at_utc": "2026-10-01T03:50:43.509105+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:65519) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:65519) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/_built/assets/core-layout-DOllse7S.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/settingsWallpaper-CDlYyUh6.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/atmosphereControls-nB4jNh-k.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-D2j70b_S.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/core-hooks-rOwBgGsK.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/api-CzcYCSym.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SettingsCore-BFFlo0J7.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-DraW8HIw.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/authority/policy",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/hub",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/calendar/sources",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/connections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/destinations",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/connections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": false,
+    "reading": "all_of part text_absent: 'Slack webhook' PRESENT at observe_at",
+    "elapsed_s": 2.003
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "all_of part text_absent: 'Slack webhook' PRESENT at observe_at",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 30.316,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "predicate: all_of part text_absent: 'Slack webhook' PRESENT at observe_at",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['attrs', 'document_text_len', 'document_text_sha256', 'focus', 'focus_label', 'rect', 'target_present', 'text', 'values', 'visible', 'windows'])."
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:65519) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:65519) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/_built/assets/core-layout-DOllse7S.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/settingsWallpaper-CDlYyUh6.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/atmosphereControls-nB4jNh-k.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/SendWell-D2j70b_S.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/core-hooks-rOwBgGsK.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/api-CzcYCSym.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/SettingsCore-BFFlo0J7.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/SendWell-DraW8HIw.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/authority/policy",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings/hub",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/calendar/sources",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/connections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/destinations",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/connections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r8-red-332d-b4/case.p11.r7.no_credentials_slack--393/20261001T035033Z-case.p11.r7.no_credentials_slack-astra-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r8-red-332d-b4/case.p11.r7.no_credentials_slack--393/20261001T035033Z-case.p11.r7.no_credentials_slack-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5r9wjqik/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5r9wjqik/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:65519"
+  ],
+  "duration_s": 40.353
+}

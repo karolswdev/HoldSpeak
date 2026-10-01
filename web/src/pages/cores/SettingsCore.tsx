@@ -81,7 +81,6 @@ const SECRET_LABELS: Record<string, string> = {
   telegram_pairing_code: "Telegram pairing code",
   failure_webhook_url: "Failure alert webhook",
   failure_webhook_credential: "Failure alert credential",
-  slack_webhook_url: "Slack webhook",
   companion_webhook_url: "Custom webhook",
 };
 const ROTATABLE_SECRETS = new Set([

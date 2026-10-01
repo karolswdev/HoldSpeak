@@ -7,6 +7,7 @@ import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface/Sur
 import { countLabel } from "../../surface/count";
 import { MicButton } from "../../surface";
 import { StringGadget } from "../../surface/gadgets";
+import { DecisionRecordSendWells } from "../../documentSendsLazy";
 
 type ReceiptSource = {
   source_type: string;
@@ -255,6 +256,8 @@ function ReceiptDetail({
         <ReceiptField label="Owner" value={receipt.owner} />
         <ReceiptField label="Review" value={humanDate(receipt.review_date)} />
       </dl>
+      {/* PHILO-11-05a (canvas B5): the record's SEND well, after its fields. */}
+      <DecisionRecordSendWells id={receipt.id} text={decisionText} />
       <section className="receipt-provenance" aria-label="Provenance">
         <h4>PROVENANCE</h4>
         {provenance?.text ? (

@@ -216,8 +216,10 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
             registry.invoke(principal, "meeting.import", {"nope": 1})
         assert exc.value.code == "owner_required"
     assert operations.MEETING_IMPORT.owner_only is True
-    # PHILO-10-03: channel.save_email_key is owner only too (the key is a held input, HTTP only).
-    assert [d.name for d in operations.DESCRIPTORS if d.owner_only] == ["meeting.import", "channel.save_email_key"]
+    # Both secret saves are owner only and HTTP only, with held inputs.
+    assert [d.name for d in operations.DESCRIPTORS if d.owner_only] == [
+        "meeting.import", "channel.save_email_key", "channel.save_slack_webhook",
+    ]
     assert "owner_required" in operations.MEETING_IMPORT.export()["refusals"]
 
 
@@ -507,12 +509,12 @@ def _p_channel_check_destination(hub: Hub, monkeypatch: Any, tmp_path: Path) -> 
 
 def _p_channel_preview(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     uid, dest = _channel(hub, tmp_path)
-    return hub.root.operations.invoke(OWNER, "channel.preview", {"update_id": uid, "destination_id": dest})
+    return hub.root.operations.invoke(OWNER, "channel.preview", {"document_ref": f"project_update:{uid}", "destination_id": dest})
 
 
 def _p_channel_prepare(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     uid, dest = _channel(hub, tmp_path)
-    return hub.root.operations.invoke(OWNER, "channel.prepare", {"update_id": uid, "destination_id": dest})
+    return hub.root.operations.invoke(OWNER, "channel.prepare", {"document_ref": f"project_update:{uid}", "destination_id": dest})
 
 
 def _p_channel_discard(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
@@ -533,6 +535,20 @@ def _p_channel_save_email_key(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any
     monkeypatch.setattr(channel_email, "KEY_STORE", lambda: memory)
     return hub.root.operations.invoke(OWNER, "channel.save_email_key", {"key_ref": "sendgrid"},
                                       held={"api_key": "SG.shape-fence-synthetic"})
+
+
+def _p_channel_save_slack_webhook(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    """The actual held-secret producer, with memory custody and no network."""
+    from holdspeak.services import channel_slack
+
+    memory = channel_slack.MemorySlackKeyStore()
+    monkeypatch.setattr(channel_slack, "KEY_STORE", lambda: memory)
+    result = hub.root.operations.invoke(OWNER, "channel.save_slack_webhook", {},
+        held={"webhook_url": "https://hooks.slack.com/services/T_SHAPE/B_SHAPE/synthetic"})
+    assert result["saved"] is True
+    assert memory.values == {f"slack:{result['key_ref']}":
+                             "https://hooks.slack.com/services/T_SHAPE/B_SHAPE/synthetic"}
+    return result
 
 
 def _p_channel_sends(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
@@ -575,6 +591,7 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "channel.send": _p_channel_send,
     "channel.sends": _p_channel_sends,
     "channel.save_email_key": _p_channel_save_email_key,
+    "channel.save_slack_webhook": _p_channel_save_slack_webhook,
 }
 
 

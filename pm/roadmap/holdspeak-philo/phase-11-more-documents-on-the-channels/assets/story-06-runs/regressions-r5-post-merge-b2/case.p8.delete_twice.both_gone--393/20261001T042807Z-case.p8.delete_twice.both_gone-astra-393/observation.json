@@ -1,0 +1,441 @@
+{
+  "id": "obs-20261001T042807Z-case.p8.delete_twice.both_gone-astra-393",
+  "run_id": "20261001T042807Z-case.p8.delete_twice.both_gone-astra-393",
+  "case_id": "case.p8.delete_twice.both_gone",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.decision_delete"
+  ],
+  "state_id": "state.desk_presentation.p8_one_delete",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:49634",
+      "port": 49634,
+      "pid": 15434,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sq04fesg",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sq04fesg/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:28:07.343496+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "582435241baa534b84dd2ccecf25d381d0abe8841984a83ec60ff836f263572a",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.34,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_571f2bc576ec",
+          "title": "Atlas probe A",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:28:13Z",
+          "updated_at": "2026-10-01T04:28:13Z",
+          "deleted": false
+        },
+        "operation_id": "op_1592718af9124294b0a1ae3e9f9d2a25",
+        "receipt": {
+          "receipt_id": "rcpt_69828b5227df4884b467198eb31f3a15",
+          "operation_id": "op_1592718af9124294b0a1ae3e9f9d2a25",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_571f2bc576ec",
+          "created_at": 1790828893.890507,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_571f2bc576ec"
+        }
+      },
+      "response_sha256": "7c9062e0737f6cabed93394223c362d323395cf794ea22723e8607e2c15c7a75",
+      "captured": {
+        "name": "a_id",
+        "path": "decision.id",
+        "value": "decision_571f2bc576ec"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_07ed053f4041",
+          "title": "Atlas probe B",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:28:13Z",
+          "updated_at": "2026-10-01T04:28:13Z",
+          "deleted": false
+        },
+        "operation_id": "op_66b7bc6de56a44e5ba8b720098c8febd",
+        "receipt": {
+          "receipt_id": "rcpt_129840651b4a44639532975f6bab7838",
+          "operation_id": "op_66b7bc6de56a44e5ba8b720098c8febd",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_07ed053f4041",
+          "created_at": 1790828893.929844,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_07ed053f4041"
+        }
+      },
+      "response_sha256": "0cce5e197b86a5555374a4f94d42033693f8b075ffaae8a2c85a80a6422b9350",
+      "captured": {
+        "name": "b_id",
+        "path": "decision.id",
+        "value": "decision_07ed053f4041"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 393,
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "at_width": 393,
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 393,
+      "selector": "[id='desk-palette-option-desk.toggle-view']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-world-a11y",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-obj-id='decision:decision_571f2bc576ec']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "focus",
+      "adapter": "ui-keyboard",
+      "selector": "[data-obj-id='decision:decision_571f2bc576ec']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "press",
+      "adapter": "ui-keyboard",
+      "key": "Shift+Enter",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-floor-toggle]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "aria-pressed",
+        "value": "true"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "aria-pressed='true', wanted 'true'"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sq04fesg",
+    "a_id": "decision_571f2bc576ec",
+    "b_id": "decision_07ed053f4041"
+  },
+  "trigger": null,
+  "diff": {},
+  "before": {
+    "observe_at": ".undo-receipt",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-world > div.desk-world-a11y > button",
+    "focus_label": "Atlas probe A",
+    "url": "http://127.0.0.1:49634/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "e6d3a6a07a7f7b86e80d66da434394971eb8eb621291eeb3cfea2db4b82ad91d",
+    "document_text_len": 281,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_571f2bc576ec",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_571f2bc576ec",
+            "title": "Atlas probe A",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-10-01T04:28:13Z",
+            "updated_at": "2026-10-01T04:28:13Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "cb481cea4b163b1614fe211821a9d99979c424942417269a3380720f0ddb3cde"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_07ed053f4041",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_07ed053f4041",
+            "title": "Atlas probe B",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-10-01T04:28:13Z",
+            "updated_at": "2026-10-01T04:28:13Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "e70217a010703dbc4ae789f239df95f9470ad1b0132da995c123d6f8cd1348fc"
+      }
+    ],
+    "at_utc": "2026-10-01T04:28:29.576990+00:00"
+  },
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "blocked",
+  "notes": [
+    "BLOCKED: ui step press not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (.undo-receipt-time reads \"01s\", wanted >= 2s)"
+  ],
+  "complete": true,
+  "trigger_error": {
+    "step": {
+      "kind": "ui",
+      "action": "press",
+      "adapter": "ui-keyboard",
+      "key": "Delete",
+      "why": "A queued: the receipt reads 'Removed Atlas probe A'",
+      "then": [
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".undo-receipt.is-pending",
+          "timeout_s": 3,
+          "why": "the first delete is still inside its window (the receipt's pending phase)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-obj-id='decision:{b_id}']",
+          "state": "attached"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-keyboard",
+          "selector": "[data-obj-id='decision:{b_id}']",
+          "why": "keyboard travel to the Floor object's chip (a focused world button surfaces as a chip)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "Shift+Enter",
+          "why": "select it: Shift toggles the selection (WorldStage chip click)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".undo-receipt.is-pending",
+          "timeout_s": 3,
+          "why": "the first delete is still inside its window (the receipt's pending phase)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "Delete",
+          "requires": {
+            "visible": ".undo-receipt.is-pending",
+            "text": "Undo",
+            "seconds_left": {
+              "selector": ".undo-receipt-time",
+              "min": 2
+            }
+          },
+          "why": "B inside A's window, re-checked at delivery (A's receipt pending with Undo and at least 2 s left): the second delete commits A at once (useUndoReceipt flush) and queues B"
+        }
+      ]
+    },
+    "error": "ui step press not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (.undo-receipt-time reads \"01s\", wanted >= 2s)"
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b2/case.p8.delete_twice.both_gone--393/20261001T042807Z-case.p8.delete_twice.both_gone-astra-393/blocked.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sq04fesg/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sq04fesg/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:49634"
+  ],
+  "duration_s": 37.939
+}

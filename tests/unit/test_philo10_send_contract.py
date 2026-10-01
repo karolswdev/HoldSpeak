@@ -46,8 +46,7 @@ from holdspeak.runtime import composition
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo10_send import (  # noqa: E402
     SENTINEL, DispatchSpy, Hub, _boot, destination, files, history, in_thread, op, ops, prepare, preview_digest, room,
-    send,
-    send_body, sends,
+    send, send_body, sends, source,
 )
 from test_philo9_steward_admission import AGENT_ID, _agent, _tool  # noqa: E402
 
@@ -56,6 +55,7 @@ CHANNEL_OPS = ("channel.destinations", "channel.save_destination", "channel.remo
                "channel.send", "channel.sends")
 ADMITTED = ("channel.save_destination", "channel.remove_destination", "channel.prepare", "channel.discard",
             "channel.send")
+SOURCE_KINDS = ["project_update", "desk_decision"]
 
 
 @pytest.fixture
@@ -74,8 +74,8 @@ def test_the_operations_are_declared_once_and_reach_one_service_over_http_and_mc
     from holdspeak import operations
 
     declared = [d.name for d in operations.DESCRIPTORS if d.name.startswith("channel.")]
-    # PHILO-10-03: channel.save_email_key is HTTP only (the key is held by the transport, never an argument).
-    assert declared == [*CHANNEL_OPS, "channel.save_email_key"]
+    # Secret saves are HTTP only; each secret is held, never an operation argument.
+    assert declared == [*CHANNEL_OPS, "channel.save_email_key", "channel.save_slack_webhook"]
     registry = hub.root.operations
     service = hub.root.channel_service
     assert service is not None and hub.server.app is not None
@@ -89,6 +89,7 @@ def test_the_operations_are_declared_once_and_reach_one_service_over_http_and_mc
         http = [e for e in descriptor.exposure if e.startswith("http:")]
         assert http and f"mcp:{name}" in descriptor.exposure, name
     assert "channel.save_email_key" not in tools
+    assert "channel.save_slack_webhook" not in tools
     routes = {(m, r.path) for r in hub.server.app.routes for m in getattr(r, "methods", ()) or ()}
     for name in declared:
         for exposure in registry.descriptor(name).exposure:
@@ -100,11 +101,11 @@ def test_the_operations_are_declared_once_and_reach_one_service_over_http_and_mc
 def test_http_and_mcp_reach_the_same_rows(hub: Hub, tmp_path: Path) -> None:
     _pid, update = room(hub)
     dest = destination(hub, tmp_path / "out")
-    is_error, prepared = hub.mcp("channel.prepare", {"update_id": update, "destination_id": dest})
+    is_error, prepared = hub.mcp("channel.prepare", {"document_ref": f"project_update:{update}", "destination_id": dest})
     assert is_error is False, prepared
-    over_http = hub.client.get("/api/channels/sends", params={"update_id": update}).json()["sends"]
+    over_http = hub.client.get("/api/channels/sends", params={"document_ref": f"project_update:{update}"}).json()["sends"]
     assert [s["id"] for s in over_http] == [prepared["send"]["id"]]
-    is_error, listed = hub.mcp("channel.sends", {"update_id": update})
+    is_error, listed = hub.mcp("channel.sends", {"document_ref": f"project_update:{update}"})
     assert is_error is False and listed["sends"] == over_http
 
 
@@ -130,10 +131,10 @@ def test_each_admitted_row_is_one_operation_with_one_terminal_receipt(hub: Hub, 
     saved = call("channel.save_destination", {"name": "Team", "channel": "file", "folder": str(folder)},
                  lambda: c.post("/api/channels/destinations", json={"name": "Team", "channel": "file", "folder": str(folder)}))
     dest = saved["destination"]["id"]
-    first = call("channel.prepare", {"update_id": update, "destination_id": dest},
-                 lambda: c.post("/api/channels/sends", json={"update_id": update, "destination_id": dest}))
-    second = call("channel.prepare", {"update_id": update, "destination_id": dest},
-                  lambda: c.post("/api/channels/sends", json={"update_id": update, "destination_id": dest}))
+    first = call("channel.prepare", {"document_ref": f"project_update:{update}", "destination_id": dest},
+                 lambda: c.post("/api/channels/sends", json={"document_ref": f"project_update:{update}", "destination_id": dest}))
+    second = call("channel.prepare", {"document_ref": f"project_update:{update}", "destination_id": dest},
+                  lambda: c.post("/api/channels/sends", json={"document_ref": f"project_update:{update}", "destination_id": dest}))
     discarded = call("channel.discard", {"send_id": second["send"]["id"]},
                      lambda: c.post(f"/api/channels/sends/{second['send']['id']}/discard", json={}))
     sent = call("channel.send", {"send_id": first["send"]["id"]},
@@ -159,10 +160,10 @@ def test_reads_and_previews_leave_no_operation(hub: Hub, tmp_path: Path) -> None
     before = len(ops(hub))
     c = hub.client
     assert c.get("/api/channels/destinations").status_code == 200
-    assert c.post("/api/channels/preview", json={"update_id": update, "destination_id": dest}).status_code == 200
+    assert c.post("/api/channels/preview", json={"document_ref": f"project_update:{update}", "destination_id": dest}).status_code == 200
     assert c.post(f"/api/channels/destinations/{dest}/check").json()["check"]["state"] == "ready"
     assert c.get("/api/channels/sends", params={"send_id": sent_id}).status_code == 200
-    for name, args in (("channel.destinations", {}), ("channel.preview", {"update_id": update, "destination_id": dest}),
+    for name, args in (("channel.destinations", {}), ("channel.preview", {"document_ref": f"project_update:{update}", "destination_id": dest}),
                        ("channel.check_destination", {"destination_id": dest}), ("channel.sends", {})):
         is_error, body = hub.mcp(name, args)
         assert is_error is False, (name, body)
@@ -186,29 +187,30 @@ def test_each_refusal_class_leaves_its_receipt_and_sends_nothing(hub: Hub, tmp_p
     dest = destination(hub, folder)
     c = hub.client
     # destination not saved
-    _refused(hub, c.post("/api/channels/sends", json={"update_id": update, "destination_id": "chd_nope"}),
+    _refused(hub, c.post("/api/channels/sends", json={"document_ref": f"project_update:{update}", "destination_id": "chd_nope"}),
              "destination_not_saved", "channel.prepare")
-    _refused(hub, c.post("/api/channels/send", json={"update_id": update, "destination_id": "chd_nope",
+    _refused(hub, c.post("/api/channels/send", json={"document_ref": f"project_update:{update}", "destination_id": "chd_nope",
                                                      "preview_digest": "0" * 64}),
              "destination_not_saved", "channel.send")
     # not published
-    _refused(hub, c.post("/api/channels/sends", json={"update_id": draft, "destination_id": dest}),
-             "update_not_published", "channel.prepare")
+    _refused(hub, c.post("/api/channels/sends", json={"document_ref": f"project_update:{draft}", "destination_id": dest}),
+             "not_published", "channel.prepare")
     # preview changed: the digest he saw is not what would go now
-    _refused(hub, c.post("/api/channels/send", json={"update_id": update, "destination_id": dest,
+    _refused(hub, c.post("/api/channels/send", json={"document_ref": f"project_update:{update}", "destination_id": dest,
                                                      "preview_digest": "0" * 64}),
              "preview_changed", "channel.send")
     # owner only (an agent's send): test_an_agents_send_is_refused_owner_principal_required
     assert files(folder) == [] and all(s["state"] == "prepared" for s in sends(hub))
 
 
+@pytest.mark.parametrize("source_kind", SOURCE_KINDS)
 def test_an_agents_send_discard_and_destination_writes_are_refused_owner_principal_required(
-    hub: Hub, tmp_path: Path,
+    hub: Hub, tmp_path: Path, source_kind: str,
 ) -> None:
     folder = tmp_path / "out"
-    _pid, update = room(hub)
+    document_ref = source(hub, source_kind)
     dest = destination(hub, folder)
-    prepared = prepare(hub, update, dest)["send"]["id"]
+    prepared = prepare(hub, document_ref, dest)["send"]["id"]
     agent = _agent(hub)
     attempts = {
         "channel.send": ({"send_id": prepared}, lambda: agent.post("/api/channels/send", json={"send_id": prepared})),
@@ -235,18 +237,19 @@ def test_an_agents_send_discard_and_destination_writes_are_refused_owner_princip
 
 
 @pytest.mark.parametrize("transport", ["mcp", "http"])
+@pytest.mark.parametrize("source_kind", SOURCE_KINDS)
 def test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner(
-    hub: Hub, tmp_path: Path, transport: str,
+    hub: Hub, tmp_path: Path, transport: str, source_kind: str,
 ) -> None:
     folder = tmp_path / "out"
-    _pid, update = room(hub)
+    document_ref = source(hub, source_kind)
     dest = destination(hub, folder)
     agent = _agent(hub)
     if transport == "mcp":
-        is_error, body = _tool(agent, "channel.prepare", {"update_id": update, "destination_id": dest})
+        is_error, body = _tool(agent, "channel.prepare", {"document_ref": document_ref, "destination_id": dest})
         assert is_error is False, body
     else:
-        resp = agent.post("/api/channels/sends", json={"update_id": update, "destination_id": dest})
+        resp = agent.post("/api/channels/sends", json={"document_ref": document_ref, "destination_id": dest})
         assert resp.status_code == 200, resp.text
         body = resp.json()
     row = op(hub, body["operation_id"])
@@ -289,7 +292,7 @@ def test_two_sends_of_one_update_to_one_folder_make_two_files_with_their_proof(h
         assert proof["sha256"] == hashlib.sha256(data).hexdigest() == answer["send"]["payload_digest"]
         assert proof["size"] == len(data)
         assert answer["send"]["file_path"] == str(path)
-        assert path.name.endswith(f"-r1-{answer['send']['id'].split('_')[-1][:8]}.md"), path.name
+        assert path.name.endswith(f"-rev-1-{answer['send']['id'].split('_')[-1][:8]}.md"), path.name
     rows = history(hub, update)
     assert [(r["channel"], r["outcome"], r["send_id"]) for r in rows] == [
         ("file", "sent", a["send"]["id"]) for a in answers]
@@ -376,17 +379,29 @@ def test_an_error_off_the_pinned_list_and_bytes_that_do_not_read_back_are_unknow
 # ── what is sent is what was previewed ──────────────────────────────────
 
 
-def test_the_preview_is_the_frozen_bytes_and_the_file_is_those_bytes(hub: Hub, tmp_path: Path) -> None:
+@pytest.mark.parametrize("source_kind", SOURCE_KINDS)
+def test_the_preview_is_the_frozen_bytes_and_the_file_is_those_bytes(
+    hub: Hub, tmp_path: Path, source_kind: str,
+) -> None:
     folder = tmp_path / "out"
-    body = f"# Status\n\nThe cutover is on track. {SENTINEL}\n"
-    _pid, update = room(hub, body=body)
+    if source_kind == "project_update":
+        body = f"# Status\n\nThe cutover is on track. {SENTINEL}\n"
+        _pid, update = room(hub, body=body)
+        document_ref = f"project_update:{update}"
+    else:
+        document_ref = source(hub, source_kind)
     dest = destination(hub, folder)
-    previewed = hub.client.post("/api/channels/preview", json={"update_id": update, "destination_id": dest}).json()
-    prepared = prepare(hub, update, dest)["send"]
-    assert previewed["preview"]["text"] == prepared["preview"]["text"] == body
-    assert previewed["payload_digest"] == prepared["payload_digest"] == hashlib.sha256(body.encode()).hexdigest()
+    previewed = hub.client.post("/api/channels/preview", json={"document_ref": document_ref, "destination_id": dest}).json()
+    prepared = prepare(hub, document_ref, dest)["send"]
+    if source_kind == "project_update":
+        assert previewed["preview"]["text"] == prepared["preview"]["text"] == body
+        payload = body
+    else:
+        payload = prepared["preview"]["text"]
+        assert previewed["preview"]["text"] == payload
+    assert previewed["payload_digest"] == prepared["payload_digest"] == hashlib.sha256(payload.encode()).hexdigest()
     resp = send(hub, {"send_id": prepared["id"]}).json()
-    assert Path(resp["send"]["proof"]["path"]).read_bytes() == body.encode()
+    assert Path(resp["send"]["proof"]["path"]).read_bytes() == payload.encode()
 
 
 def test_a_changed_payload_is_refused_before_any_effect(hub: Hub, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -409,7 +424,7 @@ def test_an_oversize_payload_is_refused_by_name(hub: Hub, tmp_path: Path, monkey
     dest = destination(hub, folder)
     prepared = prepare(hub, update, dest)["send"]
     monkeypatch.setitem(channel_contract.SIZE_LIMITS, "file", (10, "bytes"))
-    _refused(hub, hub.client.post("/api/channels/sends", json={"update_id": update, "destination_id": dest}),
+    _refused(hub, hub.client.post("/api/channels/sends", json={"document_ref": f"project_update:{update}", "destination_id": dest}),
              "payload_too_large:file", "channel.prepare")
     _refused(hub, send(hub, {"send_id": prepared["id"]}), "payload_too_large:file", "channel.send")
     assert files(folder) == []
@@ -612,13 +627,14 @@ def test_a_folder_marked_synced_is_badged_cloud(hub: Hub, tmp_path: Path) -> Non
 # ── Send and Discard at once: one wins ──────────────────────────────────
 
 
-def test_send_and_discard_pressed_together_settle_once(hub: Hub, tmp_path: Path) -> None:
+@pytest.mark.parametrize("source_kind", SOURCE_KINDS)
+def test_send_and_discard_pressed_together_settle_once(hub: Hub, tmp_path: Path, source_kind: str) -> None:
     folder = tmp_path / "out"
-    _pid, update = room(hub)
+    document_ref = source(hub, source_kind)
     dest = destination(hub, folder)
     winners = []
     for index in range(4):
-        sid = prepare(hub, update, dest)["send"]["id"]
+        sid = prepare(hub, document_ref, dest)["send"]["id"]
         start = threading.Barrier(2)
         answers: dict[str, Any] = {}
 
@@ -645,14 +661,15 @@ def test_send_and_discard_pressed_together_settle_once(hub: Hub, tmp_path: Path)
     assert len(files(folder)) == winners.count("send")
 
 
+@pytest.mark.parametrize("source_kind", SOURCE_KINDS)
 def test_a_discard_pressed_while_the_send_dispatches_is_refused_and_the_send_stands(
-    hub: Hub, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    hub: Hub, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, source_kind: str,
 ) -> None:
     """The race above made deterministic: Discard lands after the send's boundary committed."""
     folder = tmp_path / "out"
-    _pid, update = room(hub)
+    document_ref = source(hub, source_kind)
     dest = destination(hub, folder)
-    sid = prepare(hub, update, dest)["send"]["id"]
+    sid = prepare(hub, document_ref, dest)["send"]["id"]
     spy = DispatchSpy(monkeypatch, hold="before")
     thread, answer = in_thread(lambda: hub.client.post("/api/channels/send", json={"send_id": sid}))
     assert spy.entered.wait(30)
@@ -723,5 +740,5 @@ def test_the_words_map_his_asks_and_never_say_an_agent_sends(hub: Hub) -> None:
         if "agent" in text:
             assert "prepare" in text, name
     assert "only the owner sends" in tools["channel.send"]["description"].lower()
-    assert "update_id" in tools["channel.prepare"]["inputSchema"]["properties"]
+    assert "document_ref" in tools["channel.prepare"]["inputSchema"]["properties"]
     assert "destination_id" in tools["channel.prepare"]["inputSchema"]["properties"]

@@ -84,12 +84,34 @@ def test_ledger_is_closed() -> None:
     assert ALLOWED == {}, "the Phase 98 conversion ledger never reopens"
 
 
+def viewport_queries(text: str) -> list[str]:
+    """The viewport-width media queries in a stylesheet's source."""
+    return [m.group(0) for m in re.finditer(r"@media[^{]*", text)
+            if re.search(r"(min|max)-width", m.group(0))]
+
+
+def kit_css_violations(root: Path) -> list[str]:
+    """Every kit stylesheet, at ANY depth (PHILO-11-04, Astra r1 F5: the
+    species under desk/surface/send/ and patterns/ are the kit too), that
+    reads the viewport width."""
+    return [f"{path.relative_to(root)}: {q.strip()}"
+            for path in sorted(root.rglob("*.css"))
+            for q in viewport_queries(path.read_text(encoding="utf-8"))]
+
+
+def test_the_scan_reaches_nested_kit_css(tmp_path: Path) -> None:
+    nested = tmp_path / "send" / "deep"
+    nested.mkdir(parents=True)
+    (tmp_path / "top.css").write_text("@container surface (max-width: 419px) { a { color: red; } }\n")
+    (nested / "species.css").write_text("@media (max-width: 420px) { a { color: red; } }\n")
+    assert kit_css_violations(tmp_path) == ["send/deep/species.css: @media (max-width: 420px)"]
+
+
 def test_kit_css_answers_to_the_window() -> None:
     """The kit reflows by @container, never viewport width media."""
-    for path in SURFACE_CSS.glob("*.css"):
-        text = path.read_text(encoding="utf-8")
-        for match in re.finditer(r"@media[^{]*", text):
-            assert not re.search(r"(min|max)-width", match.group(0)), (
-                f"{path.name}: viewport width media query in the surface "
-                "kit — use @container surface (DESIGN_SYSTEM.md rule 2)"
-            )
+    assert any(p.parent != SURFACE_CSS for p in SURFACE_CSS.rglob("*.css")), "the scan must reach nested kit CSS"
+    bad = kit_css_violations(SURFACE_CSS)
+    assert not bad, (
+        f"{bad}: viewport width media query in the surface "
+        "kit — use @container surface (DESIGN_SYSTEM.md rule 2)"
+    )

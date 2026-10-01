@@ -1,0 +1,18 @@
+{
+  "claim": "cold context (an empty scratch dir, scratch HOME/CODEX_HOME with only the auth file, `--ignore-user-config --ignore-rules`, no preamble), ZERO repository reads in the retained log, discovery from the catalogue alone",
+  "client": "codex",
+  "engine_mode": "none",
+  "fixture_sha256": "21e46c0900faf4f9039fe1daf8d5255062523cc38ca9fbc37e0dd913eb3277fa",
+  "folder": "<scratch outbox>",
+  "label": "REHEARSED; OWNER REVIEW PENDING",
+  "leg": "A (rehearsal)",
+  "model": "gpt-6-astra",
+  "observed_sitting": false,
+  "press": "the owner's press, made by the driver AS THE OWNER by the owner's word (charter D3, 2026-09-29) for exactly these targets; Codex never sends; on the face (the Chair's brief well and Intelligence -> DECISIONS), clicked by the driver at 393",
+  "press_width": 393,
+  "reasoning_effort": "medium",
+  "sessions": [
+    "agent_prepare"
+  ],
+  "story": "PHILO-11-07"
+}

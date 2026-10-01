@@ -1,0 +1,39 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_exact_id_read_keeps_an_older_brief_after_a_newer_brief_exists ______
+
+rig = (<test_philo5_the_loop.Hub object at 0x10e62d550>, <tests.unit.test_philo12_brief_read.MovableClock object at 0x10c1f5be0>)
+
+    def test_exact_id_read_keeps_an_older_brief_after_a_newer_brief_exists(rig) -> None:
+        hub, clock = rig
+        first_response = hub.client.post("/api/brief/generate")
+        assert first_response.status_code == 200, first_response.text
+        first = first_response.json()
+    
+        hub.db.desk_decisions.upsert(
+            decision_id="philo12-read-decision",
+            title="Use the exact brief id",
+            status="proposed",
+        )
+        clock.now += datetime.timedelta(days=1)
+        second_response = hub.client.post("/api/brief/generate")
+        assert second_response.status_code == 200, second_response.text
+        second = second_response.json()
+        assert second["id"] != first["id"]
+    
+        exact = hub.client.get(f"/api/brief/{first['id']}")
+>       assert exact.status_code == 200, exact.text
+E       AssertionError: {"detail":"Not Found"}
+E       assert 404 == 200
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests/unit/test_philo12_brief_read.py:64: AssertionError
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1303
+  /Users/karol/dev/tools/wt-philo-12-01/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1303: PytestAssertRewriteWarning: Module already imported so cannot be rewritten; anyio
+    self._mark_plugins_for_rewrite(hook, disable_autoload)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo12_brief_read.py::test_exact_id_read_keeps_an_older_brief_after_a_newer_brief_exists
+1 failed, 1 warning in 1.09s

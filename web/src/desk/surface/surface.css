@@ -72,6 +72,20 @@
 .surface-section-head > .quiet {
   flex-shrink: 0;
 }
+/* PHILO-11-04 (canvas A4, Astra canvas r1 F1): a head that carries a chip
+   (`data-head-chip`: the SEND well's PREPARED ×K on the Chair's BRIEF head)
+   keeps its label whole on the first line; when the label and the chips do
+   not fit on one line, the chips and verbs wrap UNDER the label, never the
+   label squeezed into a column. Intrinsic (no width query), so it holds in a
+   host that is not a surface container (the Chair). */
+.surface-section-head:has([data-head-chip]) {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+.surface-section-head:has([data-head-chip]) > h3 {
+  flex: 1 0 auto;
+  max-width: 100%;
+}
 /* HS-111-01: section labels in mono — the system-label style */
 /* PHILO-4-01 r3: a label is often user data (a directory name, a
    destination). A long single word breaks inside the label; it never

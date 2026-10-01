@@ -68,7 +68,9 @@ def destination_inventory(
         "dictation_runtime": bool(
             pipeline.enabled and (dictation_runtime.profile_id or backend == "openai_compatible")
         ),
-        "slack": _configured(meeting.slack_webhook_url),
+        # Slack credentials now live in channel destinations. The retained
+        # Config field is intentionally ignored by trust inventory.
+        "slack": False,
         "companion_webhook": _configured(meeting.companion_webhook_url),
         "github": _configured(meeting.companion_github_repo),
         "telegram": bool(
@@ -101,7 +103,7 @@ def destination_inventory(
             dictation_runtime.profile_name or "Configured dictation runtime"
             if enabled["dictation_runtime"] else "This machine"
         ),
-        "slack": "Configured Slack workspace" if enabled["slack"] else "Not configured",
+        "slack": "Slack channel destinations",
         "companion_webhook": (
             "Configured custom endpoint" if enabled["companion_webhook"] else "Not configured"
         ),

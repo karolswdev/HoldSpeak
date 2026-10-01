@@ -68,12 +68,13 @@ def test_get_and_generic_put_never_echo_or_mutate_secrets(
     serialized = response.text
     assert all(secret not in serialized for secret in raw_secrets)
     assert all(state["configured"] for state in body["_secrets"].values())
-    assert body["_secrets"]["slack_webhook_url"]["destination"] == "hooks.slack.com"
+    assert "slack_webhook_url" not in body["_secrets"]
 
     # A naive full-form echo and an explicit generic secret mutation are both
     # ignored; credentials move only through the dedicated routes.
     body["meeting"]["web_auth_token"] = "attacker-replacement"
     body["device"]["psk"] = ""
+    body["meeting"]["slack_webhook_url"] = "https://hooks.slack.com/services/attacker"
     update = client.put("/api/settings", json=body)
     assert update.status_code == 200, update.text
     assert "attacker-replacement" not in update.text

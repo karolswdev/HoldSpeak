@@ -42,6 +42,7 @@ from holdspeak.logging_config import get_logger
 
 from . import channel_contract as contract
 from . import channel_email  # noqa: F401 -- registers the email channel (PHILO-10-03)
+from . import channel_slack  # noqa: F401 -- registers the Slack channel (PHILO-11-02)
 from .channel_contract import ChannelRefused, Outcome
 from .errors import NotFound, ValidationError
 
@@ -105,13 +106,18 @@ class ChannelService:
     def _send_view(self, row: Mapping[str, Any]) -> dict[str, Any]:
         destination = self._db.channel_destinations.get(row["destination_id"]) or {}
         payload = bytes(row["payload"] or b"")
+        # Existing channels report frozen byte size. Slack reports the text
+        # characters governed by its 39,000-character refusal.
+        size = (contract.payload_size("slack", payload)[0]
+                if str(row["channel"]) == "slack" else len(payload))
         return {
             "id": row["id"], "document_ref": row["document_ref"], "destination_id": row["destination_id"],
             "destination_name": destination.get("name"), "channel": row["channel"],
             "badge": contract.channel(row["channel"]).badge(bool(destination.get("synced"))),
             "account": json.loads(row["account_json"] or "{}"), "target": json.loads(row["target_json"] or "{}"),
             "target_digest": row["target_digest"], "payload_digest": row["payload_digest"],
-            "size": len(payload), "preview": contract.preview_for(row["channel"], payload, row["account_json"]),
+            "document_json": json.loads(row["document_json"]) if row.get("document_json") else None,
+            "size": size, "preview": contract.preview_for(row["channel"], payload, row["account_json"]),
             "prepared_by": {"kind": row["prepared_by_kind"], "identity": row["prepared_by_identity"]},
             "prepare_operation_id": row["prepare_operation_id"], "send_operation_id": row["send_operation_id"],
             "state": row["state"], "reason": row["reason"],
@@ -138,30 +144,32 @@ class ChannelService:
         rows = self._db.channel_destinations.list(include_parked=bool(include_parked))
         return {"destinations": [self._destination_view(r) for r in rows]}
 
-    def sends(self, principal: Any, update_id: Optional[str] = None, send_id: Optional[str] = None) -> dict[str, Any]:
+    def sends(self, principal: Any, document_ref: Optional[str] = None, send_id: Optional[str] = None) -> dict[str, Any]:
         if send_id:
             row = self._db.channel_sends.get(send_id)
             if row is None:
                 raise NotFound("send", send_id)
             return {"sends": [self._send_view(row)]}
-        if update_id:
-            rows = self._db.channel_sends.list_for_document(f"project_update:{update_id}")
+        if document_ref:
+            rows = self._db.channel_sends.list_for_document(document_ref)
         else:
             rows = self._db.channel_sends.list_recent()
         return {"sends": [self._send_view(r) for r in rows]}
 
-    def preview(self, principal: Any, update_id: str, destination_id: str) -> dict[str, Any]:
+    def preview(self, principal: Any, document_ref: str, destination_id: str) -> dict[str, Any]:
         """What the destination's channel would get: the exact bytes' digest and their readable preview."""
         destination = self._destination(destination_id)
         if destination["state"] != "active":
             raise ChannelRefused("destination_parked", f"Destination {destination_id} is parked")
-        document = contract.render_update(self._db, update_id)
+        document = contract.render_document(self._db, document_ref)
         chan = contract.channel(destination["channel"])
         payload = contract.serialize_for(destination, document)
         self._size(destination["channel"], payload)
+        size = (contract.payload_size("slack", payload)[0]
+                if destination["channel"] == "slack" else len(payload))
         return {"document_ref": document.ref, "title": document.title, "destination_id": destination["id"],
                 "channel": destination["channel"], "badge": chan.badge(bool(destination["synced"])),
-                "payload_digest": contract.sha256(payload), "size": len(payload),
+                "payload_digest": contract.sha256(payload), "size": size,
                 "preview": contract.preview_for(destination["channel"], payload, destination["account_json"])}
 
     def check_destination(self, principal: Any, destination_id: str) -> dict[str, Any]:
@@ -177,6 +185,15 @@ class ChannelService:
             state, answered_at = self._email_state(row)
             return {"destination": self._destination_view(row),
                     "check": {"state": state, "resolved": None, "answered_at": answered_at}}
+        if row["channel"] == "slack":
+            if row["state"] != "active":
+                return {"destination": self._destination_view(row),
+                        "check": {"state": "parked", "resolved": None}}
+            chan = contract.channel("slack")
+            check = chan.check_destination(json.loads(row["target_json"] or "{}"),
+                                           account=json.loads(row["account_json"] or "{}"))
+            return {"destination": self._destination_view(row),
+                    "check": {"state": str(check), "resolved": None}}
         if row["channel"] != "file":
             view = self._destination_view(row)
             state = "parked" if row["state"] != "active" else str((view["connection"] or {}).get("state") or "")
@@ -244,7 +261,8 @@ class ChannelService:
                          space_id: Optional[str] = None, provider: Optional[str] = None,
                          from_email: Optional[str] = None, from_name: Optional[str] = None,
                          key_ref: Optional[str] = None, to: Optional[list[str]] = None,
-                         cc: Optional[list[str]] = None, command_id: Optional[str] = None) -> dict[str, Any]:
+                         cc: Optional[list[str]] = None, channel_label: Optional[str] = None,
+                         command_id: Optional[str] = None) -> dict[str, Any]:
         """Save one destination. ``replaces``: Edit -- the old row parks and this one is new.
 
         The account is CONCRETE (design section 1): GitHub freezes ``{host, login}``
@@ -273,6 +291,15 @@ class ChannelService:
             account, target = chan.target_at_save({"provider": provider, "from_email": from_email,
                                                    "from_name": from_name, "key_ref": key_ref, "to": to, "cc": cc})
             synced = False
+        elif channel == "slack":
+            account, target = chan.target_at_save({"key_ref": key_ref, "channel_label": channel_label})
+            # Saving the URL is a separate held operation.  A Slack
+            # destination stores only the keychain item name, never the URL.
+            try:
+                chan.read_key(str(account.get("key_ref") or ""))
+            except channel_slack.SlackKeyError as exc:
+                raise ChannelRefused(exc.code, f"The Slack webhook cannot be read: {exc.code}", status=400) from None
+            synced = False
         else:
             raise ValidationError(f"{channel} destinations arrive with their channel", code="channel_unknown")
         if replaces:
@@ -289,6 +316,29 @@ class ChannelService:
 
         handle.terminal("succeeded", "succeeded", f"channel_destination:{destination_id}", effect=effect)
         return {"destination": self._destination_view(self._stored(destination_id)), "replaced": replaces or None}
+
+    def save_slack_webhook(self, principal: Any, webhook_url: Any, command_id: Optional[str] = None) -> dict[str, Any]:
+        """Save one Slack incoming-webhook URL in native key custody.
+
+        The URL is transport-held and is passed directly to the native key
+        store.  It never enters the operation arguments, destination account,
+        receipt, or response.  The returned key reference is then used by the
+        ordinary destination save operation.
+        """
+        handle = _handle()
+        # The key reference is minted from the admitted save operation.  It is
+        # only a keychain item name, never a credential fingerprint.
+        key_ref = "slack_" + hashlib.sha256(str(handle.operation_id).encode()).hexdigest()[:24]
+        chan = contract.channel("slack")
+        if handle.replay:
+            return {"key_ref": key_ref, "saved": True}
+        key = webhook_url if isinstance(webhook_url, str) else ""
+        try:
+            chan.save_key(key_ref, key)
+        except channel_slack.SlackKeyError as exc:
+            raise ChannelRefused(exc.code, f"The Slack webhook could not be saved: {exc.code}", status=400) from None
+        handle.terminal("succeeded", "succeeded", f"slack_webhook:{key_ref}")
+        return {"key_ref": key_ref, "saved": True}
 
     def remove_destination(self, principal: Any, destination_id: str,
                            command_id: Optional[str] = None) -> dict[str, Any]:
@@ -344,9 +394,10 @@ class ChannelService:
         size, limit, unit = contract.payload_size(channel, payload)
         if limit and size > limit:
             raise ChannelRefused(f"payload_too_large:{channel}",
-                                 f"The payload is {size} {unit}; the {channel} channel takes {limit}", status=400)
+                                 f"The payload is {size} {unit}; the {channel} channel takes {limit}", status=400,
+                                 size=size, limit=limit, unit=unit)
 
-    def prepare(self, principal: Any, update_id: str, destination_id: str,
+    def prepare(self, principal: Any, document_ref: str, destination_id: str,
                 command_id: Optional[str] = None) -> dict[str, Any]:
         """Freeze the target and the exact bytes in a ``prepared`` row, under the preparer's identity."""
         handle = _handle()
@@ -358,19 +409,20 @@ class ChannelService:
         destination = self._destination(destination_id)
         if destination["state"] != "active":
             raise ChannelRefused("destination_parked", f"Destination {destination_id} is parked")
-        document = contract.render_update(self._db, update_id)
+        document = contract.render_document(self._db, document_ref)
         payload = contract.serialize_for(destination, document)
         self._size(destination["channel"], payload)
+        document_json = contract.frozen_document_json(document)
         send_id = _derived_id("chs_", handle.operation_id)
         operation = handle.operation()
 
         def effect(conn: Any) -> None:
             conn.execute(
                 "INSERT INTO channel_sends (id, document_ref, destination_id, channel, account_json, target_json,"
-                " target_digest, payload, payload_digest, prepared_by_kind, prepared_by_identity,"
-                " prepare_operation_id, state, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'prepared', ?)",
+                " target_digest, payload, payload_digest, document_json, prepared_by_kind, prepared_by_identity,"
+                " prepare_operation_id, state, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'prepared', ?)",
                 (send_id, document.ref, destination["id"], destination["channel"], destination["account_json"],
-                 destination["target_json"], destination["target_digest"], payload, contract.sha256(payload),
+                 destination["target_json"], destination["target_digest"], payload, contract.sha256(payload), document_json,
                  str(operation.get("principal_kind") or ""), str(operation.get("principal_identity") or ""),
                  handle.operation_id, now_iso()))
 
@@ -397,7 +449,7 @@ class ChannelService:
 
     # ── the press ────────────────────────────────────────────────────────
 
-    def send(self, principal: Any, send_id: Optional[str] = None, update_id: Optional[str] = None,
+    def send(self, principal: Any, send_id: Optional[str] = None, document_ref: Optional[str] = None,
              destination_id: Optional[str] = None, preview_digest: Optional[str] = None,
              command_id: Optional[str] = None) -> dict[str, Any]:
         """The owner's press: a prepared row (``send_id``), or the document, the destination and
@@ -414,7 +466,7 @@ class ChannelService:
                 outcome = self._recover(mine)
                 return self._settle(handle, mine, outcome)
             return self._close_as_row(handle, mine)
-        row = self._boundary(handle, send_id=send_id, update_id=update_id, destination_id=destination_id,
+        row = self._boundary(handle, send_id=send_id, document_ref=document_ref, destination_id=destination_id,
                              preview_digest=preview_digest)
         from .channel_cli import Seam
 
@@ -433,7 +485,7 @@ class ChannelService:
         except Exception as exc:
             return Outcome("unknown", f"recover_{type(exc).__name__.lower()}")
 
-    def _boundary(self, handle: Any, *, send_id: Optional[str], update_id: Optional[str],
+    def _boundary(self, handle: Any, *, send_id: Optional[str], document_ref: Optional[str],
                   destination_id: Optional[str], preview_digest: Optional[str]) -> dict[str, Any]:
         """Every check before the effect, then the durable dispatch boundary (its own commit)."""
         if send_id:
@@ -446,17 +498,21 @@ class ChannelService:
             payload = bytes(row["payload"])
             frozen_target, frozen_digest = json.loads(row["target_json"]), row["target_digest"]
             document_ref = row["document_ref"]
+            document = (contract.document_from_json(document_ref, row["document_json"])
+                        if row.get("document_json") else None)
+            document_json = row.get("document_json")
         else:
-            if not (update_id and destination_id and preview_digest):
-                raise ValidationError("A send names send_id, or update_id + destination_id + preview_digest",
+            if not (document_ref and destination_id and preview_digest):
+                raise ValidationError("A send names send_id, or document_ref + destination_id + preview_digest",
                                       code="invalid_arguments")
             destination = self._destination(destination_id)
-            document = contract.render_update(self._db, update_id)
+            document = contract.render_document(self._db, document_ref)
             payload = contract.serialize_for(destination, document)
             if contract.sha256(payload) != str(preview_digest):
                 raise ChannelRefused("preview_changed", "The document changed since the preview you saw")
             frozen_target, frozen_digest = json.loads(destination["target_json"]), destination["target_digest"]
             document_ref = document.ref
+            document_json = contract.frozen_document_json(document)
             send_id = _derived_id("chs_", handle.operation_id)
             row = None
         # The destination's state and digest are read again inside the boundary transaction (below).
@@ -470,8 +526,16 @@ class ChannelService:
         # login again (github_identity_changed / github_not_logged_in by name);
         # email's key store is native and holds the key (email_key_store_not_native / email_key_missing).
         folder = chan.check_before_dispatch(frozen_target, account=frozen_account, principal=handle.principal)
-        path = (chan.choose_path(folder, contract.naming(self._db, document_ref), send_id)
-                if channel_name == "file" else None)
+        if channel_name == "file":
+            # A new row carries its complete naming provenance. A legacy row
+            # has no document_json, so retain the Phase 10 lookup only for the
+            # file channel that needs a path; other channels already have
+            # frozen bytes and never reread their source at Send.
+            if document is None:
+                document = contract.naming(self._db, document_ref)
+            path = chan.choose_path(folder, document, send_id)
+        else:
+            path = None
         # PHILO-10-04: the boundary time (display only; the order is dispatch_seq).
         started = datetime.now(timezone.utc).isoformat(timespec="microseconds")
         operation_id = handle.operation_id
@@ -494,11 +558,11 @@ class ChannelService:
             else:
                 moved = conn.execute(
                     "INSERT INTO channel_sends (id, document_ref, destination_id, channel, account_json, target_json,"
-                    " target_digest, payload, payload_digest, prepared_by_kind, prepared_by_identity,"
+                    " target_digest, payload, payload_digest, document_json, prepared_by_kind, prepared_by_identity,"
                     " send_operation_id, state, file_path, created_at, dispatch_started_at, dispatch_seq)"
-                    f" SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'dispatching', ?, ?, ?, ({next_seq}) WHERE {claimed}",
+                    f" SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'dispatching', ?, ?, ?, ({next_seq}) WHERE {claimed}",
                     (send_id, document_ref, destination["id"], channel_name, destination["account_json"],
-                     destination["target_json"], destination["target_digest"], payload, contract.sha256(payload),
+                     destination["target_json"], destination["target_digest"], payload, contract.sha256(payload), document_json,
                      "owner", str(getattr(handle.principal, "identity", "") or ""), operation_id, path, started,
                      started, operation_id)).rowcount
         if moved != 1:

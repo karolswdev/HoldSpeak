@@ -29,7 +29,7 @@ def test_history_uses_bounded_archive_and_detail_sections() -> None:
     for section in (
         "<TranscriptWell",    # transcript
         "<ArtifactsLibrary",  # artifacts
-        "<AftercareGadgets",  # aftercare
+        "<MeetingSendWell",   # PHILO-11-05: SEND (the aftercare Slack rows are gone, R7)
         "RAW · ROUTING",      # routing
         "<NeedsYouTable",     # proposals + open actions
     ):

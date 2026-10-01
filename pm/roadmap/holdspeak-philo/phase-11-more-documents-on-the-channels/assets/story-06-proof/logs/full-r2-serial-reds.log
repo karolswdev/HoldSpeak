@@ -1,0 +1,8 @@
+........................................................................ [ 48%]
+........................................................................ [ 97%]
+..s                                                                      [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/e2e/test_mermaid_renders.py:118: mermaid renderer unavailable in this env: eer-core/lib/puppeteer/node/PuppeteerNode.js:124:16)
+    at async run (file:///Users/karol/.npm/_npx/668c188756b835f3/node_modules/@mermaid-js/mermaid-cli/src/index.js:1090:19)
+    at async cli (file:///Users/karol/.npm/_npx/668c188756b835f3/node_modules/@mermaid-js/mermaid-cli/src/index.js:493:3)
+146 passed, 1 skipped in 504.29s (0:08:24)

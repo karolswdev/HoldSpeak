@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
+RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:49864 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-85eacsy3/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p10
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.destination_changed--1440/20260930T140930Z-case.p10.send.destination_changed-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.destination_changed--1440/20260930T140930Z-case.p10.send.destination_changed-astra-1440/after.png']
+NOTE: predicate: all_of: protocol_status: POST /api/channels/send answered 409, wanted 409 (body sha256 5a61280a17f7); response body contains the declared admission facts | readable_text: 'DESTINATION PARKED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 300, 'y': 269, 'w': 177, 'h': 18} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_dc762e3f38a344ea913df0103065a2af answered 200 with 1 row(s) {'id': 'chs_991fe12d054c4c90130fd675', 'state': 'prepared'}

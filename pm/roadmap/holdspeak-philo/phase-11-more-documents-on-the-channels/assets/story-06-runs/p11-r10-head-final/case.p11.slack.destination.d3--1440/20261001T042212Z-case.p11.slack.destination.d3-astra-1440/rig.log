@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11-slack.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:63187 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1d275q0i/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p11
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b3/case.p11.slack.destination.d3--1440/20261001T042212Z-case.p11.slack.destination.d3-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b3/case.p11.slack.destination.d3--1440/20261001T042212Z-case.p11.slack.destination.d3-astra-1440/after.png']
+NOTE: predicate: all_of: protocol_status: POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check answered 200, wanted 200 (body sha256 8fcbb3189eeb); response body matches its declared fields | readable_text: 'WEBHOOK SET · HOST OK' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 447, 'y': 365, 'w': 202, 'h': 18} | protocol_reads: GET /api/channels/destinations answered 200 with 1 row(s) {'channel': 'slack'}

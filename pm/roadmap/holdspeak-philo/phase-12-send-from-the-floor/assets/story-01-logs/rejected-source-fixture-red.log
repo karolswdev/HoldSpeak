@@ -1,0 +1,238 @@
+F.....................FFFFF.                                             [100%]
+=================================== FAILURES ===================================
+____________________ test_registry_declares_the_nine_kinds _____________________
+
+    def test_registry_declares_the_nine_kinds() -> None:
+>       assert tuple(DOCUMENT_SOURCES) == (
+            "project_update",
+            "monday_brief",
+            "desk_decision",
+            "meeting_decision",
+            "decision_record",
+            "meeting_summary",
+            "meeting_digest",
+            "meeting_followup",
+            "artifact",
+        )
+E       AssertionError: assert ('project_upd...summary', ...) == ('project_upd...summary', ...)
+E         
+E         Right contains one more item: 'artifact'
+E         Use -v to get more diff
+
+tests/unit/test_philo11_document_sources.py:35: AssertionError
+_______________ test_real_producers_render_stored_artifact_body ________________
+
+db = <holdspeak.db.core.Database object at 0x10efc3750>
+
+    def test_real_producers_render_stored_artifact_body(db) -> None:
+        refs = {
+>           "synthesis": mint_meeting_synthesis(db),
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "run": mint_run_output(db),
+            "ask_keep": mint_ask_keep(db),
+        }
+
+tests/unit/test_philo12_artifact_source.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/unit/_philo12_artifacts.py:18: in mint_meeting_synthesis
+    db.plugins.record_plugin_run(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.plugins.PluginArtifactRepository object at 0x10f0ce330>
+
+    def record_plugin_run(
+        self,
+        *,
+        meeting_id: str,
+        window_id: str,
+        plugin_id: str,
+        plugin_version: str,
+        status: str,
+        idempotency_key: Optional[str] = None,
+        duration_ms: float = 0.0,
+        output: Optional[dict[str, Any]] = None,
+        error: Optional[str] = None,
+        deduped: bool = False,
+    ) -> None:
+        """Persist one MIR plugin-run record."""
+        clean_meeting_id = str(meeting_id).strip()
+        clean_window_id = str(window_id).strip()
+        clean_plugin_id = str(plugin_id).strip()
+        clean_status = str(status).strip().lower()
+        clean_plugin_version = str(plugin_version).strip() or "unknown"
+        clean_idempotency_key = (
+            str(idempotency_key).strip() if isinstance(idempotency_key, str) and idempotency_key.strip() else None
+        )
+        if not clean_meeting_id:
+            raise ValueError("meeting_id is required")
+        if not clean_window_id:
+            raise ValueError("window_id is required")
+        if not clean_plugin_id:
+            raise ValueError("plugin_id is required")
+        if not clean_status:
+            raise ValueError("status is required")
+    
+        now_iso = datetime.now().isoformat()
+        output_json = self._json_dumps(output, fallback="null") if output is not None else None
+        with self._connection() as conn:
+            if clean_idempotency_key:
+>               conn.execute(
+                    """
+                    INSERT INTO plugin_runs (
+                        meeting_id, window_id, plugin_id, plugin_version, status,
+                        idempotency_key, duration_ms, output_json, error, deduped, created_at, updated_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(idempotency_key) DO UPDATE SET
+                        meeting_id = excluded.meeting_id,
+                        window_id = excluded.window_id,
+                        plugin_id = excluded.plugin_id,
+                        plugin_version = excluded.plugin_version,
+                        status = excluded.status,
+                        duration_ms = excluded.duration_ms,
+                        output_json = excluded.output_json,
+                        error = excluded.error,
+                        deduped = excluded.deduped,
+                        updated_at = excluded.updated_at
+                    """,
+                    (
+                        clean_meeting_id,
+                        clean_window_id,
+                        clean_plugin_id,
+                        clean_plugin_version,
+                        clean_status,
+                        clean_idempotency_key,
+                        float(duration_ms),
+                        output_json,
+                        error,
+                        int(bool(deduped)),
+                        now_iso,
+                        now_iso,
+                    ),
+                )
+E               sqlite3.IntegrityError: FOREIGN KEY constraint failed
+
+holdspeak/db/plugins.py:285: IntegrityError
+_____________________ test_authored_footer_lookalike_stays _____________________
+
+db = <holdspeak.db.core.Database object at 0x10efc3250>
+
+    def test_authored_footer_lookalike_stays(db) -> None:
+        db.plugins.record_artifact(
+            artifact_id="philo12-authored",
+            meeting_id="",
+            artifact_type="plugin_output",
+            title="Authored source",
+            body_markdown=(
+                "```text\n- Source windows: authored-window\n"
+                "- Source plugin runs: authored-run\n```\n"
+            ),
+            sources=[{"source_type": "ask", "source_ref": "authored"}],
+        )
+    
+>       document = render_document(db, "artifact:philo12-authored")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_philo12_artifact_source.py:56: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db = <holdspeak.db.core.Database object at 0x10efc3250>
+document_ref = 'artifact:philo12-authored'
+
+    def render_document(db: Any, document_ref: str) -> Document:
+        """Resolve and render ``<kind>:<source_id>`` through the registry."""
+        kind, separator, source_id = str(document_ref or "").partition(":")
+        if not separator or not kind or not source_id:
+            raise ChannelRefused("document_kind_unknown", f"Unknown document kind in {document_ref!r}", status=400)
+        source = DOCUMENT_SOURCES.get(kind)
+        if source is None:
+>           raise ChannelRefused("document_kind_unknown", f"Unknown document kind: {kind}", status=400)
+E           holdspeak.services.channel_contract.ChannelRefused: Unknown document kind: artifact
+
+holdspeak/services/document_sources.py:456: ChannelRefused
+_____ test_artifact_body_refusals[philo12-empty-   -artifact_body_missing] _____
+
+db = <holdspeak.db.core.Database object at 0x10d8fb390>
+artifact_id = 'philo12-empty', body = '   ', code = 'artifact_body_missing'
+
+    @pytest.mark.parametrize(
+        ("artifact_id", "body", "code"),
+        [
+            ("philo12-empty", "   ", "artifact_body_missing"),
+        ],
+    )
+    def test_artifact_body_refusals(db, artifact_id: str, body: str, code: str) -> None:
+        db.plugins.record_artifact(
+            artifact_id=artifact_id,
+            meeting_id="",
+            artifact_type="plugin_output",
+            title="Body refusal",
+            body_markdown=body,
+        )
+    
+        with pytest.raises(ChannelRefused) as caught:
+            render_document(db, f"artifact:{artifact_id}")
+    
+>       assert caught.value.code == code
+E       AssertionError: assert 'document_kind_unknown' == 'artifact_body_missing'
+E         
+E         - artifact_body_missing
+E         + document_kind_unknown
+
+tests/unit/test_philo12_artifact_source.py:80: AssertionError
+________________ test_artifact_not_text_checks_raw_stored_value ________________
+
+db = <holdspeak.db.core.Database object at 0x10efc3110>
+
+    def test_artifact_not_text_checks_raw_stored_value(db) -> None:
+        db.plugins.record_artifact(
+            artifact_id="philo12-binary",
+            meeting_id="",
+            artifact_type="plugin_output",
+            title="Binary body",
+            body_markdown="placeholder",
+        )
+        with db._connection() as conn:
+            conn.execute(
+                "UPDATE artifacts SET body_markdown = ? WHERE id = ?",
+                (sqlite3.Binary(b"\\x89PNG\\x00"), "philo12-binary"),
+            )
+    
+        with pytest.raises(ChannelRefused) as caught:
+            render_document(db, "artifact:philo12-binary")
+    
+>       assert caught.value.code == "artifact_not_text"
+E       AssertionError: assert 'document_kind_unknown' == 'artifact_not_text'
+E         
+E         - artifact_not_text
+E         + document_kind_unknown
+
+tests/unit/test_philo12_artifact_source.py:100: AssertionError
+____ test_artifact_missing_id_is_named[artifact:missing-document_not_found] ____
+
+db = <holdspeak.db.core.Database object at 0x10d8fa990>
+document_ref = 'artifact:missing', code = 'document_not_found'
+
+    @pytest.mark.parametrize(
+        ("document_ref", "code"),
+        [("artifact:missing", "document_not_found"), ("artifact:", "document_kind_unknown")],
+    )
+    def test_artifact_missing_id_is_named(db, document_ref: str, code: str) -> None:
+        with pytest.raises(ChannelRefused) as caught:
+            render_document(db, document_ref)
+    
+>       assert caught.value.code == code
+E       AssertionError: assert 'document_kind_unknown' == 'document_not_found'
+E         
+E         - document_not_found
+E         + document_kind_unknown
+
+tests/unit/test_philo12_artifact_source.py:111: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo11_document_sources.py::test_registry_declares_the_nine_kinds
+FAILED tests/unit/test_philo12_artifact_source.py::test_real_producers_render_stored_artifact_body
+FAILED tests/unit/test_philo12_artifact_source.py::test_authored_footer_lookalike_stays
+FAILED tests/unit/test_philo12_artifact_source.py::test_artifact_body_refusals[philo12-empty-   -artifact_body_missing]
+FAILED tests/unit/test_philo12_artifact_source.py::test_artifact_not_text_checks_raw_stored_value
+FAILED tests/unit/test_philo12_artifact_source.py::test_artifact_missing_id_is_named[artifact:missing-document_not_found]
+6 failed, 22 passed in 5.43s

@@ -192,7 +192,10 @@ describe("PHILO-4-01: Generate is always reachable on the Arrival", () => {
     expect(failed.getAttribute("data-tone")).toBe("danger");
     expect(failed.classList.contains("surface-receipt-line")).toBe(true);
     const section = screen.getByTestId("arrival-brief");
-    expect(within(section).queryByRole("button", { name: "Retry" })).toBeNull();
+    // PHILO-11-05a: the brief's SEND well sits in this section and keeps its own
+    // read's Retry (no hub in this rig); the generation itself offers none.
+    expect(within(section).queryAllByRole("button", { name: "Retry" })
+      .filter((b) => !b.closest("[data-send]"))).toEqual([]);
     expect(screen.queryByTestId("arrival-brief-retry")).toBeNull();
     expect(generateButton().disabled).toBe(false);
     // the day-one rows and the caption do not change

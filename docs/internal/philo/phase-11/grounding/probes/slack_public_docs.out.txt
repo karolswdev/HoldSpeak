@@ -1,0 +1,103 @@
+SLACK PUBLIC DOCS PROBE
+read_date=2026-09-29
+transport=GET only; official docs hosts only; no Slack API calls; no credentials; no POST/send
+home_isolated=True
+
+[incoming webhooks] GET https://api.slack.com/incoming-webhooks
+status=200 final_url=https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/ title='Sending messages using incoming webhooks | Slack Developer Docs' bytes_bounded=yes
+fact=PASS endpoint
+fact=PASS success is HTTP 200 plain-text ok
+fact=PASS webhook URL is a secret
+fact=PASS documented HTTP errors
+fact=PASS documented webhook errors
+
+[chat.postMessage] GET https://api.slack.com/methods/chat.postMessage
+status=200 final_url=https://docs.slack.dev/reference/methods/chat.postMessage/ title='chat.postMessage method | Slack Developer Docs' bytes_bounded=yes
+fact=PASS endpoint
+fact=PASS bot scope chat:write
+fact=PASS success carries ok channel ts
+fact=PASS API error envelope carries ok false
+fact=PASS best text size 4,000
+fact=PASS hard text truncation 40,000
+fact=PASS public-channel scope is explicit
+
+[chat.getPermalink] GET https://api.slack.com/methods/chat.getPermalink
+status=200 final_url=https://docs.slack.dev/reference/methods/chat.getPermalink/ title='chat.getPermalink method | Slack Developer Docs' bytes_bounded=yes
+fact=PASS GET endpoint
+fact=PASS requires channel and message_ts
+fact=PASS success carries permalink
+fact=PASS no additional scope
+
+[incoming-webhook scope] GET https://api.slack.com/scopes/incoming-webhook
+status=200 final_url=https://docs.slack.dev/reference/scopes/incoming-webhook/ title='incoming-webhook scope | Slack Developer Docs' bytes_bounded=yes
+fact=PASS scope creates one-way channel webhook
+
+[chat:write scope] GET https://api.slack.com/scopes/chat%3Awrite
+status=200 final_url=https://docs.slack.dev/reference/scopes/chat.write/ title='chat:write scope | Slack Developer Docs' bytes_bounded=yes
+fact=PASS scope posts as Slack app
+
+[rate limits] GET https://api.slack.com/apis/rate-limits
+status=200 final_url=https://docs.slack.dev/apis/web-api/rate-limits/ title='Rate limits | Slack Developer Docs' bytes_bounded=yes
+fact=PASS chat posting is about one per second
+fact=PASS incoming webhooks are one per second
+fact=PASS 429 has Retry-After
+
+[long-message truncation] GET https://api.slack.com/changelog/2018-04-truncating-really-long-messages
+status=200 final_url=https://docs.slack.dev/changelog/2018-truncating-really-long-messages/ title='Truncating really long messages | Slack Developer Docs' bytes_bounded=yes
+fact=PASS best practice is 4,000
+fact=PASS Slack truncates at 40,000
+fact=PASS incoming webhooks are included
+fact=PASS truncation warning is named
+
+[incoming-webhook error status changelog] GET https://api.slack.com/changelog/2016-05-17-changes-to-errors-for-incoming-webhooks
+status=200 final_url=https://docs.slack.dev/changelog/2016-05-17-changes-to-errors-for-incoming-webhooks/ title='Changes to errors for incoming webhooks | Slack Developer Docs' bytes_bounded=yes
+fact=PASS known whole-request status examples
+fact=PASS known error names
+fact=PASS 500 is exceptional rollup_error
+
+LOCAL AUDIT — HEAD 7e09c8b40314b183f11eacabfd7d3cd6364789a
+- holdspeak/slack_export.py:49-70 validates https+host (or loopback http) but does not restrict Slack hosts.
+- holdspeak/slack_export.py:150-163 renders the exact preview text; :36-39 caps at 3800 with a visible notice.
+- holdspeak/slack_export.py:166-196 injects the configured URL in memory and gates only its arbitrary configured host.
+- holdspeak/slack_export.py:199-232 is a generic webhook connector; it accepts any http(s) host and is outside Slack C4.
+- holdspeak/services/settings_service.py:119-188 redacts slack_webhook_url from reads; :604-621 validates the URL; :1006-1020 replaces Config and calls updated.save().
+- holdspeak/config/core.py:387-403 writes Config as JSON; Slack's URL is therefore persisted in the config file, not a native key store.
+- holdspeak/plugins/builtin/webhook_post_actuator.py:125-133 uses urllib.urlopen (redirects are followed); :147-155 raises for every non-2xx.
+- holdspeak/services/meeting_aftercare_service.py:157-172 records an actuator proposal and can auto-execute under captured control posture; :103-112 executes from the current config URL.
+- holdspeak/services/channel_email.py:396-456 provides the reusable native-only macOS/Linux/Windows key-store pattern; :582-630 disables redirects and classifies no-byte failures vs ambiguous transport failures.
+- holdspeak/channel_operations.py:247-292 gives channel.send EGRESS+owner_press; :319-351 keeps the email key held, owner-only, HTTP-only (no MCP argument).
+- holdspeak/mcp/tool_authority.py:265-273 gives channel.save_destination AUTHORITY, channel.prepare WORK, channel.send/discard EGRESS; holdspeak/mcp/families/channel.py:24-31 omits held-key save from MCP.
+
+OPEN RECOMMENDATIONS — NOT RATIFIED
+- Initial transport: chat.postMessage with a bot token in the native key store. It yields HTTP 200 JSON ok=true plus channel and ts; chat.getPermalink is an optional GET enrichment and must not downgrade a sent result.
+- Keep incoming webhook as a later compatibility transport: HTTP 200 plain ok is useful acknowledgement but has no native message id, channel, or ts. Pin hooks.slack.com only; the bot API egress is slack.com.
+- Move C4 onto the Phase-10 channel lifecycle. Reuse its content renderer; the existing 3800-character truncation cap is C4 behavior, not the proposed generic document rule. Keep the owner's channel.send press, make prepare WORK, keep send/discard owner EGRESS, and remove the YOLO auto-send path.
+- Generalize the Phase-10 native key store for Slack bot/webhook credentials and add an HTTP-only owner-held key-save seam. Remove the Slack URL from ordinary Config persistence; retain redacted Settings metadata.
+- Freeze exact Slack JSON at prepare, bind its payload digest and channel target, disable redirects, and map only pinned whole-request rejections to FAILED. Unknown HTTP/transport/redirect results remain UNKNOWN; API HTTP 200 ok:false is an error envelope, not success.
+
+TRANSPORT OUTCOME TABLE — OPEN, NOT RATIFIED
+transport | egress | credential | SENT proof | FAILED only when pinned whole-request rejection proves no delivery | UNKNOWN
+incoming webhook | hooks.slack.com:443 | webhook URL; move it to native key custody | HTTP 200 and exact plain body ok; no message id/channel/ts | exact documented status+error pair such as 400 invalid_payload, 403 action_prohibited, 404 channel_not_found, 410 channel_is_archived | redirect, timeout/drop, 5xx/rollup_error, unpinned error, or non-exact 200
+chat.postMessage | slack.com:443 | bot token in native key custody; chat:write (chat:write.public only when needed) | HTTP 200 JSON ok=true with channel+ts; optional chat.getPermalink GET | only a pinned ok=false error whose semantics prove the whole request was rejected | HTTP/transport ambiguity, missing fields, unpinned ok=false, or redirect
+chat.getPermalink | slack.com:443 | same bot token | optional link enrichment from channel+message_ts; never the send proof | no send classification; it is a read | any lookup error leaves an already SENT post SENT with channel+ts
+
+LIMITS AND PROOF
+- Slack recommends text under 4,000 characters and truncates over 40,000 with a message_truncated warning; C4 behavior caps at 3,800 with a visible notice and keeps preview and wire text equal. A generic provider should add a named over-limit refusal; the product cap (likely 4,000) remains open, rather than relying on Slack truncation.
+- Posting and incoming webhooks are generally limited to 1 message per second; Slack returns HTTP 429 with Retry-After. HoldSpeak must not retry an UNKNOWN send automatically.
+- The webhook's plain ok is an acknowledgement without a native message identity. The Web API's channel+ts is the stronger native proof; a permalink is a separate GET and optional enrichment.
+
+GAPS RANKED BY OWNER COST
+1 HIGH — C4 is still an actuator proposal and can auto-execute under control posture (meeting_aftercare_service.py:157-172); it has no channel_sends durable boundary or UNKNOWN recovery.
+2 HIGH — slack_webhook_url is redacted from reads but persisted in JSON (settings_service.py:119-188, :604-621, :1006-1020; config/core.py:387-403), and slack_webhook_host accepts arbitrary HTTPS hosts (slack_export.py:49-70).
+3 HIGH — webhook dispatch follows redirects and maps every non-2xx to failed (webhook_post_actuator.py:125-155), which can misstate ambiguous delivery and can leave the configured egress policy.
+4 MEDIUM — no Slack channel/provider row exists in CHANNELS or channel_operations; current proposal payload has text only, with no frozen channel target or native receipt.
+5 MEDIUM — current C4 tests fake HTTP and check URL secrecy, but do not prove redirect refusal, exact webhook ok, API ok=false, channel+ts proof, or native key custody.
+6 LOW — C4 truncates at 3,800 characters; generic channel documents need a named over-limit refusal. The product cap (likely 4,000) is an open decision; no compatibility shim is proposed.
+
+SEVEN TENETS IMPLICATED
+T1/T2: choose one bot provider and reuse the Phase-10 key/channel seams; do not build Slack discovery or a new framework before first use.
+T3/T7: prepare gives the owner a frozen readable preview; only the owner's channel.send press crosses egress and the receipt shows channel+ts.
+T4: use short controlled outcomes such as ACCEPTED BY SLACK, RESULT UNKNOWN, and CHECK SLACK in the eventual face and records.
+T5/T6: Slack is one registry channel with one egress badge naming slack.com or hooks.slack.com and one component-based destination row.
+
+probe_result=PASS missing_fact_count=0

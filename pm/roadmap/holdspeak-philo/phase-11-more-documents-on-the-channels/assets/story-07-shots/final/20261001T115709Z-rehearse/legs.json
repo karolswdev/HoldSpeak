@@ -1,0 +1,758 @@
+{
+  "agent_send_by_driver": null,
+  "agent_tools": [
+    "decision_record.search",
+    "monday_brief.get",
+    "channel.destinations",
+    "channel.preview",
+    "channel.preview",
+    "channel.check_destination",
+    "channel.prepare",
+    "channel.prepare",
+    "channel.send",
+    "channel.send"
+  ],
+  "checks": {
+    "agent_prepare": {
+      "nothing_left": [],
+      "prepared": [],
+      "receipts": []
+    },
+    "face_clean_1440": [],
+    "face_clean_393": [],
+    "face_prepared": [],
+    "face_saved": [],
+    "press_decision_record": [],
+    "press_monday_brief": []
+  },
+  "face": {
+    "prepared": {
+      "brief-1440": {
+        "history_head": null,
+        "named": [
+          {
+            "ok": true,
+            "sel": ".chair [data-seat=brief] [data-testid=prepared-row]",
+            "text": "\u25c6 HoldSpeak folder \u25c6 PREPARED BY CODEX-SEND-AGENT BRIEF OCT 1 OCT 1 05:57 THIS D",
+            "why": ""
+          },
+          {
+            "ok": true,
+            "sel": ".chair [data-seat=brief] [data-testid=prepared-send]",
+            "text": "Send",
+            "why": ""
+          }
+        ],
+        "prepared": [
+          "\u25c6 HoldSpeak folder \u25c6 PREPARED BY CODEX-SEND-AGENT BRIEF OCT 1 OCT 1 05:57 THIS DEVICE"
+        ],
+        "wells": [
+          "monday_brief:brief-13bfb494d72e4bddb00c8ba73b9774db",
+          "meeting_summary:philo11-07-meeting"
+        ]
+      },
+      "brief-393": {
+        "history_head": null,
+        "named": [
+          {
+            "ok": true,
+            "sel": ".chair [data-seat=brief] [data-testid=prepared-row]",
+            "text": "\u25c6 HoldSpeak folder \u25c6 PREPARED BY CODEX-SEND-AGENT BRIEF OCT 1 OCT 1 05:57 THIS D",
+            "why": ""
+          },
+          {
+            "ok": true,
+            "sel": ".chair [data-seat=brief] [data-testid=prepared-send]",
+            "text": "Send",
+            "why": ""
+          }
+        ],
+        "prepared": [
+          "\u25c6 HoldSpeak folder \u25c6 PREPARED BY CODEX-SEND-AGENT BRIEF OCT 1 OCT 1 05:57 THIS DEVICE"
+        ],
+        "wells": [
+          "monday_brief:brief-13bfb494d72e4bddb00c8ba73b9774db",
+          "meeting_summary:philo11-07-meeting"
+        ]
+      },
+      "record-1440": {
+        "history_head": null,
+        "named": [
+          {
+            "ok": true,
+            "sel": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+            "text": "\u25c6 HoldSpeak folder \u25c6 PREPARED BY CODEX-SEND-AGENT D-DA2614 OCT 1 05:57 THIS DEVI",
+            "why": ""
+          },
+          {
+            "ok": true,
+            "sel": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-send]",
+            "text": "Send",
+            "why": ""
+          }
+        ],
+        "prepared": [
+          "\u25c6 HoldSpeak folder \u25c6 PREPARED BY CODEX-SEND-AGENT D-DA2614 OCT 1 05:57 THIS DEVICE"
+        ],
+        "wells": [
+          "decision_record:record-da26145444f0487a91746e220a8514a3"
+        ]
+      },
+      "record-393": {
+        "history_head": null,
+        "named": [
+          {
+            "ok": true,
+            "sel": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+            "text": "\u25c6 HoldSpeak folder \u25c6 PREPARED BY CODEX-SEND-AGENT D-DA2614 OCT 1 05:57 THIS DEVI",
+            "why": ""
+          },
+          {
+            "ok": true,
+            "sel": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-send]",
+            "text": "Send",
+            "why": ""
+          }
+        ],
+        "prepared": [
+          "\u25c6 HoldSpeak folder \u25c6 PREPARED BY CODEX-SEND-AGENT D-DA2614 OCT 1 05:57 THIS DEVICE"
+        ],
+        "wells": [
+          "decision_record:record-da26145444f0487a91746e220a8514a3"
+        ]
+      }
+    },
+    "saved": {
+      "brief-1440": {
+        "history_head": "SENDS 1",
+        "named": [
+          {
+            "ok": true,
+            "sel": ".chair [data-seat=brief] [data-testid=prepared-result]",
+            "text": "\u00b7 HoldSpeak folder \u2713 SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000g",
+            "why": ""
+          }
+        ],
+        "prepared": [
+          "\u00b7 HoldSpeak folder \u2713 SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-brief-2026-10-01-brief-2026-10-01-2cb7f0e7.md BY CODEX-SEND-AGENT BRIEF OCT 1 OCT 1 05:58"
+        ],
+        "wells": [
+          "monday_brief:brief-13bfb494d72e4bddb00c8ba73b9774db",
+          "meeting_summary:philo11-07-meeting"
+        ]
+      },
+      "brief-393": {
+        "history_head": "SENDS 1",
+        "named": [
+          {
+            "ok": true,
+            "sel": ".chair [data-seat=brief] [data-testid=prepared-result]",
+            "text": "\u00b7 HoldSpeak folder \u2713 SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000g",
+            "why": ""
+          }
+        ],
+        "prepared": [
+          "\u00b7 HoldSpeak folder \u2713 SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-brief-2026-10-01-brief-2026-10-01-2cb7f0e7.md BY CODEX-SEND-AGENT BRIEF OCT 1 OCT 1 05:58"
+        ],
+        "wells": [
+          "monday_brief:brief-13bfb494d72e4bddb00c8ba73b9774db",
+          "meeting_summary:philo11-07-meeting"
+        ]
+      },
+      "record-1440": {
+        "history_head": "SENDS 1",
+        "named": [
+          {
+            "ok": true,
+            "sel": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-result]",
+            "text": "\u00b7 HoldSpeak folder \u2713 SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000g",
+            "why": ""
+          }
+        ],
+        "prepared": [
+          "\u00b7 HoldSpeak folder \u2713 SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-move-the-queue-in-two-steps-philo-11-07-test-decision-09458726.md BY CODEX-SEND-AGENT D-DA2614 OCT 1 05:58"
+        ],
+        "wells": [
+          "decision_record:record-da26145444f0487a91746e220a8514a3"
+        ]
+      },
+      "record-393": {
+        "history_head": "SENDS 1",
+        "named": [
+          {
+            "ok": true,
+            "sel": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-result]",
+            "text": "\u00b7 HoldSpeak folder \u2713 SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000g",
+            "why": ""
+          }
+        ],
+        "prepared": [
+          "\u00b7 HoldSpeak folder \u2713 SAVED /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-move-the-queue-in-two-steps-philo-11-07-test-decision-09458726.md BY CODEX-SEND-AGENT D-DA2614 OCT 1 05:58"
+        ],
+        "wells": [
+          "decision_record:record-da26145444f0487a91746e220a8514a3"
+        ]
+      }
+    }
+  },
+  "page_errors": [],
+  "press": {
+    "decision_record": {
+      "face": {
+        "operation_id": "op_39eba49a5e184bbf9fc9781398d7bc26",
+        "outcome": "sent",
+        "send_id": "chs_09458726b80b5ab9cb2c4aaa",
+        "status": 200
+      },
+      "label": "the owner's press, made by the driver AS THE OWNER by the owner's word (charter D3, 2026-09-29) for exactly these targets; Codex never sends",
+      "operation": {
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "claimed_by": "hub-project-writer",
+        "correlation_id": "op_39eba49a5e184bbf9fc9781398d7bc26",
+        "created_at": 1790855908.838351,
+        "decision": "approve",
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "envelope_sha256": "sha256:3fd94f592d867945d80dd1c9ac2a3c4ba344d76166687f2be1d9bf04dfcf00b4",
+        "idempotency_key": "channel.send:cmd:35a95f41-89fa-49d2-bdcc-5e0bdf8289b5",
+        "name": "channel.send",
+        "native_id": "5ad16805-3b35-57d2-aa76-6b2ee2865434",
+        "operation_id": "op_39eba49a5e184bbf9fc9781398d7bc26",
+        "parent_operation_id": "",
+        "placement": "node:hub-project-writer",
+        "policy_version": "operation-policy/v2",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "request_id": "5ad16805-3b35-57d2-aa76-6b2ee2865434",
+        "revision": 5,
+        "state": "succeeded",
+        "target_ref": "channel_send:chs_09458726b80b5ab9cb2c4aaa",
+        "updated_at": 1790855908.8442109,
+        "version": 1,
+        "warrant": {
+          "continuation_identities": [],
+          "envelope_sha256": "sha256:3fd94f592d867945d80dd1c9ac2a3c4ba344d76166687f2be1d9bf04dfcf00b4",
+          "execution_expires_at": 1790859508.841624,
+          "expires_at": 1790855938.841624,
+          "issued_at": 1790855908.841624,
+          "native_id": "5ad16805-3b35-57d2-aa76-6b2ee2865434",
+          "operation_id": "op_39eba49a5e184bbf9fc9781398d7bc26",
+          "parent_operation_id": "",
+          "placement": "node:hub-project-writer",
+          "policy_version": "operation-policy/v2",
+          "principal_identity": "owner-session",
+          "principal_kind": "owner",
+          "signature": "5375d03e532f2a8c98c2dacaa0ab1f95fafd04909574eba415644635c6a35348",
+          "target_binding": "channel_send:chs_09458726b80b5ab9cb2c4aaa",
+          "target_ref": "channel_send:chs_09458726b80b5ab9cb2c4aaa",
+          "uses": 1,
+          "warrant_id": "war_9e1a9f483d6c45efaecbdd694e9d0a8f"
+        },
+        "warrant_revoked": 0
+      },
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790855908.8442361,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_39eba49a5e184bbf9fc9781398d7bc26",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_85843026882b4b62b917825311cc1a4c",
+        "result_ref": "channel_send:chs_09458726b80b5ab9cb2c4aaa",
+        "state": "succeeded",
+        "target_ref": "channel_send:chs_09458726b80b5ab9cb2c4aaa"
+      },
+      "send": {
+        "account": {},
+        "badge": "local",
+        "channel": "file",
+        "created_at": "2026-10-01T11:57:41+00:00",
+        "destination_id": "chd_0ba65966b921ac3a7c5f2fcf",
+        "destination_name": "HoldSpeak folder",
+        "dispatch_seq": 2,
+        "dispatch_started_at": "2026-10-01T11:58:28.843673+00:00",
+        "document_json": {
+          "label": "DECISION",
+          "slug": "move-the-queue-in-two-steps-philo-11-07-test",
+          "title": "Move the queue in two steps (PHILO-11-07 test)"
+        },
+        "document_ref": "decision_record:record-da26145444f0487a91746e220a8514a3",
+        "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-move-the-queue-in-two-steps-philo-11-07-test-decision-09458726.md",
+        "id": "chs_09458726b80b5ab9cb2c4aaa",
+        "payload_digest": "46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73",
+        "prepare_operation_id": "op_4f8fe71d88cd4b3ba8d5e38c920f1e77",
+        "prepared_by": {
+          "identity": "codex-send-agent",
+          "kind": "agent"
+        },
+        "preview": {
+          "text": "# Move the queue in two steps (PHILO-11-07 test)\nLifecycle: active\n\n## Rationale\nOne step at a time keeps the rollback short.\n\n## Owner\nAvery\n\n## Review date\n2026-10-15\n\n## Sources\n- Lantern migration review (PHILO-11-07 test), 1 Oct 2026\n"
+        },
+        "proof": {
+          "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-move-the-queue-in-two-steps-philo-11-07-test-decision-09458726.md",
+          "sha256": "46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73",
+          "size": 239
+        },
+        "reason": null,
+        "send_operation_id": "op_39eba49a5e184bbf9fc9781398d7bc26",
+        "settled_at": "2026-10-01T11:58:28+00:00",
+        "size": 239,
+        "state": "sent",
+        "target": {
+          "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox"
+        },
+        "target_digest": "da5d2fb897a01f4ee9bbe57eb496d8ae743930be7ba9cb7f7ee05fce9fd1b896"
+      }
+    },
+    "monday_brief": {
+      "face": {
+        "operation_id": "op_abb12fcdb61f44dab514ae985e128828",
+        "outcome": "sent",
+        "send_id": "chs_2cb7f0e7a274498b5c6fb62b",
+        "status": 200
+      },
+      "label": "the owner's press, made by the driver AS THE OWNER by the owner's word (charter D3, 2026-09-29) for exactly these targets; Codex never sends",
+      "operation": {
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "claimed_by": "hub-project-writer",
+        "correlation_id": "op_abb12fcdb61f44dab514ae985e128828",
+        "created_at": 1790855902.5760021,
+        "decision": "approve",
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "envelope_sha256": "sha256:d2990823336ebff3f0322b06de70545d53bf21b52c92801391d03d4fb9345d55",
+        "idempotency_key": "channel.send:cmd:2831952f-0c8f-48f7-af2e-f6db72743331",
+        "name": "channel.send",
+        "native_id": "b23f22d3-03cf-5ae0-9361-bfd9fc23c312",
+        "operation_id": "op_abb12fcdb61f44dab514ae985e128828",
+        "parent_operation_id": "",
+        "placement": "node:hub-project-writer",
+        "policy_version": "operation-policy/v2",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "request_id": "b23f22d3-03cf-5ae0-9361-bfd9fc23c312",
+        "revision": 5,
+        "state": "succeeded",
+        "target_ref": "channel_send:chs_2cb7f0e7a274498b5c6fb62b",
+        "updated_at": 1790855902.583689,
+        "version": 1,
+        "warrant": {
+          "continuation_identities": [],
+          "envelope_sha256": "sha256:d2990823336ebff3f0322b06de70545d53bf21b52c92801391d03d4fb9345d55",
+          "execution_expires_at": 1790859502.58114,
+          "expires_at": 1790855932.58114,
+          "issued_at": 1790855902.58114,
+          "native_id": "b23f22d3-03cf-5ae0-9361-bfd9fc23c312",
+          "operation_id": "op_abb12fcdb61f44dab514ae985e128828",
+          "parent_operation_id": "",
+          "placement": "node:hub-project-writer",
+          "policy_version": "operation-policy/v2",
+          "principal_identity": "owner-session",
+          "principal_kind": "owner",
+          "signature": "38613acfd92d87c5976ebb2067bc012088512435a4268cf68b88f0d6b61653b8",
+          "target_binding": "channel_send:chs_2cb7f0e7a274498b5c6fb62b",
+          "target_ref": "channel_send:chs_2cb7f0e7a274498b5c6fb62b",
+          "uses": 1,
+          "warrant_id": "war_056183659e6848239c57da41d76fb47e"
+        },
+        "warrant_revoked": 0
+      },
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790855902.5837271,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_abb12fcdb61f44dab514ae985e128828",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_95981ca4deac46b78d04a9f26bb63a27",
+        "result_ref": "channel_send:chs_2cb7f0e7a274498b5c6fb62b",
+        "state": "succeeded",
+        "target_ref": "channel_send:chs_2cb7f0e7a274498b5c6fb62b"
+      },
+      "send": {
+        "account": {},
+        "badge": "local",
+        "channel": "file",
+        "created_at": "2026-10-01T11:57:41+00:00",
+        "destination_id": "chd_0ba65966b921ac3a7c5f2fcf",
+        "destination_name": "HoldSpeak folder",
+        "dispatch_seq": 1,
+        "dispatch_started_at": "2026-10-01T11:58:22.582949+00:00",
+        "document_json": {
+          "label": "BRIEF 2026-10-01",
+          "slug": "brief-2026-10-01",
+          "title": "Monday Brief \u2014 2026-10-01"
+        },
+        "document_ref": "monday_brief:brief-13bfb494d72e4bddb00c8ba73b9774db",
+        "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-brief-2026-10-01-brief-2026-10-01-2cb7f0e7.md",
+        "id": "chs_2cb7f0e7a274498b5c6fb62b",
+        "payload_digest": "60d08b4e1fe8844595e4733cb6e61ef8cfd6f6797f434e43aa27abd42231c0a2",
+        "prepare_operation_id": "op_59f4b29df8f54cb1ae574164fabd125c",
+        "prepared_by": {
+          "identity": "codex-send-agent",
+          "kind": "agent"
+        },
+        "preview": {
+          "text": "# Monday Brief\nPeriod: 2026-09-30 \u2013 2026-10-01\nGenerated: 1 Oct 2026, 05:57\n\n1 new decision, 1 thing changed, 1 thing waiting, 2 decisions waiting.\n\n## This week\n- 1 new decision from meetings\n\n## Changed\n- Meeting recorded: Lantern migration review (PHILO-11-07 test)\n  40 min \u00b7 1 action item\n\n## Waiting\n- Unassigned: Write the rollback checklist (PHILO-11-07 test)\n  Needs an owner\n\n## Decisions\n- Review decision: Move the queue in two steps (PHILO-11-07 test)\n- Review decision: Move the scheduler after the queue (PHILO-11-07 test)\n\n## People\n\n### Avery\n- You owe: 1\n"
+        },
+        "proof": {
+          "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-brief-2026-10-01-brief-2026-10-01-2cb7f0e7.md",
+          "sha256": "60d08b4e1fe8844595e4733cb6e61ef8cfd6f6797f434e43aa27abd42231c0a2",
+          "size": 576
+        },
+        "reason": null,
+        "send_operation_id": "op_abb12fcdb61f44dab514ae985e128828",
+        "settled_at": "2026-10-01T11:58:22+00:00",
+        "size": 576,
+        "state": "sent",
+        "target": {
+          "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox"
+        },
+        "target_digest": "da5d2fb897a01f4ee9bbe57eb496d8ae743930be7ba9cb7f7ee05fce9fd1b896"
+      }
+    }
+  },
+  "readback": {
+    "decision_record": {
+      "exists": true,
+      "in_folder": true,
+      "mode": "0o644",
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-move-the-queue-in-two-steps-philo-11-07-test-decision-09458726.md",
+      "sha256": "46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73",
+      "size": 239
+    },
+    "monday_brief": {
+      "exists": true,
+      "in_folder": true,
+      "mode": "0o644",
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-brief-2026-10-01-brief-2026-10-01-2cb7f0e7.md",
+      "sha256": "60d08b4e1fe8844595e4733cb6e61ef8cfd6f6797f434e43aa27abd42231c0a2",
+      "size": 576,
+      "slack": {
+        "limit": 39000,
+        "slack_text_characters": 566,
+        "slack_text_sha256": "5b89e1f7575dded48e9b1d325ed7130b63450859c18134f837d7027ab0146d62",
+        "within_limit": true
+      }
+    }
+  },
+  "sends_after": {
+    "decision_record": [
+      {
+        "account": {},
+        "badge": "local",
+        "channel": "file",
+        "created_at": "2026-10-01T11:57:41+00:00",
+        "destination_id": "chd_0ba65966b921ac3a7c5f2fcf",
+        "destination_name": "HoldSpeak folder",
+        "dispatch_seq": 2,
+        "dispatch_started_at": "2026-10-01T11:58:28.843673+00:00",
+        "document_json": {
+          "label": "DECISION",
+          "slug": "move-the-queue-in-two-steps-philo-11-07-test",
+          "title": "Move the queue in two steps (PHILO-11-07 test)"
+        },
+        "document_ref": "decision_record:record-da26145444f0487a91746e220a8514a3",
+        "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-move-the-queue-in-two-steps-philo-11-07-test-decision-09458726.md",
+        "id": "chs_09458726b80b5ab9cb2c4aaa",
+        "payload_digest": "46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73",
+        "prepare_operation_id": "op_4f8fe71d88cd4b3ba8d5e38c920f1e77",
+        "prepared_by": {
+          "identity": "codex-send-agent",
+          "kind": "agent"
+        },
+        "preview": {
+          "text": "# Move the queue in two steps (PHILO-11-07 test)\nLifecycle: active\n\n## Rationale\nOne step at a time keeps the rollback short.\n\n## Owner\nAvery\n\n## Review date\n2026-10-15\n\n## Sources\n- Lantern migration review (PHILO-11-07 test), 1 Oct 2026\n"
+        },
+        "proof": {
+          "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-move-the-queue-in-two-steps-philo-11-07-test-decision-09458726.md",
+          "sha256": "46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73",
+          "size": 239
+        },
+        "reason": null,
+        "send_operation_id": "op_39eba49a5e184bbf9fc9781398d7bc26",
+        "settled_at": "2026-10-01T11:58:28+00:00",
+        "size": 239,
+        "state": "sent",
+        "target": {
+          "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox"
+        },
+        "target_digest": "da5d2fb897a01f4ee9bbe57eb496d8ae743930be7ba9cb7f7ee05fce9fd1b896"
+      }
+    ],
+    "desk_decision": [],
+    "meeting_decision": [],
+    "meeting_digest": [],
+    "meeting_followup": [],
+    "meeting_summary": [],
+    "monday_brief": [
+      {
+        "account": {},
+        "badge": "local",
+        "channel": "file",
+        "created_at": "2026-10-01T11:57:41+00:00",
+        "destination_id": "chd_0ba65966b921ac3a7c5f2fcf",
+        "destination_name": "HoldSpeak folder",
+        "dispatch_seq": 1,
+        "dispatch_started_at": "2026-10-01T11:58:22.582949+00:00",
+        "document_json": {
+          "label": "BRIEF 2026-10-01",
+          "slug": "brief-2026-10-01",
+          "title": "Monday Brief \u2014 2026-10-01"
+        },
+        "document_ref": "monday_brief:brief-13bfb494d72e4bddb00c8ba73b9774db",
+        "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-brief-2026-10-01-brief-2026-10-01-2cb7f0e7.md",
+        "id": "chs_2cb7f0e7a274498b5c6fb62b",
+        "payload_digest": "60d08b4e1fe8844595e4733cb6e61ef8cfd6f6797f434e43aa27abd42231c0a2",
+        "prepare_operation_id": "op_59f4b29df8f54cb1ae574164fabd125c",
+        "prepared_by": {
+          "identity": "codex-send-agent",
+          "kind": "agent"
+        },
+        "preview": {
+          "text": "# Monday Brief\nPeriod: 2026-09-30 \u2013 2026-10-01\nGenerated: 1 Oct 2026, 05:57\n\n1 new decision, 1 thing changed, 1 thing waiting, 2 decisions waiting.\n\n## This week\n- 1 new decision from meetings\n\n## Changed\n- Meeting recorded: Lantern migration review (PHILO-11-07 test)\n  40 min \u00b7 1 action item\n\n## Waiting\n- Unassigned: Write the rollback checklist (PHILO-11-07 test)\n  Needs an owner\n\n## Decisions\n- Review decision: Move the queue in two steps (PHILO-11-07 test)\n- Review decision: Move the scheduler after the queue (PHILO-11-07 test)\n\n## People\n\n### Avery\n- You owe: 1\n"
+        },
+        "proof": {
+          "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox/2026-10-01-brief-2026-10-01-brief-2026-10-01-2cb7f0e7.md",
+          "sha256": "60d08b4e1fe8844595e4733cb6e61ef8cfd6f6797f434e43aa27abd42231c0a2",
+          "size": 576
+        },
+        "reason": null,
+        "send_operation_id": "op_abb12fcdb61f44dab514ae985e128828",
+        "settled_at": "2026-10-01T11:58:22+00:00",
+        "size": 576,
+        "state": "sent",
+        "target": {
+          "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/outbox"
+        },
+        "target_digest": "da5d2fb897a01f4ee9bbe57eb496d8ae743930be7ba9cb7f7ee05fce9fd1b896"
+      }
+    ],
+    "project_update": []
+  },
+  "session": {
+    "audit": {
+      "auth_file_changed": false,
+      "chosen_tools": [
+        "decision_record.search",
+        "monday_brief.get",
+        "channel.destinations",
+        "channel.preview",
+        "channel.preview",
+        "channel.check_destination",
+        "channel.prepare",
+        "channel.prepare",
+        "channel.send",
+        "channel.send"
+      ],
+      "exchange_end": 19,
+      "initial_context_findings": [],
+      "leg": "agent",
+      "mcp_other_methods": [],
+      "mcp_statuses": [
+        {
+          "method": "initialize",
+          "status": 200
+        },
+        {
+          "method": "notifications/initialized",
+          "status": 204
+        },
+        {
+          "method": "tools/list",
+          "status": 200
+        },
+        {
+          "method": "tools/call",
+          "status": 200
+        },
+        {
+          "method": "tools/call",
+          "status": 200
+        },
+        {
+          "method": "tools/call",
+          "status": 200
+        },
+        {
+          "method": "tools/call",
+          "status": 200
+        },
+        {
+          "method": "tools/call",
+          "status": 200
+        },
+        {
+          "method": "tools/call",
+          "status": 200
+        },
+        {
+          "method": "tools/call",
+          "status": 200
+        },
+        {
+          "method": "tools/call",
+          "status": 200
+        },
+        {
+          "method": "tools/call",
+          "status": 200
+        },
+        {
+          "method": "tools/call",
+          "status": 200
+        }
+      ],
+      "non_mcp_http_writes": [],
+      "reconciliation": {
+        "codex_calls": 10,
+        "matched": 10,
+        "turn_exchange_start": 6,
+        "turn_exchanges": 13
+      },
+      "reconciliation_error": null,
+      "resumed": false,
+      "rollout": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/cold-agent_prepare/home/.codex/sessions/2026/10/01/rollout-2026-10-01T05-57-12-01a0f753-6318-7e21-a189-514f4191b006.jsonl",
+      "session_id": "01a0f753-6318-7e21-a189-514f4191b006",
+      "stage": "agent_prepare",
+      "timing": {
+        "elapsed_s": 40.775,
+        "exit_code": 0,
+        "finished_at": "2026-10-01T11:57:53.064565+00:00",
+        "outcome": "process_completed",
+        "started_at": "2026-10-01T11:57:12.289001+00:00"
+      },
+      "tools_listed": 246,
+      "unlisted_tools": [],
+      "usage_limit": null,
+      "zero_read_findings": [
+        {
+          "detail": "/bin/zsh -lc 'ls -la'",
+          "item_id": "item_1",
+          "server": null,
+          "type": "command_execution"
+        }
+      ]
+    },
+    "launch_setup": {
+      "findings": [],
+      "record": {
+        "codex_home": {
+          "files": [
+            "auth.json"
+          ],
+          "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/cold-agent_prepare/home/.codex"
+        },
+        "codex_process_home": {
+          "files": [
+            ".codex/auth.json"
+          ],
+          "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/cold-agent_prepare/home"
+        },
+        "findings": [],
+        "git_rev_parse": {
+          "exit_code": 128,
+          "stderr": "fatal: not a git repository (or any of the parent directories): .git",
+          "stdout": ""
+        },
+        "parents_checked": [
+          {
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/cold-agent_prepare/work",
+            "present": []
+          },
+          {
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/cold-agent_prepare",
+            "present": []
+          },
+          {
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg",
+            "present": []
+          },
+          {
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+            "present": []
+          },
+          {
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+            "present": []
+          },
+          {
+            "path": "/var/folders/q7",
+            "present": []
+          },
+          {
+            "path": "/var/folders",
+            "present": []
+          },
+          {
+            "path": "/var",
+            "present": []
+          },
+          {
+            "path": "/",
+            "present": []
+          },
+          {
+            "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/cold-agent_prepare/work",
+            "present": []
+          },
+          {
+            "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/cold-agent_prepare",
+            "present": []
+          },
+          {
+            "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg",
+            "present": []
+          },
+          {
+            "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+            "present": []
+          },
+          {
+            "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+            "present": []
+          },
+          {
+            "path": "/private/var/folders/q7",
+            "present": []
+          },
+          {
+            "path": "/private/var/folders",
+            "present": []
+          },
+          {
+            "path": "/private/var",
+            "present": []
+          },
+          {
+            "path": "/private",
+            "present": []
+          }
+        ],
+        "servers": [
+          {
+            "auth_status": "bearer_token",
+            "disabled_reason": null,
+            "enabled": true,
+            "name": "holdspeak",
+            "startup_timeout_sec": 60.0,
+            "tool_timeout_sec": 900.0,
+            "transport": {
+              "bearer_token_env_var": "HOLDSPEAK_DESK_BEARER",
+              "env_http_headers": null,
+              "http_headers": null,
+              "http_headers_helper": null,
+              "type": "streamable_http",
+              "url": "http://127.0.0.1:52219/api/mcp"
+            }
+          }
+        ],
+        "work": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-glg5x3fg/cold-agent_prepare/work"
+      }
+    }
+  }
+}

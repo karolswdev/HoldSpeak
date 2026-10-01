@@ -4397,6 +4397,116 @@
         "web/public/qlippy/README.md"
       ],
       "status": "experimental"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "channels.document_sources",
+      "id": "channels.document_sources@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/document_sources.py",
+        "holdspeak/services/channel_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "channels.document_sources",
+      "id": "channels.document_sources@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/document_sources.py",
+        "holdspeak/services/channel_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "channels.document_sources",
+      "id": "channels.document_sources@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/document_sources.py",
+        "holdspeak/services/channel_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "channels.document_sources",
+      "id": "channels.document_sources@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/document_sources.py",
+        "holdspeak/services/channel_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "channels.document_sources",
+      "id": "channels.document_sources@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/document_sources.py",
+        "holdspeak/services/channel_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "not_applicable",
+      "capability_id": "channels.slack",
+      "id": "channels.slack@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/channel_slack.py",
+        "holdspeak/services/channel_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "channels.slack",
+      "id": "channels.slack@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/channel_slack.py",
+        "holdspeak/services/channel_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "channels.slack",
+      "id": "channels.slack@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/channel_slack.py",
+        "holdspeak/services/channel_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "channels.slack",
+      "id": "channels.slack@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/channel_slack.py",
+        "holdspeak/services/channel_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "channels.slack",
+      "id": "channels.slack@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/channel_slack.py",
+        "holdspeak/services/channel_service.py"
+      ],
+      "status": "built_unreleased"
     }
   ],
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",

@@ -1,0 +1,800 @@
+{
+  "id": "obs-20260930T140352Z-case.p9.room_items.late_row-astra-1440",
+  "run_id": "20260930T140352Z-case.p9.room_items.late_row-astra-1440",
+  "case_id": "case.p9.room_items.late_row",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase9.json",
+  "job": "p9",
+  "edge_ids": [
+    "edge.face.room_open"
+  ],
+  "state_id": "state.desk_presentation.p9_room_face",
+  "provenance": {
+    "revision": "8a6b807d6682d9446d9b75216bbd3844d203cdcc",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "5af70edb856e3d3d9620f2924959f5718a9cb4cb408352e0eca3f34f59e21b86",
+      "assets": [
+        "index-DOMEgTb7.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64978",
+      "port": 64978,
+      "pid": 1635,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nc5ufc7j",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nc5ufc7j/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-30T14:03:52.873926+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase9.json",
+      "sha256": "79acbbf975ed3f11c117926151cf35787b6ab59cab40425b5f3c3a1aa0e305e9",
+      "version": "phase9-room"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T08:03:57.996328"
+        }
+      },
+      "response_sha256": "77865c36b8d4266c07737801c4c16c88b7832ca336061b69a403e84447127860"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-0f9cc4c97edd",
+          "name": "Atlas ledger cutover",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-09-30T08:03:58.049363",
+          "updated_at": "2026-09-30T08:03:58.049363",
+          "result_kind": "created",
+          "project_id": "proj-0f9cc4c97edd",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-0f9cc4c97edd"
+          ]
+        }
+      },
+      "response_sha256": "d465d540a809d4e1435098278828e563dbe541e4b8c278eb8b34567c37be0f60",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-0f9cc4c97edd"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects/proj-0f9cc4c97edd/items",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "item": {
+          "id": "pitem_a68c6fb501234b9e9317fab4c923f04b",
+          "project_id": "proj-0f9cc4c97edd",
+          "item_type": "milestone",
+          "title": "Atlas rehearsal",
+          "summary": null,
+          "lifecycle": "planned",
+          "severity": null,
+          "owner_ref": null,
+          "due_at": "2020-01-06",
+          "sort_key": null,
+          "details_json": "{}",
+          "provenance_kind": "owner",
+          "source_observation_id": null,
+          "created_by_ref": "principal:owner-session",
+          "revision": 0,
+          "created_at": "2026-09-30T08:03:58.070460",
+          "updated_at": "2026-09-30T08:03:58.070460",
+          "result_kind": "updated",
+          "project_revision": 2,
+          "changed_refs": [
+            "project:proj-0f9cc4c97edd"
+          ],
+          "item_id": "pitem_a68c6fb501234b9e9317fab4c923f04b"
+        }
+      },
+      "response_sha256": "3ec7e96aae433c384a80afcc11b8d24065cc90b521e7fe5c39267c992677e09e"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nc5ufc7j",
+    "project_id": "proj-0f9cc4c97edd"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[id='desk-palette-option-project.open.proj-0f9cc4c97edd']",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "2459 DAYS LATE"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "surface-token",
+        "data-chip": "true",
+        "data-tone": "danger",
+        "data-testid": "item-token"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 668,
+        "y": 361,
+        "w": 125,
+        "h": 18
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+      "after": "div#surface-project-memory"
+    },
+    "focus_label": {
+      "before": "Search tools and Desk items",
+      "after": "Atlas ledger cutover"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Atlas ledger cutover",
+          "rect": {
+            "x": 24,
+            "y": 72,
+            "w": 800,
+            "h": 619
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "19e3c318c2dd82695666fbf82d7d56a980b4cce44981122a35b51beeb06b90ae",
+      "after": "e862820c837c487fa5e02ea00d42f90f62a29a6ca92b3b5a85872dfd8bee3153"
+    },
+    "document_text_len": {
+      "before": 625,
+      "after": 896
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+          "value": "Atlas ledger cutover"
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=item-row] [data-tone=danger]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+        "value": "Atlas ledger cutover"
+      }
+    ],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:64978/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "19e3c318c2dd82695666fbf82d7d56a980b4cce44981122a35b51beeb06b90ae",
+    "document_text_len": 625,
+    "replay_identity": null,
+    "at_utc": "2026-09-30T14:03:59.908280+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=item-row] [data-tone=danger]",
+    "target_present": true,
+    "text": "2459 DAYS LATE",
+    "attrs": {
+      "class": "surface-token",
+      "data-chip": "true",
+      "data-tone": "danger",
+      "data-testid": "item-token"
+    },
+    "rect": {
+      "x": 668,
+      "y": 361,
+      "w": 125,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 668,
+        "y": 361,
+        "w": 125,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 670,
+          "y": 363,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 670,
+          "y": 370,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 670,
+          "y": 377,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 731,
+          "y": 363,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 731,
+          "y": 370,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 731,
+          "y": 377,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 791,
+          "y": 363,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 791,
+          "y": 370,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 791,
+          "y": 377,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#surface-project-memory",
+    "focus_label": "Atlas ledger cutover",
+    "url": "http://127.0.0.1:64978/",
+    "windows": [
+      {
+        "title": "Atlas ledger cutover",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "e862820c837c487fa5e02ea00d42f90f62a29a6ca92b3b5a85872dfd8bee3153",
+    "document_text_len": 896,
+    "replay_identity": null,
+    "at_utc": "2026-09-30T14:04:01.109944+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/projects/proj-0f9cc4c97edd/room/read",
+      "status": 200,
+      "body_sha256": "b0bb5828d91dcdf9970b8d871670c2909229116d804a8f27065d62183fe6dba5",
+      "body": {
+        "readAt": "2026-09-30T08:04:00.374713"
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64978) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=item-row] [data-tone=danger]",
+    "target_present": true,
+    "text": "2459 DAYS LATE",
+    "attrs": {
+      "class": "surface-token",
+      "data-chip": "true",
+      "data-tone": "danger",
+      "data-testid": "item-token"
+    },
+    "rect": {
+      "x": 668,
+      "y": 361,
+      "w": 125,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 668,
+        "y": 361,
+        "w": 125,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 670,
+          "y": 363,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 670,
+          "y": 370,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 670,
+          "y": 377,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 731,
+          "y": 363,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 731,
+          "y": 370,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 731,
+          "y": 377,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 791,
+          "y": 363,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 791,
+          "y": 370,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        },
+        {
+          "x": 791,
+          "y": 377,
+          "owned": true,
+          "owner": "section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-token"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#surface-project-memory",
+    "focus_label": "Atlas ledger cutover",
+    "url": "http://127.0.0.1:64978/",
+    "windows": [
+      {
+        "title": "Atlas ledger cutover",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "e862820c837c487fa5e02ea00d42f90f62a29a6ca92b3b5a85872dfd8bee3153",
+    "document_text_len": 896,
+    "replay_identity": null,
+    "at_utc": "2026-09-30T14:04:00.970255+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/projects/proj-0f9cc4c97edd/room/read",
+      "status": 200,
+      "body_sha256": "b0bb5828d91dcdf9970b8d871670c2909229116d804a8f27065d62183fe6dba5",
+      "body": {
+        "readAt": "2026-09-30T08:04:00.374713"
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64978) non-GET response after the click"
+    },
+    "predicate_satisfied": true,
+    "reading": "'DAYS LATE' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 668, 'y': 361, 'w': 125, 'h': 18}",
+    "elapsed_s": 0.951
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'DAYS LATE' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 668, 'y': 361, 'w': 125, 'h': 18}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.087,
+    "first_satisfied_at_s": 0.951,
+    "completion_bound_s": 25.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'DAYS LATE' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 668, 'y': 361, 'w': 125, 'h': 18}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:64978) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/projects/proj-0f9cc4c97edd/room/read",
+      "status": 200,
+      "body_sha256": "b0bb5828d91dcdf9970b8d871670c2909229116d804a8f27065d62183fe6dba5",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64978) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:64978) non-GET response after the click",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/_built/assets/ProjectMemoryCore-DIOkMGZd.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/SendWell-D9YE7g0K.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/core-hooks-P9tiyG96.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/api-BNYrBVvg.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/SendWell-ucFayLGl.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/ProjectMemoryCore-BP8wVb_n.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-0f9cc4c97edd/room",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/ask-tasks",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-0f9cc4c97edd/briefs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-0f9cc4c97edd/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-0f9cc4c97edd/artifacts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-0f9cc4c97edd/since-last-meeting",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-0f9cc4c97edd/items",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/projects/proj-0f9cc4c97edd/room/read",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-0f9cc4c97edd/people",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/inference/assignments/editor",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-0f9cc4c97edd/suggested-sources",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-0f9cc4c97edd/proposals",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-0f9cc4c97edd/nudges",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p9.room_items.late_row--1440/20260930T140352Z-case.p9.room_items.late_row-astra-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p9.room_items.late_row--1440/20260930T140352Z-case.p9.room_items.late_row-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nc5ufc7j/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nc5ufc7j/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64978"
+  ],
+  "duration_s": 8.892
+}

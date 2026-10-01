@@ -17,10 +17,14 @@ and read back is the file channel's proof).
 """
 from __future__ import annotations
 
-from holdspeak.operations import _COMMAND_ID, _CONTRACT_REFUSALS, _ROOM_PRINCIPAL, _UPDATE_ID, Admission, OperationDescriptor
+from holdspeak.operations import _COMMAND_ID, _CONTRACT_REFUSALS, _ROOM_PRINCIPAL, Admission, OperationDescriptor
 
 _READ = Admission("exempt", "A read: computation without effect (Article XI.5).")
-_DESTINATION_ID = {"type": "string", "description": "The saved destination: destinations[].id from channel.destinations."}
+_DESTINATION_ID = {"type": "string", "description": "Saved ID from channel.destinations."}
+_DOCUMENT_REF = {"type": "string", "description": "Document ref <kind>:<id>. Kinds: project_update, monday_brief, "
+                 "desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, "
+                 "meeting_followup, artifact. IDs come from source list/read views."}
+_DOCUMENT_REF_FROM_PREVIEW = {"type": "string", "description": "The document ref from channel.preview."}
 _SEND_ID = {"type": "string", "description": "The prepared send: send.id from channel.prepare, or sends[].id from "
                                             "channel.sends."}
 _SEND_RESULT = ("{send: {id, document_ref, destination_id, destination_name, channel, badge, target, payload_digest, "
@@ -30,14 +34,12 @@ _OWNER_ONLY = "owner_principal_required: only the owner sends; an agent prepares
 CHANNEL_DESTINATIONS = OperationDescriptor(
     name="channel.destinations",
     version=1,
-    description="Where can I send? List your saved destinations (a folder, a GitHub issue or pull request, a Jira "
-                "work item, a Confluence space): each with its name, channel, account, target, badge (local, or "
-                "cloud), state, and the state of its connection.",
+    description="Where can I send? This lists saved destinations: folders, GitHub issues or pull requests, Jira work items, Confluence spaces and email. Each result has a name, channel, account, target, badge (local or cloud), state and connection state.",
     args_schema={
         "type": "object",
         "properties": {
             "include_parked": {"type": ["boolean", "null"],
-                               "description": "Optional. Also list parked (removed or edited) destinations."},
+                               "description": "Also include parked destinations."},
         },
         "additionalProperties": False,
     },
@@ -66,8 +68,8 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
         "type": "object",
         "properties": {
             "name": {"type": "string", "maxLength": 120, "description": "Your name for it (120 characters at most)."},
-            "channel": {"type": "string", "enum": ["file", "github", "jira", "confluence", "email"],
-                        "description": "The channel: file (a folder), github, jira, confluence or email."},
+            "channel": {"type": "string", "enum": ["file", "github", "jira", "confluence", "email", "slack"],
+                        "description": "The channel: file (a folder), github, jira, confluence, email or Slack."},
             "folder": {"type": ["string", "null"], "description": "file: the absolute folder path."},
             "synced": {"type": ["boolean", "null"],
                        "description": "Optional, file: a cloud client syncs this folder (the badge says cloud)."},
@@ -82,12 +84,13 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
             "space_id": {"type": ["string", "null"], "description": "confluence: the space id (digits)."},
             "provider": {"type": ["string", "null"],
                          "description": "email: the provider, sendgrid or resend (sendgrid if not given)."},
+            "channel_label": {"type": ["string", "null"], "maxLength": 120,
+                              "description": "slack: your label for the incoming-webhook channel, for example #leads."},
             "from_email": {"type": ["string", "null"],
                            "description": "email: the sender address (a sender the provider verified)."},
             "from_name": {"type": ["string", "null"], "maxLength": 120, "description": "email: the sender's name."},
-            "key_ref": {"type": ["string", "null"], "description": "email: the name of the key saved with "
-                                                                  "channel.save_email_key (the provider's name if "
-                                                                  "not given). Never the key."},
+            "key_ref": {"type": ["string", "null"], "description": "email: the name of the saved provider key; "
+                                                                  "slack: the key_ref returned by channel.save_slack_webhook. Never the secret."},
             "to": {"type": ["array", "null"], "items": {"type": "string"}, "maxItems": 20,
                    "description": "email: the To addresses (at least one)."},
             "cc": {"type": ["array", "null"], "items": {"type": "string"}, "maxItems": 20,
@@ -108,6 +111,9 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
                                    "atlassian_email_invalid", "confluence_space_invalid", "email_provider_unknown",
                                    "email_address_invalid", "email_key_ref_invalid", "email_recipients_missing",
                                    "email_recipients_too_many", "email_recipient_duplicate",
+                                   "slack_webhook_invalid", "slack_key_ref_invalid", "slack_channel_label_invalid",
+                                   "slack_webhook_missing",
+                                   "slack_key_store_not_native", "slack_key_store_locked",
                                    "owner_principal_required"),
     completion="synchronous; channel.destinations lists it",
     exposure=("http:POST /api/channels/destinations", "mcp:channel.save_destination"),
@@ -174,19 +180,18 @@ CHANNEL_CHECK_DESTINATION = OperationDescriptor(
 CHANNEL_PREVIEW = OperationDescriptor(
     name="channel.preview",
     version=1,
-    description="See exactly what a destination would get for a published update: the readable preview, the "
-                "size and the digest of the exact bytes. Nothing is sent. Pass the digest to channel.send.",
+    description="Preview exact bytes for a stored document at a saved destination. Returns text, size, digest; sends nothing. Pass digest to channel.send.",
     args_schema={
         "type": "object",
-        "properties": {"update_id": _UPDATE_ID, "destination_id": _DESTINATION_ID},
-        "required": ["update_id", "destination_id"],
+        "properties": {"document_ref": _DOCUMENT_REF, "destination_id": _DESTINATION_ID},
+        "required": ["document_ref", "destination_id"],
         "additionalProperties": False,
     },
     principal=_ROOM_PRINCIPAL,
     effect="read",
     result="{document_ref, title, destination_id, channel, badge, payload_digest, size, preview: {text} "
            "(confluence: {title, text})}",
-    refusals=_CONTRACT_REFUSALS + ("NotFound not_found: unknown update", "update_not_published",
+    refusals=_CONTRACT_REFUSALS + ("document_kind_unknown", "document_not_found", "artifact_body_missing", "artifact_not_text", "not_published", "no_summary",
                                    "destination_not_saved", "destination_parked", "payload_too_large:<channel>"),
     completion="synchronous",
     exposure=("http:POST /api/channels/preview", "mcp:channel.preview"),
@@ -198,19 +203,17 @@ CHANNEL_PREVIEW = OperationDescriptor(
 CHANNEL_PREPARE = OperationDescriptor(
     name="channel.prepare",
     version=1,
-    description="Prepare a send of a published update to a saved destination: \"send the update to <destination>\". "
-                "It freezes the destination and the exact bytes (its preview) in a prepared send that waits for "
-                "the owner. Nothing leaves the machine; only the owner sends it (or discards it).",
+    description="Prepare a send of a stored document using \"send the update to <destination>\" or \"send this artifact to <destination>\". The prepared send freezes its destination and exact preview bytes. Nothing leaves the machine. Only the owner can send or discard it.",
     args_schema={
         "type": "object",
-        "properties": {"update_id": _UPDATE_ID, "destination_id": _DESTINATION_ID, "command_id": _COMMAND_ID},
-        "required": ["update_id", "destination_id"],
+        "properties": {"document_ref": _DOCUMENT_REF_FROM_PREVIEW, "destination_id": _DESTINATION_ID, "command_id": _COMMAND_ID},
+        "required": ["document_ref", "destination_id"],
         "additionalProperties": False,
     },
     principal=_ROOM_PRINCIPAL,
     effect="write",
     result=_SEND_RESULT + " (state prepared; prepared_by names who prepared it)",
-    refusals=_CONTRACT_REFUSALS + ("NotFound not_found: unknown update", "update_not_published",
+    refusals=_CONTRACT_REFUSALS + ("document_kind_unknown", "document_not_found", "artifact_body_missing", "artifact_not_text", "not_published", "no_summary",
                                    "destination_not_saved", "destination_parked", "payload_too_large:<channel>"),
     completion="synchronous; channel.sends lists it prepared until the owner sends or discards it",
     exposure=("http:POST /api/channels/sends", "mcp:channel.prepare"),
@@ -247,8 +250,8 @@ CHANNEL_DISCARD = OperationDescriptor(
 CHANNEL_SEND = OperationDescriptor(
     name="channel.send",
     version=1,
-    description="The owner's Send: send a prepared send (send_id), or send a published update to a saved "
-                "destination with the digest of the preview he saw (update_id, destination_id, preview_digest). "
+    description="The owner's Send: send a prepared send (send_id), or send a stored document to a saved "
+                "destination with the digest of the preview he saw (document_ref, destination_id, preview_digest). "
                 "The answer is the channel's proof (a folder: the file's path, sha256 and size, read back; GitHub: "
                 "the comment URL; Jira and Confluence: the id acli gives; email: the provider's message id, "
                 "ACCEPTED BY SENDGRID or ACCEPTED BY RESEND -- accepted for processing, not delivered), a known failure with its code, or "
@@ -258,8 +261,8 @@ CHANNEL_SEND = OperationDescriptor(
         "type": "object",
         "properties": {
             "send_id": {"type": ["string", "null"], "description": "The prepared send: send.id from channel.prepare."},
-            "update_id": {"type": ["string", "null"], "description": "Inline form: the published update "
-                                                                     "(updates[].id from project.list_updates)."},
+            "document_ref": {"type": ["string", "null"], "description": "Inline form: the stored document "
+                                                                       "(<kind>:<source id>)."},
             "destination_id": {"type": ["string", "null"], "description": "Inline form: the saved destination "
                                                                           "(destinations[].id)."},
             "preview_digest": {"type": ["string", "null"], "description": "Inline form: payload_digest from "
@@ -273,7 +276,8 @@ CHANNEL_SEND = OperationDescriptor(
     result=_SEND_RESULT + ": outcome sent (proof), failed (reason) or unknown (reason)",
     refusals=_CONTRACT_REFUSALS + (_OWNER_ONLY, "NotFound not_found: unknown send", "destination_not_saved",
                                    "destination_parked", "destination_changed", "preview_changed", "payload_changed",
-                                   "payload_too_large:<channel>", "send_already_settled", "update_not_published",
+                                   "payload_too_large:<channel>", "send_already_settled", "document_kind_unknown",
+                                   "document_not_found", "artifact_body_missing", "artifact_not_text", "not_published", "no_summary",
                                    "path_outside_folder", "github_identity_changed", "github_not_logged_in",
                                    "github_identity_unverified", "atlassian_not_signed_in",
                                    "atlassian_switch_failed", "atlassian_identity_unverified", "lock_timeout",
@@ -294,14 +298,12 @@ CHANNEL_SEND = OperationDescriptor(
 CHANNEL_SENDS = OperationDescriptor(
     name="channel.sends",
     version=1,
-    description="What was sent: the sends of a published update (or one send, or the latest), each with its "
-                "destination, state (prepared, dispatching, sent, failed, unknown, discarded), proof or reason, "
-                "and the preview of its frozen bytes.",
+    description="What was sent? List document sends by destination and state. Each result includes proof or reason and the frozen preview.",
     args_schema={
         "type": "object",
         "properties": {
-            "update_id": {"type": ["string", "null"], "description": "Optional: one update's sends."},
-            "send_id": {"type": ["string", "null"], "description": "Optional: one send."},
+            "document_ref": {"type": ["string", "null"], "description": "Optional document ref."},
+            "send_id": {"type": ["string", "null"], "description": "Optional send ID."},
         },
         "additionalProperties": False,
     },
@@ -350,8 +352,40 @@ CHANNEL_SAVE_EMAIL_KEY = OperationDescriptor(
                                     "never an argument, never journaled."),
 )
 
+CHANNEL_SAVE_SLACK_WEBHOOK = OperationDescriptor(
+    name="channel.save_slack_webhook",
+    version=1,
+    description="Save a Slack incoming-webhook URL in the native keychain. The URL is held by HTTP, never an "
+                "argument or result; the returned key_ref is consumed by channel.save_destination.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "command_id": _COMMAND_ID,
+        },
+        "required": [],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="{key_ref, saved} and the receipt (never the URL)",
+    refusals=_CONTRACT_REFUSALS + ("owner_required", "slack_webhook_invalid", "slack_key_ref_invalid",
+                                   "slack_webhook_missing",
+                                   "slack_key_store_not_native", "slack_key_store_locked"),
+    completion="synchronous; channel.save_destination consumes key_ref to create the destination",
+    exposure=("http:POST /api/channels/slack-webhooks",),
+    service="channel_service",
+    method="save_slack_webhook",
+    held=("webhook_url",),
+    owner_only=True,
+    owner_press=True,
+    blocking_io=True,
+    admission=Admission("admitted", "Config: the owner's Slack webhook in the native keychain, HTTP only, in no palette. "
+                                    "The URL is held by the transport and never journaled."),
+)
+
 #: PHILO-10-01's rows, in export order.
 CHANNEL_OPERATIONS: tuple[OperationDescriptor, ...] = (
     CHANNEL_DESTINATIONS, CHANNEL_SAVE_DESTINATION, CHANNEL_REMOVE_DESTINATION, CHANNEL_CHECK_DESTINATION,
     CHANNEL_PREVIEW, CHANNEL_PREPARE, CHANNEL_DISCARD, CHANNEL_SEND, CHANNEL_SENDS, CHANNEL_SAVE_EMAIL_KEY,
+    CHANNEL_SAVE_SLACK_WEBHOOK,
 )

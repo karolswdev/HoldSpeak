@@ -145,7 +145,7 @@ def test_gate2_the_hub_answers_a_read_during_a_slow_send(tmp_path: Path, transpo
         baseline = time.perf_counter()
         assert hub.call("GET", "/api/channels/destinations")[0] == 200
         baseline = time.perf_counter() - baseline
-        status, prepared = hub.call("POST", "/api/channels/sends", {"update_id": update, "destination_id": dest})
+        status, prepared = hub.call("POST", "/api/channels/sends", {"document_ref": f"project_update:{update}", "destination_id": dest})
         body = {"send_id": prepared["send"]["id"]}
 
         def press() -> Any:
@@ -358,7 +358,7 @@ def test_an_oversize_body_is_refused_by_name_before_any_dispatch(
     _pid, fits = room(hub, name="Fits", body="\u00e9" * limit)  # characters, not bytes
     assert prepare(hub, fits, dest)["send"]["size"] == 2 * limit
     _pid, update = room(hub, name="Too long", body="x" * (limit + 1))
-    refused = hub.client.post("/api/channels/sends", json={"update_id": update, "destination_id": dest})
+    refused = hub.client.post("/api/channels/sends", json={"document_ref": f"project_update:{update}", "destination_id": dest})
     assert refused.status_code == 400 and refused.json()["code"] == f"payload_too_large:{channel}", refused.text
     assert canned.creates() == []
 
@@ -695,7 +695,7 @@ def test_a_real_kill_during_a_gh_create_ends_unknown_once_and_the_replay_never_r
         assert status == 200, saved
         assert saved["destination"]["account"]["login"] == "octo-owner"
         status, prepared = first.call("POST", "/api/channels/sends",
-                                      {"update_id": update, "destination_id": saved["destination"]["id"]})
+                                      {"document_ref": f"project_update:{update}", "destination_id": saved["destination"]["id"]})
         body = {"send_id": prepared["send"]["id"], "command_id": "kill-during-gh"}
 
         def press() -> None:
@@ -802,15 +802,18 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
 
     blocking = {d.name for d in operations.DESCRIPTORS if d.blocking_io}
     assert blocking == {"channel.send", "channel.save_destination", "nudge.send", "connection.recheck",
-                        "channel.save_email_key", "channel.check_destination"}
-    # PHILO-10-03: the table covers the MCP tools; channel.save_email_key (the keychain) is HTTP only --
-    # in no MCP palette, so it has no row -- and is config by its own declaration: the owner's press, owner only.
+                        "channel.save_email_key", "channel.save_slack_webhook", "channel.check_destination"}
+    # The secret saves are HTTP only, in no MCP palette, and config by their
+    # declarations: the owner's press, owner only, with transport-held secrets.
     by_name = {d.name: d for d in operations.DESCRIPTORS}
     mcp_blocking = {n for n in blocking if any(e.startswith("mcp:") for e in by_name[n].exposure)}
-    assert mcp_blocking == blocking - {"channel.save_email_key"}
+    assert mcp_blocking == blocking - {"channel.save_email_key", "channel.save_slack_webhook"}
     assert all(name in TOOL_AUTHORITY for name in mcp_blocking), mcp_blocking - set(TOOL_AUTHORITY)
     key = by_name["channel.save_email_key"]
     assert key.owner_press and key.owner_only and key.held == ("api_key",) and "channel.save_email_key" not in TOOL_AUTHORITY
+    slack = by_name["channel.save_slack_webhook"]
+    assert slack.owner_press and slack.owner_only and slack.held == ("webhook_url",)
+    assert "channel.save_slack_webhook" not in TOOL_AUTHORITY
     for name in ("channel.send", "nudge.send"):
         assert TOOL_AUTHORITY[name] == EGRESS and name in owner_press_operations() and name in blocking, name
     # The kernel's steward-child refusal reads the SAME flag the descriptors declare (no second list).

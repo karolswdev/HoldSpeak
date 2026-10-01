@@ -1,0 +1,12 @@
+{
+  "about": "PHILO-11-06 negative control: the requested HTTPS path is intentionally unanswered by the recording edge.",
+  "answers": [],
+  "https": [
+    {
+      "host": "hooks.slack.com",
+      "path": "/services/NO_MATCH",
+      "status": 400,
+      "body": "invalid_payload"
+    }
+  ]
+}

@@ -469,10 +469,11 @@ flowchart TD
   GRAPH["A Workbench graph, authored on the iPad canvas<br/>or the web desk, synced as graph_json"] -- "linear subset runs;<br/>control flow refused with a warning<br/>(services/sequence_workflow_service.py)" --> RUNB
   ART --> AFT["Aftercare digest:<br/>open, decided, changed since last time<br/>(meeting_aftercare.py)"]
   AFT --> ISSUE["An accepted action becomes<br/>a GitHub issue proposal"]
-  AFT --> SLACK["The digest or draft becomes<br/>a Send to Slack proposal (slack_export.py)"]
+  AFT --> SLACK["Digest or follow-up document<br/>(slack_export.py)"]
   ISSUE --> APV{"Propose, authorize, execute<br/>(plugins/actuator_executor.py)"}
-  SLACK --> APV
-  APV -. "authorized only" .-> EXT(["GitHub, Slack"])
+  SLACK --> SEND["Preview, prepare, owner sends<br/>(channel.send)"]
+  SEND -. "frozen bytes; owner only" .-> SLEXT(["Slack incoming webhook"])
+  APV -. "authorized only" .-> EXT(["GitHub"])
 ```
 
 ### The loop closes
@@ -1245,7 +1246,7 @@ flowchart LR
   RT -->|"loopback by default; token required off-loopback"| WEB(["Browser and API clients"])
   RT -->|"admitted attempt when Runs on names an off-machine endpoint; selected model input"| CLOUD(["Remote model endpoint"])
   RT -->|"paired node; admitted signed offer; prompt and result"| NODE(["Mesh worker you named"])
-  RT -->|"approved proposal only; to the configured host"| SK(["Slack webhook"])
+  RT -->|"owner channel.send; hooks.slack.com:443"| SK(["Slack webhook"])
   RT -->|"approved proposal only; to the one configured endpoint"| WHK(["Companion webhook<br/>(Discord, Zapier, any URL you set)"])
   RT -->|"approved proposal only; via your own gh"| GH(["GitHub issue create"])
   RT -->|"opt-in pack; entity IDs via your own CLIs"| CLI(["gh, jira, to their services"])

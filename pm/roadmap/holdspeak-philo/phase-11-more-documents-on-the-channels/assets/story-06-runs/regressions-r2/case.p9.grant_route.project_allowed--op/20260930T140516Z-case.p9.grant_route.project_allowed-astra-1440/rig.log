@@ -1,0 +1,10 @@
+PASS: live
+BRAIN: astra
+SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase9.json
+RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:65286 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_f0pe59x/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p9
+VERDICT: pass terminal=settled
+EVIDENCE: []
+NOTE: placeholder(s) ['grant_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)
+NOTE: predicate: GET /api/settings/remote answered 200 with 1 row(s) {'identity': 'sweep-runner', 'project_delegations.0.project_id': 'proj-18f6d54600e1', 'project_delegations.0.state': 'LIVE'}; GET /api/kernel/read?refs=operation:op_0cfe8d1c7a544e5084dcea88d20a550a&view=receipt answered 200 with 1 row(s) {'operation.name': 'project.delegation.grant', 'operation.operation_id': 'op_0cfe8d1c7a544e5084dcea88d20a550a', 'receipt.state': 'succeeded', 'receipt.actor_kind': 'owner', 'receipt.target_ref': 'project:proj-18f6d54600e1'}

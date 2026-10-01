@@ -705,7 +705,7 @@
       "type": "str",
       "default_expression": "''",
       "path": "holdspeak/config/meeting.py",
-      "line": 133
+      "line": 130
     },
     {
       "class": "MeetingConfig",
@@ -713,7 +713,7 @@
       "type": "str",
       "default_expression": "''",
       "path": "holdspeak/config/meeting.py",
-      "line": 140
+      "line": 137
     },
     {
       "class": "MeetingConfig",
@@ -721,7 +721,7 @@
       "type": "str",
       "default_expression": "''",
       "path": "holdspeak/config/meeting.py",
-      "line": 146
+      "line": 143
     },
     {
       "class": "MeetingConfig",
@@ -729,7 +729,7 @@
       "type": "bool",
       "default_expression": "False",
       "path": "holdspeak/config/meeting.py",
-      "line": 149
+      "line": 146
     },
     {
       "class": "MeetingConfig",
@@ -737,7 +737,7 @@
       "type": "bool",
       "default_expression": "False",
       "path": "holdspeak/config/meeting.py",
-      "line": 150
+      "line": 147
     },
     {
       "class": "MeetingConfig",
@@ -745,7 +745,7 @@
       "type": "bool",
       "default_expression": "True",
       "path": "holdspeak/config/meeting.py",
-      "line": 151
+      "line": 148
     },
     {
       "class": "MeetingConfig",
@@ -753,7 +753,7 @@
       "type": "float",
       "default_expression": "0.75",
       "path": "holdspeak/config/meeting.py",
-      "line": 152
+      "line": 149
     },
     {
       "class": "DictationPipelineConfig",
@@ -761,7 +761,7 @@
       "type": "bool",
       "default_expression": "True",
       "path": "holdspeak/config/meeting.py",
-      "line": 376
+      "line": 358
     },
     {
       "class": "DictationPipelineConfig",
@@ -769,7 +769,7 @@
       "type": "list[str]",
       "default_expression": "field(default_factory=lambda: ['intent-router', 'kb-enricher'])",
       "path": "holdspeak/config/meeting.py",
-      "line": 377
+      "line": 359
     },
     {
       "class": "DictationPipelineConfig",
@@ -777,7 +777,7 @@
       "type": "int",
       "default_expression": "600",
       "path": "holdspeak/config/meeting.py",
-      "line": 378
+      "line": 360
     },
     {
       "class": "DictationPipelineConfig",
@@ -785,7 +785,7 @@
       "type": "str",
       "default_expression": "'auto'",
       "path": "holdspeak/config/meeting.py",
-      "line": 379
+      "line": 361
     },
     {
       "class": "DictationPipelineConfig",
@@ -793,7 +793,7 @@
       "type": "int",
       "default_expression": "1",
       "path": "holdspeak/config/meeting.py",
-      "line": 384
+      "line": 366
     },
     {
       "class": "DictationPipelineConfig",
@@ -801,7 +801,7 @@
       "type": "bool",
       "default_expression": "True",
       "path": "holdspeak/config/meeting.py",
-      "line": 389
+      "line": 371
     },
     {
       "class": "DictationPipelineConfig",
@@ -809,7 +809,7 @@
       "type": "bool",
       "default_expression": "False",
       "path": "holdspeak/config/meeting.py",
-      "line": 395
+      "line": 377
     },
     {
       "class": "DictationPipelineConfig",
@@ -817,7 +817,7 @@
       "type": "float",
       "default_expression": "0.8",
       "path": "holdspeak/config/meeting.py",
-      "line": 396
+      "line": 378
     },
     {
       "class": "DictationPipelineConfig",
@@ -825,7 +825,7 @@
       "type": "bool",
       "default_expression": "True",
       "path": "holdspeak/config/meeting.py",
-      "line": 401
+      "line": 383
     },
     {
       "class": "DictationPipelineConfig",
@@ -833,7 +833,7 @@
       "type": "int",
       "default_expression": "500",
       "path": "holdspeak/config/meeting.py",
-      "line": 404
+      "line": 386
     },
     {
       "class": "DictationConfig",
@@ -841,7 +841,7 @@
       "type": "DictationPipelineConfig",
       "default_expression": "field(default_factory=DictationPipelineConfig)",
       "path": "holdspeak/config/meeting.py",
-      "line": 448
+      "line": 430
     },
     {
       "class": "DictationConfig",
@@ -849,7 +849,7 @@
       "type": "LLMRuntimeConfig",
       "default_expression": "field(default_factory=LLMRuntimeConfig)",
       "path": "holdspeak/config/meeting.py",
-      "line": 449
+      "line": 431
     },
     {
       "class": "DictationConfig",
@@ -857,7 +857,7 @@
       "type": "MacrosConfig",
       "default_expression": "field(default_factory=MacrosConfig)",
       "path": "holdspeak/config/meeting.py",
-      "line": 450
+      "line": 432
     },
     {
       "class": "DictationConfig",
@@ -865,7 +865,7 @@
       "type": "list",
       "default_expression": "field(default_factory=list)",
       "path": "holdspeak/config/meeting.py",
-      "line": 454
+      "line": 436
     },
     {
       "class": "DictationConfig",
@@ -873,7 +873,7 @@
       "type": "bool",
       "default_expression": "False",
       "path": "holdspeak/config/meeting.py",
-      "line": 459
+      "line": 441
     },
     {
       "class": "ModelConfig",

@@ -24,7 +24,6 @@ SECRET_PATHS: dict[str, tuple[str, str]] = {
         "meeting",
         "intel_retry_failure_webhook_header_value",
     ),
-    "slack_webhook_url": ("meeting", "slack_webhook_url"),
     "companion_webhook_url": ("meeting", "companion_webhook_url"),
 }
 ROTATABLE_SECRET_IDS = {"web_token", "device_psk", "telegram_pairing_code"}
@@ -33,7 +32,6 @@ ROTATABLE_SECRET_IDS = {"web_token", "device_psk", "telegram_pairing_code"}
 def _secret_destination(secret_id: str, value: str) -> Optional[str]:
     if secret_id not in {
         "failure_webhook_url",
-        "slack_webhook_url",
         "companion_webhook_url",
     }:
         return None
@@ -53,6 +51,11 @@ def redacted_settings(config: Any) -> dict[str, Any]:
         if isinstance(node, dict):
             for legacy_field in legacy_fields:
                 node.pop(legacy_field, None)
+    # Keep old Config files readable, but never place the retired Slack value
+    # on the Settings or credential wire even if its registration is removed.
+    meeting = payload.get("meeting")
+    if isinstance(meeting, dict):
+        meeting.pop("slack_webhook_url", None)
     states: dict[str, dict[str, Any]] = {}
     for secret_id, (section, field) in SECRET_PATHS.items():
         section_data = payload.get(section)
@@ -79,6 +82,7 @@ def strip_secret_mutations(payload: dict[str, Any]) -> dict[str, Any]:
     meeting = clean.get("meeting")
     if isinstance(meeting, dict):
         meeting.pop("intel_retry_failure_webhook_header_name", None)
+        meeting.pop("slack_webhook_url", None)
     return clean
 
 
@@ -185,7 +189,7 @@ class CredentialService:
             parsed = urlparse(clean)
             if parsed.scheme not in {"http", "https"} or not parsed.netloc:
                 raise ValidationError("failure webhook URL must be a valid http(s) URL")
-        elif secret_id in {"slack_webhook_url", "companion_webhook_url"}:
+        elif secret_id == "companion_webhook_url":
             from ..slack_export import slack_webhook_host
 
             try:

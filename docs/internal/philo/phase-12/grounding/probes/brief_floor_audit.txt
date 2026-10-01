@@ -1,0 +1,273 @@
+PHILO Phase 12 — Brief / Destinations Floor grounding probe
+Status: DRAFT audit, 2026-09-30
+Worktree: docs/philo-12-ground-astra, base 22c0acc40
+
+This is a source census and options record. It is not a settled design, a
+story, a contract, or product code. It does not select the world-only or full
+primitive option. The sources below were read at this worktree and the anchors
+were verified after checkout. No backend schema, product source, roadmap, or
+face file was changed.
+
+1. Existing contracts
+
+1.1 Primitive boundary
+
+`web/src/lib/primitives.ts:28-49` defines the complete `PrimitiveKind` union.
+`web/src/lib/primitives.ts:421-442` defines the `Primitive` union. A new full
+primitive therefore changes a shared wire-side type, not only a Floor icon.
+`web/src/lib/primitives.ts:66-84` makes the descriptor table authoritative for
+the label, icon, sync class, authorability, capabilities, and opening surface.
+The table is exhaustive at `web/src/lib/primitives.ts:448-673` and its helper
+functions index by `PrimitiveKind` at `:700-708`.
+
+The Desk data loader is one typed bucket per primitive kind
+(`web/src/desk/api.ts:51-57`), with the local singleton Intelligence and People
+rows in `EMPTY_ITEMS` (`web/src/desk/api.ts:138-163`). A Brief or a channel
+Destination is not a bucket today. The backend `monday_briefs` and
+`monday_brief_items` tables already hold Brief material
+(`holdspeak/db/schema.py:2464-2497`), but that is a document/service model, not
+evidence that Brief is a Desk primitive.
+
+1.2 Current Intelligence / Brief path
+
+The existing local `intelligence` primitive describes the Desk-wide Brief,
+follow-through, and receipt view (`web/src/lib/primitives.ts:628-637`). Its
+pullout registry is exhaustive over the existing kinds
+(`web/src/desk/pullouts/registry.ts:21-47`), and `IntelligencePullout` selects
+the Brief view by default (`web/src/desk/pullouts/IntelligencePullout.tsx:11-24,
+:78-85,:114-138`).
+
+`BriefView` reads `/api/brief/latest` and generates through
+`/api/brief/generate` (`web/src/desk/pullouts/views/BriefView.tsx:158-197`). The
+same view mounts the existing Brief Send well after the People section
+(`web/src/desk/pullouts/views/BriefView.tsx:461-464`). Its document constructor
+is already `monday_brief:<brief id>` (`web/src/desk/documentSends.tsx:25-30`),
+and the hub document-source registry renders that ref from the durable brief
+row (`holdspeak/services/document_sources.py:247-267,
+:437-446`). A world-only Brief icon can therefore point to an existing read
+and an existing send document ref if its latest Brief id is known; no new
+Brief table is required for that narrow path.
+
+The latest read can be null (`holdspeak/web/routes/monday_brief.py:112-121`),
+and each generated Brief has its own id (`holdspeak/services/monday_brief_service.py:
+1428-1435`). These facts matter if one icon is expected to remain in one place
+while the document behind it changes.
+
+1.3 Destinations are channel records, not primitives
+
+The channel model has `id`, `name`, `channel`, `account`, `target`, `synced`,
+`state`, and connection metadata (`web/src/features/channels/channels.ts:23-40`).
+The Send well fetches active destinations from `/api/channels/destinations`
+and refreshes on destination changes or window focus
+(`web/src/desk/surface/send/SendWell.tsx:130-142`). The wire methods for the
+read and park operation are at `web/src/features/channels/channels.ts:534-547`.
+There is no Destination entry in `Items` (`web/src/desk/api.ts:51-55`) and no
+world source or Floor position for one today.
+
+2. Floor projection and persistence census
+
+`web/src/desk/world.ts:18-25` excludes `intelligence`, `people`, and other
+world-only kinds from the normal visual list. The visual world is assembled
+from all primitive buckets at `web/src/desk/world.ts:63-90`; `ORDER` is
+compile-time exhaustive over `PrimitiveKind` (`:27-57`). `worldObjects` then
+filters roadmaps and filed objects (`:103-131`). The scene model takes only
+`items`, `positions`, and other existing Desk state (`web/src/desk/gl/sceneModel.ts:
+123-137`) and calls `worldObjects` (`:157-164`). `WorldStage` feeds those same
+inputs and does not fetch Briefs or Destinations
+(`web/src/desk/gl/WorldStage.tsx:34-56,:80-115`).
+
+Object positions are browser-local: `hs.diorama.pos` is parsed and written as a
+single id-to-`{x,y}` map (`web/src/desk/store/dataSlice.ts:30-49`), loaded into
+the store at `:284-297`, and changed by `setPosition` / `persistPositions` at
+`:825-839`. `objUnit` reads `positions[o.id]` (`web/src/desk/world.ts:159-167`)
+while the rendered scene key is `${o.kind}:${o.id}`
+(`web/src/desk/gl/sceneModel.ts:163-178`). This is already a collision risk
+when two kinds share one raw id. A virtual object must not use an unqualified
+destination id or a changing Brief id as its only position key. Candidate
+storage identities to test (not a decision) are `destination:<id>` for each
+Destination and a stable `brief`/`intelligence:brief` key for the single latest
+Brief icon. If history-specific Brief icons are intended, `monday_brief:<id>`
+would instead be correct but would leave orphaned positions as the latest
+window changes.
+
+The drag path writes a position on each move and snaps/persists on release
+(`web/src/desk/gl/engine.ts:917-981,:1129-1153`). A drop onto a marked DOM well
+dispatches only `{id, kind}` and then returns the source to its prior position
+(`web/src/desk/gl/engine.ts:1084-1104`). The grounding well is the existing
+consumer: it accepts `desk-object`, reads `id` and `kind`, and matches a
+meeting/resource (`web/src/desk/components/GroundingSection.tsx:51-60,
+:115-145`). No Destination target or generic document conversion is present
+in this drag seam.
+
+3. Existing document refs, drag source mapping, and meeting form state
+
+The generic Send well accepts a `DocRef` whose `ref` is the wire
+`document_ref` (`web/src/desk/surface/send/SendWell.tsx:50-53,:451-476`). A send
+press posts exactly that ref with a destination and preview digest
+(`web/src/desk/surface/send/SendWell.tsx:537-546`). Existing constructors are
+face-specific:
+
+* Brief: `monday_brief:<id>` (`web/src/desk/documentSends.tsx:25-30`).
+* Desk decision: `desk_decision:<id>` (`web/src/desk/documentSends.tsx:32-34`).
+* Decision record: `decision_record:<id>` (`web/src/desk/documentSends.tsx:36-38`).
+* Published project update: `project_update:<id>` (`web/src/features/channels/SendWell.tsx:20-23`),
+  with its Send well present only for a published update
+  (`web/src/features/project-room/update/UpdatePosture.tsx:434-445`).
+
+  `ProjectUpdate` is a separate feature model with lifecycle, project
+  revision, and delivery fields (`web/src/features/project-room/update/model.ts:74-95`);
+  it is not the `project` primitive in `web/src/lib/primitives.ts:36-37,517-527`.
+  A Floor `project` icon therefore cannot be treated as a published update
+  icon without resolving a particular update id and its published state.
+
+There is no single `kind + id -> document_ref` helper in `web/src`. The drag
+event's `{id, kind}` cannot distinguish a project primitive from a published
+`project_update`; a project icon therefore cannot honestly send a
+`project_update` without a read that names the published update. The existing
+decision constructor maps a decision primitive to `desk_decision:<id>`
+(`web/src/desk/documentSends.tsx:32-34`). A `decision_record` is a distinct
+source object and needs an explicit record source; it must not be guessed from
+the decision primitive's id.
+
+The meeting Send well exposes exactly three document forms, each with a
+different document kind (`web/src/meetings/MeetingSendWell.tsx:1-8,:18-23`).
+The selection is held in a module-level `formPick` map keyed by meeting id and
+local React state (`:25-40`); the selected `kind` becomes the Send well's
+document ref (`:43-47`). The map is not exported, persisted, or included in
+the drag event. Thus a destination drop cannot currently promise to use the
+form the owner last picked. A new seam must either share/read this picker,
+define a default form, or stop at the meeting's existing form chooser. Which
+is honest is unresolved in this audit.
+
+4. Options — factual scope only, no settled design
+
+Option A: world-only projection, no new `PrimitiveKind`, no backend schema.
+
+* Keep Brief and Destination outside `Items` and outside the primitive
+  descriptor/registry contracts. Extend the Floor projection with a separate
+  virtual-object input sourced by the existing Brief latest read and channel
+  Destination read. The virtual objects need explicit open actions: Brief
+  opens the existing Intelligence Brief; Destination opens the existing
+  channel settings/destination surface. This reuses existing data and avoids
+  pretending a channel target is durable Desk content.
+* Give each virtual object a stable, namespaced local position key. A single
+  latest Brief needs a stable icon key independent of the changing Brief id;
+  Destinations need `destination:<id>`. The current `objUnit` and `WorldObject`
+  types assume primitive refs, so this still requires a projection/action
+  adapter at the Floor seam. Reusing `intelligence` as a fake Brief kind would
+  collide with the existing singleton and its pullout semantics; inventing an
+  unlisted 21st kind would violate the exhaustive primitive contract. Article
+  II says every thing the user touches is a DeskPrimitive and every capability
+  exposes a contract and core surface (`docs/internal/CONSTITUTION.md:74-83`).
+  Therefore a world-only icon is only honest if it is explicitly an affordance
+  on an existing primitive (Intelligence for Brief, or the existing channel /
+  configuration surface for Destinations); a fake `intelligence` object or an
+  unlisted virtual kind would leave the Constitution II tension unresolved.
+* A Destination drop needs a source resolver before it can call the existing
+  Send well. The resolver must reject or name unsupported sources; it cannot
+  guess `project_update`, `desk_decision`, or `decision_record` from a bare
+  primitive id. Meeting drops must define how the three-form picker participates.
+* Cost is concentrated in the web Floor projection, local position namespace,
+  source resolver, and focused tests. The existing hub document source and
+  channel send contract can remain unchanged for Brief and meeting forms.
+
+Option B: full primitive.
+
+* Add one or more kinds to `PrimitiveKind`, `Primitive`, `Items`, the
+  descriptor table, world order, loader/normalizers, pullout registry, and
+  any primitive capabilities/opening declaration. The compile-time gates at
+  `web/src/lib/primitives.ts:448-673` and `web/src/desk/world.ts:27-57` make
+  the cross-surface list explicit.
+* A full Brief primitive can reuse the existing durable Brief rows and API;
+  a new database schema is not inherent in that option. It still needs the
+  typed primitive API bucket, descriptor, loader/normalizer, world order, and
+  core surface wiring listed above. A Destination is a channel configuration
+  record with account/egress semantics, not a normal Desk content primitive;
+  making it full would need an owner decision about whether the existing
+  channel contract is its primitive contract, plus sync class, authorability,
+  verbs, and deletion/parking. A new schema is only a consequence if that
+  decision creates a new durable record rather than reusing the channel rows.
+* The existing per-object browser position map still needs namespacing; a full
+  primitive does not solve placement persistence. The existing document refs
+  and meeting picker also still need a source resolver.
+* Cost is materially larger and risks adding a new interface before the first
+  Tuesday use. It is only justified if the owner wants Brief or Destinations
+  to become first-class synced Desk objects beyond this Floor affordance.
+
+5. Tenet and owner-cost findings
+
+1. Tenet 1 (do not over-engineer for safety): Option B adds the full primitive
+   lifecycle to read-only/externally-owned records. Its cost is not justified
+   by the existing Brief document source or Destination list alone.
+2. Tenet 2 (creator has not used the product once): the smallest testable
+   vertical slice is a visible icon that opens the existing Brief or
+   destination surface and survives a reload on the same device. A source
+   resolver and receipt are required before claiming that a Destination drop
+   sends anything.
+   Article V also requires a named consent path and receipt for a send
+   (`docs/internal/CONSTITUTION.md:106-117`), so a Destination drop can open
+   or arm the existing SendWell but cannot silently dispatch.
+3. Tenet 3 (help and accelerate): a stable virtual projection can give the
+   owner one Floor entry point. A second primitive grammar, schema, and
+   cross-device sync contract would add decisions before the job is observed.
+4. Tenet 4 (ASD-STE100): current product words are already established in the
+   existing faces (`Brief`, `Destination`, `Send`, `Summary`, `Digest`,
+   `Follow-up`). Any new Floor label must use the existing short words and
+   avoid implementation terms such as “virtual object”.
+5. Tenet 5 (component framework): the Floor must reuse the current world cell,
+   hit-test, Button/menu, SendWell, and destination settings species. A custom
+   DOM card or a second send grammar would be a new surface to govern.
+6. Tenet 6 (Workbench 2.0+): the existing normalized per-device placement
+   model is the closest honest fit for icons, but it needs explicit namespaced
+   keys and a rule for latest Brief replacement.
+7. Tenet 7 (Senior Software Architect with reports): the useful job is to see
+   the Brief and chosen egress destinations on the Desk and understand what a
+   drag will do. The current `{id, kind}` event and private meeting picker do
+   not yet provide an auditable send meaning.
+
+Tuesday question: this is unknown until the owner confirms whether “open the
+latest Brief / open Destinations from the Floor” is a Tuesday job. A full
+primitive should not be chartered from this source audit alone.
+
+6. Unknowns and verification limits
+
+* No live UI walk or screenshot was performed in this probe; the task is a
+  source grounding audit. A Floor icon's actual 1440/393 placement and tap
+  behavior remain unobserved.
+* The exact destination settings opening route and its intended single-object
+  destination face are not established by the current SendWell code.
+* The owner has not chosen whether one Brief icon follows the latest Brief id
+  or whether each durable Brief should remain a separate icon.
+* The owner has not chosen a source policy for project, decision, and meeting
+  drags. The meeting picker currently has no public read seam.
+* The existing world tests do not cover virtual objects, namespaced position
+  collisions, latest Brief replacement, Destination parking/reappearance, or
+  source-to-document resolution.
+* No tests were run before the focused set was identified. Focused collection
+  and run evidence is recorded below; no full suite was run by this worker.
+
+7. Focused existing world/Floor test evidence
+
+Collection command (from `web/`, isolated HOME and Node 22 PATH):
+`PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d)
+npm exec vitest -- list src/desk/__tests__/desk.test.ts
+src/desk/gl/__tests__/sceneModel.test.ts src/desk/__tests__/floorMenu.test.ts`
+
+The collector listed 15 tests in `desk.test.ts`, 18 tests in
+`sceneModel.test.ts`, and 4 tests in `floorMenu.test.ts` (37 total). These are
+the existing world math, scene/coordinate/hit-test, and Floor menu tests chosen
+for this audit; no new test was authored.
+
+Run command:
+`PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d)
+npm exec vitest -- run src/desk/__tests__/desk.test.ts
+src/desk/gl/__tests__/sceneModel.test.ts src/desk/__tests__/floorMenu.test.ts
+--maxWorkers=2`
+
+Raw collector output is in `brief_floor_vitest_list.txt`; raw run output is in
+`brief_floor_vitest_run.txt`.
+
+Run tail: `Test Files 3 passed (3); Tests 37 passed (37); Duration 1.24s`.
+
+Hold for SHIP. This probe is intentionally DRAFT and awaits the orchestrator
+and the other brain; it does not authorize a story, implementation, or merge.

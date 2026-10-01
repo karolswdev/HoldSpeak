@@ -67,7 +67,10 @@ operation receives a terminal receipt. Any connector exception moves it to
 | GitHub PR comment connector | `gh pr comment` | exact PR target; no merge/close/force-push |
 | GitHub PR status connector | GitHub API status POST | fixed status endpoint and signed/expected SHA shape |
 | `WebhookPostActuator` | configured HTTP POST | configured host allow-list; no URL in responses or broadcasts |
-| desk Slack adapter | configured Slack webhook | preview bytes equal wire body; control posture or per-action decision |
+| desk Slack adapter (parked) | none | refuses `slack_moved_to_channel`; historical receipts remain readable |
+
+Send to Slack uses `channel.send`. The owner sends the frozen document to a
+saved destination. A posture policy cannot send it.
 
 The canonical guides contain authoring examples and fixture harnesses. Keep
 those contracts authoritative; add an actuator here only when it has a real

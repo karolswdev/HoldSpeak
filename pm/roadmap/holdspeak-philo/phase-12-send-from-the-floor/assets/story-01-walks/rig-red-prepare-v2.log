@@ -1,0 +1,10 @@
+PASS: live
+BRAIN: astra
+SOURCE: 27d8bf1acffa2a93637e42724949f0426b1dd9b6 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase12-source.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:58884 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjdgnfcg/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p12
+VERDICT: fail terminal=settled
+EVIDENCE: []
+NOTE: predicate: fact #0 failed: the trigger send.document_ref: refused by name document_kind_unknown: Unknown document kind: artifact
+NOTE: UNRESOLVED: the promised result is absent and nothing moved at all. A zero diff is never a pass (brief §3).

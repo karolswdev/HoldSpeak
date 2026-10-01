@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase9.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:50721 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur2n30rp/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p9
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b4/case.p9.list_columns.in_view--1440/20261001T043036Z-case.p9.list_columns.in_view-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b4/case.p9.list_columns.in_view--1440/20261001T043036Z-case.p9.list_columns.in_view-astra-1440/after.png']
+NOTE: predicate: 'PERSONAL' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 179, 'y': 174, 'w': 1082, 'h': 41}

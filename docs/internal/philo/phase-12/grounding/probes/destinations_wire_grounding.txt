@@ -1,0 +1,145 @@
+DRAFT — PHILO-12 destination wire grounding
+
+Status: DRAFT — awaiting Muad'Dib check. No implementation was written in this
+lane. Base checked: 22c0acc40. Worktree: docs/philo-12-ground-astra.
+
+Scope and method
+
+This audit covers the saved `channel_destinations` read and parked filter,
+`channel.preview`, `channel.prepare`, the XI.5 exemption, kernel/receipt
+provenance, the owner-only Send boundary, and whether drag-to-preview needs a
+new operation. The real app was exercised in-process through its TestClient,
+with a temporary HOME and database. The probe created one local file
+destination, prepared but did not send it, parked it, and attempted an agent
+send. It never supplied credentials or crossed a real send boundary. The
+reproducible probe is [destinations_wire_probe.py.txt](destinations_wire_probe.py.txt);
+its captured output is [destinations_wire_probe.out.txt](destinations_wire_probe.out.txt).
+
+Observed behavior
+
+1. Saved destination reads are local and side-effect free. The repository
+   selects `channel_destinations` directly and adds `WHERE state='active'` by
+   default ([holdspeak/db/channels.py:90-105](../../../../../../holdspeak/db/channels.py:90)).
+   The HTTP route passes `include_parked` only when requested
+   ([holdspeak/web/routes/channels.py:95-97](../../../../../../holdspeak/web/routes/channels.py:95)).
+   A file row is decoded from its stored JSON and gets `connection=None`:
+   `_connection` returns before any provider lookup for non-GitHub/Jira/
+   Confluence channels ([holdspeak/services/channel_service.py:74-104](../../../../../../holdspeak/services/channel_service.py:74)).
+   Therefore the file listing does not read an OS keychain, make a network
+   probe, or inspect a credential. For cloud rows, the view reads only the
+   stored `watch_provider_connections` state; it does not recheck the provider
+   ([holdspeak/services/channel_service.py:86-104](../../../../../../holdspeak/services/channel_service.py:86)).
+   The destination read is exposed as a read with the same contract
+   ([holdspeak/services/channel_service.py:141-145](../../../../../../holdspeak/services/channel_service.py:141)).
+
+2. Park filtering and history preserve the owner's record. Parking is an
+   update to `state='parked'`, never deletion
+   ([holdspeak/db/channels.py:117-122](../../../../../../holdspeak/db/channels.py:117)).
+   The probe returned no rows for the default read and one `parked` row when
+   `include_parked=true` ([destinations_wire_probe.out.txt:54-63](destinations_wire_probe.out.txt)).
+   Existing destination tests also prove edit/remove park rows and preserve a
+   prepared send's historical target ([tests/unit/test_philo10_send_contract.py:509-565](../../../../../../tests/unit/test_philo10_send_contract.py:509)).
+
+3. `channel.preview` already has the required wire. Its descriptor requires
+   `document_ref` and `destination_id`, returns an exact payload digest and
+   preview, and declares the XI.5 exemption
+   ([holdspeak/channel_operations.py:180-201](../../../../../../holdspeak/channel_operations.py:180)).
+   The service rejects a parked destination, renders the stored document,
+   serializes the selected destination, checks size, and returns the digest
+   ([holdspeak/services/channel_service.py:159-173](../../../../../../holdspeak/services/channel_service.py:159)).
+   The probe showed HTTP 200, matching preview/prepared digests, no kernel
+   operation delta, and no operation or receipt fields
+   ([destinations_wire_probe.out.txt:88-100](destinations_wire_probe.out.txt)).
+
+4. `channel.prepare` already records the kernel operation and terminal receipt.
+   Its descriptor is an admitted write whose result is a frozen prepared send
+   ([holdspeak/channel_operations.py:203-224](../../../../../../holdspeak/channel_operations.py:203)).
+   The kernel target resolver chooses `document:<document_ref>` before a
+   destination target ([holdspeak/services/project_kernel.py:184-195](../../../../../../holdspeak/services/project_kernel.py:184)).
+   The probe recorded a succeeded owner `channel.prepare` operation with that
+   target, a succeeded receipt, and a prepared row with the same
+   `document_ref`, `destination_id`, payload digest, and prepare operation ID
+   ([destinations_wire_probe.out.txt:65-86](destinations_wire_probe.out.txt)).
+
+5. Send authority and the egress seam are already separated correctly. The
+   descriptor marks `channel.send` as an admitted owner press with a terminal
+   receipt for success, failure, indeterminate, or refusal
+   ([holdspeak/channel_operations.py:250-295](../../../../../../holdspeak/channel_operations.py:250)).
+   Project authorization places send in the owner-only set; only
+   `channel.prepare` is the agent prepare exception
+   ([holdspeak/kernel/project.py:64-70](../../../../../../holdspeak/kernel/project.py:64)).
+   An agent's send is refused before dispatch by the project codec
+   ([holdspeak/kernel/project_codec.py:83-104](../../../../../../holdspeak/kernel/project_codec.py:83)),
+   and the probe recorded `owner_principal_required`, a refusal receipt, no
+   output files, and the send row still `prepared`
+   ([destinations_wire_probe.out.txt:2-23](destinations_wire_probe.out.txt)).
+   The channel runtime passes the frozen payload material, principal, parent
+   operation, and broker into external egress
+   ([holdspeak/connector_runtime.py:221-248](../../../../../../holdspeak/connector_runtime.py:221));
+   the egress service rejects a non-owner without a live parent authority
+   ([holdspeak/kernel/external_egress.py:193-196](../../../../../../holdspeak/kernel/external_egress.py:193)).
+
+6. No new operation is needed for drag-to-preview. The current Send well
+   selects a destination row, stores its ID, and calls the existing
+   `wire.preview(document_ref, destination_id)` effect
+   ([web/src/desk/surface/send/SendWell.tsx:459-476](../../../../../../web/src/desk/surface/send/SendWell.tsx:459)).
+   The preview request already carries the two stable identifiers
+   ([web/src/features/channels/channels.ts:561-564](../../../../../../web/src/features/channels/channels.ts:561)).
+   There is no drag/drop handler in the Send surface or channel wire. If a
+   future gesture is added, it should only select the same pair and invoke
+   `channel.preview`; a new operation would be justified only if the gesture
+   itself changes state or crosses an effect boundary.
+
+Proposed minimum wiring
+
+Keep the existing operations and paths. A destination picker, including a
+future drag gesture, needs only to produce `{document_ref, destination_id}`
+and call the existing XI.5-exempt preview. A Send press passes the returned
+`payload_digest` to the existing owner-only `channel.send`; an agent can call
+`channel.prepare`, but cannot send. A parked row remains visible only through
+the explicit `include_parked` read and cannot be previewed or sent.
+
+Findings ranked by owner cost and Tenet
+
+1. P0 — no blocking grounding gap found. The current path meets Tenets 1 and
+   3: it uses one destination read, one preview, one prepare, and one owner
+   Send seam rather than adding an interface for drag-to-preview. Tenet 4 is
+   not implicated by this backend path.
+2. P1 — cloud connection state remains an unknown for this file-only probe.
+   The code path is bounded to a stored local connection row and does not
+   recheck credentials, but this probe did not exercise cloud credentials or
+   network channels by instruction. This is a verification limit, not an
+   observed defect. Tenet 1 keeps this as an unknown rather than a new safety
+   layer.
+3. P2 — no current drag-to-preview seam exists to verify in the UI. Adding a
+   gesture later should reuse the existing preview request and avoid a new
+   operation. This preserves Tenets 3 and 6: one direct action on the
+   Workbench-like Send surface.
+
+Tuesday question
+
+Yes for the existing Send surface: the owner can choose a saved destination,
+see its exact preview, and press Send; parked rows are excluded by default and
+the owner is the only principal that can cross the send boundary.
+
+Unknowns
+
+The probe intentionally used only a local file destination and did not provide
+credentials, call a provider, or perform a real send. It therefore does not
+prove provider-specific dispatch behavior. The focused unit contracts cover
+the owner/agent and parked-row seams; no live external credential state was
+read.
+
+Verification
+
+The probe was run as:
+
+    HOME=$(mktemp -d) UV_CACHE_DIR=/tmp/philo12-uv-cache uv run python docs/internal/philo/phase-12/grounding/probes/destinations_wire_probe.py.txt
+
+Focused collection found 51 tests in the two scoped channel contract files.
+The focused run completed with `51 passed in 33.25s`:
+
+    HOME=$(mktemp -d) UV_CACHE_DIR=/tmp/philo12-uv-cache uv run pytest -q tests/unit/test_philo11_channel_contract.py tests/unit/test_philo10_send_contract.py
+
+No full suite, e2e metal test, stage, capture, contract, flip, or commit was
+run in this lane. Hold for SHIP.

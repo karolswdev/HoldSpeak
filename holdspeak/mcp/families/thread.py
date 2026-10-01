@@ -20,8 +20,7 @@ TOOLS: list[dict[str, Any]] = [
     {
         "name": "thread.set_status",
         "description": (
-            "Set the persistent status line shown in the thread head. "
-            "The text is persisted across turns and visible on next load."
+            "Set the persistent thread status line; it persists across turns."
         ),
         "inputSchema": {
             "$id": "holdspeak://mcp/thread.set_status@1",
@@ -29,11 +28,11 @@ TOOLS: list[dict[str, Any]] = [
             "properties": {
                 "thread_id": {
                     "type": "string",
-                    "description": "Thread identifier.",
+                    "description": "Thread ID.",
                 },
                 "text": {
                     "type": "string",
-                    "description": "Status line text (empty string clears).",
+                    "description": "Status text; empty clears.",
                 },
             },
             "required": ["thread_id", "text"],

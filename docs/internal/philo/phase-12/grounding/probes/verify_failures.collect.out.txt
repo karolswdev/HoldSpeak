@@ -1,0 +1,6 @@
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.sVb9aCc3SO
+tests/unit/test_thread_tool_loop.py::TestHeldApprove::test_held_then_approved
+tests/e2e/test_hs171_shade_glass.py::test_shade_brief_row_1440
+
+2 tests collected in 0.77s
+Exit: 0

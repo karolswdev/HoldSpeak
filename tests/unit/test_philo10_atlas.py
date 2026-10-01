@@ -37,6 +37,9 @@ COUNTS = {
     "atlas-phase9.json": 13,
     "atlas-phase9-steward.json": 4,
     "atlas-phase10.json": 32,  # PHILO-10-07: five Resend face cases
+    "atlas-phase11-slack.json": 34,  # PHILO-11-06: Slack outcomes, transitions, and meeting faces
+    "atlas-phase11.json": 22,  # PHILO-11-06: seven sources and fifteen document faces
+    "atlas-phase12-source.json": 2,  # PHILO-12-01: artifact preview and prepare
 }
 
 # The charter's state/width matrix -> its face case (Manual is Phase 9's).

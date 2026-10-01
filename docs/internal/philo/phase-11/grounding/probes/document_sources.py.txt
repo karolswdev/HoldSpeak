@@ -1,0 +1,342 @@
+"""Read-only Phase 11 grounding probe for the three Send document kinds.
+
+The file has a ``.txt`` suffix because this is an evidence probe, not product
+code.  Run it from this worktree with ``uv run python <this-file>``.  It uses
+the real Database repositories and service producers, an isolated temporary
+HOME, a temporary SQLite database, no accounts, and no channel send.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import tempfile
+from dataclasses import asdict, is_dataclass
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Any
+
+
+def _json_value(value: Any) -> Any:
+    if hasattr(value, "keys"):
+        return {str(key): value[key] for key in value.keys()}
+    if is_dataclass(value):
+        return asdict(value)
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, set):
+        return sorted(value)
+    raise TypeError(type(value).__name__)
+
+
+def _dump(value: Any) -> str:
+    return json.dumps(value, default=_json_value, sort_keys=True, separators=(",", ":"))
+
+
+def _sha(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _brief_row(brief: Any) -> dict[str, Any]:
+    return {
+        "id": brief["id"],
+        "project_id": brief["project_id"],
+        "project_revision": brief["project_revision"],
+        "purpose": brief["purpose"],
+        "lifecycle": brief["lifecycle"],
+        "manifest_revision": brief["manifest_revision"],
+        "manifest_sha256": brief["manifest_sha256"],
+        "body_md": brief["body_md"],
+        "integrity": brief.get("integrity"),
+    }
+
+
+def main() -> None:
+    # Do this before importing services that consult Path.home() or Config.
+    with tempfile.TemporaryDirectory(prefix="philo11-document-sources-") as temp:
+        isolated = Path(temp)
+        for name in ("config", "data", "state"):
+            (isolated / name).mkdir()
+        os.environ["HOME"] = str(isolated / "home")
+        (isolated / "home").mkdir()
+        os.environ["XDG_CONFIG_HOME"] = str(isolated / "config")
+        os.environ["XDG_DATA_HOME"] = str(isolated / "data")
+        os.environ["XDG_STATE_HOME"] = str(isolated / "state")
+
+        from holdspeak.cadence.brief import render_brief_markdown, render_brief_text
+        from holdspeak.config.core import Config
+        from holdspeak.db.core import Database
+        from holdspeak.meeting_exports import render_meeting_export, write_meeting_export
+        from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+        from holdspeak.principals import Principal, PrincipalKind
+        from holdspeak.services.cadence_service import CadenceService
+        from holdspeak.services.channel_contract import naming
+        from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
+        from holdspeak.services.decision_record_service import DecisionRecordService
+        from holdspeak.services.monday_brief_service import MondayBriefService
+        from holdspeak.services.preparation_brief_service import PreparationBriefService
+        from holdspeak.services.project_service import ProjectService
+        from holdspeak.services.meeting_service import MeetingService
+
+        db_path = isolated / "holdspeak.db"
+        export_dir = isolated / "exports"
+        db = Database(db_path)
+        owner = Principal(PrincipalKind.OWNER, "phase11-probe-owner")
+        fixed = datetime(2026, 9, 29, 9, 0)
+        print("PROBE=real producers; no accounts; no key store; no channel dispatch")
+        print(f"HOME={os.environ['HOME']}")
+        print(f"DB={db_path}")
+
+        try:
+            # Meeting summary/export: save and read a real MeetingState, then use
+            # the same MeetingService/export helpers the HTTP/MCP/history paths use.
+            meeting_id = "probe-meeting"
+            meeting = MeetingState(
+                id=meeting_id,
+                started_at=fixed,
+                ended_at=datetime(2026, 9, 29, 10, 0),
+                title="Tuesday source review",
+                tags=["phase-11", "source"],
+                segments=[
+                    TranscriptSegment(
+                        "We choose the local path", "Owner", 1.0, 4.0
+                    ),
+                    TranscriptSegment("The summary must be stable", "Owner", 8.0, 12.0),
+                ],
+                intel=IntelSnapshot(
+                    timestamp=12.0,
+                    topics=["document identity"],
+                    action_items=[
+                        {
+                            "id": "action-1",
+                            "task": "Write the source map",
+                            "owner": "owner",
+                            "status": "pending",
+                        }
+                    ],
+                    summary="The first summary snapshot.",
+                ),
+                intel_status="complete",
+            )
+            db.meetings.save_meeting(meeting)
+            db.plugins.record_artifact(
+                artifact_id="probe-decisions-artifact",
+                meeting_id=meeting_id,
+                artifact_type="decisions",
+                title="Decision extraction",
+                body_markdown="## Decision\nUse the local path.",
+                structured_json={
+                    "decisions": [
+                        {
+                            "decision": "Use the local path",
+                            "rationale": "No network dependency",
+                            "source_timestamp": 1.0,
+                        }
+                    ]
+                },
+                confidence=1.0,
+                status="draft",
+                plugin_id="phase11-probe",
+                plugin_version="1",
+                sources=[{"source_type": "meeting", "source_ref": meeting_id}],
+            )
+            meeting_service = MeetingService(db)
+            markdown_result = meeting_service.export_meeting(owner, meeting_id, "markdown")
+            json_result = meeting_service.export_meeting(owner, meeting_id, "json")
+            markdown = markdown_result["content"]
+            json_export = json_result["content"]
+            written = write_meeting_export(
+                db.meetings.get_meeting(meeting_id),
+                "markdown",
+                destination_dir=export_dir,
+                artifacts=db.plugins.list_artifacts(meeting_id, limit=200),
+            )
+            print("MEETING_SUMMARY")
+            print(_dump({
+                "producer": "MeetingService.export_meeting -> render_meeting_export",
+                "meeting_id": meeting_id,
+                "mcp": "meeting.export (holdspeak/mcp/tools.py:318-322,1085-1086)",
+                "history": "commands/history.py -> write_meeting_export",
+                "formats": ["markdown", "json"],
+                "markdown_sha256": _sha(markdown),
+                "json_sha256": _sha(json_export),
+                "written_path": written,
+                "written_sha256": _sha(written.read_text(encoding="utf-8")),
+                "source_fields": ["meeting.id", "started_at", "ended_at", "intel snapshot", "segments", "artifacts"],
+                "revision_or_freeze_fields_in_export": [],
+            }))
+
+            # The exporter reads the current MeetingState.  Add an intel snapshot
+            # and title change, then prove that the same meeting ref has new bytes.
+            meeting.title = "Tuesday source review (revised)"
+            meeting.intel = IntelSnapshot(
+                timestamp=20.0,
+                topics=["document identity", "version drift"],
+                action_items=meeting.intel.action_items,
+                summary="The second summary snapshot.",
+            )
+            db.meetings.save_meeting(meeting)
+            revised = meeting_service.export_meeting(owner, meeting_id, "markdown")["content"]
+            assert markdown != revised, "same meeting ref unexpectedly kept identical export bytes"
+            with db._connection() as conn:
+                snapshot_count = conn.execute(
+                    "SELECT COUNT(*) AS n FROM intel_snapshots WHERE meeting_id = ?",
+                    (meeting_id,),
+                ).fetchone()["n"]
+            print(_dump({
+                "same_ref": meeting_id,
+                "before_sha256": _sha(markdown),
+                "after_sha256": _sha(revised),
+                "bytes_changed": markdown != revised,
+                "historical_intel_snapshots": snapshot_count,
+                "interpretation": "historical snapshots exist, but export has no selected snapshot/version; it renders current state",
+            }))
+
+            # Monday/COS brief: a real durable producer, but its model is a
+            # producer-day lookback plus week lookahead, not a next-day document.
+            monday = MondayBriefService(db, clock=lambda: fixed)
+            monday_one = monday.generate(owner, now=fixed)
+            monday_two = monday.generate(owner, now=fixed)
+            monday_next = monday.generate(owner, now=fixed + timedelta(days=1))
+            assert monday_one.id == monday_two.id, "same producer day was not deduped"
+            assert monday_next.id != monday_one.id, "next producer day did not mint a new brief"
+            with db._connection() as conn:
+                monday_row = conn.execute(
+                    "SELECT * FROM monday_briefs WHERE id = ?", (monday_one.id,)
+                ).fetchone()
+                monday_items = conn.execute(
+                    "SELECT COUNT(*) AS n FROM monday_brief_items WHERE brief_id = ?",
+                    (monday_one.id,),
+                ).fetchone()["n"]
+            print("CHIEF_OF_STAFF_OR_MONDAY_BRIEF")
+            print(_dump({
+                "producer": "MondayBriefService.generate",
+                "mcp": "monday_brief.generate / monday_brief.get -> brief.generate/latest",
+                "id": monday_one.id,
+                "same_day_deduped": monday_one.id == monday_two.id,
+                "next_day_id": monday_next.id,
+                "next_day_distinct": monday_next.id != monday_one.id,
+                "period_start": monday_one.period_start,
+                "period_end": monday_one.period_end,
+                "sections": sorted(monday_one.sections),
+                "row_columns": list(monday_row.keys()) if monday_row else [],
+                "item_rows": monday_items,
+                "renderer": None,
+                "next_day_spec": None,
+                "interpretation": "durable Monday/weekly attention brief; no separate chief-of-staff or next-day document/ref/version",
+            }))
+
+            # Cadence/Morning Push is a second meaning of brief: real service,
+            # deterministic renderers, but no durable brief row.
+            cadence_brief = CadenceService(db, Config.load().cadence).brief(owner)
+            from holdspeak.cadence.brief import build_brief
+
+            pure_brief = build_brief(db, now=fixed)
+            print("MORNING_PUSH_CADENCE_BRIEF")
+            print(_dump({
+                "producer": "CadenceService.brief -> build_brief",
+                "mcp": "cadence.brief (holdspeak/mcp/families/cadence.py:53-60,204-205)",
+                "service_result": cadence_brief,
+                "markdown_sha256": _sha(render_brief_markdown(pure_brief)),
+                "text_sha256": _sha(render_brief_text(pure_brief)),
+                "durable_record": False,
+                "interpretation": "daily cadence/Morning Push; separate from Monday/COS and project preparation; no Send document identity",
+            }))
+
+            # Project/preparation brief: use the real project repository and the
+            # real ProjectService.room projection, then deterministic preparation.
+            db.projects.create_project(
+                project_id="probe-project", name="Probe Project", description="Tuesday prep"
+            )
+            project_service = ProjectService(db)
+            preparation = PreparationBriefService(
+                db,
+                project_service=project_service,
+                clock=lambda: fixed.replace(tzinfo=timezone.utc),
+            )
+            prepared = preparation.prepare(
+                owner, "probe-project", "Tuesday preparation", generator="deterministic"
+            )
+            with db._connection() as conn:
+                project_row = conn.execute(
+                    "SELECT * FROM project_briefs WHERE id = ?", (prepared["id"],)
+                ).fetchone()
+            print("PROJECT_PREPARATION_BRIEF")
+            print(_dump({
+                "producer": "PreparationBriefService.prepare -> ProjectService.room",
+                "mcp": "practice_recipe plan/run and project.brief_prepare family paths",
+                "stored": _brief_row(prepared),
+                "row_columns": list(project_row.keys()) if project_row else [],
+                "body_sha256": _sha(str(prepared.get("body_md") or "")),
+                "send_ref_supported_by_channel_contract": False,
+                "interpretation": "project-scoped preparation artifact with frozen manifest/body row; it is not COS, next-day, or a channel Document",
+            }))
+
+            # Decision record and lifecycle receipt: use the artifact projected by
+            # the real decisions repository, then the real transition and record
+            # services.  The lifecycle receipt is a returned value, not a document.
+            decision = db.decisions.list(limit=10)[0]
+            lifecycle = DecisionLifecycleService(db)
+            transition = lifecycle.transition(owner, decision.id, "accept")
+            record_service = DecisionRecordService(db)
+            record = record_service.create_from_meeting(owner, decision.id)
+            with db._connection() as conn:
+                decision_row = conn.execute(
+                    "SELECT * FROM decisions WHERE id = ?", (decision.id,)
+                ).fetchone()
+                record_row = conn.execute(
+                    "SELECT * FROM decision_records WHERE id = ?", (record["id"],)
+                ).fetchone()
+                kernel_receipts = conn.execute(
+                    "SELECT COUNT(*) AS n FROM kernel_receipts"
+                ).fetchone()["n"]
+            print("DECISION_RECEIPT_AND_RECORD")
+            print(_dump({
+                "producer": "DecisionLifecycleService.transition + DecisionRecordService.create_from_meeting",
+                "mcp": "decision_record.create_from_meeting/get/list; no decision lifecycle receipt document tool",
+                "decision": decision_row,
+                "lifecycle_receipt": transition["receipt"],
+                "stored_record": record_row,
+                "record_source_rows": record_service.get(owner, record["id"])["sources"],
+                "direct_service_invocation_kernel_receipt_rows": kernel_receipts,
+                "kernel_receipt_scope": "observed only for direct DecisionLifecycleService.transition; this does not audit a routed decision operation",
+                "receipt_renderer": None,
+                "record_body_md": None,
+                "stable_published_or_frozen_version": False,
+                "interpretation": "Decision Record is mutable governing state; receipt is an ephemeral lifecycle result and has no body bytes or frozen revision",
+            }))
+
+            # Phase 10 contract boundary: only project_update:<id> resolves.  Do
+            # this read-only naming check for each candidate document identity.
+            contract_checks: dict[str, str] = {}
+            for ref in (
+                "project_update:probe",
+                f"project_brief:{prepared['id']}",
+                f"decision_record:{record['id']}",
+                f"meeting:{meeting_id}",
+                f"next_day_brief:{monday_one.id}",
+            ):
+                try:
+                    naming(db, ref)
+                    contract_checks[ref] = "accepted"
+                except Exception as exc:  # intentional refusal census
+                    contract_checks[ref] = f"{type(exc).__name__}:{getattr(exc, 'code', str(exc))}"
+            with db._connection() as conn:
+                sends = conn.execute("SELECT COUNT(*) AS n FROM channel_sends").fetchone()["n"]
+            print("PHASE10_DOCUMENT_REF_CHECK")
+            print(_dump({
+                "contract": "channel_contract.naming",
+                "accepted_kind": "project_update:<id> (only kind gate; probe id is intentionally absent)",
+                "checks": contract_checks,
+                "channel_sends": sends,
+                "interpretation": "no candidate brief/receipt/meeting ref can enter channel.prepare, so one-byte preview=sent cannot be exercised for them",
+            }))
+        finally:
+            db.close()
+
+
+if __name__ == "__main__":
+    main()

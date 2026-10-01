@@ -47,9 +47,9 @@ def _tool(
 
 
 _BOUNDARY = (
-    "PEOPLE DISCLOSURE: local-owner access defaults to write; set "
-    "HOLDSPEAK_MCP_PEOPLE_ACCESS=read or =off to restrict it. "
-    "Only shared-intent material crosses MCP. Leader-private prep is never returned. "
+    "PEOPLE DISCLOSURE: local-owner defaults to write; set "
+    "HOLDSPEAK_MCP_PEOPLE_ACCESS=read or =off to restrict. "
+    "Only shared-intent crosses MCP. Leader-private prep is never returned. "
 )
 
 TOOLS: list[dict[str, Any]] = [
@@ -114,7 +114,7 @@ TOOLS: list[dict[str, Any]] = [
     _tool(
         "people.note.create",
         _BOUNDARY
-        + "Create a durable manual shared-intent grounding note. The note is encrypted at rest and is not indexed or submitted to a model.",
+        + "Create a durable shared-intent grounding note. Encrypted at rest; not indexed or submitted to a model.",
         {
             "relationship_id": {"type": "string"},
             "topic": {"type": "string"},
@@ -151,11 +151,9 @@ TOOLS: list[dict[str, Any]] = [
     _tool(
         "people.one_on_one.brief",
         _BOUNDARY
-        + "Compute a read-time 1:1 preparation brief for a relationship. "
-        "Returns open shared-intent commitments, agenda items, grounding note count, "
-        "the last linked meetings with their open action items, decision records, "
-        "and the count of un-linked meetings in the window. "
-        "Never persists any data. Leader-private items are never returned.",
+        + "Compute a read-time 1:1 brief: open shared-intent commitments/agenda, "
+        "grounding note count, last linked meetings with open action items, decision records, "
+        "and unlinked meeting count in the window. Never persists any data.",
         {"relationship_id": {"type": "string", "description": "Opaque relationship identifier."}},
         ["relationship_id"],
     ),

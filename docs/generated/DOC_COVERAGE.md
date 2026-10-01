@@ -13,13 +13,13 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 259 / 259 |
-| Test paths | 199 / 199 |
-| Documentation paths | 222 / 222 |
-| Assertions inspected | 199 |
-| Tests executed | 171 |
-| Records with an executed assertion | 73 |
-| Semantic records unresolved | 74 |
+| Source paths | 263 / 263 |
+| Test paths | 204 / 204 |
+| Documentation paths | 225 / 225 |
+| Assertions inspected | 204 |
+| Tests executed | 172 |
+| Records with an executed assertion | 74 |
+| Semantic records unresolved | 75 |
 
 ## Documentation classes
 
@@ -106,10 +106,12 @@ Validation errors at generation: **0**.
 | `integration.activity_connectors` | capabilities | 4/4 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `integration.github_readonly` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `integration.jira_confluence_calendar` | capabilities | 3/3 | 3/3 | 3 | 2 | 0 | partially_evidenced |
-| `integration.actuators` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |
+| `integration.actuators` | capabilities | 3/3 | 3/3 | 3 | 2 | 0 | partially_evidenced |
 | `companion.ipad_client` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
 | `companion.aipi_audio_control` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
-| `companion.qlippy_presence` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
+| `companion.qlippy_presence` | capabilities | 2/2 | 2/2 | 2 | 1 | 0 | partially_evidenced |
+| `channels.document_sources` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
+| `channels.slack` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
 | `runtime.kernel` | components | 2/2 | 0/0 | 0 | 0 | 0 | unresolved |
 | `runtime.inference` | components | 1/1 | 0/0 | 0 | 0 | 1 | unresolved |
 | `authority.edge` | components | 1/1 | 0/0 | 0 | 0 | 2 | unresolved |

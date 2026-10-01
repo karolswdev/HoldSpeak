@@ -1,0 +1,20 @@
+--- channel_slack.py (built)
++++ channel_slack.py (probe: metadata removed)
+@@ -422,8 +422,6 @@
+                 "payload_too_large:slack",
+                 f"The Slack text is {len(text)} characters; Slack takes {MAX_TEXT_CHARACTERS}",
+                 status=400,
+-                size=len(text),
+-                limit=MAX_TEXT_CHARACTERS,
+             )
+         return json.dumps({"text": text}, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+ 
+@@ -439,8 +437,6 @@
+                 "payload_too_large:slack",
+                 f"The Slack text is {len(text)} characters; Slack takes {MAX_TEXT_CHARACTERS}",
+                 status=400,
+-                size=len(text),
+-                limit=MAX_TEXT_CHARACTERS,
+             )
+         return GatedOperation.outbound(
+             HOST,

@@ -16,7 +16,9 @@
 import { apiFetch, ApiError } from "../../lib/api";
 import { refusalWord } from "../../desk/surface/egress";
 
-export type Channel = "file" | "github" | "jira" | "confluence" | "email";
+/** PHILO-11-04: Slack is the sixth channel (design section 5; story 02 carries its wire).
+ *  The face words live here so the well shows a Slack row the day the hub carries it. */
+export type Channel = "file" | "github" | "jira" | "confluence" | "email" | "slack";
 
 export type Destination = {
   id: string;
@@ -102,6 +104,7 @@ export const CHANNEL_WORD: Record<Channel, string> = {
   jira: "JIRA",
   confluence: "CONFLUENCE",
   email: "EMAIL",
+  slack: "SLACK",
 };
 
 /* ── the email providers (story 03 SendGrid; story 07 Resend) ─────── */
@@ -123,6 +126,7 @@ export const SENT_WORD: Record<Channel | "manual", string> = {
   jira: "COMMENTED",
   confluence: "BLOG POSTED",
   email: "ACCEPTED BY SENDGRID",
+  slack: "POSTED",
   manual: "DELIVERED",
 };
 /** Email's word names the provider that accepted it (the proof's provider, else the account's). */
@@ -158,9 +162,19 @@ const REFUSED: Record<string, string> = {
   destination_not_saved: "DESTINATION NOT SAVED",
   destination_name_invalid: "NAME MISSING",
   document_unknown: "NO DOCUMENT",
+  document_kind_unknown: "DOCUMENT TYPE UNKNOWN",
+  document_not_found: "DOCUMENT NOT FOUND",
+  artifact_body_missing: "ARTIFACT BODY MISSING",
+  artifact_not_text: "ARTIFACT NOT TEXT",
   email_address_invalid: "ADDRESS NOT VALID",
   email_key_invalid: "KEY NOT VALID",
   email_key_missing: "NO KEY",
+  slack_webhook_missing: "NO WEBHOOK",
+  slack_webhook_invalid: "WEBHOOK NOT VALID",
+  slack_channel_label_invalid: "CHANNEL NAME NOT VALID",
+  slack_key_ref_invalid: "KEY NAME NOT VALID",
+  slack_key_store_locked: "KEY STORE LOCKED",
+  slack_key_store_not_native: "NO SAFE KEY STORE",
   email_key_ref_invalid: "KEY NAME NOT VALID",
   email_key_store_locked: "KEY STORE LOCKED",
   email_key_store_not_native: "NO SAFE KEY STORE",
@@ -175,6 +189,8 @@ const REFUSED: Record<string, string> = {
   address_invalid: "ADDRESS NOT VALID",
   channel_unknown: "CHANNEL NOT READY",
   invalid_arguments: "NOT VALID",
+  no_summary: "NO SUMMARY",
+  not_published: "NOT PUBLISHED",
   validation_error: "NOT VALID",
   preview_changed: "PREVIEW CHANGED",
   payload_changed: "PREVIEW CHANGED",
@@ -191,6 +207,7 @@ const REFUSED: Record<string, string> = {
 };
 /** A refusal code with a variable part: its word by prefix. */
 const REFUSED_PREFIX: [string, string][] = [
+  ["payload_too_large:slack", "TOO LARGE FOR SLACK"],
   ["payload_too_large:", "TOO LARGE"],
 ];
 
@@ -243,6 +260,16 @@ const FAILED: Record<string, string> = {
   tls_failed: "SECURE CONNECTION FAILED",
   timeout: "TIMED OUT",
   transport_error: "CONNECTION FAILED",
+  /* PHILO-11-05: Slack's pinned non-deliveries (design section 5) and its key custody. */
+  invalid_payload: "MESSAGE NOT VALID",
+  action_prohibited: "SLACK REFUSED",
+  channel_not_found: "CHANNEL NOT FOUND",
+  channel_is_archived: "CHANNEL ARCHIVED",
+  "payload_too_large:slack": "TOO LARGE FOR SLACK",
+  slack_webhook_missing: "NO WEBHOOK",
+  slack_webhook_invalid: "WEBHOOK NOT VALID",
+  slack_key_store_locked: "KEY STORE LOCKED",
+  slack_key_store_not_native: "NO SAFE KEY STORE",
 };
 /** A failure code with a variable part: its word by prefix (none today). */
 const FAILED_PREFIX: [string, string][] = [
@@ -274,6 +301,14 @@ const UNKNOWN: Record<string, string> = {
   dns_failed: "HOST NOT FOUND",
   tls_failed: "SECURE CONNECTION FAILED",
   transport_error: "CONNECTION FAILED",
+  /* PHILO-11-05: Slack answered, but not with its exact `ok` (design section 5). */
+  ack_missing: "NO OK FROM SLACK",
+  rollup_error: "SLACK ERROR",
+  plan_refused: "COMMAND NOT VALID",
+  slack_webhook_missing: "NO WEBHOOK",
+  slack_webhook_invalid: "WEBHOOK NOT VALID",
+  slack_key_store_locked: "KEY STORE LOCKED",
+  slack_key_store_not_native: "NO SAFE KEY STORE",
 };
 /** An UNKNOWN code with a variable part: the file channel's unpinned OS
  *  errors (`create_<errno>`, `write_<errno>`), an effect that raised, a CLI's
@@ -318,6 +353,7 @@ export function targetToken(channel: Channel, t: Record<string, string | number>
       const to = (Array.isArray(raw) ? raw.map(String) : String(raw ?? "").split(",")).map((a) => a.trim()).filter(Boolean);
       return (to[0] ?? "") + (to.length > 1 ? ` +${to.length - 1}` : "");
     }
+    case "slack": return String(t.channel_label ?? "");
     default: return "";
   }
 }
@@ -344,6 +380,7 @@ export function egressOf(d: { channel: Channel; account: Record<string, string |
       const host = emailProvider(d.account).host;
       return { label: host.toUpperCase(), scope: "cloud", title: host };
     }
+    case "slack": return { label: "HOOKS.SLACK.COM", scope: "cloud", title: "hooks.slack.com" };
     default: return { label: "", scope: "local", title: "" };
   }
 }
@@ -412,6 +449,12 @@ export function previewOf(
       if (wire.subject) f.push({ label: "Subject", value: String(wire.subject) });
       return { fields: f, body_kind: "text", body: String(wire.text ?? body) };
     }
+    case "slack":
+      // A webhook has no read call: the fields are the channel label and the one host.
+      return {
+        fields: [{ label: "Channel", value: String(t.channel_label ?? "") }, { label: "Webhook", value: "hooks.slack.com" }],
+        body_kind: "text", body,
+      };
     default:
       return { fields: [], body_kind: "text", body };
   }
@@ -419,8 +462,20 @@ export function previewOf(
 
 /* ── the wire client ───────────────────────────────────────────────── */
 
+/** A named refusal. `detail` is the hub's whole answer: a size refusal
+ *  carries `size` and `limit` there (design section 5, canvas T1). */
 export class Refusal extends Error {
-  constructor(readonly code: string) { super(code); }
+  constructor(readonly code: string, readonly detail: Record<string, unknown> = {}) { super(code); }
+}
+
+/** The size and the limit a size refusal names, when the answer carries them:
+ *  top-level integers beside `code` / `error_code` (story 02's contract for
+ *  `payload_too_large:slack`: `size` the final Slack text's characters,
+ *  `limit` 39000). The word is CHARACTERS: a byte-limited channel that reuses
+ *  this must carry its unit (BACKLOG). */
+export function refusalSize(r: { detail?: Record<string, unknown> } | null | undefined): { size: number; limit: number } | null {
+  const d = r?.detail ?? {};
+  return Number.isInteger(d.size) && Number.isInteger(d.limit) ? { size: d.size as number, limit: d.limit as number } : null;
 }
 
 /** A read whose answer lacks its list is unreadable, never empty. */
@@ -440,7 +495,7 @@ async function call<T>(path: string, init: RequestInit & { json?: unknown } = {}
       const p = (e.payload ?? {}) as Record<string, unknown>;
       const code = p.error_code ?? p.code;
       const receipt = (p.receipt ?? null) as Record<string, unknown> | null;
-      if (code && (receipt?.state === "refused" || (e.status >= 400 && e.status < 500))) throw new Refusal(String(code));
+      if (code && (receipt?.state === "refused" || (e.status >= 400 && e.status < 500))) throw new Refusal(String(code), p);
     }
     throw e;
   }
@@ -470,6 +525,7 @@ export type SaveBody = {
   host?: string; repo?: string; kind?: "issue" | "pr"; number?: number;
   site?: string; email?: string; key?: string; space_id?: string;
   provider?: string; from_email?: string; from_name?: string; key_ref?: string; to?: string[]; cc?: string[];
+  channel_label?: string;
 };
 
 const commandId = () =>
@@ -496,13 +552,19 @@ export const wire = {
     call<{ key_ref: string; saved?: boolean }>(`/api/channels/email-keys/${encodeURIComponent(keyRef)}`, {
       method: "PUT", json: { api_key: value, provider, command_id: commandId() },
     }),
-  sends: (updateId: string) =>
-    call<unknown>(`/api/channels/sends?update_id=${encodeURIComponent(updateId)}`).then((r) => listOf<Send>(r, "sends")),
-  preview: (updateId: string, destinationId: string) =>
-    call<{ payload_digest: string; preview: WirePreview }>("/api/channels/preview", {
-      method: "POST", json: { update_id: updateId, destination_id: destinationId },
+  /** PHILO-11-05: a Slack webhook, typed once, into the OS keychain (design section 5). The URL is the
+   *  credential: HTTP only, never shown again. The hub mints the key_ref the destination save then names. */
+  saveSlackWebhook: (webhookUrl: string) =>
+    call<{ key_ref: string; saved?: boolean }>("/api/channels/slack-webhooks", {
+      method: "POST", json: { webhook_url: webhookUrl, command_id: commandId() },
     }),
-  send: (body: { command_id: string; send_id?: string; update_id?: string; destination_id?: string; preview_digest?: string }) =>
+  sends: (documentRef: string) =>
+    call<unknown>(`/api/channels/sends?document_ref=${encodeURIComponent(documentRef)}`).then((r) => listOf<Send>(r, "sends")),
+  preview: (documentRef: string, destinationId: string) =>
+    call<{ payload_digest: string; preview: WirePreview }>("/api/channels/preview", {
+      method: "POST", json: { document_ref: documentRef, destination_id: destinationId },
+    }),
+  send: (body: { command_id: string; send_id?: string; document_ref?: string; destination_id?: string; preview_digest?: string }) =>
     call<{ send: Send }>("/api/channels/send", { method: "POST", json: body }).then((r) => r.send),
   discard: (sendId: string) =>
     call<{ send: Send }>(`/api/channels/sends/${encodeURIComponent(sendId)}/discard`, {
