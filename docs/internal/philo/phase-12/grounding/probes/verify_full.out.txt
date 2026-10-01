@@ -1,0 +1,451 @@
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.GNBV0u2lWj
+Command: uv run pytest -q -n auto --ignore=tests/e2e/test_metal.py
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  0%]
+........................................................................ [  1%]
+........................................................................ [  1%]
+........................................................................ [  2%]
+........................................................................ [  2%]
+........................................................................ [  3%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  4%]
+......................................................................ss [  5%]
+ssssssssssssssssssss.................................................... [  5%]
+........................................................................ [  6%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 11%]
+......................................................................s. [ 12%]
+............................................................ss.......... [ 12%]
+........ss.............................................................. [ 13%]
+........................................................................ [ 13%]
+.....................s..............s................................... [ 14%]
+............sssss....................................................... [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 15%]
+........................................................................ [ 16%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 17%]
+................................................s....................... [ 18%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 19%]
+................................ss...................................... [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 21%]
+.................................s...................................... [ 22%]
+..............................................ss........................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+..........................................s..s.......................... [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+.................................................s...................... [ 31%]
+........................................................................ [ 31%]
+..................s..................................................... [ 32%]
+........................................................................ [ 32%]
+........................................................................ [ 33%]
+........................................................................ [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+..ss.................................................................... [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+...........................................................ss........... [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 45%]
+........................................................................ [ 46%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 47%]
+................................................................s....... [ 48%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+........................................................................ [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 57%]
+........................................................................ [ 58%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+.....................................ssssss............................. [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+....................................................................s... [ 63%]
+....s................................................................... [ 64%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 65%]
+........................................................................ [ 66%]
+........................................................................ [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+........................................................................ [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 75%]
+.....................................................x.................. [ 76%]
+.....................................................s.................. [ 76%]
+...............s........................................................ [ 77%]
+........................................................................ [ 77%]
+........................................................................ [ 78%]
+........................................................................ [ 78%]
+........................................................................ [ 79%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 85%]
+...s.................................................................... [ 86%]
+...............................................................F........ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 87%]
+..s..................................................................... [ 88%]
+........................................................................ [ 88%]
+........................................................................ [ 89%]
+........................................................................ [ 89%]
+..................x..................................................... [ 90%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+...................................s.................................... [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 93%]
+...........s............................................................ [ 94%]
+........................................................................ [ 94%]
+..............x......x.................................................. [ 95%]
+..................................................ssssssssssss.......... [ 95%]
+sssssssss............................................................... [ 96%]
+ssss....ssssss..........................ssssssssss..s................... [ 96%]
+.................................................................F...... [ 97%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+........................................................................ [ 98%]
+...s..................sss............................................... [ 99%]
+........................................................................ [ 99%]
+.........                                                                [100%]
+=================================== FAILURES ===================================
+___________________ TestHeldApprove.test_held_then_approved ____________________
+[gw8] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-philo-12-ground-astra/.venv/bin/python
+
+self = <tests.unit.test_thread_tool_loop.TestHeldApprove object at 0x116d49a90>
+db = <holdspeak.db.core.Database object at 0x11d5e7c50>
+broadcast_fn = <function broadcast_fn.<locals>._broadcast at 0x11d6574c0>
+broadcasts = [('thread_turn_started', {'egress': 'same_device', 'message_id': 'tm_07972621ba7a', 'model_id': 'test-model', 'thread_...22ba459c57f7'}), ('thread_delta', {'kind': 'text', 'message_id': 'tm_07972621ba7a', 'ordinal': 0, 'seq': 0, ...}), ...]
+
+    def test_held_then_approved(self, db, broadcast_fn, broadcasts):
+        svc = ThreadService(
+            db, broadcast=broadcast_fn,
+            broker=_ToolCallBroker(
+                tool_calls=[{"id": "call_hold", "name": "desk.create", "arguments": "{}"}],
+            ),
+            tool_dispatch_fn=_fake_dispatch,
+            control_mode_fn=lambda: "safe",  # effect_proposal + safe -> hold
+        )
+        t = svc.create(title="Hold test")
+        result = asyncio.run(svc.start_turn(OWNER, t["id"], "Create"))
+    
+        # Wait for the pending frame to appear
+        deadline = time.monotonic() + 2.0
+        while time.monotonic() < deadline:
+            pending = [d for ft, d in broadcasts if ft == "thread_tool_pending"]
+            if pending:
+                break
+            time.sleep(0.05)
+        assert pending, "thread_tool_pending never broadcast"
+        assert pending[0]["decision_required"] is True
+    
+        # Simulate /decide route: find the executor and approve
+        executor_agg = ThreadService._tool_executor
+        handles = executor_agg._handles
+        assert "call_hold" in handles
+        handle = handles["call_hold"]
+        executor_agg.decide(handle, "approve")
+    
+>       _wait_done(broadcasts)
+
+tests/unit/test_thread_tool_loop.py:371: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+broadcasts = [('thread_turn_started', {'egress': 'same_device', 'message_id': 'tm_07972621ba7a', 'model_id': 'test-model', 'thread_...22ba459c57f7'}), ('thread_delta', {'kind': 'text', 'message_id': 'tm_07972621ba7a', 'ordinal': 0, 'seq': 0, ...}), ...]
+timeout = 2.0
+
+    def _wait_done(broadcasts, timeout: float = 2.0) -> None:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if any(ft == "thread_turn_done" for ft, _ in broadcasts):
+                return
+            time.sleep(0.05)
+>       raise TimeoutError("thread_turn_done never broadcast")
+E       TimeoutError: thread_turn_done never broadcast
+
+tests/unit/test_thread_tool_loop.py:256: TimeoutError
+__________________________ test_shade_brief_row_1440 ___________________________
+[gw0] darwin -- Python 3.13.11 /Users/karol/dev/tools/wt-philo-12-ground-astra/.venv/bin/python
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3110/popen-gw0/test_shade_brief_row_14400')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11d4749f0>
+
+    @pytest.mark.timeout(120)
+    def test_shade_brief_row_1440(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       _run_brief_row_rig(tmp_path, monkeypatch, 1440)
+
+tests/e2e/test_hs171_shade_glass.py:929: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3110/popen-gw0/test_shade_brief_row_14400')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11d4749f0>
+width = 1440
+
+    def _run_brief_row_rig(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+    ) -> None:
+        """Seed a brief, open the shade, assert the brief row shows."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+    
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed", token=TOKEN)
+                _api(page, "PUT", "/api/setup/onboarding",
+                     {"disposition": "completed"}, token=TOKEN)
+    
+                # Seed needs-you items (so PROJECTS section appears) and a brief.
+                _seed_two_rooms_with_needs_you()
+                _seed_brief(date="2026-09-05", items_count=5)
+    
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _settle(page)
+    
+                # Open the shade.
+                _open_shade(page)
+    
+                # ── Brief row present ──
+                brief_row = page.get_by_test_id("shade-brief-row")
+                assert brief_row.count() == 1, \
+                    "The brief row should be present in the shade"
+    
+                brief_text = brief_row.text_content() or ""
+                # Should contain "Monday brief".
+                assert "Monday brief" in brief_text, \
+                    f"Brief row should mention 'Monday brief': {brief_text}"
+    
+                # Should contain the item count.
+                assert "5" in brief_text or "THING" in brief_text.upper(), \
+                    f"Brief row should show item count: {brief_text}"
+    
+                # Should contain the date (formatted by the shade as e.g. "SEP 05").
+                # The shade formats generated_at via toLocaleDateString.
+>               assert "SEP" in brief_text.upper() or "2026" in brief_text, \
+                    f"Brief row should show a date token: {brief_text}"
+E                   AssertionError: Brief row should show a date token: =Monday brief5 THINGSOCT 01Open
+E                   assert ('SEP' in '=MONDAY BRIEF5 THINGSOCT 01OPEN' or '2026' in '=Monday brief5 THINGSOCT 01Open')
+E                    +  where '=MONDAY BRIEF5 THINGSOCT 01OPEN' = <built-in method upper of str object at 0x11adf29c0>()
+E                    +    where <built-in method upper of str object at 0x11adf29c0> = '=Monday brief5 THINGSOCT 01Open'.upper
+
+tests/e2e/test_hs171_shade_glass.py:912: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=============================== warnings summary ===============================
+tests/e2e/test_hs202_05_first_use_type_floor.py:260
+tests/e2e/test_hs202_05_first_use_type_floor.py:260
+tests/e2e/test_hs202_05_first_use_type_floor.py:260
+tests/e2e/test_hs202_05_first_use_type_floor.py:260
+tests/e2e/test_hs202_05_first_use_type_floor.py:260
+tests/e2e/test_hs202_05_first_use_type_floor.py:260
+tests/e2e/test_hs202_05_first_use_type_floor.py:260
+  /Users/karol/dev/tools/wt-philo-12-ground-astra/tests/e2e/test_hs202_05_first_use_type_floor.py:260: SyntaxWarning: invalid escape sequence '\s'
+    ? '.' + el.className.trim().split(/\s+/)
+
+tests/e2e/test_hs202_05_first_use_type_floor.py:439
+tests/e2e/test_hs202_05_first_use_type_floor.py:439
+tests/e2e/test_hs202_05_first_use_type_floor.py:439
+tests/e2e/test_hs202_05_first_use_type_floor.py:439
+tests/e2e/test_hs202_05_first_use_type_floor.py:439
+tests/e2e/test_hs202_05_first_use_type_floor.py:439
+tests/e2e/test_hs202_05_first_use_type_floor.py:439
+  /Users/karol/dev/tools/wt-philo-12-ground-astra/tests/e2e/test_hs202_05_first_use_type_floor.py:439: SyntaxWarning: invalid escape sequence '\('
+    const m = /rgba?\(([^)]+)\)/.exec(s || '');
+
+tests/e2e/test_philo9_03_room_face_glass.py:807: 12 warnings
+  /Users/karol/dev/tools/wt-philo-12-ground-astra/tests/e2e/test_philo9_03_room_face_glass.py:807: SyntaxWarning: invalid escape sequence '\s'
+    face = row.evaluate("""r => ({text: r.innerText.replace(/\s+/g, ' ').trim(),
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:260: SyntaxWarning: invalid escape sequence '\s'
+    ? '.' + el.className.trim().split(/\s+/)
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:439: SyntaxWarning: invalid escape sequence '\('
+    const m = /rgba?\(([^)]+)\)/.exec(s || '');
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_philo9_03_room_face_glass.py:807: SyntaxWarning: invalid escape sequence '\s'
+    face = row.evaluate("""r => ({text: r.innerText.replace(/\s+/g, ' ').trim(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/e2e/test_dictation_learning_digest_spoken_e2e.py:33: opt-in: set HOLDSPEAK_SPOKEN_DICTATION_E2E=1 to run the spoken-dictation learning-digest e2e (uses macOS `say` + the Whisper base model)
+SKIPPED [1] tests/e2e/test_hs141_models_setup_glass.py:21: HS-170: Settings -> Models module PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge (web/src/features/concierge/ConciergeCore.tsx, open-concierge window)
+SKIPPED [1] tests/e2e/test_hs142_model_acquisition_glass.py:26: HS-170: Model Library front-door PARKED (HS-170-03, settled-design-four-faces.md Face 3); download-verify-add now at the Concierge's preset Download (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_hs143_assignments_glass.py:18: HS-170: Settings -> Assignments PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge's THE SET section + Adjust well (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_hs143_model_library_glass.py:19: HS-170: ModelLibraryCore PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge's FOUND section (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_spoken_meeting_e2e.py:42: opt-in: set HOLDSPEAK_SPOKEN_E2E=1 to run the spoken-meeting e2e
+SKIPPED [1] tests/e2e/test_workbench_walk.py:47: no hub listening at http://localhost:8778
+SKIPPED [1] tests/unit/test_mesh_discovery.py:21: could not import 'zeroconf': No module named 'zeroconf'
+SKIPPED [1] tests/e2e/test_dictation_enrichment_e2e.py:57: set HOLDSPEAK_DICTATION_E2E_BASE_URL + HOLDSPEAK_DICTATION_E2E_MODEL to a reachable OpenAI-compatible endpoint to run the real dictation enrichment e2e
+SKIPPED [1] tests/e2e/test_dictation_journal_e2e.py:57: set HOLDSPEAK_DICTATION_E2E_BASE_URL + HOLDSPEAK_DICTATION_E2E_MODEL to a reachable OpenAI-compatible endpoint to run the real dictation journal e2e
+SKIPPED [1] tests/e2e/test_dogfood_plumbing_e2e.py:44: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [3] tests/e2e/test_dogfood_plumbing_e2e.py:52: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [12] tests/e2e/test_dogfood_plumbing_e2e.py:66: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [1] tests/e2e/test_dogfood_plumbing_e2e.py:85: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [3] tests/e2e/test_dogfood_plumbing_e2e.py:95: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:497: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:924: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:993: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1175: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1196: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_delta_schema.py:640: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2242: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2494: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2534: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [2] tests/unit/test_dictation_session_admission.py:2548: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2588: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_grammars.py:91: could not import 'llama_cpp': No module named 'llama_cpp'
+SKIPPED [1] tests/unit/test_github_provider.py:526: gh CLI not authenticated or not installed
+SKIPPED [1] tests/unit/test_github_provider.py:537: gh CLI not authenticated or not installed
+SKIPPED [1] tests/unit/test_hs166_walk_fixes.py:183: No proposals generated
+SKIPPED [1] tests/integration/test_rails_observer_live.py:37: no rail events on this machine to summarize
+SKIPPED [1] tests/integration/test_rails_observer_live.py:72: no rail events on this machine
+SKIPPED [1] tests/integration/test_runtime_llama_cpp.py:38: llama-cpp-python and /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.GNBV0u2lWj/xdist-gw4/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf are required for this integration test
+SKIPPED [1] tests/integration/test_runtime_mlx.py:38: mlx-lm + outlines + /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.GNBV0u2lWj/xdist-gw4/Models/mlx/Qwen3.5-8B-MLX-4bit are required for this integration test
+SKIPPED [1] tests/unit/test_interview_service.py:237: QUARANTINED #694: it drives project.setup.finalize through the thread's bound dispatch to assert the continuation refusal; finalize is CONFIG (the owner's press), no longer in the section, so the call is refused as unavailable before the continuation check. BACKLOG row 'Interview setup continuation after #694'.
+SKIPPED [1] tests/integration/test_update_drafter_live_43.py:110: live .43 model proof is opt-in: set HOLDSPEAK_UAT_LIVE_43=1 (runs a real model call on the LAN endpoint)
+SKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:169: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:207: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/uat/test_induction_integration_43.py:107: live .43 model proof is opt-in: set HOLDSPEAK_UAT_LIVE_43=1 (it runs a real extraction on the LAN model and takes minutes)
+SKIPPED [1] tests/uat/test_induction_integration_43.py:118: the UAT node harness cannot pair a mesh worker: since HS-131-16 `mesh serve` requires an imported node pairing (hub pin + node token) and refuses the owner token, but nodes.py still spawns it with --token-env HOLDSPEAK_HUB_TOKEN and never pairs
+SKIPPED [1] tests/uat/test_mesh_dispatch.py:85: the UAT node harness cannot pair a mesh worker: since HS-131-16 `mesh serve` requires an imported node pairing (hub pin + node token) and refuses the owner token, but nodes.py still spawns it with --token-env HOLDSPEAK_HUB_TOKEN and never pairs
+SKIPPED [2] tests/e2e/test_hs14104_refinement_glass.py:59: superseded by the Thought Workbench real-path glass
+SKIPPED [2] tests/e2e/test_hs14105_context_glass.py:110: superseded by the Thought Workbench real-path glass
+SKIPPED [2] tests/e2e/test_hs14105a_default_context_glass.py:100: superseded by the Thought Workbench real-path glass
+SKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:84: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:139: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_project_room_schema.py:390: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_project_updates_schema.py:576: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/e2e/test_hs145_door_polish_glass.py:182: HS-170: door-board scroll-hint PARKED (HS-170-04); the arrival has no horizontal-scroll viewport -- capability intentionally gone
+SKIPPED [1] tests/e2e/test_hs147_one_tap_glass.py:159: HS-170: door-rail one-tap arm PARKED (HS-170-04); per-event RECORD THIS gone; Schedule + Cancel at the arrival's capture bar covered by test_hs144_door_glass::test_upcoming_rail_schedule_create_round_trip_and_form_cancel
+SKIPPED [1] tests/unit/test_watch_graduation_schema.py:493: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_web_runtime.py:269: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/e2e/test_hs156_front_door_glass.py:553: HS-170: front-door pack cards PARKED (HS-170-03); capability now at the Concierge's FOUND section (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_hs156_front_door_glass.py:619: HS-170: front-door candidate picker PARKED (HS-170-03); capability now at the Concierge's picker ChoiceCards (ConciergeCore.tsx)
+SKIPPED [2] tests/e2e/test_hs158_room_glass.py:172: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs158_room_glass.py:233: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs158_room_glass.py:282: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs159_interview_glass.py:150: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs159_interview_glass.py:397: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs159_interview_glass.py:462: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); blank leg ported to test_hs169_door_legs_glass.py
+SKIPPED [1] tests/e2e/test_hs159_interview_glass.py:555: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); abandon leg ported to test_hs169_door_legs_glass.py
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:268: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:519: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:671: HS-169-07 retired the interview entry point this leg used for project creation; evaluation/delta review is a live capability noted in the close ledger for re-pointing
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:919: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs161_github_glass.py:1088: gh CLI not authenticated or not installed (skip-clean)
+SKIPPED [2] tests/e2e/test_hs166_jira_glass.py:328: HS-169-07 retired the interview + Jira wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs166_jira_walk.py:1637: acli jira auth status failed (exit 1): ✗ Error: unauthorized: use 'acli jira auth login' to authenticate
+SKIPPED [2] tests/e2e/test_hs168_connections_glass.py:319: gh auth status failed (exit 1): You are not logged into any GitHub hosts. To log in, run: gh auth login
+SKIPPED [2] tests/e2e/test_hs168_sources_glass.py:279: HS-169-02 retired the Sources step (ProgressPlan, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs168_sources_glass.py:365: HS-169-02 retired the Sources step (ProgressPlan, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [10] tests/e2e/test_meeting_transcription.py: Mock meeting fixture not found: /Users/karol/dev/tools/wt-philo-12-ground-astra/tests/fixtures/mock_meeting.wav
+SKIPPED [1] tests/e2e/test_mermaid_renders.py:118: mermaid renderer unavailable in this env: eer-core/lib/puppeteer/node/PuppeteerNode.js:124:16)
+    at async run (file:///Users/karol/.npm/_npx/668c188756b835f3/node_modules/@mermaid-js/mermaid-cli/src/index.js:1090:19)
+    at async cli (file:///Users/karol/.npm/_npx/668c188756b835f3/node_modules/@mermaid-js/mermaid-cli/src/index.js:493:3)
+SKIPPED [1] tests/integration/test_dictation_llama_cpp_e2e.py:72: llama-cpp-python and /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.GNBV0u2lWj/xdist-gw2/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf are required for this integration test
+SKIPPED [1] tests/integration/test_grounding_rails_live.py:35: holdspeak not in the project map on this machine
+SKIPPED [1] tests/integration/test_grounding_rails_live.py:54: holdspeak not in the project map on this machine
+SKIPPED [1] tests/integration/test_grounding_rails_live.py:71: holdspeak not in the project map on this machine
+XFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_review_proposals_stay_live_under_amendment[1440-1200] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline
+XFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_review_proposals_stay_live_under_amendment[393-900] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline
+XFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_partial_chain_retry_stays_live_under_amendment[1440-1200] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline
+XFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_partial_chain_retry_stays_live_under_amendment[393-900] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline
+FAILED tests/unit/test_thread_tool_loop.py::TestHeldApprove::test_held_then_approved
+FAILED tests/e2e/test_hs171_shade_glass.py::test_shade_brief_row_1440 - Asser...
+2 failed, 13574 passed, 117 skipped, 4 xfailed, 29 warnings in 3629.77s (1:00:29)
+Exit: 1

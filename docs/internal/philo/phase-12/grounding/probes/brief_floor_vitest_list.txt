@@ -1,0 +1,45 @@
+Command (from web/, isolated HOME):
+PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) npm exec vitest -- list src/desk/__tests__/desk.test.ts src/desk/gl/__tests__/sceneModel.test.ts src/desk/__tests__/floorMenu.test.ts
+
+src/desk/gl/__tests__/sceneModel.test.ts > buildScene > projects the same objects worldObjects yields, with objUnit homes
+src/desk/gl/__tests__/sceneModel.test.ts > buildScene > keeps a filed object off the stage; the drawer wears the count
+src/desk/gl/__tests__/sceneModel.test.ts > buildScene > caps at MAX_FLOATERS with the honest overflow
+src/desk/gl/__tests__/sceneModel.test.ts > buildScene > carries drag/selection/new/editing state and attention counts
+src/desk/gl/__tests__/sceneModel.test.ts > buildScene > gives zones saved positions precedence; the cell is fixed-size
+src/desk/gl/__tests__/sceneModel.test.ts > buildScene > a drop-ready drawer wears the real second image
+src/desk/gl/__tests__/sceneModel.test.ts > buildScene > keeps the six furnished drawers and Everyday context apart at 393px
+src/desk/gl/__tests__/sceneModel.test.ts > coords (the shared GL/DOM transform) > round-trips unit → client → unit inside the clamps
+src/desk/gl/__tests__/sceneModel.test.ts > coords (the shared GL/DOM transform) > applies the DOM world's exact drag clamps
+src/desk/gl/__tests__/sceneModel.test.ts > coords (the shared GL/DOM transform) > anchors a DOM overlay to the same pixel the GL sprite draws at
+src/desk/gl/__tests__/sceneModel.test.ts > hitTest (DOM stacking parity: zones above resting objects) > hits the object at its column box
+src/desk/gl/__tests__/sceneModel.test.ts > hitTest (DOM stacking parity: zones above resting objects) > prefers the overlapping zone over the object beneath
+src/desk/gl/__tests__/sceneModel.test.ts > hitTest (DOM stacking parity: zones above resting objects) > resolves the drawer body and the label band distinctly
+src/desk/gl/__tests__/sceneModel.test.ts > hitTest (DOM stacking parity: zones above resting objects) > ignores the dragged object for the drop hit-test
+src/desk/gl/__tests__/sceneModel.test.ts > hitTest (DOM stacking parity: zones above resting objects) > ropes by rendered center, in selection refs
+src/desk/gl/__tests__/sceneModel.test.ts > clampLabel (the two-line ellipsis contract) > keeps short titles verbatim
+src/desk/gl/__tests__/sceneModel.test.ts > clampLabel (the two-line ellipsis contract) > wraps to two lines
+src/desk/gl/__tests__/sceneModel.test.ts > clampLabel (the two-line ellipsis contract) > ellipsizes what two lines cannot hold
+src/desk/__tests__/floorMenu.test.ts > floorMenuEntries > NEW > carries the creates and routes createPrimitive
+src/desk/__tests__/floorMenu.test.ts > floorMenuEntries > LAUNCH > is the go.* registry face (every program, no dupes)
+src/desk/__tests__/floorMenu.test.ts > floorMenuEntries > the floor verbs ride below a separator, ghosted honestly
+src/desk/__tests__/floorMenu.test.ts > objectMenuEntries (registry-derived, parallel list #4 dead) > derives Open / Get Info / Ask AI / Ask this project / Edit with honest ghosts
+src/desk/__tests__/desk.test.ts > sprite hash parity > is stable per id and matches the shared picker
+src/desk/__tests__/desk.test.ts > wire normalizers > note
+src/desk/__tests__/desk.test.ts > wire normalizers > recipe defaults
+src/desk/__tests__/desk.test.ts > wire normalizers > directory members from either shape
+src/desk/__tests__/desk.test.ts > wire normalizers > workflow graph_json stays an object
+src/desk/__tests__/desk.test.ts > wire normalizers > liveValues drops tombstones and unwraps values
+src/desk/__tests__/desk.test.ts > the recipe wire (the v8 rename, hub-faithful) > loadAll lands hub {recipes:[…]} under items.recipe
+src/desk/__tests__/desk.test.ts > lineage via detection > a canonical recipe row is the via
+src/desk/__tests__/desk.test.ts > lineage via detection > a pre-rename 'agent' row still reads as the via (older stored artifacts)
+src/desk/__tests__/desk.test.ts > lineage via detection > the Ask atom's via row (HSM-16-09 wire) reads as the via
+src/desk/__tests__/desk.test.ts > world math > flattens in the canonical order and filters on dive
+src/desk/__tests__/desk.test.ts > world math > keeps Delivery roadmaps resolvable but off the ordinary Floor
+src/desk/__tests__/desk.test.ts > world math > looseHome is deterministic and clamped
+src/desk/__tests__/desk.test.ts > world math > the jitter hash is the legacy _oh
+src/desk/__tests__/desk.test.ts > qualified pull-out identity > resolves collisions and canonical capability aliases exactly
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice
