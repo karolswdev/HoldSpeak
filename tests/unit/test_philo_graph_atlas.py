@@ -486,9 +486,10 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
     # PHILO-9-05 adds 1 (atlas-phase9.json: the Room's mark delivered).
     # PHILO-10-05 adds 12 (atlas-phase10.json: the Send's durable outcomes and
     # its transitions -- replay, Send and Discard in both orders).
-    # PHILO-11-02 adds 3 Slack protocol cases on the same lifecycle.
+    # PHILO-11-02 adds 3 Slack protocol cases on the same lifecycle; PHILO-11-06
+    # adds seven document-source operation cases and one long-source refusal.
     # PHILO-12-01 adds the stored artifact's preparation through MCP.
-    assert len(siblings) == 61
+    assert len(siblings) == 69
     sibling_ids = {case["id"] for case in siblings}
     assert READ_REFUSAL_SIBLINGS <= sibling_ids
     mutating = {
@@ -782,6 +783,37 @@ def test_summary_queued_reads_the_run_admission_response(atlas: dict) -> None:
     assert predicate["status"] == 200
     assert predicate["body_contains"] == '"state": "queued"'
     assert predicate["body_fields"] == {"jobId": {"nonempty": True}}
+
+
+def test_protocol_status_can_require_top_level_integer_body_fields() -> None:
+    rig = _rig()
+    predicate = {
+        "kind": "protocol_status",
+        "method": "POST",
+        "path": "/api/channels/preview",
+        "status": 400,
+        "body_contains": "payload_too_large:slack",
+        "body_integer_fields": ["size", "limit"],
+    }
+
+    def after(size: object, limit: object) -> dict:
+        return {
+            "trigger_response": {
+                "method": "POST",
+                "path": "/api/channels/preview",
+                "status": 400,
+                "body": {
+                    "code": "payload_too_large:slack",
+                    "size": size,
+                    "limit": limit,
+                },
+            }
+        }
+
+    assert rig.check_predicate(predicate, {}, after(39001, 39000))[0]
+    for size, limit in ((39001.0, 39000), (True, 39000), ("39001", 39000), (39001, None)):
+        ok, why = rig.check_predicate(predicate, {}, after(size, limit))
+        assert not ok, f"non-integer PREVIEW size/limit passed: {why}"
 
 
 def test_summary_preconditions_do_not_require_future_or_consumed_run_state(atlas: dict) -> None:

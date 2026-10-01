@@ -1,0 +1,1187 @@
+{
+  "id": "obs-20261001T095015Z-case.p11.decision_record.intelligence.prepared-astra-1440",
+  "run_id": "20261001T095015Z-case.p11.decision_record.intelligence.prepared-astra-1440",
+  "case_id": "case.p11.decision_record.intelligence.prepared",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase11.json",
+  "job": "p11",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.documents.p11_sources",
+  "provenance": {
+    "revision": "abb8a94e50b2d3634b30bd4a8091c4bc7ef31c7b",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55521",
+      "port": 55521,
+      "pid": 41765,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-b7hjuo_i",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-b7hjuo_i/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T09:50:16.223302+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase11.json",
+      "sha256": "35b55c4d3004eb85d00b633ce27bf053dd64a8da6c7d9cadca5f67b4d2114305",
+      "version": "phase11-documents"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-01T03:50:20.087793"
+        }
+      },
+      "response_sha256": "589fc35c11185f48331595e36e524b1ac66bc5da771f61ee99fb101b729e499f"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-1c1737038985",
+          "name": "P11Room",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-10-01T03:50:20.124076",
+          "updated_at": "2026-10-01T03:50:20.124076",
+          "result_kind": "created",
+          "project_id": "proj-1c1737038985",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-1c1737038985"
+          ]
+        }
+      },
+      "response_sha256": "e20ab6a259f50f71439350eb463b22e92c5a0194402a1b4b8e808fe766738f23",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-1c1737038985"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_e463da450756",
+          "title": "P11Record",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "P11RecordText.",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T09:50:20Z",
+          "updated_at": "2026-10-01T09:50:20Z",
+          "deleted": false
+        },
+        "operation_id": "op_77bf429b00534984b7f4b792c643a6c1",
+        "receipt": {
+          "receipt_id": "rcpt_da5e876595fb44d89a1dab2370f8307a",
+          "operation_id": "op_77bf429b00534984b7f4b792c643a6c1",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_e463da450756",
+          "created_at": 1790848220.12941,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_e463da450756"
+        }
+      },
+      "response_sha256": "cd992c1f9704603d0e322e1e5ba44f547d81f12a61d8b467aad2f7744da0587e",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_e463da450756"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/mcp",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "jsonrpc": "2.0",
+        "id": "p11-record-create",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"alternatives\": null, \"created_at\": \"2026-10-01T09:50:20.132570+00:00\", \"decision_text\": \"P11RecordText.\", \"deleted\": 0, \"id\": \"record-051b3849aec14485ac257066a5a9d426\", \"lifecycle\": \"active\", \"owner\": null, \"rationale\": null, \"review_date\": null, \"source_id\": \"decision_e463da450756\", \"source_type\": \"desk\", \"updated_at\": \"2026-10-01T09:50:20.132570+00:00\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "response_sha256": "48fb2d3782dfd953c5c52bb4be7faa2bc4811091b6dc435cc63983f10190de69"
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/decision-records",
+      "adapter": "http-route",
+      "status": 200,
+      "response": [
+        {
+          "id": "record-051b3849aec14485ac257066a5a9d426",
+          "decision_text": "P11RecordText.",
+          "rationale": null,
+          "alternatives": null,
+          "owner": null,
+          "review_date": null,
+          "lifecycle": "active",
+          "source_type": "desk",
+          "source_id": "decision_e463da450756",
+          "created_at": "2026-10-01T09:50:20.132570+00:00",
+          "updated_at": "2026-10-01T09:50:20.132570+00:00",
+          "deleted": 0
+        }
+      ],
+      "response_sha256": "cb6e91d97fb5012a006fe02b1f88330a0246813a1b6a91b243e178fa38dee728",
+      "captured": {
+        "name": "record_id",
+        "path": "/",
+        "value": "record-051b3849aec14485ac257066a5a9d426",
+        "match": {
+          "source_type": "desk",
+          "source_id": "decision_e463da450756"
+        }
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.resource.add",
+      "args": {
+        "project_id": "proj-1c1737038985",
+        "resource_ref": "decision_record:record-051b3849aec14485ac257066a5a9d426",
+        "relationship": "member"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "project.resource.add",
+          "arguments": {
+            "project_id": "proj-1c1737038985",
+            "resource_ref": "decision_record:record-051b3849aec14485ac257066a5a9d426",
+            "relationship": "member"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_4483a6949577432f821cdb47438befe1",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790848220.1378748,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_4483a6949577432f821cdb47438befe1",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_1558efbdbd77422b9636df0215512cde",
+          "result_ref": "project:proj-1c1737038985",
+          "state": "succeeded",
+          "target_ref": "project:proj-1c1737038985"
+        },
+        "resource": {
+          "changed_refs": [
+            "project:proj-1c1737038985"
+          ],
+          "confidence": 1.0,
+          "created_at": "2026-10-01T03:50:20.137530",
+          "deleted": false,
+          "id": "proj-1c1737038985|decision_record:record-051b3849aec14485ac257066a5a9d426",
+          "last_modified": "2026-10-01T03:50:20.137530",
+          "project_id": "proj-1c1737038985",
+          "project_revision": 2,
+          "relationship": "member",
+          "resource_ref": "decision_record:record-051b3849aec14485ac257066a5a9d426",
+          "result_kind": "linked",
+          "source": "manual"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_4483a6949577432f821cdb47438befe1",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790848220.1378748,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_4483a6949577432f821cdb47438befe1",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_1558efbdbd77422b9636df0215512cde",
+          "result_ref": "project:proj-1c1737038985",
+          "state": "succeeded",
+          "target_ref": "project:proj-1c1737038985"
+        },
+        "resource": {
+          "changed_refs": [
+            "project:proj-1c1737038985"
+          ],
+          "confidence": 1.0,
+          "created_at": "2026-10-01T03:50:20.137530",
+          "deleted": false,
+          "id": "proj-1c1737038985|decision_record:record-051b3849aec14485ac257066a5a9d426",
+          "last_modified": "2026-10-01T03:50:20.137530",
+          "project_id": "proj-1c1737038985",
+          "project_revision": 2,
+          "relationship": "member",
+          "resource_ref": "decision_record:record-051b3849aec14485ac257066a5a9d426",
+          "result_kind": "linked",
+          "source": "manual"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_4483a6949577432f821cdb47438befe1\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790848220.1378748, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_4483a6949577432f821cdb47438befe1\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_1558efbdbd77422b9636df0215512cde\", \"result_ref\": \"project:proj-1c1737038985\", \"state\": \"succeeded\", \"target_ref\": \"project:proj-1c1737038985\"}, \"resource\": {\"changed_refs\": [\"project:proj-1c1737038985\"], \"confidence\": 1.0, \"created_at\": \"2026-10-01T03:50:20.137530\", \"deleted\": false, \"id\": \"proj-1c1737038985|decision_record:record-051b3849aec14485ac257066a5a9d426\", \"last_modified\": \"2026-10-01T03:50:20.137530\", \"project_id\": \"proj-1c1737038985\", \"project_revision\": 2, \"relationship\": \"member\", \"resource_ref\": \"decision_record:record-051b3849aec14485ac257066a5a9d426\", \"result_kind\": \"linked\", \"source\": \"manual\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.004
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/destinations",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "destination": {
+          "id": "chd_8dcaafd66808807f2d39c20e",
+          "name": "P11-Folder",
+          "channel": "file",
+          "account": {},
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-b7hjuo_i"
+          },
+          "target_digest": "09b5235f605b371b85364232cef9f28fb2079aa3783fdff3fde0a6936acc8629",
+          "synced": false,
+          "state": "active",
+          "badge": "local",
+          "created_at": "2026-10-01T09:50:20+00:00",
+          "parked_at": null,
+          "connection": null
+        },
+        "replaced": null,
+        "operation_id": "op_d384244b7f8e40198c4c63d6165d34f0",
+        "receipt": {
+          "receipt_id": "rcpt_dd15eef48a3e4df6b156b65ee9f58a25",
+          "operation_id": "op_d384244b7f8e40198c4c63d6165d34f0",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_destination:chd_8dcaafd66808807f2d39c20e",
+          "created_at": 1790848220.144295,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_destination"
+        }
+      },
+      "response_sha256": "73821957a2ce256da312a2891cd9fe5c6403067cf50caf3edec99101994600ef",
+      "captured": {
+        "name": "dest_id",
+        "path": "destination.id",
+        "value": "chd_8dcaafd66808807f2d39c20e"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/sends",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "send": {
+          "id": "chs_6a44e6e18b26fd8e835cc87a",
+          "document_ref": "decision_record:record-051b3849aec14485ac257066a5a9d426",
+          "destination_id": "chd_8dcaafd66808807f2d39c20e",
+          "destination_name": "P11-Folder",
+          "channel": "file",
+          "badge": "local",
+          "account": {},
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-b7hjuo_i"
+          },
+          "target_digest": "09b5235f605b371b85364232cef9f28fb2079aa3783fdff3fde0a6936acc8629",
+          "payload_digest": "52881b07bdaa3ed7d76f8b50a18ca5896b7311d8fc990a28ee4ee85fa9368243",
+          "document_json": {
+            "label": "DECISION",
+            "slug": "p11recordtext",
+            "title": "P11RecordText."
+          },
+          "size": 35,
+          "preview": {
+            "text": "# P11RecordText.\nLifecycle: active\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": "op_78c7c4026e17437fa631d7c29ad207ca",
+          "send_operation_id": null,
+          "state": "prepared",
+          "reason": null,
+          "proof": null,
+          "file_path": null,
+          "created_at": "2026-10-01T09:50:20+00:00",
+          "dispatch_started_at": null,
+          "settled_at": null,
+          "dispatch_seq": null
+        },
+        "outcome": "prepared",
+        "operation_id": "op_78c7c4026e17437fa631d7c29ad207ca",
+        "receipt": {
+          "receipt_id": "rcpt_5d1610f5bc244be99b8bf8580cb09f3d",
+          "operation_id": "op_78c7c4026e17437fa631d7c29ad207ca",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_send:chs_6a44e6e18b26fd8e835cc87a",
+          "created_at": 1790848220.148052,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "document:decision_record:record-051b3849aec14485ac257066a5a9d426"
+        }
+      },
+      "response_sha256": "2b1d75f52ff84cc63d255ea388a2b601b537a9dcf44a43d1be9ac4178b6197c1"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "button.desk-dock-app",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window .intelligence-pullout",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Decisions",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window .receipts-results .surface-ledger-line:has-text('P11RecordText.')",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window .receipts-results .surface-ledger-line:has-text('P11RecordText.')",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "scroll_into_view",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=prepared-open]",
+      "block": "end",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-b7hjuo_i",
+    "project_id": "proj-1c1737038985",
+    "decision_id": "decision_e463da450756",
+    "record_id": "record-051b3849aec14485ac257066a5a9d426",
+    "dest_id": "chd_8dcaafd66808807f2d39c20e"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+    "done": true
+  },
+  "diff": {
+    "attrs": {
+      "before": {
+        "role": "button",
+        "tabindex": "0",
+        "class": "surface-ledger-line",
+        "data-testid": "prepared-row",
+        "aria-expanded": "false",
+        "aria-label": "P11-Folder, PREPARED"
+      },
+      "after": {
+        "role": "button",
+        "tabindex": "0",
+        "class": "surface-ledger-line",
+        "data-testid": "prepared-row",
+        "aria-expanded": "true",
+        "aria-label": "P11-Folder, PREPARED"
+      }
+    },
+    "document_text_sha256": {
+      "before": "196c5ce9eca3be5615abbfac39b143bdb148d9deeb89feb866a0a42945f5d6e0",
+      "after": "0209b55adddbc4d08178d843a0c5e3889bbc9a8c3784a1b2a899031bc2a64093"
+    },
+    "document_text_len": {
+      "before": 889,
+      "after": 1038
+    }
+  },
+  "before": {
+    "observe_at": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+    "target_present": true,
+    "text": "\u25c6\nP11-Folder\n\u25c6\nPREPARED\nBY YOU\nD-051B38\nOCT 1 03:50\nTHIS DEVICE",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "prepared-row",
+      "aria-expanded": "false",
+      "aria-label": "P11-Folder, PREPARED"
+    },
+    "rect": {
+      "x": 1049,
+      "y": 523,
+      "w": 346,
+      "h": 78
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1049,
+        "y": 523,
+        "w": 346,
+        "h": 78
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1051,
+          "y": 525,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1051,
+          "y": 562,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1051,
+          "y": 599,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1222,
+          "y": 525,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1222,
+          "y": 562,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-cells > span.surface-token"
+        },
+        {
+          "x": 1222,
+          "y": 599,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1393,
+          "y": 525,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1393,
+          "y": 562,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1393,
+          "y": 599,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "P11-Folder, PREPARED",
+    "url": "http://127.0.0.1:55521/",
+    "windows": [
+      {
+        "title": "Intelligence",
+        "rect": {
+          "x": 1022,
+          "y": 64,
+          "w": 400,
+          "h": 784
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "196c5ce9eca3be5615abbfac39b143bdb148d9deeb89feb866a0a42945f5d6e0",
+    "document_text_len": 889,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=decision_record:record-051b3849aec14485ac257066a5a9d426",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_6a44e6e18b26fd8e835cc87a",
+              "document_ref": "decision_record:record-051b3849aec14485ac257066a5a9d426",
+              "destination_id": "chd_8dcaafd66808807f2d39c20e",
+              "destination_name": "P11-Folder",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-b7hjuo_i"
+              },
+              "target_digest": "09b5235f605b371b85364232cef9f28fb2079aa3783fdff3fde0a6936acc8629",
+              "payload_digest": "52881b07bdaa3ed7d76f8b50a18ca5896b7311d8fc990a28ee4ee85fa9368243",
+              "document_json": {
+                "label": "DECISION",
+                "slug": "p11recordtext",
+                "title": "P11RecordText."
+              },
+              "size": 35,
+              "preview": {
+                "text": "# P11RecordText.\nLifecycle: active\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_78c7c4026e17437fa631d7c29ad207ca",
+              "send_operation_id": null,
+              "state": "prepared",
+              "reason": null,
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T09:50:20+00:00",
+              "dispatch_started_at": null,
+              "settled_at": null,
+              "dispatch_seq": null
+            }
+          ]
+        },
+        "body_sha256": "3d35f81efd3fe36540f5496bd8aa4b5d2e4fe7718b096b33d0580a3cb02b4e5e"
+      }
+    ],
+    "at_utc": "2026-10-01T09:50:23.750889+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+    "target_present": true,
+    "text": "\u25c6\nP11-Folder\n\u25c6\nPREPARED\nBY YOU\nD-051B38\nOCT 1 03:50\nTHIS DEVICE",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "prepared-row",
+      "aria-expanded": "true",
+      "aria-label": "P11-Folder, PREPARED"
+    },
+    "rect": {
+      "x": 1049,
+      "y": 523,
+      "w": 346,
+      "h": 78
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1049,
+        "y": 523,
+        "w": 346,
+        "h": 78
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1051,
+          "y": 525,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1051,
+          "y": 562,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1051,
+          "y": 599,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1222,
+          "y": 525,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1222,
+          "y": 562,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-cells > span.surface-token"
+        },
+        {
+          "x": 1222,
+          "y": 599,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1393,
+          "y": 525,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1393,
+          "y": 562,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1393,
+          "y": 599,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "P11-Folder, PREPARED",
+    "url": "http://127.0.0.1:55521/",
+    "windows": [
+      {
+        "title": "Intelligence",
+        "rect": {
+          "x": 1022,
+          "y": 64,
+          "w": 400,
+          "h": 784
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "0209b55adddbc4d08178d843a0c5e3889bbc9a8c3784a1b2a899031bc2a64093",
+    "document_text_len": 1038,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=decision_record:record-051b3849aec14485ac257066a5a9d426",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_6a44e6e18b26fd8e835cc87a",
+              "document_ref": "decision_record:record-051b3849aec14485ac257066a5a9d426",
+              "destination_id": "chd_8dcaafd66808807f2d39c20e",
+              "destination_name": "P11-Folder",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-b7hjuo_i"
+              },
+              "target_digest": "09b5235f605b371b85364232cef9f28fb2079aa3783fdff3fde0a6936acc8629",
+              "payload_digest": "52881b07bdaa3ed7d76f8b50a18ca5896b7311d8fc990a28ee4ee85fa9368243",
+              "document_json": {
+                "label": "DECISION",
+                "slug": "p11recordtext",
+                "title": "P11RecordText."
+              },
+              "size": 35,
+              "preview": {
+                "text": "# P11RecordText.\nLifecycle: active\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_78c7c4026e17437fa631d7c29ad207ca",
+              "send_operation_id": null,
+              "state": "prepared",
+              "reason": null,
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T09:50:20+00:00",
+              "dispatch_started_at": null,
+              "settled_at": null,
+              "dispatch_seq": null
+            }
+          ]
+        },
+        "body_sha256": "3d35f81efd3fe36540f5496bd8aa4b5d2e4fe7718b096b33d0580a3cb02b4e5e"
+      }
+    ],
+    "at_utc": "2026-10-01T09:50:24.957312+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:55521) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:55521) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+    "target_present": true,
+    "text": "\u25c6\nP11-Folder\n\u25c6\nPREPARED\nBY YOU\nD-051B38\nOCT 1 03:50\nTHIS DEVICE",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "prepared-row",
+      "aria-expanded": "true",
+      "aria-label": "P11-Folder, PREPARED"
+    },
+    "rect": {
+      "x": 1049,
+      "y": 523,
+      "w": 346,
+      "h": 78
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1049,
+        "y": 523,
+        "w": 346,
+        "h": 78
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1051,
+          "y": 525,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1051,
+          "y": 562,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1051,
+          "y": 599,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1222,
+          "y": 525,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1222,
+          "y": 562,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-cells > span.surface-token"
+        },
+        {
+          "x": 1222,
+          "y": 599,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1393,
+          "y": 525,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1393,
+          "y": 562,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1393,
+          "y": 599,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "P11-Folder, PREPARED",
+    "url": "http://127.0.0.1:55521/",
+    "windows": [
+      {
+        "title": "Intelligence",
+        "rect": {
+          "x": 1022,
+          "y": 64,
+          "w": 400,
+          "h": 784
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "0209b55adddbc4d08178d843a0c5e3889bbc9a8c3784a1b2a899031bc2a64093",
+    "document_text_len": 1038,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=decision_record:record-051b3849aec14485ac257066a5a9d426",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_6a44e6e18b26fd8e835cc87a",
+              "document_ref": "decision_record:record-051b3849aec14485ac257066a5a9d426",
+              "destination_id": "chd_8dcaafd66808807f2d39c20e",
+              "destination_name": "P11-Folder",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-b7hjuo_i"
+              },
+              "target_digest": "09b5235f605b371b85364232cef9f28fb2079aa3783fdff3fde0a6936acc8629",
+              "payload_digest": "52881b07bdaa3ed7d76f8b50a18ca5896b7311d8fc990a28ee4ee85fa9368243",
+              "document_json": {
+                "label": "DECISION",
+                "slug": "p11recordtext",
+                "title": "P11RecordText."
+              },
+              "size": 35,
+              "preview": {
+                "text": "# P11RecordText.\nLifecycle: active\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_78c7c4026e17437fa631d7c29ad207ca",
+              "send_operation_id": null,
+              "state": "prepared",
+              "reason": null,
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T09:50:20+00:00",
+              "dispatch_started_at": null,
+              "settled_at": null,
+              "dispatch_seq": null
+            }
+          ]
+        },
+        "body_sha256": "3d35f81efd3fe36540f5496bd8aa4b5d2e4fe7718b096b33d0580a3cb02b4e5e"
+      }
+    ],
+    "at_utc": "2026-10-01T09:50:24.819813+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:55521) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:55521) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'PREPARED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1049, 'y': 523, 'w': 346, 'h': 78} | readable_text: 'BY YOU' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1049, 'y': 523, 'w': 346, 'h': 78} | protocol_reads: GET /api/channels/sends?document_ref=decision_record:record-051b3849aec14485ac257066a5a9d426 answered 200 with 1 row(s) {'document_ref': 'decision_record:record-051b3849aec14485ac257066a5a9d426', 'destination_id': 'chd_8dcaafd66808807f2d39c20e', 'channel': 'file', 'state': 'prepared', 'prepared_by.kind': 'owner'}",
+    "elapsed_s": 0.94
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'PREPARED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1049, 'y': 523, 'w': 346, 'h': 78} | readable_text: 'BY YOU' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1049, 'y': 523, 'w': 346, 'h': 78} | protocol_reads: GET /api/channels/sends?document_ref=decision_record:record-051b3849aec14485ac257066a5a9d426 answered 200 with 1 row(s) {'document_ref': 'decision_record:record-051b3849aec14485ac257066a5a9d426', 'destination_id': 'chd_8dcaafd66808807f2d39c20e', 'channel': 'file', 'state': 'prepared', 'prepared_by.kind': 'owner'}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.077,
+    "first_satisfied_at_s": 0.94,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: readable_text: 'PREPARED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1049, 'y': 523, 'w': 346, 'h': 78} | readable_text: 'BY YOU' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1049, 'y': 523, 'w': 346, 'h': 78} | protocol_reads: GET /api/channels/sends?document_ref=decision_record:record-051b3849aec14485ac257066a5a9d426 answered 200 with 1 row(s) {'document_ref': 'decision_record:record-051b3849aec14485ac257066a5a9d426', 'destination_id': 'chd_8dcaafd66808807f2d39c20e', 'channel': 'file', 'state': 'prepared', 'prepared_by.kind': 'owner'}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:55521) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:55521) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/r3-r4-head-case.p11.decision_record.intelligence.prepared/case.p11.decision_record.intelligence.prepared--1440/20261001T095015Z-case.p11.decision_record.intelligence.prepared-astra-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/r3-r4-head-case.p11.decision_record.intelligence.prepared/case.p11.decision_record.intelligence.prepared--1440/20261001T095015Z-case.p11.decision_record.intelligence.prepared-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-b7hjuo_i/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-b7hjuo_i/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55521"
+  ],
+  "duration_s": 9.28
+}

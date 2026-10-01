@@ -1,0 +1,710 @@
+{
+  "id": "obs-20260930T140219Z-case.p9.list_columns.in_view-astra-393",
+  "run_id": "20260930T140219Z-case.p9.list_columns.in_view-astra-393",
+  "case_id": "case.p9.list_columns.in_view",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase9.json",
+  "job": "p9",
+  "edge_ids": [
+    "edge.face.list_zone_dive"
+  ],
+  "state_id": "state.desk_presentation.p9_list_face",
+  "provenance": {
+    "revision": "8a6b807d6682d9446d9b75216bbd3844d203cdcc",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "5af70edb856e3d3d9620f2924959f5718a9cb4cb408352e0eca3f34f59e21b86",
+      "assets": [
+        "index-DOMEgTb7.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64754",
+      "port": 64754,
+      "pid": 99791,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-35muwz1c",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-35muwz1c/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-30T14:02:19.689869+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase9.json",
+      "sha256": "79acbbf975ed3f11c117926151cf35787b6ab59cab40425b5f3c3a1aa0e305e9",
+      "version": "phase9-room"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.96,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_f198fba58cbb",
+          "title": "Atlas list note 1",
+          "body_markdown": "A row for the list face",
+          "tags": [],
+          "created_at": "2026-09-30T14:02:24Z",
+          "updated_at": "2026-09-30T14:02:24Z",
+          "last_modified": "2026-09-30T14:02:24Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "8739f1a34257f8389d00df022dd6ccb9647c353d5b983c61cdecfab5972656ca",
+      "captured": {
+        "name": "note_1",
+        "path": "note.id",
+        "value": "note_f198fba58cbb"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_ca2426b8f3e0",
+          "title": "Atlas list note 2",
+          "body_markdown": "A row for the list face",
+          "tags": [],
+          "created_at": "2026-09-30T14:02:24Z",
+          "updated_at": "2026-09-30T14:02:24Z",
+          "last_modified": "2026-09-30T14:02:24Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "26df717eecbe3593fc38d8c1d053643c88b937c04ee3ba41b0a9bb3feb3ed044",
+      "captured": {
+        "name": "note_2",
+        "path": "note.id",
+        "value": "note_ca2426b8f3e0"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_15c0b1d29cf7",
+          "title": "Atlas list note 3",
+          "body_markdown": "A row for the list face",
+          "tags": [],
+          "created_at": "2026-09-30T14:02:24Z",
+          "updated_at": "2026-09-30T14:02:24Z",
+          "last_modified": "2026-09-30T14:02:24Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "2f4ca5f9bcb1c2a164dd59e6c5341f002a1c2516cb006e1a16d4cc9e087fc95d",
+      "captured": {
+        "name": "note_3",
+        "path": "note.id",
+        "value": "note_15c0b1d29cf7"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_9f6fb406610a",
+          "title": "Atlas list note 4",
+          "body_markdown": "A row for the list face",
+          "tags": [],
+          "created_at": "2026-09-30T14:02:24Z",
+          "updated_at": "2026-09-30T14:02:24Z",
+          "last_modified": "2026-09-30T14:02:24Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "5153de01e79140f0f827b2cd52a276010625ea5c556d57e2a5bb3e366e2498d1",
+      "captured": {
+        "name": "note_4",
+        "path": "note.id",
+        "value": "note_9f6fb406610a"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_0d1a011c5fde",
+          "title": "Atlas list note 5",
+          "body_markdown": "A row for the list face",
+          "tags": [],
+          "created_at": "2026-09-30T14:02:24Z",
+          "updated_at": "2026-09-30T14:02:24Z",
+          "last_modified": "2026-09-30T14:02:24Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "6478504efdef5b1839654c5e146f5247d38a1f68e7ab2bb660ea7ab5ff7597f7",
+      "captured": {
+        "name": "note_5",
+        "path": "note.id",
+        "value": "note_0d1a011c5fde"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_bcd5b36e3ad7",
+          "title": "Atlas list note 6",
+          "body_markdown": "A row for the list face",
+          "tags": [],
+          "created_at": "2026-09-30T14:02:24Z",
+          "updated_at": "2026-09-30T14:02:24Z",
+          "last_modified": "2026-09-30T14:02:24Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "e8b935d7ac04189aeb0f233aa97fcac6a91cb56e15f2d0a462faf563f323bd93",
+      "captured": {
+        "name": "note_6",
+        "path": "note.id",
+        "value": "note_bcd5b36e3ad7"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-listmode",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list note 6']",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-floor-toggle]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "aria-pressed",
+        "value": "true"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "aria-pressed='true', wanted 'true'"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-35muwz1c",
+    "note_1": "note_f198fba58cbb",
+    "note_2": "note_ca2426b8f3e0",
+    "note_3": "note_15c0b1d29cf7",
+    "note_4": "note_9f6fb406610a",
+    "note_5": "note_0d1a011c5fde",
+    "note_6": "note_bcd5b36e3ad7"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": ".desk-listmode .desk-sortable-table-open[aria-label^='Personal zone']",
+    "done": true
+  },
+  "diff": {
+    "attrs": {
+      "before": {
+        "class": "desk-sortable-table-row",
+        "tabindex": "-1"
+      },
+      "after": {
+        "class": "desk-sortable-table-row",
+        "tabindex": "0"
+      }
+    },
+    "rect": {
+      "before": {
+        "x": 19,
+        "y": 793,
+        "w": 355,
+        "h": 79
+      },
+      "after": {
+        "x": 19,
+        "y": 249,
+        "w": 355,
+        "h": 78
+      }
+    },
+    "focus": {
+      "before": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "Chair",
+      "after": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n08:02 AM\nPersonal zone\nALL"
+    },
+    "document_text_sha256": {
+      "before": "ba38b1168baabd76afc577df6772b47a7ec1b91847f3f5b02d9c6bfe59dad0ae",
+      "after": "4414d37d0f681255210590866dd83298d54ed8c03564147aad943d13ff50a6cb"
+    },
+    "document_text_len": {
+      "before": 1041,
+      "after": 241
+    }
+  },
+  "before": {
+    "observe_at": ".desk-listmode tbody tr:has(.desk-list-name-cell[aria-label^=About])",
+    "target_present": true,
+    "text": "[ ]\nAbout me\nPERSONAL\nNOTE\nPERSONAL",
+    "attrs": {
+      "class": "desk-sortable-table-row",
+      "tabindex": "-1"
+    },
+    "rect": {
+      "x": 19,
+      "y": 793,
+      "w": 355,
+      "h": 79
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 19,
+        "y": 793,
+        "w": 355,
+        "h": 79
+      },
+      "in_viewport": false,
+      "samples": [
+        {
+          "x": 21,
+          "y": 795,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch"
+        },
+        {
+          "x": 21,
+          "y": 832,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch"
+        },
+        {
+          "x": 21,
+          "y": 870,
+          "owned": false,
+          "owner": null
+        },
+        {
+          "x": 197,
+          "y": 795,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock > span.desk-room-actions > button.btn.btn--secondary"
+        },
+        {
+          "x": 197,
+          "y": 832,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock > span.desk-room-actions > button.btn.btn--secondary"
+        },
+        {
+          "x": 197,
+          "y": 870,
+          "owned": false,
+          "owner": null
+        },
+        {
+          "x": 372,
+          "y": 795,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock > div.desk-orb-wrap > button.btn--chrome.desk-orb"
+        },
+        {
+          "x": 372,
+          "y": 832,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock > div.desk-orb-wrap > button.btn--chrome.desk-orb"
+        },
+        {
+          "x": 372,
+          "y": 870,
+          "owned": false,
+          "owner": null
+        }
+      ],
+      "all_owned": false
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch",
+    "focus_label": "Chair",
+    "url": "http://127.0.0.1:64754/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "ba38b1168baabd76afc577df6772b47a7ec1b91847f3f5b02d9c6bfe59dad0ae",
+    "document_text_len": 1041,
+    "replay_identity": null,
+    "at_utc": "2026-09-30T14:02:26.189539+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-listmode tbody tr:has(.desk-list-name-cell[aria-label^=About])",
+    "target_present": true,
+    "text": "[ ]\nAbout me\nPERSONAL\nNOTE\nPERSONAL",
+    "attrs": {
+      "class": "desk-sortable-table-row",
+      "tabindex": "0"
+    },
+    "rect": {
+      "x": 19,
+      "y": 249,
+      "w": 355,
+      "h": 78
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 19,
+        "y": 249,
+        "w": 355,
+        "h": 78
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 21,
+          "y": 251,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 21,
+          "y": 288,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 21,
+          "y": 325,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 197,
+          "y": 251,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 197,
+          "y": 288,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 197,
+          "y": 325,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 372,
+          "y": 251,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 372,
+          "y": 288,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 372,
+          "y": 325,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n08:02 AM\nPersonal zone\nALL",
+    "url": "http://127.0.0.1:64754/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "4414d37d0f681255210590866dd83298d54ed8c03564147aad943d13ff50a6cb",
+    "document_text_len": 241,
+    "replay_identity": null,
+    "at_utc": "2026-09-30T14:02:31.587399+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-listmode tbody tr:has(.desk-list-name-cell[aria-label^=About])",
+    "target_present": true,
+    "text": "[ ]\nAbout me\nPERSONAL\nNOTE\nPERSONAL",
+    "attrs": {
+      "class": "desk-sortable-table-row",
+      "tabindex": "0"
+    },
+    "rect": {
+      "x": 19,
+      "y": 249,
+      "w": 355,
+      "h": 78
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 19,
+        "y": 249,
+        "w": 355,
+        "h": 78
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 21,
+          "y": 251,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 21,
+          "y": 288,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 21,
+          "y": 325,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 197,
+          "y": 251,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 197,
+          "y": 288,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 197,
+          "y": 325,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 372,
+          "y": 251,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 372,
+          "y": 288,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        },
+        {
+          "x": 372,
+          "y": 325,
+          "owned": true,
+          "owner": "section.desk-list-face > div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n08:02 AM\nPersonal zone\nALL",
+    "url": "http://127.0.0.1:64754/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "4414d37d0f681255210590866dd83298d54ed8c03564147aad943d13ff50a6cb",
+    "document_text_len": 241,
+    "replay_identity": null,
+    "at_utc": "2026-09-30T14:02:31.347720+00:00",
+    "predicate_satisfied": true,
+    "reading": "'PERSONAL' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 19, 'y': 249, 'w': 355, 'h': 78}",
+    "elapsed_s": 2.073
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'PERSONAL' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 19, 'y': 249, 'w': 355, 'h': 78}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 2.313,
+    "first_satisfied_at_s": 2.073,
+    "completion_bound_s": 25.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'PERSONAL' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 19, 'y': 249, 'w': 355, 'h': 78}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:64754) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:64754) non-GET response after the click; the click fired none",
+    "seen": []
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p9.list_columns.in_view--393/20260930T140219Z-case.p9.list_columns.in_view-astra-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p9.list_columns.in_view--393/20260930T140219Z-case.p9.list_columns.in_view-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-35muwz1c/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-35muwz1c/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64754"
+  ],
+  "duration_s": 12.886
+}

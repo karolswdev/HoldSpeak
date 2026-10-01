@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
+RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:49337 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-gbmxsttg/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p10
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.sent--393/20260930T140729Z-case.p10.send.sent-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.sent--393/20260930T140729Z-case.p10.send.sent-astra-393/after.png']
+NOTE: predicate: all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 122135d5f6e3); response body contains the declared admission facts | readable_text: 'SAVED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 394, 'w': 307, 'h': 74} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_6500db413a9d41639aa1eff5f5358885 answered 200 with 1 row(s) {'state': 'sent', 'destination_id': 'chd_12ed99ed5f9321f00d096650', 'channel': 'file'}; GET /api/projects/proj-486659aeb75c/updates answered 200 with 1 row(s) {'id': 'pupd_6500db413a9d41639aa1eff5f5358885', 'deliveries.0.channel': 'file', 'deliveries.0.outcome': 'sent'}

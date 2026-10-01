@@ -1,0 +1,1888 @@
+{
+  "id": "obs-20261001T042204Z-case.p11.slack.unknown.face-astra-1440",
+  "run_id": "20261001T042204Z-case.p11.slack.unknown.face-astra-1440",
+  "case_id": "case.p11.slack.unknown.face",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase11-slack.json",
+  "job": "p11",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p11_slack_face_outcomes",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:63099",
+      "port": 63099,
+      "pid": 8575,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z39ykomy",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z39ykomy/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo11_documents/meeting_summary_reply.json": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+      "tests/fixtures/philo11_documents/meeting_transcript.vtt": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8",
+      "tests/fixtures/philo11_slack/unknown.json": "31fc6ac32e27216d5a5a0dcf78dd5dfab972edf5929d91e5854ef445b0f14979"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:22:04.538879+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "replayed",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "recorded meeting intelligence provider",
+        "substitute": "engine_reply",
+        "installed_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7"
+      },
+      {
+        "label": "Slack HTTPS edge: unknown.json",
+        "substitute": "cli_runner",
+        "installed_sha256": "31fc6ac32e27216d5a5a0dcf78dd5dfab972edf5929d91e5854ef445b0f14979"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase11-slack.json",
+      "sha256": "2c756a0a38aa18199d352d473a0d656c1dc792c7e3d7ac086ea8279aa08bf461",
+      "version": "phase11-slack-backend"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDED provider reply at the real provider seam",
+        "a RECORDING runner at the CLI channels' process edge (no real gh or acli)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+    "engine_provider_url": "http://127.0.0.1:63120/v1",
+    "cli_runner_sha256": "31fc6ac32e27216d5a5a0dcf78dd5dfab972edf5929d91e5854ef445b0f14979"
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T22:22:10.127067"
+        }
+      },
+      "response_sha256": "57f023b2519da51fd8e4ca5e6f404096821ab21ff123d4562e3d0ef7c4c84342"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/setup/discover-models",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "ok": true,
+        "models": [
+          "philo11-atlas"
+        ],
+        "detail": "Found 1 model.",
+        "status": 200
+      },
+      "response_sha256": "96a392df2be73d8a3ee78bc0d3c00e3a80b97ec6b45d72ec4071081558f5088f",
+      "captured": {
+        "name": "engine_model",
+        "path": "models.0",
+        "value": "philo11-atlas"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/inference/model-library/define-endpoint",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "receipt": {
+          "kind": "model_library_provider",
+          "message": "Added to the Model Library. Assignments are unchanged.",
+          "assignments_unchanged": true,
+          "assignments_before": {
+            "heads": [
+              {
+                "assignment_key": "capability:speech.transcribe",
+                "assignment_id": "ia_e0e1f7ca7b1c4c1e9b957644434dd8e4",
+                "revision": 1,
+                "cleared": false
+              }
+            ],
+            "sha256": "sha256:2f99fbe9cac2f31caa10a15ee65a3f67664e1eaaa2beaa8eb457355ff35951fc"
+          },
+          "assignments_after": {
+            "heads": [
+              {
+                "assignment_key": "capability:speech.transcribe",
+                "assignment_id": "ia_e0e1f7ca7b1c4c1e9b957644434dd8e4",
+                "revision": 1,
+                "cleared": false
+              }
+            ],
+            "sha256": "sha256:2f99fbe9cac2f31caa10a15ee65a3f67664e1eaaa2beaa8eb457355ff35951fc"
+          }
+        },
+        "provider": {
+          "profile_id": "p11-recorded-engine",
+          "profile_revision": 1,
+          "binding_id": "binding-p11-recorded-engine",
+          "binding_revision": 1,
+          "provider_family": "openai_compatible",
+          "secret": {
+            "required": false,
+            "present": false
+          }
+        }
+      },
+      "response_sha256": "4e44cdb9d24c0a1790048e0108b928d10dda191fb4604295408c212fc27f23ef",
+      "captured": {
+        "name": "profile_id",
+        "path": "provider.profile_id",
+        "value": "p11-recorded-engine"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/concierge/summary-selection",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "schema": "ConciergeSummaryAssignmentReceipt@1",
+        "status": "succeeded",
+        "capabilityId": "meeting.deferred_analysis",
+        "result": {
+          "capabilityId": "meeting.deferred_analysis",
+          "state": "READY",
+          "profileId": "p11-recorded-engine",
+          "profileRevision": 1,
+          "assignment": {
+            "revision": 1,
+            "entries": [
+              {
+                "profileId": "p11-recorded-engine",
+                "profileRevision": 1,
+                "label": "Recorded loopback provider",
+                "boundary": "lan",
+                "readiness": "ready"
+              }
+            ]
+          }
+        },
+        "receipt": {
+          "id": "concierge-summary-bb714fcbf892",
+          "visible": true
+        },
+        "summaryAssignment": {
+          "schema": "ConciergeSummaryAssignmentProjection@1",
+          "capabilityId": "meeting.deferred_analysis",
+          "status": "assigned",
+          "assignmentRevision": 1,
+          "profileId": "p11-recorded-engine",
+          "profileRevision": 1,
+          "label": "Recorded loopback provider",
+          "boundary": "lan",
+          "readiness": "ready"
+        }
+      },
+      "response_sha256": "523a160553428d43584316ca2297c9b4384099ab34f05b4a4e3fc53d93d8da3a"
+    },
+    {
+      "kind": "boundary",
+      "label": "recorded meeting intelligence provider",
+      "substitute": "engine_reply",
+      "adapter": "hub-engine-boundary",
+      "installed_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+      "seam": "holdspeak.intel.providers._configured_engine + holdspeak.intel.engine.MeetingIntel"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.import",
+      "args": {
+        "path": "/Users/karol/dev/tools/wt-philo-11-06/tests/fixtures/philo11_documents/meeting_transcript.vtt",
+        "title": "Document source review"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.import",
+          "arguments": {
+            "path": "/Users/karol/dev/tools/wt-philo-11-06/tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          }
+        }
+      },
+      "response": {
+        "meeting_id": "35bc7bf0",
+        "transcription_status": "importing"
+      },
+      "domain_response": {
+        "meeting_id": "35bc7bf0",
+        "transcription_status": "importing"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"meeting_id\": \"35bc7bf0\", \"transcription_status\": \"importing\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.015,
+      "fixture": {
+        "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+        "sha256": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "35bc7bf0"
+      }
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "35bc7bf0"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "transcription_status",
+        "value": "complete"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "transcription_status equals the declared value"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "35bc7bf0"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "35bc7bf0"
+          }
+        }
+      },
+      "response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 24.0,
+        "ended_at": "2026-09-30T22:22:34.216305",
+        "formatted_duration": "00:24",
+        "id": "35bc7bf0",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_267225126eddb71335bce8e9a00d3bbad29f9b653ace7ee04816b4d7a2e7ea80",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:3909a1697349d7421ba52cb1d30ebc09700f09b092acfeb668a9498a8c6167f0",
+          "status": "ready"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 8.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Avery: We agree to use one document registry for the channel sources."
+          },
+          {
+            "device_id": null,
+            "end_time": 16.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 8.0,
+            "text": "Blair: Avery will check the frozen bytes before the next review."
+          },
+          {
+            "device_id": null,
+            "end_time": 24.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 16.0,
+            "text": "Avery: The channel reads durable records and keeps the transcript private."
+          }
+        ],
+        "started_at": "2026-09-30T22:22:10.216305",
+        "sync_modified_at": "2026-09-30T22:22:10.224328",
+        "tags": [],
+        "title": "Document source review",
+        "transcriptWords": 34,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "domain_response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 24.0,
+        "ended_at": "2026-09-30T22:22:34.216305",
+        "formatted_duration": "00:24",
+        "id": "35bc7bf0",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_267225126eddb71335bce8e9a00d3bbad29f9b653ace7ee04816b4d7a2e7ea80",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:3909a1697349d7421ba52cb1d30ebc09700f09b092acfeb668a9498a8c6167f0",
+          "status": "ready"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 8.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Avery: We agree to use one document registry for the channel sources."
+          },
+          {
+            "device_id": null,
+            "end_time": 16.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 8.0,
+            "text": "Blair: Avery will check the frozen bytes before the next review."
+          },
+          {
+            "device_id": null,
+            "end_time": 24.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 16.0,
+            "text": "Avery: The channel reads durable records and keeps the transcript private."
+          }
+        ],
+        "started_at": "2026-09-30T22:22:10.216305",
+        "sync_modified_at": "2026-09-30T22:22:10.224328",
+        "tags": [],
+        "title": "Document source review",
+        "transcriptWords": 34,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 24.0, \"ended_at\": \"2026-09-30T22:22:34.216305\", \"formatted_duration\": \"00:24\", \"id\": \"35bc7bf0\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_267225126eddb71335bce8e9a00d3bbad29f9b653ace7ee04816b4d7a2e7ea80\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:3909a1697349d7421ba52cb1d30ebc09700f09b092acfeb668a9498a8c6167f0\", \"status\": \"ready\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 8.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Avery: We agree to use one document registry for the channel sources.\"}, {\"device_id\": null, \"end_time\": 16.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 8.0, \"text\": \"Blair: Avery will check the frozen bytes before the next review.\"}, {\"device_id\": null, \"end_time\": 24.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 16.0, \"text\": \"Avery: The channel reads durable records and keeps the transcript private.\"}], \"started_at\": \"2026-09-30T22:22:10.216305\", \"sync_modified_at\": \"2026-09-30T22:22:10.224328\", \"tags\": [], \"title\": \"Document source review\", \"transcriptWords\": 34, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.004,
+      "captured": {
+        "name": "selection_hash",
+        "path": "planned_route.selection_hash",
+        "value": "sha256:3909a1697349d7421ba52cb1d30ebc09700f09b092acfeb668a9498a8c6167f0"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.summary.run",
+      "args": {
+        "meeting_id": "35bc7bf0",
+        "expected_selection_hash": "sha256:3909a1697349d7421ba52cb1d30ebc09700f09b092acfeb668a9498a8c6167f0"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.run_intelligence",
+          "arguments": {
+            "meeting_id": "35bc7bf0",
+            "expected_selection_hash": "sha256:3909a1697349d7421ba52cb1d30ebc09700f09b092acfeb668a9498a8c6167f0"
+          }
+        }
+      },
+      "response": {
+        "drainer": "running",
+        "expectedWithinSeconds": 0,
+        "host": "127.0.0.1",
+        "jobId": "ij_528cfeb2b0f803dd5d762557b042a249a5704e5601f1db3d4c7aaecacdcacd62",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_267225126eddb71335bce8e9a00d3bbad29f9b653ace7ee04816b4d7a2e7ea80",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:3909a1697349d7421ba52cb1d30ebc09700f09b092acfeb668a9498a8c6167f0",
+          "status": "ready"
+        },
+        "run_receipt": null,
+        "state": "queued"
+      },
+      "domain_response": {
+        "drainer": "running",
+        "expectedWithinSeconds": 0,
+        "host": "127.0.0.1",
+        "jobId": "ij_528cfeb2b0f803dd5d762557b042a249a5704e5601f1db3d4c7aaecacdcacd62",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_267225126eddb71335bce8e9a00d3bbad29f9b653ace7ee04816b4d7a2e7ea80",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:3909a1697349d7421ba52cb1d30ebc09700f09b092acfeb668a9498a8c6167f0",
+          "status": "ready"
+        },
+        "run_receipt": null,
+        "state": "queued"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"drainer\": \"running\", \"expectedWithinSeconds\": 0, \"host\": \"127.0.0.1\", \"jobId\": \"ij_528cfeb2b0f803dd5d762557b042a249a5704e5601f1db3d4c7aaecacdcacd62\", \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_267225126eddb71335bce8e9a00d3bbad29f9b653ace7ee04816b4d7a2e7ea80\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:3909a1697349d7421ba52cb1d30ebc09700f09b092acfeb668a9498a8c6167f0\", \"status\": \"ready\"}, \"run_receipt\": null, \"state\": \"queued\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.008
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "35bc7bf0"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "intel.summary",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.31,
+      "holds": true,
+      "reading": "intel.summary is non-empty"
+    },
+    {
+      "kind": "boundary",
+      "label": "Slack HTTPS edge: unknown.json",
+      "substitute": "cli_runner",
+      "adapter": "slack-https-edge",
+      "installed_sha256": "31fc6ac32e27216d5a5a0dcf78dd5dfab972edf5929d91e5854ef445b0f14979",
+      "seam": "holdspeak.services.channel_cli.CLI_RUNNER"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/slack-webhooks",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "key_ref": "slack_677fab58e5477f026f3ed57d",
+        "saved": true,
+        "operation_id": "op_e9dd5cede7fd4355911ff46fbc1ce62d",
+        "receipt": {
+          "receipt_id": "rcpt_a4826baa72ea4feb89809068f8e5e8ed",
+          "operation_id": "op_e9dd5cede7fd4355911ff46fbc1ce62d",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "slack_webhook:slack_677fab58e5477f026f3ed57d",
+          "created_at": 1790828530.574301,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_slack_webhook"
+        }
+      },
+      "response_sha256": "e696f609bf21417bfd33529b472894bc3d9a45bb17e60f24ad3ffdda0f4ba94c",
+      "captured": {
+        "name": "key_ref",
+        "path": "key_ref",
+        "value": "slack_677fab58e5477f026f3ed57d"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.save_destination",
+      "args": {
+        "channel": "slack",
+        "name": "Slack #leads",
+        "key_ref": "slack_677fab58e5477f026f3ed57d",
+        "channel_label": "#leads"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.save_destination",
+          "arguments": {
+            "channel": "slack",
+            "name": "Slack #leads",
+            "key_ref": "slack_677fab58e5477f026f3ed57d",
+            "channel_label": "#leads"
+          }
+        }
+      },
+      "response": {
+        "destination": {
+          "account": {
+            "key_ref": "slack_677fab58e5477f026f3ed57d"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "connection": null,
+          "created_at": "2026-10-01T04:22:10+00:00",
+          "id": "chd_eb9d3c5b7d48127c809d4771",
+          "name": "Slack #leads",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "c5dcc32934f52c4259be213dc54dab66d1021a5f1546e4d11e71bcdc82399d98"
+        },
+        "operation_id": "op_a4bc4074b4664622bf9798fa4d809e01",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790828530.579881,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_a4bc4074b4664622bf9798fa4d809e01",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_bb1124943b8d47b8a9dfbaac011928d4",
+          "result_ref": "channel_destination:chd_eb9d3c5b7d48127c809d4771",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "domain_response": {
+        "destination": {
+          "account": {
+            "key_ref": "slack_677fab58e5477f026f3ed57d"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "connection": null,
+          "created_at": "2026-10-01T04:22:10+00:00",
+          "id": "chd_eb9d3c5b7d48127c809d4771",
+          "name": "Slack #leads",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "c5dcc32934f52c4259be213dc54dab66d1021a5f1546e4d11e71bcdc82399d98"
+        },
+        "operation_id": "op_a4bc4074b4664622bf9798fa4d809e01",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790828530.579881,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_a4bc4074b4664622bf9798fa4d809e01",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_bb1124943b8d47b8a9dfbaac011928d4",
+          "result_ref": "channel_destination:chd_eb9d3c5b7d48127c809d4771",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"destination\": {\"account\": {\"key_ref\": \"slack_677fab58e5477f026f3ed57d\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"connection\": null, \"created_at\": \"2026-10-01T04:22:10+00:00\", \"id\": \"chd_eb9d3c5b7d48127c809d4771\", \"name\": \"Slack #leads\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"c5dcc32934f52c4259be213dc54dab66d1021a5f1546e4d11e71bcdc82399d98\"}, \"operation_id\": \"op_a4bc4074b4664622bf9798fa4d809e01\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790828530.579881, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_a4bc4074b4664622bf9798fa4d809e01\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_bb1124943b8d47b8a9dfbaac011928d4\", \"result_ref\": \"channel_destination:chd_eb9d3c5b7d48127c809d4771\", \"state\": \"succeeded\", \"target_ref\": \"desk:channel.save_destination\"}, \"replaced\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.004,
+      "captured": {
+        "name": "dest_id",
+        "path": "destination.id",
+        "value": "chd_eb9d3c5b7d48127c809d4771"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-go.review-meetings']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=meeting-row-35bc7bf0]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=meeting-row-35bc7bf0] .meetings-stream-row-body",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window:has(.meetings-detail-head) [data-testid=meeting-send-well]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=destination-row]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=destination-row]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=send-open] [data-testid=send-preview]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "scroll_into_view",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=send-open] [data-testid=send-verb]",
+      "block": "center",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "Fresh isolated HOME; the meeting summary and Slack response fixture are produced in this run.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z39ykomy",
+    "replay_provider_url": "http://127.0.0.1:63120/v1",
+    "engine_model": "philo11-atlas",
+    "profile_id": "p11-recorded-engine",
+    "meeting_id": "35bc7bf0",
+    "selection_hash": "sha256:3909a1697349d7421ba52cb1d30ebc09700f09b092acfeb668a9498a8c6167f0",
+    "key_ref": "slack_677fab58e5477f026f3ed57d",
+    "dest_id": "chd_eb9d3c5b7d48127c809d4771"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=send-open] [data-testid=send-verb]",
+    "done": true
+  },
+  "diff": {
+    "text": {
+      "before": "Send\nHOOKS.SLACK.COM",
+      "after": "Send again\nHOOKS.SLACK.COM\n\u26a0\nRESULT UNKNOWN\nSLACK ERROR"
+    },
+    "rect": {
+      "before": {
+        "x": 309,
+        "y": 372,
+        "w": 310,
+        "h": 24
+      },
+      "after": {
+        "x": 309,
+        "y": 394,
+        "w": 310,
+        "h": 48
+      }
+    },
+    "focus": {
+      "before": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "Slack #leads, SLACK",
+      "after": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 EXTERNAL REACH ENABLED\nSea"
+    },
+    "document_text_sha256": {
+      "before": "b2535ada400baa893cdbc7c0eb700c1d4b5c97b264dc4edb38c28153da855b63",
+      "after": "a24036144a45cb29553cb2cf0c005c9b26e2d995690b5fe073c6992ed84dea89"
+    },
+    "document_text_len": {
+      "before": 2058,
+      "after": 2306
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends?document_ref=meeting_summary:35bc7bf0",
+          "status": 200,
+          "payload": {
+            "sends": []
+          },
+          "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends?document_ref=meeting_summary:35bc7bf0",
+          "status": 200,
+          "payload": {
+            "sends": [
+              {
+                "id": "chs_7fc7f1bda4e838d6419ea990",
+                "document_ref": "meeting_summary:35bc7bf0",
+                "destination_id": "chd_eb9d3c5b7d48127c809d4771",
+                "destination_name": "Slack #leads",
+                "channel": "slack",
+                "badge": "cloud",
+                "account": {
+                  "key_ref": "slack_677fab58e5477f026f3ed57d"
+                },
+                "target": {
+                  "channel_label": "#leads"
+                },
+                "target_digest": "c5dcc32934f52c4259be213dc54dab66d1021a5f1546e4d11e71bcdc82399d98",
+                "payload_digest": "4db7664aa92c84e78d7561c8b8a3f4b33dda9c066d7fb7b3f3c7ba1f5495b7c8",
+                "document_json": {
+                  "label": "SUMMARY 2026-09-30",
+                  "slug": "document-source-review",
+                  "title": "Document source review"
+                },
+                "size": 187,
+                "preview": {
+                  "text": "*Document source review*\nDate: 2026-09-30\n\n*Summary*\nThe meeting agreed to use one document registry and to check frozen bytes before review.\n\n*Topics*\n- document registry\n- frozen bytes\n"
+                },
+                "prepared_by": {
+                  "kind": "owner",
+                  "identity": "owner-session"
+                },
+                "prepare_operation_id": null,
+                "send_operation_id": "op_47aa6a2f150f4b6995da47f9792962d7",
+                "state": "unknown",
+                "reason": "rollup_error",
+                "proof": null,
+                "file_path": null,
+                "created_at": "2026-10-01T04:22:14.334292+00:00",
+                "dispatch_started_at": "2026-10-01T04:22:14.334292+00:00",
+                "settled_at": "2026-10-01T04:22:14+00:00",
+                "dispatch_seq": 1
+              }
+            ]
+          },
+          "body_sha256": "39372cd1c4ec83b60c8d0d13f30ea66c40ad64b5c61aabff8668d0d90ccd119f"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
+    "target_present": true,
+    "text": "Send\nHOOKS.SLACK.COM",
+    "attrs": {
+      "class": "send-verbs",
+      "data-testid": "send-verbs"
+    },
+    "rect": {
+      "x": 309,
+      "y": 372,
+      "w": 310,
+      "h": 24
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 309,
+        "y": 372,
+        "w": 310,
+        "h": 24
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 311,
+          "y": 374,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--primary"
+        },
+        {
+          "x": 311,
+          "y": 384,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--primary"
+        },
+        {
+          "x": 311,
+          "y": 394,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--primary"
+        },
+        {
+          "x": 464,
+          "y": 374,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 464,
+          "y": 384,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.gadget-chip.gadget-chip-egress"
+        },
+        {
+          "x": 464,
+          "y": 394,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 617,
+          "y": 374,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 617,
+          "y": 384,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 617,
+          "y": 394,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 1034,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "Slack #leads, SLACK",
+    "url": "http://127.0.0.1:63099/",
+    "windows": [
+      {
+        "title": "Meetings",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 640,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "b2535ada400baa893cdbc7c0eb700c1d4b5c97b264dc4edb38c28153da855b63",
+    "document_text_len": 2058,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=meeting_summary:35bc7bf0",
+        "status": 200,
+        "payload": {
+          "sends": []
+        },
+        "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+      }
+    ],
+    "cli_calls": [],
+    "at_utc": "2026-10-01T04:22:14.146669+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
+    "target_present": true,
+    "text": "Send again\nHOOKS.SLACK.COM\n\u26a0\nRESULT UNKNOWN\nSLACK ERROR",
+    "attrs": {
+      "class": "send-verbs",
+      "data-testid": "send-verbs"
+    },
+    "rect": {
+      "x": 309,
+      "y": 394,
+      "w": 310,
+      "h": 48
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 309,
+        "y": 394,
+        "w": 310,
+        "h": 48
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 311,
+          "y": 396,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--primary"
+        },
+        {
+          "x": 311,
+          "y": 418,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 311,
+          "y": 440,
+          "owned": true,
+          "owner": "div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 464,
+          "y": 396,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 464,
+          "y": 418,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 464,
+          "y": 440,
+          "owned": true,
+          "owner": "div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line > span.surface-token"
+        },
+        {
+          "x": 617,
+          "y": 396,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 617,
+          "y": 418,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 617,
+          "y": 440,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 1132,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 EXTERNAL REACH ENABLED\nSea",
+    "url": "http://127.0.0.1:63099/",
+    "windows": [
+      {
+        "title": "Meetings",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 640,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "a24036144a45cb29553cb2cf0c005c9b26e2d995690b5fe073c6992ed84dea89",
+    "document_text_len": 2306,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=meeting_summary:35bc7bf0",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_7fc7f1bda4e838d6419ea990",
+              "document_ref": "meeting_summary:35bc7bf0",
+              "destination_id": "chd_eb9d3c5b7d48127c809d4771",
+              "destination_name": "Slack #leads",
+              "channel": "slack",
+              "badge": "cloud",
+              "account": {
+                "key_ref": "slack_677fab58e5477f026f3ed57d"
+              },
+              "target": {
+                "channel_label": "#leads"
+              },
+              "target_digest": "c5dcc32934f52c4259be213dc54dab66d1021a5f1546e4d11e71bcdc82399d98",
+              "payload_digest": "4db7664aa92c84e78d7561c8b8a3f4b33dda9c066d7fb7b3f3c7ba1f5495b7c8",
+              "document_json": {
+                "label": "SUMMARY 2026-09-30",
+                "slug": "document-source-review",
+                "title": "Document source review"
+              },
+              "size": 187,
+              "preview": {
+                "text": "*Document source review*\nDate: 2026-09-30\n\n*Summary*\nThe meeting agreed to use one document registry and to check frozen bytes before review.\n\n*Topics*\n- document registry\n- frozen bytes\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": null,
+              "send_operation_id": "op_47aa6a2f150f4b6995da47f9792962d7",
+              "state": "unknown",
+              "reason": "rollup_error",
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T04:22:14.334292+00:00",
+              "dispatch_started_at": "2026-10-01T04:22:14.334292+00:00",
+              "settled_at": "2026-10-01T04:22:14+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "39372cd1c4ec83b60c8d0d13f30ea66c40ad64b5c61aabff8668d0d90ccd119f"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "https",
+          "POST",
+          "hooks.slack.com",
+          "/services/[redacted]"
+        ],
+        "body_sha256": "4db7664aa92c84e78d7561c8b8a3f4b33dda9c066d7fb7b3f3c7ba1f5495b7c8",
+        "pid": 8575,
+        "at": "2026-10-01T04:22:14.339605+00:00",
+        "answer": 0,
+        "auth": null,
+        "user_agent": "HoldSpeak"
+      }
+    ],
+    "at_utc": "2026-10-01T04:22:15.366198+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/channels/send",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/channels/send",
+        "status": 200,
+        "body_sha256": "d73a1e1bf6a9f6fdd15016bcf4689e190f21a7f21246cdf42073ced13caef6eb",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/channels/send"
+      },
+      "why": "chosen by the declared trigger_route POST /api/channels/send",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/channels/send",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings/35bc7bf0",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/channels/send",
+      "status": 200,
+      "body_sha256": "d73a1e1bf6a9f6fdd15016bcf4689e190f21a7f21246cdf42073ced13caef6eb",
+      "body": {
+        "send": {
+          "id": "chs_7fc7f1bda4e838d6419ea990",
+          "document_ref": "meeting_summary:35bc7bf0",
+          "destination_id": "chd_eb9d3c5b7d48127c809d4771",
+          "destination_name": "Slack #leads",
+          "channel": "slack",
+          "badge": "cloud",
+          "account": {
+            "key_ref": "slack_677fab58e5477f026f3ed57d"
+          },
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "c5dcc32934f52c4259be213dc54dab66d1021a5f1546e4d11e71bcdc82399d98",
+          "payload_digest": "4db7664aa92c84e78d7561c8b8a3f4b33dda9c066d7fb7b3f3c7ba1f5495b7c8",
+          "document_json": {
+            "label": "SUMMARY 2026-09-30",
+            "slug": "document-source-review",
+            "title": "Document source review"
+          },
+          "size": 187,
+          "preview": {
+            "text": "*Document source review*\nDate: 2026-09-30\n\n*Summary*\nThe meeting agreed to use one document registry and to check frozen bytes before review.\n\n*Topics*\n- document registry\n- frozen bytes\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": null,
+          "send_operation_id": "op_47aa6a2f150f4b6995da47f9792962d7",
+          "state": "unknown",
+          "reason": "rollup_error",
+          "proof": null,
+          "file_path": null,
+          "created_at": "2026-10-01T04:22:14.334292+00:00",
+          "dispatch_started_at": "2026-10-01T04:22:14.334292+00:00",
+          "settled_at": "2026-10-01T04:22:14+00:00",
+          "dispatch_seq": 1
+        },
+        "outcome": "unknown",
+        "operation_id": "op_47aa6a2f150f4b6995da47f9792962d7",
+        "receipt": {
+          "receipt_id": "rcpt_49115de2c7da44df830c2e8dbfbd8e88",
+          "operation_id": "op_47aa6a2f150f4b6995da47f9792962d7",
+          "state": "indeterminate",
+          "outcome": "rollup_error",
+          "result_ref": "channel_send:chs_7fc7f1bda4e838d6419ea990",
+          "created_at": 1790828534.341749,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "document:meeting_summary:35bc7bf0"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/send"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
+    "target_present": true,
+    "text": "Send again\nHOOKS.SLACK.COM\n\u26a0\nRESULT UNKNOWN\nSLACK ERROR",
+    "attrs": {
+      "class": "send-verbs",
+      "data-testid": "send-verbs"
+    },
+    "rect": {
+      "x": 309,
+      "y": 394,
+      "w": 310,
+      "h": 48
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 309,
+        "y": 394,
+        "w": 310,
+        "h": 48
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 311,
+          "y": 396,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--primary"
+        },
+        {
+          "x": 311,
+          "y": 418,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 311,
+          "y": 440,
+          "owned": true,
+          "owner": "div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 464,
+          "y": 396,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 464,
+          "y": 418,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 464,
+          "y": 440,
+          "owned": true,
+          "owner": "div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line > span.surface-token"
+        },
+        {
+          "x": 617,
+          "y": 396,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 617,
+          "y": 418,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 617,
+          "y": 440,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 1132,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 EXTERNAL REACH ENABLED\nSea",
+    "url": "http://127.0.0.1:63099/",
+    "windows": [
+      {
+        "title": "Meetings",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 640,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "a24036144a45cb29553cb2cf0c005c9b26e2d995690b5fe073c6992ed84dea89",
+    "document_text_len": 2306,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=meeting_summary:35bc7bf0",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_7fc7f1bda4e838d6419ea990",
+              "document_ref": "meeting_summary:35bc7bf0",
+              "destination_id": "chd_eb9d3c5b7d48127c809d4771",
+              "destination_name": "Slack #leads",
+              "channel": "slack",
+              "badge": "cloud",
+              "account": {
+                "key_ref": "slack_677fab58e5477f026f3ed57d"
+              },
+              "target": {
+                "channel_label": "#leads"
+              },
+              "target_digest": "c5dcc32934f52c4259be213dc54dab66d1021a5f1546e4d11e71bcdc82399d98",
+              "payload_digest": "4db7664aa92c84e78d7561c8b8a3f4b33dda9c066d7fb7b3f3c7ba1f5495b7c8",
+              "document_json": {
+                "label": "SUMMARY 2026-09-30",
+                "slug": "document-source-review",
+                "title": "Document source review"
+              },
+              "size": 187,
+              "preview": {
+                "text": "*Document source review*\nDate: 2026-09-30\n\n*Summary*\nThe meeting agreed to use one document registry and to check frozen bytes before review.\n\n*Topics*\n- document registry\n- frozen bytes\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": null,
+              "send_operation_id": "op_47aa6a2f150f4b6995da47f9792962d7",
+              "state": "unknown",
+              "reason": "rollup_error",
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T04:22:14.334292+00:00",
+              "dispatch_started_at": "2026-10-01T04:22:14.334292+00:00",
+              "settled_at": "2026-10-01T04:22:14+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "39372cd1c4ec83b60c8d0d13f30ea66c40ad64b5c61aabff8668d0d90ccd119f"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "https",
+          "POST",
+          "hooks.slack.com",
+          "/services/[redacted]"
+        ],
+        "body_sha256": "4db7664aa92c84e78d7561c8b8a3f4b33dda9c066d7fb7b3f3c7ba1f5495b7c8",
+        "pid": 8575,
+        "at": "2026-10-01T04:22:14.339605+00:00",
+        "answer": 0,
+        "auth": null,
+        "user_agent": "HoldSpeak"
+      }
+    ],
+    "at_utc": "2026-10-01T04:22:15.230537+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/channels/send",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/channels/send",
+        "status": 200,
+        "body_sha256": "d73a1e1bf6a9f6fdd15016bcf4689e190f21a7f21246cdf42073ced13caef6eb",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/channels/send"
+      },
+      "why": "chosen by the declared trigger_route POST /api/channels/send",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/channels/send",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings/35bc7bf0",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/channels/send",
+      "status": 200,
+      "body_sha256": "d73a1e1bf6a9f6fdd15016bcf4689e190f21a7f21246cdf42073ced13caef6eb",
+      "body": {
+        "send": {
+          "id": "chs_7fc7f1bda4e838d6419ea990",
+          "document_ref": "meeting_summary:35bc7bf0",
+          "destination_id": "chd_eb9d3c5b7d48127c809d4771",
+          "destination_name": "Slack #leads",
+          "channel": "slack",
+          "badge": "cloud",
+          "account": {
+            "key_ref": "slack_677fab58e5477f026f3ed57d"
+          },
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "c5dcc32934f52c4259be213dc54dab66d1021a5f1546e4d11e71bcdc82399d98",
+          "payload_digest": "4db7664aa92c84e78d7561c8b8a3f4b33dda9c066d7fb7b3f3c7ba1f5495b7c8",
+          "document_json": {
+            "label": "SUMMARY 2026-09-30",
+            "slug": "document-source-review",
+            "title": "Document source review"
+          },
+          "size": 187,
+          "preview": {
+            "text": "*Document source review*\nDate: 2026-09-30\n\n*Summary*\nThe meeting agreed to use one document registry and to check frozen bytes before review.\n\n*Topics*\n- document registry\n- frozen bytes\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": null,
+          "send_operation_id": "op_47aa6a2f150f4b6995da47f9792962d7",
+          "state": "unknown",
+          "reason": "rollup_error",
+          "proof": null,
+          "file_path": null,
+          "created_at": "2026-10-01T04:22:14.334292+00:00",
+          "dispatch_started_at": "2026-10-01T04:22:14.334292+00:00",
+          "settled_at": "2026-10-01T04:22:14+00:00",
+          "dispatch_seq": 1
+        },
+        "outcome": "unknown",
+        "operation_id": "op_47aa6a2f150f4b6995da47f9792962d7",
+        "receipt": {
+          "receipt_id": "rcpt_49115de2c7da44df830c2e8dbfbd8e88",
+          "operation_id": "op_47aa6a2f150f4b6995da47f9792962d7",
+          "state": "indeterminate",
+          "outcome": "rollup_error",
+          "result_ref": "channel_send:chs_7fc7f1bda4e838d6419ea990",
+          "created_at": 1790828534.341749,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "document:meeting_summary:35bc7bf0"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/send"
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 d73a1e1bf6a9); response body matches its declared fields | readable_text: 'RESULT UNKNOWN' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 309, 'y': 394, 'w': 310, 'h': 48} | protocol_reads: GET /api/channels/sends?document_ref=meeting_summary:35bc7bf0 answered 200 with 1 row(s) {'document_ref': 'meeting_summary:35bc7bf0', 'state': 'unknown', 'channel': 'slack', 'reason': 'rollup_error'}",
+    "elapsed_s": 0.936
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 d73a1e1bf6a9); response body matches its declared fields | readable_text: 'RESULT UNKNOWN' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 309, 'y': 394, 'w': 310, 'h': 48} | protocol_reads: GET /api/channels/sends?document_ref=meeting_summary:35bc7bf0 answered 200 with 1 row(s) {'document_ref': 'meeting_summary:35bc7bf0', 'state': 'unknown', 'channel': 'slack', 'reason': 'rollup_error'}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.067,
+    "first_satisfied_at_s": 0.936,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 d73a1e1bf6a9); response body matches its declared fields | readable_text: 'RESULT UNKNOWN' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 309, 'y': 394, 'w': 310, 'h': 48} | protocol_reads: GET /api/channels/sends?document_ref=meeting_summary:35bc7bf0 answered 200 with 1 row(s) {'document_ref': 'meeting_summary:35bc7bf0', 'state': 'unknown', 'channel': 'slack', 'reason': 'rollup_error'}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/channels/send",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/channels/send",
+      "status": 200,
+      "body_sha256": "d73a1e1bf6a9f6fdd15016bcf4689e190f21a7f21246cdf42073ced13caef6eb",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/send"
+    },
+    "why": "chosen by the declared trigger_route POST /api/channels/send",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/channels/send",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/35bc7bf0",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b4/case.p11.slack.unknown.face--1440/20261001T042204Z-case.p11.slack.unknown.face-astra-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b4/case.p11.slack.unknown.face--1440/20261001T042204Z-case.p11.slack.unknown.face-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z39ykomy/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z39ykomy/.config/holdspeak/config.json",
+    "ENGINE_REPLAY bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+    "ENGINE_PROVIDER http://127.0.0.1:63120/v1",
+    "CLI_RUNNER 31fc6ac32e27216d5a5a0dcf78dd5dfab972edf5929d91e5854ef445b0f14979",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDED provider reply at the real provider seam\", \"a RECORDING runner at the CLI channels' process edge (no real gh or acli)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:63099",
+    "CLI_CALL [\"https\", \"POST\", \"hooks.slack.com\", \"/services/[redacted]\"]"
+  ],
+  "duration_s": 11.033
+}

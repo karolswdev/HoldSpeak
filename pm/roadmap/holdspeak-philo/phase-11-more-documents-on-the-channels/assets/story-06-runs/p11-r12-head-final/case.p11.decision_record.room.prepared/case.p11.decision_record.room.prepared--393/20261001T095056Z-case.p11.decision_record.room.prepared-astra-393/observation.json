@@ -1,0 +1,1925 @@
+{
+  "id": "obs-20261001T095056Z-case.p11.decision_record.room.prepared-astra-393",
+  "run_id": "20261001T095056Z-case.p11.decision_record.room.prepared-astra-393",
+  "case_id": "case.p11.decision_record.room.prepared",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase11.json",
+  "job": "p11",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.documents.p11_sources",
+  "provenance": {
+    "revision": "abb8a94e50b2d3634b30bd4a8091c4bc7ef31c7b",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55678",
+      "port": 55678,
+      "pid": 42203,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_9r59p1a",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_9r59p1a/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo11_documents/meeting_summary_reply.json": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+      "tests/fixtures/philo11_documents/meeting_transcript.vtt": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T09:50:56.918707+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "replayed",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "recorded meeting intelligence provider",
+        "substitute": "engine_reply",
+        "installed_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase11.json",
+      "sha256": "35b55c4d3004eb85d00b633ce27bf053dd64a8da6c7d9cadca5f67b4d2114305",
+      "version": "phase11-documents"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDED provider reply at the real provider seam",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+    "engine_provider_url": "http://127.0.0.1:55679/v1",
+    "cli_runner_sha256": null,
+    "meeting_intelligence": [
+      {
+        "kind": "cli",
+        "action": "queue_meeting_intelligence",
+        "adapter": "production-queue",
+        "meeting_id": "910c5f65",
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_9r59p1a/.local/share/holdspeak/holdspeak.db",
+        "producer": "holdspeak.db.intel.IntelRepository.enqueue_intel_job",
+        "job_id": "ij_972beea62867c877674e0a21a5877ad6a5d7055ec4ac4bce5af137b0ece36f21",
+        "transcript_hash": "3eebb12291adfc524eab0137a9dce7a89fef5b52eab08f382aa8eaa62ed8cf33",
+        "planned_route": null
+      }
+    ]
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-01T03:51:00.815405"
+        }
+      },
+      "response_sha256": "35c4cb53e2d155dddae7e7914171a1ea9b859fe37e5bfcccb50de2580af00fc4"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-75ef250daae2",
+          "name": "P11Room",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-10-01T03:51:00.853651",
+          "updated_at": "2026-10-01T03:51:00.853651",
+          "result_kind": "created",
+          "project_id": "proj-75ef250daae2",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-75ef250daae2"
+          ]
+        }
+      },
+      "response_sha256": "23881498c9afc9d592cf026b8edff3476ec5d711721c685751581dbd60d58a5a",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-75ef250daae2"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/setup/discover-models",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "ok": true,
+        "models": [
+          "philo11-atlas"
+        ],
+        "detail": "Found 1 model.",
+        "status": 200
+      },
+      "response_sha256": "96a392df2be73d8a3ee78bc0d3c00e3a80b97ec6b45d72ec4071081558f5088f",
+      "captured": {
+        "name": "engine_model",
+        "path": "models.0",
+        "value": "philo11-atlas"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/inference/model-library/define-endpoint",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "receipt": {
+          "kind": "model_library_provider",
+          "message": "Added to the Model Library. Assignments are unchanged.",
+          "assignments_unchanged": true,
+          "assignments_before": {
+            "heads": [
+              {
+                "assignment_key": "capability:speech.transcribe",
+                "assignment_id": "ia_03e0d1792abd43498da0816b809007fd",
+                "revision": 1,
+                "cleared": false
+              }
+            ],
+            "sha256": "sha256:949e9c69689161e7192069adbc7d15125e9d02a7882173635b25dd39883dca0a"
+          },
+          "assignments_after": {
+            "heads": [
+              {
+                "assignment_key": "capability:speech.transcribe",
+                "assignment_id": "ia_03e0d1792abd43498da0816b809007fd",
+                "revision": 1,
+                "cleared": false
+              }
+            ],
+            "sha256": "sha256:949e9c69689161e7192069adbc7d15125e9d02a7882173635b25dd39883dca0a"
+          }
+        },
+        "provider": {
+          "profile_id": "p11-recorded-engine",
+          "profile_revision": 1,
+          "binding_id": "binding-p11-recorded-engine",
+          "binding_revision": 1,
+          "provider_family": "openai_compatible",
+          "secret": {
+            "required": false,
+            "present": false
+          }
+        }
+      },
+      "response_sha256": "9586aa328e6ff01945c8dddbcf765f3597ecbe9c7ff3e208ed93f1b205eb1eaa",
+      "captured": {
+        "name": "profile_id",
+        "path": "provider.profile_id",
+        "value": "p11-recorded-engine"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/concierge/summary-selection",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "schema": "ConciergeSummaryAssignmentReceipt@1",
+        "status": "succeeded",
+        "capabilityId": "meeting.deferred_analysis",
+        "result": {
+          "capabilityId": "meeting.deferred_analysis",
+          "state": "READY",
+          "profileId": "p11-recorded-engine",
+          "profileRevision": 1,
+          "assignment": {
+            "revision": 1,
+            "entries": [
+              {
+                "profileId": "p11-recorded-engine",
+                "profileRevision": 1,
+                "label": "Recorded loopback provider",
+                "boundary": "lan",
+                "readiness": "ready"
+              }
+            ]
+          }
+        },
+        "receipt": {
+          "id": "concierge-summary-92143438fc6b",
+          "visible": true
+        },
+        "summaryAssignment": {
+          "schema": "ConciergeSummaryAssignmentProjection@1",
+          "capabilityId": "meeting.deferred_analysis",
+          "status": "assigned",
+          "assignmentRevision": 1,
+          "profileId": "p11-recorded-engine",
+          "profileRevision": 1,
+          "label": "Recorded loopback provider",
+          "boundary": "lan",
+          "readiness": "ready"
+        }
+      },
+      "response_sha256": "3b9ebb76a7ce42345f6d020d0dc78eb1fc77ff8514f8055eed2fed89c8e0477e"
+    },
+    {
+      "kind": "boundary",
+      "label": "recorded meeting intelligence provider",
+      "substitute": "engine_reply",
+      "adapter": "hub-engine-boundary",
+      "installed_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+      "seam": "holdspeak.intel.providers._configured_engine + holdspeak.intel.engine.MeetingIntel"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.import",
+      "args": {
+        "path": "/Users/karol/dev/tools/wt-philo-11-06/tests/fixtures/philo11_documents/meeting_transcript.vtt",
+        "title": "Document source review"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.import",
+          "arguments": {
+            "path": "/Users/karol/dev/tools/wt-philo-11-06/tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          }
+        }
+      },
+      "response": {
+        "meeting_id": "910c5f65",
+        "transcription_status": "importing"
+      },
+      "domain_response": {
+        "meeting_id": "910c5f65",
+        "transcription_status": "importing"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"meeting_id\": \"910c5f65\", \"transcription_status\": \"importing\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.004,
+      "fixture": {
+        "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+        "sha256": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "910c5f65"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects/proj-75ef250daae2/meetings/910c5f65",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "operation_id": "op_195fff620ab242559e412f14cba03cbc",
+        "receipt": {
+          "receipt_id": "rcpt_2c43757e25fd4e5b8c341042f90304fb",
+          "operation_id": "op_195fff620ab242559e412f14cba03cbc",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project:proj-75ef250daae2",
+          "created_at": 1790848260.886121,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project:proj-75ef250daae2"
+        }
+      },
+      "response_sha256": "fbefa133c6b6440191f7bea07248ea5f7753705dfb381cfb5326f56a2a944ebc"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "910c5f65"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "transcription_status",
+        "value": "complete"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "transcription_status equals the declared value"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "910c5f65"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "segments",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "segments is non-empty"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "910c5f65"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "planned_route.selection_hash",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "planned_route.selection_hash is non-empty"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "910c5f65"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "910c5f65"
+          }
+        }
+      },
+      "response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 24.0,
+        "ended_at": "2026-10-01T03:51:24.877642",
+        "formatted_duration": "00:24",
+        "id": "910c5f65",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_d76e0dc078d298d580f22ed61b56362755a52c48ee0e29af0cfa1f3e4c2fcce2",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:3776034f5e34137f278c2415721f345b4c6b2e0215a3640d8b6536b6ad6baa88",
+          "status": "ready"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 8.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Avery: We agree to use one document registry for the channel sources."
+          },
+          {
+            "device_id": null,
+            "end_time": 16.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 8.0,
+            "text": "Blair: Avery will check the frozen bytes before the next review."
+          },
+          {
+            "device_id": null,
+            "end_time": 24.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 16.0,
+            "text": "Avery: The channel reads durable records and keeps the transcript private."
+          }
+        ],
+        "started_at": "2026-10-01T03:51:00.877642",
+        "sync_modified_at": "2026-10-01T03:51:00.880950",
+        "tags": [],
+        "title": "Document source review",
+        "transcriptWords": 34,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "domain_response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 24.0,
+        "ended_at": "2026-10-01T03:51:24.877642",
+        "formatted_duration": "00:24",
+        "id": "910c5f65",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_d76e0dc078d298d580f22ed61b56362755a52c48ee0e29af0cfa1f3e4c2fcce2",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:3776034f5e34137f278c2415721f345b4c6b2e0215a3640d8b6536b6ad6baa88",
+          "status": "ready"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 8.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Avery: We agree to use one document registry for the channel sources."
+          },
+          {
+            "device_id": null,
+            "end_time": 16.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 8.0,
+            "text": "Blair: Avery will check the frozen bytes before the next review."
+          },
+          {
+            "device_id": null,
+            "end_time": 24.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 16.0,
+            "text": "Avery: The channel reads durable records and keeps the transcript private."
+          }
+        ],
+        "started_at": "2026-10-01T03:51:00.877642",
+        "sync_modified_at": "2026-10-01T03:51:00.880950",
+        "tags": [],
+        "title": "Document source review",
+        "transcriptWords": 34,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 24.0, \"ended_at\": \"2026-10-01T03:51:24.877642\", \"formatted_duration\": \"00:24\", \"id\": \"910c5f65\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_d76e0dc078d298d580f22ed61b56362755a52c48ee0e29af0cfa1f3e4c2fcce2\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:3776034f5e34137f278c2415721f345b4c6b2e0215a3640d8b6536b6ad6baa88\", \"status\": \"ready\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 8.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Avery: We agree to use one document registry for the channel sources.\"}, {\"device_id\": null, \"end_time\": 16.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 8.0, \"text\": \"Blair: Avery will check the frozen bytes before the next review.\"}, {\"device_id\": null, \"end_time\": 24.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 16.0, \"text\": \"Avery: The channel reads durable records and keeps the transcript private.\"}], \"started_at\": \"2026-10-01T03:51:00.877642\", \"sync_modified_at\": \"2026-10-01T03:51:00.880950\", \"tags\": [], \"title\": \"Document source review\", \"transcriptWords\": 34, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002,
+      "captured": {
+        "name": "selection_hash",
+        "path": "planned_route.selection_hash",
+        "value": "sha256:3776034f5e34137f278c2415721f345b4c6b2e0215a3640d8b6536b6ad6baa88"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/inference/assignments/set",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-01T09:51:00.904711Z",
+        "effective_retry_policy_id": "retry.structured.standard",
+        "entries": [
+          {
+            "boundary": "private_network",
+            "label": "Recorded loopback provider",
+            "ordinal": 1,
+            "profile_id": "p11-recorded-engine",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "readiness": "ready"
+          }
+        ],
+        "id": "ia_508d0ff86e964fe0bdd605692766cd3a",
+        "issues": [],
+        "retry_policy_id": null,
+        "retry_policy_source": "capability_default",
+        "revision": 1,
+        "schema": "InferenceAssignmentProjection@1",
+        "scope": {
+          "capability_id": "meeting.plugin.decision_capture",
+          "kind": "capability"
+        },
+        "sha256": "sha256:8d1b0164697080e6bd627825e2c6b7508f832d102a749d3978c51c0c5925bae8",
+        "committed_effect": {
+          "created_at": "2026-10-01T09:51:00.904711Z",
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1,
+              "profile_schema_version": 2
+            }
+          ],
+          "id": "ia_508d0ff86e964fe0bdd605692766cd3a",
+          "retry_policy_id": null,
+          "revision": 1,
+          "schema": "InferenceAssignment@1",
+          "scope": {
+            "capability_id": "meeting.plugin.decision_capture",
+            "kind": "capability"
+          },
+          "sha256": "sha256:8d1b0164697080e6bd627825e2c6b7508f832d102a749d3978c51c0c5925bae8"
+        },
+        "current": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_508d0ff86e964fe0bdd605692766cd3a",
+          "revision": 1,
+          "sha256": "sha256:8d1b0164697080e6bd627825e2c6b7508f832d102a749d3978c51c0c5925bae8",
+          "scope": {
+            "capability_id": "meeting.plugin.decision_capture",
+            "kind": "capability"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Recorded loopback provider",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-10-01T09:51:00.904711Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        }
+      },
+      "response_sha256": "1eac6886636805c77c97614e01468edea88ab7e5c52af88eef81b4c0ae4f1e4a"
+    },
+    {
+      "kind": "cli",
+      "action": "queue_meeting_intelligence",
+      "adapter": "production-queue",
+      "meeting_id": "910c5f65",
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_9r59p1a/.local/share/holdspeak/holdspeak.db",
+      "producer": "holdspeak.db.intel.IntelRepository.enqueue_intel_job",
+      "job_id": "ij_972beea62867c877674e0a21a5877ad6a5d7055ec4ac4bce5af137b0ece36f21",
+      "transcript_hash": "3eebb12291adfc524eab0137a9dce7a89fef5b52eab08f382aa8eaa62ed8cf33",
+      "planned_route": null
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "910c5f65"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "intel.summary",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 12.19,
+      "holds": true,
+      "reading": "intel.summary is non-empty"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings/910c5f65/follow-through-proposals",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "proposals",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "proposals is non-empty"
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/meetings/910c5f65/follow-through-proposals",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "meeting_id": "910c5f65",
+        "proposals": [
+          {
+            "id": "prop-7bc8afe3f33c4414",
+            "meeting_id": "910c5f65",
+            "project_id": "proj-75ef250daae2",
+            "kind": "decision",
+            "text": "Use one document registry for the channel sources",
+            "owner_hint": null,
+            "due_hint": null,
+            "owner": null,
+            "due": null,
+            "owner_supplied": null,
+            "due_supplied": null,
+            "source_artifact_id": "art-54a5611cc8b024378469",
+            "source_plugin": "decision_capture",
+            "segment_timestamp": 4.0,
+            "speaker_label": null,
+            "model_host": "127.0.0.1",
+            "state": "proposed",
+            "original_text": "Use one document registry for the channel sources",
+            "decision_record_id": null,
+            "rationale": "The channel needs one durable source table",
+            "commitment_id": null,
+            "created_at": "2026-10-01T03:51:13.555444",
+            "decided_at": null,
+            "retry_key": "c76160dbad93055d0cb5f53ba6f2d9ad",
+            "extraction_revision": "3eebb12291adfc524eab0137a9dce7a89fef5b52eab08f382aa8eaa62ed8cf33",
+            "job_id": "ij_c973d9c31139f0cdef9707f51532dcb38401917e44b5f823eac0f3db6f205ef1",
+            "job_attempt": 1,
+            "extraction_model": "philo11-atlas",
+            "span_start": 0.0,
+            "span_end": 8.0,
+            "segment_index": 0,
+            "claim_kind": "proposal",
+            "support": "supported",
+            "support_record": {
+              "method": "field_mapping",
+              "source_version": "3eebb12291adfc524eab0137a9dce7a89fef5b52eab08f382aa8eaa62ed8cf33",
+              "source_refs": [
+                "meeting:910c5f65#segment:0"
+              ],
+              "fields": [
+                "segments.text"
+              ]
+            },
+            "acceptance": "unreviewed",
+            "unknowns": [],
+            "edited_at": null,
+            "text_edited": false
+          }
+        ]
+      },
+      "response_sha256": "1d04740ef7d0442c6ed548ca8208e386913734d7a398a83cf6a5dcf413cb9eeb",
+      "captured": {
+        "name": "proposal_id",
+        "path": "proposals",
+        "value": "prop-7bc8afe3f33c4414",
+        "match": {
+          "kind": "decision"
+        }
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/proposals/prop-7bc8afe3f33c4414/confirm",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "proposal_id": "prop-7bc8afe3f33c4414",
+        "state": "confirmed",
+        "original_text": "Use one document registry for the channel sources",
+        "decision_id": "dec-9191c55214d34149",
+        "decision_record_id": "record-1ec0b859540344cf",
+        "action_item_id": "action-3da0bccfe3744c25",
+        "commitment_id": "commitment-8f3a6fdec6a0420a",
+        "replayed": false,
+        "proposal": {
+          "id": "prop-7bc8afe3f33c4414",
+          "meeting_id": "910c5f65",
+          "project_id": "proj-75ef250daae2",
+          "kind": "decision",
+          "text": "Use one document registry for the channel sources",
+          "owner_hint": null,
+          "due_hint": null,
+          "owner": null,
+          "due": null,
+          "owner_supplied": null,
+          "due_supplied": null,
+          "source_artifact_id": "art-54a5611cc8b024378469",
+          "source_plugin": "decision_capture",
+          "segment_timestamp": 4.0,
+          "speaker_label": null,
+          "model_host": "127.0.0.1",
+          "state": "confirmed",
+          "original_text": "Use one document registry for the channel sources",
+          "decision_record_id": "record-1ec0b859540344cf",
+          "rationale": "The channel needs one durable source table",
+          "commitment_id": "commitment-8f3a6fdec6a0420a",
+          "created_at": "2026-10-01T03:51:13.555444",
+          "decided_at": "2026-10-01T03:51:13.592083",
+          "retry_key": "c76160dbad93055d0cb5f53ba6f2d9ad",
+          "extraction_revision": "3eebb12291adfc524eab0137a9dce7a89fef5b52eab08f382aa8eaa62ed8cf33",
+          "job_id": "ij_c973d9c31139f0cdef9707f51532dcb38401917e44b5f823eac0f3db6f205ef1",
+          "job_attempt": 1,
+          "extraction_model": "philo11-atlas",
+          "span_start": 0.0,
+          "span_end": 8.0,
+          "segment_index": 0,
+          "claim_kind": "proposal",
+          "support": "supported",
+          "support_record": {
+            "method": "field_mapping",
+            "source_version": "3eebb12291adfc524eab0137a9dce7a89fef5b52eab08f382aa8eaa62ed8cf33",
+            "source_refs": [
+              "meeting:910c5f65#segment:0"
+            ],
+            "fields": [
+              "segments.text"
+            ]
+          },
+          "acceptance": "accepted",
+          "unknowns": [],
+          "edited_at": null,
+          "text_edited": false
+        }
+      },
+      "response_sha256": "8e1edace45d9c68e364afd1237ef1add0719d3cf7d2b39114a87aa2f18e0eab3",
+      "captured": {
+        "name": "confirmed_id",
+        "path": "decision_record_id",
+        "value": "record-1ec0b859540344cf"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/decision-records",
+      "adapter": "http-route",
+      "status": 200,
+      "response": [
+        {
+          "id": "record-1ec0b859540344cf",
+          "decision_text": "Use one document registry for the channel sources",
+          "rationale": "The channel needs one durable source table",
+          "alternatives": "",
+          "owner": null,
+          "review_date": "",
+          "lifecycle": "active",
+          "source_type": "meeting",
+          "source_id": "dec-9191c55214d34149",
+          "created_at": "2026-10-01T03:51:13.592044",
+          "updated_at": "2026-10-01T03:51:13.592044",
+          "deleted": 0
+        }
+      ],
+      "response_sha256": "45575f969fe7b17d8c4177c52aeabaf07284c73991ad56e6422a5f8edc9ab532",
+      "captured": {
+        "name": "record_id",
+        "path": "/",
+        "value": "record-1ec0b859540344cf",
+        "match": {
+          "id": "record-1ec0b859540344cf"
+        }
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.resource.add",
+      "args": {
+        "project_id": "proj-75ef250daae2",
+        "resource_ref": "decision_record:record-1ec0b859540344cf",
+        "relationship": "member"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 46,
+        "method": "tools/call",
+        "params": {
+          "name": "project.resource.add",
+          "arguments": {
+            "project_id": "proj-75ef250daae2",
+            "resource_ref": "decision_record:record-1ec0b859540344cf",
+            "relationship": "member"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_cbbe31500931430e984f6e362c5311ae",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790848273.5973399,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_cbbe31500931430e984f6e362c5311ae",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_6eb867d131fd42dabbf4b864fc3b956e",
+          "result_ref": "project:proj-75ef250daae2",
+          "state": "succeeded",
+          "target_ref": "project:proj-75ef250daae2"
+        },
+        "resource": {
+          "changed_refs": [
+            "project:proj-75ef250daae2"
+          ],
+          "confidence": 1.0,
+          "created_at": "2026-10-01T03:51:13.596991",
+          "deleted": false,
+          "id": "proj-75ef250daae2|decision_record:record-1ec0b859540344cf",
+          "last_modified": "2026-10-01T03:51:13.596991",
+          "project_id": "proj-75ef250daae2",
+          "project_revision": 3,
+          "relationship": "member",
+          "resource_ref": "decision_record:record-1ec0b859540344cf",
+          "result_kind": "linked",
+          "source": "manual"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_cbbe31500931430e984f6e362c5311ae",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790848273.5973399,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_cbbe31500931430e984f6e362c5311ae",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_6eb867d131fd42dabbf4b864fc3b956e",
+          "result_ref": "project:proj-75ef250daae2",
+          "state": "succeeded",
+          "target_ref": "project:proj-75ef250daae2"
+        },
+        "resource": {
+          "changed_refs": [
+            "project:proj-75ef250daae2"
+          ],
+          "confidence": 1.0,
+          "created_at": "2026-10-01T03:51:13.596991",
+          "deleted": false,
+          "id": "proj-75ef250daae2|decision_record:record-1ec0b859540344cf",
+          "last_modified": "2026-10-01T03:51:13.596991",
+          "project_id": "proj-75ef250daae2",
+          "project_revision": 3,
+          "relationship": "member",
+          "resource_ref": "decision_record:record-1ec0b859540344cf",
+          "result_kind": "linked",
+          "source": "manual"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 46,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_cbbe31500931430e984f6e362c5311ae\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790848273.5973399, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_cbbe31500931430e984f6e362c5311ae\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_6eb867d131fd42dabbf4b864fc3b956e\", \"result_ref\": \"project:proj-75ef250daae2\", \"state\": \"succeeded\", \"target_ref\": \"project:proj-75ef250daae2\"}, \"resource\": {\"changed_refs\": [\"project:proj-75ef250daae2\"], \"confidence\": 1.0, \"created_at\": \"2026-10-01T03:51:13.596991\", \"deleted\": false, \"id\": \"proj-75ef250daae2|decision_record:record-1ec0b859540344cf\", \"last_modified\": \"2026-10-01T03:51:13.596991\", \"project_id\": \"proj-75ef250daae2\", \"project_revision\": 3, \"relationship\": \"member\", \"resource_ref\": \"decision_record:record-1ec0b859540344cf\", \"result_kind\": \"linked\", \"source\": \"manual\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/destinations",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "destination": {
+          "id": "chd_3dd935d8b1e6f1becfdbe0fc",
+          "name": "P11-Folder",
+          "channel": "file",
+          "account": {},
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_9r59p1a"
+          },
+          "target_digest": "eac426ed6211e1b1645d439434df17d743ef18825219ef5c03f7479df642192a",
+          "synced": false,
+          "state": "active",
+          "badge": "local",
+          "created_at": "2026-10-01T09:51:13+00:00",
+          "parked_at": null,
+          "connection": null
+        },
+        "replaced": null,
+        "operation_id": "op_17ec4b724e1947db9b113dd0d88fee74",
+        "receipt": {
+          "receipt_id": "rcpt_925e7295e7fb44b7908576ecbd16578b",
+          "operation_id": "op_17ec4b724e1947db9b113dd0d88fee74",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_destination:chd_3dd935d8b1e6f1becfdbe0fc",
+          "created_at": 1790848273.603418,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_destination"
+        }
+      },
+      "response_sha256": "3260adb175724779aae4736a85b0a914663efa5e9e7b1450c9eedddaa473fca7",
+      "captured": {
+        "name": "dest_id",
+        "path": "destination.id",
+        "value": "chd_3dd935d8b1e6f1becfdbe0fc"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/sends",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "send": {
+          "id": "chs_899a59e9fb26db1a8895ae32",
+          "document_ref": "decision_record:record-1ec0b859540344cf",
+          "destination_id": "chd_3dd935d8b1e6f1becfdbe0fc",
+          "destination_name": "P11-Folder",
+          "channel": "file",
+          "badge": "local",
+          "account": {},
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_9r59p1a"
+          },
+          "target_digest": "eac426ed6211e1b1645d439434df17d743ef18825219ef5c03f7479df642192a",
+          "payload_digest": "192afa2665ff3c92806d991189215095e75f728eb02788aaee12637d206332b1",
+          "document_json": {
+            "label": "DECISION",
+            "slug": "use-one-document-registry-for-the-channel-sources",
+            "title": "Use one document registry for the channel sources"
+          },
+          "size": 202,
+          "preview": {
+            "text": "# Use one document registry for the channel sources\nLifecycle: active\n\n## Rationale\nThe channel needs one durable source table\n\n## Sources\n- From a meeting proposal\n- Document source review, 1 Oct 2026\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": "op_cf251d1cdede4673abe4abf58775a819",
+          "send_operation_id": null,
+          "state": "prepared",
+          "reason": null,
+          "proof": null,
+          "file_path": null,
+          "created_at": "2026-10-01T09:51:13+00:00",
+          "dispatch_started_at": null,
+          "settled_at": null,
+          "dispatch_seq": null
+        },
+        "outcome": "prepared",
+        "operation_id": "op_cf251d1cdede4673abe4abf58775a819",
+        "receipt": {
+          "receipt_id": "rcpt_fe8cc36565b54ca6b757359dc76ddd9c",
+          "operation_id": "op_cf251d1cdede4673abe4abf58775a819",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_send:chs_899a59e9fb26db1a8895ae32",
+          "created_at": 1790848273.606627,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "document:decision_record:record-1ec0b859540344cf"
+        }
+      },
+      "response_sha256": "9c5a09be20b3a2f98d3b7471187524cc02244cf0c70bd4aaf538fee39856e3fb"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-project.open.proj-75ef250daae2']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=room-body]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=decision-row]:has-text('Use one document registry for the channel sources')",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=decision-row]:has-text('Use one document registry for the channel sources')",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=prepared-row]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "scroll_into_view",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=prepared-open]",
+      "block": "end",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=prepared-row]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_9r59p1a",
+    "replay_provider_url": "http://127.0.0.1:55679/v1",
+    "project_id": "proj-75ef250daae2",
+    "engine_model": "philo11-atlas",
+    "profile_id": "p11-recorded-engine",
+    "meeting_id": "910c5f65",
+    "selection_hash": "sha256:3776034f5e34137f278c2415721f345b4c6b2e0215a3640d8b6536b6ad6baa88",
+    "proposal_id": "prop-7bc8afe3f33c4414",
+    "confirmed_id": "record-1ec0b859540344cf",
+    "record_id": "record-1ec0b859540344cf",
+    "dest_id": "chd_3dd935d8b1e6f1becfdbe0fc"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=prepared-row]",
+    "done": true
+  },
+  "diff": {
+    "attrs": {
+      "before": {
+        "role": "button",
+        "tabindex": "0",
+        "class": "surface-ledger-line",
+        "data-testid": "prepared-row",
+        "aria-expanded": "false",
+        "aria-label": "P11-Folder, PREPARED"
+      },
+      "after": {
+        "role": "button",
+        "tabindex": "0",
+        "class": "surface-ledger-line",
+        "data-testid": "prepared-row",
+        "aria-expanded": "true",
+        "aria-label": "P11-Folder, PREPARED"
+      }
+    },
+    "document_text_sha256": {
+      "before": "f1b2f0b3db09cf81a75a5173cc5f18fc50fe3c027dd38ba43454e65541b7325e",
+      "after": "c4096ef1b83350b9c7fd53b2d95cbb6bede640a083db64ec69cabad2d83e2524"
+    },
+    "document_text_len": {
+      "before": 1541,
+      "after": 1847
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=room-body] [data-seat=decision-record] [data-testid=prepared-row]",
+    "target_present": true,
+    "text": "\u25c6\nP11-Folder\n\u25c6\nPREPARED\nBY YOU\nD-1EC0B8\nOCT 1 03:51\nTHIS DEVICE",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "prepared-row",
+      "aria-expanded": "false",
+      "aria-label": "P11-Folder, PREPARED"
+    },
+    "rect": {
+      "x": 51,
+      "y": 155,
+      "w": 307,
+      "h": 78
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 51,
+        "y": 155,
+        "w": 307,
+        "h": 78
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 53,
+          "y": 157,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 53,
+          "y": 194,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 53,
+          "y": 231,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 205,
+          "y": 157,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 205,
+          "y": 194,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-cells > span.surface-token"
+        },
+        {
+          "x": 205,
+          "y": 231,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 356,
+          "y": 157,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 356,
+          "y": 194,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 356,
+          "y": 231,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "P11-Folder, PREPARED",
+    "url": "http://127.0.0.1:55678/",
+    "windows": [
+      {
+        "title": "P11Room",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "f1b2f0b3db09cf81a75a5173cc5f18fc50fe3c027dd38ba43454e65541b7325e",
+    "document_text_len": 1541,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=decision_record:record-1ec0b859540344cf",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_899a59e9fb26db1a8895ae32",
+              "document_ref": "decision_record:record-1ec0b859540344cf",
+              "destination_id": "chd_3dd935d8b1e6f1becfdbe0fc",
+              "destination_name": "P11-Folder",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_9r59p1a"
+              },
+              "target_digest": "eac426ed6211e1b1645d439434df17d743ef18825219ef5c03f7479df642192a",
+              "payload_digest": "192afa2665ff3c92806d991189215095e75f728eb02788aaee12637d206332b1",
+              "document_json": {
+                "label": "DECISION",
+                "slug": "use-one-document-registry-for-the-channel-sources",
+                "title": "Use one document registry for the channel sources"
+              },
+              "size": 202,
+              "preview": {
+                "text": "# Use one document registry for the channel sources\nLifecycle: active\n\n## Rationale\nThe channel needs one durable source table\n\n## Sources\n- From a meeting proposal\n- Document source review, 1 Oct 2026\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_cf251d1cdede4673abe4abf58775a819",
+              "send_operation_id": null,
+              "state": "prepared",
+              "reason": null,
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T09:51:13+00:00",
+              "dispatch_started_at": null,
+              "settled_at": null,
+              "dispatch_seq": null
+            }
+          ]
+        },
+        "body_sha256": "551a43018e2a2c935137ea10f2cf18ea2aca41bb124f128a181ea36dc4e5d00e"
+      }
+    ],
+    "at_utc": "2026-10-01T09:51:17.188878+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=room-body] [data-seat=decision-record] [data-testid=prepared-row]",
+    "target_present": true,
+    "text": "\u25c6\nP11-Folder\n\u25c6\nPREPARED\nBY YOU\nD-1EC0B8\nOCT 1 03:51\nTHIS DEVICE",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "prepared-row",
+      "aria-expanded": "true",
+      "aria-label": "P11-Folder, PREPARED"
+    },
+    "rect": {
+      "x": 51,
+      "y": 155,
+      "w": 307,
+      "h": 78
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 51,
+        "y": 155,
+        "w": 307,
+        "h": 78
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 53,
+          "y": 157,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 53,
+          "y": 194,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 53,
+          "y": 231,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 205,
+          "y": 157,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 205,
+          "y": 194,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-cells > span.surface-token"
+        },
+        {
+          "x": 205,
+          "y": 231,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 356,
+          "y": 157,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 356,
+          "y": 194,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 356,
+          "y": 231,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "P11-Folder, PREPARED",
+    "url": "http://127.0.0.1:55678/",
+    "windows": [
+      {
+        "title": "P11Room",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "c4096ef1b83350b9c7fd53b2d95cbb6bede640a083db64ec69cabad2d83e2524",
+    "document_text_len": 1847,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=decision_record:record-1ec0b859540344cf",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_899a59e9fb26db1a8895ae32",
+              "document_ref": "decision_record:record-1ec0b859540344cf",
+              "destination_id": "chd_3dd935d8b1e6f1becfdbe0fc",
+              "destination_name": "P11-Folder",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_9r59p1a"
+              },
+              "target_digest": "eac426ed6211e1b1645d439434df17d743ef18825219ef5c03f7479df642192a",
+              "payload_digest": "192afa2665ff3c92806d991189215095e75f728eb02788aaee12637d206332b1",
+              "document_json": {
+                "label": "DECISION",
+                "slug": "use-one-document-registry-for-the-channel-sources",
+                "title": "Use one document registry for the channel sources"
+              },
+              "size": 202,
+              "preview": {
+                "text": "# Use one document registry for the channel sources\nLifecycle: active\n\n## Rationale\nThe channel needs one durable source table\n\n## Sources\n- From a meeting proposal\n- Document source review, 1 Oct 2026\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_cf251d1cdede4673abe4abf58775a819",
+              "send_operation_id": null,
+              "state": "prepared",
+              "reason": null,
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T09:51:13+00:00",
+              "dispatch_started_at": null,
+              "settled_at": null,
+              "dispatch_seq": null
+            }
+          ]
+        },
+        "body_sha256": "551a43018e2a2c935137ea10f2cf18ea2aca41bb124f128a181ea36dc4e5d00e"
+      }
+    ],
+    "at_utc": "2026-10-01T09:51:18.341995+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:55678) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:55678) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=room-body] [data-seat=decision-record] [data-testid=prepared-row]",
+    "target_present": true,
+    "text": "\u25c6\nP11-Folder\n\u25c6\nPREPARED\nBY YOU\nD-1EC0B8\nOCT 1 03:51\nTHIS DEVICE",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "prepared-row",
+      "aria-expanded": "true",
+      "aria-label": "P11-Folder, PREPARED"
+    },
+    "rect": {
+      "x": 51,
+      "y": 155,
+      "w": 307,
+      "h": 78
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 51,
+        "y": 155,
+        "w": 307,
+        "h": 78
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 53,
+          "y": 157,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 53,
+          "y": 194,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 53,
+          "y": 231,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 205,
+          "y": 157,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 205,
+          "y": 194,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-cells > span.surface-token"
+        },
+        {
+          "x": 205,
+          "y": 231,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 356,
+          "y": 157,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 356,
+          "y": 194,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 356,
+          "y": 231,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "P11-Folder, PREPARED",
+    "url": "http://127.0.0.1:55678/",
+    "windows": [
+      {
+        "title": "P11Room",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "c4096ef1b83350b9c7fd53b2d95cbb6bede640a083db64ec69cabad2d83e2524",
+    "document_text_len": 1847,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=decision_record:record-1ec0b859540344cf",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_899a59e9fb26db1a8895ae32",
+              "document_ref": "decision_record:record-1ec0b859540344cf",
+              "destination_id": "chd_3dd935d8b1e6f1becfdbe0fc",
+              "destination_name": "P11-Folder",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_9r59p1a"
+              },
+              "target_digest": "eac426ed6211e1b1645d439434df17d743ef18825219ef5c03f7479df642192a",
+              "payload_digest": "192afa2665ff3c92806d991189215095e75f728eb02788aaee12637d206332b1",
+              "document_json": {
+                "label": "DECISION",
+                "slug": "use-one-document-registry-for-the-channel-sources",
+                "title": "Use one document registry for the channel sources"
+              },
+              "size": 202,
+              "preview": {
+                "text": "# Use one document registry for the channel sources\nLifecycle: active\n\n## Rationale\nThe channel needs one durable source table\n\n## Sources\n- From a meeting proposal\n- Document source review, 1 Oct 2026\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_cf251d1cdede4673abe4abf58775a819",
+              "send_operation_id": null,
+              "state": "prepared",
+              "reason": null,
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T09:51:13+00:00",
+              "dispatch_started_at": null,
+              "settled_at": null,
+              "dispatch_seq": null
+            }
+          ]
+        },
+        "body_sha256": "551a43018e2a2c935137ea10f2cf18ea2aca41bb124f128a181ea36dc4e5d00e"
+      }
+    ],
+    "at_utc": "2026-10-01T09:51:18.203876+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:55678) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:55678) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'PREPARED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 155, 'w': 307, 'h': 78} | readable_text: 'BY YOU' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 155, 'w': 307, 'h': 78} | protocol_reads: GET /api/channels/sends?document_ref=decision_record:record-1ec0b859540344cf answered 200 with 1 row(s) {'document_ref': 'decision_record:record-1ec0b859540344cf', 'destination_id': 'chd_3dd935d8b1e6f1becfdbe0fc', 'channel': 'file', 'state': 'prepared', 'prepared_by.kind': 'owner'}",
+    "elapsed_s": 0.937
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'PREPARED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 155, 'w': 307, 'h': 78} | readable_text: 'BY YOU' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 155, 'w': 307, 'h': 78} | protocol_reads: GET /api/channels/sends?document_ref=decision_record:record-1ec0b859540344cf answered 200 with 1 row(s) {'document_ref': 'decision_record:record-1ec0b859540344cf', 'destination_id': 'chd_3dd935d8b1e6f1becfdbe0fc', 'channel': 'file', 'state': 'prepared', 'prepared_by.kind': 'owner'}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.075,
+    "first_satisfied_at_s": 0.937,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: readable_text: 'PREPARED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 155, 'w': 307, 'h': 78} | readable_text: 'BY YOU' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 155, 'w': 307, 'h': 78} | protocol_reads: GET /api/channels/sends?document_ref=decision_record:record-1ec0b859540344cf answered 200 with 1 row(s) {'document_ref': 'decision_record:record-1ec0b859540344cf', 'destination_id': 'chd_3dd935d8b1e6f1becfdbe0fc', 'channel': 'file', 'state': 'prepared', 'prepared_by.kind': 'owner'}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:55678) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:55678) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/r3-r4-head-case.p11.decision_record.room.prepared/case.p11.decision_record.room.prepared--393/20261001T095056Z-case.p11.decision_record.room.prepared-astra-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/r3-r4-head-case.p11.decision_record.room.prepared/case.p11.decision_record.room.prepared--393/20261001T095056Z-case.p11.decision_record.room.prepared-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_9r59p1a/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_9r59p1a/.config/holdspeak/config.json",
+    "ENGINE_REPLAY bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+    "ENGINE_PROVIDER http://127.0.0.1:55679/v1",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDED provider reply at the real provider seam\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55678"
+  ],
+  "duration_s": 21.93
+}

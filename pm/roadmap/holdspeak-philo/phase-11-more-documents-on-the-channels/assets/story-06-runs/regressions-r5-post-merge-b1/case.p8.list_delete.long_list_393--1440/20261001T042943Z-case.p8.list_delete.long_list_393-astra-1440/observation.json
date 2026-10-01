@@ -1,0 +1,2213 @@
+{
+  "id": "obs-20261001T042943Z-case.p8.list_delete.long_list_393-astra-1440",
+  "run_id": "20261001T042943Z-case.p8.list_delete.long_list_393-astra-1440",
+  "case_id": "case.p8.list_delete.long_list_393",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.decision_delete"
+  ],
+  "state_id": "state.desk_presentation.p8_one_delete",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50278",
+      "port": 50278,
+      "pid": 17211,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-58rhlnym",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-58rhlnym/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:29:43.766339+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "582435241baa534b84dd2ccecf25d381d0abe8841984a83ec60ff836f263572a",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 2.02,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_6c2efed3fbf3",
+          "title": "Atlas long list 01",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:51Z",
+          "updated_at": "2026-10-01T04:29:51Z",
+          "deleted": false
+        },
+        "operation_id": "op_b93e15486beb44e8a74edb2b080d4a92",
+        "receipt": {
+          "receipt_id": "rcpt_1d6e36baf8aa44949a1ca96303e0bea5",
+          "operation_id": "op_b93e15486beb44e8a74edb2b080d4a92",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_6c2efed3fbf3",
+          "created_at": 1790828991.992959,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_6c2efed3fbf3"
+        }
+      },
+      "response_sha256": "80a27e129242397baf836cfd5698df49c111933e2bbae3a9b3ba2599074de829",
+      "captured": {
+        "name": "long_00",
+        "path": "decision.id",
+        "value": "decision_6c2efed3fbf3"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_3eccdeeb1dac",
+          "title": "Atlas long list 02",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:51Z",
+          "updated_at": "2026-10-01T04:29:51Z",
+          "deleted": false
+        },
+        "operation_id": "op_12e8c7e3a19c4801bac3dbf2be9bb7c4",
+        "receipt": {
+          "receipt_id": "rcpt_bffc0b15cb3e488a952b47fdedb086a5",
+          "operation_id": "op_12e8c7e3a19c4801bac3dbf2be9bb7c4",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_3eccdeeb1dac",
+          "created_at": 1790828991.9994082,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_3eccdeeb1dac"
+        }
+      },
+      "response_sha256": "45268819a5de71d9c8fe066e6618eb44a0e2774585aadd8c5359973580773181",
+      "captured": {
+        "name": "long_01",
+        "path": "decision.id",
+        "value": "decision_3eccdeeb1dac"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_24bcd62b49c2",
+          "title": "Atlas long list 03",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_4e321819565f4eeab3022ee641dc0012",
+        "receipt": {
+          "receipt_id": "rcpt_aeea5115cfe54333949c6c848027e362",
+          "operation_id": "op_4e321819565f4eeab3022ee641dc0012",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_24bcd62b49c2",
+          "created_at": 1790828992.00913,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_24bcd62b49c2"
+        }
+      },
+      "response_sha256": "d86aba814d9ad0c5ce1d5852f79ac0855a04b65464b6462c2a8e5ccb84ef0a84",
+      "captured": {
+        "name": "long_02",
+        "path": "decision.id",
+        "value": "decision_24bcd62b49c2"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_19c344e25677",
+          "title": "Atlas long list 04",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_92056242a82b40dd8c9cacd17c6ad747",
+        "receipt": {
+          "receipt_id": "rcpt_3d70bb9e1c56483abd3fced1cfcc4996",
+          "operation_id": "op_92056242a82b40dd8c9cacd17c6ad747",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_19c344e25677",
+          "created_at": 1790828992.0186071,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_19c344e25677"
+        }
+      },
+      "response_sha256": "699698517cc5fb5fb7e0316ee86ec493cbd7411cbde35d98c257dce0a2502ac1",
+      "captured": {
+        "name": "long_03",
+        "path": "decision.id",
+        "value": "decision_19c344e25677"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_b8848fee55e2",
+          "title": "Atlas long list 05",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_0f25c6adf17141b58c077c6cee13d4f6",
+        "receipt": {
+          "receipt_id": "rcpt_fec078491dc6429c83e0828dc04e4aeb",
+          "operation_id": "op_0f25c6adf17141b58c077c6cee13d4f6",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_b8848fee55e2",
+          "created_at": 1790828992.0226,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_b8848fee55e2"
+        }
+      },
+      "response_sha256": "726651f3bedbb68d70e6e21cd1acdf7873756de2d25fccf1b45dc622ca7bf9e0",
+      "captured": {
+        "name": "long_04",
+        "path": "decision.id",
+        "value": "decision_b8848fee55e2"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_b42474bd0fbf",
+          "title": "Atlas long list 06",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_e4daa5fdbee64fa692cbc72980a3cfee",
+        "receipt": {
+          "receipt_id": "rcpt_1db9b6a89f444d029a209e70ac63f1c7",
+          "operation_id": "op_e4daa5fdbee64fa692cbc72980a3cfee",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_b42474bd0fbf",
+          "created_at": 1790828992.0280802,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_b42474bd0fbf"
+        }
+      },
+      "response_sha256": "8ab7a2ded560bb760062038b815d39aa2ebd6a7957e1383444a71e488d401bca",
+      "captured": {
+        "name": "long_05",
+        "path": "decision.id",
+        "value": "decision_b42474bd0fbf"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_fb3ea2d83222",
+          "title": "Atlas long list 07",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_0e10ff6250f44d54b8a1087dc602afa6",
+        "receipt": {
+          "receipt_id": "rcpt_391ef2a264ab434a874ee52310ef3227",
+          "operation_id": "op_0e10ff6250f44d54b8a1087dc602afa6",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_fb3ea2d83222",
+          "created_at": 1790828992.034314,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_fb3ea2d83222"
+        }
+      },
+      "response_sha256": "85fb2fd06c53755d6b7b0144657cf3f9f2eecf21c63c4c31ebe1cff2e46a7ea8",
+      "captured": {
+        "name": "long_06",
+        "path": "decision.id",
+        "value": "decision_fb3ea2d83222"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_db188e0ad41b",
+          "title": "Atlas long list 08",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_af4da3f4811a43f8a6fa648bf42f7925",
+        "receipt": {
+          "receipt_id": "rcpt_23377b4d5fae4408958737f65a717cf2",
+          "operation_id": "op_af4da3f4811a43f8a6fa648bf42f7925",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_db188e0ad41b",
+          "created_at": 1790828992.046334,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_db188e0ad41b"
+        }
+      },
+      "response_sha256": "841c20e390ea562b3911e2e63a669f805cf4089e6192c3680004b4a65fb1ba5a",
+      "captured": {
+        "name": "long_07",
+        "path": "decision.id",
+        "value": "decision_db188e0ad41b"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_7c8cd708fbfc",
+          "title": "Atlas long list 09",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_f5a8604e60944062860d5f3a6d067c3a",
+        "receipt": {
+          "receipt_id": "rcpt_50f6b133e2314b7599db65399ce5a57a",
+          "operation_id": "op_f5a8604e60944062860d5f3a6d067c3a",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_7c8cd708fbfc",
+          "created_at": 1790828992.0531032,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_7c8cd708fbfc"
+        }
+      },
+      "response_sha256": "2030b9fbebb678113bc4129d1801c152bdcb7202eb4d01a812874d6d25f0a050",
+      "captured": {
+        "name": "long_08",
+        "path": "decision.id",
+        "value": "decision_7c8cd708fbfc"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_a8da6a485aca",
+          "title": "Atlas long list 10",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_291de4fc6ccd481691fffc55d5f27c70",
+        "receipt": {
+          "receipt_id": "rcpt_e3730abdc4084b38b28b56953424f317",
+          "operation_id": "op_291de4fc6ccd481691fffc55d5f27c70",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_a8da6a485aca",
+          "created_at": 1790828992.058487,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_a8da6a485aca"
+        }
+      },
+      "response_sha256": "fbd4ced380125d505fe57997224b480f1e059a6d956491c2677520557b53708d",
+      "captured": {
+        "name": "long_09",
+        "path": "decision.id",
+        "value": "decision_a8da6a485aca"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_b01f349598ce",
+          "title": "Atlas long list 11",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_340796fd07c5478986ec0e2e08459b54",
+        "receipt": {
+          "receipt_id": "rcpt_199ed2e5f5b94d8bb2a1ec131a846b3a",
+          "operation_id": "op_340796fd07c5478986ec0e2e08459b54",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_b01f349598ce",
+          "created_at": 1790828992.0641222,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_b01f349598ce"
+        }
+      },
+      "response_sha256": "9686c8508d6610fb2d75e00988a84e89b584f061925f3f51ec54bb42e4acd509",
+      "captured": {
+        "name": "long_10",
+        "path": "decision.id",
+        "value": "decision_b01f349598ce"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_dad4cb958122",
+          "title": "Atlas long list 12",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_5bcca2eebe7f4fd287fa605920fbc594",
+        "receipt": {
+          "receipt_id": "rcpt_4fa24c2163494b38a419231d7731a8f7",
+          "operation_id": "op_5bcca2eebe7f4fd287fa605920fbc594",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_dad4cb958122",
+          "created_at": 1790828992.072587,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_dad4cb958122"
+        }
+      },
+      "response_sha256": "eb2680b6ed24d277033df52deb1bbdc8fca124530f7b42bf6d43eb8e069da999",
+      "captured": {
+        "name": "long_11",
+        "path": "decision.id",
+        "value": "decision_dad4cb958122"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_fc1154accb2e",
+          "title": "Atlas long list 13",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_0429ae72a435459c937e6483d427e174",
+        "receipt": {
+          "receipt_id": "rcpt_194543fedcfa4ac4b335afeb271b8222",
+          "operation_id": "op_0429ae72a435459c937e6483d427e174",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_fc1154accb2e",
+          "created_at": 1790828992.089685,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_fc1154accb2e"
+        }
+      },
+      "response_sha256": "a41fda1b87b777eeec246643c76c5c97af16b2dd1714e89f93937722719d3f93",
+      "captured": {
+        "name": "long_12",
+        "path": "decision.id",
+        "value": "decision_fc1154accb2e"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_2c5749dcb7c2",
+          "title": "Atlas long list 14",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_8c7f4b11b30549239ee6b94d227b3237",
+        "receipt": {
+          "receipt_id": "rcpt_f9784b03588547d7b7a64c5ad577feaf",
+          "operation_id": "op_8c7f4b11b30549239ee6b94d227b3237",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_2c5749dcb7c2",
+          "created_at": 1790828992.0977259,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_2c5749dcb7c2"
+        }
+      },
+      "response_sha256": "18bc2de49da3551cd39c41437817aaead54bb58811ac5e0bda2c06c13597199b",
+      "captured": {
+        "name": "long_13",
+        "path": "decision.id",
+        "value": "decision_2c5749dcb7c2"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_35cbcbb2af5e",
+          "title": "Atlas long list 15",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_f7806e77809247849c0a30129113f492",
+        "receipt": {
+          "receipt_id": "rcpt_ab246f4aed234a83903fe64319e2d59e",
+          "operation_id": "op_f7806e77809247849c0a30129113f492",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_35cbcbb2af5e",
+          "created_at": 1790828992.104616,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_35cbcbb2af5e"
+        }
+      },
+      "response_sha256": "aa6f72c9e6a428a5b58c3dd2dc449e6ab4767386d19e340f51ae0a957d0d8c92",
+      "captured": {
+        "name": "long_14",
+        "path": "decision.id",
+        "value": "decision_35cbcbb2af5e"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_0611f4c74cf9",
+          "title": "Atlas long list 16",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_6d206bebd4ae4a129c38b65190ebf465",
+        "receipt": {
+          "receipt_id": "rcpt_5b241c8b0f114fe799bf3e62a75883ac",
+          "operation_id": "op_6d206bebd4ae4a129c38b65190ebf465",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_0611f4c74cf9",
+          "created_at": 1790828992.112635,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_0611f4c74cf9"
+        }
+      },
+      "response_sha256": "8c460b520143a38c60416a7f15c1c4de914d9d7f0fff2314516ea041e0ecfaba",
+      "captured": {
+        "name": "long_15",
+        "path": "decision.id",
+        "value": "decision_0611f4c74cf9"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_d9d7bff5d695",
+          "title": "Atlas long list 17",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_7e13b4ab71444d83b68ba28db78dd0c1",
+        "receipt": {
+          "receipt_id": "rcpt_a70a3f7460b34e7181c71e46f5cd0702",
+          "operation_id": "op_7e13b4ab71444d83b68ba28db78dd0c1",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_d9d7bff5d695",
+          "created_at": 1790828992.118589,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_d9d7bff5d695"
+        }
+      },
+      "response_sha256": "a67d7cc10bb7e4ebb4197c7f56fee9b69bd93113c056685e180c8eb935ee72c5",
+      "captured": {
+        "name": "long_16",
+        "path": "decision.id",
+        "value": "decision_d9d7bff5d695"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_93aed70e2bf8",
+          "title": "Atlas long list 18",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_fa18fceeadf74519bd607382b417cbc6",
+        "receipt": {
+          "receipt_id": "rcpt_33fca8ea92a9471082971b74012701e2",
+          "operation_id": "op_fa18fceeadf74519bd607382b417cbc6",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_93aed70e2bf8",
+          "created_at": 1790828992.126996,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_93aed70e2bf8"
+        }
+      },
+      "response_sha256": "79e4a5184ef0c9ddd8807a6950ebe69a7aeecb6246e4b1af3e40ed5ca5476107",
+      "captured": {
+        "name": "long_17",
+        "path": "decision.id",
+        "value": "decision_93aed70e2bf8"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_59708f09866b",
+          "title": "Atlas long list 19",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_c918710c0e10459cbc14f152ca8e24bc",
+        "receipt": {
+          "receipt_id": "rcpt_5d3b6c583ec640d88f45ab971570e368",
+          "operation_id": "op_c918710c0e10459cbc14f152ca8e24bc",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_59708f09866b",
+          "created_at": 1790828992.134057,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_59708f09866b"
+        }
+      },
+      "response_sha256": "1df7ae7a34a012824ee347d92e6dfcada653e9b584c7ad77f39ff49e849a422d",
+      "captured": {
+        "name": "long_18",
+        "path": "decision.id",
+        "value": "decision_59708f09866b"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_645779ba421c",
+          "title": "Atlas long list 20",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:29:52Z",
+          "updated_at": "2026-10-01T04:29:52Z",
+          "deleted": false
+        },
+        "operation_id": "op_cb5c7736301846a6be718c25da70051f",
+        "receipt": {
+          "receipt_id": "rcpt_d03bd4c286ce49328a53f49d74d4ff95",
+          "operation_id": "op_cb5c7736301846a6be718c25da70051f",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_645779ba421c",
+          "created_at": 1790828992.141556,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_645779ba421c"
+        }
+      },
+      "response_sha256": "aecfa77a681cbb536355caa106562dbd834ce0b7b0269373887abb692ad267e2",
+      "captured": {
+        "name": "last_id",
+        "path": "decision.id",
+        "value": "decision_645779ba421c"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 1440,
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "at_width": 1440,
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 1440,
+      "selector": "[id='desk-palette-option-desk.toggle-view']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-listmode",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas long list 20']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "focus",
+      "adapter": "ui-keyboard",
+      "selector": ".desk-listmode .desk-list-name-cell[aria-label='Everyday context']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "button": "right",
+      "name": "Atlas long list 20",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-floor-toggle]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "aria-pressed",
+        "value": "true"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "aria-pressed='true', wanted 'true'"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-58rhlnym",
+    "long_00": "decision_6c2efed3fbf3",
+    "long_01": "decision_3eccdeeb1dac",
+    "long_02": "decision_24bcd62b49c2",
+    "long_03": "decision_19c344e25677",
+    "long_04": "decision_b8848fee55e2",
+    "long_05": "decision_b42474bd0fbf",
+    "long_06": "decision_fb3ea2d83222",
+    "long_07": "decision_db188e0ad41b",
+    "long_08": "decision_7c8cd708fbfc",
+    "long_09": "decision_a8da6a485aca",
+    "long_10": "decision_b01f349598ce",
+    "long_11": "decision_dad4cb958122",
+    "long_12": "decision_fc1154accb2e",
+    "long_13": "decision_2c5749dcb7c2",
+    "long_14": "decision_35cbcbb2af5e",
+    "long_15": "decision_0611f4c74cf9",
+    "long_16": "decision_d9d7bff5d695",
+    "long_17": "decision_93aed70e2bf8",
+    "long_18": "decision_59708f09866b",
+    "last_id": "decision_645779ba421c"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click_role",
+    "adapter": "ui-pointer",
+    "name": "Delete",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Removal committed"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "undo-receipt is-committed"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 651,
+        "y": 788,
+        "w": 138,
+        "h": 27
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div#desk-next > nav.desk-menu-list.desk-work-menu > button.btn--chrome",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "Open",
+      "after": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,"
+    },
+    "document_text_sha256": {
+      "before": "e09c59962467ca62427f03e7c7339b6ed35fec0dc59de5b10f2f5a4855d521ba",
+      "after": "d4cd86bdbca15806fed9d8330fc8355253e67a6cc0e124ac2868647070313595"
+    },
+    "document_text_len": {
+      "before": 1911,
+      "after": 1714
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/decisions/decision_645779ba421c",
+          "status": 200,
+          "payload": {
+            "decision": {
+              "id": "decision_645779ba421c",
+              "title": "Atlas long list 20",
+              "status": "accepted",
+              "deciders": [],
+              "decided_at": null,
+              "context_markdown": "",
+              "decision_markdown": "",
+              "alternatives": [],
+              "consequences_markdown": "",
+              "superseded_by": null,
+              "tags": [],
+              "created_at": "2026-10-01T04:29:52Z",
+              "updated_at": "2026-10-01T04:29:52Z",
+              "deleted": false
+            }
+          },
+          "body_sha256": "ffb0e5d3570cffdd2f0cabf8f83b7e9919cf41b249359e7d3f4a4857389b7ef9"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/decisions/decision_645779ba421c",
+          "status": 404,
+          "payload": "{\"error\":\"decision_not_found\"}",
+          "body_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": ".undo-receipt",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > nav.desk-menu-list.desk-work-menu > button.btn--chrome",
+    "focus_label": "Open",
+    "url": "http://127.0.0.1:50278/?view=list",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "e09c59962467ca62427f03e7c7339b6ed35fec0dc59de5b10f2f5a4855d521ba",
+    "document_text_len": 1911,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_645779ba421c",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_645779ba421c",
+            "title": "Atlas long list 20",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-10-01T04:29:52Z",
+            "updated_at": "2026-10-01T04:29:52Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "ffb0e5d3570cffdd2f0cabf8f83b7e9919cf41b249359e7d3f4a4857389b7ef9"
+      }
+    ],
+    "at_utc": "2026-10-01T04:30:16.644875+00:00"
+  },
+  "after": {
+    "observe_at": ".undo-receipt",
+    "target_present": true,
+    "text": "Removal committed",
+    "attrs": {
+      "class": "undo-receipt is-committed"
+    },
+    "rect": {
+      "x": 651,
+      "y": 788,
+      "w": 138,
+      "h": 27
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 651,
+        "y": 788,
+        "w": 138,
+        "h": 27
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 653,
+          "y": 790,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 653,
+          "y": 802,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 653,
+          "y": 813,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 720,
+          "y": 790,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 720,
+          "y": 802,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-committed > span.undo-receipt-label"
+        },
+        {
+          "x": 720,
+          "y": 813,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 787,
+          "y": 790,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 787,
+          "y": 802,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 787,
+          "y": 813,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-committed"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:50278/?view=list",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d4cd86bdbca15806fed9d8330fc8355253e67a6cc0e124ac2868647070313595",
+    "document_text_len": 1714,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_645779ba421c",
+        "status": 404,
+        "payload": "{\"error\":\"decision_not_found\"}",
+        "body_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+      }
+    ],
+    "at_utc": "2026-10-01T04:30:46.118867+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:50278) non-GET response after the click",
+      "chosen": {
+        "method": "DELETE",
+        "path": "/api/decisions/decision_645779ba421c",
+        "status": 200,
+        "body_sha256": "3bddbd8767c8cffa431788071363e297281c506ce579a545e793f1477aa58958",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:50278) non-GET response after the click"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:50278) non-GET response after the click",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/decisions/decision_645779ba421c",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/setup/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/repositories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "DELETE",
+      "path": "/api/decisions/decision_645779ba421c",
+      "status": 200,
+      "body_sha256": "3bddbd8767c8cffa431788071363e297281c506ce579a545e793f1477aa58958",
+      "body": {
+        "success": true,
+        "operation_id": "op_6878429dad6344f699aa6c1654a65c76",
+        "receipt": {
+          "receipt_id": "rcpt_fca913c1d1c04b8d850971e5513c7784",
+          "operation_id": "op_6878429dad6344f699aa6c1654a65c76",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_645779ba421c",
+          "created_at": 1790829036.669868,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_645779ba421c"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:50278) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".undo-receipt",
+    "target_present": true,
+    "text": "Removed Atlas long list 20\nUndo\n06s",
+    "attrs": {
+      "class": "undo-receipt is-pending"
+    },
+    "rect": {
+      "x": 554,
+      "y": 788,
+      "w": 333,
+      "h": 27
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 554,
+        "y": 788,
+        "w": 333,
+        "h": 27
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 556,
+          "y": 790,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 556,
+          "y": 802,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 556,
+          "y": 813,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 720,
+          "y": 790,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 720,
+          "y": 802,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-pending > span.undo-receipt-label"
+        },
+        {
+          "x": 720,
+          "y": 813,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 884,
+          "y": 790,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 884,
+          "y": 802,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 884,
+          "y": 813,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-pending"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:50278/?view=list",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "c26a5cc90aa3def5710a8361b68564ef80a2c12da702bcf1adea96858da4ee45",
+    "document_text_len": 1769,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_645779ba421c",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_645779ba421c",
+            "title": "Atlas long list 20",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-10-01T04:29:52Z",
+            "updated_at": "2026-10-01T04:29:52Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "ffb0e5d3570cffdd2f0cabf8f83b7e9919cf41b249359e7d3f4a4857389b7ef9"
+      }
+    ],
+    "at_utc": "2026-10-01T04:30:30.413727+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:50278) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:50278) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": false,
+    "reading": "all_of part protocol_reads: GET /api/decisions/decision_645779ba421c answered 200, wanted 404",
+    "elapsed_s": 7.964
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_reads: GET /api/decisions/decision_645779ba421c answered 404 | readable_text: 'Removal committed' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 651, 'y': 788, 'w': 138, 'h': 27}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 23.669,
+    "first_satisfied_at_s": 22.307,
+    "completion_bound_s": 40.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_reads: GET /api/decisions/decision_645779ba421c answered 404 | readable_text: 'Removal committed' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 651, 'y': 788, 'w': 138, 'h': 27}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:50278) non-GET response after the click",
+    "chosen": {
+      "method": "DELETE",
+      "path": "/api/decisions/decision_645779ba421c",
+      "status": 200,
+      "body_sha256": "3bddbd8767c8cffa431788071363e297281c506ce579a545e793f1477aa58958",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:50278) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:50278) non-GET response after the click",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/decisions/decision_645779ba421c",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b1/case.p8.list_delete.long_list_393--1440/20261001T042943Z-case.p8.list_delete.long_list_393-astra-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b1/case.p8.list_delete.long_list_393--1440/20261001T042943Z-case.p8.list_delete.long_list_393-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-58rhlnym/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-58rhlnym/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50278"
+  ],
+  "duration_s": 67.718
+}

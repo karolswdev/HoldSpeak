@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: abb8a94e50b2d3634b30bd4a8091c4bc7ef31c7b dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:55521 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-b7hjuo_i/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p11
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/r3-r4-head-case.p11.decision_record.intelligence.prepared/case.p11.decision_record.intelligence.prepared--1440/20261001T095015Z-case.p11.decision_record.intelligence.prepared-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/r3-r4-head-case.p11.decision_record.intelligence.prepared/case.p11.decision_record.intelligence.prepared--1440/20261001T095015Z-case.p11.decision_record.intelligence.prepared-astra-1440/after.png']
+NOTE: predicate: all_of: readable_text: 'PREPARED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1049, 'y': 523, 'w': 346, 'h': 78} | readable_text: 'BY YOU' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1049, 'y': 523, 'w': 346, 'h': 78} | protocol_reads: GET /api/channels/sends?document_ref=decision_record:record-051b3849aec14485ac257066a5a9d426 answered 200 with 1 row(s) {'document_ref': 'decision_record:record-051b3849aec14485ac257066a5a9d426', 'destination_id': 'chd_8dcaafd66808807f2d39c20e', 'channel': 'file', 'state': 'prepared', 'prepared_by.kind': 'owner'}

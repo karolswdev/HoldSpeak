@@ -1,0 +1,752 @@
+{
+  "id": "obs-20261001T032924Z-case.p11.monday_brief.chair.picked-astra-1440",
+  "run_id": "20261001T032924Z-case.p11.monday_brief.chair.picked-astra-1440",
+  "case_id": "case.p11.monday_brief.chair.picked",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase11.json",
+  "job": "p11",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.documents.p11_sources",
+  "provenance": {
+    "revision": "332d91586bdbd7fe40e3c2c00851a46adc4650e4",
+    "revision_source": "environment",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "18f299869d984fd50e4ce99c6855356a2ed7d5c1317b688ef4c2d2bbd54e4ddb",
+      "assets": [
+        "index-CRd8xHI_.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:52369",
+      "port": 52369,
+      "pid": 66057,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_87ni4w",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_87ni4w/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T03:29:24.667273+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase11.json",
+      "sha256": "958ad47747df249ddbcc66f134e6162518b50baf5a8a9040e68e10bf8fd602e3",
+      "version": "phase11-documents"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T21:29:31.332392"
+        }
+      },
+      "response_sha256": "7db3cc85a9d05c1aa92ef416aca3849404af3212589eab17eb90562181c6b0a4"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_8ef01ff9a482",
+          "title": "P11BriefDecision",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "P11BriefDecisionText.",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T03:29:31Z",
+          "updated_at": "2026-10-01T03:29:31Z",
+          "deleted": false
+        },
+        "operation_id": "op_da482f9e97ce4860a05ae29903e33e71",
+        "receipt": {
+          "receipt_id": "rcpt_e37d9df8bcd84ff1af776717e3dd3dbd",
+          "operation_id": "op_da482f9e97ce4860a05ae29903e33e71",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_8ef01ff9a482",
+          "created_at": 1790825371.436985,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_8ef01ff9a482"
+        }
+      },
+      "response_sha256": "53db0711feccbc402f99cf13f1dff4469fa7830b8d212600264181df010e97e3",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_8ef01ff9a482"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-2a7077abb90247d58ad03eb2d332c7c8",
+        "period_start": "2026-09-29T17:00:00",
+        "period_end": "2026-09-30T21:29:31.460658",
+        "headline": "1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-1d49142859634069be0b3c57f830efd8",
+              "section": "decisions",
+              "text": "Review decision: P11BriefDecision",
+              "detail": null,
+              "source_ref": "decision:decision_8ef01ff9a482",
+              "priority": 200,
+              "created_at": "2026-10-01T03:29:31Z"
+            }
+          ]
+        },
+        "generated_at": "2026-09-30T21:29:31.460658",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 1,
+          "since": "1790825371.430518"
+        },
+        "period_label": "SEP 28 \u2013 30",
+        "generated_label": "GENERATED SEP 30 21:29",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "e52ffd8db923c1b8f4d626a5d1f7cb50bd45769af3a5efe2b92b9452023359da",
+      "captured": {
+        "name": "brief_id",
+        "path": "id",
+        "value": "brief-2a7077abb90247d58ad03eb2d332c7c8"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/destinations",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "destination": {
+          "id": "chd_21122f51bbb30cef931555bd",
+          "name": "P11-Folder",
+          "channel": "file",
+          "account": {},
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_87ni4w"
+          },
+          "target_digest": "4e437f93785ceba5b00223eb75050c2e70d511aafa807d692a1b3cb8f25d41dd",
+          "synced": false,
+          "state": "active",
+          "badge": "local",
+          "created_at": "2026-10-01T03:29:31+00:00",
+          "parked_at": null,
+          "connection": null
+        },
+        "replaced": null,
+        "operation_id": "op_243bff6288844ecca68a641c92aa58f7",
+        "receipt": {
+          "receipt_id": "rcpt_2f4d3fb9bfa248c0b5978fa1bb4b2fb9",
+          "operation_id": "op_243bff6288844ecca68a641c92aa58f7",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_destination:chd_21122f51bbb30cef931555bd",
+          "created_at": 1790825371.530488,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_destination"
+        }
+      },
+      "response_sha256": "4c4c3854921c2d5ffa0b6fc9eb8b3513005a51557469ac7574b081da5a4f7196",
+      "captured": {
+        "name": "dest_id",
+        "path": "destination.id",
+        "value": "chd_21122f51bbb30cef931555bd"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.wait_for: Timeout 10000ms exceeded.\\nCall log:\\n  - waiting for locator(\".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination=\\'P11-Folder\\'])\").first to be visible\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "scroll_into_view",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.wait_for: Timeout 10000ms exceeded.\\nCall log:\\n  - waiting for locator(\".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination=\\'P11-Folder\\'])\").first to be visible\\n')"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_87ni4w",
+    "decision_id": "decision_8ef01ff9a482",
+    "brief_id": "brief-2a7077abb90247d58ad03eb2d332c7c8",
+    "dest_id": "chd_21122f51bbb30cef931555bd"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "done": false,
+    "error": "TimeoutError('Locator.click: Timeout 10000ms exceeded.\\nCall log:\\n  - waiting for locator(\".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination=\\'P11-Folder\\'])\").first\\n')"
+  },
+  "diff": {
+    "document_text_sha256": {
+      "before": "3dc2c4e8feaf625b406aab9bf0e33f2f46ea82f1a5d76ec2446c82a1c5715973",
+      "after": "1dad4741fb1a7eaebe384b1146c2b40140afa790e9332e8acb3e8d1fda858816"
+    }
+  },
+  "before": {
+    "observe_at": ".chair [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verbs]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:52369/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "3dc2c4e8feaf625b406aab9bf0e33f2f46ea82f1a5d76ec2446c82a1c5715973",
+    "document_text_len": 483,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=monday_brief:brief-2a7077abb90247d58ad03eb2d332c7c8",
+        "status": 200,
+        "payload": {
+          "sends": []
+        },
+        "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+      }
+    ],
+    "at_utc": "2026-10-01T03:29:51.860405+00:00"
+  },
+  "after": {
+    "observe_at": ".chair [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verbs]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:52369/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "1dad4741fb1a7eaebe384b1146c2b40140afa790e9332e8acb3e8d1fda858816",
+    "document_text_len": 483,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=monday_brief:brief-2a7077abb90247d58ad03eb2d332c7c8",
+        "status": 200,
+        "payload": {
+          "sends": []
+        },
+        "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+      }
+    ],
+    "at_utc": "2026-10-01T03:30:22.307045+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/channels/preview",
+      "chosen": null,
+      "why": "NO response matched the declared trigger_route POST /api/channels/preview; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".chair [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verbs]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:52369/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "3dc2c4e8feaf625b406aab9bf0e33f2f46ea82f1a5d76ec2446c82a1c5715973",
+    "document_text_len": 483,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=monday_brief:brief-2a7077abb90247d58ad03eb2d332c7c8",
+        "status": 200,
+        "payload": {
+          "sends": []
+        },
+        "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+      }
+    ],
+    "at_utc": "2026-10-01T03:30:02.883378+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/channels/preview",
+      "chosen": null,
+      "why": "NO response matched the declared trigger_route POST /api/channels/preview; the click fired none",
+      "seen": []
+    },
+    "predicate_satisfied": false,
+    "reading": "all_of part protocol_status: no trigger response was recorded; `protocol_status` reads the status of the trigger's own call",
+    "elapsed_s": 10.912
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "all_of part protocol_status: no trigger response was recorded; `protocol_status` reads the status of the trigger's own call",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 30.335,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "predicate: all_of part protocol_status: no trigger response was recorded; `protocol_status` reads the status of the trigger's own call",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['document_text_sha256'])."
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/channels/preview",
+    "chosen": null,
+    "why": "NO response matched the declared trigger_route POST /api/channels/preview; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r8-red-332d-b1/case.p11.monday_brief.chair.picked--1440/20261001T032924Z-case.p11.monday_brief.chair.picked-astra-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r8-red-332d-b1/case.p11.monday_brief.chair.picked--1440/20261001T032924Z-case.p11.monday_brief.chair.picked-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_87ni4w/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_87ni4w/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:52369"
+  ],
+  "duration_s": 59.866
+}

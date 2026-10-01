@@ -168,12 +168,15 @@ PREDICATES (`expected.predicate.kind`):
   protocol_rows_gone {collection, match, min_gone, identity?}
                                  a NAMED row present before and absent after,
                                  by identity — never merely "fewer rows".
-  protocol_status {method, path, status, body_contains?, body_excludes?}
+  protocol_status {method, path, status, body_contains?, body_excludes?, body_integer_fields?}
                                  the TRIGGER's own response status (a 4xx
                                  refusal is a promised result). The call is
                                  never re-fired; the body sha256 is recorded,
                                  and `body_contains` proves the refusal NAMES
                                  what is missing rather than merely failing.
+                                 `body_integer_fields` requires named top-level
+                                 JSON fields to be integers (not booleans or
+                                 numeric strings).
                                  `body_excludes` names what the body must NOT
                                  carry (a previous result's id: a NEW result).
   protocol_field {path, value | absent}
@@ -358,9 +361,19 @@ def _frontend_build() -> dict[str, Any]:
 
 def base_provenance(*, engine_mode: str) -> dict[str, Any]:
     assert engine_mode in ("real", "replayed", "none"), engine_mode
+    # An archive extracted under this worktree has no .git directory.  Git
+    # then walks up into the enclosing checkout and reports the wrong source
+    # revision.  The Phase 11 archive runner supplies this explicit source
+    # identity; ordinary runs keep the existing git-derived values.
+    source_revision = os.environ.get("HOLDSPEAK_SOURCE_REVISION") or _git("rev-parse", "HEAD")
+    revision_source = "environment" if os.environ.get("HOLDSPEAK_SOURCE_REVISION") else "git"
+    source_dirty = os.environ.get("HOLDSPEAK_SOURCE_DIRTY")
+    dirty = (source_dirty.lower() == "true" if source_dirty is not None
+             else bool(_git("status", "--porcelain")))
     return {
-        "revision": _git("rev-parse", "HEAD"),
-        "dirty": bool(_git("status", "--porcelain")),
+        "revision": source_revision,
+        "revision_source": revision_source,
+        "dirty": dirty,
         "frontend_build": None,
         "hub": None,
         "db_path": None,
@@ -1192,6 +1205,18 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
              expected.get("pending_marker"),
              _value_selector(predicate)],
         )
+        predicate_parts = (predicate.get("predicates", [])
+                           if isinstance(predicate, dict)
+                           and predicate.get("kind") == "all_of"
+                           else [predicate])
+        selector_presence: dict[str, bool] = {}
+        for part in predicate_parts:
+            if (isinstance(part, dict)
+                    and part.get("kind") == "selector_presence"):
+                selector = str(part.get("selector") or "")
+                selector_presence[selector] = page.locator(selector).count() > 0
+        if selector_presence:
+            raw["selector_presence"] = selector_presence
     raw["observe_at"] = expected.get("observe_at")
     if page is not None and isinstance(predicate, dict) and predicate.get("first_paint_after"):
         raw["transition_probe"] = page.evaluate("window.__graphFirstPaint || null")
@@ -1543,6 +1568,67 @@ def check_predicate(
             readings.append(f"{part.get('kind')}: {why}")
         return True, "all_of: " + " | ".join(readings)
 
+    if kind == "selector_presence":
+        selector = str(predicate.get("selector") or "")
+        states = after.get("selector_presence") or {}
+        if selector not in states:
+            return False, f"BLOCKED: no DOM presence observation for {selector!r}"
+        got = bool(states[selector])
+        want = bool(predicate.get("present"))
+        return got is want, (
+            f"selector {selector!r} is {'present' if got else 'absent'}, "
+            f"wanted {'present' if want else 'absent'}")
+
+    if kind == "protocol_sequence":
+        capture = after.get("trigger_response_capture") or {}
+        seen = capture.get("seen") or []
+        expected = predicate.get("expect") or []
+        routes = {(str(item.get("method", "")).upper(), str(item.get("path", "")))
+                  for item in expected if isinstance(item, dict)}
+        actual = [
+            {"method": str(item.get("method", "")).upper(),
+             "path": str(item.get("path", "")),
+             "status": item.get("status")}
+            for item in seen
+            if item.get("after_arming") is True
+            and (str(item.get("method", "")).upper(), str(item.get("path", ""))) in routes
+        ]
+        if not expected:
+            return False, "BLOCKED: protocol_sequence needs a non-empty `expect` list"
+        if actual != expected:
+            return False, f"same-origin response sequence was {actual!r}, wanted {expected!r}"
+        return True, f"same-origin response sequence matches {expected!r}"
+
+    if kind == "protocol_rows_same":
+        read_index = predicate.get("read_index", 0)
+        if not isinstance(read_index, int) or read_index < 0:
+            return False, "BLOCKED: protocol_rows_same needs a non-negative read_index"
+        match = predicate.get("match") or {}
+        collection = str(predicate.get("collection") or "")
+        identity = str(predicate.get("identity") or "id")
+        snapshots = []
+        for label, record in (("before", before), ("after", after)):
+            api_reads = record.get("api_reads") or []
+            if len(api_reads) <= read_index:
+                return False, f"{label} has no protocol read at index {read_index}"
+            read = api_reads[read_index]
+            if read.get("status") != 200:
+                return False, f"{label} read answered {read.get('status')!r}, wanted 200"
+            found, rows = _json_path(read.get("payload"), collection)
+            if not found or not isinstance(rows, list):
+                return False, f"{label} read has no row list at {collection!r}"
+            selected = [row for row in rows if _op_row_matches(row, match)]
+            if len(selected) != 1:
+                return False, (f"{label} read has {len(selected)} row(s) matching "
+                               f"{match!r}; exactly one required")
+            row_id = _row_identity(selected[0], identity)
+            if not row_id:
+                return False, f"{label} row has no {identity!r} identity"
+            snapshots.append(row_id)
+        return snapshots[0] == snapshots[1], (
+            f"{collection} row identity before={snapshots[0]!r}, "
+            f"after={snapshots[1]!r}")
+
     if kind == "cli_calls":
         # PHILO-10-05: the recording runner's log (every hub process of the run).
         calls = after.get("cli_calls")
@@ -1636,10 +1722,17 @@ def check_predicate(
                 return False, (
                     f"{reading}; body field {field!r} = {value!r}, "
                     f"wanted {wanted!r}")
-        if "body_contains" in predicate or body_fields:
-            return True, (
-                f"{reading}; response body contains the declared admission "
-                "facts")
+        integer_fields = predicate.get("body_integer_fields") or []
+        if not isinstance(integer_fields, list) or any(not isinstance(field, str) for field in integer_fields):
+            return False, f"{reading}; body_integer_fields must be a list of field paths"
+        for field in integer_fields:
+            found, value = _json_path(answer.get("body"), field)
+            if not found or type(value) is not int:
+                return False, (
+                    f"{reading}; body field {field!r} is not an integer "
+                    f"({value!r})")
+        if "body_contains" in predicate or body_fields or integer_fields:
+            return True, f"{reading}; response body matches its declared fields"
         return True, reading
 
     if kind == "protocol_rows_gone":
@@ -1972,7 +2065,7 @@ def check_predicate(
 #: ``reads`` (by index among the op reads), ``trigger`` the trigger's own
 #: recorded operation (never re-fired).
 OP_FACT_SOURCES = frozenset({"observe", "read", "trigger"})
-OP_FACT_TESTS = ("value", "absent", "nonempty", "contains", "lacks", "length")
+OP_FACT_TESTS = ("value", "absent", "nonempty", "contains", "lacks", "length", "integer")
 
 
 def _op_fact_record(fact: dict[str, Any], after: dict[str, Any]) -> tuple[dict[str, Any] | None, str]:
@@ -2029,6 +2122,8 @@ def _op_fact(fact: dict[str, Any], after: dict[str, Any]) -> tuple[bool, str]:
             f"{where} is absent" if (not found or value is None) else f"{where} is present ({value!r})")
     if not found:
         return False, f"{where} does not resolve"
+    if "integer" in fact and (fact["integer"] is not True or type(value) is not int):
+        return False, f"{where} is not an integer ({value!r})"
     if "value" in fact and value != fact["value"]:
         return False, f"{where} = {value!r}, wanted {fact['value']!r}"
     if fact.get("nonempty") and value in (None, "", [], {}):
@@ -2347,6 +2442,7 @@ class Hub:
         self.producer_clock_reads: list[str] = []
         self.engine_replay_path = engine_replay
         self.engine_replay: str | None = None
+        self.engine_provider_url: str | None = None
         self.wiring: dict[str, Any] = {}
         self.port = _free_port()
         self.url = f"http://127.0.0.1:{self.port}"
@@ -2366,6 +2462,8 @@ class Hub:
                 self.config_path = line.split(" ", 1)[1].strip()
             elif line.startswith("ENGINE_REPLAY "):
                 self.engine_replay = line.split(" ", 1)[1].strip()
+            elif line.startswith("ENGINE_PROVIDER "):
+                self.engine_provider_url = line.split(" ", 1)[1].strip()
             elif line.startswith("CLI_RUNNER "):
                 self.cli_runner = line.split(" ", 1)[1].strip()
             elif line.startswith("WIRING "):
@@ -2385,6 +2483,7 @@ class Hub:
         self.db_path = None
         self.config_path = None
         self.engine_replay = None
+        self.engine_provider_url = None
         self.cli_runner = None
         self.producer_clock = None
         self.wiring = {}
@@ -2717,12 +2816,17 @@ class _ReplayIntel:
         self.calls.append("run_prompt_messages")
         return self.reply.get("raw_text", json.dumps(self.reply))
 
+    def _chat_completion_text(self, messages: Any, **_kwargs: Any) -> str:
+        # AgentTurnService.dispatch_plugin reaches this physical provider leaf.
+        self.calls.append("_chat_completion_text")
+        return self.reply.get("raw_text", json.dumps(self.reply))
+
     def run_prompt_stream(self, **_kwargs: Any) -> Any:
         self.calls.append("run_prompt_stream")
         return iter(())
 
 
-def _install_engine_replay(path: Path) -> str:
+def _install_engine_replay(path: Path) -> tuple[str, str]:
     """Install the recorded reply at the product's own provider seam.
 
     The seam is `holdspeak.intel.providers._configured_engine`
@@ -2740,7 +2844,62 @@ def _install_engine_replay(path: Path) -> str:
     engine = _ReplayIntel(reply)
     engine_module.MeetingIntel = lambda **_: engine
     providers_module._configured_engine = lambda: engine
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    # A recorded provider can declare the typed results its fixture supplies.
+    # Feed that declaration into the real profile/deployment producer; keep
+    # assignment compatibility and the runner's output validation intact.
+    # The ordinary endpoint producer declares only the summary adapter.
+    if reply.get("capabilities"):
+        from holdspeak.inference_capabilities import process_inference_capability_registry
+        from holdspeak.services.model_library_service import ModelLibraryApplicationService
+
+        profile_body = ModelLibraryApplicationService._profile_body
+        definitions = [process_inference_capability_registry().require(name)
+                       for name in reply["capabilities"]]
+
+        def recorded_profile_body(draft: dict[str, Any]) -> dict[str, Any]:
+            body = profile_body(draft)
+            claims = set(body["capability_manifest"]["claims"])
+            for definition in definitions:
+                claims.add(f"result_schema:{definition.output_schema_sha256}")
+                claims.update(definition.requires.capability_classes)
+            material = {"revision": "graph-walk-recorded-provider-v1", "claims": sorted(claims)}
+            digest = hashlib.sha256(json.dumps(material, sort_keys=True, separators=(",", ":"),
+                                               ensure_ascii=True).encode()).hexdigest()
+            body["capability_manifest"] = {**material, "sha256": f"sha256:{digest}"}
+            return body
+
+        ModelLibraryApplicationService._profile_body = staticmethod(recorded_profile_body)
+
+    # Endpoint discovery is a real production HTTP read.  Keep that read on a
+    # loopback-only server owned by this hub process, while the actual model
+    # call remains at the provider replay seam above.  Cases that bind this
+    # URL therefore perform discovery without probing a LAN or internet host.
+    model_id = str(reply.get("model") or "recorded-reply")
+
+    class _ModelsHandler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802 - stdlib handler contract
+            request_path = urllib.parse.urlsplit(self.path).path.rstrip("/")
+            if request_path not in {"/models", "/v1/models"}:
+                self.send_error(404, "recording provider exposes only /v1/models")
+                return
+            payload = json.dumps({
+                "object": "list",
+                "data": [{"id": model_id, "owned_by": "graph-walk-replay"}],
+            }).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+
+        def log_message(self, _format: str, *_args: Any) -> None:
+            return
+
+    provider = ThreadingHTTPServer(("127.0.0.1", 0), _ModelsHandler)
+    threading.Thread(target=provider.serve_forever, daemon=True).start()
+    provider_url = f"http://127.0.0.1:{provider.server_address[1]}/v1"
+    return hashlib.sha256(path.read_bytes()).hexdigest(), provider_url
 
 
 #: PHILO-10-05: the recording runner's call log, in the run's HOME.
@@ -2827,12 +2986,21 @@ def _install_email_edge(https: list[dict[str, Any]], log_path: Path, lock: Any) 
     import urllib.response as _urllib_response
     from urllib.parse import urlparse as _urlparse
 
-    from holdspeak.services import channel_email, channel_slack
+    from holdspeak.services import channel_email
+    # Phase 10 archive exports predate the Slack module.  The common recording
+    # edge must still boot there for email regression cases; Slack cases run
+    # only on a source tree that declares the channel.
+    import importlib.util as _importlib_util
+    if _importlib_util.find_spec("holdspeak.services.channel_slack") is None:
+        channel_slack = None
+    else:
+        from holdspeak.services import channel_slack
 
     memory = channel_email.MemoryEmailKeyStore()
     channel_email.KEY_STORE = lambda: memory
-    slack_memory = channel_slack.MemorySlackKeyStore()
-    channel_slack.KEY_STORE = lambda: slack_memory
+    if channel_slack is not None:
+        slack_memory = channel_slack.MemorySlackKeyStore()
+        channel_slack.KEY_STORE = lambda: slack_memory
 
     class RecordingEdge(_urllib_request.BaseHandler):
         def https_open(self, req: Any) -> Any:
@@ -2841,7 +3009,7 @@ def _install_email_edge(https: list[dict[str, Any]], log_path: Path, lock: Any) 
             headers = {k.lower(): v for k, v in req.header_items()}
             index = next((i for i, a in enumerate(https)
                           if a.get("host") == argv[2] and a.get("path") == argv[3]), None)
-            if url.hostname == channel_slack.HOST:
+            if channel_slack is not None and url.hostname == channel_slack.HOST:
                 argv[3] = "/services/[redacted]"
             entry = {"argv": argv, "body_sha256": hashlib.sha256(bytes(req.data or b"")).hexdigest(),
                      "pid": os.getpid(), "at": datetime.now(timezone.utc).isoformat(), "answer": index,
@@ -2865,7 +3033,8 @@ def _install_email_edge(https: list[dict[str, Any]], log_path: Path, lock: Any) 
             return resp
 
     channel_email.HTTPS_HANDLER = RecordingEdge
-    channel_slack.HTTPS_HANDLER = RecordingEdge
+    if channel_slack is not None:
+        channel_slack.HTTPS_HANDLER = RecordingEdge
 
 
 def read_cli_calls(hub: Any) -> list[dict[str, Any]] | None:
@@ -2955,9 +3124,10 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
     ]
 
     if engine_replay:
-        digest = _install_engine_replay(Path(engine_replay))
+        digest, provider_url = _install_engine_replay(Path(engine_replay))
         has.append("a RECORDED provider reply at the real provider seam")
         print(f"ENGINE_REPLAY {digest}", flush=True)
+        print(f"ENGINE_PROVIDER {provider_url}", flush=True)
 
     if cli_runner:
         digest = _install_cli_runner(Path(cli_runner))
@@ -4058,7 +4228,7 @@ _EXPECTED_READ_FIELDS = (
 
 #: The step fields a captured value may travel into.
 _SUBSTITUTED_FIELDS = ("path", "selector", "name", "value", "url", "key", "body",
-                       "args", "observe_at")
+                       "args", "observe_at", "meeting_id")
 
 
 def substitute(value: Any, variables: dict[str, Any]) -> Any:
@@ -4096,7 +4266,7 @@ def unresolved(value: Any) -> list[str]:
 #: The rig's CLOSED ui vocabulary. A step naming anything else is blocked
 #: before it fires, so a typo cannot silently become a no-op that "passed".
 UI_ACTIONS = frozenset({
-    "goto", "reload", "click", "click_role", "fill", "press", "wait_for",
+    "goto", "reload", "click", "click_role", "fill", "select_option", "press", "wait_for",
     # PHILO-7-03: keyboard travel to a control (the owner's Tab), e.g. the
     # Floor's world chip, which only surfaces when focused (desk.css:171).
     "focus",
@@ -4245,6 +4415,14 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         raise Blocked(
             f"ui action {action!r} is not in the rig's vocabulary "
             f"{sorted(UI_ACTIONS)}; nothing was fired")
+    if action == "select_option":
+        selector = step.get("selector")
+        value = step.get("value")
+        if (not isinstance(selector, str) or not selector.strip()
+                or not isinstance(value, str) or not value.strip()):
+            raise Blocked(
+                "ui action 'select_option' needs a nonempty selector and value; "
+                f"got selector={selector!r} value={value!r}; nothing was fired")
     if action == "scroll_into_view" and (not step.get("selector")
                                          or step.get("block", "center") not in ("start", "center", "end")):
         # PHILO-10-05: a malformed seat is refused by name before anything is touched.
@@ -4254,6 +4432,9 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         raise Blocked("headless mode refuses UI/face steps: no Page is opened")
     optional = bool(step.get("optional"))
     record = {"kind": "ui", "action": action, "adapter": step.get("adapter", "ui-pointer")}
+    if action == "select_option":
+        record["selector"] = step["selector"]
+        record["value"] = step["value"]
     # PHILO-7-03: a step the face needs at ONE width only (at 393 the Floor
     # opens as a list, so the owner switches to the spatial view first). The
     # step is recorded as skipped at every other width, never silently.
@@ -4310,8 +4491,18 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
             record["name"] = step["name"]
         elif action == "fill":
             page.locator(step["selector"]).first.fill(step["value"], timeout=timeout)
+        elif action == "select_option":
+            page.locator(step["selector"]).first.select_option(step["value"], timeout=timeout)
         elif action == "press":
-            page.keyboard.press(step["key"])
+            # PHILO-11-06: if the case names a control, deliver the key to
+            # that control. A global keyboard press can land after focus has
+            # moved during the preceding setup/observation boundary.
+            selector = step.get("selector")
+            if selector:
+                page.locator(selector).first.press(step["key"], timeout=timeout)
+                record["selector"] = selector
+            else:
+                page.keyboard.press(step["key"])
             record["key"] = step["key"]
         elif action == "focus":
             page.locator(step["selector"]).first.focus(timeout=timeout)
@@ -4520,6 +4711,16 @@ def _op_step(step: dict[str, Any], hub: Any, provenance: dict[str, Any],
         args = {**args, "path": str(candidate)}
     result = _op_call(hub, name, args)
     record = {"kind": "op", "adapter": step.get("adapter", "mcp-http"), **result}
+    if result.get("refusal") and step.get("optional"):
+        record.update(optional=True, done=False,
+                      skipped="the named operation refusal is retained; no value was captured")
+        if name == "meeting.import" and isinstance(raw_args, dict):
+            declared_path = raw_args.get("path")
+            if isinstance(declared_path, str):
+                fixture_hash = provenance.get("fixture_hashes", {}).get(declared_path)
+                if fixture_hash:
+                    record["fixture"] = {"path": declared_path, "sha256": fixture_hash}
+        return record
     if name == "meeting.import" and isinstance(raw_args, dict):
         declared_path = raw_args.get("path")
         if isinstance(declared_path, str):
@@ -4642,6 +4843,11 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
     step = substitute(step, variables)
     missing = unresolved({f: step.get(f) for f in _SUBSTITUTED_FIELDS})
     if missing:
+        if step.get("optional"):
+            return {"kind": kind, "adapter": step.get("adapter"),
+                    "optional": True, "done": False,
+                    "skipped": ("unresolved placeholder(s) "
+                                f"{sorted(set(missing))}; no request was sent")}
         raise Blocked(
             f"unresolved placeholder(s) {sorted(set(missing))} in the {kind} "
             "step; nothing was sent. A `{name}` is filled by an earlier step's "
@@ -4692,6 +4898,11 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
                       json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()}
         want = step.get("expect_status")
         if want is not None and status != want:
+            if step.get("optional"):
+                record.update(optional=True, done=False,
+                              skipped=f"{step['method']} {step['path']} answered "
+                                      f"{status}, wanted {want}; response retained")
+                return record
             raise Blocked(f"{step['method']} {step['path']} answered {status}, wanted {want}: {record['response']}"[:500])
         # A SETUP step that errors means the preconditions were never reached,
         # so the case is blocked. A TRIGGER's error status is the observation
@@ -4769,11 +4980,95 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         return record
     if kind == "cli":
         action = step.get("action")
+        if action == "queue_meeting_intelligence":
+            if hub is None or not hasattr(hub, "home") or not hasattr(hub, "db_path"):
+                raise Blocked(
+                    "queue_meeting_intelligence needs the rig's own hub process")
+            raw_meeting_id = step.get("meeting_id")
+            if not isinstance(raw_meeting_id, str) or not raw_meeting_id.strip():
+                raise Blocked(
+                    "queue_meeting_intelligence requires a non-empty meeting_id")
+            if not hub.db_path:
+                raise Blocked(
+                    "queue_meeting_intelligence cannot prove the hub database path")
+
+            # This action is deliberately in the rig process, while the hub
+            # drainer remains the production consumer.  Never use
+            # get_database() here: its singleton could already point at the
+            # owner's database in a long-lived rig process.
+            hub_home = guard_home(hub.home)
+            db_path = guard_path(hub.db_path, "hub database")
+            if not _under(db_path, hub_home) or db_path == hub_home:
+                raise Blocked(
+                    "queue_meeting_intelligence refuses a database outside the "
+                    f"isolated hub HOME ({db_path} is not under {hub_home})")
+
+            database: Any | None = None
+            try:
+                from holdspeak.db.core import Database
+                from holdspeak.db.intel import _durable_transcript_hash
+
+                database = Database(db_path)
+                meeting_id = raw_meeting_id.strip()
+                meeting = database.meetings.get_meeting(meeting_id)
+                if meeting is None:
+                    raise Blocked(
+                        f"queue_meeting_intelligence found no imported meeting "
+                        f"{meeting_id!r} in the isolated hub database")
+                if not getattr(meeting, "segments", None):
+                    raise Blocked(
+                        f"queue_meeting_intelligence meeting {meeting_id!r} has "
+                        "no durable transcript segments")
+
+                # Compute the exact persisted-segment fence used by the
+                # production queue, then call its public producer authority in
+                # the same connection.  Passing planned_route=None is
+                # intentional: the hub's drainer must run the installed-plugin
+                # planner after the real capability assignment is in place.
+                with database._connection() as conn:
+                    transcript_hash = _durable_transcript_hash(conn, meeting_id)
+                    if not transcript_hash:
+                        raise Blocked(
+                            f"queue_meeting_intelligence could not derive a "
+                            f"durable transcript hash for {meeting_id!r}")
+                    job_id = database.intel.enqueue_intel_job(
+                        meeting_id,
+                        transcript_hash=transcript_hash,
+                        planned_route=None,
+                        conn=conn,
+                    )
+            except Blocked:
+                raise
+            except Exception as exc:
+                raise Blocked(
+                    "queue_meeting_intelligence production enqueue failed: "
+                    f"{type(exc).__name__}: {exc}") from exc
+            finally:
+                if database is not None:
+                    database.close()
+
+            if not isinstance(job_id, str) or not job_id.strip():
+                raise Blocked(
+                    "queue_meeting_intelligence producer returned no job id")
+            record = {
+                "kind": "cli",
+                "action": action,
+                "adapter": step.get("adapter", "db-producer"),
+                "meeting_id": meeting_id,
+                "db_path": str(db_path),
+                "producer": "holdspeak.db.intel.IntelRepository.enqueue_intel_job",
+                "job_id": job_id,
+                "transcript_hash": transcript_hash,
+                "planned_route": None,
+            }
+            provenance.setdefault("meeting_intelligence", []).append(record)
+            return record
         if action != "restart_hub":
             raise Blocked(
                 f"cli command {(step.get('command') or action)!r} is not "
                 "implemented in this rig; the case is blocked, not claimed. The "
-                "one implemented command is action 'restart_hub'.")
+                "implemented commands are actions 'restart_hub' and "
+                "'queue_meeting_intelligence'.")
         if hub is None or not hasattr(hub, "restart"):
             raise Blocked("a restart_hub step needs the rig's own hub process")
         resolved_case = substitute(case or {}, variables)
@@ -5360,6 +5655,11 @@ def exercise(
     if hub is not None and getattr(hub, "home", None):
         # PHILO-10-05: a file destination's folder is a real folder on the run's HOME.
         variables["hub_home"] = str(Path(hub.home).resolve())
+    if hub is not None and getattr(hub, "engine_provider_url", None):
+        # Provider discovery is a real HTTP read, but replay walks keep its
+        # endpoint on loopback.  Cases may bind this URL into a profile or
+        # assignment setup step without contacting the owner's LAN endpoint.
+        variables["replay_provider_url"] = str(hub.engine_provider_url)
     steps: list[dict[str, Any]] = []
     for step in case.get("setup", []):
         try:
@@ -5546,7 +5846,9 @@ def exercise(
         answer = trigger_response
         if answer is None and ui_capture is not None:
             answer = ui_capture.chosen()
-            recorder.record["trigger_response_capture"] = ui_capture.record()
+            response_capture = ui_capture.record()
+            recorder.record["trigger_response_capture"] = response_capture
+            snap["trigger_response_capture"] = response_capture
         if answer is not None:
             snap["trigger_response"] = answer
         if trigger_record.get("kind") == "op":
@@ -6089,6 +6391,7 @@ def run_case(
         # observation is read as if it came from the whole product.
         provenance["product_wiring"] = hub.wiring
         provenance["engine_replay_sha256"] = hub.engine_replay
+        provenance["engine_provider_url"] = hub.engine_provider_url
         provenance["cli_runner_sha256"] = hub.cli_runner
         if engine == "real":
             provenance["engine_identity"] = _engine_identity()

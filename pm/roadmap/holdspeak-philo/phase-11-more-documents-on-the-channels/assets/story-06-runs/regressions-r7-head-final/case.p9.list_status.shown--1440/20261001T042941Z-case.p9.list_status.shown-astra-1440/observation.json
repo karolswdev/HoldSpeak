@@ -1,0 +1,970 @@
+{
+  "id": "obs-20261001T042941Z-case.p9.list_status.shown-astra-1440",
+  "run_id": "20261001T042941Z-case.p9.list_status.shown-astra-1440",
+  "case_id": "case.p9.list_status.shown",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase9.json",
+  "job": "p9",
+  "edge_ids": [
+    "edge.face.list_zone_dive"
+  ],
+  "state_id": "state.desk_presentation.p9_list_face",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50268",
+      "port": 50268,
+      "pid": 17196,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-38kegf9m",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-38kegf9m/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:29:41.242957+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase9.json",
+      "sha256": "1d9bac87e1e69ba0b5c17e9e944e6be69fd21b8b37bf2a56360944c5427f7abd",
+      "version": "phase9-room"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 2.04,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_98353cff2b28",
+          "title": "Atlas list note 1",
+          "body_markdown": "A row for the list face",
+          "tags": [],
+          "created_at": "2026-10-01T04:29:48Z",
+          "updated_at": "2026-10-01T04:29:48Z",
+          "last_modified": "2026-10-01T04:29:48Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "11ca013a6b2a4c168956e7e02ad31a8523726f62e13131eace10ca1badd2d670",
+      "captured": {
+        "name": "note_1",
+        "path": "note.id",
+        "value": "note_98353cff2b28"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_9bd7450367a4",
+          "title": "Atlas list note 2",
+          "body_markdown": "A row for the list face",
+          "tags": [],
+          "created_at": "2026-10-01T04:29:48Z",
+          "updated_at": "2026-10-01T04:29:48Z",
+          "last_modified": "2026-10-01T04:29:48Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "92ed68e3aa72487eb0e5f416fdd5bc6d911dbb5917eaf7abd6f3200cf7c0d39e",
+      "captured": {
+        "name": "note_2",
+        "path": "note.id",
+        "value": "note_9bd7450367a4"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_25aafea23633",
+          "title": "Atlas list note 3",
+          "body_markdown": "A row for the list face",
+          "tags": [],
+          "created_at": "2026-10-01T04:29:48Z",
+          "updated_at": "2026-10-01T04:29:48Z",
+          "last_modified": "2026-10-01T04:29:48Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "36c8d8c31e75595fbbb0c421dc893f33152695ae661e3f75da5f6337301fbf6a",
+      "captured": {
+        "name": "note_3",
+        "path": "note.id",
+        "value": "note_25aafea23633"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_a8699a4b4bf2",
+          "title": "Atlas list note 4",
+          "body_markdown": "A row for the list face",
+          "tags": [],
+          "created_at": "2026-10-01T04:29:48Z",
+          "updated_at": "2026-10-01T04:29:48Z",
+          "last_modified": "2026-10-01T04:29:48Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "8151a15d6206751707dc3f8cd22216c67853f2943a1b229263720875f4bf2cdf",
+      "captured": {
+        "name": "note_4",
+        "path": "note.id",
+        "value": "note_a8699a4b4bf2"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_5ab491b1837d",
+          "title": "Atlas list note 5",
+          "body_markdown": "A row for the list face",
+          "tags": [],
+          "created_at": "2026-10-01T04:29:48Z",
+          "updated_at": "2026-10-01T04:29:48Z",
+          "last_modified": "2026-10-01T04:29:48Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "c3c1f03177d8a85c527dfe39aa29a04e044293e961ebb01e530e47d187f8e666",
+      "captured": {
+        "name": "note_5",
+        "path": "note.id",
+        "value": "note_5ab491b1837d"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_9365bd88502d",
+          "title": "Atlas list note 6",
+          "body_markdown": "A row for the list face",
+          "tags": [],
+          "created_at": "2026-10-01T04:29:48Z",
+          "updated_at": "2026-10-01T04:29:48Z",
+          "last_modified": "2026-10-01T04:29:48Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "25467e21ac18d3806fa7c09d6c829da76a37d89109b3166ca836ae45d0f5ed6c",
+      "captured": {
+        "name": "note_6",
+        "path": "note.id",
+        "value": "note_9365bd88502d"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 1440,
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "at_width": 1440,
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 1440,
+      "selector": "[id='desk-palette-option-desk.toggle-view']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-listmode",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list note 6']",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-floor-toggle]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "aria-pressed",
+        "value": "true"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "aria-pressed='true', wanted 'true'"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-38kegf9m",
+    "note_1": "note_98353cff2b28",
+    "note_2": "note_9bd7450367a4",
+    "note_3": "note_25aafea23633",
+    "note_4": "note_a8699a4b4bf2",
+    "note_5": "note_5ab491b1837d",
+    "note_6": "note_9365bd88502d"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": ".desk-listmode .desk-sortable-table-open[aria-label^='Personal zone']",
+    "done": true
+  },
+  "diff": {
+    "text": {
+      "before": "23 SHOWN OF 23",
+      "after": "2 SHOWN OF 2"
+    },
+    "rect": {
+      "before": {
+        "x": 1140,
+        "y": 72,
+        "w": 111,
+        "h": 16
+      },
+      "after": {
+        "x": 1156,
+        "y": 76,
+        "w": 95,
+        "h": 16
+      }
+    },
+    "document_text_sha256": {
+      "before": "d9e3d5adebb973433360cdd3c4dc20f62e901f79a0c701ccf04db84d44bee687",
+      "after": "fdc55cc648a1e7d7ca2deadad04538ab191c13fff613a83aec2ce744fb154d6c"
+    },
+    "document_text_len": {
+      "before": 1176,
+      "after": 361
+    }
+  },
+  "before": {
+    "observe_at": ".desk-list-status",
+    "target_present": true,
+    "text": "23 SHOWN OF 23",
+    "attrs": {
+      "class": "desk-list-status",
+      "role": "status",
+      "tabindex": "-1"
+    },
+    "rect": {
+      "x": 1140,
+      "y": 72,
+      "w": 111,
+      "h": 16
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1140,
+        "y": 72,
+        "w": 111,
+        "h": 16
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1142,
+          "y": 74,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1142,
+          "y": 80,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1142,
+          "y": 86,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1196,
+          "y": 74,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1196,
+          "y": 80,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1196,
+          "y": 86,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1249,
+          "y": 74,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1249,
+          "y": 80,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1249,
+          "y": 86,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:50268/?view=list",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d9e3d5adebb973433360cdd3c4dc20f62e901f79a0c701ccf04db84d44bee687",
+    "document_text_len": 1176,
+    "replay_identity": null,
+    "at_utc": "2026-10-01T04:30:01.059052+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-list-status",
+    "target_present": true,
+    "text": "2 SHOWN OF 2",
+    "attrs": {
+      "class": "desk-list-status",
+      "role": "status",
+      "tabindex": "-1"
+    },
+    "rect": {
+      "x": 1156,
+      "y": 76,
+      "w": 95,
+      "h": 16
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1156,
+        "y": 76,
+        "w": 95,
+        "h": 16
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1158,
+          "y": 78,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1158,
+          "y": 84,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1158,
+          "y": 90,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1203,
+          "y": 78,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1203,
+          "y": 84,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1203,
+          "y": 90,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1249,
+          "y": 78,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1249,
+          "y": 84,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1249,
+          "y": 90,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:50268/?view=list",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "fdc55cc648a1e7d7ca2deadad04538ab191c13fff613a83aec2ce744fb154d6c",
+    "document_text_len": 361,
+    "replay_identity": null,
+    "at_utc": "2026-10-01T04:30:17.333631+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:50268) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:50268) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-list-status",
+    "target_present": true,
+    "text": "2 SHOWN OF 2",
+    "attrs": {
+      "class": "desk-list-status",
+      "role": "status",
+      "tabindex": "-1"
+    },
+    "rect": {
+      "x": 1156,
+      "y": 76,
+      "w": 95,
+      "h": 16
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1156,
+        "y": 76,
+        "w": 95,
+        "h": 16
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1158,
+          "y": 78,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1158,
+          "y": 84,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1158,
+          "y": 90,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1203,
+          "y": 78,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1203,
+          "y": 84,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1203,
+          "y": 90,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1249,
+          "y": 78,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1249,
+          "y": 84,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        },
+        {
+          "x": 1249,
+          "y": 90,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > section.desk-list-face > div.desk-list-census > p.desk-list-status"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:50268/?view=list",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "fdc55cc648a1e7d7ca2deadad04538ab191c13fff613a83aec2ce744fb154d6c",
+    "document_text_len": 361,
+    "replay_identity": null,
+    "at_utc": "2026-10-01T04:30:15.840810+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:50268) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:50268) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "'2 SHOWN OF 2' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1156, 'y': 76, 'w': 95, 'h': 16}",
+    "elapsed_s": 9.012
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'2 SHOWN OF 2' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1156, 'y': 76, 'w': 95, 'h': 16}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 10.505,
+    "first_satisfied_at_s": 9.012,
+    "completion_bound_s": 25.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: '2 SHOWN OF 2' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1156, 'y': 76, 'w': 95, 'h': 16}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:50268) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:50268) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b3/case.p9.list_status.shown--1440/20261001T042941Z-case.p9.list_status.shown-astra-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b3/case.p9.list_status.shown--1440/20261001T042941Z-case.p9.list_status.shown-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-38kegf9m/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-38kegf9m/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50268"
+  ],
+  "duration_s": 42.191
+}
