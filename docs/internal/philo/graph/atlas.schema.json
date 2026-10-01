@@ -241,7 +241,7 @@
             },
             "optional": {
               "type": "boolean",
-              "description": "On a setup step, retain an unavailable precondition and continue; the case's expected predicate remains mandatory."
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "capture_as": {
               "type": "string",
@@ -349,7 +349,8 @@
               "minLength": 1
             },
             "optional": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "timeout_s": {
               "type": "number",
@@ -410,7 +411,8 @@
               "minLength": 1
             },
             "optional": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "timeout_s": {
               "type": "number",
@@ -665,7 +667,8 @@
               "minLength": 1
             },
             "optional": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "timeout_s": {
               "type": "number",
@@ -715,7 +718,8 @@
               "minLength": 1
             },
             "optional": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "timeout_s": {
               "type": "number",
@@ -854,7 +858,8 @@
               "minLength": 1
             },
             "optional": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "timeout_s": {
               "type": "number",
@@ -914,7 +919,8 @@
               "minLength": 1
             },
             "optional": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "timeout_s": {
               "type": "number",

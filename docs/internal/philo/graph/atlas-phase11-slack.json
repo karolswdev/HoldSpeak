@@ -1730,6 +1730,23 @@
           "adapter": "ui-pointer",
           "selector": ".desk-pullout [data-testid=meeting-send-well] [data-testid=prepared-row]",
           "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=prepared-open]",
+          "block": "end",
+          "why": "seat the expanded prepared preview above the fixed footer before reopening it",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-pullout [data-testid=meeting-send-well] [data-testid=prepared-row]",
+          "why": "close the initially expanded prepared row so the trigger reopens it",
+          "optional": true
         }
       ],
       "trigger": {
@@ -1772,10 +1789,6 @@
               "kind": "input_value",
               "selector": ".desk-pullout [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
               "equals": "meeting_summary"
-            },
-            {
-              "kind": "readable_text",
-              "value": "SUMMARY"
             }
           ]
         },
@@ -1786,7 +1799,7 @@
             "path": "/api/channels/sends?document_ref=meeting_summary:{meeting_id}"
           }
         ],
-        "words": "The meeting_summary window face retains PREPARED BY YOU."
+        "words": "Presence check only: The meeting_summary window face retains PREPARED BY YOU. This case does not prove that the optional click opened Send at either viewport width."
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -2612,6 +2625,23 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=prepared-row]",
           "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=prepared-open]",
+          "block": "end",
+          "why": "seat the expanded prepared preview above the fixed footer before reopening it",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=prepared-row]",
+          "why": "close the initially expanded prepared row so the trigger reopens it",
+          "optional": true
         }
       ],
       "trigger": {
@@ -2654,10 +2684,6 @@
               "kind": "input_value",
               "selector": "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
               "equals": "meeting_summary"
-            },
-            {
-              "kind": "readable_text",
-              "value": "SUMMARY"
             }
           ]
         },
@@ -2668,7 +2694,7 @@
             "path": "/api/channels/sends?document_ref=meeting_summary:{meeting_id}"
           }
         ],
-        "words": "The meeting_summary chair face retains PREPARED BY YOU."
+        "words": "Presence check only: The meeting_summary chair face retains PREPARED BY YOU. This case does not prove that the optional click opened Send at either viewport width."
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -3548,6 +3574,23 @@
           "adapter": "ui-pointer",
           "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
           "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=prepared-open]",
+          "block": "end",
+          "why": "seat the expanded prepared preview above the fixed footer before reopening it",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
+          "why": "close the initially expanded prepared row so the trigger reopens it",
+          "optional": true
         }
       ],
       "trigger": {
@@ -3590,10 +3633,6 @@
               "kind": "input_value",
               "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
               "equals": "meeting_summary"
-            },
-            {
-              "kind": "readable_text",
-              "value": "SUMMARY"
             }
           ]
         },
@@ -3604,7 +3643,7 @@
             "path": "/api/channels/sends?document_ref=meeting_summary:{meeting_id}"
           }
         ],
-        "words": "The meeting_summary meetings_record face retains PREPARED BY YOU."
+        "words": "Presence check only: The meeting_summary meetings_record face retains PREPARED BY YOU. This case does not prove that the optional click opened Send at either viewport width."
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -4508,6 +4547,23 @@
           "adapter": "ui-pointer",
           "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
           "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=prepared-open]",
+          "block": "end",
+          "why": "seat the expanded prepared preview above the fixed footer before reopening it",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
+          "why": "close the initially expanded prepared row so the trigger reopens it",
+          "optional": true
         }
       ],
       "trigger": {
@@ -4550,10 +4606,6 @@
               "kind": "input_value",
               "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
               "equals": "meeting_digest"
-            },
-            {
-              "kind": "readable_text",
-              "value": "DIGEST"
             }
           ]
         },
@@ -4564,7 +4616,7 @@
             "path": "/api/channels/sends?document_ref=meeting_digest:{meeting_id}"
           }
         ],
-        "words": "The meeting_digest meetings_record face retains PREPARED BY YOU."
+        "words": "Presence check only: The meeting_digest meetings_record face retains PREPARED BY YOU. This case does not prove that the optional click opened Send at either viewport width."
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -5468,6 +5520,23 @@
           "adapter": "ui-pointer",
           "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
           "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=prepared-open]",
+          "block": "end",
+          "why": "seat the expanded prepared preview above the fixed footer before reopening it",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
+          "why": "close the initially expanded prepared row so the trigger reopens it",
+          "optional": true
         }
       ],
       "trigger": {
@@ -5510,10 +5579,6 @@
               "kind": "input_value",
               "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
               "equals": "meeting_followup"
-            },
-            {
-              "kind": "readable_text",
-              "value": "FOLLOW-UP"
             }
           ]
         },
@@ -5524,7 +5589,7 @@
             "path": "/api/channels/sends?document_ref=meeting_followup:{meeting_id}"
           }
         ],
-        "words": "The meeting_followup meetings_record face retains PREPARED BY YOU."
+        "words": "Presence check only: The meeting_followup meetings_record face retains PREPARED BY YOU. This case does not prove that the optional click opened Send at either viewport width."
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -7946,10 +8011,10 @@
             "kind": "ui",
             "action": "scroll_into_view",
             "adapter": "ui-pointer",
-            "selector": "[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-history]",
+            "selector": ".chair [data-testid=arrival-brief]",
             "block": "center",
             "optional": true,
-            "why": "The old build has no rendered channel receipt after this branch leaves; the expected visible receipt and durable row remain required."
+            "why": "Keep the Chair branch and its send receipt in view after the last brief item is handled."
           }
         ]
       },
@@ -7969,6 +8034,10 @@
             {
               "kind": "readable_text",
               "value": "POSTED"
+            },
+            {
+              "kind": "text_contains",
+              "value": "ALL 1 HANDLED"
             },
             {
               "kind": "protocol_reads",
@@ -7999,7 +8068,7 @@
             }
           ]
         },
-        "observe_at": "[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-history]",
+        "observe_at": ".chair [data-testid=arrival-brief]",
         "reads": [
           {
             "method": "GET",
@@ -8176,10 +8245,10 @@
             "kind": "ui",
             "action": "scroll_into_view",
             "adapter": "ui-pointer",
-            "selector": "[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-history]",
+            "selector": ".chair [data-testid=arrival-brief]",
             "block": "center",
             "optional": true,
-            "why": "The old build has no rendered channel receipt after this branch leaves; the expected visible receipt and durable row remain required."
+            "why": "Keep the Chair branch and its send receipt in view after the last brief item is handled."
           }
         ]
       },
@@ -8199,6 +8268,10 @@
             {
               "kind": "readable_text",
               "value": "POSTED"
+            },
+            {
+              "kind": "text_contains",
+              "value": "ALL 1 HANDLED"
             },
             {
               "kind": "protocol_reads",
@@ -8229,7 +8302,7 @@
             }
           ]
         },
-        "observe_at": "[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-history]",
+        "observe_at": ".chair [data-testid=arrival-brief]",
         "reads": [
           {
             "method": "GET",

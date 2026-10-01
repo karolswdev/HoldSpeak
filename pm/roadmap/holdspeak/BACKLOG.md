@@ -19,6 +19,11 @@ New portfolio surfaces, extra connectors, native parity, and additional worker a
 need a measured Phase 200 pilot gap before they take delivery capacity.
 The outcome review in HS-200-37 records each expansion decision.
 
+## Phase 11 face observations (2026-10-01)
+
+- At 393, the floating TALK / Write a thought / Record meeting / Schedule dock covers the Chair meeting row's send preview. The observed shot is [meeting_summary.chair.picked at 393](../holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-runs/p11-r10-head-final/case.p11.meeting_summary.chair.picked--393/20261001T042051Z-case.p11.meeting_summary.chair.picked-astra-393/after.png). Home: a future Phase 11 face follow-up.
+- In the Meetings window, the list can say “No meetings yet” while the record detail is open beside it. The paired 1440 captures from the same walk show the list/footer mismatch across the trigger: the [before shot](../holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-runs/p11-r10-head-final/case.p11.meeting_summary.meetings_record.no_summary--1440/20261001T042210Z-case.p11.meeting_summary.meetings_record.no_summary-astra-1440/before.png) shows “1 RECORD” and the [after shot](../holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-runs/p11-r10-head-final/case.p11.meeting_summary.meetings_record.no_summary--1440/20261001T042210Z-case.p11.meeting_summary.meetings_record.no_summary-astra-1440/after.png) shows “No meetings yet” with the record detail still open. Home: a future Phase 11 face follow-up.
+
 ## Phase 201 parked summary follow-through
 
 **2026-09-19 — Astra, ratified by Muad'Dib.** The first-use summary gesture
@@ -1471,4 +1476,3 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 |---|---|---|---|
 | Unify DELIVERY rows into the one row grammar: the update's DELIVERY history (`web/src/features/channels/SendWell.tsx`, `DeliveryHistory`) keeps its Phase 10 row look while the SEND well and `SENDS N` use the species' grammar (name on line 1, chips under the name on line 2). Draw it on the owner's canvas first (UX-CANON A.2), then build. | face consistency (Tenet 5) | `pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/checks/story-04-built-astra-r1.md` F4; ruling on #708 | UNASSIGNED; the owner's canvas |
 | Carry the unit on a size refusal if a byte-limited channel reuses it: the well renders `<size> / <limit> CHARACTERS` (`web/src/desk/surface/send/SendWell.tsx`, `PreviewFailed`); only Slack's `payload_too_large:slack` carries `size` / `limit` today, in characters. A channel limited in bytes (email) must send its unit and the face must render it. | face words | same check, MISSED 3 | UNASSIGNED; with the first byte-limited producer |
-

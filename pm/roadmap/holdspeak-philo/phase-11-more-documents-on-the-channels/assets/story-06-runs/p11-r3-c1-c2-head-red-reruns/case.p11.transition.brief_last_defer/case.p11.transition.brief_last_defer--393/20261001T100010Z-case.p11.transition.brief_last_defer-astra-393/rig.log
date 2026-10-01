@@ -1,0 +1,10 @@
+PASS: live
+BRAIN: astra
+SOURCE: abb8a94e50b2d3634b30bd4a8091c4bc7ef31c7b dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11-slack.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:56927 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v9jey0t9/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p11
+VERDICT: fail terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/r3-r4-head-serial-before-root-scroll-case.p11.transition.brief_last_defer/case.p11.transition.brief_last_defer--393/20261001T100010Z-case.p11.transition.brief_last_defer-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/r3-r4-head-serial-before-root-scroll-case.p11.transition.brief_last_defer/case.p11.transition.brief_last_defer--393/20261001T100010Z-case.p11.transition.brief_last_defer-astra-393/after.png']
+NOTE: predicate: all_of part readable_text: the text scope is outside the viewport: {'width': 393, 'height': 852}
+NOTE: a nonzero diff with the wrong result is a finding, not a pass (changed: ['document_text_len', 'document_text_sha256', 'focus_label', 'rect', 'text']).

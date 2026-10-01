@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 11
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** PHILO-11-01, PHILO-11-02, PHILO-11-05
 - **Unblocks:** PHILO-11-07
 - **Owner:** Astra's lane (Luna, xhigh); Muad'Dib checks
@@ -21,7 +21,7 @@ The atlas has Send cases for the update only (`docs/internal/philo/graph/atlas-p
 
 ## Acceptance criteria
 
-- [ ] Each new face case fails on main and passes on the phase head; each `.op` reads the hub's record and receipt.
+- [x] Every baseline-sensitive new face case fails on pre-Phase-11 main (`332d9158`) and passes on the phase head; each `.op` reads the hub's record and kernel receipt. **Control exception:** C4, `case.p11.meeting_summary.meetings_record.no_summary`, is expected to pass on both baseline and head at both widths because neither revision has a summary or SEND well in that state.
 - [x] The Phase 7, 8, 9 and 10 atlas cases still pass.
 
 ## Effort (not a promise)
@@ -34,7 +34,8 @@ PROVISIONAL: about 1 engineering day.
 
 ## Notes
 
-- 2026-10-01 — Part 2 walks and the full suite are complete; the story remains in progress because the literal baseline-red condition has one valid control exception. All 101 Phase 11 head rows pass (45 face rows at each width plus 11 `.op` rows). The 90 face rows were run against pre-Phase-11 `332d9158`: 88 fail at the intended missing capability, while the two C4 `no_summary` control rows pass at both widths because the product already has no summary and no SEND well in that state. The same two C4 rows pass on head. Their observations are retained in `assets/story-06-runs/p11-r9-c4-control-final/`; the baseline red rows are in `p11-r9-red-332d9158/`, and the head matrix is `p11-r10-head-final/`. No guard or acceptance text was changed to conceal this. The first acceptance criterion stays unchecked pending an owner ruling on the C4 control exception.
+- 2026-10-01 — Round 3 pays Muad'Dib's adopted built counsel. C4 is a control exception, recorded beside and included in the checked first acceptance criterion. The 20 PREPARED rows are explicitly presence checks: they prove `PREPARED` and `BY YOU` plus the hub read, not that the optional click opens Send. T3 asserts the Chair's rendered `ALL 1 HANDLED` branch and the same receipt row after Ack/Defer. The affected 24 case×width rows per revision were rerun one case per invocation: all 24 pass on the head and all 24 fail on `332d9158`; retained in `assets/story-06-runs/p11-r12-head-final/` and `p11-r12-baseline-332d9158/`. The complete head matrix remains 101/101; the baseline face matrix remains 88/90 red, with the two C4 controls passing on both revisions. The Phase 7–10 matrix remains 149/149. The 43/45 applicable Phase 11 face triggers are marked `optional: true`; `atlas.schema.json` documents optional setup and trigger skips. See the Round 3 lane record and `evidence-story-06.md`. The full suite is not rerun in this round; Muad'Dib will run it next on this head.
+- 2026-10-01 — Part 2 walks and the full suite were complete at that point; C4's control ruling had not yet arrived. All 101 Phase 11 head rows passed (45 face rows at each width plus 11 `.op` rows). The 90 face rows were run against pre-Phase-11 `332d9158`: 88 failed at the intended missing capability, while the two C4 `no_summary` control rows passed at both widths because the product already had no summary and no SEND well in that state. The same two C4 rows passed on head. Their observations are retained in `assets/story-06-runs/p11-r9-c4-control-final/`; the baseline red rows are in `p11-r9-red-332d9158/`, and the head matrix is `p11-r10-head-final/`.
 - The full Phase 7–10 atlas run has 149/149 passing case×width rows, including the four Phase 9 steward `.op` cases walked on merged head `5e82b65d`. The final green matrix with full captures is `assets/story-06-runs/regressions-r7-head-final/`. Earlier blocked attempts, serial retries and the P8 quiet-host blocked→pass pair are retained in the neighboring `regressions-r5-post-merge-*`, `regressions-r6-*` and `regressions-r7-p8-current-*` directories. These disclose the timing flakes; no guard was weakened.
 - The post-merge full suite used Python 3.13, `-n auto`, isolated HOME and basetemp, and excluded `tests/e2e/test_metal.py`: 28 failed, 13,524 passed, 116 skipped, 4 xfailed, and 119 errors. Exact serial reruns passed 146 of the 147 red node ids; the remaining Mermaid renderer node skipped in both serial attempts because the environment lacks a usable renderer. See `assets/story-06-proof/logs/full-r2-classification.json` and its linked logs. The post-merge Phase 7–11 graph and phase-atlas selection passed 357 tests: `assets/story-06-proof/logs/atlas-tests-r3-post-merge.log`.
 - 2026-09-30 — dispatched in two parts by Muad'Dib. Part 1 covers the seven new document-kind `.op` file lifecycles and the four recorded Slack outcomes. Story 05 merged at `22c0acc4`; Part 2 added the real-face cases below. The retained walks and suite are now complete; the first acceptance criterion remains open only for the C4 baseline control recorded above.

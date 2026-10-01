@@ -2984,6 +2984,23 @@
           "selector": ".chair [data-seat=brief] [data-testid=prepared-row]",
           "why": "wait for the producer's prepared row",
           "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=prepared-open]",
+          "block": "end",
+          "why": "seat the expanded prepared preview above the fixed footer before reopening it",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".chair [data-seat=brief] [data-testid=prepared-row]",
+          "why": "close the initially expanded prepared row so the trigger reopens it",
+          "optional": true
         }
       ],
       "trigger": {
@@ -3034,7 +3051,7 @@
             "path": "/api/channels/sends?document_ref=monday_brief:{brief_id}"
           }
         ],
-        "words": "the real producer prepares monday_brief:{brief_id}; the face shows PREPARED BY YOU and the durable prepared row"
+        "words": "Presence check only: the real producer prepares monday_brief:{brief_id}; the face shows PREPARED BY YOU and the durable prepared row. This case does not prove that the optional click opened Send at either viewport width."
       },
       "completion_bound_s": 30,
       "viewports": [
@@ -3637,6 +3654,23 @@
           "selector": ".desk-window [data-seat=brief] [data-testid=prepared-row]",
           "why": "wait for the producer's prepared row",
           "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=prepared-open]",
+          "block": "end",
+          "why": "seat the expanded prepared preview above the fixed footer before reopening it",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=brief] [data-testid=prepared-row]",
+          "why": "close the initially expanded prepared row so the trigger reopens it",
+          "optional": true
         }
       ],
       "trigger": {
@@ -3687,7 +3721,7 @@
             "path": "/api/channels/sends?document_ref=monday_brief:{brief_id}"
           }
         ],
-        "words": "the real producer prepares monday_brief:{brief_id}; the face shows PREPARED BY YOU and the durable prepared row"
+        "words": "Presence check only: the real producer prepares monday_brief:{brief_id}; the face shows PREPARED BY YOU and the durable prepared row. This case does not prove that the optional click opened Send at either viewport width."
       },
       "completion_bound_s": 30,
       "viewports": [
@@ -4263,6 +4297,23 @@
           "selector": ".desk-window [data-seat=desk-decision] [data-testid=prepared-row]",
           "why": "wait for the prepared decision row",
           "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=prepared-open]",
+          "block": "end",
+          "why": "seat the expanded prepared preview above the fixed footer before reopening it",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=desk-decision] [data-testid=prepared-row]",
+          "why": "close the initially expanded prepared row so the trigger reopens it",
+          "optional": true
         }
       ],
       "trigger": {
@@ -4313,7 +4364,7 @@
             "path": "/api/channels/sends?document_ref=desk_decision:{decision_id}"
           }
         ],
-        "words": "the real producer prepares desk_decision:{decision_id}; the face shows PREPARED BY YOU and the durable prepared row"
+        "words": "Presence check only: the real producer prepares desk_decision:{decision_id}; the face shows PREPARED BY YOU and the durable prepared row. This case does not prove that the optional click opened Send at either viewport width."
       },
       "completion_bound_s": 30,
       "viewports": [
@@ -5087,6 +5138,23 @@
           "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
           "why": "wait for the prepared record row",
           "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=prepared-open]",
+          "block": "end",
+          "why": "seat the expanded prepared preview above the fixed footer before reopening it",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+          "why": "close the initially expanded prepared row so the trigger reopens it",
+          "optional": true
         }
       ],
       "trigger": {
@@ -5137,7 +5205,7 @@
             "path": "/api/channels/sends?document_ref=decision_record:{record_id}"
           }
         ],
-        "words": "the real producer prepares decision_record:{record_id}; the face shows PREPARED BY YOU and the durable prepared row"
+        "words": "Presence check only: the real producer prepares decision_record:{record_id}; the face shows PREPARED BY YOU and the durable prepared row. This case does not prove that the optional click opened Send at either viewport width."
       },
       "completion_bound_s": 30,
       "viewports": [
@@ -6502,6 +6570,23 @@
           "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=prepared-row]",
           "why": "wait for the prepared record row",
           "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=prepared-open]",
+          "block": "end",
+          "why": "seat the expanded prepared preview above the fixed footer before reopening it",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=prepared-row]",
+          "why": "close the initially expanded prepared row so the trigger reopens it",
+          "optional": true
         }
       ],
       "trigger": {
@@ -6552,7 +6637,7 @@
             "path": "/api/channels/sends?document_ref=decision_record:{record_id}"
           }
         ],
-        "words": "the real producer prepares decision_record:{record_id}; the face shows PREPARED BY YOU and the durable prepared row"
+        "words": "Presence check only: the real producer prepares decision_record:{record_id}; the face shows PREPARED BY YOU and the durable prepared row. This case does not prove that the optional click opened Send at either viewport width."
       },
       "completion_bound_s": 30,
       "viewports": [

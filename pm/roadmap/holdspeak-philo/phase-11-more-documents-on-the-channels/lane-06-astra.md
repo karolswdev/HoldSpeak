@@ -1,6 +1,8 @@
-# PHILO-11-06 — atlas part 1
+# PHILO-11-06 — atlas cases
 
-**DRAFT — UNCHECKED, awaiting Muad'Dib. Story 06 remains in progress.**
+**Current state: story 06 is DONE with evidence. Round 3 conditions are paid; Muad'Dib runs the full suite next on this head.**
+
+## Part 1 progress record — 2026-09-30 to 2026-10-01
 
 LANE: PHILO-11-06, story 06 part 1. Worktree `/Users/karol/dev/tools/wt-philo-11-06`; branch `feat/philo-11-06`; dispatched base `8a6b807d6682d9446d9b75216bbd3844d203cdcc`. The pre-Phase-11 comparison is `332d9158`. Part 2 follows a new dispatch after story 05 merges. PR: [#712](https://github.com/karolswdev/HoldSpeak/pull/712), draft to `main`, titled **PHILO-11-06 — the atlas cases (part 1: .op and Slack)**. Implementation/proof commit: `719a022409fc5c361b62c39c7f7d915e3de978b1`, pushed to `origin/feat/philo-11-06`; Delivery Workbench gate passed 7/7 with `shipped_count=0`.
 
@@ -51,7 +53,33 @@ UNKNOWN: the new Phase 11 faces, real Slack delivery, native keyring custody, an
 
 Tuesday: these operation cases protect the owner's document-send loop; the usable new face loop still waits for story 05 and part 2.
 
-## Part 2 lane report — 2026-10-01
+## Part 2 lane report — Round 3, 2026-10-01
+
+LANE: PHILO-11-06, Part 2; worktree `/Users/karol/dev/tools/wt-philo-11-06`; branch `feat/philo-11-06`; PR #712 is ready for review. Muad'Dib's adopted built counsel is recorded verbatim in [story-06-part2-built-muaddib-r1.md](checks/story-06-part2-built-muaddib-r1.md).
+
+OUTCOME: C1–C3 are paid. C4 is the explicit control exception to baseline-red, recorded beside the checked first acceptance criterion. Story 06 is DONE with paired evidence. No face source was edited. This round did not run the full suite; Muad'Dib runs it next on this head.
+
+PROOF:
+
+- The counsel-directed affected matrix contains 24 rows on the head and 24 on pre-Phase-11 `332d9158`: the ten PREPARED cases at 1440 and 393 (20 rows), plus Ack and Defer T3 at both widths (4 rows). Every head row passes and every baseline row fails for the missing face behavior. The observations, screenshots, `rig.log` files and per-case TSVs are retained in [head runs](assets/story-06-runs/p11-r12-head-final/) and [baseline runs](assets/story-06-runs/p11-r12-baseline-332d9158/). Each walk is one case per invocation.
+- C1 uses the counsel's allowed honest fallback: all 20 PREPARED rows are labeled presence checks. They assert `PREPARED`, `BY YOU` and the durable hub read; they do not claim the optional click opened Send. Astra read the [Chair PREPARED 393 shot](assets/story-06-runs/p11-r12-head-final/case.p11.monday_brief.chair.prepared/case.p11.monday_brief.chair.prepared--393/20261001T090907Z-case.p11.monday_brief.chair.prepared-astra-393/after.png).
+- C2 requires the rendered Chair branch text `ALL 1 HANDLED` after Ack/Defer and retains the same receipt row-id check. Astra read the [T3 Ack 393 shot](assets/story-06-runs/p11-r12-head-final/case.p11.transition.brief_last_ack/case.p11.transition.brief_last_ack--393/20261001T100315Z-case.p11.transition.brief_last_ack-astra-393/after.png): the branch text, POSTED receipt and send-history row are visible together. Defer has its paired 1440/393 walks.
+- C3 is corrected: the Phase 7–10 matrix is 149/149; the other source-revision group is 144 cases, with the `case.p8.delete_twice.both_gone` 1440 row identified as the `5e82b65d` retry. Of the 45 Phase 11 face triggers, 43 declare `optional: true`; the schema now describes optional skips on both setup and trigger steps. The counsel's two face findings are in [the backlog](../../../../holdspeak/BACKLOG.md) with their observed shot paths.
+- The complete Phase 11 head matrix remains 101/101. Against baseline, 88 of 90 face rows fail; the two C4 no-summary controls pass at both widths on both revisions. Their explicit control observations remain in `p11-r9-c4-control-final/` and `p11-r10-head-final/`. No expected result or guard was weakened.
+- The focused Phase 7–11 atlas, phase-atlas and count selection collected and passed 401 tests. The final capture is linked from [story evidence](evidence-story-06.md); the test output is in `assets/story-06-proof/logs/r3-r5-atlas-tests.log`, and the retained matrix/count audit is `assets/story-06-proof/logs/r3-r5-matrix-audit-final.log`. The previous full-suite result and its classification remain historical in the Round 2 report above. No full-suite command ran in Round 3.
+
+LEDGER:
+
+- **(b), T3 mobile observer geometry, fixed:** the first Ack/Defer 393 walks and serial reruns moved the Chair branch rectangle above the viewport because the trigger scrolled only the send-history row. The trigger now scrolls the whole Chair branch into view. Both T3 cases pass at both widths on the head, still assert `ALL 1 HANDLED` and the same receipt, and fail on baseline. The before-fix runs are retained in `p11-r3-c1-c2-head-initial/` and `p11-r3-c1-c2-head-red-reruns/`; final walks are in the `p11-r12-*` matrices.
+- **(a), verification command recipes, corrected:** the first evidence capture did not split the space-separated test list under zsh, so pytest collected zero tests and exited 4. The first matrix-audit script looked only for per-case TSVs, while the C4 and full-matrix runs use a root `runs.tsv`; its assertion stopped before the count checks. Both command errors are retained in `evidence-story-06.md` and `r3-r5-matrix-audit-path-error.log`. The corrected capture collected 401 and passed all 401 in 5.87 seconds; the corrected matrix audit reports the 24-row head/baseline outcomes, C4 controls, 43/45 optional triggers and 101-row head matrix. No product test was red from either recipe.
+- **C1 scope limit, explicit:** the cases establish that PREPARED/BY YOU is visible and the hub holds the document. They do not establish the effect of the optional row click. This follows the counsel's allowed relabeling and is stated in each case's words; no stronger click claim is made.
+- **Full-suite ownership:** Round 2's full-suite reds and serial classifications remain documented above. Round 3 is intentionally scoped to the counsel's affected walks and the atlas/count selection; Muad'Dib owns the next full-suite run on this head.
+
+AMENDMENTS: applied Muad'Dib's C4 control ruling and checked the first acceptance criterion with the exception beside it. Updated the schema description, corrected the 144/145 record, stated the 43/45 optional trigger count, and added the two requested face observations to BACKLOG.md. Story 06 is marked done only with `evidence-story-06.md` in the same gated commit.
+
+UNKNOWN: the PREPARED cases do not prove that their optional click opens Send. The actual Slack network delivery is outside this recording-edge atlas. The full suite is not run in this round; Muad'Dib will run it next on the committed head.
+
+## Part 2 lane report — Round 2 (historical; superseded below) — 2026-10-01
 
 LANE: PHILO-11-06, Part 2; worktree `/Users/karol/dev/tools/wt-philo-11-06`; branch `feat/philo-11-06`; PR #712 is ready for review. Story 05 is merged. The branch merged `origin/main` at `27d8bf1a` as `5e82b65dd3f103c0f984a199bdfcb765d138ce08`; the 51-path merge diff brought no `web/src` or Phase 11 atlas changes (`assets/story-06-proof/logs/merge-product-diff.json`).
 
@@ -60,7 +88,7 @@ OUTCOME: the requested face, transition, baseline, regression and full-suite wal
 PROOF:
 
 - The Phase 11 head matrix has 101/101 passing rows: 45 face rows at each viewport and 11 `.op` rows. The manifest names each face seat and transition in [story 06](story-06-the-atlas-cases.md#notes); the full run observations and screenshots are in `assets/story-06-runs/p11-r10-head-final/`. The corresponding pre-Phase-11 matrix is `p11-r9-red-332d9158/`; it has 88 failing face rows out of 90. C4’s two baseline passes are retained in `p11-r9-c4-control-final/`; its two head passes are in `p11-r10-head-final/`. The same no-summary/no-well behavior is correct on both revisions, so making C4 red on baseline would make the case assert a false difference.
-- The full Phase 7–10 case×width matrix passes 149/149 in `assets/story-06-runs/regressions-r7-head-final/`, including all four Phase 9 steward operation cases walked on merge head `5e82b65d`. The other 145 cases were run at product revision `5ae061c2`; the merge from `27d8bf1a` changed no product or Phase 11 atlas files. All attempts and observations are retained in the adjacent `regressions-r5-post-merge-*`, `regressions-r6-*` and `regressions-r7-p8-current-*` directories. P8’s current-head 1440 retry first hit the product Undo guard with less than two seconds left, then passed on the quiet retry. No timeout or guard was loosened.
+- The full Phase 7–10 case×width matrix passes 149/149 in `assets/story-06-runs/regressions-r7-head-final/`, including all four Phase 9 steward operation cases walked on merge head `5e82b65d`. The other 144 cases were run at product revision `5ae061c2`; the merge from `27d8bf1a` changed no product or Phase 11 atlas files. `case.p8.delete_twice.both_gone` at 1440 is the 5e82 retry that completes the count. All attempts and observations are retained in the adjacent `regressions-r5-post-merge-*`, `regressions-r6-*` and `regressions-r7-p8-current-*` directories. P8’s current-head 1440 retry first hit the product Undo guard with less than two seconds left, then passed on the quiet retry. No timeout or guard was loosened.
 - The post-merge Phase 7–11 graph and phase-atlas selection passed 357 tests: `assets/story-06-proof/logs/atlas-tests-r3-post-merge.log`.
 - The required quiet full suite used Python 3.13, `-n auto`, isolated HOME and basetemp, and excluded `tests/e2e/test_metal.py`. It ended `28 failed, 13,524 passed, 116 skipped, 4 xfailed, 119 errors` (exit 1). The exact 147 red nodes were rerun serially: 146 passed and one Mermaid renderer test skipped. The isolated Mermaid rerun skipped again because the renderer is unavailable in this environment. Logs, node list and classification are in `assets/story-06-proof/logs/full-r2-*`.
 - Part 1’s Muad'Dib r2 RATIFY remains recorded in `checks/story-06-part1-built-muaddib-r2.md`; C1–C3 remain paid. No real Slack send occurred, and this lane touched no `web/src` face file.

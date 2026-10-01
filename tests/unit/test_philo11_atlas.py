@@ -176,6 +176,8 @@ def test_meeting_form_faces_observe_the_rendered_send_state_in_each_seat() -> No
         if case["id"].endswith(".prepared"):
             assert any(p.get("kind") == "readable_text" and p.get("value") == "PREPARED"
                        for p in predicates), case["id"]
+            assert any(p.get("kind") == "readable_text" and p.get("value") == "BY YOU"
+                       for p in predicates), case["id"]
         else:
             assert any(p.get("kind") == "protocol_status" for p in predicates), case["id"]
 
@@ -198,6 +200,72 @@ def test_meeting_form_faces_observe_the_rendered_send_state_in_each_seat() -> No
                for p in no_digest_predicates)
     assert any(p.get("kind") == "text_absent" and p.get("value") == "DIGEST → SLACK"
                for p in no_digest_predicates)
+
+
+def test_prepared_face_cases_are_explicit_presence_checks() -> None:
+    """Prepared faces are presence checks; they do not prove the optional click."""
+    cases = [
+        case
+        for path in (ATLAS, SLACK)
+        for case in json.loads(path.read_text())["cases"]
+        if case["id"].endswith(".prepared") and case.get("viewports")
+    ]
+    assert len(cases) == 10
+
+    for case in cases:
+        assert case["trigger"].get("optional") is True, case["id"]
+        observed = case["expected"]["observe_at"]
+        assert observed.endswith("[data-testid=prepared-row]"), case["id"]
+        predicates = case["expected"]["predicate"]["predicates"]
+        readable_text_values = [
+            predicate.get("value")
+            for predicate in predicates
+            if predicate.get("kind") == "readable_text"
+        ]
+        assert readable_text_values == ["PREPARED", "BY YOU"], case["id"]
+        assert any(predicate.get("kind") == "protocol_reads" for predicate in predicates), case["id"]
+        words = case["expected"].get("words", "").lower()
+        assert "presence check" in words, case["id"]
+        assert "does not prove" in words, case["id"]
+
+
+def test_last_brief_item_transitions_assert_the_chair_branch() -> None:
+    data = json.loads(SLACK.read_text())
+    cases = {case["id"]: case for case in data["cases"]}
+    for case_id in (
+        "case.p11.transition.brief_last_ack",
+        "case.p11.transition.brief_last_defer",
+    ):
+        case = cases[case_id]
+        assert case["expected"]["observe_at"].startswith(
+            ".chair [data-testid=arrival-brief]"
+        ), case_id
+        predicates = case["expected"]["predicate"]["predicates"]
+        assert any(
+            predicate.get("kind") == "text_contains"
+            and predicate.get("value") == "ALL 1 HANDLED"
+            for predicate in predicates
+        ) or any(
+            predicate.get("kind") == "text_absent"
+            and predicate.get("value") == "One brief item for Chair transition"
+            for predicate in predicates
+        ), case_id
+
+
+def test_optional_schema_describes_setup_and_trigger_skip_behavior() -> None:
+    schema = json.loads(general.SCHEMA_PATH.read_text())
+    descriptions = [
+        branch["properties"]["optional"].get("description", "")
+        for branch in schema["$defs"]["step"]["oneOf"]
+        if "optional" in branch.get("properties", {})
+    ]
+    assert descriptions
+    assert all(
+        "setup" in description.lower()
+        and "trigger" in description.lower()
+        and "skip" in description.lower()
+        for description in descriptions
+    ), descriptions
 
 
 def test_slack_face_outcomes_observe_the_post_click_rendered_send_receipt() -> None:
@@ -442,7 +510,9 @@ def test_last_brief_item_transitions_keep_the_same_send_receipt() -> None:
         "case.p11.transition.brief_last_defer",
     ):
         case = next(c for c in data["cases"] if c["id"] == case_id)
-        assert case["expected"]["observe_at"].endswith("[data-testid=send-history]"), case_id
+        assert case["expected"]["observe_at"].startswith(
+            ".chair [data-testid=arrival-brief]"
+        ), case_id
         predicates = case["expected"]["predicate"]["predicates"]
         assert any(p.get("kind") == "readable_text" and p.get("value") == "POSTED"
                    for p in predicates), case_id
@@ -452,6 +522,11 @@ def test_last_brief_item_transitions_keep_the_same_send_receipt() -> None:
                    and p.get("match", {}).get("document_ref") == "monday_brief:{brief_id}"
                    for p in predicates), case_id
         assert case["trigger"]["then"][-1].get("optional") is True, case_id
+        assert case["trigger"]["then"][-1].get("action") == "scroll_into_view", case_id
+        assert case["trigger"]["then"][-1].get("selector") == (
+            ".chair [data-testid=arrival-brief]"
+        ), case_id
+        assert case["trigger"]["then"][-1].get("block") == "center", case_id
         sent = next(step for step in case["setup"]
                     if step.get("kind") == "api" and step.get("path") == "/api/channels/sends")
         assert sent["capture_as"] == "send_id" and sent["capture_path"] == "send.id", case_id
