@@ -1,0 +1,7 @@
+delivery | Delivery | ▤ DELIVERY HUB↻ INTEGRATION Companion repo owner/repo ✕ NO LIVE SOURCE SOURCES · WORK · READ 15:11:56 | 
+panes | None |  | 
+schedule | Schedule recording | Schedule recording RECORDING STARTS ON ITS OWN AT THE SET TIME Title Mode ↻ Once Recurring When Duration ↻ 15 min 30 min 60 min 90 min 2 hours Cancel Schedule | 
+this-device-chip | Data boundaries | Data boundaries All data stays on this device Current scope this device Open to the network no · Token: not set Enabled destinations None MEETING SUMMARY OFF Destination Summary route unavailable Operation Generate meeting summary Where it goes unavailable Data Meeting transcript Allowed by Assigned | 
+menubar-count | None |  | TimeoutError('Locator.tap: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(".desk-menubar [class*=traffic], .desk-menubar [class*=attention]").first\n')
+places | Change places | Change places Rainy City All places Favorites View on Floor Hide the menus ENVIRONMENTS RAINY CITY A cinematic night storm above a lamplit city street. IN USE LANTERN GARDEN A rain-dark flagstone path lit through a fine garden drizzle. CHOOSE AFTER-HOURS RADIO Walnut, warm meters, and rain over a sl | 
+record-orb | Live meeting | Live meeting ⚙︎ Ready to record Start meeting Link · connected TRANSCRIPT ● Start a meeting to begin READY | 

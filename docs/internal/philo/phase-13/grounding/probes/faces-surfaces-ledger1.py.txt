@@ -1,0 +1,25 @@
+import sys, json
+sys.path.insert(0, '.')
+from fslib import *
+from walk import enter_desk, press
+out = {}
+for w in (393, 1440):
+    with browser(w) as page:
+        enter_desk(page, 'pop')
+        sec = page.locator('.surface-section', has_text='MEETINGS').first
+        sec.scroll_into_view_if_needed()
+        # bring the summary preview to the middle of the screen
+        summ = sec.get_by_text('SUMMARY', exact=True).first
+        summ.evaluate("e => e.scrollIntoView({block: 'center'})")
+        settle(page, 500)
+        out[f'preview-{w}'] = page.evaluate("""() => {
+          const bar = document.querySelector('.arrival-capture-bar'); const b = bar && bar.getBoundingClientRect();
+          const sec = [...document.querySelectorAll('.surface-section')].find(s => s.innerText.startsWith('MEETINGS'));
+          const covered = []; let probed = 0;
+          for (const e of sec.querySelectorAll('button, p, span, div')) { if (e.children.length && e.tagName !== 'BUTTON') continue; const r = e.getBoundingClientRect(); if (!r.width || r.bottom < 0 || r.top > innerHeight) continue;
+            probed++; const cx = r.left + r.width/2, cy = r.top + r.height/2; const h = document.elementFromPoint(cx, cy);
+            if (h && !e.contains(h) && !h.contains(e) && bar && bar.contains(h)) covered.push((e.innerText||'').trim().slice(0,40) + ' @' + Math.round(cy)); }
+          return {bar: b && [Math.round(b.top), Math.round(b.bottom), Math.round(b.left), Math.round(b.right)], probed, covered: covered.slice(0, 20)}; }""")
+        out[f'shot-{w}'] = shot(page, f'60-ledger-chair-meeting-preview-pop-{w}')
+print(json.dumps(out, indent=1))
+dump('ledger-chair-preview', out)

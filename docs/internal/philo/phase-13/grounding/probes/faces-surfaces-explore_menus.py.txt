@@ -1,0 +1,20 @@
+import sys, json, time
+sys.path.insert(0, '.')
+from fslib import *
+w = int(sys.argv[1]); which = sys.argv[2]
+with browser(w) as page:
+    goto(page, which)
+    page.locator('.btn').first.wait_for(timeout=30000); settle(page, 500)
+    if page.get_by_role('button', name='Continue later', exact=True).count():
+        page.get_by_role('button', name='Continue later', exact=True).click(); settle(page, 1200)
+    for m in ['Desk','Object','Go','Window']:
+        page.locator('nav.desk-verbbar').get_by_text(m, exact=True).first.click()
+        settle(page, 300)
+        items = page.evaluate("""() => [...document.querySelectorAll('[role=menu] [role^=menuitem]')].map(e => (e.getAttribute('aria-disabled')==='true'?'(ghost) ':'') + e.innerText.replace(/\\s+/g,' ').trim())""")
+        print(m, json.dumps(items))
+        print(shot(page, f'02-menu-{m.lower()}-{which}-{w}'))
+        page.keyboard.press('Escape'); settle(page, 200)
+    page.keyboard.press('Meta+k'); settle(page, 600)
+    print('PALETTE', page.evaluate("() => document.body.innerText").split('Search')[-1][:2500])
+    print(shot(page, f'02-palette-{which}-{w}'))
+    print('errors', page._fs_errors[:8])

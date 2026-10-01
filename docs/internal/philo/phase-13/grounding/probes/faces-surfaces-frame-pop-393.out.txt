@@ -1,0 +1,93 @@
+arrive_ms 1897
+menubar ["HoldSpeak Go \u2302 THIS DEVICE", "Go", "5 Search 03:21 PM"]
+menubar_overflow {"h": 28, "sw": 396, "cw": 393, "kids": ["03:21 PM"]}
+dock {"top": 727, "h": 125, "share": 15}
+meetings_open_rect [0, 48, 393, 631, "Meetings"]
+shot "docs/internal/philo/phase-13/grounding/shots/surfaces/41-frame-meetings-open-pop-393.png"
+moved_rect [0, 48, 393, 631, "Meetings"]
+moved false
+resized_rect "no grip found"
+shot "docs/internal/philo/phase-13/grounding/shots/surfaces/42-frame-meetings-moved-resized-pop-393.png"
+windows_after_second [["Meetings", true, 0, 48, 393, 631, "42", "flex"], ["Settings", true, 0, 48, 393, 631, "43", "flex"]]
+shot "docs/internal/philo/phase-13/grounding/shots/surfaces/43-frame-two-windows-pop-393.png"
+meetings_visible_point null
+raise "Meetings has no visible point (fully covered)"
+max "no maximize gadget visible at this width"
+after_min [["Meetings", true, 0, 48, 393, 631, "42", "flex"]]
+dock_chips ["\u2022", "5"]
+shot "docs/internal/philo/phase-13/grounding/shots/surfaces/44-frame-minimized-pop-393.png"
+memory_before_reload [["Meetings", true, 0, 48, 393, 631, "42", "flex"]]
+memory_after_reload [["Meetings", false, 0, 48, 393, 631, "42", "flex"], ["Settings", true, 0, 48, 393, 631, "43", "flex"]]
+shot "docs/internal/philo/phase-13/grounding/shots/surfaces/45-frame-after-reload-pop-393.png"
+expose_door_393 1
+dock_buttons_393 ["Intelligence, brief ready", "Speak", "Meetings", "Agents", "Settings", "Floor", "Desk memory, 5 need attention", "Delivery", "Panes", "\u25cc\nHide the menus", "Change places", "Record a meeting", "Overview", "Reset layout"]
+hide_menus {"menubar": 28, "dock": 97}
+shot "docs/internal/philo/phase-13/grounding/shots/surfaces/46-frame-menus-hidden-pop-393.png"
+palette_send ["\u2197 Slack NOT CONFIGURED", "\u2197 Telegram control NOT CONFIGURED", "\u25b8 Overview VERB \u2303\u2191", "\u25b8 Close window VERB \u2318W", "\u2301 Speak PROGRAM \u23181", "\u2726 Ask AI PROGRAM \u2318I", "\u25a3 Meetings PROGRAM \u23182", "\u25a7 Change places PROGRAM \u2318\u21e7P"]
+shot "docs/internal/philo/phase-13/grounding/shots/surfaces/47-frame-palette-send-pop-393.png"
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/fs13/frame.py", line 231, in <module>
+    main()
+    ~~~~^^
+  File "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/fs13/frame.py", line 219, in main
+    press(page, sb)
+    ~~~~~^^^^^^^^^^
+  File "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/fs13/walk.py", line 105, in press
+    loc.tap()
+    ~~~~~~~^^
+  File "/Users/karol/dev/tools/wt-philo-13-ground/.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py", line 17805, in tap
+    self._sync(
+    ~~~~~~~~~~^
+        self._impl_obj.tap(
+        ^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        )
+        ^
+    )
+    ^
+  File "/Users/karol/dev/tools/wt-philo-13-ground/.venv/lib/python3.14/site-packages/playwright/_impl/_sync_base.py", line 115, in _sync
+    return task.result()
+           ~~~~~~~~~~~^^
+  File "/Users/karol/dev/tools/wt-philo-13-ground/.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py", line 639, in tap
+    return await self._frame.tap(
+           ^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/Users/karol/dev/tools/wt-philo-13-ground/.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py", line 596, in tap
+    await self._channel.send("tap", self._timeout, locals_to_params(locals()))
+  File "/Users/karol/dev/tools/wt-philo-13-ground/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py", line 69, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/Users/karol/dev/tools/wt-philo-13-ground/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py", line 559, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.TimeoutError: Locator.tap: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator(".desk-menubar").get_by_text("Search").first
+    - locator resolved to <button type="button" aria-expanded="true" aria-controls="desk-tool-shelf" aria-keyshortcuts="Control+K Meta+K" class="btn--chrome desk-chip desk-tools-launch">…</button>
+  - attempting tap action
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <aside role="region" id="desk-tool-shelf" class="desk-tool-shelf" aria-label="Tools and Desk search">…</aside> intercepts pointer events
+    - retrying tap action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <aside role="region" id="desk-tool-shelf" class="desk-tool-shelf" aria-label="Tools and Desk search">…</aside> intercepts pointer events
+    - retrying tap action
+      - waiting 100ms
+    58 × waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <aside role="region" id="desk-tool-shelf" class="desk-tool-shelf" aria-label="Tools and Desk search">…</aside> intercepts pointer events
+     - retrying tap action
+       - waiting 500ms
+

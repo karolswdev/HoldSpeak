@@ -1,0 +1,231 @@
+"""Phase 13 faces-surfaces: the frame walk (window manager, Expose, Switcher,
+SnapGhost, Get Info, palette verbs, Hide the menus, memory across reload).
+
+usage: frame.py <pop|cold> <1440|393>
+"""
+from __future__ import annotations
+
+import json
+import sys
+import time
+
+sys.path.insert(0, __import__("os").path.dirname(__file__))
+from fslib import browser, dump, goto, settle, shot  # noqa: E402
+from walk import enter_desk, press, try_open  # noqa: E402
+
+LOG: list = []
+
+
+def note(k, v):
+    LOG.append({k: v})
+    print(k, json.dumps(v, default=str)[:600], flush=True)
+
+
+TAG_JS = """() => { const ws = [...document.querySelectorAll('.desk-window')].filter(e => getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 0);
+  ws.forEach(e => e.removeAttribute('data-fsfront')); if (!ws.length) return null;
+  const top = ws.reduce((a, b) => (parseInt(getComputedStyle(b).zIndex) || 0) >= (parseInt(getComputedStyle(a).zIndex) || 0) ? b : a);
+  top.setAttribute('data-fsfront', 'one'); return top.getAttribute('aria-label'); }"""
+
+
+def front(page):
+    return page.evaluate(TAG_JS)
+
+
+def rect(page, sel='[data-fsfront=one]'):
+    front(page)
+    return page.evaluate("""(s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect();
+        return [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height), e.getAttribute('aria-label')]; }""", sel)
+
+
+def windows(page):
+    return page.evaluate("""() => [...document.querySelectorAll('.desk-window')].map(e => { const r = e.getBoundingClientRect();
+        return [e.getAttribute('aria-label'), e.classList.contains('is-front'), Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height), getComputedStyle(e).zIndex, getComputedStyle(e).display]; })""")
+
+
+def touch_drag(page, x0, y0, x1, y1, steps=8):
+    cdp = page.context.new_cdp_session(page)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x0, "y": y0}]})
+    for i in range(1, steps + 1):
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x0 + (x1 - x0) * i / steps, "y": y0 + (y1 - y0) * i / steps}]})
+        page.wait_for_timeout(16)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+
+
+def long_press(page, x, y, ms=650):
+    cdp = page.context.new_cdp_session(page)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y}]})
+    page.wait_for_timeout(ms)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+
+
+def main():
+    which, width = sys.argv[1], int(sys.argv[2])
+    narrow = width < 600
+    tag = f"{which}-{width}"
+    n = [40]
+
+    def s(page, name):
+        n[0] += 1
+        p = shot(page, f"{n[0]:02d}-frame-{name}-{tag}")
+        note("shot", p)
+
+    with browser(width) as page:
+        note("arrive_ms", enter_desk(page, which))
+        # menubar at this width
+        note("menubar", page.evaluate("() => [...document.querySelectorAll('.desk-menubar > *, nav.desk-verbbar > *')].filter(e => e.getBoundingClientRect().width > 0).map(e => e.innerText.replace(/\\s+/g, ' ').trim()).filter(Boolean)"))
+        note("menubar_overflow", page.evaluate("() => { const m = document.querySelector('.desk-menubar'); const r = m.getBoundingClientRect(); return {h: Math.round(r.height), sw: m.scrollWidth, cw: m.clientWidth, kids: [...m.querySelectorAll('*')].filter(e => { const q = e.getBoundingClientRect(); return e.children.length === 0 && e.textContent.trim() && (q.right > innerWidth + 1 || q.top > r.bottom); }).map(e => e.textContent.trim().slice(0, 20)) }; }"))
+        note("dock", page.evaluate("() => { const d = document.querySelector('.desk-dock'); const r = d.getBoundingClientRect(); return {top: Math.round(r.top), h: Math.round(r.height), share: Math.round(100 * r.height / innerHeight)}; }"))
+        # 1. open Meetings
+        try_open(page, "go:Meetings", which)
+        page.wait_for_selector(".desk-window.is-front")
+        settle(page, 600)
+        r0 = rect(page)
+        note("meetings_open_rect", r0)
+        s(page, "meetings-open")
+        head = page.locator("[data-fsfront=one] .desk-window-handle").first
+        hb = head.bounding_box()
+        # 2. move
+        if narrow:
+            touch_drag(page, hb["x"] + 60, hb["y"] + hb["height"] / 2, hb["x"] + 60, hb["y"] + 200)
+        else:
+            page.mouse.move(hb["x"] + 200, hb["y"] + hb["height"] / 2)
+            page.mouse.down()
+            page.mouse.move(hb["x"] + 450, hb["y"] + 120, steps=10)
+            page.mouse.up()
+        settle(page, 400)
+        r1 = rect(page)
+        note("moved_rect", r1)
+        note("moved", r1 != r0)
+        # 3. resize via the grip
+        grip = page.locator("[data-fsfront=one] [class*=resize], [data-fsfront=one] [class*=grip]").last
+        if grip.count():
+            gb = grip.bounding_box()
+            if narrow:
+                touch_drag(page, gb["x"] + gb["width"] / 2, gb["y"] + gb["height"] / 2, gb["x"] - 60, gb["y"] - 120)
+            else:
+                page.mouse.move(gb["x"] + gb["width"] / 2, gb["y"] + gb["height"] / 2)
+                page.mouse.down()
+                page.mouse.move(gb["x"] + 200, gb["y"] + 100, steps=10)
+                page.mouse.up()
+            settle(page, 400)
+            note("resized_rect", rect(page))
+        else:
+            note("resized_rect", "no grip found")
+        s(page, "meetings-moved-resized")
+        # 4. second window, depth
+        try_open(page, "go:Settings", which)
+        page.wait_for_timeout(900)
+        note("windows_after_second", windows(page))
+        s(page, "two-windows")
+        # click the back window (Meetings) to raise it
+        pt = page.evaluate("""() => { const m = document.querySelector('.desk-window[aria-label=Meetings]'); if (!m) return null; const r = m.getBoundingClientRect();
+            for (let y = r.top + 5; y < r.bottom; y += 15) for (let x = r.left + 5; x < r.right; x += 25) { const h = document.elementFromPoint(x, y); if (h && m.contains(h) && !h.closest('button')) return [x, y]; } return null; }""")
+        note("meetings_visible_point", pt)
+        if pt:
+            if narrow:
+                page.touchscreen.tap(pt[0], pt[1])
+            else:
+                page.mouse.click(pt[0], pt[1])
+            settle(page, 300)
+            note("front_after_raise", front(page))
+            note("after_raise", windows(page))
+            s(page, "raised")
+        else:
+            note("raise", "Meetings has no visible point (fully covered)")
+        front(page)
+        # 5. maximize
+        mx = page.locator("[data-fsfront=one] .desk-light-max")
+        if mx.count() and mx.first.is_visible():
+            press(page, mx.first) if True else None
+            settle(page, 400)
+            note("max_rect", rect(page))
+            s(page, "maximized")
+            press(page, page.locator("[data-fsfront=one] .desk-light-max").first)
+            settle(page, 300)
+            note("unmax_rect", rect(page))
+        else:
+            note("max", "no maximize gadget visible at this width")
+        front(page)
+        # 6. minimize -> chip
+        mn = page.locator("[data-fsfront=one] .desk-light-min")
+        if mn.count():
+            title = rect(page)[4]
+            press(page, mn.first)
+            settle(page, 400)
+            note("after_min", windows(page))
+            note("dock_chips", page.evaluate("() => [...document.querySelectorAll('.desk-dock [class*=chip], .desk-dock-window')].map(e => e.innerText.trim()).filter(Boolean)"))
+            s(page, "minimized")
+        # 7. reload: window memory
+        before = windows(page)
+        page.reload()
+        page.locator(".btn").first.wait_for(timeout=30000)
+        settle(page, 1500)
+        after = windows(page)
+        note("memory_before_reload", before)
+        note("memory_after_reload", after)
+        s(page, "after-reload")
+        # 8. Expose and Switcher
+        if not narrow:
+            page.keyboard.press("Control+ArrowUp")
+            settle(page, 600)
+            note("expose", page.evaluate("() => { const e = document.querySelector('[class*=expose]'); return e ? e.className + ' :: ' + e.innerText.slice(0, 200) : null; }"))
+            s(page, "expose")
+            page.keyboard.press("Escape")
+            settle(page, 300)
+            page.keyboard.down("Control")
+            page.keyboard.press("Backquote")
+            page.wait_for_timeout(300)
+            note("switcher", page.evaluate("() => { const e = document.querySelector('[class*=switcher]'); return e ? e.className + ' :: ' + e.innerText.slice(0, 200) : null; }"))
+            s(page, "switcher")
+            page.keyboard.up("Control")
+            settle(page, 300)
+        else:
+            ex = page.locator(".desk-dock").get_by_role("button", name="Overview")
+            note("expose_door_393", ex.count())
+            chips = page.evaluate("() => [...document.querySelectorAll('.desk-dock button')].map(b => (b.getAttribute('aria-label') || b.innerText).trim()).filter(Boolean)")
+            note("dock_buttons_393", chips)
+        front(page)
+        # 9. Snap ghost (drag to left edge) at 1440
+        if not narrow and page.locator("[data-fsfront=one] .desk-window-handle").count():
+            hb = page.locator("[data-fsfront=one] .desk-window-handle").first.bounding_box()
+            page.mouse.move(hb["x"] + 150, hb["y"] + 10)
+            page.mouse.down()
+            page.mouse.move(2, 400, steps=15)
+            page.wait_for_timeout(300)
+            note("snapghost", page.evaluate("() => { const e = document.querySelector('[class*=snap-ghost], [class*=SnapGhost], [class*=snapghost]'); return e ? [e.className, JSON.stringify(e.getBoundingClientRect())] : null; }"))
+            s(page, "snap-ghost")
+            page.mouse.up()
+            settle(page, 400)
+            note("snapped_rect", rect(page))
+        # 10. Hide the menus
+        hm = page.locator(".desk-dock").get_by_role("button", name="Hide the menus")
+        if hm.count():
+            press(page, hm.first)
+            settle(page, 600)
+            note("hide_menus", page.evaluate("() => ({menubar: !!document.querySelector('.desk-menubar') && document.querySelector('.desk-menubar').getBoundingClientRect().height, dock: !!document.querySelector('.desk-dock') && document.querySelector('.desk-dock').getBoundingClientRect().height})"))
+            s(page, "menus-hidden")
+            page.keyboard.press("Meta+Shift+f")
+            settle(page, 500)
+        # 11. palette: a verb
+        sb = page.locator(".desk-menubar").get_by_text("Search").first
+        if sb.count() and sb.is_visible():
+            press(page, sb)
+            settle(page, 300)
+            page.keyboard.type("Send")
+            settle(page, 400)
+            note("palette_send", page.evaluate("() => [...document.querySelectorAll('[role=option]')].map(e => e.innerText.replace(/\\s+/g, ' ')).slice(0, 8)"))
+            s(page, "palette-send")
+            page.keyboard.press("Escape")
+            press(page, sb)
+            settle(page, 300)
+            page.keyboard.type("People")
+            settle(page, 400)
+            note("palette_people", page.evaluate("() => [...document.querySelectorAll('[role=option]')].map(e => e.innerText.replace(/\\s+/g, ' ')).slice(0, 8)"))
+            s(page, "palette-people")
+            page.keyboard.press("Escape")
+        note("errors", page._fs_errors[:10])  # type: ignore[attr-defined]
+    dump(f"frame-{tag}", LOG)
+
+
+if __name__ == "__main__":
+    main()

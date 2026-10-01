@@ -1,0 +1,347 @@
+{
+ "chair": [
+  {
+   "b": "RANKED",
+   "h": 26,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "OVERDUE",
+   "h": 26,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "DUE TODAY",
+   "h": 26,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "NOT RUN",
+   "h": 26,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "NO DUE DATE",
+   "h": 26,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "WAITING",
+   "h": 26,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Connect calendar",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Choose an engine",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Done: Avery: send the status",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": false,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Done: Sam: send the status b",
+   "h": 24,
+   "centre": false,
+   "up20": false,
+   "down20": false,
+   "left": false,
+   "right": false
+  },
+  {
+   "b": "Done: Jordan: send the statu",
+   "h": 24,
+   "centre": false,
+   "up20": false,
+   "down20": false,
+   "left": false,
+   "right": false
+  },
+  {
+   "b": "Write a thought",
+   "h": 28,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Record meeting",
+   "h": 28,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Schedule",
+   "h": 28,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  }
+ ],
+ "meetings": [
+  {
+   "b": "Record meeting",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Import",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Open",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Open",
+   "h": 24,
+   "centre": false,
+   "up20": false,
+   "down20": false,
+   "left": false,
+   "right": false
+  },
+  {
+   "b": "Open",
+   "h": 24,
+   "centre": false,
+   "up20": false,
+   "down20": false,
+   "left": false,
+   "right": false
+  }
+ ],
+ "settings": [
+  {
+   "b": "Open",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Open",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Open",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Open",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Open",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Open",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": false,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Open",
+   "h": 24,
+   "centre": false,
+   "up20": false,
+   "down20": false,
+   "left": false,
+   "right": false
+  },
+  {
+   "b": "Open",
+   "h": 24,
+   "centre": false,
+   "up20": false,
+   "down20": false,
+   "left": false,
+   "right": false
+  }
+ ],
+ "models": [
+  {
+   "b": "Add an engine",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Adjust",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "\u2014",
+   "h": 27,
+   "centre": true,
+   "up20": false,
+   "down20": false,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "\u2014",
+   "h": 27,
+   "centre": true,
+   "up20": false,
+   "down20": false,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "\u2014",
+   "h": 27,
+   "centre": false,
+   "up20": false,
+   "down20": false,
+   "left": false,
+   "right": false
+  },
+  {
+   "b": "\u2014",
+   "h": 27,
+   "centre": false,
+   "up20": false,
+   "down20": false,
+   "left": false,
+   "right": false
+  },
+  {
+   "b": "Cancel",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  },
+  {
+   "b": "Use these",
+   "h": 24,
+   "centre": true,
+   "up20": true,
+   "down20": true,
+   "left": true,
+   "right": true
+  }
+ ],
+ "summary": {
+  "chair": {
+   "plated": 14,
+   "centre_owned": 12,
+   "owns_44_band": 11
+  },
+  "meetings": {
+   "plated": 5,
+   "centre_owned": 3,
+   "owns_44_band": 3
+  },
+  "settings": {
+   "plated": 8,
+   "centre_owned": 6,
+   "owns_44_band": 5
+  },
+  "models": {
+   "plated": 8,
+   "centre_owned": 6,
+   "owns_44_band": 4
+  }
+ }
+}

@@ -1,0 +1,90 @@
+PW = "#surface-people"
+def tab(wk, name):
+    p = wk.page
+    wk.act(p.locator(f"{PW} button").filter(has_text=re.compile("^" + re.escape(name) + "$")), f"People: {name} tab")
+def field(p, label):
+    return p.locator(f"{PW} textarea[aria-label='{label}'], {PW} input[aria-label='{label}'], {PW} textarea[placeholder='{label}'], {PW} input[placeholder='{label}']").first
+
+def run(wk):
+    p = wk.page
+    goto(p)
+    # prep: the obvious first try is today's calendar row
+    cal = p.locator("[data-testid=arrival-meeting-row]").filter(has_text="1:1 Priya")
+    if cal.count():
+        o = wk.act(cal.locator("text=1:1 Priya / Karol"), "Chair: tap today's 1:1 Priya / Karol (first try)")
+        if not o: wk.log[-1]["dead"] = True; wk.dead += 1
+    pal_open(wk, "people", "desk.open-people", "palette: Open People")
+    wk.act(p.locator(f"{PW} button").filter(has_text="Priya Nair"), "People: Priya Nair")
+    wk.note("Now tab", text=(text(p, PW) or "")[:400])
+    wk.shot("priya-now")
+    tab(wk, "Prep")
+    wk.note("Prep tab", text=(text(p, PW) or "")[:400])
+    wk.shot("prep")
+    # notes: an agenda item in the 1:1, then a grounding note
+    tab(wk, "1:1s")
+    wk.note("1:1s tab", text=(text(p, PW) or "")[:500], mics=p.locator(f"{PW} [aria-label^='Speak']").count())
+    wk.type(field(p, "Agenda item"), "EU shard staffing: who backs Priya up?", "type an agenda item")
+    wk.act(p.locator(f"{PW} button:visible").filter(has_text=re.compile("^Add$")).first, "Add (agenda)")
+    wk.shot("agenda-added")
+    tab(wk, "Context")
+    wk.type(field(p, "Grounding note"), "Priya asked for a backup on the EU shard work.", "type a note (not saved yet)")
+    # RETURN a: leave mid-typing (close People) and come back
+    wk.act(p.locator(f"{PW} [aria-label='Close People']"), "leave: close People mid-typing")
+    pal_open(wk, "people", "desk.open-people", "come back: palette Open People")
+    p.wait_for_timeout(500)
+    wk.note("after coming back", text=(text(p, PW) or "")[:200], draft=(field(p, "Grounding note").input_value() if field(p, "Grounding note").count() else "NOT ON SCREEN"))
+    wk.shot("came-back")
+    if not field(p, "Grounding note").count():
+        wk.act(p.locator(f"{PW} button").filter(has_text="Priya Nair"), "People: Priya Nair (again)")
+        tab(wk, "Context")
+    wk.type(field(p, "Grounding note"), "Priya asked for a backup on the EU shard work.", "type the note again")
+    # RETURN b: reload mid-typing
+    reload(wk, "reload mid-typing")
+    wk.note("after reload", windows=windows(p), text=(text(p, PW) or "")[:200] if p.locator(PW).count() else None,
+            draft=(field(p, "Grounding note").input_value() if field(p, "Grounding note").count() else "NOT ON SCREEN"))
+    wk.shot("after-reload")
+    if not p.locator(PW).count() or not p.locator(PW).is_visible():
+        pal_open(wk, "people", "desk.open-people", "palette: Open People (after reload)")
+    if not field(p, "Grounding note").count():
+        if p.locator(f"{PW} button").filter(has_text="Priya Nair").count():
+            wk.act(p.locator(f"{PW} button").filter(has_text="Priya Nair"), "People: Priya Nair (after reload)")
+        tab(wk, "Context")
+    wk.type(field(p, "Grounding note"), "Priya asked for a backup on the EU shard work.", "type the note a third time")
+    # RECOVERY: the save fails
+    p.route(re.compile(r".*/api/people/relationships/[^/]+/notes$"), lambda r: r.fulfill(status=503, body='{"detail":"people_store_unavailable"}', content_type="application/json") if r.request.method == "POST" else r.continue_())
+    wk.act(p.locator(f"{PW} button").filter(has_text=re.compile("^Add note$")), "Add note (the store fails)")
+    wk.note("note failed face", text=(text(p, PW) or "")[:500], draft=(field(p, "Grounding note").input_value() if field(p, "Grounding note").count() else None))
+    wk.shot("note-failed")
+    p.unroute(re.compile(r".*/api/people/relationships/[^/]+/notes$"))
+    rec = p.locator(f"{PW} button:visible").filter(has_text="Recovery")
+    if rec.count():
+        wk.act(rec, "Recovery")
+        wk.note("after Recovery", text=(text(p, PW) or "")[:300])
+        wk.shot("after-recovery")
+    if "Store unavailable" in (text(p, PW) or ""):
+        st = p.locator("#surface-settings [aria-label='Close Settings']")
+        if st.count(): wk.act(st, "close Settings (Recovery led there; nothing to fix)")
+        wk.act(p.locator(f"{PW} [aria-label='Close People']"), "close the stuck People window")
+        pal_open(wk, "people", "desk.open-people", "reopen People")
+        wk.note("People after reopen", text=(text(p, PW) or "")[:200])
+    if p.locator(f"{PW} button:visible").filter(has_text="Priya Nair").count():
+        wk.act(p.locator(f"{PW} button:visible").filter(has_text="Priya Nair"), "People: Priya Nair (after the failure)")
+        tab(wk, "Context")
+    if field(p, "Grounding note").count():
+        if not field(p, "Grounding note").input_value():
+            wk.type(field(p, "Grounding note"), "Priya asked for a backup on the EU shard work.", "the draft was lost: type it a fourth time")
+        wk.act(p.locator(f"{PW} button:visible").filter(has_text=re.compile("^Add note$")), "Add note (again)")
+    wk.note("note saved", has=("backup on the EU shard" in (text(p, PW) or "")))
+    wk.shot("note-saved")
+    # follow-ups: a request on the Now tab
+    tab(wk, "Now")
+    wk.type(field(p, "Request"), "Send me the EU shard backup plan by Tuesday", "type a follow-up request")
+    wk.act(p.locator(f"{PW} button:visible").filter(has_text=re.compile("^Add$")).first, "Add (request)")
+    wk.note("Now after request", text=(text(p, PW) or "")[:500])
+    wk.shot("follow-up")
+    # does the follow-up show where he lives (the Chair)?
+    close_all(wk)
+    p.wait_for_timeout(800)
+    wk.note("Chair needs-you after the 1:1", rows=p.locator("[data-testid=arrival-needs-you-row]").all_inner_texts()[:8],
+            headline=text(p, "[data-testid=arrival-display]"))
+    wk.shot("chair-after")

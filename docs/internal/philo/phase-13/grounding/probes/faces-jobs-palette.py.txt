@@ -1,0 +1,6 @@
+page.locator("[aria-controls=desk-tool-shelf]").first.click(); page.wait_for_timeout(800)
+inp = page.locator("[aria-controls=desk-palette-listbox]")
+for q in ["Priya", "Payments", "people", "send", "rollout", "freeze", "ledger", "brief", "calendar", "thought", "1:1"]:
+    inp.fill(q); page.wait_for_timeout(700)
+    print(q, "=>", page.evaluate("() => { const l = document.querySelector('#desk-palette-listbox'); const s = document.querySelector('#desk-tool-shelf'); return l ? [...l.querySelectorAll('[role=option]')].map(o => o.id.replace('desk-palette-option-','') + ' :: ' + o.innerText.replace(/\\n/g,' ').slice(0,60)) : ('NO LIST: ' + (s ? s.innerText.slice(0,200) : '')); }"))
+    if q == "Priya": page.screenshot(path="/Users/karol/dev/tools/wt-philo-13-ground/.tmp/p13jobs/pal-priya.png")

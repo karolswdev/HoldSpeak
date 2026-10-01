@@ -1,0 +1,3 @@
+DB_PATH /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13cold.GtjGbJKCxD/.local/share/holdspeak/holdspeak.db
+CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13cold.GtjGbJKCxD/.config/holdspeak/config.json
+WIRING {"has": ["MeetingWebServer routes", "the database owner lock (port published)", "the intelligence queue drainer"], "lacks": ["AudioRecorder (the microphone is forbidden to this rig)", "HotkeyLi

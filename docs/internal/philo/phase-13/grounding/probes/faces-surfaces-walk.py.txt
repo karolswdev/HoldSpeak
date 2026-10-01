@@ -1,0 +1,220 @@
+"""Phase 13 faces-surfaces walk: every registry application, one fresh
+browser context per surface, at one width, against one rig hub (cold|pop).
+
+usage: walk.py <cold|pop> <1440|393> [surface-key ...]
+Writes shots to grounding/shots/surfaces/ and the raw record to
+grounding/probes/faces-surfaces-walk-<state>-<width>.json
+"""
+from __future__ import annotations
+
+import json
+import sys
+import time
+
+sys.path.insert(0, __import__("os").path.dirname(__file__))
+from fslib import audit, browser, dump, goto, settle, shot  # noqa: E402
+
+# (key, registry action, ordered open strategies)
+SURFACES = [
+    ("intelligence", "open-intelligence", ["desk:Open Intelligence", "dock:Intelligence"]),
+    ("speak", "dictate", ["go:Speak", "dock:Speak"]),
+    ("ask", "ask", ["go:Ask AI", "pal:Ask AI"]),
+    ("meetings", "review-meetings", ["go:Meetings", "dock:Meetings"]),
+    ("agents", "inspect-personas-and-coders", ["go:Agents and coder sessions", "dock:Agents"]),
+    ("settings", "configure-settings", ["go:Settings", "dock:Settings"]),
+    ("live", "record-live", ["pal:Live meeting", "route:/live"]),
+    ("rhythm", "configure-cadence", ["go:Rhythm", "pal:Rhythm"]),
+    ("setup", "configure-setup", ["go:Setup", "pal:Setup"]),
+    ("context", "open-constitutional-context", ["go:Context", "pal:Context"]),
+    ("workbenches", "open-workbenches", ["go:Workbenches", "pal:Workbenches"]),
+    ("components", "design-components", ["pal:Components", "route:/design/components"]),
+    ("activity", "inspect-activity", ["go:Activity", "pal:Activity"]),
+    ("desk-memory", "open-project-memory", ["go:Desk memory", "dock:Desk memory"]),
+    ("models", "open-concierge", ["go:Models", "pal:Models"]),
+    ("new-project", "project-setup", ["desk:New Project", "pal:New Project", "route:/setup"]),
+    ("processes", "inspect-processes", ["go:Processes", "pal:Processes"]),
+    ("commands", "configure-commands", ["go:Commands", "pal:Commands"]),
+    ("people", "open-people", ["desk:Open People", "pal:People"]),
+    ("calendar-snapshot", "review-calendar-snapshot", ["pal:Calendar snapshot"]),
+    ("models-runs-on", "configure-runs-on", ["route:/profiles"]),
+    ("connections", "configure-integrations", ["go:Connections", "pal:Connections"]),
+    ("change-places", "change-places", ["go:Change places", "dock:Places", "pal:Change places"]),
+]
+
+WIN_JS = r"""
+() => {
+  const f = document.querySelector('.desk-window.is-front');
+  if (!f) return null;
+  const r = f.getBoundingClientRect();
+  const W = innerWidth, H = innerHeight;
+  const vis = (e) => { const q = e.getBoundingClientRect(); const s = getComputedStyle(e);
+    return q.width > 0 && q.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+  const inView = (e) => { const q = e.getBoundingClientRect(); return q.bottom > 0 && q.top < H && q.right > 0 && q.left < W; };
+  // visible text nodes inside the window AND inside the viewport (noun-ish count)
+  const tw = document.createTreeWalker(f, NodeFilter.SHOW_TEXT); let nodes = 0; const words = [];
+  while (tw.nextNode()) { const t = tw.currentNode.textContent.trim(); const e = tw.currentNode.parentElement;
+    if (t && e && vis(e) && inView(e)) { nodes++; if (words.length < 400) words.push(t.slice(0, 60)); } }
+  // clipped content: element wider than its box with hidden overflow and no ellipsis
+  const clipped = [];
+  for (const e of f.querySelectorAll('*')) {
+    if (clipped.length >= 6) break;
+    if (!e.children.length && e.textContent.trim() && e.scrollWidth > e.clientWidth + 2) {
+      const s = getComputedStyle(e);
+      if (s.textOverflow !== 'ellipsis' && (s.overflow === 'hidden' || s.overflowX === 'hidden')) clipped.push(e.textContent.trim().slice(0, 50));
+    }
+  }
+  // occlusion of the window by other fixed chrome (dock, chair dock) at bottom edge
+  const plated = [...f.querySelectorAll('button.btn, button.btn--chrome')].filter(vis).filter(inView);
+  const notOwned = [];
+  const clippedBy = (b, cx, cy) => { let e = b.parentElement; while (e && e !== document.body) { const s = getComputedStyle(e);
+      if (/(hidden|auto|scroll|clip)/.test(s.overflow + s.overflowX + s.overflowY)) { const q = e.getBoundingClientRect(); if (cx < q.left || cx > q.right || cy < q.top || cy > q.bottom) return true; }
+      e = e.parentElement; } return false; };
+  const scrolled = [...f.querySelectorAll('*')].filter(e => e.scrollTop > 4).map(e => ((typeof e.className === 'string') ? e.className : e.tagName).slice(0, 50) + ':' + e.scrollTop);
+  for (const b of plated) {
+    const q = b.getBoundingClientRect(); const cx = q.left + q.width / 2, cy = q.top + q.height / 2;
+    if (cx < 0 || cy < 0 || cx >= W || cy >= H) continue;
+    if (clippedBy(b, cx, cy)) continue;
+    const h = document.elementFromPoint(cx, cy);
+    if (!h || !(h === b || b.contains(h))) notOwned.push({btn: (b.getAttribute('aria-label') || b.innerText).trim().slice(0, 40), by: h ? (h.className && typeof h.className === 'string' ? h.className.slice(0, 60) : h.tagName) : null, y: Math.round(cy)});
+  }
+  const small44 = W < 600 ? plated.filter(b => b.classList.contains('btn')).map(b => { const q = b.getBoundingClientRect(); return {b: (b.getAttribute('aria-label') || b.innerText).trim().slice(0, 30), h: Math.round(q.height), w: Math.round(q.width)}; }).filter(x => x.h < 44).length : null;
+  const ghosts = [...f.querySelectorAll('button[disabled], button[aria-disabled=true]')].filter(vis).map(b => (b.getAttribute('aria-label') || b.innerText).trim().slice(0, 40));
+  return {title: f.getAttribute('aria-label'), rect: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)],
+          offscreen: r.right > W + 1 || r.bottom > H + 1 || r.left < -1 || r.top < -1,
+          nodes, words: words.slice(0, 90), clipped, scrolled, notOwned, verbsInView: plated.length, platedUnder44: small44, ghosts,
+          scrollH: f.scrollHeight, clientH: f.clientHeight, text: f.innerText.slice(0, 1200)};
+}
+"""
+
+
+def enter_desk(page, which: str) -> int:
+    t0 = time.monotonic()
+    goto(page, which)
+    page.locator(".btn").first.wait_for(timeout=30000)
+    ms = round((time.monotonic() - t0) * 1000)
+    settle(page, 400)
+    later = page.get_by_role("button", name="Continue later", exact=True)
+    if later.count():
+        press(page, later.first)
+        settle(page, 1200)
+    return ms
+
+
+def press(page, loc) -> None:
+    if page.viewport_size["width"] < 600:
+        loc.tap()
+    else:
+        loc.click()
+
+
+def try_open(page, strat: str, which: str) -> bool:
+    kind, _, arg = strat.partition(":")
+    if kind in ("go", "desk"):
+        menu = "Go" if kind == "go" else "Desk"
+        top = page.locator("nav.desk-verbbar").get_by_text(menu, exact=True)
+        if not top.count() or not top.first.is_visible():
+            return False
+        press(page, top.first)
+        settle(page, 250)
+        item = page.get_by_role("menuitem", name=arg)
+        if not item.count():
+            page.keyboard.press("Escape")
+            return False
+        press(page, item.first)
+        return True
+    if kind == "dock":
+        b = page.locator(".desk-dock").get_by_role("button", name=arg)
+        if not b.count() or not b.first.is_visible():
+            return False
+        press(page, b.first)
+        return True
+    if kind == "pal":
+        s = page.locator(".desk-menubar").get_by_text("Search").first
+        press(page, s)
+        settle(page, 300)
+        page.keyboard.type(arg)
+        settle(page, 400)
+        none = page.get_by_text("No matching tools or Desk items.")
+        if none.count() and none.first.is_visible():
+            page.keyboard.press("Escape")
+            settle(page, 200)
+            return False
+        page.keyboard.press("Enter")
+        return True
+    if kind == "route":
+        goto(page, which, arg)
+        page.locator(".btn").first.wait_for(timeout=30000)
+        return True
+    return False
+
+
+def walk_one(which: str, width: int, idx: int, key: str, action: str, strats: list[str]) -> dict:
+    rec: dict = {"key": key, "action": action, "state": which, "width": width}
+    with browser(width) as page:
+        rec["arrive_ms"] = enter_desk(page, which)
+        used = None
+        t0 = time.monotonic()
+        for s in strats:
+            before = page.evaluate("() => document.querySelectorAll('.desk-window').length")
+            t0 = time.monotonic()
+            try:
+                ok = try_open(page, s, which)
+            except Exception as exc:  # noqa: BLE001
+                rec.setdefault("open_errors", []).append(f"{s}: {exc!r}"[:200])
+                ok = False
+            if not ok:
+                rec.setdefault("open_refused", []).append(s)
+                continue
+            try:
+                page.wait_for_selector(".desk-window.is-front", timeout=8000)
+                used = s
+                break
+            except Exception:  # noqa: BLE001
+                rec.setdefault("open_refused", []).append(s + " (no window)")
+        rec["opened_by"] = used
+        if used:
+            # time to first useful pixel: a visible plated verb or 40+ chars of text inside the window
+            for _ in range(80):
+                ready = page.evaluate("""() => { const f = document.querySelector('.desk-window.is-front'); if (!f) return false;
+                    const b = [...f.querySelectorAll('button.btn, input, textarea')].some(e => e.getBoundingClientRect().height > 0);
+                    const busy = /Loading|loading…|Loading…/.test(f.innerText.slice(0, 400));
+                    return (b || f.innerText.trim().length > 60) && !busy; }""")
+                if ready:
+                    break
+                page.wait_for_timeout(100)
+            rec["first_useful_ms"] = round((time.monotonic() - t0) * 1000)
+            settle(page, 900)
+            rec["win"] = page.evaluate(WIN_JS)
+            rec["audit"] = audit(page, ".desk-window.is-front")
+        else:
+            settle(page, 600)
+        rec["shot"] = shot(page, f"{idx:02d}-{key}-{which}-{width}")
+        rec["errors"] = page._fs_errors[:10]  # type: ignore[attr-defined]
+    return rec
+
+
+def main() -> None:
+    which, width = sys.argv[1], int(sys.argv[2])
+    only = set(sys.argv[3:])
+    out = []
+    for i, (key, action, strats) in enumerate(SURFACES):
+        if only and key not in only:
+            continue
+        idx = 10 + i
+        try:
+            r = walk_one(which, width, idx, key, action, strats)
+        except Exception as exc:  # noqa: BLE001
+            r = {"key": key, "fatal": repr(exc)[:400]}
+        w = r.get("win") or {}
+        a = r.get("audit") or {}
+        print(f"{key:18s} by={r.get('opened_by')} ttfup={r.get('first_useful_ms')} nodes={w.get('nodes')} verbs={w.get('verbsInView')} "
+              f"notOwned={len(w.get('notOwned') or [])} ghosts={len(w.get('ghosts') or [])} small={len(a.get('small') or [])} "
+              f"zeros={a.get('zeros')} inputsNoMic={[i['ph'] for i in (a.get('inputs') or []) if not i['mic']]} "
+              f"raw={len([b for b in (a.get('buttons') or []) if b.get('lib') is False])} dialogs={a.get('dialogs')} off={w.get('offscreen')} "
+              f"err={len(r.get('errors') or [])} {r.get('fatal','')}", flush=True)
+        out.append(r)
+    dump(f"walk-{which}-{width}" + ("-" + "-".join(sorted(only)) if only else ""), out)
+
+
+if __name__ == "__main__":
+    main()

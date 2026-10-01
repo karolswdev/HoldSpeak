@@ -1,0 +1,101 @@
+WORD = "warmup" + str(W)
+THOUGHT = f"Idea: a {WORD} gate in the deploy pipeline, so a cold cache never reaches checkout again."
+def tw(p):
+    return p.locator(".desk-pullout, .desk-window").filter(has=p.locator(".desk-window-title", has_text="Thought")).last
+
+def run(wk):
+    p = wk.page
+    goto(p)
+    wk.act(p.locator("[data-testid=arrival-develop-thought]"), "Chair: Write a thought")
+    w = tw(p)
+    w.wait_for(timeout=15000)
+    wk.note("Thought window", text=(w.inner_text() or "")[:300])
+    wk.shot("thought-open")
+    # voice first (Chromium's synthetic tone device; never a real microphone)
+    mic = w.locator("[aria-label='Speak the note']")
+    wk.act(mic, "Speak the note (voice)")
+    p.wait_for_timeout(2500)
+    wk.note("mic labels after the press", labels=w.evaluate("w => [...w.querySelectorAll('button')].map(b => b.getAttribute('aria-label')).filter(Boolean)"))
+    wk.note("after speaking", text=(w.inner_text() or "")[:400],
+            receipts=p.evaluate("() => [...document.querySelectorAll('[role=status],[role=alert]')].filter(e=>e.getBoundingClientRect().width).map(e=>e.innerText.replace(/\\s+/g,' ').trim().slice(0,140)).filter(Boolean)"))
+    wk.shot("voice-result")
+    # typed (the engine is off for transcription)
+    body = w.locator("[contenteditable=true]").first
+    body.click(); p.keyboard.type(THOUGHT); wk.clicks += 1
+    wk.log.append({"t": wk.now(), "gesture": "type", "what": f"type the thought ({len(THOUGHT)} chars)"})
+    p.wait_for_timeout(1500)
+    wk.note("typed", footer=(w.locator(".surface-footer, footer").first.inner_text() if w.locator(".surface-footer, footer").count() else None))
+    wk.shot("typed")
+    # RETURN a: reload mid-thought
+    reload(wk, "reload mid-thought")
+    wk.note("after reload", windows=windows(p), thought_window=(tw(p).inner_text()[:200] if tw(p).count() and tw(p).is_visible() else None))
+    wk.shot("after-reload")
+    # RECOVERY: saving fails mid-typing
+    if not (tw(p).count() and tw(p).is_visible()):
+        wk.note("the Thought window did not come back after reload")
+    # find it again later: the Chair first
+    th = p.locator("[data-testid=arrival-thought-row]")
+    wk.note("Chair THOUGHTS", rows=th.all_inner_texts()[:5], section=p.locator("[data-testid=arrival-thoughts]").count())
+    found = th.filter(has_text=WORD)
+    if found.count():
+        found.first.scroll_into_view_if_needed()
+        wk.shot("chair-thoughts")
+        wk.act(found.first, "Chair: tap the thought")
+    else:
+        pal_open(wk, WORD, "", "palette search") if False else None
+        wk.act(p.locator("[aria-controls=desk-tool-shelf]"), "Search (palette)")
+        wk.type(p.locator("[aria-controls=desk-palette-listbox]"), WORD, f"type '{WORD}'")
+        opts = p.evaluate("() => [...document.querySelectorAll('#desk-palette-listbox [role=option]')].map(o => o.id.replace('desk-palette-option-','') + ' :: ' + o.innerText.replace(/\\n/g,' ').slice(0,60))")
+        wk.note("palette finds the thought by a word in it?", options=opts)
+        wk.type(p.locator("[aria-controls=desk-palette-listbox]"), "Thought", "type 'Thought' (its title)")
+        opts = p.evaluate("() => [...document.querySelectorAll('#desk-palette-listbox [role=option]')].map(o => o.id.replace('desk-palette-option-','') + ' :: ' + o.innerText.replace(/\\n/g,' ').slice(0,60))")
+        wk.note("palette by title", options=opts)
+        p.keyboard.press("Escape"); p.wait_for_timeout(500)
+        rows = p.locator("[data-testid=arrival-thought-row]")
+        for i in range(rows.count()):
+            rows.nth(i).scroll_into_view_if_needed()
+            wk.act(rows.nth(i), f"Chair THOUGHTS: tap row {i+1} of {rows.count()} (all named 'Thought')")
+            if tw(p).count() and tw(p).is_visible() and WORD in tw(p).inner_text():
+                wk.note("found on try", n=i+1); break
+            if tw(p).count() and tw(p).is_visible():
+                wk.log[-1]["dead"] = True; wk.dead += 1
+                c = tw(p).locator("[aria-label='Close Thought']")
+                if c.count(): wk.act(c, "close the wrong Thought")
+    wk.note("windows now", windows=windows(p))
+    if not (tw(p).count() and tw(p).is_visible() and WORD in tw(p).inner_text()):
+        close_all(wk)
+        wk.act(p.locator("[aria-controls=desk-tool-shelf]"), "Search (palette)")
+        wk.type(p.locator("[aria-controls=desk-palette-listbox]"), "Thought", "type 'Thought'")
+        wk.act(p.locator("#desk-palette-listbox [role=option]").first, "palette: the first 'Thought' (newest)")
+        wk.note("palette pick", has=(tw(p).count() and WORD in tw(p).inner_text()))
+    w = tw(p)
+    if w.count() and w.is_visible():
+        wk.note("found", has=(WORD in w.inner_text()))
+        # RECOVERY: saving fails while he types more
+        p.route(re.compile(r".*/api/thoughts/[^/]+/working$"), lambda r: r.fulfill(status=500, body='{"detail":"injected failure"}', content_type="application/json") if r.request.method in ("PUT", "PATCH") else r.continue_())
+        body = w.locator("[contenteditable=true]").first
+        try:
+            body.click(timeout=5000)
+        except Exception as e:
+            wk.note("typing into the found thought is blocked", why=str(e).split("Call log")[-1][-250:], ghosts=ghosts(p)); wk.dead += 1
+            body.click(force=True)
+        p.keyboard.press("End"); p.keyboard.type(" Ask Marcus."); wk.clicks += 1
+        wk.log.append({"t": wk.now(), "gesture": "type", "what": "type more (the save fails)"})
+        p.wait_for_timeout(2500)
+        wk.note("save failed face", text=(w.inner_text() or "")[-300:],
+                receipts=p.evaluate("() => [...document.querySelectorAll('[role=status],[role=alert]')].filter(e=>e.getBoundingClientRect().width).map(e=>e.innerText.replace(/\\s+/g,' ').trim().slice(0,140)).filter(Boolean)"))
+        wk.shot("save-failed")
+        p.unroute(re.compile(r".*/api/thoughts/[^/]+/working$"))
+        p.wait_for_timeout(3000)
+        wk.note("after the store is back (no automatic retry?)", text=(w.inner_text() or "")[-200:])
+        r = w.locator("button:visible").filter(has_text=re.compile("^Retry$"))
+        if r.count():
+            wk.act(r, "Retry (save)")
+            wk.note("after Retry", text=(w.inner_text() or "")[-200:])
+        wk.shot("save-recovered")
+    else:
+        # the Floor list as the last place to look
+        dock(wk, "Floor", "Floor")
+        p.wait_for_timeout(1500)
+        wk.note("Floor", text=(text(p, ".desk-list, .desk-list-view, [data-testid=desk-list]") or "")[:300])
+        wk.shot("floor")

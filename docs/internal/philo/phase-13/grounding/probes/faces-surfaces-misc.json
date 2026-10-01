@@ -1,0 +1,35 @@
+{
+ "palette_people_393": "OBJECTS \u25cb People & vocabulary NOTE VERBS \u25b8 Open People VERB PROJECTS \u25a3 Open Payments ledger cutover PROJECT \u25a3 Open Platform observability PROJECT",
+ "shot_pal_people_393": "docs/internal/philo/phase-13/grounding/shots/surfaces/110-palette-people-pop-393.png",
+ "shelf_open_after_one_escape": true,
+ "shelf_open_after_two_escapes": false,
+ "object_menu_selected": [
+  "(ghost) Open",
+  "(ghost) Get Info",
+  "(ghost) Ask this project \u00b7 Select a Project",
+  "(ghost) Ask AI",
+  "(ghost) Continue in thread",
+  "(ghost) Edit",
+  "(ghost) Rename F2",
+  "(ghost) Duplicate",
+  "(ghost) Move to Zone",
+  "(ghost) Delete Delete"
+ ],
+ "shot_object_menu": "docs/internal/philo/phase-13/grounding/shots/surfaces/111-object-menu-decision-pop-1440.png",
+ "get_info_ghosted": "true",
+ "row_context_menu": [
+  "Open",
+  "Get Info",
+  "(ghost) Ask this project \u00b7 Select a Project",
+  "(ghost) Ask AI \u00b7 Ask unavailable",
+  "Continue in thread",
+  "(ghost) Edit \u00b7 Not editable",
+  "(ghost) Rename \u00b7 Not renameable F2",
+  "Duplicate",
+  "Move to Zone",
+  "Delete Delete"
+ ],
+ "shot_row_menu": "docs/internal/philo/phase-13/grounding/shots/surfaces/111b-row-context-menu-decision-pop-1440.png",
+ "get_info": "Freeze the old ledger on Nov 5 :: Freeze the old ledger on Nov 5 accepted \u21bbkarol DECISION CONTEXT Dual-write is stable. DECISION Freeze writes to the old ledger on Nov 5. CONSEQUENCES Month-end runs on the new ledger. SEND \u25cb Team updates folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13pop.mdVn7UpXR4/Updates-out THIS DEVICE Filed \u00b7 Desk root Copy Dictate about this Edit",
+ "shot_get_info": "docs/internal/philo/phase-13/grounding/shots/surfaces/112-get-info-decision-pop-1440.png"
+}

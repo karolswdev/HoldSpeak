@@ -1,0 +1,20 @@
+#!/bin/bash
+# PHILO-13 faces-jobs: the atlas cases that touch the Tuesday spine, one case per
+# invocation, each in a fresh mktemp HOME removed afterwards (capability-verifier "Walk a case").
+cd "$(git rev-parse --show-toplevel)"
+OUT=docs/internal/philo/phase-13/grounding/probes/faces-jobs-graphwalk
+mkdir -p "$OUT"
+while read -r CASE VP; do
+  GH=$(mktemp -d -t p13gw)
+  HOME=$GH PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm UV_CACHE_DIR=/Users/karol/.cache/uv \
+    uv run --extra dev python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json \
+      --case "$CASE" --brain muaddib --viewport "$VP" --engine none --out "$OUT/$CASE-$VP" > "$OUT/$CASE-$VP.out.txt" 2>&1
+  echo "$CASE $VP exit=$?"
+  rm -rf "$GH"
+done <<'CASES'
+case.j10.arrival_generate_brief.populated 1440
+case.j10.arrival_generate_brief.populated 393
+case.j11.write_a_thought.window_open 1440
+case.j11.write_a_thought.window_open 393
+case.j4.record_start.capture_recording 1440
+CASES

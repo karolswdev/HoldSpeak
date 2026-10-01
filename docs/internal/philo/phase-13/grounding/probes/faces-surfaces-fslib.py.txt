@@ -1,0 +1,130 @@
+"""faces-surfaces walk helpers (Phase 13 grounding, Fedaykin lane).
+
+Connects Playwright to an already-running rig hub (scripts/graph_walk.py
+serve) on a throwaway HOME. Never touches the owner's HOME.
+"""
+from __future__ import annotations
+
+import json
+import os
+import time
+from contextlib import contextmanager
+from pathlib import Path
+
+SP = Path(__file__).resolve().parent
+WT = Path("/Users/karol/dev/tools/wt-philo-13-ground")
+SHOTS = WT / "docs/internal/philo/phase-13/grounding/shots/surfaces"
+PROBES = WT / "docs/internal/philo/phase-13/grounding/probes"
+TOKEN = "fs13"
+REAL_HOME = "/Users/karol"
+
+
+def hub_url(which: str) -> str:
+    port = (SP / f"{which}_port").read_text().strip()
+    home = (SP / f"{which}_home").read_text().strip()
+    assert not home.startswith(REAL_HOME), home
+    return f"http://127.0.0.1:{port}"
+
+
+def hub_home(which: str) -> str:
+    return (SP / f"{which}_home").read_text().strip()
+
+
+@contextmanager
+def browser(width: int, *, touch: bool | None = None, profile: str | None = None):
+    from playwright.sync_api import sync_playwright
+
+    if touch is None:
+        touch = width < 600
+    height = 900 if width >= 1000 else 852
+    with sync_playwright() as p:
+        b = p.chromium.launch()
+        kw = dict(viewport={"width": width, "height": height}, device_scale_factor=1)
+        if touch:
+            kw.update(has_touch=True, is_mobile=True)
+        ctx = b.new_context(**kw)
+        page = ctx.new_page()
+        errors: list[str] = []
+        page.on("pageerror", lambda e: errors.append(repr(e)[:300]))
+        page.on("console", lambda m: errors.append("console:" + m.text[:200]) if m.type == "error" else None)
+        page._fs_errors = errors  # type: ignore[attr-defined]
+        try:
+            yield page
+        finally:
+            ctx.close()
+            b.close()
+
+
+def goto(page, which: str, path: str = "/") -> float:
+    """Navigate; return ms until the first desk landmark is visible."""
+    url = hub_url(which) + path + ("&" if "?" in path else "?") + f"token={TOKEN}"
+    t0 = time.monotonic()
+    page.goto(url)
+    page.wait_for_load_state("domcontentloaded")
+    return round((time.monotonic() - t0) * 1000)
+
+
+def settle(page, extra: int = 250) -> None:
+    page.evaluate(
+        """() => { const a = document.getAnimations(); if (!a.length) return;
+        return Promise.race([Promise.all(a.map(x => x.finished.catch(() => null))), new Promise(r => setTimeout(r, 2000))]); }"""
+    )
+    page.wait_for_timeout(extra)
+
+
+def shot(page, name: str, *, full: bool = False) -> str:
+    SHOTS.mkdir(parents=True, exist_ok=True)
+    path = SHOTS / f"{name}.png"
+    page.screenshot(path=str(path), full_page=full)
+    return str(path.relative_to(WT))
+
+
+AUDIT_JS = r"""
+(scopeSel) => {
+  const root = scopeSel ? document.querySelector(scopeSel) : document.body;
+  if (!root) return {missing: scopeSel};
+  const vis = (e) => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e);
+    return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && parseFloat(s.opacity || '1') > 0.05; };
+  const out = {buttons: [], rawButtons: [], inputs: [], small: [], zeros: [], overflowX: false, dialogs: [], textLen: 0};
+  const W = window.innerWidth, H = window.innerHeight;
+  out.overflowX = document.documentElement.scrollWidth > W;
+  for (const b of root.querySelectorAll('button, [role=button], a[href]')) {
+    if (!vis(b)) continue;
+    const r = b.getBoundingClientRect();
+    const name = (b.getAttribute('aria-label') || b.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+    const cn = (typeof b.className === 'string') ? b.className : ''; const lib = b.tagName === 'A' ? null : /(^|\s)(btn|btn--chrome)(\s|$)/.test(cn);
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let owns = null;
+    if (cx >= 0 && cy >= 0 && cx < W && cy < H) { const h = document.elementFromPoint(cx, cy); owns = !!h && (b === h || b.contains(h)); }
+    out.buttons.push({name, lib, cls: (b.className && b.className.baseVal === undefined ? b.className : '').toString().slice(0, 80), w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.left), y: Math.round(r.top), owns, tag: b.tagName});
+  }
+  for (const i of root.querySelectorAll('input[type=text], input:not([type]), input[type=search], textarea, [contenteditable=true]')) {
+    if (!vis(i)) continue;
+    const box = i.closest('[class*="gadget"], [class*="field"], form, div') || i.parentElement;
+    const scope = i.closest('[class*="gadget"]') || box;
+    const mic = !!(scope && scope.querySelector('[class*="mic" i], [aria-label*="mic" i], [aria-label*="dictat" i], [aria-label*="speak" i], [data-mic]'));
+    out.inputs.push({ph: (i.getAttribute('placeholder') || i.getAttribute('aria-label') || '').slice(0, 50), mic});
+  }
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const seen = new Set();
+  while (walker.nextNode()) {
+    const t = walker.currentNode; const txt = t.textContent.trim(); if (!txt) continue;
+    const e = t.parentElement; if (!e || !vis(e)) continue;
+    out.textLen += txt.length;
+    const fs = parseFloat(getComputedStyle(e).fontSize);
+    if (fs < 12 && /[A-Za-z0-9]/.test(txt) && !seen.has(e)) { seen.add(e); out.small.push({t: txt.slice(0, 40), fs}); }
+    if (/(^|\s)0\s+[A-Za-z]/.test(txt) || /\b[A-Z]+\s0$/.test(txt) || /^0$/.test(txt)) out.zeros.push(txt.slice(0, 50));
+  }
+  for (const d of document.querySelectorAll('dialog[open], [role=dialog], [aria-modal=true]')) if (vis(d)) out.dialogs.push((d.getAttribute('aria-label') || d.className || '').toString().slice(0, 60));
+  return out;
+}
+"""
+
+
+def audit(page, scope: str | None = None) -> dict:
+    return page.evaluate(AUDIT_JS, scope)
+
+
+def dump(name: str, data) -> None:
+    PROBES.mkdir(parents=True, exist_ok=True)
+    (PROBES / f"faces-surfaces-{name}.json").write_text(json.dumps(data, indent=1, default=str))

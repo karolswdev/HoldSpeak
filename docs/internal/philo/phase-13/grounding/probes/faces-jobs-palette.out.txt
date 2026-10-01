@@ -1,0 +1,14 @@
+Priya => NO LIST: Search tools and Desk items
+
+No matching tools or Desk items.
+Payments => ['project:proj-4f8e754b9881 :: ○ Payments ledger cutover PROJECT', 'artifact:artifact_8668338939a1 :: ○ Payments ledger cutover ARTIFACT', 'project.open.proj-4f8e754b9881 :: ▣ Open Payments ledger cutover PROJECT']
+people => ['note:hs-seed-people-vocabulary :: ○ People & vocabulary NOTE', 'desk.open-people :: ▸ Open People VERB', 'project.open.proj-4f8e754b9881 :: ▣ Open Payments ledger cutover PROJECT']
+send => ['integration:slack :: ↗ Slack NOT CONFIGURED', 'integration:telegram :: ↗ Telegram control NOT CONFIGURED', 'desk.overview :: ▸ Overview · No window open VERB ⌃↑', 'window.close :: ▸ Close window · No window open VERB ⌘W', 'go.dictate :: ⌁ Speak PROGRAM ⌘1', 'go.ask :: ✦ Ask AI PROGRAM ⌘I', 'go.review-meetings :: ▣ Meetings PROGRAM ⌘2', 'go.change-places :: ▧ Change places PROGRAM ⌘⇧P', 'go.inspect-personas-and-coders :: ◉ Agents and coder sessions PROGRAM ⌘3', 'go.configure-cadence :: ◷ Rhythm PROGRAM', 'go.inspect-activity :: ≋ Activity PROGRAM', 'go.open-project-memory :: ▤ Desk memory PROGRAM', 'go.configure-commands :: ⌘ Commands PROGRAM', 'roadmap:roadmap:holdspeak-mobile :: ○ HoldSpeak Mobile Runtime — Roadmap ROADMAP', 'settings:meetings :: S Meetings SETTINGS', 'integration:dictation_runtime :: ↗ Dictation intelligence NOT CONFIGURED']
+rollout => ['desk.open-intelligence :: ▸ Open Intelligence VERB']
+freeze => ['decision:decision_94582473c9ff :: ○ Freeze the old ledger on Nov 5 DECISION']
+ledger => ['meeting:p13-cutover-sync :: ▣ Ledger cutover sync MEETING', 'project.open.proj-4f8e754b9881 :: ▣ Open Payments ledger cutover PROJECT', 'decision:decision_94582473c9ff :: ○ Freeze the old ledger on Nov 5 DECISION', 'project:proj-4f8e754b9881 :: ○ Payments ledger cutover PROJECT', 'artifact:artifact_8668338939a1 :: ○ Payments ledger cutover ARTIFACT']
+brief => ['desk.open-intelligence :: ▸ Open Intelligence VERB', "desk.intelligence-brief :: ▸ Show today's brief VERB", 'go.configure-cadence :: ◷ Rhythm PROGRAM', 'go.open-constitutional-context :: § Context PROGRAM']
+calendar => ['settings:meetings :: S Meetings SETTINGS', 'integration:slack :: ↗ Slack NOT CONFIGURED']
+thought => ['note:note_9f5c7f1d906a :: ○ Thought NOTE', 'note:note_16327b99ceaa :: ○ Thought NOTE', 'note:note_eb0873cb61fc :: ○ Thought NOTE', 'note:note_23621392930a :: ○ Thought NOTE', 'note:note_f62e879f2619 :: ○ Thought NOTE', 'desk.open-intelligence :: ▸ Open Intelligence VERB']
+1:1 => ['note:hs-seed-prompt-one-on-one-prep :: ○ 1:1 prep NOTE', 'desk.open-people :: ▸ Open People VERB']
+ERRS []

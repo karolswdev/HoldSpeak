@@ -1,0 +1,22 @@
+import sys, json
+sys.path.insert(0, '.')
+from fslib import *
+from walk import enter_desk, press, try_open
+out = {}
+HIT = """(names) => { const f = document.querySelector('.desk-window[aria-label=Meetings]'); const res = {};
+  for (const n of names) { const b = [...f.querySelectorAll('button')].find(x => x.innerText.trim() === n); if (!b) { res[n] = 'absent'; continue; }
+    const r = b.getBoundingClientRect(); const pts = [[r.left + r.width/2, r.top + r.height/2], [r.left + 3, r.top + 3], [r.right - 3, r.bottom - 3]];
+    res[n] = pts.map(([x, y]) => { const h = document.elementFromPoint(x, y); return h && (h === b || b.contains(h)) ? 'own' : ((h && h.className) || '').toString().slice(0, 50); }); }
+  return res; }"""
+for w in (393, 1440):
+    with browser(w) as page:
+        enter_desk(page, 'pop')
+        sec = page.locator('.surface-section', has_text='MEETINGS').first
+        op = sec.get_by_role('button', name='Open').first
+        op.evaluate("e => e.scrollIntoView({block: 'center'})"); settle(page, 300)
+        press(page, op); settle(page, 1800)
+        out[f'chair-open-{w}'] = page.evaluate("() => [...document.querySelectorAll('.desk-window')].map(e => e.getAttribute('aria-label') + ' :: ' + e.innerText.replace(/\\s+/g,' ').slice(0, 260))")
+        out[f'hit-{w}'] = page.evaluate(HIT, ['MD', 'SRT', 'Delete'])
+        out[f'shot-{w}'] = shot(page, f'63-ledger-chair-open-meeting-pop-{w}')
+print(json.dumps(out, indent=1))
+dump('ledger-chair-open-meeting', out)

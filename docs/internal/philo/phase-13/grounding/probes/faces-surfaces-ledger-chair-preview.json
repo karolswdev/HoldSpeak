@@ -1,0 +1,32 @@
+{
+ "preview-393": {
+  "bar": [
+   573,
+   711,
+   12,
+   381
+  ],
+  "probed": 28,
+  "covered": [
+   "THIS DEVICE @586",
+   "\u25b8\nTRANSCRIPT\n4 WORDS @620",
+   "\u25b8 @620",
+   "TRANSCRIPT @620",
+   "4 WORDS @620",
+   "SEP 30 @657",
+   "Architecture review: tracing @681"
+  ]
+ },
+ "shot-393": "docs/internal/philo/phase-13/grounding/shots/surfaces/60-ledger-chair-meeting-preview-pop-393.png",
+ "preview-1440": {
+  "bar": [
+   1370,
+   1444,
+   256,
+   1184
+  ],
+  "probed": 31,
+  "covered": []
+ },
+ "shot-1440": "docs/internal/philo/phase-13/grounding/shots/surfaces/60-ledger-chair-meeting-preview-pop-1440.png"
+}

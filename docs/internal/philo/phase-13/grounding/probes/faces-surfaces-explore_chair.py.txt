@@ -1,0 +1,18 @@
+import sys, json, time
+sys.path.insert(0, '.')
+from fslib import *
+w = int(sys.argv[1]); which = sys.argv[2]
+with browser(w) as page:
+    t0 = time.monotonic()
+    goto(page, which)
+    page.locator('.btn').first.wait_for(timeout=30000)
+    print('first btn ms', round((time.monotonic()-t0)*1000))
+    settle(page, 500)
+    if page.get_by_role('button', name='Continue later', exact=True).count():
+        page.get_by_role('button', name='Continue later', exact=True).click()
+        settle(page, 1500)
+    print(page.evaluate("() => document.body.innerText")[:3000])
+    print('---menubar/dock structure')
+    print(page.evaluate("""() => [...document.querySelectorAll('[class*=menubar] , [class*=menu-bar], nav, [class*=dock]')].slice(0,15).map(e => e.tagName+'.'+(typeof e.className==='string'?e.className:'').slice(0,80)+' :: '+e.innerText.replace(/\\s+/g,' ').slice(0,200))"""))
+    print(shot(page, f'01-chair-{which}-{w}'))
+    print('errors', page._fs_errors[:8])

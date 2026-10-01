@@ -1,0 +1,6168 @@
+[
+ {
+  "key": "intelligence",
+  "action": "open-intelligence",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 2426,
+  "opened_by": "desk:Open Intelligence",
+  "first_useful_ms": 454,
+  "win": {
+   "title": "Intelligence",
+   "rect": [
+    1022,
+    64,
+    400,
+    784
+   ],
+   "offscreen": false,
+   "nodes": 35,
+   "words": [
+    "Intelligence",
+    "Brief",
+    "Follow-through",
+    "Decisions",
+    "SEP 28 - OCT 01",
+    "GENERATED OCT 01 14:41",
+    "THIS WEEK",
+    "SINCE WEDNESDAY",
+    "MEETING RECORDED",
+    "Ledger cutover sync",
+    "30 min \u00b7 1 action item",
+    "MTG",
+    "UNASSIGNED",
+    "Review Avery's promo packet",
+    "Needs an owner",
+    "UNASSIGNED",
+    "Pilot OTel in billing",
+    "Needs an owner",
+    "UNASSIGNED",
+    "Schedule the ops interview",
+    "Needs an owner",
+    "UNASSIGNED",
+    "Write the rollback runbook",
+    "Needs an owner",
+    "REVIEW DECISION",
+    "Run a second ops interview",
+    "REVIEW DECISION",
+    "Adopt OpenTelemetry",
+    "REVIEW DECISION",
+    "Freeze the old ledger on Nov 5",
+    "REVIEW DECISION",
+    "Adopt OpenTelemetry for all services",
+    "Acknowledge",
+    "Defer",
+    "Speak"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 9,
+   "platedUnder44": null,
+   "ghosts": [
+    "Acknowledge",
+    "Defer",
+    "Speak"
+   ],
+   "scrollH": 785,
+   "clientH": 782,
+   "text": "Intelligence\nBRIEF\nFOLLOW-THROUGH\nDECISIONS\nSEP 28 - OCT 01\nGENERATED OCT 01 14:41\nTHIS WEEK\nSINCE WEDNESDAY\nMEETING RECORDED\nLedger cutover sync\n30 min \u00b7 1 action item\nMTG\nUNASSIGNED\nReview Avery's promo packet\nNeeds an owner\nUNASSIGNED\nPilot OTel in billing\nNeeds an owner\nUNASSIGNED\nSchedule the ops interview\nNeeds an owner\nUNASSIGNED\nWrite the rollback runbook\nNeeds an owner\nREVIEW DECISION\nRun a second ops interview\nREVIEW DECISION\nAdopt OpenTelemetry\nREVIEW DECISION\nFreeze the old ledger on Nov 5\nREVIEW DECISION\nAdopt OpenTelemetry for all services\nPEOPLE\nAvery Chen\nJordan Patel\nSam Rivera\nSEND\n\u25cb\nTeam updates folder\nFILE\n/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13pop.mdVn7UpXR4/Updates-out\nTHIS DEVICE\nAcknowledge\nDefer\nSpeak"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Intelligence",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 1035,
+     "y": 78,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Intelligence",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 1055,
+     "y": 78,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Intelligence",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 1075,
+     "y": 78,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "BRIEF",
+     "lib": true,
+     "cls": "btn--chrome intelligence-segment is-active",
+     "w": 364,
+     "h": 28,
+     "x": 1040,
+     "y": 120,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "FOLLOW-THROUGH",
+     "lib": true,
+     "cls": "btn--chrome intelligence-segment",
+     "w": 364,
+     "h": 28,
+     "x": 1040,
+     "y": 150,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "DECISIONS",
+     "lib": true,
+     "cls": "btn--chrome intelligence-segment",
+     "w": 364,
+     "h": 28,
+     "x": 1040,
+     "y": 180,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Ledger cutover sync",
+     "lib": false,
+     "cls": "intelligence-brief-sf-primary",
+     "w": 149,
+     "h": 21,
+     "x": 1037,
+     "y": 395,
+     "owns": true,
+     "tag": "SPAN"
+    },
+    {
+     "name": "Review Avery's promo packet",
+     "lib": false,
+     "cls": "intelligence-brief-sf-primary",
+     "w": 215,
+     "h": 21,
+     "x": 1037,
+     "y": 476,
+     "owns": true,
+     "tag": "SPAN"
+    },
+    {
+     "name": "Pilot OTel in billing",
+     "lib": false,
+     "cls": "intelligence-brief-sf-primary",
+     "w": 133,
+     "h": 21,
+     "x": 1037,
+     "y": 534,
+     "owns": true,
+     "tag": "SPAN"
+    },
+    {
+     "name": "Schedule the ops interview",
+     "lib": false,
+     "cls": "intelligence-brief-sf-primary",
+     "w": 197,
+     "h": 21,
+     "x": 1037,
+     "y": 593,
+     "owns": true,
+     "tag": "SPAN"
+    },
+    {
+     "name": "Write the rollback runbook",
+     "lib": false,
+     "cls": "intelligence-brief-sf-primary",
+     "w": 192,
+     "h": 21,
+     "x": 1037,
+     "y": 651,
+     "owns": true,
+     "tag": "SPAN"
+    },
+    {
+     "name": "Run a second ops interview",
+     "lib": false,
+     "cls": "intelligence-brief-sf-primary",
+     "w": 199,
+     "h": 21,
+     "x": 1037,
+     "y": 710,
+     "owns": true,
+     "tag": "SPAN"
+    },
+    {
+     "name": "Adopt OpenTelemetry",
+     "lib": false,
+     "cls": "intelligence-brief-sf-primary",
+     "w": 159,
+     "h": 21,
+     "x": 1037,
+     "y": 768,
+     "owns": true,
+     "tag": "SPAN"
+    },
+    {
+     "name": "Freeze the old ledger on Nov 5",
+     "lib": false,
+     "cls": "intelligence-brief-sf-primary",
+     "w": 220,
+     "h": 21,
+     "x": 1037,
+     "y": 827,
+     "owns": false,
+     "tag": "SPAN"
+    },
+    {
+     "name": "Adopt OpenTelemetry for all services",
+     "lib": false,
+     "cls": "intelligence-brief-sf-primary",
+     "w": 269,
+     "h": 21,
+     "x": 1037,
+     "y": 885,
+     "owns": false,
+     "tag": "SPAN"
+    },
+    {
+     "name": "Person: Avery Chen",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 370,
+     "h": 26,
+     "x": 1037,
+     "y": 949,
+     "owns": null,
+     "tag": "DIV"
+    },
+    {
+     "name": "Person: Jordan Patel",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 370,
+     "h": 26,
+     "x": 1037,
+     "y": 975,
+     "owns": null,
+     "tag": "DIV"
+    },
+    {
+     "name": "Person: Sam Rivera",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 370,
+     "h": 26,
+     "x": 1037,
+     "y": 1001,
+     "owns": null,
+     "tag": "DIV"
+    },
+    {
+     "name": "Team updates folder, FILE",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 370,
+     "h": 108,
+     "x": 1037,
+     "y": 1078,
+     "owns": null,
+     "tag": "DIV"
+    },
+    {
+     "name": "Acknowledge",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 97,
+     "h": 24,
+     "x": 1184,
+     "y": 812,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Defer",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 54,
+     "h": 24,
+     "x": 1285,
+     "y": 812,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 54,
+     "h": 24,
+     "x": 1343,
+     "y": 812,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "Brief",
+     "fs": 11
+    },
+    {
+     "t": "Follow-through",
+     "fs": 11
+    },
+    {
+     "t": "Decisions",
+     "fs": 11
+    },
+    {
+     "t": "THIS WEEK",
+     "fs": 11
+    },
+    {
+     "t": "SINCE WEDNESDAY",
+     "fs": 11
+    },
+    {
+     "t": "MEETING RECORDED",
+     "fs": 11
+    },
+    {
+     "t": "UNASSIGNED",
+     "fs": 11
+    },
+    {
+     "t": "UNASSIGNED",
+     "fs": 11
+    },
+    {
+     "t": "UNASSIGNED",
+     "fs": 11
+    },
+    {
+     "t": "UNASSIGNED",
+     "fs": 11
+    },
+    {
+     "t": "REVIEW DECISION",
+     "fs": 11
+    },
+    {
+     "t": "REVIEW DECISION",
+     "fs": 11
+    },
+    {
+     "t": "REVIEW DECISION",
+     "fs": 11
+    },
+    {
+     "t": "REVIEW DECISION",
+     "fs": 11
+    },
+    {
+     "t": "PEOPLE",
+     "fs": 11
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 713
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/10-intelligence-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "speak",
+  "action": "dictate",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1921,
+  "opened_by": "go:Speak",
+  "first_useful_ms": 650,
+  "win": {
+   "title": "Speak",
+   "rect": [
+    24,
+    72,
+    640,
+    560
+   ],
+   "offscreen": false,
+   "nodes": 31,
+   "words": [
+    "Speak",
+    "Speak",
+    "Journal",
+    "Blocks",
+    "Learned",
+    "\u2699\ufe0e",
+    "Talk",
+    "\u25c9",
+    "Open",
+    "Level",
+    "LANDS IN",
+    "\u00b7",
+    "Claude Code",
+    "\u21bb",
+    "DRY RUN",
+    "DICTATION",
+    "\u00b7",
+    "\u26a0",
+    "NOT SET",
+    "Choose",
+    "HOTKEY",
+    "\u00b7",
+    "\u2325R",
+    "\u26a0",
+    "UNKNOWN",
+    "Re-check",
+    "\u25b8",
+    "Details",
+    "3 TODAY",
+    "Review",
+    "Export"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 14,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 561,
+   "clientH": 558,
+   "text": "Speak\nSPEAK\nJOURNAL\nBLOCKS\nLEARNED\n\u2699\ufe0e\nTALK\n\u25c9\nOPEN\nLEVEL\nLANDS IN\n\u00b7\nClaude Code\n\u21bb\nFocused app\nAgent\nThis field\nDRY RUN\nDICTATION\n\u00b7\n\u26a0\nNOT SET\nChoose\nHOTKEY\n\u00b7\n\u2325R\n\u26a0\nUNKNOWN\nRe-check\n\u25b8\nDetails\n3 TODAY\nReview\nExport"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Speak",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Speak",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Speak",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "SPEAK",
+     "lib": true,
+     "cls": "btn--chrome desk-wing is-on",
+     "w": 66,
+     "h": 26,
+     "x": 233,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "JOURNAL",
+     "lib": true,
+     "cls": "btn--chrome desk-wing",
+     "w": 81,
+     "h": 26,
+     "x": 297,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "BLOCKS",
+     "lib": true,
+     "cls": "btn--chrome desk-wing",
+     "w": 74,
+     "h": 26,
+     "x": 378,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "LEARNED",
+     "lib": true,
+     "cls": "btn--chrome desk-wing",
+     "w": 81,
+     "h": 26,
+     "x": 450,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Configure dictation",
+     "lib": true,
+     "cls": "btn--chrome desk-wing desk-wing-door",
+     "w": 27,
+     "h": 24,
+     "x": 536,
+     "y": 81,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Talk",
+     "lib": true,
+     "cls": "btn--chrome desk-mic gadget-transport-key is-idle",
+     "w": 48,
+     "h": 48,
+     "x": 39,
+     "y": 131,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Open mic",
+     "lib": false,
+     "cls": "gadget-transport-key",
+     "w": 48,
+     "h": 48,
+     "x": 97,
+     "y": 131,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Choose",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 588,
+     "y": 337,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Re-check",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 76,
+     "h": 24,
+     "x": 573,
+     "y": 396,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25b8 Details",
+     "lib": true,
+     "cls": "btn--chrome surface-disclosure-trigger",
+     "w": 67,
+     "h": 26,
+     "x": 39,
+     "y": 448,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Review",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 505,
+     "y": 602,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Export",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 570,
+     "y": 602,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "Talk, or type here",
+     "mic": false
+    }
+   ],
+   "small": [
+    {
+     "t": "Level",
+     "fs": 9
+    },
+    {
+     "t": "LANDS IN",
+     "fs": 11
+    },
+    {
+     "t": "DICTATION",
+     "fs": 11
+    },
+    {
+     "t": "HOTKEY",
+     "fs": 11
+    },
+    {
+     "t": "3 TODAY",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 150
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/11-speak-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "ask",
+  "action": "ask",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 2398,
+  "opened_by": "go:Ask AI",
+  "first_useful_ms": 337,
+  "win": {
+   "title": "Ask AI",
+   "rect": [
+    1022,
+    54,
+    400,
+    794
+   ],
+   "offscreen": false,
+   "nodes": 21,
+   "words": [
+    "\u2726",
+    "Ask AI",
+    "SESSION",
+    "NO TRAFFIC",
+    "Summarize the following in 3\u20134 tight sentences. Be concrete.",
+    "\u25b8",
+    "ASK",
+    "SUMMARIZE",
+    "ACTION ITEMS",
+    "RISKS",
+    "DECISIONS",
+    "DRAFT EMAIL",
+    "Ask",
+    "No default model",
+    "Choose default",
+    "GROUNDING",
+    "\u25a4",
+    "Ground this ask",
+    "CTX 0.0K/16.4K",
+    "CTX 0.0K/16.4K \u00b7 USES ASSIGNMENT",
+    "Cancel"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 6,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 795,
+   "clientH": 792,
+   "text": "\u2726\nAsk AI\nSESSION\nNO TRAFFIC\n\u25b8\nASK\nSUMMARIZE\nACTION ITEMS\nRISKS\nDECISIONS\nDRAFT EMAIL\nAsk\nNo default model\nChoose default\nGROUNDING\n\u25a4\nGROUND THIS ASK\nCTX 0.0K/16.4K\nCTX 0.0K/16.4K \u00b7 USES ASSIGNMENT\nCancel"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Ask AI",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 1035,
+     "y": 68,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Ask AI",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 1055,
+     "y": 68,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Ask AI",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 1075,
+     "y": 68,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 34,
+     "h": 34,
+     "x": 1049,
+     "y": 484,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "ASK",
+     "lib": false,
+     "cls": "gadget-transport-key",
+     "w": 55,
+     "h": 28,
+     "x": 1340,
+     "y": 487,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Choose default",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 125,
+     "h": 36,
+     "x": 1196,
+     "y": 614,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Cancel",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 1336,
+     "y": 818,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "Instruction",
+     "mic": true
+    }
+   ],
+   "small": [
+    {
+     "t": "NO TRAFFIC",
+     "fs": 11
+    },
+    {
+     "t": "Ground this ask",
+     "fs": 10
+    },
+    {
+     "t": "CTX 0.0K/16.4K",
+     "fs": 9
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 244
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/12-ask-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "meetings",
+  "action": "review-meetings",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1933,
+  "opened_by": "go:Meetings",
+  "first_useful_ms": 639,
+  "win": {
+   "title": "Meetings",
+   "rect": [
+    24,
+    72,
+    640,
+    619
+   ],
+   "offscreen": false,
+   "nodes": 48,
+   "words": [
+    "Meetings",
+    "Outcomes",
+    "Review",
+    "Record",
+    "Artifacts",
+    "\u2699\ufe0e",
+    "Nothing needs you",
+    "Record meeting",
+    "Import",
+    "HAS OPEN ACTIONS",
+    "Ledger cutover sync",
+    "OCT 01",
+    "\u00b7",
+    "30 MIN",
+    "\u00b7",
+    "4 WORDS",
+    "\u00b7",
+    "SAVED",
+    "Open",
+    "Architecture review: tracing",
+    "SEP 30",
+    "\u00b7",
+    "60 MIN",
+    "\u00b7",
+    "5 WORDS",
+    "\u00b7",
+    "SAVED",
+    "Open",
+    "1:1 Avery",
+    "SEP 29",
+    "\u00b7",
+    "30 MIN",
+    "\u00b7",
+    "8 WORDS",
+    "\u00b7",
+    "SAVED",
+    "Open",
+    "Hiring debrief: staff engineer",
+    "SEP 28",
+    "\u00b7",
+    "45 MIN",
+    "\u00b7",
+    "4 WORDS",
+    "\u00b7",
+    "SAVED",
+    "Open",
+    "NO SUMMARY ROUTE \u00b7 NO ASSIGNMENT",
+    "4 RECORDS"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 19,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 620,
+   "clientH": 617,
+   "text": "Meetings\nOUTCOMES\nREVIEW\nRECORD\nARTIFACTS\n\u2699\ufe0e\nNothing needs you\nRecord meeting\nImport\nHAS OPEN ACTIONS\nLedger cutover sync\nOCT 01\n\u00b7\n30 MIN\n\u00b7\n4 WORDS\n\u00b7\nSAVED\nOpen\nArchitecture review: tracing\nSEP 30\n\u00b7\n60 MIN\n\u00b7\n5 WORDS\n\u00b7\nSAVED\nOpen\n1:1 Avery\nSEP 29\n\u00b7\n30 MIN\n\u00b7\n8 WORDS\n\u00b7\nSAVED\nOpen\nHiring debrief: staff engineer\nSEP 28\n\u00b7\n45 MIN\n\u00b7\n4 WORDS\n\u00b7\nSAVED\nOpen\nNO SUMMARY ROUTE \u00b7 NO ASSIGNMENT\n4 RECORDS"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Meetings",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Meetings",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Meetings",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "OUTCOMES",
+     "lib": true,
+     "cls": "btn--chrome desk-wing is-on",
+     "w": 89,
+     "h": 26,
+     "x": 228,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "REVIEW",
+     "lib": true,
+     "cls": "btn--chrome desk-wing",
+     "w": 74,
+     "h": 26,
+     "x": 316,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "RECORD",
+     "lib": true,
+     "cls": "btn--chrome desk-wing",
+     "w": 74,
+     "h": 26,
+     "x": 389,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "ARTIFACTS",
+     "lib": true,
+     "cls": "btn--chrome desk-wing",
+     "w": 97,
+     "h": 26,
+     "x": 461,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Meeting plumbing",
+     "lib": true,
+     "cls": "btn--chrome desk-wing desk-wing-door",
+     "w": 27,
+     "h": 24,
+     "x": 563,
+     "y": 81,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Record meeting",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 119,
+     "h": 24,
+     "x": 461,
+     "y": 177,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Import",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 588,
+     "y": 177,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak Search meetings",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 20,
+     "h": 20,
+     "x": 627,
+     "y": 228,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Ledger cutover sync OCT 01 \u00b7 30 MIN \u00b7 4 WORDS \u00b7 SAVED",
+     "lib": true,
+     "cls": "btn--chrome meetings-stream-row-body",
+     "w": 555,
+     "h": 46,
+     "x": 39,
+     "y": 319,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 602,
+     "y": 330,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Architecture review: tracing SEP 30 \u00b7 60 MIN \u00b7 5 WORDS \u00b7 SAV",
+     "lib": true,
+     "cls": "btn--chrome meetings-stream-row-body",
+     "w": 555,
+     "h": 46,
+     "x": 39,
+     "y": 386,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 602,
+     "y": 397,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "1:1 Avery SEP 29 \u00b7 30 MIN \u00b7 8 WORDS \u00b7 SAVED",
+     "lib": true,
+     "cls": "btn--chrome meetings-stream-row-body",
+     "w": 555,
+     "h": 46,
+     "x": 39,
+     "y": 453,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 602,
+     "y": 464,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Hiring debrief: staff engineer SEP 28 \u00b7 45 MIN \u00b7 4 WORDS \u00b7 S",
+     "lib": true,
+     "cls": "btn--chrome meetings-stream-row-body",
+     "w": 555,
+     "h": 46,
+     "x": 39,
+     "y": 520,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 602,
+     "y": 531,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "Search meetings",
+     "mic": true
+    }
+   ],
+   "small": [
+    {
+     "t": "OCT 01",
+     "fs": 10
+    },
+    {
+     "t": "30 MIN",
+     "fs": 10
+    },
+    {
+     "t": "4 WORDS",
+     "fs": 10
+    },
+    {
+     "t": "SEP 30",
+     "fs": 10
+    },
+    {
+     "t": "60 MIN",
+     "fs": 10
+    },
+    {
+     "t": "5 WORDS",
+     "fs": 10
+    },
+    {
+     "t": "SEP 29",
+     "fs": 10
+    },
+    {
+     "t": "30 MIN",
+     "fs": 10
+    },
+    {
+     "t": "8 WORDS",
+     "fs": 10
+    },
+    {
+     "t": "SEP 28",
+     "fs": 10
+    },
+    {
+     "t": "45 MIN",
+     "fs": 10
+    },
+    {
+     "t": "4 WORDS",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 343
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/13-meetings-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "agents",
+  "action": "inspect-personas-and-coders",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1896,
+  "opened_by": "go:Agents and coder sessions",
+  "first_useful_ms": 630,
+  "win": {
+   "title": "Agents",
+   "rect": [
+    24,
+    72,
+    640,
+    619
+   ],
+   "offscreen": false,
+   "nodes": 11,
+   "words": [
+    "Agents",
+    "Roster",
+    "Delivery",
+    "\u2699\ufe0e",
+    "CREW \u00b7 SESSIONS \u00b7 BLOCKED",
+    "Sessions",
+    "\u25cb",
+    "No sessions",
+    "Crew",
+    "\u25cb",
+    "No agents"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 6,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 620,
+   "clientH": 617,
+   "text": "Agents\nROSTER\nDELIVERY\n\u2699\ufe0e\nCREW \u00b7 SESSIONS \u00b7 BLOCKED\nSESSIONS\n\u25cb\nNo sessions\nCREW\n\u25cb\nNo agents"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Agents",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Agents",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Agents",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "ROSTER",
+     "lib": true,
+     "cls": "btn--chrome desk-wing is-on",
+     "w": 74,
+     "h": 26,
+     "x": 305,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "DELIVERY",
+     "lib": true,
+     "cls": "btn--chrome desk-wing",
+     "w": 89,
+     "h": 26,
+     "x": 378,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "How it connects",
+     "lib": true,
+     "cls": "btn--chrome desk-wing desk-wing-door",
+     "w": 27,
+     "h": 24,
+     "x": 471,
+     "y": 81,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "Sessions",
+     "fs": 10
+    },
+    {
+     "t": "Crew",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 81
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/14-agents-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "settings",
+  "action": "configure-settings",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1935,
+  "opened_by": "go:Settings",
+  "first_useful_ms": 641,
+  "win": {
+   "title": "Settings",
+   "rect": [
+    24,
+    72,
+    1392,
+    600
+   ],
+   "offscreen": false,
+   "nodes": 41,
+   "words": [
+    "Settings",
+    "Settings",
+    "Guide",
+    "No default model",
+    "Models",
+    "Open",
+    "Assignments",
+    "\u26a0",
+    "NO DEFAULT",
+    "Open",
+    "Connections",
+    "Open",
+    "Voice",
+    "\u2713",
+    "LIVE",
+    "AUTO",
+    "Open",
+    "Meetings",
+    "\u2713",
+    "SUMMARY ON \u00b7 AFTER ROOM MEETINGS",
+    "Open",
+    "Rhythm",
+    "EVERY 15 MIN",
+    "Open",
+    "Sounds & Presence",
+    "\u2713",
+    "ON",
+    "Open",
+    "Wallpaper",
+    "Rainy City",
+    "Open",
+    "System",
+    "THIS DEVICE",
+    "MESH OFF",
+    "REMOTE OFF",
+    "Open",
+    "Posture",
+    "\u21bb",
+    "NOT SET",
+    "WRITTEN",
+    "14:41"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 14,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 601,
+   "clientH": 598,
+   "text": "Settings\nSETTINGS\nGUIDE\nNo default model\nModels\nOpen\nAssignments\n\u26a0\nNO DEFAULT\nOpen\nConnections\nOpen\nVoice\n\u2713\nLIVE\nAUTO\nOpen\nMeetings\n\u2713\nSUMMARY ON \u00b7 AFTER ROOM MEETINGS\nOpen\nRhythm\nEVERY 15 MIN\nOpen\nSounds & Presence\n\u2713\nON\nOpen\nWallpaper\nRAINY CITY\nOpen\nSystem\nTHIS DEVICE\nMESH OFF\nREMOTE OFF\nOpen\nPosture\n\u21bb\nSecure\nNormal\nYOLO\nNOT SET\nWRITTEN 14:41"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Settings",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Settings",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Settings",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "SETTINGS",
+     "lib": true,
+     "cls": "btn--chrome desk-wing is-on",
+     "w": 89,
+     "h": 26,
+     "x": 708,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "GUIDE",
+     "lib": true,
+     "cls": "btn--chrome desk-wing",
+     "w": 66,
+     "h": 26,
+     "x": 796,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Models Open",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 1362,
+     "h": 48,
+     "x": 39,
+     "y": 183,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 1342,
+     "y": 195,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Assignments \u26a0 NO DEFAULT Open",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 1362,
+     "h": 48,
+     "x": 39,
+     "y": 231,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 1342,
+     "y": 243,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Connections Open",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 1362,
+     "h": 48,
+     "x": 39,
+     "y": 279,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 1342,
+     "y": 291,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Voice \u2713 LIVE AUTO Open",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 1362,
+     "h": 48,
+     "x": 39,
+     "y": 327,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 1342,
+     "y": 339,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Meetings \u2713 SUMMARY ON \u00b7 AFTER ROOM MEETINGS Open",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 1362,
+     "h": 48,
+     "x": 39,
+     "y": 375,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 1342,
+     "y": 387,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Rhythm EVERY 15 MIN Open",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 1362,
+     "h": 48,
+     "x": 39,
+     "y": 423,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 1342,
+     "y": 435,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Sounds & Presence \u2713 ON Open",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 1362,
+     "h": 48,
+     "x": 39,
+     "y": 471,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 1342,
+     "y": 483,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Wallpaper RAINY CITY Open",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 1362,
+     "h": 48,
+     "x": 39,
+     "y": 519,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 1342,
+     "y": 531,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "System THIS DEVICE MESH OFF REMOTE OFF Open",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 1362,
+     "h": 48,
+     "x": 39,
+     "y": 567,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Open",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 1342,
+     "y": 579,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 286
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/15-settings-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "live",
+  "action": "record-live",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1902,
+  "open_refused": [
+   "pal:Live meeting"
+  ],
+  "opened_by": "route:/live",
+  "first_useful_ms": 1834,
+  "win": {
+   "title": "Live meeting",
+   "rect": [
+    24,
+    72,
+    640,
+    619
+   ],
+   "offscreen": false,
+   "nodes": 9,
+   "words": [
+    "Live meeting",
+    "\u2699\ufe0e",
+    "Ready to record",
+    "Start meeting",
+    "Link \u00b7 connected",
+    "Transcript",
+    "\u25cf",
+    "Start a meeting to begin",
+    "READY"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 5,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 620,
+   "clientH": 617,
+   "text": "Live meeting\n\u2699\ufe0e\nReady to record\nStart meeting\n\nLink \u00b7 connected\n\nTRANSCRIPT\n\u25cf\nStart a meeting to begin\nREADY"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Live meeting",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Live meeting",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Live meeting",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Configure meeting",
+     "lib": true,
+     "cls": "btn--chrome desk-wing desk-wing-door",
+     "w": 27,
+     "h": 24,
+     "x": 412,
+     "y": 81,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Start meeting",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 112,
+     "h": 24,
+     "x": 537,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 98
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/16-live-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "rhythm",
+  "action": "configure-cadence",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1911,
+  "opened_by": "go:Rhythm",
+  "first_useful_ms": 645,
+  "win": {
+   "title": "Rhythm",
+   "rect": [
+    24,
+    72,
+    640,
+    520
+   ],
+   "offscreen": false,
+   "nodes": 26,
+   "words": [
+    "Rhythm",
+    "Every 15 min",
+    "Sweep",
+    "\u21bb",
+    "Run now",
+    "QUIET",
+    "22:00",
+    "\u2013",
+    "08:00",
+    "Runs on",
+    "\u21bb",
+    "Monday brief",
+    "DAILY 08:00",
+    "\u2713",
+    "LAST OCT 01",
+    "Generate",
+    "1 WATCH ITEM",
+    "Notify",
+    "\u21bb",
+    "\u21bb",
+    "\u2713 PAYMENTS LEDGER CUTOVER",
+    "\u2713 PLATFORM OBSERVABILITY",
+    "\u2713 STAFF HIRING LOOP",
+    "NOT SET",
+    "WRITTEN",
+    "14:48"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 5,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 521,
+   "clientH": 518,
+   "text": "Rhythm\nEvery 15 min\nSweep\n\u21bb\nEVERY 5 MIN\nEVERY 15 MIN\nEVERY 30 MIN\nEVERY 1 HR\nRun now\nQUIET 22:00\u201308:00\nRuns on\n\u21bb\nTHIS DEVICE\nMonday brief\nDAILY 08:00\n\u2713\nLAST OCT 01\nGenerate\n1 WATCH ITEM\nNotify\n\u21bb\nOFF\nON THE EDGE\nEVERY SWEEP\n\u21bb\nCOUNT ONLY\nROOM NAMES\n\u2713 PAYMENTS LEDGER CUTOVER\n\u2713 PLATFORM OBSERVABILITY\n\u2713 STAFF HIRING LOOP\nNOT SET\nWRITTEN 14:48"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Rhythm",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Rhythm",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Rhythm",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Sweep \u21bb EVERY 5 MIN EVERY 15 MIN EVERY 30 MIN EVERY 1 HR Run",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 610,
+     "h": 48,
+     "x": 39,
+     "y": 183,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Run now",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 569,
+     "y": 195,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Runs on \u21bb THIS DEVICE",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 610,
+     "h": 48,
+     "x": 39,
+     "y": 296,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Monday brief DAILY 08:00 \u2713 LAST OCT 01 Generate",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 610,
+     "h": 48,
+     "x": 39,
+     "y": 391,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Generate",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 76,
+     "h": 24,
+     "x": 561,
+     "y": 403,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Notify \u21bb OFF ON THE EDGE EVERY SWEEP \u21bb COUNT ONLY ROOM NAMES",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 610,
+     "h": 48,
+     "x": 39,
+     "y": 504,
+     "owns": true,
+     "tag": "DIV"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 205
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/17-rhythm-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "setup",
+  "action": "configure-setup",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1907,
+  "opened_by": "go:Setup",
+  "first_useful_ms": 636,
+  "win": {
+   "title": "Setup",
+   "rect": [
+    24,
+    72,
+    640,
+    560
+   ],
+   "offscreen": false,
+   "nodes": 54,
+   "words": [
+    "Setup",
+    "needs attention",
+    "Test runtime",
+    "Refresh",
+    "Readiness checks",
+    "Runtime",
+    "HoldSpeak 0.4.0 on Darwin 25.2.0 (arm64), Python 3.14.2",
+    "pass",
+    "Config",
+    "Loaded /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13",
+    "pass",
+    "Database",
+    "Schema OK at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/",
+    "pass",
+    "Microphone",
+    "Default input: MacBook Pro Microphone (index 1)",
+    "pass",
+    "Transcription backend",
+    "`auto` resolves to `mlx`",
+    "pass",
+    "Web runtime",
+    "fastapi, uvicorn, and websockets are importable",
+    "pass",
+    "Web runtime auth",
+    "Web runtime binds loopback (open to this machine). Auth toke",
+    "pass",
+    "Meeting intelligence runtime",
+    "Live analysis is off for Record.",
+    "pass",
+    "Meeting intelligence egress",
+    "Live analysis is off for Record.",
+    "pass",
+    "Endpoint health",
+    "no endpoint calls recorded yet",
+    "pass",
+    "Trust destinations",
+    "No listed destination is enabled.",
+    "pass",
+    "Runtime profiles",
+    "Meeting summary: unavailable (no assignment); Live analysis ",
+    "pass",
+    "Runs on destinations",
+    "This device: this device \u00b7 same_device \u00b7 unavailable (model ",
+    "warn",
+    "Mesh edges",
+    "no node has ever served this mesh (start one: holdspeak mesh",
+    "pass",
+    "Cloud intel preflight",
+    "Live analysis is off for Record.",
+    "pass",
+    "Next step",
+    "Run one dictation to verify",
+    "Continue arrival",
+    "Runs on"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 7,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 561,
+   "clientH": 558,
+   "text": "Setup\nNEEDS ATTENTION\nTest runtime\nRefresh\nREADINESS CHECKS\nRuntime\nHoldSpeak 0.4.0 on Darwin 25.2.0 (arm64), Python 3.14.2\nPASS\nConfig\nLoaded /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13pop.mdVn7UpXR4/.config/holdspeak/config.json (config version 1)\nPASS\nDatabase\nSchema OK at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13pop.mdVn7UpXR4/.local/share/holdspeak/holdspeak.db (254 tables).\nPASS\nMicrophone\nDefault input: MacBook Pro Microphone (index 1)\nPASS\nTranscription backend\n`auto` resolves to `mlx`\nPASS\nWeb runtime\nfastapi, uvicorn, and websockets are importable\nPASS\nWeb runtime auth\nWeb runtime binds loopback (open to this machine). Auth token is set \u2014 required automatically if a non-loopback bind is ever configured.\nPASS\nMeeting intelligence runtime\nLive analysis is off for Record.\nPASS\nMeeting intelligence egress\nLive analysis is off for Record.\nPASS\nEndpoint health\nno endpoint calls recorded yet\nPASS\nTrust destinations\nNo listed destination is enabled.\nPASS\nRuntime profiles\nMeeting summary: unavailable (no assignment); Live analysis is off for Record.; dictation: hub default (no profile assigned)\nPASS\nRuns on destinations\nThis device: this device \u00b7 same_device "
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Setup",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Setup",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Setup",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Test runtime",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 104,
+     "h": 24,
+     "x": 470,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Refresh",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 581,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Continue arrival",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 133,
+     "h": 24,
+     "x": 412,
+     "y": 259,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Runs on",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 551,
+     "y": 259,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "needs attention",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "warn",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "warn",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "warn",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    },
+    {
+     "t": "pass",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 3053
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/18-setup-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "context",
+  "action": "open-constitutional-context",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1943,
+  "opened_by": "go:Context",
+  "first_useful_ms": 639,
+  "win": {
+   "title": "Context",
+   "rect": [
+    24,
+    72,
+    640,
+    619
+   ],
+   "offscreen": false,
+   "nodes": 10,
+   "words": [
+    "Context",
+    "Status",
+    "Save",
+    "rev",
+    "0",
+    "~",
+    "0",
+    "tokens",
+    "0/32,768 chars",
+    "Constitutional context"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 5,
+   "platedUnder44": null,
+   "ghosts": [
+    "Save"
+   ],
+   "scrollH": 620,
+   "clientH": 617,
+   "text": "Context\nSTATUS\nSave\nrev 0\n~0 tokens\n0/32,768 CHARS\nCONSTITUTIONAL CONTEXT"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Context",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Context",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Context",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Save",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 602,
+     "y": 134,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak Constitutional context",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 20,
+     "h": 20,
+     "x": 626,
+     "y": 395,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "Role, stack, rules\nOne fact per line",
+     "mic": true
+    }
+   ],
+   "small": [
+    {
+     "t": "rev",
+     "fs": 11
+    },
+    {
+     "t": "0",
+     "fs": 11
+    },
+    {
+     "t": "0/32,768 chars",
+     "fs": 10
+    }
+   ],
+   "zeros": [
+    "0",
+    "0"
+   ],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 65
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/19-context-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "workbenches",
+  "action": "open-workbenches",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1905,
+  "opened_by": "go:Workbenches",
+  "first_useful_ms": 637,
+  "win": {
+   "title": "Workbenches",
+   "rect": [
+    24,
+    72,
+    640,
+    619
+   ],
+   "offscreen": false,
+   "nodes": 6,
+   "words": [
+    "Workbenches",
+    "+ Create",
+    "Ledger cutover bench",
+    "3 PENDING",
+    "Choose default",
+    "Manual"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 4,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 620,
+   "clientH": 617,
+   "text": "Workbenches\n+ Create\nLedger cutover bench\n3 PENDING\nChoose default\nManual"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Workbenches",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Workbenches",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Workbenches",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "+ Create",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 76,
+     "h": 24,
+     "x": 573,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Ledger cutover bench 3 PENDING Choose default Manual",
+     "lib": false,
+     "cls": "wb-home-card",
+     "w": 287,
+     "h": 80,
+     "x": 53,
+     "y": 179,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "Choose default",
+     "fs": 10
+    },
+    {
+     "t": "Manual",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 68
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/20-workbenches-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "components",
+  "action": "design-components",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1939,
+  "open_refused": [
+   "pal:Components"
+  ],
+  "opened_by": "route:/design/components",
+  "first_useful_ms": 10197,
+  "win": {
+   "title": "Components",
+   "rect": [
+    24,
+    72,
+    640,
+    619
+   ],
+   "offscreen": false,
+   "nodes": 54,
+   "words": [
+    "Components",
+    "The gadget kit on the surface idiom",
+    "Primary verb",
+    "Buttons and verbs",
+    "Primary",
+    "Secondary",
+    "Ghost",
+    "Destructive",
+    "Loading",
+    "Disabled",
+    "Dense action",
+    "\u25cf",
+    "TALK",
+    "\u25a0",
+    "STOP",
+    "\u2715",
+    "KILL",
+    "\u21b5",
+    "SEND",
+    "The gadget sheet",
+    "EVERY CONTROL IS A GADGET",
+    "Boolean",
+    "CheckGadget",
+    "Pick",
+    "CycleGadget",
+    "\u21bb",
+    "Text",
+    "StringGadget \u00b7 mic",
+    "Long text",
+    "PadGadget \u00b7 mic",
+    "Number",
+    "StepperGadget",
+    "tok",
+    "\u25b2",
+    "\u25bc",
+    "Scalar",
+    "PropGadget",
+    "0.60",
+    "Level",
+    "LedMeter",
+    "CTX",
+    "Lamps and chips",
+    "ready",
+    "review",
+    "blocked",
+    "off",
+    "ctx 16k",
+    "SET",
+    "NOT SET",
+    "12",
+    "figures",
+    "Local",
+    "Gallery loaded",
+    "now"
+   ],
+   "clipped": [
+    "Download weights"
+   ],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 13,
+   "platedUnder44": null,
+   "ghosts": [
+    "Loading",
+    "Disabled",
+    "APPLY"
+   ],
+   "scrollH": 620,
+   "clientH": 617,
+   "text": "Components\nThe gadget kit on the surface idiom\nPrimary verb\nBUTTONS AND VERBS\nPrimary\nSecondary\nGhost\nDestructive\nLoading\nDisabled\nDense action\n\u25cf\nTALK\n\u25a0\nSTOP\n\u2715\nKILL\n\u21b5\nSEND\nTHE GADGET SHEET\nEVERY CONTROL IS A GADGET\nBoolean\nCheckGadget\nPick\nCycleGadget\n\u21bb\nAutomatic\nOn device\nHeld\nText\nStringGadget \u00b7 mic\nLong text\nPadGadget \u00b7 mic\nNumber\nStepperGadget\ntok\n\u25b2\n\u25bc\nScalar\nPropGadget\n0.60\nLevel\nLedMeter\nCTX\nLAMPS AND CHIPS\nREADY\nREVIEW\nBLOCKED\nOFF\nCTX 16K\nSET\nNOT SET\n12\nfigures\nWINGS AND THE FOLD\nOUTCOMES\nRECORD\n\u2699\ufe0e\nRAW \u00b7 SPECIMEN\n2 LINES\nTHE TABLE AND THE ARMED DELETE\nKEYWORD\nDOES\nsay the word\ntypes the phrase\n\u00d7\nopen board\nopens the board\n\u00d7\n+ ADD\nTHE LEDGER WALKS\nSPECIMEN 3 \u00b7 ARROWS WALK\n09:38\none Tab stop for the composite\n09:41\narrows ride the accent band\n09:44\nHome and End jump; letters seek\nROWS, STATES, AND THE TWO-STEP\n\u25c8\nAn honest row\ntitle + meaningful detail; unknowns omitted\njust now\nDelete\nA press-target row\nthe row body is one press target\n\u25cb\nA quiet empty state\n\u26a0\ufe0e\nThe error leg renders in the flow\nSTATECHIP: ALL SEVEN STATES\n\u25cb\nIDLE\n\u25cf\nACTIVE\n\u21bb\nWORKING\n\u2713\nSUCCESS\n\u26a0\nWARNING\n\u2717\nFAILURE\n\u2014\nUNREACHABLE\n*\nCUSTOM LABEL\nACTIONNOTICE: TONE VARIANTS\ni\nModels are downloading in the background.\n\u2713\n"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Components",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Components",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Components",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Primary verb",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 104,
+     "h": 24,
+     "x": 545,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Primary",
+     "lib": true,
+     "cls": "btn btn--primary ",
+     "w": 76,
+     "h": 28,
+     "x": 39,
+     "y": 195,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Secondary",
+     "lib": true,
+     "cls": "btn btn--secondary ",
+     "w": 91,
+     "h": 28,
+     "x": 121,
+     "y": 195,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Ghost",
+     "lib": true,
+     "cls": "btn btn--ghost ",
+     "w": 62,
+     "h": 28,
+     "x": 218,
+     "y": 195,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Destructive",
+     "lib": true,
+     "cls": "btn btn--danger ",
+     "w": 105,
+     "h": 28,
+     "x": 286,
+     "y": 195,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Loading",
+     "lib": true,
+     "cls": "btn btn--secondary ",
+     "w": 100,
+     "h": 28,
+     "x": 397,
+     "y": 195,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Disabled",
+     "lib": true,
+     "cls": "btn btn--secondary ",
+     "w": 84,
+     "h": 28,
+     "x": 504,
+     "y": 195,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Dense action",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 104,
+     "h": 24,
+     "x": 39,
+     "y": 229,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "TALK",
+     "lib": false,
+     "cls": "gadget-transport-key",
+     "w": 48,
+     "h": 48,
+     "x": 39,
+     "y": 259,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "STOP",
+     "lib": false,
+     "cls": "gadget-transport-key",
+     "w": 48,
+     "h": 48,
+     "x": 93,
+     "y": 259,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "KILL",
+     "lib": false,
+     "cls": "gadget-transport-key",
+     "w": 48,
+     "h": 48,
+     "x": 147,
+     "y": 259,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "SEND",
+     "lib": false,
+     "cls": "gadget-transport-key",
+     "w": 63,
+     "h": 28,
+     "x": 201,
+     "y": 269,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak Gallery text",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 20,
+     "h": 20,
+     "x": 621,
+     "y": 473,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak Gallery long text",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 20,
+     "h": 20,
+     "x": 620,
+     "y": 595,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Increase Gallery number",
+     "lib": false,
+     "cls": "",
+     "w": 14,
+     "h": 10,
+     "x": 628,
+     "y": 631,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Decrease Gallery number",
+     "lib": false,
+     "cls": "",
+     "w": 14,
+     "h": 11,
+     "x": 628,
+     "y": 640,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "OUTCOMES",
+     "lib": true,
+     "cls": "btn--chrome desk-wing is-on",
+     "w": 89,
+     "h": 26,
+     "x": 39,
+     "y": 942,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "RECORD",
+     "lib": true,
+     "cls": "btn--chrome desk-wing",
+     "w": 74,
+     "h": 26,
+     "x": 127,
+     "y": 942,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Configure",
+     "lib": true,
+     "cls": "btn--chrome desk-wing desk-wing-door",
+     "w": 27,
+     "h": 24,
+     "x": 205,
+     "y": 943,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Delete row 1",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 25,
+     "h": 24,
+     "x": 622,
+     "y": 1074,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Delete row 2",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 25,
+     "h": 24,
+     "x": 622,
+     "y": 1100,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "+ ADD",
+     "lib": false,
+     "cls": "gadget-table-add",
+     "w": 610,
+     "h": 24,
+     "x": 39,
+     "y": 1128,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "09:38 one Tab stop for the composite",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 610,
+     "h": 26,
+     "x": 39,
+     "y": 1231,
+     "owns": null,
+     "tag": "DIV"
+    },
+    {
+     "name": "09:41 arrows ride the accent band",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 610,
+     "h": 26,
+     "x": 39,
+     "y": 1257,
+     "owns": null,
+     "tag": "DIV"
+    },
+    {
+     "name": "09:44 Home and End jump; letters seek",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 610,
+     "h": 26,
+     "x": 39,
+     "y": 1283,
+     "owns": null,
+     "tag": "DIV"
+    },
+    {
+     "name": "Delete",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 578,
+     "y": 1373,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "A press-target row the row body is one press target",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 590,
+     "h": 38,
+     "x": 49,
+     "y": 1412,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "REVIEW",
+     "lib": true,
+     "cls": "btn--chrome surface-action-notice-btn",
+     "w": 64,
+     "h": 27,
+     "x": 572,
+     "y": 1932,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "RETRY",
+     "lib": true,
+     "cls": "btn--chrome surface-action-notice-btn",
+     "w": 58,
+     "h": 27,
+     "x": 578,
+     "y": 2026,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25b8 Uncontrolled fold (default closed)",
+     "lib": true,
+     "cls": "btn--chrome surface-disclosure-trigger",
+     "w": 222,
+     "h": 26,
+     "x": 39,
+     "y": 2115,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25b8 Uncontrolled fold (default open)",
+     "lib": true,
+     "cls": "btn--chrome surface-disclosure-trigger",
+     "w": 212,
+     "h": 26,
+     "x": 39,
+     "y": 2151,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25b8 Controlled fold CTRL",
+     "lib": true,
+     "cls": "btn--chrome surface-disclosure-trigger",
+     "w": 610,
+     "h": 26,
+     "x": 39,
+     "y": 2217,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25b8 RAW VARIANT DEBUG",
+     "lib": true,
+     "cls": "btn--chrome surface-disclosure-trigger",
+     "w": 610,
+     "h": 26,
+     "x": 39,
+     "y": 2253,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "RETRY",
+     "lib": true,
+     "cls": "btn--chrome surface-plan-action-btn",
+     "w": 58,
+     "h": 27,
+     "x": 591,
+     "y": 2438,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "RESUME",
+     "lib": true,
+     "cls": "btn--chrome surface-plan-action-btn",
+     "w": 64,
+     "h": 27,
+     "x": 585,
+     "y": 2540,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25b8 WHAT'S INSIDE",
+     "lib": true,
+     "cls": "btn--chrome surface-disclosure-trigger",
+     "w": 125,
+     "h": 26,
+     "x": 44,
+     "y": 2780,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25b8 WHAT'S INSIDE",
+     "lib": true,
+     "cls": "btn--chrome surface-disclosure-trigger",
+     "w": 125,
+     "h": 26,
+     "x": 44,
+     "y": 2981,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "APPLY",
+     "lib": true,
+     "cls": "btn--chrome surface-choice-confirm-btn",
+     "w": 66,
+     "h": 27,
+     "x": 583,
+     "y": 3089,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Open popover",
+     "lib": false,
+     "cls": "signal-btn",
+     "w": 610,
+     "h": 21,
+     "x": 39,
+     "y": 3167,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Cloud API",
+     "lib": true,
+     "cls": "btn--chrome surface-provenance-inspect",
+     "w": 7,
+     "h": 10,
+     "x": 402,
+     "y": 3243,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Inspect Failed",
+     "lib": true,
+     "cls": "btn--chrome surface-receipt-inspect",
+     "w": 7,
+     "h": 10,
+     "x": 368,
+     "y": 3264,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "This Mac",
+     "lib": false,
+     "cls": "surface-topology-node",
+     "w": 180,
+     "h": 80,
+     "x": 314,
+     "y": 3430,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "LAN Server",
+     "lib": false,
+     "cls": "surface-topology-node",
+     "w": 180,
+     "h": 80,
+     "x": 634,
+     "y": 3365,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Cloud API",
+     "lib": false,
+     "cls": "surface-topology-node",
+     "w": 180,
+     "h": 80,
+     "x": 634,
+     "y": 3505,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "+ Add node",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 90,
+     "h": 24,
+     "x": 48,
+     "y": 3617,
+     "owns": null,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "TYPE OR SPEAK",
+     "mic": true
+    },
+    {
+     "ph": "THE MULTILINE WELL",
+     "mic": true
+    }
+   ],
+   "small": [
+    {
+     "t": "tok",
+     "fs": 10
+    },
+    {
+     "t": "CTX",
+     "fs": 9
+    },
+    {
+     "t": "ready",
+     "fs": 10
+    },
+    {
+     "t": "review",
+     "fs": 10
+    },
+    {
+     "t": "blocked",
+     "fs": 10
+    },
+    {
+     "t": "off",
+     "fs": 10
+    },
+    {
+     "t": "KEYWORD",
+     "fs": 10
+    },
+    {
+     "t": "DOES",
+     "fs": 10
+    },
+    {
+     "t": "say the word",
+     "fs": 11
+    },
+    {
+     "t": "types the phrase",
+     "fs": 11
+    },
+    {
+     "t": "open board",
+     "fs": 11
+    },
+    {
+     "t": "opens the board",
+     "fs": 11
+    },
+    {
+     "t": "+ ADD",
+     "fs": 11
+    },
+    {
+     "t": "Review",
+     "fs": 10
+    },
+    {
+     "t": "Retry",
+     "fs": 10
+    },
+    {
+     "t": "CTRL",
+     "fs": 10
+    },
+    {
+     "t": "DEBUG",
+     "fs": 10
+    },
+    {
+     "t": "Retry",
+     "fs": 10
+    },
+    {
+     "t": "Resume",
+     "fs": 10
+    },
+    {
+     "t": "Free",
+     "fs": 10
+    },
+    {
+     "t": "641 MB download",
+     "fs": 10
+    },
+    {
+     "t": "Apply",
+     "fs": 10
+    },
+    {
+     "t": "Chat & agents, Summaries",
+     "fs": 10
+    },
+    {
+     "t": "Translation",
+     "fs": 10
+    },
+    {
+     "t": "MLX, llama.cpp",
+     "fs": 10
+    },
+    {
+     "t": "qwen3.6-35b",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 2213
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/21-components-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "activity",
+  "action": "inspect-activity",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1916,
+  "opened_by": "go:Activity",
+  "first_useful_ms": 637,
+  "win": {
+   "title": "Activity",
+   "rect": [
+    24,
+    72,
+    640,
+    619
+   ],
+   "offscreen": false,
+   "nodes": 10,
+   "words": [
+    "Activity",
+    "Records",
+    "Rules",
+    "\u2699\ufe0e",
+    "Refresh now",
+    "Watching",
+    "Records",
+    "Clear records",
+    "\u25cd",
+    "No activity yet"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 9,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 620,
+   "clientH": 617,
+   "text": "Activity\nRECORDS\nRULES\n\u2699\ufe0e\nRefresh now\nWATCHING\nRECORDS\nClear records\n\u25cd\nNo activity yet"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Activity",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Activity",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Activity",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "RECORDS",
+     "lib": true,
+     "cls": "btn--chrome desk-wing is-on",
+     "w": 81,
+     "h": 26,
+     "x": 320,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "RULES",
+     "lib": true,
+     "cls": "btn--chrome desk-wing",
+     "w": 66,
+     "h": 26,
+     "x": 401,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Candidates and connectors",
+     "lib": true,
+     "cls": "btn--chrome desk-wing desk-wing-door",
+     "w": 27,
+     "h": 24,
+     "x": 470,
+     "y": 81,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Refresh now",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 97,
+     "h": 24,
+     "x": 471,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Clear records",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 112,
+     "h": 24,
+     "x": 537,
+     "y": 171,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak Filter this view",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 20,
+     "h": 20,
+     "x": 627,
+     "y": 202,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "FILTER",
+     "mic": true
+    }
+   ],
+   "small": [
+    {
+     "t": "Watching",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 77
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/22-activity-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "desk-memory",
+  "action": "open-project-memory",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1922,
+  "opened_by": "go:Desk memory",
+  "first_useful_ms": 638,
+  "win": {
+   "title": "Desk memory",
+   "rect": [
+    24,
+    72,
+    800,
+    619
+   ],
+   "offscreen": false,
+   "nodes": 58,
+   "words": [
+    "Desk memory",
+    "REF \u00b7",
+    "\u00b7",
+    "SEARCHED 14:48",
+    "Search",
+    "All",
+    "Decisions",
+    "Commitments",
+    "Briefs",
+    "Meetings",
+    "CURRENT 1",
+    "Freeze the old ledger on Nov 5",
+    "Carry into brief",
+    "DEC 10-01",
+    "DECISION",
+    "NO SOURCE",
+    "ACCEPTED",
+    "PAYMENTS LEDGER CUTOVER",
+    "Agreed in the meeting.",
+    "SOURCE",
+    "MTG 10-01 \u00b7 12:41",
+    "Open source",
+    "MEETINGS 4",
+    "Ledger cutover sync",
+    "Dual-write is stable. Agreed.",
+    "meeting",
+    "Architecture review: tracing",
+    "Reviewed the tracing options. Agreed.",
+    "meeting",
+    "1:1 Avery",
+    "Avery wants to lead the ledger cutover. Agreed.",
+    "meeting",
+    "Hiring debrief: staff engineer",
+    "Strong system design. Agreed.",
+    "meeting",
+    "BRIEFS 10",
+    "Unassigned: Pilot OTel in billing",
+    "Needs an owner",
+    "waiting",
+    "Unassigned: Review Avery's promo packet",
+    "Needs an owner",
+    "waiting",
+    "Unassigned: Schedule the ops interview",
+    "Needs an owner",
+    "waiting",
+    "Unassigned: Write the rollback runbook",
+    "Needs an owner",
+    "waiting",
+    "Review decision: Run a second ops interview",
+    "1 new decision, 1 thing changed, 4 things waiting, 4 decisio",
+    "decisions",
+    "Review decision: Adopt OpenTelemetry",
+    "1 new decision, 1 thing changed, 4 things waiting, 4 decisio",
+    "decisions",
+    "Review decision: Freeze the old ledger on Nov 5",
+    "1 new decision, 1 thing changed, 4 things waiting, 4 decisio",
+    "decisions",
+    "THIS DEVICE"
+   ],
+   "clipped": [],
+   "scrolled": [
+    "desk-surface-body:172"
+   ],
+   "notOwned": [],
+   "verbsInView": 17,
+   "platedUnder44": null,
+   "ghosts": [
+    "Search desk memory"
+   ],
+   "scrollH": 620,
+   "clientH": 617,
+   "text": "Desk memory\n37 remembered\nREF \u00b7\n\u00b7\nSEARCHED 14:48\nSearch\nALL\nDECISIONS\nCOMMITMENTS\nBRIEFS\nMEETINGS\nCURRENT 1\nFreeze the old ledger on Nov 5\nCarry into brief\nDEC 10-01\nDECISION\nNO SOURCE\nACCEPTED\nPAYMENTS LEDGER CUTOVER\nAgreed in the meeting.\nSOURCE\nMTG 10-01 \u00b7 12:41\nOpen source\nMEETINGS 4\nLedger cutover sync\nDual-write is stable. Agreed.\nMEETING\nArchitecture review: tracing\nReviewed the tracing options. Agreed.\nMEETING\n1:1 Avery\nAvery wants to lead the ledger cutover. Agreed.\nMEETING\nHiring debrief: staff engineer\nStrong system design. Agreed.\nMEETING\nBRIEFS 10\nUnassigned: Pilot OTel in billing\nNeeds an owner\nWAITING\nUnassigned: Review Avery's promo packet\nNeeds an owner\nWAITING\nUnassigned: Schedule the ops interview\nNeeds an owner\nWAITING\nUnassigned: Write the rollback runbook\nNeeds an owner\nWAITING\nReview decision: Run a second ops interview\n1 new decision, 1 thing changed, 4 things waiting, 4 decisions waiting.\nDECISIONS\nReview decision: Adopt OpenTelemetry\n1 new decision, 1 thing changed, 4 things waiting, 4 decisions waiting.\nDECISIONS\nReview decision: Freeze the old ledger on Nov 5\n1 new decision, 1 thing changed, 4 things waiting, 4 decisions waiting.\nDECISIONS\nReview decisio"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Desk memory",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Desk memory",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Desk memory",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Dictate into the search",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 20,
+     "h": 20,
+     "x": 696,
+     "y": 41,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Search desk memory",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 726,
+     "y": 39,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Filter: All",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm surface-filter-token",
+     "w": 48,
+     "h": 26,
+     "x": 49,
+     "y": 95,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Filter: Decisions",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm surface-filter-token",
+     "w": 91,
+     "h": 26,
+     "x": 96,
+     "y": 95,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Filter: Commitments",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm surface-filter-token",
+     "w": 106,
+     "h": 26,
+     "x": 186,
+     "y": 95,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Filter: Briefs",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm surface-filter-token",
+     "w": 70,
+     "h": 26,
+     "x": 291,
+     "y": 95,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Filter: Meetings",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm surface-filter-token",
+     "w": 84,
+     "h": 26,
+     "x": 360,
+     "y": 95,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Carry into brief",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 133,
+     "h": 24,
+     "x": 655,
+     "y": 172,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Open the Project: Payments ledger cutover",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm surface-project-button",
+     "w": 166,
+     "h": 20,
+     "x": 405,
+     "y": 202,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Open source: MTG 10-01",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 97,
+     "h": 24,
+     "x": 260,
+     "y": 255,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Ledger cutover sync Dual-write is stable. Agreed. MEETING",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 338,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Architecture review: tracing Reviewed the tracing options. A",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 386,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "1:1 Avery Avery wants to lead the ledger cutover. Agreed. ME",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 433,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Hiring debrief: staff engineer Strong system design. Agreed.",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 481,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Start here These drawers and notes are yours to edit, rename",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1087,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Weekly update Summarize what happened this week. Focus on de",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1135,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "1:1 prep Prepare for my next 1:1. List open commitments, rec",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1182,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "People & vocabulary Which names, terms, or abbreviations wou",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1230,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Meeting preferences What would make a meeting record useful?",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1277,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "How I like help How should help be shaped when you explicitl",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1325,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Egress guard --- instruction: > Flag any pending tool call w",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1372,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Effect guard --- instruction: > Flag any tool call that writ",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1420,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Current priorities What deserves attention right now? - Prio",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1467,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "About me What would be useful to share when you explicitly a",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1515,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Architecture review notes Event sourcing for the ledger: yes",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1562,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Questions for Avery 1:1 - promo packet - on-call load NOTE",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1610,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Ledger cutover risks - reconciliation job slow - rollback pl",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1657,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Adopt OpenTelemetry for all services Use the OTel SDK in eve",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1705,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Freeze the old ledger on Nov 5 Dual-write is stable. Freeze ",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1752,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Hiring debrief: staff engineer: notes Strong system design. ",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1800,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Meeting decisions ARTIFACT",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 20,
+     "x": 59,
+     "y": 1853,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "1:1 Avery: notes Avery wants to lead the ledger cutover. Pro",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1889,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Architecture review: tracing: notes Reviewed the tracing opt",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 1937,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Meeting decisions ARTIFACT",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 20,
+     "x": 59,
+     "y": 1990,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Ledger cutover sync: notes Dual-write is stable. The team ag",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 38,
+     "x": 59,
+     "y": 2026,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Meeting decisions ARTIFACT",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 730,
+     "h": 20,
+     "x": 59,
+     "y": 2080,
+     "owns": null,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "Search",
+     "mic": true
+    }
+   ],
+   "small": [
+    {
+     "t": "REF \u00b7",
+     "fs": 10
+    },
+    {
+     "t": "SEARCHED 14:48",
+     "fs": 10
+    },
+    {
+     "t": "All",
+     "fs": 11
+    },
+    {
+     "t": "Decisions",
+     "fs": 11
+    },
+    {
+     "t": "Commitments",
+     "fs": 11
+    },
+    {
+     "t": "Briefs",
+     "fs": 11
+    },
+    {
+     "t": "Meetings",
+     "fs": 11
+    },
+    {
+     "t": "PAYMENTS LEDGER CUTOVER",
+     "fs": 10
+    },
+    {
+     "t": "SOURCE",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 4652
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/23-desk-memory-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "models",
+  "action": "open-concierge",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1923,
+  "opened_by": "go:Models",
+  "first_useful_ms": 634,
+  "win": {
+   "title": "Models",
+   "rect": [
+    24,
+    72,
+    640,
+    760
+   ],
+   "offscreen": false,
+   "nodes": 49,
+   "words": [
+    "Models",
+    "No engine yet",
+    "THIS MAC \u00b7 M\u2011SERIES",
+    "CHECKED",
+    "2:49 PM",
+    "FOUND",
+    "Add an engine",
+    "THE SET",
+    "Adjust",
+    "\u2022",
+    "Thoughts & notes",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "\u25a0",
+    "Chat",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "\u2013",
+    "Writing & dictation",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "\u2215",
+    "Speech recognition",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "\u25a0",
+    "Meetings",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "\u25e6",
+    "Agents & tools",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "\u25cb",
+    "Background",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "PROBE",
+    "Test",
+    "7 GROUPS \u00b7 7 WAITING",
+    "Cancel",
+    "Use these"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 15,
+   "platedUnder44": null,
+   "ghosts": [
+    "Use these"
+   ],
+   "scrollH": 761,
+   "clientH": 758,
+   "text": "Models\nNo engine yet\nTHIS MAC \u00b7 M\u2011SERIES\nCHECKED 2:49 PM\nFOUND\nAdd an engine\nTHE SET\nAdjust\n\u2022\nThoughts & notes\n\u2014\n\u25cb\nWAITING\n\u25a0\nChat\n\u2014\n\u25cb\nWAITING\n\u2013\nWriting & dictation\n\u2014\n\u25cb\nWAITING\n\u2215\nSpeech recognition\n\u2014\n\u25cb\nWAITING\n\u25a0\nMeetings\n\u2014\n\u25cb\nWAITING\n\u25e6\nAgents & tools\n\u2014\n\u25cb\nWAITING\n\u25cb\nBackground\n\u2014\n\u25cb\nWAITING\nPROBE\nTest\n7 GROUPS \u00b7 7 WAITING\nCancel\nUse these"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Models",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Models",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Models",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Add an engine",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-add-engine",
+     "w": 112,
+     "h": 24,
+     "x": 85,
+     "y": 227,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Adjust",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-adjust-trigger",
+     "w": 61,
+     "h": 24,
+     "x": 588,
+     "y": 269,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u2022 Thoughts & notes \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 312,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 235,
+     "y": 312,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25a0 Chat \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 371,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 142,
+     "y": 371,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u2013 Writing & dictation \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 430,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 242,
+     "y": 430,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u2215 Speech recognition \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 489,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 249,
+     "y": 489,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25a0 Meetings \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 547,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 176,
+     "y": 547,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25e6 Agents & tools \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 606,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 213,
+     "y": 606,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25cb Background \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 665,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 195,
+     "y": 665,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Test",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 589,
+     "y": 732,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Cancel",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 491,
+     "y": 802,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Use these",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 83,
+     "h": 24,
+     "x": 556,
+     "y": 802,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "THIS MAC \u00b7 M\u2011SERIES",
+     "fs": 11
+    },
+    {
+     "t": "CHECKED",
+     "fs": 11
+    },
+    {
+     "t": "FOUND",
+     "fs": 11
+    },
+    {
+     "t": "THE SET",
+     "fs": 11
+    },
+    {
+     "t": "PROBE",
+     "fs": 11
+    },
+    {
+     "t": "7 GROUPS \u00b7 7 WAITING",
+     "fs": 11
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 286
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/24-models-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "new-project",
+  "action": "project-setup",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1901,
+  "opened_by": "desk:New Project",
+  "first_useful_ms": 628,
+  "win": {
+   "title": "New Project",
+   "rect": [
+    24,
+    72,
+    640,
+    580
+   ],
+   "offscreen": false,
+   "nodes": 21,
+   "words": [
+    "New Project",
+    "THIS BECOMES THE PROJECT'S NAME",
+    "SOURCES",
+    "GH",
+    "GitHub",
+    "\u25cb",
+    "NOT SET UP",
+    "Connect",
+    "J",
+    "Jira",
+    "\u25cb",
+    "NOT SET UP",
+    "Connect",
+    "C",
+    "Confluence",
+    "\u25cb",
+    "NOT SET UP",
+    "Connect",
+    "NO SOURCES \u00b7 BLANK PROJECT",
+    "Cancel",
+    "Create Project"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 9,
+   "platedUnder44": null,
+   "ghosts": [
+    "Create Project"
+   ],
+   "scrollH": 581,
+   "clientH": 578,
+   "text": "New Project\nTHIS BECOMES THE PROJECT'S NAME\nSOURCES\nGH\nGitHub\n\u25cb\nNOT SET UP\nConnect\nJ\nJira\n\u25cb\nNOT SET UP\nConnect\nC\nConfluence\n\u25cb\nNOT SET UP\nConnect\nNO SOURCES \u00b7 BLANK PROJECT\nCancel\nCreate Project"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close New Project",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize New Project",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize New Project",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak outcome",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 34,
+     "h": 34,
+     "x": 603,
+     "y": 134,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "GH GitHub \u25cb NOT SET UP Connect",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 26,
+     "x": 52,
+     "y": 238,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Connect",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 568,
+     "y": 239,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "J Jira \u25cb NOT SET UP Connect",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 26,
+     "x": 52,
+     "y": 296,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Connect",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 568,
+     "y": 297,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "C Confluence \u25cb NOT SET UP Connect",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 26,
+     "x": 52,
+     "y": 354,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Connect",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 568,
+     "y": 355,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Cancel",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 455,
+     "y": 622,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Create Project",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 119,
+     "h": 24,
+     "x": 520,
+     "y": 622,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "What are you delivering?",
+     "mic": true
+    }
+   ],
+   "small": [
+    {
+     "t": "THIS BECOMES THE PROJECT'S NAME",
+     "fs": 11
+    },
+    {
+     "t": "SOURCES",
+     "fs": 11
+    },
+    {
+     "t": "NO SOURCES \u00b7 BLANK PROJECT",
+     "fs": 11
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 173
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/25-new-project-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "processes",
+  "action": "inspect-processes",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1895,
+  "opened_by": "go:Processes",
+  "first_useful_ms": 633,
+  "win": {
+   "title": "Processes",
+   "rect": [
+    24,
+    72,
+    640,
+    619
+   ],
+   "offscreen": false,
+   "nodes": 14,
+   "words": [
+    "Processes",
+    "WATCHING",
+    "RUNS 1",
+    "NEEDS YOU",
+    "RUNNING",
+    "WAITING",
+    "UNKNOWN",
+    "RECENTLY ENDED 1",
+    "10:28:07",
+    "CHANNEL.SAVE_DESTINATION",
+    "\u00b7 desk:channel.save_destination",
+    "Owner-session \u00b7 Node:hub-project-writer",
+    "SUCCEEDED",
+    "KERNEL \u00b7 CURSOR 5 \u00b7 RUNS 1"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 3,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 620,
+   "clientH": 617,
+   "text": "Processes\nWATCHING\nRUNS 1\nNEEDS YOU\nRUNNING\nWAITING\nUNKNOWN\nRECENTLY ENDED 1\n10:28:07\nCHANNEL.SAVE_DESTINATION \u00b7 desk:channel.save_destination\nOwner-session \u00b7 Node:hub-project-writer\nSUCCEEDED\nKERNEL \u00b7 CURSOR 5 \u00b7 RUNS 1"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Processes",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Processes",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Processes",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "10:28:07 CHANNEL.SAVE_DESTINATION \u00b7 desk:channel.save_destin",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 610,
+     "h": 26,
+     "x": 39,
+     "y": 377,
+     "owns": true,
+     "tag": "DIV"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "WATCHING",
+     "fs": 10
+    },
+    {
+     "t": "Owner-session \u00b7 Node:hub-project-writer",
+     "fs": 11
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 206
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/26-processes-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "commands",
+  "action": "configure-commands",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1896,
+  "opened_by": "go:Commands",
+  "first_useful_ms": 638,
+  "win": {
+   "title": "Commands",
+   "rect": [
+    24,
+    72,
+    640,
+    619
+   ],
+   "offscreen": false,
+   "nodes": 8,
+   "words": [
+    "Commands",
+    "Add command",
+    "Commands off",
+    "Enable in Settings",
+    "Command board",
+    "\u25cb",
+    "No voice commands",
+    "Add command"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 6,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 620,
+   "clientH": 617,
+   "text": "Commands\nAdd command\nCOMMANDS OFF\nEnable in Settings\nCOMMAND BOARD\n\u25cb\nNo voice commands\nAdd command"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Commands",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Commands",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Commands",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Add command",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 97,
+     "h": 24,
+     "x": 313,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Enable in Settings",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 148,
+     "h": 24,
+     "x": 501,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Add command",
+     "lib": true,
+     "cls": "btn--chrome desk-chip surface-state-action",
+     "w": 110,
+     "h": 27,
+     "x": 289,
+     "y": 290,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "Commands off",
+     "fs": 10
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 91
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/27-commands-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "people",
+  "action": "open-people",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 2404,
+  "opened_by": "desk:Open People",
+  "first_useful_ms": 645,
+  "win": {
+   "title": "People",
+   "rect": [
+    24,
+    72,
+    640,
+    619
+   ],
+   "offscreen": false,
+   "nodes": 16,
+   "words": [
+    "People",
+    "Encrypted",
+    "Local storage",
+    "Notes only",
+    "New relationship",
+    "Relationships",
+    "\u21bb",
+    "Add",
+    "Avery Chen",
+    "Direct report",
+    "Jordan Patel",
+    "Direct report",
+    "Morgan Lee",
+    "Peer",
+    "Sam Rivera",
+    "Direct report"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 10,
+   "platedUnder44": null,
+   "ghosts": [
+    "Add"
+   ],
+   "scrollH": 620,
+   "clientH": 617,
+   "text": "People\nEncrypted\nLocal storage\nNotes only\nNew relationship\nRELATIONSHIPS\n\u21bb\nDirect report\nPeer\nExtended\nAdd\nAvery Chen\nDirect report\nJordan Patel\nDirect report\nMorgan Lee\nPeer\nSam Rivera\nDirect report"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close People",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize People",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize People",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "New relationship",
+     "lib": true,
+     "cls": "btn btn--primary btn--sm ",
+     "w": 133,
+     "h": 24,
+     "x": 516,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak New relationship",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 20,
+     "h": 20,
+     "x": 437,
+     "y": 188,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Add",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 40,
+     "h": 24,
+     "x": 609,
+     "y": 186,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Avery Chen Direct report",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 590,
+     "h": 38,
+     "x": 49,
+     "y": 228,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Jordan Patel Direct report",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 590,
+     "h": 38,
+     "x": 49,
+     "y": 276,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Morgan Lee Peer",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 590,
+     "h": 38,
+     "x": 49,
+     "y": 323,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Sam Rivera Direct report",
+     "lib": true,
+     "cls": "btn--chrome surface-row-open",
+     "w": 590,
+     "h": 38,
+     "x": 49,
+     "y": 371,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "Name",
+     "mic": true
+    }
+   ],
+   "small": [],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 156
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/28-people-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "calendar-snapshot",
+  "action": "review-calendar-snapshot",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1902,
+  "open_refused": [
+   "pal:Calendar snapshot"
+  ],
+  "opened_by": null,
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/29-calendar-snapshot-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "models-runs-on",
+  "action": "configure-runs-on",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 2404,
+  "opened_by": "route:/profiles",
+  "first_useful_ms": 1834,
+  "win": {
+   "title": "Models",
+   "rect": [
+    24,
+    72,
+    640,
+    760
+   ],
+   "offscreen": false,
+   "nodes": 49,
+   "words": [
+    "Models",
+    "No engine yet",
+    "THIS MAC \u00b7 M\u2011SERIES",
+    "CHECKED",
+    "2:49 PM",
+    "FOUND",
+    "Add an engine",
+    "THE SET",
+    "Adjust",
+    "\u2022",
+    "Thoughts & notes",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "\u25a0",
+    "Chat",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "\u2013",
+    "Writing & dictation",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "\u2215",
+    "Speech recognition",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "\u25a0",
+    "Meetings",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "\u25e6",
+    "Agents & tools",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "\u25cb",
+    "Background",
+    "\u2014",
+    "\u25cb",
+    "WAITING",
+    "PROBE",
+    "Test",
+    "7 GROUPS \u00b7 7 WAITING",
+    "Cancel",
+    "Use these"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 15,
+   "platedUnder44": null,
+   "ghosts": [
+    "Use these"
+   ],
+   "scrollH": 761,
+   "clientH": 758,
+   "text": "Models\nNo engine yet\nTHIS MAC \u00b7 M\u2011SERIES\nCHECKED 2:49 PM\nFOUND\nAdd an engine\nTHE SET\nAdjust\n\u2022\nThoughts & notes\n\u2014\n\u25cb\nWAITING\n\u25a0\nChat\n\u2014\n\u25cb\nWAITING\n\u2013\nWriting & dictation\n\u2014\n\u25cb\nWAITING\n\u2215\nSpeech recognition\n\u2014\n\u25cb\nWAITING\n\u25a0\nMeetings\n\u2014\n\u25cb\nWAITING\n\u25e6\nAgents & tools\n\u2014\n\u25cb\nWAITING\n\u25cb\nBackground\n\u2014\n\u25cb\nWAITING\nPROBE\nTest\n7 GROUPS \u00b7 7 WAITING\nCancel\nUse these"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Models",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Models",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Models",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Add an engine",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-add-engine",
+     "w": 112,
+     "h": 24,
+     "x": 85,
+     "y": 227,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Adjust",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-adjust-trigger",
+     "w": 61,
+     "h": 24,
+     "x": 588,
+     "y": 269,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u2022 Thoughts & notes \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 312,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 235,
+     "y": 312,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25a0 Chat \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 371,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 142,
+     "y": 371,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u2013 Writing & dictation \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 430,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 242,
+     "y": 430,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u2215 Speech recognition \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 489,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 249,
+     "y": 489,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25a0 Meetings \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 547,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 176,
+     "y": 547,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25e6 Agents & tools \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 606,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 213,
+     "y": 606,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "\u25cb Background \u2014 \u25cb WAITING",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 584,
+     "h": 33,
+     "x": 52,
+     "y": 665,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "\u2014",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm concierge-picker-trigger",
+     "w": 51,
+     "h": 27,
+     "x": 195,
+     "y": 665,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Test",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 47,
+     "h": 24,
+     "x": 589,
+     "y": 732,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Cancel",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 491,
+     "y": 802,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Use these",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 83,
+     "h": 24,
+     "x": 556,
+     "y": 802,
+     "owns": true,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "THIS MAC \u00b7 M\u2011SERIES",
+     "fs": 11
+    },
+    {
+     "t": "CHECKED",
+     "fs": 11
+    },
+    {
+     "t": "FOUND",
+     "fs": 11
+    },
+    {
+     "t": "THE SET",
+     "fs": 11
+    },
+    {
+     "t": "PROBE",
+     "fs": 11
+    },
+    {
+     "t": "7 GROUPS \u00b7 7 WAITING",
+     "fs": 11
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 286
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/30-models-runs-on-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "connections",
+  "action": "configure-integrations",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1912,
+  "opened_by": "go:Connections",
+  "first_useful_ms": 737,
+  "win": {
+   "title": "Settings",
+   "rect": [
+    24,
+    72,
+    1392,
+    600
+   ],
+   "offscreen": false,
+   "nodes": 77,
+   "words": [
+    "Settings",
+    "Settings",
+    "Guide",
+    "Connections",
+    "Tools 5",
+    "GH",
+    "GitHub",
+    "\u25cb",
+    "Never checked",
+    "gh",
+    "github.com",
+    "Recheck",
+    "GITHUB.COM",
+    "J",
+    "Jira",
+    "\u25cb",
+    "Never checked",
+    "acli",
+    "Site",
+    "Email",
+    "Add",
+    "C",
+    "Confluence",
+    "\u25cb",
+    "Never checked",
+    "acli",
+    "Calendar",
+    "\u25cb",
+    "Not set up",
+    "local",
+    "Set up",
+    "M",
+    "Models",
+    "Unassigned",
+    "\u25cb",
+    "Unassigned",
+    "local",
+    "Open Models",
+    "Destinations 1",
+    "\u25b8",
+    "Team updates folder",
+    "FILE",
+    "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs1",
+    "THIS DEVICE",
+    "Add destination",
+    "Credentials",
+    "NOT SET",
+    "values stay on this hub",
+    "Web pairing token",
+    "SET",
+    "Replace",
+    "Rotate",
+    "Delete",
+    "Device audio key",
+    "\u2014",
+    "Replace",
+    "Rotate",
+    "Telegram bot token",
+    "\u2014",
+    "Replace",
+    "Telegram pairing code",
+    "\u2014",
+    "Replace",
+    "Rotate",
+    "Custom webhook",
+    "\u2014",
+    "Replace",
+    "RAW",
+    "2",
+    "Failure alert webhook",
+    "\u2014",
+    "Replace",
+    "Failure alert credential",
+    "\u2014",
+    "Replace",
+    "NOT SET",
+    "NOT CHECKED"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 23,
+   "platedUnder44": null,
+   "ghosts": [
+    "Add"
+   ],
+   "scrollH": 601,
+   "clientH": 598,
+   "text": "Settings\nSETTINGS\nGUIDE\nCONNECTIONS\nTOOLS 5\nGH\nGitHub\n\u25cb\nNEVER CHECKED\nGH\nGITHUB.COM\nRecheck\nGITHUB.COM\nJ\nJira\n\u25cb\nNEVER CHECKED\nACLI\nSITE\nEMAIL\nAdd\nC\nConfluence\n\u25cb\nNEVER CHECKED\nACLI\nCalendar\n\u25cb\nNOT SET UP\nLOCAL\nSet up\nM\nModels\nUnassigned\n\u25cb\nUNASSIGNED\nLOCAL\nOpen Models\nDESTINATIONS 1\n\u25b8\nTeam updates folder\nFILE\n/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13pop.mdVn7UpXR4/Updates-out\nTHIS DEVICE\nAdd destination\nCREDENTIALS\nNOT SET\nvalues stay on this hub\nWeb pairing token\nSET\nReplace\nRotate\nDelete\nDevice audio key\n\u2014\nReplace\nRotate\nTelegram bot token\n\u2014\nReplace\nTelegram pairing code\n\u2014\nReplace\nRotate\nCustom webhook\n\u2014\nReplace\nRAW\n2\nNOT SET\nNOT CHECKED"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Settings",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Settings",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Settings",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "SETTINGS",
+     "lib": true,
+     "cls": "btn--chrome desk-wing is-on",
+     "w": 89,
+     "h": 26,
+     "x": 708,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "GUIDE",
+     "lib": true,
+     "cls": "btn--chrome desk-wing",
+     "w": 66,
+     "h": 26,
+     "x": 796,
+     "y": 80,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Recheck",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 1220,
+     "y": 185,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak Site",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 20,
+     "h": 20,
+     "x": 1370,
+     "y": 282,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Speak Email",
+     "lib": true,
+     "cls": "btn--chrome desk-mic is-idle",
+     "w": 20,
+     "h": 20,
+     "x": 1370,
+     "y": 328,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Add",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 40,
+     "h": 24,
+     "x": 48,
+     "y": 353,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Set up",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 1331,
+     "y": 448,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Open Models",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 97,
+     "h": 24,
+     "x": 1295,
+     "y": 496,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Team updates folder, FILE",
+     "lib": false,
+     "cls": "surface-ledger-line",
+     "w": 1362,
+     "h": 26,
+     "x": 39,
+     "y": 574,
+     "owns": true,
+     "tag": "DIV"
+    },
+    {
+     "name": "Add destination",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 126,
+     "h": 24,
+     "x": 39,
+     "y": 608,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Replace",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 1196,
+     "y": 680,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Rotate",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 1269,
+     "y": 680,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Delete",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 1334,
+     "y": 680,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Replace",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 1261,
+     "y": 708,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Rotate",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 1334,
+     "y": 708,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Replace",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 1327,
+     "y": 736,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Replace",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 1261,
+     "y": 764,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Rotate",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 61,
+     "h": 24,
+     "x": 1334,
+     "y": 764,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Replace",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 1327,
+     "y": 792,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 1319,
+     "y": 866,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 68,
+     "h": 24,
+     "x": 1319,
+     "y": 894,
+     "owns": null,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [
+    {
+     "ph": "site.atlassian.net",
+     "mic": true
+    },
+    {
+     "ph": "email",
+     "mic": true
+    }
+   ],
+   "small": [],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 655
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/31-connections-pop-1440.png",
+  "errors": []
+ },
+ {
+  "key": "change-places",
+  "action": "change-places",
+  "state": "pop",
+  "width": 1440,
+  "arrive_ms": 1897,
+  "opened_by": "go:Change places",
+  "first_useful_ms": 638,
+  "win": {
+   "title": "Change places",
+   "rect": [
+    24,
+    72,
+    640,
+    620
+   ],
+   "offscreen": false,
+   "nodes": 19,
+   "words": [
+    "Change places",
+    "Rainy City",
+    "All places",
+    "Favorites",
+    "View on Floor",
+    "Hide the menus",
+    "Environments",
+    "Rainy City",
+    "A cinematic night storm above a lamplit city street.",
+    "IN USE",
+    "Lantern Garden",
+    "A rain-dark flagstone path lit through a fine garden drizzle",
+    "CHOOSE",
+    "After-Hours Radio",
+    "Walnut, warm meters, and rain over a sleeping city.",
+    "CHOOSE",
+    "Midnight Archive",
+    "Green reading lamps in a long hall of wooden drawers.",
+    "CHOOSE"
+   ],
+   "clipped": [],
+   "scrolled": [],
+   "notOwned": [],
+   "verbsInView": 19,
+   "platedUnder44": null,
+   "ghosts": [],
+   "scrollH": 621,
+   "clientH": 618,
+   "text": "Change places\nRainy City\nAll places\nFavorites\nView on Floor\nHide the menus\nENVIRONMENTS\nRAINY CITY\nA cinematic night storm above a lamplit city street.\nIN USE\nLANTERN GARDEN\nA rain-dark flagstone path lit through a fine garden drizzle.\nCHOOSE\nAFTER-HOURS RADIO\nWalnut, warm meters, and rain over a sleeping city.\nCHOOSE\nMIDNIGHT ARCHIVE\nGreen reading lamps in a long hall of wooden drawers.\nCHOOSE\nNIGHT TRAIN\nA lamplit compartment. Forests passing in the rain.\nCHOOSE\nDEEP-SEA STATION\nBrass instruments, blue water, and distant silhouettes.\nCHOOSE\nSTORM GREENHOUSE\nWet stone, terracotta, and violet light through iron rafters.\nCHOOSE\nLAST LAUNDROMAT\nSlow drums and fluorescent quiet. Open all night.\nCHOOSE\nQUIET DESK\nThe unanimated Desk field with no atmospheric scene.\nCHOOSE\nAnimation\nRESPECTS REDUCED MOTION\nRoom sound\nQUIET DURING CAPTURE\n\nSAVED ON THIS BROWSER \u00b7 APPLIES LIVE TO THE FLOOR"
+  },
+  "audit": {
+   "buttons": [
+    {
+     "name": "Close Change places",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-close",
+     "w": 16,
+     "h": 14,
+     "x": 37,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Minimize Change places",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-min",
+     "w": 16,
+     "h": 14,
+     "x": 57,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Maximize Change places",
+     "lib": true,
+     "cls": "btn--chrome desk-light desk-light-max",
+     "w": 16,
+     "h": 14,
+     "x": 77,
+     "y": 86,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "All places",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 90,
+     "h": 24,
+     "x": 228,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorites",
+     "lib": true,
+     "cls": "btn btn--ghost btn--sm ",
+     "w": 83,
+     "h": 24,
+     "x": 324,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "View on Floor",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 112,
+     "h": 24,
+     "x": 413,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Hide the menus",
+     "lib": true,
+     "cls": "btn btn--secondary btn--sm ",
+     "w": 119,
+     "h": 24,
+     "x": 530,
+     "y": 121,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "RAINY CITY A cinematic night storm above a lamplit city stre",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 45,
+     "y": 199,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Rainy City",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 285,
+     "y": 211,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "LANTERN GARDEN A rain-dark flagstone path lit through a fine",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 349,
+     "y": 199,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Lantern Garden",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 589,
+     "y": 211,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "AFTER-HOURS RADIO Walnut, warm meters, and rain over a sleep",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 45,
+     "y": 468,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite After-Hours Radio",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 285,
+     "y": 480,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "MIDNIGHT ARCHIVE Green reading lamps in a long hall of woode",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 349,
+     "y": 468,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Midnight Archive",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 589,
+     "y": 480,
+     "owns": true,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "NIGHT TRAIN A lamplit compartment. Forests passing in the ra",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 45,
+     "y": 736,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Night Train",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 285,
+     "y": 748,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "DEEP-SEA STATION Brass instruments, blue water, and distant ",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 349,
+     "y": 736,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Deep-Sea Station",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 589,
+     "y": 748,
+     "owns": false,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "STORM GREENHOUSE Wet stone, terracotta, and violet light thr",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 45,
+     "y": 1005,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Storm Greenhouse",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 285,
+     "y": 1017,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "LAST LAUNDROMAT Slow drums and fluorescent quiet. Open all n",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 349,
+     "y": 1005,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Last Laundromat",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 589,
+     "y": 1017,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "QUIET DESK The unanimated Desk field with no atmospheric sce",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-card",
+     "w": 294,
+     "h": 259,
+     "x": 45,
+     "y": 1274,
+     "owns": null,
+     "tag": "BUTTON"
+    },
+    {
+     "name": "Favorite Quiet Desk",
+     "lib": true,
+     "cls": "btn btn--secondary prefs-wallpaper-favorite",
+     "w": 42,
+     "h": 36,
+     "x": 285,
+     "y": 1286,
+     "owns": null,
+     "tag": "BUTTON"
+    }
+   ],
+   "rawButtons": [],
+   "inputs": [],
+   "small": [
+    {
+     "t": "Rainy City",
+     "fs": 11
+    },
+    {
+     "t": "A cinematic night storm above a lamplit ",
+     "fs": 11
+    },
+    {
+     "t": "IN USE",
+     "fs": 9
+    },
+    {
+     "t": "Lantern Garden",
+     "fs": 11
+    },
+    {
+     "t": "A rain-dark flagstone path lit through a",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "After-Hours Radio",
+     "fs": 11
+    },
+    {
+     "t": "Walnut, warm meters, and rain over a sle",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "Midnight Archive",
+     "fs": 11
+    },
+    {
+     "t": "Green reading lamps in a long hall of wo",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "Night Train",
+     "fs": 11
+    },
+    {
+     "t": "A lamplit compartment. Forests passing i",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "Deep-Sea Station",
+     "fs": 11
+    },
+    {
+     "t": "Brass instruments, blue water, and dista",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "Storm Greenhouse",
+     "fs": 11
+    },
+    {
+     "t": "Wet stone, terracotta, and violet light ",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "Last Laundromat",
+     "fs": 11
+    },
+    {
+     "t": "Slow drums and fluorescent quiet. Open a",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "Quiet Desk",
+     "fs": 11
+    },
+    {
+     "t": "The unanimated Desk field with no atmosp",
+     "fs": 11
+    },
+    {
+     "t": "CHOOSE",
+     "fs": 9
+    },
+    {
+     "t": "SAVED ON THIS BROWSER \u00b7 APPLIES LIVE TO ",
+     "fs": 9
+    }
+   ],
+   "zeros": [],
+   "overflowX": false,
+   "dialogs": [],
+   "textLen": 856
+  },
+  "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/32-change-places-pop-1440.png",
+  "errors": []
+ }
+]

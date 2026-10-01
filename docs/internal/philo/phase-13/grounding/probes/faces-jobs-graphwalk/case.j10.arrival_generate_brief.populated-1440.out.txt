@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: muaddib
+SOURCE: 89f69e346cf4e5f5781ba2c8803f1b866dec0f20 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-ChQW1Esz.js'] hub=http://127.0.0.1:54714 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-esiidgrd/.local/share/holdspeak/holdspeak.db engine=none
+JOB: j10
+VERDICT: pass terminal=settled
+EVIDENCE: ['docs/internal/philo/phase-13/grounding/probes/faces-jobs-graphwalk/case.j10.arrival_generate_brief.populated-1440/20261001T211810Z-case.j10.arrival_generate_brief.populated-muaddib-1440/before.png', 'docs/internal/philo/phase-13/grounding/probes/faces-jobs-graphwalk/case.j10.arrival_generate_brief.populated-1440/20261001T211810Z-case.j10.arrival_generate_brief.populated-muaddib-1440/after.png']
+NOTE: predicate: 'Review decision: Graph walk brief material J10' in observe_at text

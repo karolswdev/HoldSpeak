@@ -1,0 +1,57 @@
+"""Shared walk helpers (copied to probes/faces-jobs-lib.py.txt)."""
+import json, os, time
+from pathlib import Path
+H = Path(open("/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/H.txt").read().strip())
+HUB = json.loads((H / "hub.json").read_text())
+BASE, TOKEN, IDS = HUB["url"], HUB["token"], HUB["ids"]
+SHOTS = Path("/Users/karol/dev/tools/wt-philo-13-ground/docs/internal/philo/phase-13/grounding/shots/jobs")
+SIZES = {1440: 900, 393: 852}
+
+def open_page(pw, width, touch=None):
+    touch = (width <= 420) if touch is None else touch
+    args = ["--disable-smooth-scrolling"]
+    if os.environ.get("P13_FAKE_MEDIA"):
+        # Chromium's synthetic audio device: a generated tone, never a real microphone.
+        args += ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"]
+    b = pw.chromium.launch(headless=True, args=args)
+    ctx = b.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1,
+                        has_touch=touch, is_mobile=False)
+    page = ctx.new_page(); page.set_default_timeout(20000)
+    errs = []
+    page.on("pageerror", lambda e: errs.append(str(e)[:200]))
+    page.on("console", lambda m: errs.append("console:" + m.text[:160]) if m.type == "error" else None)
+    return b, ctx, page, errs
+
+def goto(page, path="/"):
+    sep = "&" if "?" in path else "?"
+    page.goto(f"{BASE}{path}{sep}token={TOKEN}", wait_until="load")
+    page.locator(".chair, .desk-next").first.wait_for()
+    page.wait_for_timeout(1500)
+
+def settle(page, ms=300):
+    page.evaluate("""() => { const a = document.getAnimations(); if (!a.length) return;
+      return Promise.race([Promise.all(a.map(x => x.finished.catch(() => null))), new Promise(r => setTimeout(r, 2000))]); }""")
+    page.wait_for_timeout(ms)
+
+def shot(page, name):
+    settle(page)
+    p = SHOTS / f"{name}.png"
+    page.screenshot(path=str(p))
+    return p.name
+
+def windows(page):
+    return page.evaluate("""() => [...document.querySelectorAll('.desk-window, .desk-pullout')].filter(w => w.getBoundingClientRect().width && parseFloat(getComputedStyle(w).opacity) > 0 && getComputedStyle(w).display !== 'none' && getComputedStyle(w).visibility !== 'hidden')
+      .map(w => { const t = w.querySelector('.desk-window-title, [class*=title]'); const r = w.getBoundingClientRect();
+        return {title: t ? t.innerText.trim().slice(0,60) : '?', id: w.id || '', rect: [r.x|0, r.y|0, r.width|0, r.height|0]}; })""")
+
+def tap(page, loc):
+    """A real touch tap at the element's center (393 law: touch-driven)."""
+    loc.scroll_into_view_if_needed()
+    box = loc.bounding_box()
+    page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+
+class Clock:
+    def __init__(self): self.t0 = time.monotonic(); self.steps = []; self.clicks = 0
+    def step(self, name, clicks=0, **kw):
+        self.clicks += clicks
+        self.steps.append({"step": name, "t": round(time.monotonic() - self.t0, 1), "clicks": clicks, **kw})

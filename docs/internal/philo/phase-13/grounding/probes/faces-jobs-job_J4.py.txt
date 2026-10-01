@@ -1,0 +1,97 @@
+RW = "#surface-project-memory"
+PNAME = "Payments ledger cutover" if W > 420 else "Observability uplift"
+PID = IDS["projects"][PNAME]["id"]
+def open_room(wk, what):
+    return pal_open(wk, PNAME.split()[0], f"project.open.{PID}", what)
+def editor(p):
+    return p.locator(f"{RW} [contenteditable=true]").first
+
+def run(wk):
+    p = wk.page
+    goto(p)
+    # the obvious first try: the Chair names "Ledger cutover sync" today; tap it
+    cal = p.locator("[data-testid=arrival-meeting-row]").filter(has_text="Ledger cutover sync")
+    if cal.count():
+        o = wk.act(cal.locator("text=Ledger cutover sync"), "Chair: tap today's 'Ledger cutover sync' (first try)")
+        if not o: wk.log[-1]["dead"] = True; wk.dead += 1
+    dock_has_room = p.locator(".desk-dock-launch").filter(has_text=re.compile("Room|Project", re.I)).count()
+    wk.note("a Room or project launcher on the Dock", count=dock_has_room)
+    open_room(wk, "palette: Open Payments ledger cutover")
+    p.locator(RW).wait_for(timeout=15000)
+    wk.note("Room", text=(text(p, RW) or "")[:600])
+    wk.shot("room")
+    # what changed
+    wk.act(p.locator(f"{RW} button").filter(has_text=re.compile("^HISTORY$", re.I)), "Room: HISTORY")
+    wk.note("History", text=(text(p, RW) or "")[:500])
+    wk.shot("history")
+    wk.act(p.locator(f"{RW} button").filter(has_text=re.compile("^ROOM$", re.I)), "Room: ROOM")
+    # publish an update
+    wk.act(p.locator(f"{RW} [data-testid=updates-verb]"), "Draft update")
+    wk.note("Update posture", text=(text(p, RW) or "")[:400],
+            model_verb=p.locator(f"{RW} [data-testid=update-verb-draft-model]").count())
+    wk.shot("update-posture")
+    wk.act(p.locator(f"{RW} [data-testid=update-verb-draft-deterministic]"), "Draft (deterministic)")
+    p.wait_for_timeout(1200)
+    body = editor(p).inner_text() if editor(p).count() else ""
+    wk.note("the draft he gets", body=body[:600])
+    wk.shot("draft")
+    # he writes the week himself
+    ed = editor(p)
+    ed.click(); p.keyboard.press("Meta+End") if not TOUCH else None
+    p.keyboard.press("Control+End")
+    typed = "\n\nThis week: freeze date proposed for Nov 5. Priya owns the dry-run report; Marcus sizes the EU shard backfill."
+    p.keyboard.type(typed); wk.clicks += 1
+    wk.log.append({"t": wk.now(), "gesture": "type", "what": f"type the week by hand ({len(typed)} chars)"})
+    # RETURN a: leave mid-draft (close the Room without Save) and come back
+    wk.act(p.locator(f"{RW} [aria-label^='Close {PNAME}']"), "leave: close the Room mid-draft (no Save)")
+    open_room(wk, "come back: palette Open Payments ledger cutover")
+    p.wait_for_timeout(800)
+    wk.note("after coming back", text=(text(p, RW) or "")[:300], has_typed=("Priya owns the dry-run" in (text(p, RW) or "")))
+    wk.shot("came-back")
+    if not editor(p).count():
+        wk.act(p.locator(f"{RW} [data-testid=updates-verb]"), "Draft update (again)")
+        items = p.locator(f"{RW} [data-testid=update-list-item]")
+        wk.note("update list", items=items.all_inner_texts()[:5])
+        drafts = items.filter(has_text="DRAFT")
+        if drafts.count():
+            wk.act(drafts.first, "open the DRAFT row")
+        else:
+            wk.act(p.locator(f"{RW} [data-testid=update-verb-draft-deterministic]"), "Draft (deterministic) again")
+        p.wait_for_timeout(1000)
+    wk.note("the draft after return", has_typed=("Priya owns the dry-run" in (editor(p).inner_text() if editor(p).count() else "")))
+    if editor(p).count() and "Priya owns the dry-run" not in editor(p).inner_text():
+        editor(p).click(); p.keyboard.press("Control+End"); p.keyboard.type(typed); wk.clicks += 1
+        wk.log.append({"t": wk.now(), "gesture": "type", "what": "type the week again (lost on close)"})
+    if p.locator(f"{RW} [data-testid=update-verb-save]").count():
+        wk.act(p.locator(f"{RW} [data-testid=update-verb-save]"), "Save")
+    # RETURN b: reload mid-draft
+    reload(wk, "reload mid-draft (after Save)")
+    wk.note("after reload", windows=windows(p), text=(text(p, RW) or "")[:300] if p.locator(RW).count() else None)
+    wk.shot("after-reload")
+    if not p.locator(RW).count() or not p.locator(RW).is_visible():
+        open_room(wk, "palette: Open the Room (after reload)")
+    if not editor(p).count():
+        if p.locator(f"{RW} [data-testid=updates-verb]").count():
+            wk.act(p.locator(f"{RW} [data-testid=updates-verb]"), "Draft update (after reload)")
+        items = p.locator(f"{RW} [data-testid=update-list-item]")
+        wk.note("update list after reload", items=items.all_inner_texts()[:5])
+        drafts = items.filter(has_text="DRAFT")
+        if drafts.count():
+            wk.act(drafts.first, "open the DRAFT row")
+    wk.note("draft after reload", has_typed=("Priya owns the dry-run" in (text(p, RW) or "")))
+    # RECOVERY: publish fails
+    p.route(re.compile(r".*/api/updates/[^/]+/publish$"), lambda r: r.fulfill(status=500, body='{"detail":"injected failure"}', content_type="application/json"))
+    pub = p.locator(f"{RW} [data-testid=update-verb-publish]")
+    if pub.count():
+        wk.act(pub, "Publish (the hub fails)")
+        wk.note("publish failed face", text=(text(p, RW) or "")[-400:])
+        wk.shot("publish-failed")
+    p.unroute(re.compile(r".*/api/updates/[^/]+/publish$"))
+    pub = p.locator(f"{RW} [data-testid=update-verb-publish]")
+    if pub.count():
+        wk.act(pub, "Publish (again)")
+    p.wait_for_timeout(1000)
+    wk.note("published face", text=(text(p, RW) or "")[:700])
+    ups = p.evaluate("(pid) => fetch(`/api/projects/${pid}/updates`, {headers: {authorization: 'Bearer philo13-jobs'}}).then(r => r.json())", PID)
+    wk.note("hub: updates", updates=[{k: u.get(k) for k in ("id", "status", "published_at")} for u in (ups.get("updates") or [])][:4])
+    wk.shot("published")

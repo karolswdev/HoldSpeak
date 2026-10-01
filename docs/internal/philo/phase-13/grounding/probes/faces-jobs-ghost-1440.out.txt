@@ -1,0 +1,11 @@
+open {'cls': 'desk-pullout is-card desk-window desk-window-shell is-floating is-front', 'op': '1', 'vis': 'visible', 'pe': 'auto', 'disp': 'flex', 'rect': [1002, 374, 400, 474], 'anims': 0}
+count 1
+store 2
+close btns 1 Close Freeze the old ledger on Nov 5
+100 {'cls': 'desk-pullout is-card desk-window desk-window-shell is-floating is-front', 'op': '0.434709', 'vis': 'visible', 'pe': 'auto', 'disp': 'flex', 'rect': [1006, 379, 390, 463], 'anims': 1}
+500 {'cls': 'desk-pullout is-card desk-window desk-window-shell is-floating is-front', 'op': '0', 'vis': 'visible', 'pe': 'auto', 'disp': 'flex', 'rect': [1010, 383, 384, 455], 'anims': 1}
+1500 {'cls': 'desk-pullout is-card desk-window desk-window-shell is-floating is-front', 'op': '0', 'vis': 'visible', 'pe': 'auto', 'disp': 'flex', 'rect': [1010, 383, 384, 455], 'anims': 1}
+4000 {'cls': 'desk-pullout is-card desk-window desk-window-shell is-floating is-front', 'op': '0', 'vis': 'visible', 'pe': 'auto', 'disp': 'flex', 'rect': [1010, 383, 384, 455], 'anims': 1}
+after count 1
+[['finished', '{"delay":0,"direction":"normal","duration":140,"easing":"ease-in","endDelay":0,"fill":"forwards","iterationStart":0,"iterations":1}', '']]
+ERRS []

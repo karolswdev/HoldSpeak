@@ -1,0 +1,395 @@
+{
+ "job": "J4",
+ "width": 1440,
+ "touch": false,
+ "clicks": 22,
+ "dead_clicks": 1,
+ "seconds": 36.1,
+ "windows_seen": [
+  "Payments ledger cutover"
+ ],
+ "page_errors": [
+  "console:Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+ ],
+ "log": [
+  {
+   "t": 3.2,
+   "gesture": "press",
+   "what": "Chair: tap today's 'Ledger cutover sync' (first try)",
+   "dead": true,
+   "opened": [],
+   "windows": []
+  },
+  {
+   "t": 3.3,
+   "note": "a Room or project launcher on the Dock",
+   "count": 0
+  },
+  {
+   "t": 4.6,
+   "gesture": "press",
+   "what": "Search (palette)",
+   "dead": false,
+   "opened": [],
+   "windows": []
+  },
+  {
+   "t": 5.1,
+   "gesture": "type",
+   "what": "type 'Payments'"
+  },
+  {
+   "t": 5.1,
+   "note": "palette options",
+   "query": "Payments",
+   "options": [
+    "project:proj-4f8e754b9881 :: \u25cb Payments ledger cutover PROJECT",
+    "artifact:artifact_8668338939a1 :: \u25cb Payments ledger cutover ARTIFACT",
+    "project.open.proj-4f8e754b9881 :: \u25a3 Open Payments ledger cutover PROJECT"
+   ]
+  },
+  {
+   "t": 6.5,
+   "gesture": "press",
+   "what": "palette: Open Payments ledger cutover",
+   "dead": false,
+   "opened": [
+    "Payments ledger cutover"
+   ],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 6.5,
+   "note": "Room",
+   "text": "Payments ledger cutover ROOM HISTORY Nothing needs you \u25cf ON TRACK CHECKED 27M AGO Draft update NEEDS YOU Nothing needs you \u00b7 next check 14:39 SOURCES 1 Steward MTG MEETINGS Pause \u25cf CHECKED 14:39 PEOPLE 1 People PN Priya Nair Open RECEIPTS 3 \u25cf ASSOCIATE MEETING \u25cf PUBLISH UPDATE \u25cf CREATE PROJECT SINCE YOU LOOKED THU 15:06 Nothing since 15:06 \u21bb Answer Preparation brief MODEL \u00b7 NOT SET Choose Submit READ 15:06 \u00b7 NEXT CHECK 14:39 Refresh"
+  },
+  {
+   "t": 6.5,
+   "shot": "J4-01-room-1440.png",
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 8.2,
+   "gesture": "press",
+   "what": "Room: HISTORY",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 8.2,
+   "note": "History",
+   "text": "Payments ledger cutover ROOM HISTORY 3 today ALL GITHUB JIRA ROOM TODAY: THU, OCT 1 14:39 Updated \u00b7 meeting associated 14:39 Update published 14:39 Created \u00b7 name 3 TODAY \u00b7 3 THIS WEEK Refresh"
+  },
+  {
+   "t": 8.2,
+   "shot": "J4-02-history-1440.png",
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 9.9,
+   "gesture": "press",
+   "what": "Room: ROOM",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 11.2,
+   "gesture": "press",
+   "what": "Draft update",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 11.2,
+   "note": "Update posture",
+   "text": "Payments ledger cutover ROOM HISTORY Close Draft Draft with model LOCAL + CLOUD UPDATES 2 1m ago \u25a4 DRAFT REV 1 DETERMINISTIC \u203a 27m ago \u25a4 PUBLISHED REV 1 DETERMINISTIC \u203a UPDATES 2",
+   "model_verb": 1
+  },
+  {
+   "t": 11.2,
+   "shot": "J4-03-update-posture-1440.png",
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 12.9,
+   "gesture": "press",
+   "what": "Draft (deterministic)",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 14.1,
+   "note": "the draft he gets",
+   "body": "## Progress\n\n\nNo focus items in this window.\n\n\n## Decisions\n\n\nNo decisions in this window.\n\n\n## Risks & Blockers\n\n\nNo risks or blockers in this window.\n\n\n## Dependencies\n\n\nNo dependencies tracked.\n\n\n## Next Actions\n\n\nNo upcoming actions.\n\n\n## Source Coverage\n\n\nAll sources consulted successfully.\n\n"
+  },
+  {
+   "t": 14.1,
+   "shot": "J4-04-draft-1440.png",
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 14.6,
+   "gesture": "type",
+   "what": "type the week by hand (111 chars)"
+  },
+  {
+   "t": 15.9,
+   "gesture": "press",
+   "what": "leave: close the Room mid-draft (no Save)",
+   "dead": false,
+   "opened": [],
+   "windows": []
+  },
+  {
+   "t": 17.2,
+   "gesture": "press",
+   "what": "Search (palette)",
+   "dead": false,
+   "opened": [],
+   "windows": []
+  },
+  {
+   "t": 17.7,
+   "gesture": "type",
+   "what": "type 'Payments'"
+  },
+  {
+   "t": 17.7,
+   "note": "palette options",
+   "query": "Payments",
+   "options": [
+    "project:proj-4f8e754b9881 :: \u25cb Payments ledger cutover PROJECT",
+    "artifact:artifact_8668338939a1 :: \u25cb Payments ledger cutover ARTIFACT",
+    "project.open.proj-4f8e754b9881 :: \u25a3 Open Payments ledger cutover PROJECT"
+   ]
+  },
+  {
+   "t": 19.1,
+   "gesture": "press",
+   "what": "come back: palette Open Payments ledger cutover",
+   "dead": false,
+   "opened": [
+    "Payments ledger cutover"
+   ],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 19.9,
+   "note": "after coming back",
+   "text": "Payments ledger cutover ROOM HISTORY Nothing needs you \u25cf ON TRACK CHECKED 28M AGO Draft update NEEDS YOU Nothing needs you \u00b7 next check 14:39 SOURCES 1 Steward MTG MEETINGS Pause \u25cf CHECKED 14:39 PEOPLE 1 People PN Priya Nair Open RECEIPTS 3 \u25cf ASSOCIATE MEETING \u25cf PUBLISH UPDATE \u25cf CREATE PROJECT SINCE",
+   "has_typed": false
+  },
+  {
+   "t": 19.9,
+   "shot": "J4-05-came-back-1440.png",
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 21.6,
+   "gesture": "press",
+   "what": "Draft update (again)",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 21.6,
+   "note": "update list",
+   "items": [
+    "just now\n\u25a4\nDRAFT\nREV 2\nDETERMINISTIC\n\u203a",
+    "just now\n\u25a4\nSUPERSEDED\nREV 1\nDETERMINISTIC\n\u203a",
+    "28m ago\n\u25a4\nPUBLISHED\nREV 1\nDETERMINISTIC\n\u203a"
+   ]
+  },
+  {
+   "t": 22.9,
+   "gesture": "press",
+   "what": "open the newest draft",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 23.9,
+   "note": "the draft after return",
+   "has_typed": false
+  },
+  {
+   "t": 24.1,
+   "gesture": "type",
+   "what": "type the week again (lost on close)"
+  },
+  {
+   "t": 25.4,
+   "gesture": "press",
+   "what": "Save",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 28.7,
+   "gesture": "reload",
+   "what": "reload mid-draft (after Save)",
+   "reload_s": 3.34,
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 28.7,
+   "note": "after reload",
+   "windows": [
+    {
+     "title": "Payments ledger cutover",
+     "id": "surface-project-memory",
+     "rect": [
+      24,
+      72,
+      800,
+      619
+     ]
+    }
+   ],
+   "text": "Payments ledger cutover ROOM HISTORY Nothing needs you \u25cf ON TRACK CHECKED 28M AGO Draft update NEEDS YOU Nothing needs you \u00b7 next check 14:39 SOURCES 1 Steward MTG MEETINGS Pause \u25cf CHECKED 14:39 PEOPLE 1 People PN Priya Nair Open RECEIPTS 3 \u25cf ASSOCIATE MEETING \u25cf PUBLISH UPDATE \u25cf CREATE PROJECT SINCE"
+  },
+  {
+   "t": 28.7,
+   "shot": "J4-06-after-reload-1440.png",
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 30.4,
+   "gesture": "press",
+   "what": "Draft update (after reload)",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 30.4,
+   "note": "update list after reload",
+   "items": [
+    "just now\n\u25a4\nDRAFT\nREV 2\nDETERMINISTIC\n\u203a",
+    "just now\n\u25a4\nSUPERSEDED\nREV 1\nDETERMINISTIC\n\u203a",
+    "28m ago\n\u25a4\nPUBLISHED\nREV 1\nDETERMINISTIC\n\u203a"
+   ]
+  },
+  {
+   "t": 31.8,
+   "gesture": "press",
+   "what": "open the newest update",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 31.8,
+   "note": "draft after reload",
+   "has_typed": true
+  },
+  {
+   "t": 33.1,
+   "gesture": "press",
+   "what": "Publish (the hub fails)",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 33.1,
+   "note": "publish failed face",
+   "text": " ## Decisions No decisions in this window. ## Risks & Blockers No risks or blockers in this window. This week: freeze date proposed for Nov 5. Priya owns the dry-run report; Marcus sizes the EU shard backfill. ## Dependencies No dependencies tracked. ## Next Actions No upcoming actions. ## Source Coverage All sources consulted successfully. UPDATE DRAFT \u00b7 DETERMINISTIC Save Regenerate Copy Publish"
+  },
+  {
+   "t": 33.1,
+   "shot": "J4-07-publish-failed-1440.png",
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 34.8,
+   "gesture": "press",
+   "what": "Publish (again)",
+   "dead": false,
+   "opened": [],
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  },
+  {
+   "t": 35.8,
+   "note": "published face",
+   "text": "Payments ledger cutover ROOM HISTORY Back \u2713 PUBLISHED DETERMINISTIC REV 2 SEND \u25cb Team folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/p13jobs.wMU5ncs369/out/team THIS DEVICE DELIVERY Mark delivered UPDATE PUBLISHED UPDATES ARE READ-ONLY Progress No focus items in this window. Decisions No decisions in this window. Risks & Blockers No risks or blockers in this window. This week: freeze date proposed for Nov 5. Priya owns the dry-run report; Marcus sizes the EU shard backfill. Dependencies No dependencies tracked. Next Actions No upcoming actions. Source Coverage All sources consulted successfully. UPDATE PUBLISHED \u00b7 DETERMINISTIC Regenerate Copy"
+  },
+  {
+   "t": 35.8,
+   "note": "hub: updates",
+   "updates": [
+    {
+     "id": "pupd_9191e712f7d24d7390d933670de4fa4d",
+     "status": null,
+     "published_at": "2026-10-01T21:07:16+00:00"
+    },
+    {
+     "id": "pupd_2231bbf610b54c76ade9c7e62a843472",
+     "status": null,
+     "published_at": null
+    },
+    {
+     "id": "pupd_a95aa9e7c2254a2b9998f2ea3fadb190",
+     "status": null,
+     "published_at": "2026-10-01T20:39:31+00:00"
+    }
+   ]
+  },
+  {
+   "t": 35.8,
+   "shot": "J4-08-published-1440.png",
+   "windows": [
+    "Payments ledger cutover"
+   ]
+  }
+ ]
+}

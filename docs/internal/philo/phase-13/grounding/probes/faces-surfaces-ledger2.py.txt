@@ -1,0 +1,28 @@
+import sys, json
+sys.path.insert(0, '.')
+from fslib import *
+from walk import enter_desk, press, try_open
+out = {}
+FOOT_JS = """() => { const f = document.querySelector('.desk-window.is-front[aria-label=Meetings]') || document.querySelector('.desk-window[aria-label=Meetings]'); if (!f) return null;
+  const foot = f.querySelector('[class*=surface-footer]'); const fr = foot && foot.getBoundingClientRect();
+  const items = foot ? [...foot.querySelectorAll('*')].filter(e => !e.children.length && e.textContent.trim()).map(e => { const r = e.getBoundingClientRect(); return [e.textContent.trim().slice(0, 30), Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)]; }) : [];
+  const ov = []; for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) { const a = items[i], b = items[j]; if (a[1] < b[3] && b[1] < a[3] && a[2] < b[4] && b[2] < a[4]) ov.push([a[0], b[0]]); }
+  const body = f.querySelector('.desk-surface-body'); const br = body && body.getBoundingClientRect();
+  return {footer: fr && [Math.round(fr.top), Math.round(fr.bottom)], body: br && [Math.round(br.top), Math.round(br.bottom)], items, overlaps: ov, head: f.innerText.slice(0, 300)}; }"""
+for w in (1440, 393):
+    with browser(w) as page:
+        enter_desk(page, 'pop')
+        try_open(page, 'go:Meetings', 'pop')
+        page.wait_for_selector('.desk-window[aria-label=Meetings]'); settle(page, 800)
+        out[f'list-{w}'] = page.evaluate(FOOT_JS)
+        op = page.locator('.desk-window[aria-label=Meetings]').get_by_role('button', name='Open').first
+        press(page, op); settle(page, 1500)
+        out[f'record-{w}'] = page.evaluate(FOOT_JS)
+        out[f'windows-{w}'] = page.evaluate("() => [...document.querySelectorAll('.desk-window')].map(e => e.getAttribute('aria-label') + ' :: ' + e.innerText.replace(/\\s+/g,' ').slice(0, 160))")
+        out[f'shot-{w}'] = shot(page, f'61-ledger-meeting-record-pop-{w}')
+        # scroll the record body to the end to expose the footer neighbours
+        page.evaluate("() => document.querySelectorAll('.desk-window .desk-surface-body').forEach(b => b.scrollTop = b.scrollHeight)")
+        settle(page, 400)
+        out[f'shot-end-{w}'] = shot(page, f'62-ledger-meeting-record-end-pop-{w}')
+print(json.dumps(out, indent=1)[:6000])
+dump('ledger-meetings', out)

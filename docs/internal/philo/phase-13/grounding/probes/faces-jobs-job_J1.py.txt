@@ -1,0 +1,120 @@
+def run(wk):
+    p = wk.page
+    # 1. arrive: time to the first useful pixel (headline + a needs-you row painted)
+    t = time.monotonic()
+    p.goto(f"{BASE}/?token={TOKEN}", wait_until="commit")
+    p.locator("[data-testid=arrival-needs-you-row]").first.wait_for(state="visible", timeout=30000)
+    ttu = round(time.monotonic() - t, 2)
+    p.locator("[data-testid=arrival-brief]").first.wait_for(state="attached", timeout=30000)
+    ttb = round(time.monotonic() - t, 2)
+    wk.note("arrival", first_useful_pixel_s=ttu, brief_attached_s=ttb,
+            headline=text(p, "[data-testid=arrival-headline]"),
+            above_fold=p.evaluate("() => [...document.querySelectorAll('[data-testid=arrival-needs-you-row],[data-testid=arrival-brief-row],[data-testid=arrival-meeting-row],[data-testid=arrival-brief]')].filter(e => { const r = e.getBoundingClientRect(); return r.top < innerHeight - 60 && r.bottom > 0; }).map(e => e.dataset.testid + ':' + e.innerText.split('\\n')[0].slice(0,40))"))
+    wk.shot("arrive")
+    # 2. read the brief on the Chair (scroll only; no click)
+    p.locator("[data-testid=arrival-brief]").first.scroll_into_view_if_needed()
+    p.wait_for_timeout(600)
+    wk.note("brief on the Chair", rows=p.locator("[data-testid=arrival-brief-row]").all_inner_texts(),
+            more=text(p, "[data-testid=arrival-brief-more]"),
+            scroll_needed_px=p.evaluate("() => { const e = document.querySelector('[data-testid=arrival-brief]'); const s = document.querySelector('.chair'); return s ? s.scrollTop : null; }"))
+    wk.shot("brief-chair")
+    # 3. the obvious first try: open a brief item by its name
+    row = p.locator("[data-testid=arrival-brief-row]").filter(has_text="Freeze the old ledger")
+    if row.count():
+        opened = wk.act(row.locator("text=Freeze the old ledger"), "tap the brief item 'Review decision: Freeze the old ledger' (first try)")
+        if not opened: wk.log[-1]["dead"] = True; wk.dead += 1
+    # 4. "2 more"
+    if p.locator("[data-testid=arrival-brief-more]").count():
+        wk.act(p.locator("[data-testid=arrival-brief-more]"), "2 more")
+        wk.note("after 2 more", rows=p.locator("[data-testid=arrival-brief-row]").count(), windows=[w["title"] for w in windows(p)])
+        wk.shot("brief-more")
+    # 5. the whole brief: Intelligence -> BRIEF
+    if not p.locator(".intelligence-pullout").count():
+        dock(wk, "Intelligence")
+    p.locator(".intelligence-pullout").first.wait_for(timeout=15000)
+    wk.shot("intelligence-brief")
+    item = p.locator(".intelligence-pullout [data-testid=brief-sf-row]").filter(has_text="Freeze the old ledger")
+    if item.count():
+        opened = wk.act(item.locator(".intelligence-brief-sf-primary"), "tap 'Freeze the old ledger' in Intelligence BRIEF")
+        if not opened: wk.log[-1]["dead"] = True; wk.dead += 1
+        wk.note("footer after select", footer=text(p, ".intelligence-pullout ~ *, .desk-window:has(.intelligence-pullout) .surface-footer"))
+    # 6a. open the decision: the palette is the only path found
+    pal_open(wk, "freeze", f"decision:{IDS['decisions']['Freeze the old ledger on Nov 5']}", "open the decision from the palette")
+    wk.shot("decision-open")
+    # 6b. today's 1:1: the Chair row first (obvious), then the brief PEOPLE row -> Open person
+    close_dec = p.locator(".desk-window [aria-label^='Close Freeze'], .desk-pullout [aria-label^='Close Freeze']")
+    cal = p.locator("[data-testid=arrival-meeting-row]").filter(has_text="1:1 Priya")
+    if cal.count():
+        try:
+            opened = wk.act(cal.locator("text=1:1 Priya / Karol"), "tap today's '1:1 Priya / Karol' on the Chair (first try)")
+            if not opened: wk.log[-1]["dead"] = True; wk.dead += 1
+        except Exception as e:
+            wk.note("calendar row not reachable", error=str(e)[:200])
+    if close_dec.count():
+        wk.act(close_dec, "close the decision window (it covers Intelligence PEOPLE)")
+    person = p.locator(".intelligence-pullout [data-testid^=person-row-]").filter(has_text="Priya Nair")
+    opened_person = False
+    if person.count():
+        wk.act(person.locator(".surface-ledger-line, :scope").first, "Intelligence BRIEF: PEOPLE -> Priya Nair")
+        if wk.log[-1].get("blocked"):
+            wk.log[-1]["dead"] = True; wk.dead += 1
+            wk.note("the closed decision card is still in the DOM at opacity 0 and swallows the tap", ghost=p.evaluate("() => { const e = document.querySelector('[id^=\\'pullout:decision_\\']'); return e ? getComputedStyle(e).opacity : 'gone'; }"))
+        sig = p.locator(f"[data-testid=person-signals-{IDS['people']['Priya Nair']}]")
+        wk.note("person signals", signals=text(p, f"[data-testid=person-signals-{IDS['people']['Priya Nair']}]"))
+        if p.locator("[data-testid=verb-open-person]").count() and p.locator("[data-testid=verb-open-person]").is_visible():
+            wk.act(p.locator("[data-testid=verb-open-person]"), "Open person"); opened_person = True
+    if not opened_person:
+        pal_open(wk, "people", "desk.open-people", "palette: Open People")
+        wk.act(p.locator("#surface-people button").filter(has_text="Priya Nair"), "People: Priya Nair")
+    wk.note("Priya's window", text=(text(p, "#surface-people") or "")[:400])
+    wk.shot("today-opened")
+    # 6c. the DUE TODAY item: what opens it?
+    ny = p.locator("[data-testid=arrival-needs-you-row]").filter(has_text="Review the rollout plan")
+    if ny.count():
+        try:
+            opened = wk.act(ny.locator("text=Review the rollout plan before Friday"), "tap the DUE TODAY row 'Review the rollout plan before Friday' (first try)")
+            if not opened: wk.log[-1]["dead"] = True; wk.dead += 1
+        except Exception as e:
+            wk.note("needs-you row not reachable (covered)", error=str(e)[:200])
+    before = [w["title"] for w in windows(p)]
+    wk.note("windows mid-job", windows=windows(p), storage=workspace(p))
+    # RETURN: reload mid-job
+    t = time.monotonic(); p.reload(wait_until="commit")
+    p.locator("[data-testid=arrival-needs-you-row]").first.wait_for(state="visible", timeout=30000)
+    p.wait_for_timeout(2500)
+    after = [w["title"] for w in windows(p)]
+    wk.note("RELOAD mid-job", reload_s=round(time.monotonic() - t, 2), before=before, after=after,
+            kept=[x for x in before if x in after], lost=[x for x in before if x not in after])
+    wk.shot("after-reload")
+    # RECOVERY: the brief read fails mid-job (the hub answers 500 for /api/brief/latest)
+    p.route("**/api/brief/latest*", lambda r: r.fulfill(status=500, body='{"detail":"injected"}', content_type="application/json"))
+    p.reload(wait_until="commit")
+    p.locator("[data-testid=arrival-needs-you-row]").first.wait_for(state="visible", timeout=30000)
+    p.wait_for_timeout(2500)
+    p.locator("[data-testid=arrival-brief]").first.scroll_into_view_if_needed()
+    wk.note("brief read fails", chair_brief=text(p, "[data-testid=arrival-brief]"),
+            retry=p.locator("[data-testid=arrival-brief-retry]").count())
+    wk.shot("brief-failed")
+    if not p.locator(".intelligence-pullout").count():
+        dock(wk, "Intelligence")
+    p.wait_for_timeout(1500)
+    wk.note("Intelligence brief under failure", text=text(p, ".intelligence-pullout"))
+    wk.shot("intelligence-brief-failed")
+    p.unroute("**/api/brief/latest*")
+    ta = p.locator(".intelligence-pullout button").filter(has_text="Try again")
+    if ta.count():
+        wk.act(ta, "Intelligence: Try again")
+        wk.note("Intelligence after Try again", text=(text(p, ".intelligence-pullout") or "")[:160])
+    if TOUCH:
+        close_all(wk)
+    if p.locator("[data-testid=arrival-brief-retry]").count():
+        p.locator("[data-testid=arrival-brief]").first.scroll_into_view_if_needed()
+        wk.act(p.locator("[data-testid=arrival-brief-retry]"), "Chair: Retry (brief)")
+        wk.note("after retry", chair_brief=(text(p, "[data-testid=arrival-brief]") or "")[:200], ghosts=ghosts(p))
+        if "DID NOT LOAD" in (text(p, "[data-testid=arrival-brief]") or ""):
+            wk.log[-2]["dead"] = True; wk.dead += 1
+            wk.shot("retry-swallowed")
+            reload(wk, "reload: the only way past the closed-window ghost")
+            p.locator("[data-testid=arrival-brief]").first.scroll_into_view_if_needed()
+            wk.note("after reload", chair_brief=(text(p, "[data-testid=arrival-brief]") or "")[:200])
+    wk.shot("brief-recovered")

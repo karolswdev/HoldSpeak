@@ -1,0 +1,12 @@
+| Job | Width | Gestures | Presses | Typing | Reloads | Dead taps | Taps with a ghost present | Windows opened | Rig s | KLM s | Windows seen |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| J1 | 1440 | 17 | 15 | 2 | 0 | 5 | 6 | 4 | 42.7 | 25 | Freeze the old ledger on Nov 5, Intelligence, People |
+| J1 | 393 | 20 | 17 | 2 | 1 | 5 | 9 | 4 | 43.9 | 33 | Freeze the old ledger on Nov 5, Intelligence, People |
+| J2 | 1440 | 16 | 13 | 2 | 1 | 0 | 0 | 3 | 44.2 | 40 | Meetings, New decision |
+| J2 | 393 | 16 | 13 | 2 | 1 | 0 | 0 | 3 | 44.1 | 40 | Meetings, New decision |
+| J3 | 1440 | 37 | 27 | 9 | 1 | 1 | 0 | 4 | 50.8 | 121 | People, Settings |
+| J3 | 393 | 37 | 27 | 9 | 1 | 1 | 0 | 4 | 50.7 | 121 | People, Settings |
+| J4 | 1440 | 22 | 17 | 4 | 1 | 1 | 0 | 2 | 36.1 | 74 | Payments ledger cutover |
+| J4 | 393 | 22 | 17 | 4 | 1 | 1 | 0 | 2 | 36.2 | 76 | Observability uplift |
+| J5 | 1440 | 10 | 5 | 4 | 1 | 0 | 0 | 2 | 25.7 | 56 | Thought |
+| J5 | 393 | 16 | 10 | 5 | 1 | 0 | 0 | 4 | 33.0 | 65 | New Workbench, Thought, Triage Agent |

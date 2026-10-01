@@ -1,0 +1,42 @@
+{
+ "before_items": [
+  [
+   "wbi_874ece44c627",
+   "Draft rollback runbook"
+  ]
+ ],
+ "open_ms": 465,
+ "windows": [
+  "Ledger cutover bench :: Ledger cutover bench ITEMS RUNS MEMORY \u25b8 Run \u00b7 Bind an agent first \u25b4 Collapse AGENT #2563EB Chase #6B7280 Desk #9333EA Draft #0F766E Interview #059669 Plan #D97706 Project RUNS ON Item assignment No default model Choose default RESOLVES WITH Reference assignment No default model Choose default STARTS WHEN Manual Schedule Event Idle Starts only when you press Run. SKILLS \u25c7 Skills appear when an agent is bound ~/.holdspeak/workbenches/workbench_7f0804c026b5/ P3 Draft rollback runbook NEEDS REVIEW P3 Add 1 ITEM",
+  "Workbenches :: Workbenches + Create Ledger cutover bench 1 PENDING Choose default Manual"
+ ],
+ "verbs": [
+  "Close Ledger cutover bench|btn--chrome desk-light desk-li",
+  "Minimize Ledger cutover bench|btn--chrome desk-light desk-li",
+  "Maximize Ledger cutover bench|btn--chrome desk-light desk-li",
+  "Edit Workbench name|btn--chrome surface-edit-in-pl",
+  "ITEMS|btn--chrome desk-wing is-on",
+  "RUNS|btn--chrome desk-wing",
+  "MEMORY|btn--chrome desk-wing",
+  "Run: Bind an agent first|desk-chip",
+  "Collapse configuration|wb-config-collapse desk-chip q",
+  "Speak Search agents|btn--chrome desk-mic is-idle",
+  "#2563EB Chase|btn--chrome surface-row-open",
+  "#6B7280 Desk|btn--chrome surface-row-open",
+  "#9333EA Draft|btn--chrome surface-row-open",
+  "#0F766E Interview|btn--chrome surface-row-open",
+  "#059669 Plan|btn--chrome surface-row-open",
+  "#D97706 Project|btn--chrome surface-row-open",
+  "Choose default|btn btn--ghost btn--sm ",
+  "Choose default|btn btn--ghost btn--sm ",
+  "Manual|desk-chip",
+  "Schedule|desk-chip",
+  "Event|desk-chip",
+  "Idle|desk-chip",
+  "P3 Draft rollback runbook NEEDS REVIEW|wb-card-head",
+  "Speak|btn--chrome desk-mic is-idle",
+  "P3|desk-chip wb-priority-cycle",
+  "Add|desk-chip is-primary"
+ ],
+ "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/70-workbench-window-pop-1440.png"
+}

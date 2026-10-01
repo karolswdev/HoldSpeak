@@ -1,0 +1,89 @@
+MW = "#surface-meetings"
+def send_state(p):
+    return p.evaluate("""(mw) => { const w = document.querySelector(mw); if (!w) return null;
+      const q = (s) => [...w.querySelectorAll(s)].filter(e => e.getBoundingClientRect().width).map(e => e.innerText.replace(/\\s+/g,' ').trim().slice(0,120));
+      return {picked: q('[data-testid=destination-row][aria-expanded=true], [data-testid=destination-row].is-open'),
+              preview: q('[data-testid=send-preview]').slice(0,1), send: q('[data-testid=send-verb]'),
+              receipt: q('[data-receipt=latest], [data-testid=send-refused], [data-testid=send-lost], [data-testid=send-failed]'),
+              forms: q('[data-testid=doc-forms]')}; }""", MW)
+
+def run(wk):
+    p = wk.page
+    goto(p)
+    # 1. start
+    wk.act(p.locator("[data-testid=arrival-record-meeting]"), "Chair: Record meeting")
+    p.wait_for_timeout(2500)
+    wk.note("start face", receipts=p.evaluate("() => [...document.querySelectorAll('[role=status],[role=alert],.desk-receipt-row,[data-testid*=receipt]')].filter(e=>e.getBoundingClientRect().width).map(e=>e.innerText.replace(/\\s+/g,' ').trim().slice(0,140)).filter(Boolean)"),
+            orb=p.evaluate("() => { const o = document.querySelector('.desk-orb'); return o ? o.className + ' | ' + o.innerText : null }"))
+    wk.shot("start-refused")
+    # 2. live: no recorder in this hub (the rig never opens a microphone) -> blocked
+    wk.note("LIVE leg BLOCKED: the walk hub has no recorder (POST /api/meeting/start answers 501); no live meeting can exist without a microphone")
+    # 3. summary
+    dock(wk, "Meetings")
+    p.locator(MW).wait_for(timeout=15000)
+    wk.act(p.locator(f"{MW} button").filter(has_text="Checkout latency review"), "Meetings: Checkout latency review")
+    p.wait_for_timeout(800)
+    wk.note("meeting record", head=(text(p, MW) or "")[:500])
+    wk.shot("summary")
+    # 4. decision: look in the record first (no verb), then the palette
+    has_dec = p.locator(f"{MW} button").filter(has_text=re.compile("decision", re.I)).count()
+    wk.note("decision verb in the meeting record", count=has_dec)
+    pal_open(wk, "decision", "desk.new-decision", "palette: New Decision")
+    nd = p.locator(".desk-pullout").filter(has_text="New decision").last
+    if nd.count():
+        wk.type(nd.locator("textarea[aria-label=Decision]"), "Add a cache warm-up step to every checkout deploy.", "type the decision")
+        wk.note("new decision window", text=(text(p, ".desk-pullout:last-of-type") or "")[:300])
+    wk.shot("decision")
+    # 5. send: back to the meeting record
+    wk.act(p.locator(f".desk-dock-launch[aria-label^='Meetings'], .desk-dock-chip:has-text('Meetings')").first, "back to Meetings")
+    p.wait_for_timeout(600)
+    row = p.locator(f"{MW} [data-send=well] [data-testid=destination-row]").first
+    row.scroll_into_view_if_needed()
+    wk.act(row, "SEND: pick Team folder")
+    p.locator(f"{MW} [data-testid=send-preview], {MW} [data-testid=preview-refused], {MW} [data-testid=preview-failed]").first.wait_for(timeout=20000)
+    p.wait_for_timeout(600)
+    wk.note("preview", state=send_state(p))
+    wk.shot("preview")
+    # RETURN a: leave (close the Meetings window mid-job) and come back
+    wk.act(p.locator(f"{MW} [aria-label='Close Meetings']"), "leave: close Meetings")
+    wk.note("after close", windows=windows(p), ghosts=ghosts(p))
+    dock(wk, "Meetings", "come back: Meetings")
+    p.wait_for_timeout(800)
+    wk.note("after coming back", state=send_state(p), selected=text(p, f"{MW} .meetings-detail-head"), windows=windows(p))
+    wk.shot("came-back")
+    # RETURN b: reload mid-job
+    reload(wk, "reload mid-job (preview open)")
+    wk.note("after reload", state=send_state(p), windows=windows(p))
+    wk.shot("after-reload")
+    if not p.locator(MW).count() or not p.locator(MW).is_visible():
+        dock(wk, "Meetings", "reopen Meetings after reload")
+        p.wait_for_timeout(800)
+    if not p.locator(f"{MW} [data-send=well]").count():
+        wk.act(p.locator(f"{MW} button").filter(has_text="Checkout latency review"), "re-pick the meeting")
+    if not p.locator(f"{MW} [data-testid=send-preview]").count():
+        row = p.locator(f"{MW} [data-send=well] [data-testid=destination-row]").first
+        row.scroll_into_view_if_needed()
+        wk.act(row, "re-pick Team folder")
+        p.locator(f"{MW} [data-testid=send-preview]").first.wait_for(timeout=20000)
+    # RECOVERY: the send fails mid-job (the hub answers 500 for the send)
+    p.route(re.compile(r".*/api/channels/send$"), lambda r: r.fulfill(status=500, body='{"detail":"injected failure"}', content_type="application/json") if r.request.method == "POST" else r.continue_())
+    sv = p.locator(f"{MW} [data-testid=send-verb]").first
+    sv.scroll_into_view_if_needed()
+    wk.act(sv, "Send (the hub fails)")
+    p.wait_for_timeout(1500)
+    wk.note("send failed face", state=send_state(p))
+    wk.shot("send-failed")
+    p.unroute(re.compile(r".*/api/channels/send$"))
+    sv = p.locator(f"{MW} [data-testid=send-verb], {MW} button:has-text('Try again'), {MW} button:has-text('Retry')").first
+    sv.scroll_into_view_if_needed()
+    wk.act(sv, "Send again")
+    try:
+        p.locator(f"{MW} [data-receipt=latest]").first.wait_for(timeout=20000)
+    except Exception:
+        pass
+    p.wait_for_timeout(800)
+    wk.note("sent face", state=send_state(p))
+    folder = Path(IDS["destination_folder"])
+    files = sorted(folder.glob("*"))
+    wk.note("the file on disk", files=[f.name for f in files], head=(files[-1].read_text()[:400] if files else None))
+    wk.shot("sent")

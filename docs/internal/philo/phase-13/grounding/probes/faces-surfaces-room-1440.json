@@ -1,0 +1,41 @@
+{
+ "open_ms": 5556,
+ "windows": [
+  "Payments ledger cutover :: Payments ledger cutover ROOM HISTORY Nothing needs you \u25cf ON TRACK Draft update NEEDS YOU Nothing needs you SOURCES Steward PEOPLE 3 People AC Avery Chen Open JP Jordan Patel Open SR Sam Rivera Open SINCE YOU LOOKED THU 14:57 Nothing since 14:57 DECISIONS & COMMITMENTS 1 Decided \u00b7 Freeze the old ledger on Nov 5 \u00b7 17m ago \u21bb Answer Preparation brief MODEL \u00b7 NOT SET Choose Submit READ 14:58 Refresh"
+ ],
+ "shot": "docs/internal/philo/phase-13/grounding/shots/surfaces/64-room-pop-1440.png",
+ "verbs": [
+  "Close Payments ledger cutover",
+  "Minimize Payments ledger cutover",
+  "Maximize Payments ledger cutover",
+  "ROOM",
+  "HISTORY",
+  "Draft update",
+  "Steward",
+  "People: this Project's people",
+  "Open: Avery Chen",
+  "Open: Jordan Patel",
+  "Open: Sam Rivera",
+  "Speak",
+  "Choose",
+  "Submit",
+  "Refresh"
+ ],
+ "shot_decisions": "docs/internal/philo/phase-13/grounding/shots/surfaces/65-room-decisions-pop-1440.png",
+ "decision_row": {
+  "html": "<div class=\"surface-ledger\" data-cols=\"room\"><div class=\"surface-ledger-head\"><span class=\"surface-ledger-count\"></span></div><ul class=\"surface-ledger-rows\"><li class=\"surface-ledger-row\" data-wrap=\"true\"><div role=\"button\" tabindex=\"0\" class=\"surface-ledger-line\" data-testid=\"decision-row\" aria-expanded=\"false\" aria-label=\"Decision: Freeze the old ledger on Nov 5\"><span class=\"surface-ledger-primary\"><span class=\"room-dc-verb\">Decided</span> \u00b7 Freeze the old ledger on Nov 5 \u00b7 17m ago</span></div></li></ul></div>",
+  "buttons": []
+ },
+ "dock_geometry": {
+  "left": -35,
+  "right": 1475,
+  "sw": 1510,
+  "cw": 1510,
+  "vw": 1440
+ },
+ "decision_unfolded": {
+  "text": "Decided \u00b7 Freeze the old ledger on Nov 5 \u00b7 17m ago SEND \u25cb Team updates folder FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/fs13pop.mdVn7UpXR4/Updates-out THIS DEVICE",
+  "buttons": []
+ },
+ "shot_unfolded": "docs/internal/philo/phase-13/grounding/shots/surfaces/66-room-decision-unfolded-pop-1440.png"
+}
