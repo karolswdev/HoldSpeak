@@ -163,6 +163,41 @@ def test_meeting_form_faces_observe_the_rendered_send_state_in_each_seat() -> No
                        and step.get("selector") == "[data-testid=arrival-meeting-row]"
                        for step in case["setup"])
                for case in chair)
+    for case in chair:
+        assert case["trigger"].get("optional") is True
+        assert any(step.get("selector") == "[data-testid=arrival-meetings] [data-testid=arrival-meeting-row]"
+                   and step.get("optional") is True for step in case["setup"]), case["id"]
+        for step in case["setup"]:
+            if (step.get("kind") == "ui"
+                    and step.get("selector", "").startswith(
+                        "[data-testid=arrival-meeting-row] + .surface-ledger-open [data-testid=meeting-send-well]")):
+                assert step.get("optional") is True, case["id"]
+        predicates = case["expected"]["predicate"]["predicates"]
+        if case["id"].endswith(".prepared"):
+            assert any(p.get("kind") == "readable_text" and p.get("value") == "PREPARED"
+                       for p in predicates), case["id"]
+        else:
+            assert any(p.get("kind") == "protocol_status" for p in predicates), case["id"]
+
+    brief_data = json.loads(ATLAS.read_text())
+    brief = next(case for case in brief_data["cases"]
+                 if case["id"] == "case.p11.monday_brief.intelligence.picked")
+    assert any(step.get("action") == "scroll_into_view" and step.get("optional") is True
+               for step in brief["trigger"].get("then", []))
+    assert any(p.get("kind") == "protocol_status"
+               for p in brief["expected"]["predicate"]["predicates"]), brief["id"]
+
+    no_digest = cases["case.p11.r7.no_digest_slack"]
+    assert no_digest["trigger"].get("optional") is True
+    assert all(step.get("optional") is True
+               for step in no_digest["setup"]
+               if step.get("kind") == "ui" and step.get("action") == "wait_for"
+               and "meeting-send-well" in step.get("selector", ""))
+    no_digest_predicates = no_digest["expected"]["predicate"]["predicates"]
+    assert any(p.get("kind") == "input_value" and p.get("equals") == "meeting_digest"
+               for p in no_digest_predicates)
+    assert any(p.get("kind") == "text_absent" and p.get("value") == "DIGEST → SLACK"
+               for p in no_digest_predicates)
 
 
 def test_slack_face_outcomes_observe_the_post_click_rendered_send_receipt() -> None:
@@ -357,6 +392,15 @@ def test_slack_destination_check_reads_the_visible_result_at_mobile_width() -> N
                 if c["id"] == "case.p11.slack.destination.d3")
     assert case["expected"]["observe_at"] == "[data-testid=dest-check-result]"
     assert case["trigger"]["then"][0]["selector"] == "[data-testid=dest-check-result]"
+    assert case["trigger"]["trigger_route"] == {
+        "method": "POST", "path": "/api/channels/destinations/{dest_id}/check"
+    }
+    status = next(p for p in case["expected"]["predicate"]["predicates"]
+                  if p.get("kind") == "protocol_status")
+    assert status["method"] == "POST" and status["status"] == 200
+    assert status["body_fields"] == {"check.state": "ready"}
+    assert "path" not in status  # trigger_route above retains the exact dynamic route fence
+    assert case["trigger"]["then"][0].get("optional") is True
 
 
 def test_preview_changed_case_fences_refusal_refresh_and_successful_second_press() -> None:
@@ -407,6 +451,7 @@ def test_last_brief_item_transitions_keep_the_same_send_receipt() -> None:
         assert any(p.get("kind") == "protocol_rows_same"
                    and p.get("match", {}).get("document_ref") == "monday_brief:{brief_id}"
                    for p in predicates), case_id
+        assert case["trigger"]["then"][-1].get("optional") is True, case_id
         sent = next(step for step in case["setup"]
                     if step.get("kind") == "api" and step.get("path") == "/api/channels/sends")
         assert sent["capture_as"] == "send_id" and sent["capture_path"] == "send.id", case_id

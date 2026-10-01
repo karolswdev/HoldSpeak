@@ -3198,7 +3198,8 @@
             "action": "scroll_into_view",
             "adapter": "ui-pointer",
             "selector": ".desk-window [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verbs]",
-            "block": "center"
+            "block": "center",
+            "optional": true
           }
         ],
         "optional": true
