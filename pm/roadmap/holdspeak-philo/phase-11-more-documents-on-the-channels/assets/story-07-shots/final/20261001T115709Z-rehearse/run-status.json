@@ -1,0 +1,12 @@
+{
+  "blocked": [
+    "agent_prepare: zero-read fence: 1 non-MCP action(s)",
+    "fence zero_read: 1"
+  ],
+  "claim": "cold context (an empty scratch dir, scratch HOME/CODEX_HOME with only the auth file, `--ignore-user-config --ignore-rules`, no preamble), ZERO repository reads in the retained log, discovery from the catalogue alone",
+  "finished_at": "2026-10-01T11:58:51.106005+00:00",
+  "label": "REHEARSED; OWNER REVIEW PENDING",
+  "outcome": "blocked",
+  "press": "the owner's press, made by the driver AS THE OWNER by the owner's word (charter D3, 2026-09-29) for exactly these targets; Codex never sends",
+  "started_at": "2026-10-01T11:57:09.404045+00:00"
+}

@@ -1,0 +1,211 @@
+{
+  "agent_send_by_driver": null,
+  "operations": [
+    {
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "delegator_kind": "",
+      "name": "channel.prepare",
+      "operation_id": "op_d83518247198413abb81996f38c315c6",
+      "parent_operation_id": "",
+      "principal_identity": "codex-send-agent",
+      "principal_kind": "agent",
+      "rid": 2,
+      "state": "succeeded"
+    },
+    {
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "delegator_kind": "",
+      "name": "channel.prepare",
+      "operation_id": "op_6e7588cac56040edbcb5c424c69a7bbd",
+      "parent_operation_id": "",
+      "principal_identity": "codex-send-agent",
+      "principal_kind": "agent",
+      "rid": 3,
+      "state": "succeeded"
+    },
+    {
+      "authority_basis": "refused_at_admission",
+      "delegator_kind": "",
+      "name": "channel.send",
+      "operation_id": "op_5f3add4678134ced82d8747950dd95bc",
+      "parent_operation_id": "",
+      "principal_identity": "codex-send-agent",
+      "principal_kind": "agent",
+      "rid": 4,
+      "state": "refused"
+    }
+  ],
+  "previews": {
+    "decision_record": "46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73",
+    "monday_brief": "119e6ca6c18fd2844a2d345b21dc7ccf97b3d9a5eadb96e77ee4bd9fd6190c06"
+  },
+  "receipts": [
+    {
+      "operation": {
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "delegator_kind": "",
+        "name": "channel.prepare",
+        "operation_id": "op_d83518247198413abb81996f38c315c6",
+        "parent_operation_id": "",
+        "principal_identity": "codex-send-agent",
+        "principal_kind": "agent",
+        "rid": 2,
+        "state": "succeeded"
+      },
+      "receipt": {
+        "actor_identity": "codex-send-agent",
+        "actor_kind": "agent",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790855975.076938,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_d83518247198413abb81996f38c315c6",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_a043d083444b4ede9d2d81f854ccb294",
+        "result_ref": "channel_send:chs_f2686bef5315954cd208b667",
+        "state": "succeeded",
+        "target_ref": "document:monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6"
+      }
+    },
+    {
+      "operation": {
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "delegator_kind": "",
+        "name": "channel.prepare",
+        "operation_id": "op_6e7588cac56040edbcb5c424c69a7bbd",
+        "parent_operation_id": "",
+        "principal_identity": "codex-send-agent",
+        "principal_kind": "agent",
+        "rid": 3,
+        "state": "succeeded"
+      },
+      "receipt": {
+        "actor_identity": "codex-send-agent",
+        "actor_kind": "agent",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790855975.083102,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_6e7588cac56040edbcb5c424c69a7bbd",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_ab8e73a24ea64cf0943cc221bf064efc",
+        "result_ref": "channel_send:chs_045d562db358980853b97e38",
+        "state": "succeeded",
+        "target_ref": "document:decision_record:record-76e5a7d019b44a68a9105e3fe6e58029"
+      }
+    },
+    {
+      "operation": {
+        "authority_basis": "refused_at_admission",
+        "delegator_kind": "",
+        "name": "channel.send",
+        "operation_id": "op_5f3add4678134ced82d8747950dd95bc",
+        "parent_operation_id": "",
+        "principal_identity": "codex-send-agent",
+        "principal_kind": "agent",
+        "rid": 4,
+        "state": "refused"
+      },
+      "receipt": {
+        "actor_identity": "codex-send-agent",
+        "actor_kind": "agent",
+        "authority_basis": "refused_at_admission",
+        "created_at": 1790855979.22617,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_5f3add4678134ced82d8747950dd95bc",
+        "outcome": "owner_principal_required",
+        "receipt_id": "rcpt_5d1a07362b26434bb580d16582270e64",
+        "result_ref": "",
+        "state": "refused",
+        "target_ref": "channel_send:chs_f2686bef5315954cd208b667"
+      }
+    }
+  ],
+  "sends": {
+    "decision_record": [
+      {
+        "account": {},
+        "badge": "local",
+        "channel": "file",
+        "created_at": "2026-10-01T11:59:35+00:00",
+        "destination_id": "chd_889dffc12ae51316484cc9a6",
+        "destination_name": "HoldSpeak folder",
+        "dispatch_seq": null,
+        "dispatch_started_at": null,
+        "document_json": {
+          "label": "DECISION",
+          "slug": "move-the-queue-in-two-steps-philo-11-07-test",
+          "title": "Move the queue in two steps (PHILO-11-07 test)"
+        },
+        "document_ref": "decision_record:record-76e5a7d019b44a68a9105e3fe6e58029",
+        "file_path": null,
+        "id": "chs_045d562db358980853b97e38",
+        "payload_digest": "46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73",
+        "prepare_operation_id": "op_6e7588cac56040edbcb5c424c69a7bbd",
+        "prepared_by": {
+          "identity": "codex-send-agent",
+          "kind": "agent"
+        },
+        "preview": {
+          "text": "# Move the queue in two steps (PHILO-11-07 test)\nLifecycle: active\n\n## Rationale\nOne step at a time keeps the rollback short.\n\n## Owner\nAvery\n\n## Review date\n2026-10-15\n\n## Sources\n- Lantern migration review (PHILO-11-07 test), 1 Oct 2026\n"
+        },
+        "proof": null,
+        "reason": null,
+        "send_operation_id": null,
+        "settled_at": null,
+        "size": 239,
+        "state": "prepared",
+        "target": {
+          "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/outbox"
+        },
+        "target_digest": "56ce3f627e73ee125f647179b7e801c1051502d3a3d9af2e5f9576c9c4ce6311"
+      }
+    ],
+    "desk_decision": [],
+    "meeting_decision": [],
+    "meeting_digest": [],
+    "meeting_followup": [],
+    "meeting_summary": [],
+    "monday_brief": [
+      {
+        "account": {},
+        "badge": "local",
+        "channel": "file",
+        "created_at": "2026-10-01T11:59:35+00:00",
+        "destination_id": "chd_889dffc12ae51316484cc9a6",
+        "destination_name": "HoldSpeak folder",
+        "dispatch_seq": null,
+        "dispatch_started_at": null,
+        "document_json": {
+          "label": "BRIEF 2026-10-01",
+          "slug": "brief-2026-10-01",
+          "title": "Monday Brief \u2014 2026-10-01"
+        },
+        "document_ref": "monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6",
+        "file_path": null,
+        "id": "chs_f2686bef5315954cd208b667",
+        "payload_digest": "119e6ca6c18fd2844a2d345b21dc7ccf97b3d9a5eadb96e77ee4bd9fd6190c06",
+        "prepare_operation_id": "op_d83518247198413abb81996f38c315c6",
+        "prepared_by": {
+          "identity": "codex-send-agent",
+          "kind": "agent"
+        },
+        "preview": {
+          "text": "# Monday Brief\nPeriod: 2026-09-30 \u2013 2026-10-01\nGenerated: 1 Oct 2026, 05:59\n\n1 new decision, 1 thing changed, 1 thing waiting, 2 decisions waiting.\n\n## This week\n- 1 new decision from meetings\n\n## Changed\n- Meeting recorded: Lantern migration review (PHILO-11-07 test)\n  40 min \u00b7 1 action item\n\n## Waiting\n- Unassigned: Write the rollback checklist (PHILO-11-07 test)\n  Needs an owner\n\n## Decisions\n- Review decision: Move the queue in two steps (PHILO-11-07 test)\n- Review decision: Move the scheduler after the queue (PHILO-11-07 test)\n\n## People\n\n### Avery\n- You owe: 1\n"
+        },
+        "proof": null,
+        "reason": null,
+        "send_operation_id": null,
+        "settled_at": null,
+        "size": 576,
+        "state": "prepared",
+        "target": {
+          "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/outbox"
+        },
+        "target_digest": "56ce3f627e73ee125f647179b7e801c1051502d3a3d9af2e5f9576c9c4ce6311"
+      }
+    ],
+    "project_update": []
+  }
+}

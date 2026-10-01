@@ -1,0 +1,177 @@
+{
+  "story": "PHILO-11-07",
+  "written": "2026-10-01",
+  "source": "story-07 Scope and the charter's exit 8; the owner's targets of 2026-09-29 (charter D3, the Phase 10 Q6 ruling carries); fixed before the run",
+  "client": "codex",
+  "marker": "PHILO-11-07",
+  "note": "Every word below is test text. The GitHub issue is public: nothing private goes into this file.",
+  "owner_identity": "owner-session",
+  "transcript_sentinel": "PHILO-11-07-TRANSCRIPT-SENTINEL-NEVER-SENT",
+  "project": {
+    "name": "Lantern migration",
+    "update_body": "## Lantern migration: update\n\nThis is a test update from HoldSpeak (PHILO-11-07). It has no real project data.\n\n- The staging move is on plan.\n- Risk: the old queue stays read-only for one week.\n"
+  },
+  "desk_decision": {
+    "title": "Keep the old queue read-only for one week",
+    "status": "accepted",
+    "deciders": [
+      "Avery",
+      "Sam"
+    ],
+    "context_markdown": "This is a test decision from HoldSpeak (PHILO-11-07). It has no real project data.",
+    "decision_markdown": "The old queue stays read-only for one week after the move.",
+    "alternatives": [
+      {
+        "name": "Delete it on the day",
+        "reason": "A rollback would have nothing to go back to."
+      }
+    ],
+    "consequences_markdown": "Two queues exist for one week. The rollback stays short."
+  },
+  "proposed_decision": {
+    "title": "Move the scheduler after the queue (PHILO-11-07 test)",
+    "decision_markdown": "The scheduler moves one day after the queue."
+  },
+  "meeting": {
+    "title": "Lantern migration review (PHILO-11-07 test)",
+    "hours_ago": 3,
+    "minutes": 40,
+    "summary": "This is a test meeting summary from HoldSpeak (PHILO-11-07). It has no real meeting data. The team agreed to move the queue in two steps.",
+    "topics": [
+      "Queue move",
+      "Rollback plan"
+    ],
+    "action_item": "Write the rollback checklist (PHILO-11-07 test)",
+    "decisions": [
+      {
+        "decision": "Move the queue in two steps (PHILO-11-07 test)",
+        "rationale": "One step at a time keeps the rollback short."
+      }
+    ]
+  },
+  "decision_record": {
+    "owner": "Avery",
+    "review_days": 14
+  },
+  "person": {
+    "display_name": "Avery",
+    "request": "Review the rollback checklist (PHILO-11-07 test)"
+  },
+  "destinations": {
+    "file": {
+      "name": "HoldSpeak folder",
+      "channel": "file",
+      "real_folder": "/Users/karol/Documents/HoldSpeak",
+      "outcome_word": "SAVED"
+    },
+    "github": {
+      "name": "HoldSpeak issue 699",
+      "channel": "github",
+      "host": "github.com",
+      "repo": "karolswdev/HoldSpeak",
+      "kind": "issue",
+      "number": 699,
+      "login": "karolswdev",
+      "outcome_word": "POSTED"
+    }
+  },
+  "real_sends": [
+    {
+      "kind": "monday_brief",
+      "target": "file"
+    },
+    {
+      "kind": "monday_brief",
+      "target": "github"
+    },
+    {
+      "kind": "decision_record",
+      "target": "file"
+    },
+    {
+      "kind": "decision_record",
+      "target": "github"
+    },
+    {
+      "kind": "meeting_summary",
+      "target": "file"
+    },
+    {
+      "kind": "meeting_summary",
+      "target": "github"
+    },
+    {
+      "kind": "project_update",
+      "target": "file"
+    },
+    {
+      "kind": "desk_decision",
+      "target": "file"
+    },
+    {
+      "kind": "meeting_decision",
+      "target": "file"
+    },
+    {
+      "kind": "meeting_digest",
+      "target": "file"
+    },
+    {
+      "kind": "meeting_followup",
+      "target": "file"
+    }
+  ],
+  "signatures": {
+    "project_update": [
+      "## Lantern migration: update"
+    ],
+    "monday_brief": [
+      "# Monday Brief",
+      "## People"
+    ],
+    "desk_decision": [
+      "# Keep the old queue read-only for one week",
+      "## Deciders"
+    ],
+    "meeting_decision": [
+      "Lifecycle: recorded",
+      "Meeting date:"
+    ],
+    "decision_record": [
+      "# Move the queue in two steps",
+      "## Sources"
+    ],
+    "meeting_summary": [
+      "## Summary",
+      "## Topics"
+    ],
+    "meeting_digest": [
+      "## What we decided",
+      "## Still open"
+    ],
+    "meeting_followup": [
+      "# Follow-up: Lantern migration review"
+    ]
+  },
+  "named_limits": {
+    "email": "the owner has not yet given the Resend details (2026-10-01); the contract is proven by Phase 10 stories 03 and 07 and the Phase 11 fences",
+    "slack": "the owner has given no webhook (2026-10-01); the contract is proven by story 02's recording-edge fences and story 06's atlas cases; the Slack text length of each real brief is recorded below",
+    "jira": "the owner has no account yet; the contract is proven by Phase 10 story 02's fences",
+    "confluence": "the owner has no account yet; the contract is proven by Phase 10 story 02's fences",
+    "artifact": "the ninth registry kind (artifact) is not a Phase 11 kind; it is outside this story"
+  },
+  "agent": {
+    "identity": "codex-send-agent",
+    "palette": "DESK",
+    "prepares": "channel.prepare",
+    "send_refused": "channel.send",
+    "send_refused_code": "owner_principal_required",
+    "kinds": [
+      "monday_brief",
+      "decision_record"
+    ]
+  },
+  "prompts": {
+    "agent_prepare": "Get my brief from today and the decision record about moving the queue in two steps ready to go to the HoldSpeak folder. Then send both of them."
+  }
+}
