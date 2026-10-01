@@ -22,7 +22,7 @@ The atlas has Send cases for the update only (`docs/internal/philo/graph/atlas-p
 ## Acceptance criteria
 
 - [ ] Each new face case fails on main and passes on the phase head; each `.op` reads the hub's record and receipt.
-- [ ] The Phase 7, 8, 9 and 10 atlas cases still pass.
+- [x] The Phase 7, 8, 9 and 10 atlas cases still pass.
 
 ## Effort (not a promise)
 
@@ -34,11 +34,14 @@ PROVISIONAL: about 1 engineering day.
 
 ## Notes
 
-- 2026-09-30 — dispatched in two parts by Muad'Dib. Part 1 covers the seven new document-kind `.op` file lifecycles and the four recorded Slack outcomes. Story 05 merged at `22c0acc4`; Part 2 now adds the real-face cases below. This progress note does not close the story. Part 2 still needs its retained head/baseline walks, Phase 7–10 regression walks, and final full-suite run.
+- 2026-10-01 — Part 2 walks and the full suite are complete; the story remains in progress because the literal baseline-red condition has one valid control exception. All 101 Phase 11 head rows pass (45 face rows at each width plus 11 `.op` rows). The 90 face rows were run against pre-Phase-11 `332d9158`: 88 fail at the intended missing capability, while the two C4 `no_summary` control rows pass at both widths because the product already has no summary and no SEND well in that state. The same two C4 rows pass on head. Their observations are retained in `assets/story-06-runs/p11-r9-c4-control-final/`; the baseline red rows are in `p11-r9-red-332d9158/`, and the head matrix is `p11-r10-head-final/`. No guard or acceptance text was changed to conceal this. The first acceptance criterion stays unchecked pending an owner ruling on the C4 control exception.
+- The full Phase 7–10 atlas run has 149/149 passing case×width rows, including the four Phase 9 steward `.op` cases walked on merged head `5e82b65d`. The final green matrix with full captures is `assets/story-06-runs/regressions-r7-head-final/`. Earlier blocked attempts, serial retries and the P8 quiet-host blocked→pass pair are retained in the neighboring `regressions-r5-post-merge-*`, `regressions-r6-*` and `regressions-r7-p8-current-*` directories. These disclose the timing flakes; no guard was weakened.
+- The post-merge full suite used Python 3.13, `-n auto`, isolated HOME and basetemp, and excluded `tests/e2e/test_metal.py`: 28 failed, 13,524 passed, 116 skipped, 4 xfailed, and 119 errors. Exact serial reruns passed 146 of the 147 red node ids; the remaining Mermaid renderer node skipped in both serial attempts because the environment lacks a usable renderer. See `assets/story-06-proof/logs/full-r2-classification.json` and its linked logs. The post-merge Phase 7–11 graph and phase-atlas selection passed 357 tests: `assets/story-06-proof/logs/atlas-tests-r3-post-merge.log`.
+- 2026-09-30 — dispatched in two parts by Muad'Dib. Part 1 covers the seven new document-kind `.op` file lifecycles and the four recorded Slack outcomes. Story 05 merged at `22c0acc4`; Part 2 added the real-face cases below. The retained walks and suite are now complete; the first acceptance criterion remains open only for the C4 baseline control recorded above.
 - Part 1 proof and full-suite dispositions: [lane-06-astra.md](lane-06-astra.md). Final operation matrix: 11/11 pass; old-main matrix: 11 blocked before Send. Final focused tests: 411 pass. The inherited face-word guard remains for story 05.
-- Part 2 face-case manifest: run each listed case at **1440 and 393**. The three suffixes listed in a row are separate cases; each reads the hub outcome in the same observation. The merged story 05 faces are the targets.
+- Part 2 face-case manifest: each listed case was run at **1440 and 393**. The three suffixes listed in a row are separate cases; each reads the hub outcome in the same observation. The merged story 05 faces are the targets.
 
-  | Kind / seat | Planned case ids |
+  | Kind / seat | Case ids |
   |---|---|
   | Brief, Chair | `case.p11.monday_brief.chair.picked`, `case.p11.monday_brief.chair.sent`, `case.p11.monday_brief.chair.prepared` |
   | Brief, Intelligence | `case.p11.monday_brief.intelligence.picked`, `case.p11.monday_brief.intelligence.sent`, `case.p11.monday_brief.intelligence.prepared` |

@@ -1,0 +1,10 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase7.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:65110 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-x159jkjg/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p7
+VERDICT: pass terminal=settled
+EVIDENCE: []
+NOTE: placeholder(s) ['remove_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)
+NOTE: predicate: all 15 facts hold: observe_at <root> holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_kind holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_identity holds; op read #0 (kernel.receipt.read) objects.0.receipt.target_ref holds; op read #0 (kernel.receipt.read) objects.0.receipt.result_ref holds; op read #1 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #1 (kernel.receipt.read) objects.0.operation.name holds; op read #1 (kernel.receipt.read) objects.0.receipt.state holds; op read #1 (kernel.receipt.read) objects.0.receipt.actor_kind holds; op read #1 (kernel.receipt.read) objects.0.receipt.actor_identity holds; op read #1 (kernel.receipt.read) objects.0.receipt.target_ref holds; op read #1 (kernel.receipt.read) objects.0.receipt.result_ref holds

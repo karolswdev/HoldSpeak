@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase7.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:56018 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v44q4k17/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p7
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r6-serial-r2/case.p7.zone_create.visible--393/20261001T044807Z-case.p7.zone_create.visible-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r6-serial-r2/case.p7.zone_create.visible--393/20261001T044807Z-case.p7.zone_create.visible-astra-393/after.png']
+NOTE: predicate: 'Atlas zone' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 74, 'w': 363, 'h': 26}

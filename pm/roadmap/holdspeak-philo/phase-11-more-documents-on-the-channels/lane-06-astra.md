@@ -50,3 +50,28 @@ AMENDMENTS: the dispatch divides story 06 into part 1 and part 2. No acceptance 
 UNKNOWN: the new Phase 11 faces, real Slack delivery, native keyring custody, and the owner's live desk remain outside this part. The recording edge proves the channel's handling of specified responses; it does not prove delivery to Slack. The decision cases assume a recorded provider that declares the decision result schema. Ordinary Model Library endpoint setup currently declares only summary adapter support (`holdspeak/services/model_library_service.py:373`); these cases do not prove plugin admission through that unmodified setup face. No self-invoked counsel or CI watch.
 
 Tuesday: these operation cases protect the owner's document-send loop; the usable new face loop still waits for story 05 and part 2.
+
+## Part 2 lane report — 2026-10-01
+
+LANE: PHILO-11-06, Part 2; worktree `/Users/karol/dev/tools/wt-philo-11-06`; branch `feat/philo-11-06`; PR #712 remains draft. Story 05 is merged. The branch merged `origin/main` at `27d8bf1a` as `5e82b65dd3f103c0f984a199bdfcb765d138ce08`; the 51-path merge diff brought no `web/src` or Phase 11 atlas changes (`assets/story-06-proof/logs/merge-product-diff.json`).
+
+OUTCOME: the requested face, transition, baseline, regression and full-suite walks are recorded. Story 06 remains in progress because the literal criterion that every face row fail on `332d9158` has one intended control exception: C4, “no summary, no well,” passes on both baseline and head at both widths. I left the criterion unchanged and did not weaken a guard. The PR remains draft until the owner resolves that acceptance conflict.
+
+PROOF:
+
+- The Phase 11 head matrix has 101/101 passing rows: 45 face rows at each viewport and 11 `.op` rows. The manifest names each face seat and transition in [story 06](story-06-the-atlas-cases.md#notes); the full run observations and screenshots are in `assets/story-06-runs/p11-r10-head-final/`. The corresponding pre-Phase-11 matrix is `p11-r9-red-332d9158/`; it has 88 failing face rows out of 90. C4’s two baseline passes are retained in `p11-r9-c4-control-final/`; its two head passes are in `p11-r10-head-final/`. The same no-summary/no-well behavior is correct on both revisions, so making C4 red on baseline would make the case assert a false difference.
+- The full Phase 7–10 case×width matrix passes 149/149 in `assets/story-06-runs/regressions-r7-head-final/`, including all four Phase 9 steward operation cases walked on merge head `5e82b65d`. The other 145 cases were run at product revision `5ae061c2`; the merge from `27d8bf1a` changed no product or Phase 11 atlas files. All attempts and observations are retained in the adjacent `regressions-r5-post-merge-*`, `regressions-r6-*` and `regressions-r7-p8-current-*` directories. P8’s current-head 1440 retry first hit the product Undo guard with less than two seconds left, then passed on the quiet retry. No timeout or guard was loosened.
+- The post-merge Phase 7–11 graph and phase-atlas selection passed 357 tests: `assets/story-06-proof/logs/atlas-tests-r3-post-merge.log`.
+- The required quiet full suite used Python 3.13, `-n auto`, isolated HOME and basetemp, and excluded `tests/e2e/test_metal.py`. It ended `28 failed, 13,524 passed, 116 skipped, 4 xfailed, 119 errors` (exit 1). The exact 147 red nodes were rerun serially: 146 passed and one Mermaid renderer test skipped. The isolated Mermaid rerun skipped again because the renderer is unavailable in this environment. Logs, node list and classification are in `assets/story-06-proof/logs/full-r2-*`.
+- Part 1’s Muad'Dib r2 RATIFY remains recorded in `checks/story-06-part1-built-muaddib-r2.md`; C1–C3 remain paid. No real Slack send occurred, and this lane touched no `web/src` face file.
+
+LEDGER:
+
+- **(c), 146 full-suite parallel/resource flakes:** all exact node ids from the full run passed serially with guards unchanged. The xdist log reports a worker death and replacement; the serial pass shows the 146 red results did not reproduce without parallel load.
+- **(b), one full-suite environment limitation:** `tests/e2e/test_mermaid_renders.py::test_every_mermaid_block_renders` failed in the full run and skipped in both serial attempts because the Mermaid/Puppeteer renderer is unavailable here. This remains unverified, not a product pass.
+- **(c), P7–P8 timing flakes:** blocked Undo/rename attempts and the current-head P8 quiet retry are retained with their green reruns. The P8 guard itself remains intact.
+- **Acceptance conflict, not a product defect:** the two C4 no-summary controls pass on both baseline and head by design. All other 88/90 face rows are red on baseline. The strict criterion remains open; no result was edited or hidden.
+
+AMENDMENTS: the Phase 7–10 acceptance box is checked from the 149-row matrix. The Phase 11 “fail on main and pass on head” box remains unchecked because C4 is an invariant control. No story status flip, acceptance edit, face edit or guard change was made.
+
+UNKNOWN: whether the owner wants C4 explicitly exempted as a control case or wants a different baseline-sensitive C4 case. Until that ruling, story 06 cannot be marked done honestly. The Mermaid renderer remains unavailable in the verification environment. No self-check or CI watch was run.

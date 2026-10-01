@@ -1,0 +1,1493 @@
+{
+  "id": "obs-20261001T042131Z-case.p11.meeting_digest.meetings_record.picked-astra-393",
+  "run_id": "20261001T042131Z-case.p11.meeting_digest.meetings_record.picked-astra-393",
+  "case_id": "case.p11.meeting_digest.meetings_record.picked",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase11-slack.json",
+  "job": "p11",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p11_meeting_send_faces",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:62665",
+      "port": 62665,
+      "pid": 7493,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yzgiejmh",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yzgiejmh/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo11_documents/meeting_summary_reply.json": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+      "tests/fixtures/philo11_documents/meeting_transcript.vtt": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:21:31.148690+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "replayed",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "recorded meeting intelligence provider",
+        "substitute": "engine_reply",
+        "installed_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase11-slack.json",
+      "sha256": "2c756a0a38aa18199d352d473a0d656c1dc792c7e3d7ac086ea8279aa08bf461",
+      "version": "phase11-slack-backend"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDED provider reply at the real provider seam",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+    "engine_provider_url": "http://127.0.0.1:62683/v1",
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T22:21:36.907646"
+        }
+      },
+      "response_sha256": "b4a206c1cc4d83081ace0d36eb234d9e14e2c807fe1277a4bd171cc46f120ad6"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/setup/discover-models",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "ok": true,
+        "models": [
+          "philo11-atlas"
+        ],
+        "detail": "Found 1 model.",
+        "status": 200
+      },
+      "response_sha256": "96a392df2be73d8a3ee78bc0d3c00e3a80b97ec6b45d72ec4071081558f5088f",
+      "captured": {
+        "name": "engine_model",
+        "path": "models.0",
+        "value": "philo11-atlas"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/inference/model-library/define-endpoint",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "receipt": {
+          "kind": "model_library_provider",
+          "message": "Added to the Model Library. Assignments are unchanged.",
+          "assignments_unchanged": true,
+          "assignments_before": {
+            "heads": [
+              {
+                "assignment_key": "capability:speech.transcribe",
+                "assignment_id": "ia_91deae9b59e94edfa2835d68c48b3d2c",
+                "revision": 1,
+                "cleared": false
+              }
+            ],
+            "sha256": "sha256:9eb0f0ae5c5494e262cc797aa4f1df562f357323b1fd560482ce97041e21deb7"
+          },
+          "assignments_after": {
+            "heads": [
+              {
+                "assignment_key": "capability:speech.transcribe",
+                "assignment_id": "ia_91deae9b59e94edfa2835d68c48b3d2c",
+                "revision": 1,
+                "cleared": false
+              }
+            ],
+            "sha256": "sha256:9eb0f0ae5c5494e262cc797aa4f1df562f357323b1fd560482ce97041e21deb7"
+          }
+        },
+        "provider": {
+          "profile_id": "p11-recorded-engine",
+          "profile_revision": 1,
+          "binding_id": "binding-p11-recorded-engine",
+          "binding_revision": 1,
+          "provider_family": "openai_compatible",
+          "secret": {
+            "required": false,
+            "present": false
+          }
+        }
+      },
+      "response_sha256": "7c3a54e78df4ea22ad70d9a65c55427f282182a4e2a5d7256c4153da23f2976a",
+      "captured": {
+        "name": "profile_id",
+        "path": "provider.profile_id",
+        "value": "p11-recorded-engine"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/concierge/summary-selection",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "schema": "ConciergeSummaryAssignmentReceipt@1",
+        "status": "succeeded",
+        "capabilityId": "meeting.deferred_analysis",
+        "result": {
+          "capabilityId": "meeting.deferred_analysis",
+          "state": "READY",
+          "profileId": "p11-recorded-engine",
+          "profileRevision": 1,
+          "assignment": {
+            "revision": 1,
+            "entries": [
+              {
+                "profileId": "p11-recorded-engine",
+                "profileRevision": 1,
+                "label": "Recorded loopback provider",
+                "boundary": "lan",
+                "readiness": "ready"
+              }
+            ]
+          }
+        },
+        "receipt": {
+          "id": "concierge-summary-9471ba815f2d",
+          "visible": true
+        },
+        "summaryAssignment": {
+          "schema": "ConciergeSummaryAssignmentProjection@1",
+          "capabilityId": "meeting.deferred_analysis",
+          "status": "assigned",
+          "assignmentRevision": 1,
+          "profileId": "p11-recorded-engine",
+          "profileRevision": 1,
+          "label": "Recorded loopback provider",
+          "boundary": "lan",
+          "readiness": "ready"
+        }
+      },
+      "response_sha256": "71712edbfce6378f15ad8c40b8206c067e862c2a66f728eb2d397d9af73bddf4"
+    },
+    {
+      "kind": "boundary",
+      "label": "recorded meeting intelligence provider",
+      "substitute": "engine_reply",
+      "adapter": "hub-engine-boundary",
+      "installed_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+      "seam": "holdspeak.intel.providers._configured_engine + holdspeak.intel.engine.MeetingIntel"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.import",
+      "args": {
+        "path": "/Users/karol/dev/tools/wt-philo-11-06/tests/fixtures/philo11_documents/meeting_transcript.vtt",
+        "title": "Document source review"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.import",
+          "arguments": {
+            "path": "/Users/karol/dev/tools/wt-philo-11-06/tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          }
+        }
+      },
+      "response": {
+        "meeting_id": "3948d64e",
+        "transcription_status": "importing"
+      },
+      "domain_response": {
+        "meeting_id": "3948d64e",
+        "transcription_status": "importing"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"meeting_id\": \"3948d64e\", \"transcription_status\": \"importing\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.006,
+      "fixture": {
+        "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+        "sha256": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "3948d64e"
+      }
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "3948d64e"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "transcription_status",
+        "value": "complete"
+      },
+      "adapter": "observation",
+      "waited_s": 0.31,
+      "holds": true,
+      "reading": "transcription_status equals the declared value"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "3948d64e"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "segments",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "segments is non-empty"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "3948d64e"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "3948d64e"
+          }
+        }
+      },
+      "response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 24.0,
+        "ended_at": "2026-09-30T22:22:00.970898",
+        "formatted_duration": "00:24",
+        "id": "3948d64e",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_4d9afa382c69e89e0bb1ddb02c973d41dd0dfdfcd2cfcb7cf7e2344fbb31bb5d",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:78e1f9736ec6e8cd7d0cda1261e0b6ca295b41ca113768fa94220ceddd70afdc",
+          "status": "ready"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 8.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Avery: We agree to use one document registry for the channel sources."
+          },
+          {
+            "device_id": null,
+            "end_time": 16.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 8.0,
+            "text": "Blair: Avery will check the frozen bytes before the next review."
+          },
+          {
+            "device_id": null,
+            "end_time": 24.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 16.0,
+            "text": "Avery: The channel reads durable records and keeps the transcript private."
+          }
+        ],
+        "started_at": "2026-09-30T22:21:36.970898",
+        "sync_modified_at": "2026-09-30T22:21:36.978081",
+        "tags": [],
+        "title": "Document source review",
+        "transcriptWords": 34,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "domain_response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 24.0,
+        "ended_at": "2026-09-30T22:22:00.970898",
+        "formatted_duration": "00:24",
+        "id": "3948d64e",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_4d9afa382c69e89e0bb1ddb02c973d41dd0dfdfcd2cfcb7cf7e2344fbb31bb5d",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:78e1f9736ec6e8cd7d0cda1261e0b6ca295b41ca113768fa94220ceddd70afdc",
+          "status": "ready"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 8.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Avery: We agree to use one document registry for the channel sources."
+          },
+          {
+            "device_id": null,
+            "end_time": 16.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 8.0,
+            "text": "Blair: Avery will check the frozen bytes before the next review."
+          },
+          {
+            "device_id": null,
+            "end_time": 24.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 16.0,
+            "text": "Avery: The channel reads durable records and keeps the transcript private."
+          }
+        ],
+        "started_at": "2026-09-30T22:21:36.970898",
+        "sync_modified_at": "2026-09-30T22:21:36.978081",
+        "tags": [],
+        "title": "Document source review",
+        "transcriptWords": 34,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 24.0, \"ended_at\": \"2026-09-30T22:22:00.970898\", \"formatted_duration\": \"00:24\", \"id\": \"3948d64e\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_4d9afa382c69e89e0bb1ddb02c973d41dd0dfdfcd2cfcb7cf7e2344fbb31bb5d\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:78e1f9736ec6e8cd7d0cda1261e0b6ca295b41ca113768fa94220ceddd70afdc\", \"status\": \"ready\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 8.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Avery: We agree to use one document registry for the channel sources.\"}, {\"device_id\": null, \"end_time\": 16.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 8.0, \"text\": \"Blair: Avery will check the frozen bytes before the next review.\"}, {\"device_id\": null, \"end_time\": 24.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 16.0, \"text\": \"Avery: The channel reads durable records and keeps the transcript private.\"}], \"started_at\": \"2026-09-30T22:21:36.970898\", \"sync_modified_at\": \"2026-09-30T22:21:36.978081\", \"tags\": [], \"title\": \"Document source review\", \"transcriptWords\": 34, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.008,
+      "captured": {
+        "name": "selection_hash",
+        "path": "planned_route.selection_hash",
+        "value": "sha256:78e1f9736ec6e8cd7d0cda1261e0b6ca295b41ca113768fa94220ceddd70afdc"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.summary.run",
+      "args": {
+        "meeting_id": "3948d64e",
+        "expected_selection_hash": "sha256:78e1f9736ec6e8cd7d0cda1261e0b6ca295b41ca113768fa94220ceddd70afdc"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.run_intelligence",
+          "arguments": {
+            "meeting_id": "3948d64e",
+            "expected_selection_hash": "sha256:78e1f9736ec6e8cd7d0cda1261e0b6ca295b41ca113768fa94220ceddd70afdc"
+          }
+        }
+      },
+      "response": {
+        "drainer": "running",
+        "expectedWithinSeconds": 0,
+        "host": "127.0.0.1",
+        "jobId": "ij_22f80b0d331b160fac373b295ae2d99037748695e38c24819f9ae6c7d5747303",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_4d9afa382c69e89e0bb1ddb02c973d41dd0dfdfcd2cfcb7cf7e2344fbb31bb5d",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:78e1f9736ec6e8cd7d0cda1261e0b6ca295b41ca113768fa94220ceddd70afdc",
+          "status": "ready"
+        },
+        "run_receipt": null,
+        "state": "queued"
+      },
+      "domain_response": {
+        "drainer": "running",
+        "expectedWithinSeconds": 0,
+        "host": "127.0.0.1",
+        "jobId": "ij_22f80b0d331b160fac373b295ae2d99037748695e38c24819f9ae6c7d5747303",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_4d9afa382c69e89e0bb1ddb02c973d41dd0dfdfcd2cfcb7cf7e2344fbb31bb5d",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:78e1f9736ec6e8cd7d0cda1261e0b6ca295b41ca113768fa94220ceddd70afdc",
+          "status": "ready"
+        },
+        "run_receipt": null,
+        "state": "queued"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"drainer\": \"running\", \"expectedWithinSeconds\": 0, \"host\": \"127.0.0.1\", \"jobId\": \"ij_22f80b0d331b160fac373b295ae2d99037748695e38c24819f9ae6c7d5747303\", \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_4d9afa382c69e89e0bb1ddb02c973d41dd0dfdfcd2cfcb7cf7e2344fbb31bb5d\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:78e1f9736ec6e8cd7d0cda1261e0b6ca295b41ca113768fa94220ceddd70afdc\", \"status\": \"ready\"}, \"run_receipt\": null, \"state\": \"queued\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.007
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "3948d64e"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "intel.summary",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.31,
+      "holds": true,
+      "reading": "intel.summary is non-empty"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.save_destination",
+      "args": {
+        "channel": "file",
+        "name": "File archive",
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yzgiejmh",
+        "synced": false
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.save_destination",
+          "arguments": {
+            "channel": "file",
+            "name": "File archive",
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yzgiejmh",
+            "synced": false
+          }
+        }
+      },
+      "response": {
+        "destination": {
+          "account": {},
+          "badge": "local",
+          "channel": "file",
+          "connection": null,
+          "created_at": "2026-10-01T04:21:37+00:00",
+          "id": "chd_148a9a45c118aed3338b6bb3",
+          "name": "File archive",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yzgiejmh"
+          },
+          "target_digest": "66257d8ad33f13ee754805ea2a757f8cbef9a5cfd63e33411b919607d51016b6"
+        },
+        "operation_id": "op_3675cbde92c649c69730617e9e32f712",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790828497.694635,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_3675cbde92c649c69730617e9e32f712",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_dd3e0c2528fe443abddfc6e421355186",
+          "result_ref": "channel_destination:chd_148a9a45c118aed3338b6bb3",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "domain_response": {
+        "destination": {
+          "account": {},
+          "badge": "local",
+          "channel": "file",
+          "connection": null,
+          "created_at": "2026-10-01T04:21:37+00:00",
+          "id": "chd_148a9a45c118aed3338b6bb3",
+          "name": "File archive",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yzgiejmh"
+          },
+          "target_digest": "66257d8ad33f13ee754805ea2a757f8cbef9a5cfd63e33411b919607d51016b6"
+        },
+        "operation_id": "op_3675cbde92c649c69730617e9e32f712",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790828497.694635,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_3675cbde92c649c69730617e9e32f712",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_dd3e0c2528fe443abddfc6e421355186",
+          "result_ref": "channel_destination:chd_148a9a45c118aed3338b6bb3",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"destination\": {\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"connection\": null, \"created_at\": \"2026-10-01T04:21:37+00:00\", \"id\": \"chd_148a9a45c118aed3338b6bb3\", \"name\": \"File archive\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yzgiejmh\"}, \"target_digest\": \"66257d8ad33f13ee754805ea2a757f8cbef9a5cfd63e33411b919607d51016b6\"}, \"operation_id\": \"op_3675cbde92c649c69730617e9e32f712\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790828497.694635, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_3675cbde92c649c69730617e9e32f712\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_dd3e0c2528fe443abddfc6e421355186\", \"result_ref\": \"channel_destination:chd_148a9a45c118aed3338b6bb3\", \"state\": \"succeeded\", \"target_ref\": \"desk:channel.save_destination\"}, \"replaced\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.007,
+      "captured": {
+        "name": "dest_id",
+        "path": "destination.id",
+        "value": "chd_148a9a45c118aed3338b6bb3"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-go.review-meetings']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=meeting-row-3948d64e]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=meeting-row-3948d64e] .meetings-stream-row-body",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window:has(.meetings-detail-head) [data-testid=meeting-send-well]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "select_option",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
+      "value": "meeting_digest",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=destination-row]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "Fresh isolated HOME and browser; the meeting and Slack destination are produced in this run.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yzgiejmh",
+    "replay_provider_url": "http://127.0.0.1:62683/v1",
+    "engine_model": "philo11-atlas",
+    "profile_id": "p11-recorded-engine",
+    "meeting_id": "3948d64e",
+    "selection_hash": "sha256:78e1f9736ec6e8cd7d0cda1261e0b6ca295b41ca113768fa94220ceddd70afdc",
+    "dest_id": "chd_148a9a45c118aed3338b6bb3"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=destination-row]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Send\nTHIS DEVICE"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "send-verbs",
+        "data-testid": "send-verbs"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 61,
+        "y": 505,
+        "w": 287,
+        "h": 52
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "body",
+      "after": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+    },
+    "focus_label": {
+      "before": "HoldSpeak\nGo\n\u2192 EXTERNAL REACH ENABLED\nSearch\n10:21 PM\n1 need",
+      "after": "File archive, FILE"
+    },
+    "document_text_sha256": {
+      "before": "ec3b0db6acc930447b00ef95a78d883612680477b9343f9d44df87aebed76c9d",
+      "after": "87ee1d722dfa72419725433994f2cefc00a4f4d0add8acc99fcf7b28a87b27a5"
+    },
+    "document_text_len": {
+      "before": 1555,
+      "after": 1778
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "div > div > section.surface-section > div.send-line > span.gadget-cycle > select",
+          "value": "meeting_summary"
+        },
+        {
+          "selector": "div#surface-meetings > div.desk-surface-body > div.meetings-search > span.gadget-string > input",
+          "value": ""
+        },
+        {
+          "selector": "div#surface-meetings > div.desk-surface-body > div.meetings-facets > label.gadget-check-token.is-off > input",
+          "value": "on"
+        },
+        {
+          "selector": "div > div > section.surface-section > div.send-line > span.gadget-cycle > select",
+          "value": "meeting_digest"
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 525,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "275px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [
+      {
+        "selector": "div > div > section.surface-section > div.send-line > span.gadget-cycle > select",
+        "value": "meeting_summary"
+      },
+      {
+        "selector": "div#surface-meetings > div.desk-surface-body > div.meetings-search > span.gadget-string > input",
+        "value": ""
+      },
+      {
+        "selector": "div#surface-meetings > div.desk-surface-body > div.meetings-facets > label.gadget-check-token.is-off > input",
+        "value": "on"
+      },
+      {
+        "selector": "div > div > section.surface-section > div.send-line > span.gadget-cycle > select",
+        "value": "meeting_digest"
+      }
+    ],
+    "field_value": {
+      "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
+      "present": true,
+      "value": "meeting_digest"
+    },
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 EXTERNAL REACH ENABLED\nSearch\n10:21 PM\n1 need",
+    "url": "http://127.0.0.1:62665/",
+    "windows": [
+      {
+        "title": "Meetings",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 631
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "ec3b0db6acc930447b00ef95a78d883612680477b9343f9d44df87aebed76c9d",
+    "document_text_len": 1555,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=meeting_digest:3948d64e",
+        "status": 200,
+        "payload": {
+          "sends": []
+        },
+        "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+      }
+    ],
+    "at_utc": "2026-10-01T04:21:40.894717+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
+    "target_present": true,
+    "text": "Send\nTHIS DEVICE",
+    "attrs": {
+      "class": "send-verbs",
+      "data-testid": "send-verbs"
+    },
+    "rect": {
+      "x": 61,
+      "y": 505,
+      "w": 287,
+      "h": 52
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 61,
+        "y": 505,
+        "w": 287,
+        "h": 52
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 63,
+          "y": 507,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 63,
+          "y": 531,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--primary"
+        },
+        {
+          "x": 63,
+          "y": 555,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 205,
+          "y": 507,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 205,
+          "y": 531,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.gadget-chip.gadget-chip-egress"
+        },
+        {
+          "x": 205,
+          "y": 555,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 346,
+          "y": 507,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 346,
+          "y": 531,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 346,
+          "y": 555,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 525,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "275px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": {
+      "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
+      "present": true,
+      "value": "meeting_digest"
+    },
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "File archive, FILE",
+    "url": "http://127.0.0.1:62665/",
+    "windows": [
+      {
+        "title": "Meetings",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 631
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "87ee1d722dfa72419725433994f2cefc00a4f4d0add8acc99fcf7b28a87b27a5",
+    "document_text_len": 1778,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=meeting_digest:3948d64e",
+        "status": 200,
+        "payload": {
+          "sends": []
+        },
+        "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+      }
+    ],
+    "at_utc": "2026-10-01T04:21:42.042290+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/channels/preview",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/channels/preview",
+        "status": 200,
+        "body_sha256": "05838a90d4110841e396d38c0992f27d7fd9ac81a2ad9ad87adb7668c39b3333",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/channels/preview"
+      },
+      "why": "chosen by the declared trigger_route POST /api/channels/preview",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/channels/preview",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings/3948d64e",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/channels/preview",
+      "status": 200,
+      "body_sha256": "05838a90d4110841e396d38c0992f27d7fd9ac81a2ad9ad87adb7668c39b3333",
+      "body": {
+        "document_ref": "meeting_digest:3948d64e",
+        "title": "Document source review",
+        "destination_id": "chd_148a9a45c118aed3338b6bb3",
+        "channel": "file",
+        "badge": "local",
+        "payload_digest": "34b5ad3d2c3d44cbeba068396545a86466a676f13102627f27745f4697df271e",
+        "size": 122,
+        "preview": {
+          "text": "# Document source review\n2026-09-30\n\n## Still open\n- Avery: Check the frozen bytes before the next review (due 2026-10-07)"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/preview"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=send-verbs]",
+    "target_present": true,
+    "text": "Send\nTHIS DEVICE",
+    "attrs": {
+      "class": "send-verbs",
+      "data-testid": "send-verbs"
+    },
+    "rect": {
+      "x": 61,
+      "y": 505,
+      "w": 287,
+      "h": 52
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 61,
+        "y": 505,
+        "w": 287,
+        "h": 52
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 63,
+          "y": 507,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 63,
+          "y": 531,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > button.btn.btn--primary"
+        },
+        {
+          "x": 63,
+          "y": 555,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 205,
+          "y": 507,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 205,
+          "y": 531,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.gadget-chip.gadget-chip-egress"
+        },
+        {
+          "x": 205,
+          "y": 555,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 346,
+          "y": 507,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 346,
+          "y": 531,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        },
+        {
+          "x": 346,
+          "y": 555,
+          "owned": true,
+          "owner": "div.surface-ledger-open > div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 525,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "275px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": {
+      "selector": ".desk-window [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
+      "present": true,
+      "value": "meeting_digest"
+    },
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "File archive, FILE",
+    "url": "http://127.0.0.1:62665/",
+    "windows": [
+      {
+        "title": "Meetings",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 631
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "87ee1d722dfa72419725433994f2cefc00a4f4d0add8acc99fcf7b28a87b27a5",
+    "document_text_len": 1778,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=meeting_digest:3948d64e",
+        "status": 200,
+        "payload": {
+          "sends": []
+        },
+        "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+      }
+    ],
+    "at_utc": "2026-10-01T04:21:41.907998+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/channels/preview",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/channels/preview",
+        "status": 200,
+        "body_sha256": "05838a90d4110841e396d38c0992f27d7fd9ac81a2ad9ad87adb7668c39b3333",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/channels/preview"
+      },
+      "why": "chosen by the declared trigger_route POST /api/channels/preview",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/channels/preview",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings/3948d64e",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/channels/preview",
+      "status": 200,
+      "body_sha256": "05838a90d4110841e396d38c0992f27d7fd9ac81a2ad9ad87adb7668c39b3333",
+      "body": {
+        "document_ref": "meeting_digest:3948d64e",
+        "title": "Document source review",
+        "destination_id": "chd_148a9a45c118aed3338b6bb3",
+        "channel": "file",
+        "badge": "local",
+        "payload_digest": "34b5ad3d2c3d44cbeba068396545a86466a676f13102627f27745f4697df271e",
+        "size": 122,
+        "preview": {
+          "text": "# Document source review\n2026-09-30\n\n## Still open\n- Avery: Check the frozen bytes before the next review (due 2026-10-07)"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/preview"
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/channels/preview answered 200, wanted 200 (body sha256 05838a90d411); response body matches its declared fields | readable_text: 'Send' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 61, 'y': 505, 'w': 287, 'h': 52} | readable_text: 'THIS DEVICE' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 61, 'y': 505, 'w': 287, 'h': 52} | protocol_reads: GET /api/channels/sends?document_ref=meeting_digest:3948d64e answered 200 with 0 row(s) {'state': 'sent'} | input_value: value is 'meeting_digest', wanted 'meeting_digest'",
+    "elapsed_s": 0.938
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/channels/preview answered 200, wanted 200 (body sha256 05838a90d411); response body matches its declared fields | readable_text: 'Send' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 61, 'y': 505, 'w': 287, 'h': 52} | readable_text: 'THIS DEVICE' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 61, 'y': 505, 'w': 287, 'h': 52} | protocol_reads: GET /api/channels/sends?document_ref=meeting_digest:3948d64e answered 200 with 0 row(s) {'state': 'sent'} | input_value: value is 'meeting_digest', wanted 'meeting_digest'",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.07,
+    "first_satisfied_at_s": 0.938,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_status: POST /api/channels/preview answered 200, wanted 200 (body sha256 05838a90d411); response body matches its declared fields | readable_text: 'Send' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 61, 'y': 505, 'w': 287, 'h': 52} | readable_text: 'THIS DEVICE' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 61, 'y': 505, 'w': 287, 'h': 52} | protocol_reads: GET /api/channels/sends?document_ref=meeting_digest:3948d64e answered 200 with 0 row(s) {'state': 'sent'} | input_value: value is 'meeting_digest', wanted 'meeting_digest'"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/channels/preview",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/channels/preview",
+      "status": 200,
+      "body_sha256": "05838a90d4110841e396d38c0992f27d7fd9ac81a2ad9ad87adb7668c39b3333",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/preview"
+    },
+    "why": "chosen by the declared trigger_route POST /api/channels/preview",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/channels/preview",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/3948d64e",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b4/case.p11.meeting_digest.meetings_record.picked--393/20261001T042131Z-case.p11.meeting_digest.meetings_record.picked-astra-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b4/case.p11.meeting_digest.meetings_record.picked--393/20261001T042131Z-case.p11.meeting_digest.meetings_record.picked-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yzgiejmh/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yzgiejmh/.config/holdspeak/config.json",
+    "ENGINE_REPLAY bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+    "ENGINE_PROVIDER http://127.0.0.1:62683/v1",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDED provider reply at the real provider seam\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:62665"
+  ],
+  "duration_s": 11.051
+}

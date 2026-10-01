@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11-slack.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:62657 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-4_js0ojb/.local/share/holdspeak/holdspeak.db engine=replayed
+JOB: p11
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b3/case.p11.slack.failed.face--1440/20261001T042129Z-case.p11.slack.failed.face-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b3/case.p11.slack.failed.face--1440/20261001T042129Z-case.p11.slack.failed.face-astra-1440/after.png']
+NOTE: predicate: all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 96f03710b1f3); response body matches its declared fields | readable_text: 'FAILED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 309, 'y': 394, 'w': 310, 'h': 72} | protocol_reads: GET /api/channels/sends?document_ref=meeting_summary:564acc5c answered 200 with 1 row(s) {'document_ref': 'meeting_summary:564acc5c', 'state': 'failed', 'channel': 'slack', 'reason': 'invalid_payload'}

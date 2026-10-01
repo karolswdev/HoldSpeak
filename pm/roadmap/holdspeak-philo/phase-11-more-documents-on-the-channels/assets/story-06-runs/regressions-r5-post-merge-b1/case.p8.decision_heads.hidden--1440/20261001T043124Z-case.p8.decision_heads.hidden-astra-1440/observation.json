@@ -1,0 +1,864 @@
+{
+  "id": "obs-20261001T043124Z-case.p8.decision_heads.hidden-astra-1440",
+  "run_id": "20261001T043124Z-case.p8.decision_heads.hidden-astra-1440",
+  "case_id": "case.p8.decision_heads.hidden",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.decision_open"
+  ],
+  "state_id": "state.desk_presentation.p8_decision_heads",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:51269",
+      "port": 51269,
+      "pid": 19176,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-63tf2l8l",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-63tf2l8l/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:31:24.129552+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "582435241baa534b84dd2ccecf25d381d0abe8841984a83ec60ff836f263572a",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.98,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_a9b4d064129f",
+          "title": "Atlas context only",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "Our own runners are full every night.",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:31:31Z",
+          "updated_at": "2026-10-01T04:31:31Z",
+          "deleted": false
+        },
+        "operation_id": "op_e9f5b56c62474603a497d93209fd516f",
+        "receipt": {
+          "receipt_id": "rcpt_9e49fa02e9af4e2383ce95d6b005c021",
+          "operation_id": "op_e9f5b56c62474603a497d93209fd516f",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_a9b4d064129f",
+          "created_at": 1790829091.186661,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_a9b4d064129f"
+        }
+      },
+      "response_sha256": "85cb09a0ab15f39b2ed9c642d926c91341966c82f99b89ba6ce70a845c318bd7",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_a9b4d064129f"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-63tf2l8l",
+    "decision_id": "decision_a9b4d064129f"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[id='desk-palette-option-decision:decision_a9b4d064129f']",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "proposed \u21bb\nDECISION CONTEXT\n\nOur own runners are full every night.\n\nSEND\nNO DESTINATION\nAdd destination"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "desk-decision-card"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 1037,
+        "y": 117,
+        "w": 370,
+        "h": 159
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+      "after": "div#pullout:decision_a9b4d064129f"
+    },
+    "focus_label": {
+      "before": "Search tools and Desk items",
+      "after": "Atlas context only"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Atlas context only",
+          "rect": {
+            "x": 1022,
+            "y": 64,
+            "w": 400,
+            "h": 311
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "0246c1f7cd44ebc3fe8fc6c242c57d83c2736dcbe5d95fe69c7c841f393c6ffd",
+      "after": "f54a82d519e6d1868301b5860205d353dd092042eb1137288d2b37cf7a6ca496"
+    },
+    "document_text_len": {
+      "before": 425,
+      "after": 550
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+          "value": "Atlas context only"
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": ".desk-decision-card",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+        "value": "Atlas context only"
+      }
+    ],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:51269/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "0246c1f7cd44ebc3fe8fc6c242c57d83c2736dcbe5d95fe69c7c841f393c6ffd",
+    "document_text_len": 425,
+    "replay_identity": null,
+    "at_utc": "2026-10-01T04:31:33.495509+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-decision-card",
+    "target_present": true,
+    "text": "proposed \u21bb\nDECISION CONTEXT\n\nOur own runners are full every night.\n\nSEND\nNO DESTINATION\nAdd destination",
+    "attrs": {
+      "class": "desk-decision-card"
+    },
+    "rect": {
+      "x": 1037,
+      "y": 117,
+      "w": 370,
+      "h": 159
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1037,
+        "y": 117,
+        "w": 370,
+        "h": 159
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1039,
+          "y": 119,
+          "owned": true,
+          "owner": "div#pullout:decision_a9b4d064129f > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts > button.btn.btn--ghost"
+        },
+        {
+          "x": 1039,
+          "y": 196,
+          "owned": true,
+          "owner": "div#pullout:decision_a9b4d064129f > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section > div.surface-material > p"
+        },
+        {
+          "x": 1039,
+          "y": 274,
+          "owned": true,
+          "owner": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div > div > section.surface-section > div.send-line"
+        },
+        {
+          "x": 1222,
+          "y": 119,
+          "owned": true,
+          "owner": "div#pullout:decision_a9b4d064129f > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 1222,
+          "y": 196,
+          "owned": true,
+          "owner": "div#pullout:decision_a9b4d064129f > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section > div.surface-material > p"
+        },
+        {
+          "x": 1222,
+          "y": 274,
+          "owned": true,
+          "owner": "section.desk-decision-card > div > div > section.surface-section > div.send-line > button.btn.btn--primary"
+        },
+        {
+          "x": 1405,
+          "y": 119,
+          "owned": true,
+          "owner": "div#pullout:decision_a9b4d064129f > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 1405,
+          "y": 196,
+          "owned": true,
+          "owner": "div#pullout:decision_a9b4d064129f > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section > div.surface-material > p"
+        },
+        {
+          "x": 1405,
+          "y": 274,
+          "owned": true,
+          "owner": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div > div > section.surface-section > div.send-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:decision_a9b4d064129f",
+    "focus_label": "Atlas context only",
+    "url": "http://127.0.0.1:51269/",
+    "windows": [
+      {
+        "title": "Atlas context only",
+        "rect": {
+          "x": 1022,
+          "y": 64,
+          "w": 400,
+          "h": 311
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "f54a82d519e6d1868301b5860205d353dd092042eb1137288d2b37cf7a6ca496",
+    "document_text_len": 550,
+    "replay_identity": null,
+    "at_utc": "2026-10-01T04:31:34.719405+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:51269) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:51269) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-D9YE7g0K.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/documentSends-BsqDYTzC.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/relationships/decision%3Adecision_a9b4d064129f",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/documentSends-DlI3R3H-.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/api-DoUhuCdb.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-BdagargR.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note7.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/destinations",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/connections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-decision-card",
+    "target_present": true,
+    "text": "proposed \u21bb\nDECISION CONTEXT\n\nOur own runners are full every night.\n\nSEND\nNO DESTINATION\nAdd destination",
+    "attrs": {
+      "class": "desk-decision-card"
+    },
+    "rect": {
+      "x": 1037,
+      "y": 117,
+      "w": 370,
+      "h": 159
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1037,
+        "y": 117,
+        "w": 370,
+        "h": 159
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1039,
+          "y": 119,
+          "owned": true,
+          "owner": "div#pullout:decision_a9b4d064129f > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts > button.btn.btn--ghost"
+        },
+        {
+          "x": 1039,
+          "y": 196,
+          "owned": true,
+          "owner": "div#pullout:decision_a9b4d064129f > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section > div.surface-material > p"
+        },
+        {
+          "x": 1039,
+          "y": 274,
+          "owned": true,
+          "owner": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div > div > section.surface-section > div.send-line"
+        },
+        {
+          "x": 1222,
+          "y": 119,
+          "owned": true,
+          "owner": "div#pullout:decision_a9b4d064129f > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 1222,
+          "y": 196,
+          "owned": true,
+          "owner": "div#pullout:decision_a9b4d064129f > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section > div.surface-material > p"
+        },
+        {
+          "x": 1222,
+          "y": 274,
+          "owned": true,
+          "owner": "section.desk-decision-card > div > div > section.surface-section > div.send-line > button.btn.btn--primary"
+        },
+        {
+          "x": 1405,
+          "y": 119,
+          "owned": true,
+          "owner": "div#pullout:decision_a9b4d064129f > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 1405,
+          "y": 196,
+          "owned": true,
+          "owner": "div#pullout:decision_a9b4d064129f > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section.surface-section > div.surface-material > p"
+        },
+        {
+          "x": 1405,
+          "y": 274,
+          "owned": true,
+          "owner": "div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div > div > section.surface-section > div.send-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:decision_a9b4d064129f",
+    "focus_label": "Atlas context only",
+    "url": "http://127.0.0.1:51269/",
+    "windows": [
+      {
+        "title": "Atlas context only",
+        "rect": {
+          "x": 1022,
+          "y": 64,
+          "w": 400,
+          "h": 311
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "f54a82d519e6d1868301b5860205d353dd092042eb1137288d2b37cf7a6ca496",
+    "document_text_len": 550,
+    "replay_identity": null,
+    "at_utc": "2026-10-01T04:31:34.575825+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:51269) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:51269) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-D9YE7g0K.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/documentSends-BsqDYTzC.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/relationships/decision%3Adecision_a9b4d064129f",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/documentSends-DlI3R3H-.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/api-DoUhuCdb.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-BdagargR.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note7.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/destinations",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/connections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'DECISION CONTEXT' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1037, 'y': 117, 'w': 370, 'h': 159} | text_absent: 'CONSEQUENCES' absent at observe_at",
+    "elapsed_s": 0.966
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'DECISION CONTEXT' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1037, 'y': 117, 'w': 370, 'h': 159} | text_absent: 'CONSEQUENCES' absent at observe_at",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.109,
+    "first_satisfied_at_s": 0.966,
+    "completion_bound_s": 20.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: readable_text: 'DECISION CONTEXT' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1037, 'y': 117, 'w': 370, 'h': 159} | text_absent: 'CONSEQUENCES' absent at observe_at"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:51269) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:51269) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/_built/assets/SendWell-D9YE7g0K.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/documentSends-BsqDYTzC.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/relationships/decision%3Adecision_a9b4d064129f",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/documentSends-DlI3R3H-.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/api-DoUhuCdb.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/SendWell-BdagargR.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note7.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/destinations",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/connections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b1/case.p8.decision_heads.hidden--1440/20261001T043124Z-case.p8.decision_heads.hidden-astra-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b1/case.p8.decision_heads.hidden--1440/20261001T043124Z-case.p8.decision_heads.hidden-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-63tf2l8l/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-63tf2l8l/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:51269"
+  ],
+  "duration_s": 10.777
+}

@@ -1,0 +1,1251 @@
+{
+  "id": "obs-20261001T040653Z-case.p11.transition.brief_last_defer-astra-1440",
+  "run_id": "20261001T040653Z-case.p11.transition.brief_last_defer-astra-1440",
+  "case_id": "case.p11.transition.brief_last_defer",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase11-slack.json",
+  "job": "p11",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p11_face_transitions",
+  "provenance": {
+    "revision": "332d91586bdbd7fe40e3c2c00851a46adc4650e4",
+    "revision_source": "environment",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "18f299869d984fd50e4ce99c6855356a2ed7d5c1317b688ef4c2d2bbd54e4ddb",
+      "assets": [
+        "index-CRd8xHI_.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55830",
+      "port": 55830,
+      "pid": 93829,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qvmiz_tg",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qvmiz_tg/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo11_slack/posted.json": "8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:06:53.978465+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "Slack HTTPS edge: transition recording",
+        "substitute": "cli_runner",
+        "installed_sha256": "8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase11-slack.json",
+      "sha256": "dbd2fa339e708723b247a8d6560aaa5ffe8a017782517c13042565561af96971",
+      "version": "phase11-slack-backend"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDING runner at the CLI channels' process edge (no real gh or acli)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": "8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541"
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T22:06:59.085510"
+        }
+      },
+      "response_sha256": "a1d17b6b245ec48e2f9f4592dc369c7ce6824a7da5a8f1c2cc63d742457f84d0"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_d12a05508ac1",
+          "title": "One brief item for Chair transition",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "Review one Chair transition item.",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:06:59Z",
+          "updated_at": "2026-10-01T04:06:59Z",
+          "deleted": false
+        },
+        "operation_id": "op_3f893335c3704b4496a2942a007d4105",
+        "receipt": {
+          "receipt_id": "rcpt_acc2cb618c9d4034aa10e4a2c68f21a2",
+          "operation_id": "op_3f893335c3704b4496a2942a007d4105",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_d12a05508ac1",
+          "created_at": 1790827619.104712,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_d12a05508ac1"
+        }
+      },
+      "response_sha256": "9fb92bc8c461b8504792b2c1563c4cddc139e39775c239110927dde475ca41aa",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_d12a05508ac1"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "brief.generate",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "monday_brief.generate",
+          "arguments": {}
+        }
+      },
+      "response": {
+        "generated_at": "2026-09-30T22:06:59.130519",
+        "headline": "1 decision waiting.",
+        "id": "brief-10fef240eac54c2c88fc90a989ac5b51",
+        "is_empty": false,
+        "ledger": {
+          "operations": 1,
+          "since": "1790827619.103723"
+        },
+        "period_end": "2026-09-30T22:06:59.130519",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-10-01T04:06:59Z",
+              "detail": null,
+              "id": "brief-item-27f10ae5707a4a44a8578694c1653ddf",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_d12a05508ac1",
+              "text": "Review decision: One brief item for Chair transition"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "domain_response": {
+        "generated_at": "2026-09-30T22:06:59.130519",
+        "headline": "1 decision waiting.",
+        "id": "brief-10fef240eac54c2c88fc90a989ac5b51",
+        "is_empty": false,
+        "ledger": {
+          "operations": 1,
+          "since": "1790827619.103723"
+        },
+        "period_end": "2026-09-30T22:06:59.130519",
+        "period_start": "2026-09-29T17:00:00",
+        "person_sections_state": "unavailable",
+        "sections": {
+          "broke": [],
+          "changed": [],
+          "decisions": [
+            {
+              "created_at": "2026-10-01T04:06:59Z",
+              "detail": null,
+              "id": "brief-item-27f10ae5707a4a44a8578694c1653ddf",
+              "priority": 200,
+              "section": "decisions",
+              "source_ref": "decision:decision_d12a05508ac1",
+              "text": "Review decision: One brief item for Chair transition"
+            }
+          ],
+          "this_week": [],
+          "waiting": []
+        },
+        "shelf": {}
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"generated_at\": \"2026-09-30T22:06:59.130519\", \"headline\": \"1 decision waiting.\", \"id\": \"brief-10fef240eac54c2c88fc90a989ac5b51\", \"is_empty\": false, \"ledger\": {\"operations\": 1, \"since\": \"1790827619.103723\"}, \"period_end\": \"2026-09-30T22:06:59.130519\", \"period_start\": \"2026-09-29T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [], \"decisions\": [{\"created_at\": \"2026-10-01T04:06:59Z\", \"detail\": null, \"id\": \"brief-item-27f10ae5707a4a44a8578694c1653ddf\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:decision_d12a05508ac1\", \"text\": \"Review decision: One brief item for Chair transition\"}], \"this_week\": [], \"waiting\": []}, \"shelf\": {}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.053,
+      "captured": {
+        "name": "brief_id",
+        "path": "id",
+        "value": "brief-10fef240eac54c2c88fc90a989ac5b51"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-10fef240eac54c2c88fc90a989ac5b51",
+        "period_start": "2026-09-29T17:00:00",
+        "period_end": "2026-09-30T22:06:59.130519",
+        "headline": "1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-27f10ae5707a4a44a8578694c1653ddf",
+              "section": "decisions",
+              "text": "Review decision: One brief item for Chair transition",
+              "detail": null,
+              "source_ref": "decision:decision_d12a05508ac1",
+              "priority": 200,
+              "created_at": "2026-10-01T04:06:59Z"
+            }
+          ]
+        },
+        "generated_at": "2026-09-30T22:06:59.130519",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 28 \u2013 30",
+        "generated_label": "GENERATED SEP 30 22:06",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "25aa963276ed8c6affac1f023beaaf79433f5285711f6e68c748d73650cb6d85",
+      "captured": {
+        "name": "item_id",
+        "path": "sections.decisions.0.id",
+        "value": "brief-item-27f10ae5707a4a44a8578694c1653ddf"
+      }
+    },
+    {
+      "kind": "boundary",
+      "label": "Slack HTTPS edge: transition recording",
+      "substitute": "cli_runner",
+      "adapter": "slack-https-edge",
+      "installed_sha256": "8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541",
+      "seam": "holdspeak.services.channel_cli.CLI_RUNNER"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/slack-webhooks",
+      "adapter": "http-route",
+      "status": 404,
+      "response": "{\"detail\":\"Not Found\"}",
+      "response_sha256": "c1c11b19d1433458c5e0baf975e7be265e7fc2cdac37d534dc8ce42458966f86",
+      "optional": true,
+      "done": false,
+      "skipped": "POST /api/channels/slack-webhooks answered 404, wanted 200; response retained"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "optional": true,
+      "done": false,
+      "skipped": "unresolved placeholder(s) ['key_ref']; no request was sent"
+    },
+    {
+      "kind": "api",
+      "adapter": "http-route",
+      "optional": true,
+      "done": false,
+      "skipped": "unresolved placeholder(s) ['dest_id']; no request was sent"
+    },
+    {
+      "kind": "api",
+      "adapter": "http-route",
+      "optional": true,
+      "done": false,
+      "skipped": "unresolved placeholder(s) ['send_id']; no request was sent"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-pointer",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-row]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.wait_for: Timeout 10000ms exceeded.\\nCall log:\\n  - waiting for locator(\"[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-well]\").first to be visible\\n')"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "The last brief item is ready in the Chair and already has a sent Slack receipt; the owner presses Defer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qvmiz_tg",
+    "decision_id": "decision_d12a05508ac1",
+    "brief_id": "brief-10fef240eac54c2c88fc90a989ac5b51",
+    "item_id": "brief-item-27f10ae5707a4a44a8578694c1653ddf"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-brief-row] button:nth-of-type(2)",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "scroll_into_view",
+        "adapter": "ui-pointer",
+        "done": false,
+        "error": "TimeoutError('Locator.wait_for: Timeout 10000ms exceeded.\\nCall log:\\n  - waiting for locator(\"[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-history]\").first to be visible\\n')"
+      }
+    ]
+  },
+  "diff": {
+    "document_text_sha256": {
+      "before": "a5cb6d593545c866cdb47b20305b13bf03fa0351041b3b8144d4f098af55b969",
+      "after": "b2d399b32fcc83cadca1bb61045390f50768d1a4c0cd40e89a54a92a3650de78"
+    },
+    "document_text_len": {
+      "before": 502,
+      "after": 455
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-history]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:55830/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "a5cb6d593545c866cdb47b20305b13bf03fa0351041b3b8144d4f098af55b969",
+    "document_text_len": 502,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=monday_brief:brief-10fef240eac54c2c88fc90a989ac5b51",
+        "status": 200,
+        "payload": {
+          "sends": []
+        },
+        "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+      }
+    ],
+    "cli_calls": [],
+    "at_utc": "2026-10-01T04:07:11.322363+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-history]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:55830/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "b2d399b32fcc83cadca1bb61045390f50768d1a4c0cd40e89a54a92a3650de78",
+    "document_text_len": 455,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=monday_brief:brief-10fef240eac54c2c88fc90a989ac5b51",
+        "status": 200,
+        "payload": {
+          "sends": []
+        },
+        "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+      }
+    ],
+    "cli_calls": [],
+    "at_utc": "2026-10-01T04:08:11.823458+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+        "status": 200,
+        "body_sha256": "e4a0031058938f8d086c44efd7cc40514a3b94223e518de9852e699760b26cd3",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf"
+      },
+      "why": "chosen by the declared trigger_route POST /api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+      "seen": [
+        {
+          "method": "POST",
+          "path": "/api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+      "status": 200,
+      "body_sha256": "e4a0031058938f8d086c44efd7cc40514a3b94223e518de9852e699760b26cd3",
+      "body": {
+        "item_id": "brief-item-27f10ae5707a4a44a8578694c1653ddf",
+        "state": "deferred"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-brief] [data-seat=brief] [data-testid=send-history]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:55830/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d3730f36c7f71fc6e0ed07e1c3867abc433389139a20b04ae61269d8480dfd96",
+    "document_text_len": 455,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=monday_brief:brief-10fef240eac54c2c88fc90a989ac5b51",
+        "status": 200,
+        "payload": {
+          "sends": []
+        },
+        "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+      }
+    ],
+    "cli_calls": [],
+    "at_utc": "2026-10-01T04:07:22.374554+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+        "status": 200,
+        "body_sha256": "e4a0031058938f8d086c44efd7cc40514a3b94223e518de9852e699760b26cd3",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf"
+      },
+      "why": "chosen by the declared trigger_route POST /api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+      "seen": [
+        {
+          "method": "POST",
+          "path": "/api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+      "status": 200,
+      "body_sha256": "e4a0031058938f8d086c44efd7cc40514a3b94223e518de9852e699760b26cd3",
+      "body": {
+        "item_id": "brief-item-27f10ae5707a4a44a8578694c1653ddf",
+        "state": "deferred"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf"
+    },
+    "predicate_satisfied": false,
+    "reading": "all_of part readable_text: the named text scope is absent or hidden",
+    "elapsed_s": 10.946
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "all_of part readable_text: the named text scope is absent or hidden",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 60.392,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "predicate: all_of part readable_text: the named text scope is absent or hidden",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['document_text_len', 'document_text_sha256'])."
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+      "status": 200,
+      "body_sha256": "e4a0031058938f8d086c44efd7cc40514a3b94223e518de9852e699760b26cd3",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf"
+    },
+    "why": "chosen by the declared trigger_route POST /api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/brief/items/brief-item-27f10ae5707a4a44a8578694c1653ddf/shelf",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r9-red-fixes-b3/case.p11.transition.brief_last_defer--1440/20261001T040653Z-case.p11.transition.brief_last_defer-astra-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r9-red-fixes-b3/case.p11.transition.brief_last_defer--1440/20261001T040653Z-case.p11.transition.brief_last_defer-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qvmiz_tg/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qvmiz_tg/.config/holdspeak/config.json",
+    "CLI_RUNNER 8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDING runner at the CLI channels' process edge (no real gh or acli)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55830"
+  ],
+  "duration_s": 80.04
+}

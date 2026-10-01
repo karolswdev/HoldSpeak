@@ -1,0 +1,10 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase7.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:49399 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nin8la9j/.local/share/holdspeak/holdspeak.db engine=none
+JOB: j1
+VERDICT: pass terminal=settled
+EVIDENCE: []
+NOTE: placeholder(s) ['note_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)
+NOTE: predicate: all 5 facts hold: observe_at id holds; observe_at body_markdown holds; observe_at title holds; op read #0 (note.list) <root> holds; the trigger operation_id is absent

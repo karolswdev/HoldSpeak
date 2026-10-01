@@ -1,0 +1,722 @@
+{
+  "id": "obs-20261001T043005Z-case.p8.chair.delete_withheld-astra-393",
+  "run_id": "20261001T043005Z-case.p8.chair.delete_withheld-astra-393",
+  "case_id": "case.p8.chair.delete_withheld",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.decision_delete"
+  ],
+  "state_id": "state.desk_presentation.p8_one_delete",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50484",
+      "port": 50484,
+      "pid": 17597,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-h79da_p3",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-h79da_p3/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:30:05.782937+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "582435241baa534b84dd2ccecf25d381d0abe8841984a83ec60ff836f263572a",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.96,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_aad94919ed3d",
+          "title": "Atlas chair keep",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:30:12Z",
+          "updated_at": "2026-10-01T04:30:12Z",
+          "deleted": false
+        },
+        "operation_id": "op_0c4e13a482b24bbf94f25b9b25b747d3",
+        "receipt": {
+          "receipt_id": "rcpt_6561f3b87680438bb992f9b050c30bcc",
+          "operation_id": "op_0c4e13a482b24bbf94f25b9b25b747d3",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_aad94919ed3d",
+          "created_at": 1790829012.787316,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_aad94919ed3d"
+        }
+      },
+      "response_sha256": "6ed6f2a3ada469aec6664ebabbce40d48edd46f85b778a4c0455fdd785738c08",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_aad94919ed3d"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 393,
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "at_width": 393,
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 393,
+      "selector": "[id='desk-palette-option-desk.toggle-view']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-world-a11y",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-obj-id='decision:decision_aad94919ed3d']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "focus",
+      "adapter": "ui-keyboard",
+      "selector": "[data-obj-id='decision:decision_aad94919ed3d']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "press",
+      "adapter": "ui-keyboard",
+      "key": "Shift+Enter",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "press",
+      "adapter": "ui-keyboard",
+      "key": "Delete",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-h79da_p3",
+    "decision_id": "decision_aad94919ed3d"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "fill",
+    "adapter": "ui-keyboard",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "\u25b8\nDelete \u00b7 Open the Floor or the list\nVERB\nDelete"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "type": "button",
+        "class": "btn--chrome desk-deck-row is-ghost",
+        "id": "desk-palette-option-object.delete",
+        "role": "option",
+        "aria-selected": "false",
+        "aria-disabled": "true"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 15,
+        "y": 74,
+        "w": 363,
+        "h": 26
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "e30000830ac2c32d1dbdcd3985b7911f40cc9be97dd383cad058e006950057bd",
+      "after": "d0e4d92c9ebbc6693daea20a4a697c5eada077fca9aff9cb1e75d167fa56b6eb"
+    },
+    "document_text_len": {
+      "before": 916,
+      "after": 436
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+          "value": ""
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[id='desk-palette-option-object.delete']",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [
+      {
+        "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:50484/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "e30000830ac2c32d1dbdcd3985b7911f40cc9be97dd383cad058e006950057bd",
+    "document_text_len": 916,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_aad94919ed3d",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_aad94919ed3d",
+            "title": "Atlas chair keep",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-10-01T04:30:12Z",
+            "updated_at": "2026-10-01T04:30:12Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "07ac9805d6337a39a3da91ed506a9940bd96dbdcd60e6eaeb7aa8f40af630a15"
+      }
+    ],
+    "at_utc": "2026-10-01T04:30:31.787192+00:00"
+  },
+  "after": {
+    "observe_at": "[id='desk-palette-option-object.delete']",
+    "target_present": true,
+    "text": "\u25b8\nDelete \u00b7 Open the Floor or the list\nVERB\nDelete",
+    "attrs": {
+      "type": "button",
+      "class": "btn--chrome desk-deck-row is-ghost",
+      "id": "desk-palette-option-object.delete",
+      "role": "option",
+      "aria-selected": "false",
+      "aria-disabled": "true"
+    },
+    "rect": {
+      "x": 15,
+      "y": 74,
+      "w": 363,
+      "h": 26
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 74,
+        "w": 363,
+        "h": 26
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 76,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 17,
+          "y": 87,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 17,
+          "y": 98,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 197,
+          "y": 76,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 197,
+          "y": 87,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete > span.desk-deck-label > small.quiet"
+        },
+        {
+          "x": 197,
+          "y": 98,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 376,
+          "y": 76,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 376,
+          "y": 87,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 376,
+          "y": 98,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:50484/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d0e4d92c9ebbc6693daea20a4a697c5eada077fca9aff9cb1e75d167fa56b6eb",
+    "document_text_len": 436,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_aad94919ed3d",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_aad94919ed3d",
+            "title": "Atlas chair keep",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-10-01T04:30:12Z",
+            "updated_at": "2026-10-01T04:30:12Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "07ac9805d6337a39a3da91ed506a9940bd96dbdcd60e6eaeb7aa8f40af630a15"
+      }
+    ],
+    "at_utc": "2026-10-01T04:30:32.938647+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:50484) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:50484) non-GET response after the click; the click fired none",
+      "seen": []
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[id='desk-palette-option-object.delete']",
+    "target_present": true,
+    "text": "\u25b8\nDelete \u00b7 Open the Floor or the list\nVERB\nDelete",
+    "attrs": {
+      "type": "button",
+      "class": "btn--chrome desk-deck-row is-ghost",
+      "id": "desk-palette-option-object.delete",
+      "role": "option",
+      "aria-selected": "false",
+      "aria-disabled": "true"
+    },
+    "rect": {
+      "x": 15,
+      "y": 74,
+      "w": 363,
+      "h": 26
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 74,
+        "w": 363,
+        "h": 26
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 76,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 17,
+          "y": 87,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 17,
+          "y": 98,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 197,
+          "y": 76,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 197,
+          "y": 87,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete > span.desk-deck-label > small.quiet"
+        },
+        {
+          "x": 197,
+          "y": 98,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 376,
+          "y": 76,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 376,
+          "y": 87,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 376,
+          "y": 98,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:50484/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d0e4d92c9ebbc6693daea20a4a697c5eada077fca9aff9cb1e75d167fa56b6eb",
+    "document_text_len": 436,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_aad94919ed3d",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_aad94919ed3d",
+            "title": "Atlas chair keep",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-10-01T04:30:12Z",
+            "updated_at": "2026-10-01T04:30:12Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "07ac9805d6337a39a3da91ed506a9940bd96dbdcd60e6eaeb7aa8f40af630a15"
+      }
+    ],
+    "at_utc": "2026-10-01T04:30:32.803827+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:50484) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:50484) non-GET response after the click; the click fired none",
+      "seen": []
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'Open the Floor or the list' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 74, 'w': 363, 'h': 26} | attr_equals: aria-disabled='true', wanted 'true' | protocol_reads: GET /api/decisions/decision_aad94919ed3d answered 200",
+    "elapsed_s": 0.931
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'Open the Floor or the list' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 74, 'w': 363, 'h': 26} | attr_equals: aria-disabled='true', wanted 'true' | protocol_reads: GET /api/decisions/decision_aad94919ed3d answered 200",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.066,
+    "first_satisfied_at_s": 0.931,
+    "completion_bound_s": 20.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: readable_text: 'Open the Floor or the list' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 74, 'w': 363, 'h': 26} | attr_equals: aria-disabled='true', wanted 'true' | protocol_reads: GET /api/decisions/decision_aad94919ed3d answered 200"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:50484) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:50484) non-GET response after the click; the click fired none",
+    "seen": []
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b4/case.p8.chair.delete_withheld--393/20261001T043005Z-case.p8.chair.delete_withheld-astra-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b4/case.p8.chair.delete_withheld--393/20261001T043005Z-case.p8.chair.delete_withheld-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-h79da_p3/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-h79da_p3/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50484"
+  ],
+  "duration_s": 27.284
+}

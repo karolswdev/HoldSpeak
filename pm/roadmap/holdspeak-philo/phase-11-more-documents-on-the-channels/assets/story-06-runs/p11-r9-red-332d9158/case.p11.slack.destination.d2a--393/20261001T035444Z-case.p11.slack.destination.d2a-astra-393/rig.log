@@ -1,0 +1,10 @@
+PASS: live
+BRAIN: astra
+SOURCE: 332d91586bdbd7fe40e3c2c00851a46adc4650e4 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11-slack.json
+RUNTIME: build=['index-CRd8xHI_.js'] hub=http://127.0.0.1:51489 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-gizw0pgr/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p11
+VERDICT: fail terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r8-red-332d-b2/case.p11.slack.destination.d2a--393/20261001T035444Z-case.p11.slack.destination.d2a-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r8-red-332d-b2/case.p11.slack.destination.d2a--393/20261001T035444Z-case.p11.slack.destination.d2a-astra-393/after.png']
+NOTE: predicate: all_of part protocol_status: no trigger response was recorded; `protocol_status` reads the status of the trigger's own call
+NOTE: UNRESOLVED: the promised result is absent and nothing moved at all. A zero diff is never a pass (brief §3).
