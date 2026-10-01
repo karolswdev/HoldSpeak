@@ -1,0 +1,182 @@
+{
+  "fixture": {
+    "agent": {
+      "identity": "codex-send-agent",
+      "kinds": [
+        "monday_brief",
+        "decision_record"
+      ],
+      "palette": "DESK",
+      "prepares": "channel.prepare",
+      "send_refused": "channel.send",
+      "send_refused_code": "owner_principal_required"
+    },
+    "client": "codex",
+    "decision_record": {
+      "owner": "Avery",
+      "review_days": 14
+    },
+    "desk_decision": {
+      "alternatives": [
+        {
+          "name": "Delete it on the day",
+          "reason": "A rollback would have nothing to go back to."
+        }
+      ],
+      "consequences_markdown": "Two queues exist for one week. The rollback stays short.",
+      "context_markdown": "This is a test decision from HoldSpeak (PHILO-11-07). It has no real project data.",
+      "deciders": [
+        "Avery",
+        "Sam"
+      ],
+      "decision_markdown": "The old queue stays read-only for one week after the move.",
+      "status": "accepted",
+      "title": "Keep the old queue read-only for one week"
+    },
+    "destinations": {
+      "file": {
+        "channel": "file",
+        "name": "HoldSpeak folder",
+        "outcome_word": "SAVED",
+        "real_folder": "/Users/karol/Documents/HoldSpeak"
+      },
+      "github": {
+        "channel": "github",
+        "host": "github.com",
+        "kind": "issue",
+        "login": "karolswdev",
+        "name": "HoldSpeak issue 699",
+        "number": 699,
+        "outcome_word": "POSTED",
+        "repo": "karolswdev/HoldSpeak"
+      }
+    },
+    "marker": "PHILO-11-07",
+    "meeting": {
+      "action_item": "Write the rollback checklist (PHILO-11-07 test)",
+      "decisions": [
+        {
+          "decision": "Move the queue in two steps (PHILO-11-07 test)",
+          "rationale": "One step at a time keeps the rollback short."
+        }
+      ],
+      "hours_ago": 3,
+      "minutes": 40,
+      "summary": "This is a test meeting summary from HoldSpeak (PHILO-11-07). It has no real meeting data. The team agreed to move the queue in two steps.",
+      "title": "Lantern migration review (PHILO-11-07 test)",
+      "topics": [
+        "Queue move",
+        "Rollback plan"
+      ]
+    },
+    "named_limits": {
+      "artifact": "the ninth registry kind (artifact) is not a Phase 11 kind; it is outside this story",
+      "confluence": "the owner has no account yet; the contract is proven by Phase 10 story 02's fences",
+      "email": "the owner has not yet given the Resend details (2026-10-01); the contract is proven by Phase 10 stories 03 and 07 and the Phase 11 fences",
+      "jira": "the owner has no account yet; the contract is proven by Phase 10 story 02's fences",
+      "slack": "the owner has given no webhook (2026-10-01); the contract is proven by story 02's recording-edge fences and story 06's atlas cases; the Slack text length of each real brief is recorded below"
+    },
+    "note": "Every word below is test text. The GitHub issue is public: nothing private goes into this file.",
+    "owner_identity": "owner-session",
+    "person": {
+      "display_name": "Avery",
+      "request": "Review the rollback checklist (PHILO-11-07 test)"
+    },
+    "project": {
+      "name": "Lantern migration",
+      "update_body": "## Lantern migration: update\n\nThis is a test update from HoldSpeak (PHILO-11-07). It has no real project data.\n\n- The staging move is on plan.\n- Risk: the old queue stays read-only for one week.\n"
+    },
+    "prompts": {
+      "agent_prepare": "Get my brief from today and the decision record about moving the queue in two steps ready to go to the HoldSpeak folder. Then send both of them."
+    },
+    "proposed_decision": {
+      "decision_markdown": "The scheduler moves one day after the queue.",
+      "title": "Move the scheduler after the queue (PHILO-11-07 test)"
+    },
+    "real_sends": [
+      {
+        "kind": "monday_brief",
+        "target": "file"
+      },
+      {
+        "kind": "monday_brief",
+        "target": "github"
+      },
+      {
+        "kind": "decision_record",
+        "target": "file"
+      },
+      {
+        "kind": "decision_record",
+        "target": "github"
+      },
+      {
+        "kind": "meeting_summary",
+        "target": "file"
+      },
+      {
+        "kind": "meeting_summary",
+        "target": "github"
+      },
+      {
+        "kind": "project_update",
+        "target": "file"
+      },
+      {
+        "kind": "desk_decision",
+        "target": "file"
+      },
+      {
+        "kind": "meeting_decision",
+        "target": "file"
+      },
+      {
+        "kind": "meeting_digest",
+        "target": "file"
+      },
+      {
+        "kind": "meeting_followup",
+        "target": "file"
+      }
+    ],
+    "signatures": {
+      "decision_record": [
+        "# Move the queue in two steps",
+        "## Sources"
+      ],
+      "desk_decision": [
+        "# Keep the old queue read-only for one week",
+        "## Deciders"
+      ],
+      "meeting_decision": [
+        "Lifecycle: recorded",
+        "Meeting date:"
+      ],
+      "meeting_digest": [
+        "## What we decided",
+        "## Still open"
+      ],
+      "meeting_followup": [
+        "# Follow-up: Lantern migration review"
+      ],
+      "meeting_summary": [
+        "## Summary",
+        "## Topics"
+      ],
+      "monday_brief": [
+        "# Monday Brief",
+        "## People"
+      ],
+      "project_update": [
+        "## Lantern migration: update"
+      ]
+    },
+    "source": "story-07 Scope and the charter's exit 8; the owner's targets of 2026-09-29 (charter D3, the Phase 10 Q6 ruling carries); fixed before the run",
+    "story": "PHILO-11-07",
+    "transcript_sentinel": "PHILO-11-07-TRANSCRIPT-SENTINEL-NEVER-SENT",
+    "written": "2026-10-01"
+  },
+  "source": "pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/story-07-fixture.json",
+  "source_sha256": "21e46c0900faf4f9039fe1daf8d5255062523cc38ca9fbc37e0dd913eb3277fa",
+  "written_at": "2026-10-01T12:15:34.696730+00:00"
+}

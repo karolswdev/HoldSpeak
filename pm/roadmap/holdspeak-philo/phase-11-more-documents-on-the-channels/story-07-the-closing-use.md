@@ -36,6 +36,8 @@ PROVISIONAL: about 1 engineering day, plus the real-send legs.
 
 ## Notes
 
+- 2026-10-01 — round two: Astra counsel r1 on #719 RATIFY-WITH-CONDITIONS (`checks/story-07-built-astra-r1.md`) paid: the owner's face press at 393 (isolated hub, scratch folder), the 3-versus-11 reconciliation (`lane-07-muaddib.md`), the lone-chip BACKLOG row, the test count (9), the API reference regenerated. No new real send.
+
 - 2026-10-01 — DONE (evidence `evidence-story-07.md`). Leg A: a cold Codex session (DESK credential) prepared the brief and a decision record from the MCP catalogue alone; its Send was refused `owner_principal_required`; the owner's Send on the face (Chair, Intelligence → DECISIONS) ended SAVED at 1440 and 393, read back from the hub. Leg B: 11 real sends, exactly once each: the eight kinds to `~/Documents/HoldSpeak`, the brief, the decision record and the meeting summary to issue #699; every far side read back byte for byte, no transcript and no internal id. The brief's Slack text: 566 / 39,000. Named limits: email (no Resend details), Slack (no webhook), Jira and Confluence (no accounts). Owner review of the shots is pending; never a sitting.
 - 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

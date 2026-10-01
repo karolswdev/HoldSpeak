@@ -851,7 +851,8 @@ def run_rehearse(args: argparse.Namespace) -> int:
     fixture = load_fixture(fixture_path)
     p7.CLIENT[0] = "codex"
     p7.CODEX_AUTH[0] = Path(args.codex_auth).expanduser().resolve()
-    run_dir = Path(args.out).resolve() / (time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + "-rehearse")
+    run_dir = Path(args.out).resolve() / (time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + "-rehearse"
+                                          + ("" if args.press_width == 1440 else f"-press{args.press_width}"))
     run_dir.mkdir(parents=True)
     started = datetime.now(timezone.utc)
     record = write_run_fixture(run_dir, fixture_path)
@@ -865,7 +866,8 @@ def run_rehearse(args: argparse.Namespace) -> int:
         "story": "PHILO-11-07", "leg": "A (rehearsal)", "claim": p7.CLAIM_CODEX, "client": "codex",
         "model": p7.MODEL, "reasoning_effort": p7.EFFORT, "label": REVIEW_LABEL, "observed_sitting": False,
         "engine_mode": "none", "sessions": list(SESSIONS), "press": PRESS_LABEL + "; on the face (the Chair's "
-        "brief well and Intelligence -> DECISIONS), clicked by the driver at 1440", "folder": "<scratch outbox>",
+        "brief well and Intelligence -> DECISIONS), clicked by the driver at " + str(args.press_width),
+        "press_width": args.press_width, "folder": "<scratch outbox>",
         "fixture_sha256": record["source_sha256"]})
     blocked: list[str] = []
     out: dict[str, Any] = {"checks": {}, "press": {}, "readback": {}}
@@ -947,7 +949,7 @@ def run_rehearse(args: argparse.Namespace) -> int:
                     facts["prepared"][f"record-{width}"] = b.shoot(
                         page, "2-record-prepared", DR, [f"{DR} [data-testid=prepared-row]",
                                                         f"{DR} [data-testid=prepared-send]"])
-                page = pages[1440]
+                page = pages[args.press_width]   # the owner's press, at the width asked for
                 _chair(page, hub, glass)
                 out["press"]["monday_brief"] = {"face": _face_press(page, CH), "label": PRESS_LABEL}
                 _record(page, hub, glass, record_text)
@@ -1026,6 +1028,11 @@ def run_rehearse(args: argparse.Namespace) -> int:
     print(f"RUN_DIR {run_dir}")
     print("MODE REHEARSAL (isolated hub, scratch folder: nothing leaves the machine)")
     print(f"AGENT_TOOLS {out.get('agent_tools')}")
+    for kind, press in out["press"].items():
+        face, send, receipt = press.get("face") or {}, press.get("send") or {}, press.get("receipt") or {}
+        print(f"PRESS {kind} width={args.press_width} http={face.get('status')} outcome={face.get('outcome')} "
+              f"send={send.get('state')} op={send.get('send_operation_id')} receipt={receipt.get('state')} "
+              f"by={receipt.get('actor_kind')}")
     for kind, back in out["readback"].items():
         print(f"SAVED {kind} {json.dumps(back, sort_keys=True)}")
     print(f"OUTCOME {'BLOCKED' if blocked else 'COMPLETED'}")
@@ -1045,6 +1052,8 @@ def _parser() -> argparse.ArgumentParser:
     rh.add_argument("--codex-timeout", type=float, default=1200)
     rh.add_argument("--codex-auth", type=Path, default=Path.home() / ".codex" / "auth.json")
     rh.add_argument("--fixture", type=Path, default=FIXTURE_PATH)
+    rh.add_argument("--press-width", type=int, choices=(1440, 393), default=1440,
+                    help="the width at which the owner's Send is pressed (Astra r1 on #719: both widths)")
     real = sub.add_parser("real", help="leg B: the real sends, exactly once each (refused when one exists)")
     real.add_argument("--out", default=None)
     real.add_argument("--dry", action="store_true", help="a scratch folder and a recording gh: nothing leaves")

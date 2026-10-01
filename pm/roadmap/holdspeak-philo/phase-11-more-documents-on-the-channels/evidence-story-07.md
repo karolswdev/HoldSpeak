@@ -3,6 +3,20 @@
 - **Story:** PHILO-11-07 - The closing use
 - **Status:** done
 - **Date:** 2026-10-01
+
+## Round two — Astra counsel r1 on #719 @ `b083cf4fa` (RATIFY-WITH-CONDITIONS), paid
+
+`checks/story-07-built-astra-r1.md` (verbatim). Lane record: `lane-07-muaddib.md`. Nothing real was sent again: the folder still holds the same eight files, and #699 still has four comments.
+
+1. **The face press at 393** (exit 8: "he presses Send on the face at both widths"). Round one pressed both rows at 1440 only (`pages[1440]`). New flag `rehearse --press-width 393`. A fresh cold Codex session (DESK credential, isolated hub, a scratch folder destination) prepared the brief and the decision record. Its Send was refused `owner_principal_required`. The driver, AS THE OWNER, clicked Send on each prepared row **at 393**: `http=200 outcome=sent` for both. Both rows then show `✓ SAVED <path> BY CODEX-SEND-AGENT` at 393 and 1440. Read back from the hub's DB (captured): `channel.send` by `owner`/`owner-session`, state succeeded, receipt succeeded (`op_2b0aa4dc…`, `op_0a07fb8c…`); each send row is `sent` with that operation; one agent `channel.send` refused `owner_principal_required`; two agent `channel.prepare` succeeded. Fences: zero-read 0, session isolation 0, account leaks 0. Run `assets/story-07-shots/final/20261001T121534Z-rehearse-press393`; I looked at all eight shots (1 and 2 PREPARED before the press, 3 and 4 SAVED after it, both widths).
+   - One attempt at 393 is kept as BLOCKED (`…/20261001T121341Z-rehearse-press393`, exit 3): that session ran `pwd && rg --files …` in its own empty scratch root. Its 393 presses also reached SAVED, but the run does not count.
+   - My first DB read (an inner join with `parent_operation_id IS NULL`) printed no kernel rows; the column is not NULL on top-level rows. That capture stays in the record, and the plain join after it is the read.
+2. **3 versus 11:** Muad'Dib's brief named three real sends; the story's scope line (`story-07-the-closing-use.md:19`) requires eleven; Astra r1 ratified eleven. Recorded in `lane-07-muaddib.md`.
+3. **The lone `THIS DEVICE` chip** after the brief's send settles: BACKLOG row in `pm/roadmap/holdspeak/BACKLOG.md` (Phase 11 face observations), with the shot, Tenet 3 and UX-CANON A.9.
+4. **The test count:** `tests/unit/test_philo11_send_job.py` collects **9** tests (round one wrongly said 11; collect output captured below).
+5. **Documentation Navigation:** all twelve commands of `.github/workflows/test.yml:26-38` ran; `philo_api_reference.py --check` reported drift in `docs/generated/api-reference.json` (inherited: this lane changed no route). It was regenerated; all twelve pass (captured).
+
+Open, not this lane's: Muad'Dib's quiet-tree full-suite disposition before merge; the owner's review of the shots (still pending).
 - **Branch:** `feat/philo-11-07` from main `349e25c4` (stories 01–06 merged). No product file changed: a driver (`scripts/philo11_send_job.py`), its fixture (`story-07-fixture.json`), its fences (`tests/unit/test_philo11_send_job.py`), and one parameter on the Phase 9 driver's isolation fence (`scripts/philo9_room_job.py:152`, the same change as the open Phase 10 PR #700).
 - **Label:** REHEARSED; OWNER REVIEW PENDING. Never a sitting.
 
@@ -21,7 +35,7 @@
 
 ### Leg B: the real sends (`assets/story-07-shots/final/20261001T120102Z-real`)
 
-On an isolated hub (scratch HOME; one file from the real HOME: a 0600 copy of `~/.config/gh/hosts.yml`, deleted at the end, `exists_after: false`), the driver AS THE OWNER read each preview and pressed the inline Send with the digest it read (`POST /api/channels/send`, the SEND well's own route; not a click). The ledger `assets/story-07-real-sends.json` got each entry BEFORE its press.
+On an isolated hub (scratch HOME; one file from the real HOME: a 0600 copy of `~/.config/gh/hosts.yml`, deleted at the end, `exists_after: false`), the driver AS THE OWNER read each preview and made **owner-authenticated API sends**: the inline Send with the digest it read (`POST /api/channels/send`, the SEND well's own route, the hub's owner token; not a face click). Astra r1 on #719 ruled these meet the delivery criterion. The ledger `assets/story-07-real-sends.json` got each entry BEFORE its press.
 
 | Kind | Target | Far-side proof | Read back apart from the hub |
 |---|---|---|---|
@@ -201,4 +215,150 @@ exit=4
 https://github.com/karolswdev/HoldSpeak/issues/699#issuecomment-5930904969 karolswdev 296d0de698bd85c9028e97d875f05b8b3b78db856c00f40a86e9af27b5c951ad 576
 https://github.com/karolswdev/HoldSpeak/issues/699#issuecomment-5930906027 karolswdev 46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73 239
 https://github.com/karolswdev/HoldSpeak/issues/699#issuecomment-5930906937 karolswdev bc55db0d49908c177446566f1c73f458177dbc172f5f01777dbc6db0ad7164dd 253
+```
+
+### Captured run — 2026-10-01T12:13:41Z
+
+- **Command:** `sh -c H=$(mktemp -d); trap "rm -rf $H" EXIT; HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run python scripts/philo11_send_job.py rehearse --press-width 393 --out pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-07-shots/final --codex-auth /Users/karol/.codex/auth.json --codex-timeout 900`
+- **Cwd:** .
+- **Exit code:** 3
+- **Index-tree:** 4122ef0b74b56836e39dd0e28df89fd69c19689c
+
+```text
+RUN_DIR /Users/karol/dev/tools/wt-philo-11-07/pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-07-shots/final/20261001T121341Z-rehearse-press393
+MODE REHEARSAL (isolated hub, scratch folder: nothing leaves the machine)
+AGENT_TOOLS ['monday_brief.get', 'decision_record.search', 'channel.destinations', 'decision_record.get', 'channel.check_destination', 'channel.preview', 'channel.preview', 'channel.prepare', 'channel.prepare', 'channel.send']
+PRESS monday_brief width=393 http=200 outcome=sent send=sent op=op_3c0d5ce7629c4e4ca31cbdcf87e5d2b3 receipt=succeeded by=owner
+PRESS decision_record width=393 http=200 outcome=sent send=sent op=op_2168b16aecd046b1bd25a9b0382a0c6f receipt=succeeded by=owner
+SAVED monday_brief {"exists": true, "in_folder": true, "mode": "0o644", "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-52itstwm/outbox/2026-10-01-brief-2026-10-01-brief-2026-10-01-16a9369f.md", "sha256": "f6cdb5e8a709696ed9133d1a0d6492e13213365e4475162e0dea972c458e3ef0", "size": 576, "slack": {"limit": 39000, "slack_text_characters": 566, "slack_text_sha256": "db1c6c70cc2c56f12b2bf4f179dc692fe2bcab7b983ea4500d7279a8a465b344", "within_limit": true}}
+SAVED decision_record {"exists": true, "in_folder": true, "mode": "0o644", "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-52itstwm/outbox/2026-10-01-move-the-queue-in-two-steps-philo-11-07-test-decision-3d4d5706.md", "sha256": "46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73", "size": 239}
+OUTCOME BLOCKED
+BLOCKED agent_prepare: zero-read fence: 1 non-MCP action(s)
+BLOCKED fence zero_read: 1
+```
+
+### Captured run — 2026-10-01T12:15:34Z
+
+- **Command:** `sh -c H=$(mktemp -d); trap "rm -rf $H" EXIT; HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run python scripts/philo11_send_job.py rehearse --press-width 393 --out pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-07-shots/final --codex-auth /Users/karol/.codex/auth.json --codex-timeout 900`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 4122ef0b74b56836e39dd0e28df89fd69c19689c
+
+```text
+RUN_DIR /Users/karol/dev/tools/wt-philo-11-07/pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-07-shots/final/20261001T121534Z-rehearse-press393
+MODE REHEARSAL (isolated hub, scratch folder: nothing leaves the machine)
+AGENT_TOOLS ['channel.destinations', 'decision_record.search', 'monday_brief.get', 'decision_record.get', 'channel.check_destination', 'channel.preview', 'channel.preview', 'channel.prepare', 'channel.prepare', 'channel.send']
+PRESS monday_brief width=393 http=200 outcome=sent send=sent op=op_2b0aa4dc9e1b4d0895c02665cf52a3cb receipt=succeeded by=owner
+PRESS decision_record width=393 http=200 outcome=sent send=sent op=op_0a07fb8c95bb4ed8a5bbf453f6db85e3 receipt=succeeded by=owner
+SAVED monday_brief {"exists": true, "in_folder": true, "mode": "0o644", "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-_2n1zlmt/outbox/2026-10-01-brief-2026-10-01-brief-2026-10-01-b105af35.md", "sha256": "c26c6fcc0705c40b7968780456feb40fccf2157cb56d8835971a8ebf1ae02ab8", "size": 576, "slack": {"limit": 39000, "slack_text_characters": 566, "slack_text_sha256": "a77aa612cce3d0c381bf64fe544a370889514aa50b625abbc37630a51462dd37", "within_limit": true}}
+SAVED decision_record {"exists": true, "in_folder": true, "mode": "0o644", "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-_2n1zlmt/outbox/2026-10-01-move-the-queue-in-two-steps-philo-11-07-test-decision-6e4c5022.md", "sha256": "46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73", "size": 239}
+OUTCOME COMPLETED
+```
+
+### Captured run — 2026-10-01T12:17:20Z
+
+- **Command:** `uv run python -c 
+import sqlite3
+c=sqlite3.connect('file:pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-07-shots/final/20261001T121534Z-rehearse-press393/db-proof.sqlite?mode=ro',uri=True)
+for r in c.execute("SELECT o.operation_id,o.name,o.principal_kind,o.principal_identity,o.state,r.state,r.outcome FROM kernel_operations o JOIN kernel_receipts r USING(operation_id) WHERE o.name IN ('channel.send','channel.prepare') AND o.parent_operation_id IS NULL ORDER BY o.rowid"): print(*r)
+for r in c.execute('SELECT document_ref,state,send_operation_id FROM channel_sends'): print(*r)
+`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 4122ef0b74b56836e39dd0e28df89fd69c19689c
+
+```text
+monday_brief:brief-91e1dcfe9eb7495f9eea0caaa6164a0e sent op_2b0aa4dc9e1b4d0895c02665cf52a3cb
+decision_record:record-15440dbbbd2c41c88b37380f174d6209 sent op_0a07fb8c95bb4ed8a5bbf453f6db85e3
+```
+
+### Captured run — 2026-10-01T12:17:31Z
+
+- **Command:** `uv run python -c 
+import sqlite3
+c=sqlite3.connect('file:pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-07-shots/final/20261001T121534Z-rehearse-press393/db-proof.sqlite?mode=ro',uri=True)
+for r in c.execute("SELECT o.operation_id,o.name,o.principal_kind,o.principal_identity,o.state,r.state,r.outcome FROM kernel_operations o LEFT JOIN kernel_receipts r ON r.operation_id=o.operation_id WHERE o.name LIKE 'channel.%' ORDER BY o.rowid"): print(*r)
+for r in c.execute('SELECT document_ref,state,send_operation_id FROM channel_sends'): print(*r)
+`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 4122ef0b74b56836e39dd0e28df89fd69c19689c
+
+```text
+op_146d448ce996427cb44f1649a20c0fa5 channel.save_destination owner owner-session succeeded succeeded succeeded
+op_95af73ef545344df82fae4c33226066c channel.prepare agent codex-send-agent succeeded succeeded succeeded
+op_fcde26d329734624941fbe2a1817063b channel.prepare agent codex-send-agent succeeded succeeded succeeded
+op_dbf49a7db24545f69cbde06db07e1af0 channel.send agent codex-send-agent refused refused owner_principal_required
+op_2b0aa4dc9e1b4d0895c02665cf52a3cb channel.send owner owner-session succeeded succeeded succeeded
+op_0a07fb8c95bb4ed8a5bbf453f6db85e3 channel.send owner owner-session succeeded succeeded succeeded
+monday_brief:brief-91e1dcfe9eb7495f9eea0caaa6164a0e sent op_2b0aa4dc9e1b4d0895c02665cf52a3cb
+decision_record:record-15440dbbbd2c41c88b37380f174d6209 sent op_0a07fb8c95bb4ed8a5bbf453f6db85e3
+```
+
+### Captured run — 2026-10-01T12:17:48Z
+
+- **Command:** `sh -c H=$(mktemp -d); trap "rm -rf $H" EXIT; HOME=$H uv run pytest -q --collect-only tests/unit/test_philo11_send_job.py --basetemp $H/bt -p no:cacheprovider 2>&1 | tail -12; HOME=$H uv run pytest -q tests/unit/test_philo11_send_job.py tests/unit/test_philo9_room_job.py tests/unit/test_evidence_scratch_guard.py --basetemp $H/bt2 -p no:cacheprovider 2>&1 | tail -1`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 4122ef0b74b56836e39dd0e28df89fd69c19689c
+
+```text
+tests/unit/test_philo11_send_job.py::test_the_fixture_plans_every_kind_on_the_file_and_three_families_on_github
+tests/unit/test_philo11_send_job.py::test_each_document_carries_only_its_own_signature
+tests/unit/test_philo11_send_job.py::test_no_sent_text_carries_the_transcript_or_an_internal_id
+tests/unit/test_philo11_send_job.py::test_the_brief_goes_out_whole_and_its_slack_length_is_measured
+tests/unit/test_philo11_send_job.py::test_the_guard_reads_the_ledger_the_folder_and_the_issue
+tests/unit/test_philo11_send_job.py::test_a_second_real_run_is_refused_before_anything_boots
+tests/unit/test_philo11_send_job.py::test_an_extra_newline_on_the_far_side_is_red[file]
+tests/unit/test_philo11_send_job.py::test_an_extra_newline_on_the_far_side_is_red[github]
+tests/unit/test_philo11_send_job.py::test_the_ledger_is_written_before_the_press
+
+9 tests collected in 0.06s
+57 passed, 3 warnings in 2.45s
+```
+
+### Captured run — 2026-10-01T12:17:52Z
+
+- **Command:** `sh -c set -e; uv run python -m unittest discover -s tests/unit -p test_docs_navigation.py 2>&1 | tail -1; uv run python scripts/check_docs.py; uv run python scripts/check_docs.py docs/internal/philo/*.md docs/internal/philo/adr/*.md docs/internal/philo/checks/*.md docs/internal/philo/visuals/README.md docs/internal/philo/desktop-prototypes/README.md agent/skills/*/SKILL.md; uv run python scripts/philo_repository_census.py --check; uv run python scripts/philo_api_reference.py --check; uv run python scripts/philo_boundary_census.py --check; uv run python scripts/philo_doctor_reference.py --check; uv run python scripts/philo_config_reference.py --check; uv run python scripts/philo_graph_reference.py --check 2>&1 | tail -1; uv run python scripts/validate_architecture.py; uv run python scripts/generate_capability_docs.py --check; uv run python scripts/check_doc_coverage.py --check`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 4122ef0b74b56836e39dd0e28df89fd69c19689c
+
+```text
+OK
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+Repository census: 5 outputs verified.
+API reference checked
+Boundary candidate census checked
+Doctor reference: 41 check functions
+Configuration declaration reference is current
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+Architecture metadata: 4 shard(s), 149 record(s)
+Architecture metadata validation passed.
+Architecture documentation checked (10 outputs).
+Documentation coverage checked.
+```
+
+### Captured run — 2026-10-01T12:19:13Z
+
+- **Command:** `sh -c set -e; uv run python -m unittest discover -s tests/unit -p test_docs_navigation.py 2>&1 | tail -1; uv run python scripts/check_docs.py; uv run python scripts/check_docs.py docs/internal/philo/*.md docs/internal/philo/adr/*.md docs/internal/philo/checks/*.md docs/internal/philo/visuals/README.md docs/internal/philo/desktop-prototypes/README.md agent/skills/*/SKILL.md; uv run python scripts/philo_repository_census.py --check; uv run python scripts/philo_api_reference.py --check; uv run python scripts/philo_boundary_census.py --check; uv run python scripts/philo_doctor_reference.py --check; uv run python scripts/philo_config_reference.py --check; uv run python scripts/philo_graph_reference.py --check 2>&1 | tail -1; uv run python scripts/validate_architecture.py; uv run python scripts/generate_capability_docs.py --check; uv run python scripts/check_doc_coverage.py --check`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1226f618173982f62bae32551c6fb974eab11f27
+
+```text
+OK
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+Repository census: 5 outputs verified.
+API reference checked
+Boundary candidate census checked
+Doctor reference: 41 check functions
+Configuration declaration reference is current
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+Architecture metadata: 4 shard(s), 149 record(s)
+Architecture metadata validation passed.
+Architecture documentation checked (10 outputs).
+Documentation coverage checked.
 ```

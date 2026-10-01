@@ -1,0 +1,18 @@
+{
+  "file": {
+    "account": {},
+    "badge": "local",
+    "channel": "file",
+    "connection": null,
+    "created_at": "2026-10-01T12:15:37+00:00",
+    "id": "chd_a0152e8cc7bb1d612cdf8515",
+    "name": "HoldSpeak folder",
+    "parked_at": null,
+    "state": "active",
+    "synced": false,
+    "target": {
+      "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-_2n1zlmt/outbox"
+    },
+    "target_digest": "c4fa9931ffe3598bb67fb5964c037ef6ae001649e87ee01431293941bc6dc514"
+  }
+}
