@@ -1,8 +1,8 @@
 # Phase 12 - Send from the Floor
 
-**Last updated:** 2026-09-30 (round two: Astra r1 RATIFY-WITH-CONDITIONS paid, `checks/charter-astra-r1.md`.) Earlier: 2026-09-30 (DRAFTED by the Fedaykin docs lane for Muad'Dib; unchecked.)
+**Last updated:** 2026-09-30 (RATIFIED by the owner, "Ratify, build it". Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid, `checks/charter-astra-r1.md`.) Earlier: 2026-09-30 (DRAFTED by the Fedaykin docs lane for Muad'Dib; unchecked.)
 
-**Status:** CHECKED by Astra (r1 RATIFY-WITH-CONDITIONS, paid) — awaiting the owner's ratification. Nothing is built. The stories stay `backlog` until he ratifies.
+**Status:** RATIFIED by the owner 2026-09-30 ("Ratify, build it", all eleven defaults) after Astra's check r1 (RATIFY-WITH-CONDITIONS, paid).
 
 ## Goal
 
@@ -117,6 +117,8 @@ The proof is new capability through the real hub on an isolated HOME, never a te
 - A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call. CI does not gate a merge (the owner, 2026-09-28).
 
 ## Where we are
+
+2026-09-30: the owner RATIFIED the charter ("Ratify, build it") with all eleven defaults. Story 01 (Astra) and story 02, the canvases (Muad'Dib), start now; the Floor faces wait for the canvases' ratification.
 
 2026-09-30, round two: Astra r1 RATIFY-WITH-CONDITIONS paid (table under "Status of this charter"). Next: the owner's one answer.
 
