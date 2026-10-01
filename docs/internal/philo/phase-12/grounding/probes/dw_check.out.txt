@@ -1,0 +1,6 @@
+ERROR pm/roadmap/holdspeak/phase-101-the-native-innards/evidence-story-04.md: evidence exists but matching story is not done
+ERROR pm/roadmap/holdspeak/phase-152-the-hands: all stories are done but final-summary.md is missing
+ERROR pm/roadmap/holdspeak/phase-153-the-practice: all stories are done but final-summary.md is missing
+ERROR pm/roadmap/holdspeak/phase-154-the-call: all stories are done but final-summary.md is missing
+ERROR pm/roadmap/holdspeak/phase-156-the-front-door: all stories are done but final-summary.md is missing
+ERROR pm/roadmap/holdspeak/phase-200-the-working-practice: all stories are done but final-summary.md is missing

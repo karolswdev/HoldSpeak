@@ -1,0 +1,79 @@
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.4j4Kr5JchT
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__________________________ test_shade_brief_row_1440 ___________________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3114/test_shade_brief_row_14400')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10cf5cfc0>
+
+    @pytest.mark.timeout(120)
+    def test_shade_brief_row_1440(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       _run_brief_row_rig(tmp_path, monkeypatch, 1440)
+
+tests/e2e/test_hs171_shade_glass.py:929: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-3114/test_shade_brief_row_14400')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10cf5cfc0>
+width = 1440
+
+    def _run_brief_row_rig(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+    ) -> None:
+        """Seed a brief, open the shade, assert the brief row shows."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+    
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed", token=TOKEN)
+                _api(page, "PUT", "/api/setup/onboarding",
+                     {"disposition": "completed"}, token=TOKEN)
+    
+                # Seed needs-you items (so PROJECTS section appears) and a brief.
+                _seed_two_rooms_with_needs_you()
+                _seed_brief(date="2026-09-05", items_count=5)
+    
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _settle(page)
+    
+                # Open the shade.
+                _open_shade(page)
+    
+                # ── Brief row present ──
+                brief_row = page.get_by_test_id("shade-brief-row")
+                assert brief_row.count() == 1, \
+                    "The brief row should be present in the shade"
+    
+                brief_text = brief_row.text_content() or ""
+                # Should contain "Monday brief".
+                assert "Monday brief" in brief_text, \
+                    f"Brief row should mention 'Monday brief': {brief_text}"
+    
+                # Should contain the item count.
+                assert "5" in brief_text or "THING" in brief_text.upper(), \
+                    f"Brief row should show item count: {brief_text}"
+    
+                # Should contain the date (formatted by the shade as e.g. "SEP 05").
+                # The shade formats generated_at via toLocaleDateString.
+>               assert "SEP" in brief_text.upper() or "2026" in brief_text, \
+                    f"Brief row should show a date token: {brief_text}"
+E                   AssertionError: Brief row should show a date token: =Monday brief5 THINGSOCT 01Open
+E                   assert ('SEP' in '=MONDAY BRIEF5 THINGSOCT 01OPEN' or '2026' in '=Monday brief5 THINGSOCT 01Open')
+E                    +  where '=MONDAY BRIEF5 THINGSOCT 01OPEN' = <built-in method upper of str object at 0x1140e2a60>()
+E                    +    where <built-in method upper of str object at 0x1140e2a60> = '=Monday brief5 THINGSOCT 01Open'.upper
+
+tests/e2e/test_hs171_shade_glass.py:912: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_hs171_shade_glass.py::test_shade_brief_row_1440 - Asser...
+1 failed in 4.91s
+Exit: 1
