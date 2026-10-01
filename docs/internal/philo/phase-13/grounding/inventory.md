@@ -1,6 +1,6 @@
 # PHILO-13 S0 — shared surface inventory
 
-**Status:** DRAFT — UNCHECKED — awaiting Muad’Dib
+**Status:** CHECKED — Muad'Dib RATIFY, 2026-10-01 (`checks/structure-muaddib.md` on `docs/philo-13-ground`; PR #722 comment).
 **Base:** `4c49651e1` (the pinned audit base; anchors below were read from this worktree)
 **Scope:** read-only source census for Astra’s grounding lane. This file records
 what can open what, where it is mounted, and what is reachable from the Desk

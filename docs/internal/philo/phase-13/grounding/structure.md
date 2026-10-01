@@ -1,6 +1,6 @@
 # PHILO Phase 13 grounding — structure half
 
-**Status: DRAFT — UNCHECKED — awaiting Muad'Dib.**
+**Status:** CHECKED — Muad'Dib RATIFY, 2026-10-01 (`checks/structure-muaddib.md` on `docs/philo-13-ground`; PR #722 comment).
 **Owner:** Astra, 2026-10-01. **Source base:** `4c49651e10a9eff28a1ee8e47cb898609d591935`.
 **Lane:** `docs/philo-13-ground-astra`, `/Users/karol/dev/tools/wt-philo-13-ground-astra`.
 **Authority:** the checked r2 plan on `origin/docs/philo-13-ground`, read from the sibling worktree; `docs/internal/TWO-BRAINS.md:108`; the Seven Tenets in `docs/internal/CONSTITUTION.md:19`. This is grounding for Muad'Dib's proposal, not a charter, canvas ratification, or build instruction.
