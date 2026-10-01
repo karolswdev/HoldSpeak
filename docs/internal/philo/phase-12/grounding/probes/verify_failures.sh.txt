@@ -1,0 +1,21 @@
+#!/bin/sh
+# Focused triage of the two full-suite failures, with an isolated HOME per run.
+set -u
+philo12_cache_home="$HOME"
+export HOME="$(mktemp -d)"
+export UV_CACHE_DIR=/tmp/philo12-uv-cache
+export PATH="/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH"
+export PLAYWRIGHT_BROWSERS_PATH="$philo12_cache_home/Library/Caches/ms-playwright"
+printf 'HOME=%s\n' "$HOME"
+case "${1:-}" in
+  collect)
+    uv run pytest --collect-only -q tests/unit/test_thread_tool_loop.py::TestHeldApprove::test_held_then_approved tests/e2e/test_hs171_shade_glass.py::test_shade_brief_row_1440 ;;
+  thread)
+    uv run pytest -q tests/unit/test_thread_tool_loop.py::TestHeldApprove::test_held_then_approved ;;
+  shade)
+    uv run pytest -q tests/e2e/test_hs171_shade_glass.py::test_shade_brief_row_1440 ;;
+  *) exit 2 ;;
+esac
+philo12_status=$?
+printf 'Exit: %s\n' "$philo12_status"
+exit "$philo12_status"

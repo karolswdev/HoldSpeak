@@ -1,0 +1,101 @@
+{
+  "agent_send": {
+    "code": "owner_principal_required",
+    "is_error": true,
+    "operation": [
+      {
+        "name": "channel.send",
+        "principal_identity": "remote-project-agent-destination-probe",
+        "principal_kind": "agent",
+        "state": "refused"
+      }
+    ],
+    "output_files": [],
+    "receipt": [
+      {
+        "outcome": "owner_principal_required",
+        "state": "refused"
+      }
+    ],
+    "send_row_after_attempt": {
+      "state": "prepared"
+    }
+  },
+  "base": "22c0acc40",
+  "descriptors": {
+    "channel.prepare": {
+      "admission": {
+        "arguments": [],
+        "condition": "Records a prepared send under the preparer's identity: the owner, or an agent he connected (Q5). Nothing leaves.",
+        "enforced": true,
+        "rule": "admitted"
+      },
+      "owner_press": false
+    },
+    "channel.preview": {
+      "admission": {
+        "arguments": [],
+        "condition": "Computation: a render per channel, nothing leaves (XI.5).",
+        "enforced": true,
+        "rule": "exempt"
+      },
+      "owner_press": false
+    },
+    "channel.send": {
+      "admission": {
+        "arguments": [],
+        "condition": "Crosses egress or files (XI.1): one terminal receipt -- succeeded (sent), failed, indeterminate (unknown), or refused before the dispatch boundary. The owner's press ('You, every time').",
+        "enforced": true,
+        "rule": "admitted"
+      },
+      "owner_press": true
+    }
+  },
+  "park_filter": {
+    "default_ids": [],
+    "default_states": [],
+    "delete_status": 200,
+    "include_parked_ids": [
+      "chd_b2509f6a98f8ab4be96e1bcc"
+    ],
+    "include_parked_states": [
+      "parked"
+    ]
+  },
+  "prepare": {
+    "http_status": 200,
+    "operation": {
+      "name": "channel.prepare",
+      "principal_identity": "owner-session",
+      "principal_kind": "owner",
+      "state": "succeeded",
+      "target_ref": "document:project_update:pupd_8ced5f40e28c49b99dc393e8e251b0fe"
+    },
+    "prepared_preview_text": "# Wire probe\n\nStored body.\n",
+    "receipt": {
+      "outcome": "succeeded",
+      "state": "succeeded"
+    },
+    "row": {
+      "destination_id": "chd_b2509f6a98f8ab4be96e1bcc",
+      "document_ref": "project_update:pupd_8ced5f40e28c49b99dc393e8e251b0fe",
+      "id": "chs_cd9fcd1128a6ea5a68f858eb",
+      "payload_digest": "ea45de87e30cace89ceda1600d68335282053484828c8df8682ad63097419abf",
+      "prepare_operation_id": "op_42f4bf110a25428aabb0e7f867cf1ba9",
+      "state": "prepared"
+    }
+  },
+  "preview": {
+    "destination_id": "chd_b2509f6a98f8ab4be96e1bcc",
+    "document_ref": "project_update:pupd_8ced5f40e28c49b99dc393e8e251b0fe",
+    "http_status": 200,
+    "kernel_operation_count_after": 2,
+    "kernel_operation_count_before": 2,
+    "kernel_operation_delta": 0,
+    "payload_digest_matches_prepared": true,
+    "receipt_or_operation_fields": {
+      "operation_id": null,
+      "receipt": null
+    }
+  }
+}

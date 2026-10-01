@@ -1,0 +1,16 @@
+Command (from web/, isolated HOME):
+PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) npm exec vitest -- run src/desk/__tests__/desk.test.ts src/desk/gl/__tests__/sceneModel.test.ts src/desk/__tests__/floorMenu.test.ts --maxWorkers=2
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-12-ground-astra/web
+
+
+ Test Files  3 passed (3)
+      Tests  37 passed (37)
+   Start at  18:42:36
+   Duration  1.24s (transform 401ms, setup 225ms, import 523ms, tests 25ms, environment 810ms)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice

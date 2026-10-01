@@ -1,0 +1,33 @@
+VERDICT: RATIFY-WITH-CONDITIONS
+
+FINDINGS:
+
+1. **Story 03 cannot deliver the complete menu path before story 04 as written.** Story 03 promises the correct document window and preview, but story 04 owns the missing project Update link (`pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/story-03-send-to-the-artifact-window-and-the-decision-sprite.md:26`, `pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/story-04-destinations-on-the-floor-and-the-drop.md:19`). Move that link into 03. Its shape should carry the project ID, exact published-update ID and destination ID, then open that update in the existing Room when its data is ready—including when the Room is already open. The current opener carries only project scope (`web/src/desk/store/compositorSlice.ts:158`). **Tenets 3 and 7.** Keep the 03 → 04 order.
+
+2. **The menu-bar grounding is incorrect.** Adding a submenu to `objectMenuEntries` reaches the spatial and list menus, but the menu bar independently builds flat entries from `menuVerbs` (`web/src/desk/components/DeskMenuBar.tsx:78`). The design claims otherwise (`pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md:38`). Explicitly assign story 03 the shared menu composition and all three rendered entry points, including the compact Go menu. **Tenet 5.**
+
+3. **Ratify the pure-module split, but specify who supplies its facts.** A Floor project has no published-update ID (`web/src/lib/primitives.ts:213`); the meeting list response has status but no summary body (`holdspeak/services/meeting_service.py:868`). A pure resolver cannot discover either. Story 01 should define explicit resolved inputs; story 03 should own the reads used by both menu and later drop. Distinguish unread/loading/failed from confirmed absence. Otherwise a valid meeting or project can lose Send merely because its detail has not loaded. **Tenets 3, 5 and 7.**
+
+4. **“Export two setters; nothing else changes” understates the required behavior.** The meeting form map initializes component-local state only, while destination selection is keyed by the complete document reference (`web/src/meetings/MeetingSendWell.tsx:34`, `web/src/desk/surface/send/SendWell.tsx:459`). Specify reactive selection for already-open wells and destination retention through Summary → Digest → Follow-up. Likewise, Brief navigation carries no brief ID and its view independently fetches latest (`web/src/desk/intelligenceNavigation.ts:5`, `web/src/desk/pullouts/views/BriefView.tsx:174`). Define the exact-ID handoff and retention promised by the design. Fence these rendered transitions and their receipts. **Tenets 3 and 7.**
+
+5. **The phone promise has a scope contradiction and an evidence gap.** The brief is spatial-only (`pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md:72`), yet the close requires every picked kind, including brief, through `Send to ▸` at 393 (`pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/story-06-the-closing-use.md:19`). Prefer a brief projection in the list; destinations can remain absent there. Also require a touch-triggered list-menu fence: the cited long-press implementation belongs to the GL engine, while the table exposes `onContextMenu` (`web/src/desk/components/DeskSortableTable.tsx:247`). A mouse right-click at phone width does not establish the promised gesture. **Tenets 3 and 6.**
+
+6. **The other flagged defaults are sound.** Ratify **Open only**; story 02 explicitly supersedes grounding board F2 (`pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/story-02-the-canvases.md:19`). However, existing Settings focus opens the **add form**, not a specified destination row; assign that row-focus extension to 04 (`web/src/pages/cores/connections/Destinations.tsx:364`). Ratify withholding unavailable Send with the registry comment amended: UX-CANON A.11 governs. Ratify removing only the synthesis-owned footer, identified against stored lineage; preserve authored text and code (`docs/internal/philo/phase-12/grounding/backend.md:35`). No general scrubber, review gate or revision store is warranted. **Tenets 1, 3 and 5.**
+
+7. **The exit criteria need two mechanical corrections.** Story 03 requires every J board, but J2 is a drop, explicitly outside 03 (`pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/story-03-send-to-the-artifact-window-and-the-decision-sprite.md:20`, `docs/internal/philo/phase-12/grounding/faces.md:126`). Assign J2 to 04. Story 05 runs after the feature merges yet requires new cases red “on main” (`pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/story-05-the-atlas-cases.md:24`); name a fixed pre-feature revision. Otherwise the real-producer, actual-atlas, rendered-result and DB-receipt obligations are appropriate. **Tenets 2 and 3.**
+
+8. **Ratify the brain assignments and one-question format.** Astra 01/05 and Muad’Dib 02/03/04/06 fit the work. Retain the eleven defaults, with the brief’s phone treatment explicit in row 6 (`pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/current-phase-status.md:125`). The 7.5–10 engineering-day estimate is a provisional budget; the two-day elapsed forecast needs recalibration after these integration tasks are assigned (`pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/current-phase-status.md:109`). The core design does **not** over-engineer for safety: preview, then his single Send press, is the right flow.
+
+CONDITIONS:
+
+Revise the charter before implementation briefs: move shared opening dependencies into 03; correct menu-bar wiring; specify resolver inputs and mounted-window selection behavior; reconcile brief/menu coverage; require touch-entry proof; assign Settings row focus; correct J2 ownership and the red-test baseline. These are bounded charter corrections, not grounds for another subsystem or additional owner questions.
+
+MISSED:
+
+1. Highest cost: the wrong or unselected document after opening an existing window.
+2. Next: a phone path that exists in screenshots but lacks its promised entry gesture or brief.
+3. Next: stories whose acceptance criteria depend on later work or a moving baseline.
+
+TUESDAY: Yes to the intended decision → Slack preview → Send job; I would not yet promise the complete phone path from this charter.
+
+UNKNOWN: No Phase 12 implementation, ratified canvases or live sends were available to verify. I inspected source and grounding shots; I did not rerun suites or walks. HEAD remains `af1f5fd3c`; the tree is unchanged and clean.
