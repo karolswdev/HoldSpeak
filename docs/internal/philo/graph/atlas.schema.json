@@ -239,6 +239,10 @@
               "type": "string",
               "minLength": 1
             },
+            "optional": {
+              "type": "boolean",
+              "description": "On a setup step, retain an unavailable precondition and continue; the case's expected predicate remains mandatory."
+            },
             "capture_as": {
               "type": "string",
               "pattern": "^[a-z][a-z0-9_]*$"
@@ -389,6 +393,7 @@
                 "click",
                 "click_role",
                 "fill",
+                "select_option",
                 "press",
                 "wait_for",
                 "focus",
@@ -538,6 +543,7 @@
                     "enum": [
                       "click",
                       "fill",
+                      "select_option",
                       "wait_for",
                       "focus",
                       "scroll_into_view"
@@ -569,6 +575,30 @@
                 "required": [
                   "value"
                 ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "action": {
+                    "const": "select_option"
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              },
+              "then": {
+                "required": [
+                  "selector",
+                  "value"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
               }
             },
             {
@@ -1182,7 +1212,10 @@
                     "protocol_field",
                     "protocol_rows",
                     "protocol_rows_gone",
+                    "protocol_rows_same",
+                    "protocol_sequence",
                     "protocol_status",
+                    "selector_presence",
                     "text_absent",
                     "text_contains",
                     "text_equals",
@@ -1358,7 +1391,7 @@
           "properties": {
             "id": {
               "type": "string",
-              "pattern": "^case\\.[a-z0-9_]+\\.[a-z0-9_]+\\.[a-z0-9_]+(?:\\.(?:op(?:\\.replayed)?|replayed))?$"
+              "pattern": "^case\\.[a-z0-9_]+(?:\\.[a-z0-9_]+){2,3}(?:\\.(?:op(?:\\.replayed)?|replayed))?$"
             },
             "job": {
               "enum": [

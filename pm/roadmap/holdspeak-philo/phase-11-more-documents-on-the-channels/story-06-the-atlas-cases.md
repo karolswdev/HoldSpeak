@@ -34,9 +34,9 @@ PROVISIONAL: about 1 engineering day.
 
 ## Notes
 
-- 2026-09-30 — dispatched in two parts by Muad'Dib. Part 1 covers the seven new document-kind `.op` file lifecycles and the four recorded Slack outcomes. Part 2 starts on a new dispatch after story 05 merges. This progress commit does **not** close the story or claim the face acceptance criterion. Part 1 remains **DRAFT — UNCHECKED, awaiting Muad'Dib**.
-- Part 1 proof and full-suite dispositions: [lane-06-astra.md](lane-06-astra.md). Final operation matrix: 11/11 pass; old-main matrix: 11 blocked before Send. Final focused tests: 411 pass. The inherited face-word guard remains for story 05. No story criterion is flipped.
-- Part 2 TODO: run each of these planned face ids at **1440 and 393**. The three suffixes listed in a row are three separate cases; each reads the hub outcome in the same observation. Confirm selectors against the merged story 05 build, not the canvas shim.
+- 2026-09-30 — dispatched in two parts by Muad'Dib. Part 1 covers the seven new document-kind `.op` file lifecycles and the four recorded Slack outcomes. Story 05 merged at `22c0acc4`; Part 2 now adds the real-face cases below. This progress note does not close the story. Part 2 still needs its retained head/baseline walks, Phase 7–10 regression walks, and final full-suite run.
+- Part 1 proof and full-suite dispositions: [lane-06-astra.md](lane-06-astra.md). Final operation matrix: 11/11 pass; old-main matrix: 11 blocked before Send. Final focused tests: 411 pass. The inherited face-word guard remains for story 05.
+- Part 2 face-case manifest: run each listed case at **1440 and 393**. The three suffixes listed in a row are separate cases; each reads the hub outcome in the same observation. The merged story 05 faces are the targets.
 
   | Kind / seat | Planned case ids |
   |---|---|
@@ -51,11 +51,12 @@ PROVISIONAL: about 1 engineering day.
   | Meeting digest, Meetings record | `case.p11.meeting_digest.meetings_record.picked`, `case.p11.meeting_digest.meetings_record.sent`, `case.p11.meeting_digest.meetings_record.prepared` |
   | Meeting follow-up, Meetings record | `case.p11.meeting_followup.meetings_record.picked`, `case.p11.meeting_followup.meetings_record.sent`, `case.p11.meeting_followup.meetings_record.prepared` |
   | Slack outcomes on a document face | `case.p11.slack.posted`, `case.p11.slack.failed`, `case.p11.slack.unknown`, `case.p11.slack.too_large` |
-  | Design §6b: limit refusal remains on the well | `case.p11.transition.slack_limit` |
+  | Design §6b: limit refusal remains on the well; assert the PREVIEW refusal's top-level integer size/limit | `case.p11.transition.slack_limit` |
   | Design §6b: changed preview, refresh, second Send | `case.p11.transition.preview_changed` |
   | Design §6b: last brief item leaves the Chair branch | `case.p11.transition.brief_last_ack`, `case.p11.transition.brief_last_defer` |
 
-- `meeting_decision` remains `.op` only (design §6a); part 2 adds no face for it. The two last-item cases cover both gestures in the third §6b transition. These ids reserve the remaining work; they are not executed-case claims.
-- 2026-09-30 — round two: paid Muad'Dib's adopted C1–C3 in the progress commit. The Slack reason facts now name the pinned replies, their two passing walks and four negative controls are retained in `assets/story-06-runs/p11-r2-slack-c1-c3/`, and `revision_source` identifies the provenance source. The three Meetings record TODO rows above follow the settled seats. Story 06 remains in progress; part 2 waits for story 05 and a new dispatch.
+- `meeting_decision` remains `.op` only (design §6a); part 2 adds no face for it. The two last-item cases cover both gestures in the third §6b transition.
+- Additional face cases from Muad'Dib's part-1 counsel: C4 `case.p11.meeting_summary.meetings_record.no_summary`; R7 removals `case.p11.r7.no_digest_slack` and `case.p11.r7.no_credentials_slack`; Slack destination form D1/D2a/D2b/D3 `case.p11.slack.destination.d1`, `.d2a`, `.d2b`, `.d3`. The four Slack outcome faces are `case.p11.slack.posted.face`, `.failed.face`, `.unknown.face`, `.too_large.face`.
+- 2026-09-30 — round two: paid Muad'Dib's adopted C1–C3 in the prior commit. The Slack reason facts name the pinned replies; their two passing walks and four negative controls are retained in `assets/story-06-runs/p11-r2-slack-c1-c3/`, and `revision_source` identifies the provenance source. The three Meetings record rows follow the settled seats. Muad'Dib's r2 RATIFY is recorded in `checks/story-06-part1-built-muaddib-r2.md`.
 - 2026-09-29 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
 - 2026-09-29 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

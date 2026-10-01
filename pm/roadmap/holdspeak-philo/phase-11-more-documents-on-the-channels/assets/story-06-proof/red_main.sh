@@ -49,6 +49,15 @@ for fixture_dir in "$WT"/tests/fixtures/philo11_*; do
   cp -R "$fixture_dir" "$ARCHIVE/tests/fixtures/"
 done
 
+# A git archive has the real source but omits ignored build output and
+# node_modules.  Face cases must exercise the old product on glass, so build
+# the archived source with its own lockfile before starting the rig.  Without
+# this, the browser shows the generic "React Web build is missing" page and
+# every face case stops at setup rather than measuring the old product.
+if [[ ! -f "$ARCHIVE/holdspeak/static/_built/index.html" ]]; then
+  (cd "$ARCHIVE/web" && npm ci && npm run build)
+fi
+
 label=${1:-red-$REV}; shift || true
 OUT=$WT/.tmp/philo11-06
 PYTHON=${PYTHON:-$WT/.venv/bin/python}

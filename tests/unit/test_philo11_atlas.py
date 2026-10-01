@@ -21,6 +21,34 @@ KINDS = {
     "meeting_digest",
     "meeting_followup",
 }
+FACE_CASE_IDS = {
+    *(f"case.p11.monday_brief.{seat}.{state}"
+      for seat in ("chair", "intelligence")
+      for state in ("picked", "sent", "prepared")),
+    *(f"case.p11.desk_decision.window.{state}"
+      for state in ("picked", "sent", "prepared")),
+    *(f"case.p11.decision_record.{seat}.{state}"
+      for seat in ("intelligence", "room")
+      for state in ("picked", "sent", "prepared")),
+    *(f"case.p11.meeting_summary.{seat}.{state}"
+      for seat in ("window", "chair", "meetings_record")
+      for state in ("picked", "sent", "prepared")),
+    *(f"case.p11.{kind}.meetings_record.{state}"
+      for kind in ("meeting_digest", "meeting_followup")
+      for state in ("picked", "sent", "prepared")),
+    "case.p11.slack.posted.face",
+    "case.p11.slack.failed.face",
+    "case.p11.slack.unknown.face",
+    "case.p11.slack.too_large.face",
+    "case.p11.meeting_summary.meetings_record.no_summary",
+    "case.p11.r7.no_digest_slack",
+    "case.p11.r7.no_credentials_slack",
+    *(f"case.p11.slack.destination.{suffix}" for suffix in ("d1", "d2a", "d2b", "d3")),
+    "case.p11.transition.slack_limit",
+    "case.p11.transition.preview_changed",
+    "case.p11.transition.brief_last_ack",
+    "case.p11.transition.brief_last_defer",
+}
 
 
 # ``test_philo_graph_atlas`` parametrizes only the checks that are safe to run
@@ -66,7 +94,23 @@ def test_phase11_atlases_validate_against_schema_and_openapi(atlas_path: Path) -
 
 
 def _doc_cases() -> list[dict]:
-    return json.loads(ATLAS.read_text())["cases"]
+    return [
+        case for case in json.loads(ATLAS.read_text())["cases"]
+        if case["id"].startswith("case.p11.document.")
+    ]
+
+
+def _doc_operation_cases() -> list[dict]:
+    return [case for case in _doc_cases() if case["trigger"].get("kind") == "op"]
+
+
+def _all_face_cases() -> list[dict]:
+    return [
+        case
+        for path in (ATLAS, SLACK)
+        for case in json.loads(path.read_text())["cases"]
+        if case.get("viewports")
+    ]
 
 
 def _steps(case: dict) -> list[dict]:
@@ -74,7 +118,7 @@ def _steps(case: dict) -> list[dict]:
 
 
 def test_atlas_has_one_headless_case_for_each_new_source_kind() -> None:
-    cases = _doc_cases()
+    cases = _doc_operation_cases()
     assert len(cases) == 7
     names = {case["id"].split(".")[3] for case in cases}
     assert names == KINDS
@@ -82,8 +126,16 @@ def test_atlas_has_one_headless_case_for_each_new_source_kind() -> None:
     assert all(case["trigger"]["kind"] == "op" for case in cases)
 
 
+def test_face_case_manifest_covers_every_planned_seat_and_transition() -> None:
+    cases = _all_face_cases()
+    actual = {case["id"] for case in cases}
+    assert actual == FACE_CASE_IDS
+    assert all(case["viewports"] == [1440, 393] for case in cases)
+    assert all(case["trigger"].get("kind") == "ui" for case in cases)
+
+
 def test_each_source_uses_real_producer_preview_prepare_send_and_durable_reads() -> None:
-    for case in _doc_cases():
+    for case in _doc_operation_cases():
         steps = _steps(case)
         names = [step.get("name") for step in steps if step.get("kind") == "op"]
         assert "channel.preview" in names, case["id"]
@@ -110,7 +162,7 @@ def test_each_source_uses_real_producer_preview_prepare_send_and_durable_reads()
 def test_meeting_cases_use_import_and_engine_replay_boundary() -> None:
     fixture = (REPO / "tests/fixtures/philo11_documents/meeting_transcript.vtt").read_text()
     assert fixture.startswith("WEBVTT")
-    for case in _doc_cases():
+    for case in _doc_operation_cases():
         if case["id"].split(".")[3] not in {"meeting_summary", "meeting_digest", "meeting_followup", "meeting_decision", "decision_record"}:
             continue
         steps = _steps(case)
@@ -121,7 +173,7 @@ def test_meeting_cases_use_import_and_engine_replay_boundary() -> None:
 
 
 def test_meeting_decision_and_record_are_confirmed_by_real_proposal_route() -> None:
-    for case in _doc_cases():
+    for case in _doc_operation_cases():
         kind = case["id"].split(".")[3]
         if kind not in {"meeting_decision", "decision_record"}:
             continue
@@ -138,6 +190,37 @@ def test_meeting_decision_and_record_are_confirmed_by_real_proposal_route() -> N
             and s.get("path") == "/api/proposals/{proposal_id}/confirm"
             for s in case["setup"]
         )
+
+
+def test_room_record_face_cases_mint_the_meeting_row_through_its_producer() -> None:
+    for case in _doc_cases():
+        if not case["id"].startswith("case.p11.decision_record.room."):
+            continue
+        setup = case["setup"]
+        assert any(s.get("kind") == "op" and s.get("name") == "meeting.import" for s in setup), case["id"]
+        assert any(
+            s.get("kind") == "api"
+            and s.get("path") == "/api/projects/{project_id}/meetings/{meeting_id}"
+            for s in setup
+        ), case["id"]
+        assert any(
+            s.get("kind") == "cli" and s.get("action") == "queue_meeting_intelligence"
+            for s in setup
+        ), case["id"]
+        assert any(
+            s.get("kind") == "api" and s.get("path") == "/api/proposals/{proposal_id}/confirm"
+            for s in setup
+        ), case["id"]
+        assert any(
+            s.get("kind") == "api" and s.get("method") == "GET"
+            and s.get("path") == "/api/decision-records"
+            and s.get("capture_as") == "record_id"
+            for s in setup
+        ), case["id"]
+        attach = next(
+            s for s in setup if s.get("kind") == "op" and s.get("name") == "project.resource.add"
+        )
+        assert attach["args"]["resource_ref"] == "decision_record:{record_id}", case["id"]
 
 
 def test_long_slack_refusal_keeps_integer_limits_and_zero_history() -> None:
@@ -157,6 +240,128 @@ def test_long_slack_refusal_keeps_integer_limits_and_zero_history() -> None:
     assert size == {"source": "trigger", "path": "size", "value": 39001, "integer": True, "refused": {"code": "payload_too_large:slack"}}
     assert {"source": "observe", "path": "sends", "length": 0} in facts
     assert {"kind": "cli_calls", "argv_prefix": ["https", "POST", "hooks.slack.com"], "count": 0} in case["expected"]["predicate"]["predicates"]
+
+
+def test_meeting_summary_face_refusal_reads_preview_top_level_integer_limits() -> None:
+    data = json.loads(SLACK.read_text())
+    fixture = json.loads(
+        (REPO / "tests/fixtures/philo11_documents/meeting_summary_over_limit_reply.json").read_text()
+    )
+    assert len(fixture["summary"]) == 40998
+    for case_id in ("case.p11.transition.slack_limit", "case.p11.slack.too_large.face"):
+        case = next(c for c in data["cases"] if c["id"] == case_id)
+        assert case["trigger"]["trigger_route"] == {
+            "method": "POST",
+            "path": "/api/channels/preview",
+        }
+        assert any(
+            step.get("kind") == "boundary"
+            and step.get("substitute") == "engine_reply"
+            and step.get("reply") == "tests/fixtures/philo11_documents/meeting_summary_over_limit_reply.json"
+            for step in case["setup"]
+        )
+        assert any(step.get("name") == "meeting.summary.run" for step in case["setup"])
+        assert any(step.get("name") == "channel.save_destination" for step in case["setup"])
+        predicates = case["expected"]["predicate"]["predicates"]
+        refusal = next(p for p in predicates if p.get("kind") == "protocol_status")
+        assert refusal["body_integer_fields"] == ["size", "limit"]
+        assert refusal["body_fields"] == {"size": 41097, "limit": 39000}
+        assert any(p.get("value") == "TOO LARGE FOR SLACK" for p in predicates)
+        assert any(p.get("kind") == "protocol_reads" for p in predicates)
+
+
+def test_no_summary_case_reads_the_transcript_and_proves_no_send_well() -> None:
+    data = json.loads(SLACK.read_text())
+    case = next(c for c in data["cases"]
+                if c["id"] == "case.p11.meeting_summary.meetings_record.no_summary")
+    assert case["trigger"]["action"] == "fill"
+    assert case["trigger"]["value"] == "Document source review"
+    predicates = case["expected"]["predicate"]["predicates"]
+    assert {"kind": "selector_presence", "selector": "[data-testid=meeting-send-well]",
+            "present": False} in predicates
+    assert {"kind": "text_contains", "value": "TRANSCRIPT"} in predicates
+    assert any(p.get("kind") == "text_absent" and p.get("value") == "SEND"
+               for p in predicates)
+
+
+def test_slack_destination_save_uses_recording_edge_memory_store_and_hub_receipt() -> None:
+    data = json.loads(SLACK.read_text())
+    case = next(c for c in data["cases"]
+                if c["id"] == "case.p11.slack.destination.d2a")
+    assert any(step.get("kind") == "boundary"
+               and step.get("substitute") == "cli_runner"
+               and step.get("adapter") == "slack-https-edge"
+               for step in case["setup"])
+    assert case["trigger"]["trigger_route"] == {
+        "method": "POST", "path": "/api/channels/slack-webhooks"
+    }
+    status = next(p for p in case["expected"]["predicate"]["predicates"]
+                  if p.get("kind") == "protocol_status")
+    assert status["status"] == 200
+    assert status["body_fields"]["key_ref"] == {"nonempty": True}
+    assert {"kind": "cli_calls", "argv_prefix": ["https", "POST", "hooks.slack.com"],
+            "count": 0} in case["expected"]["predicate"]["predicates"]
+
+
+def test_slack_destination_check_reads_the_visible_result_at_mobile_width() -> None:
+    data = json.loads(SLACK.read_text())
+    case = next(c for c in data["cases"]
+                if c["id"] == "case.p11.slack.destination.d3")
+    assert case["expected"]["observe_at"] == "[data-testid=dest-check-result]"
+    assert case["trigger"]["then"][0]["selector"] == "[data-testid=dest-check-result]"
+
+
+def test_preview_changed_case_fences_refusal_refresh_and_successful_second_press() -> None:
+    data = json.loads(SLACK.read_text())
+    case = next(c for c in data["cases"]
+                if c["id"] == "case.p11.transition.preview_changed")
+    predicates = case["expected"]["predicate"]["predicates"]
+    sequence = next(p for p in predicates if p.get("kind") == "protocol_sequence")
+    assert sequence["expect"] == [
+        {"method": "POST", "path": "/api/channels/send", "status": 409},
+        {"method": "POST", "path": "/api/channels/preview", "status": 200},
+        {"method": "POST", "path": "/api/channels/send", "status": 200},
+    ]
+    assert case["expected"]["observe_at"].endswith("[data-testid=send-history]")
+    assert case["trigger"]["then"][-1]["action"] == "scroll_into_view"
+
+
+def test_transition_decision_setup_uses_the_route_creation_status() -> None:
+    data = json.loads(SLACK.read_text())
+    for case_id in (
+        "case.p11.transition.preview_changed",
+        "case.p11.transition.brief_last_ack",
+        "case.p11.transition.brief_last_defer",
+    ):
+        case = next(c for c in data["cases"] if c["id"] == case_id)
+        create = next(
+            step for step in case["setup"]
+            if step.get("kind") == "api" and step.get("method") == "POST"
+            and step.get("path") == "/api/decisions"
+        )
+        assert create["expect_status"] == 201, case_id
+        assert create["capture_path"] == "decision.id", case_id
+
+
+def test_last_brief_item_transitions_keep_the_same_send_receipt() -> None:
+    data = json.loads(SLACK.read_text())
+    for case_id in (
+        "case.p11.transition.brief_last_ack",
+        "case.p11.transition.brief_last_defer",
+    ):
+        case = next(c for c in data["cases"] if c["id"] == case_id)
+        assert case["expected"]["observe_at"].endswith("[data-testid=send-history]"), case_id
+        predicates = case["expected"]["predicate"]["predicates"]
+        assert any(p.get("kind") == "readable_text" and p.get("value") == "POSTED"
+                   for p in predicates), case_id
+        reads = next(p for p in predicates if p.get("kind") == "protocol_reads")
+        assert reads["expect"][0]["row"]["match"]["channel"] == "slack", case_id
+        assert any(p.get("kind") == "protocol_rows_same"
+                   and p.get("match", {}).get("document_ref") == "monday_brief:{brief_id}"
+                   for p in predicates), case_id
+        sent = next(step for step in case["setup"]
+                    if step.get("kind") == "api" and step.get("path") == "/api/channels/sends")
+        assert sent["capture_as"] == "send_id" and sent["capture_path"] == "send.id", case_id
 
 
 @pytest.mark.parametrize(

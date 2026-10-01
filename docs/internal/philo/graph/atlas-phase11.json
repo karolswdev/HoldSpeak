@@ -2,7 +2,7 @@
   "schema_version": 1,
   "atlas_version": "phase11-documents",
   "extends": "atlas-phase10.json",
-  "source_commit": "8a6b807d6682d9446d9b75216bbd3844d203cdcc",
+  "source_commit": "7d49cbeae8313d8724e3e72dde6e502234b25fcc",
   "cases": [
     {
       "id": "case.p11.document.monday_brief.op",
@@ -2473,6 +2473,4091 @@
       },
       "completion_bound_s": 180,
       "viewports": []
+    },
+    {
+      "id": "case.p11.monday_brief.chair.picked",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P11BriefDecision",
+            "status": "proposed",
+            "decision_markdown": "P11BriefDecisionText."
+          },
+          "expect_status": 201,
+          "why": "create a real proposed decision for the Monday brief",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "mint the Monday brief through the real brief producer",
+          "capture_as": "brief_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the freshly minted brief in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "wait for the real document destination row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": ".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "block": "start",
+          "why": "seat the open Send well above the fixed arrival footer",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+        "why": "pick P11-Folder through the real Send well",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/preview"
+        },
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/preview",
+              "status": 200,
+              "body_fields": {
+                "payload_digest": {
+                  "nonempty": true
+                }
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "Send"
+            },
+            {
+              "kind": "readable_text",
+              "value": "THIS DEVICE"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {},
+                    "count": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".chair [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verbs]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=monday_brief:{brief_id}"
+          }
+        ],
+        "words": "the owner picks P11-Folder for monday_brief:{brief_id}; the real preview opens with Send and the hub has no send row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.monday_brief.chair.sent",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P11BriefDecision",
+            "status": "proposed",
+            "decision_markdown": "P11BriefDecisionText."
+          },
+          "expect_status": 201,
+          "why": "create a real proposed decision for the Monday brief",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "mint the Monday brief through the real brief producer",
+          "capture_as": "brief_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the freshly minted brief in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "wait for the real document destination row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "pick P11-Folder and open the inline preview",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".chair [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+          "why": "wait for the real Send verb after preview",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": ".chair [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+          "block": "start",
+          "why": "seat the Send result above the fixed arrival footer",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".chair [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+        "why": "press Send through the real file channel",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/send"
+        },
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/send",
+              "status": 200,
+              "body_fields": {
+                "outcome": "sent",
+                "send.state": "sent",
+                "send.channel": "file",
+                "send.proof.path": {
+                  "nonempty": true
+                },
+                "send.proof.sha256": {
+                  "nonempty": true
+                },
+                "receipt.state": "succeeded",
+                "receipt.actor_kind": "owner"
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "SAVED"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "document_ref": "monday_brief:{brief_id}",
+                      "destination_id": "{dest_id}",
+                      "channel": "file",
+                      "state": "sent"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".chair [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-sent] .surface-state-chip",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=monday_brief:{brief_id}"
+          }
+        ],
+        "words": "the owner sends monday_brief:{brief_id} to P11-Folder; the file proof and owner receipt settle one durable sent row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.monday_brief.chair.prepared",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P11BriefDecision",
+            "status": "proposed",
+            "decision_markdown": "P11BriefDecisionText."
+          },
+          "expect_status": 201,
+          "why": "create a real proposed decision for the Monday brief",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "mint the Monday brief through the real brief producer",
+          "capture_as": "brief_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/sends",
+          "adapter": "http-route",
+          "body": {
+            "document_ref": "monday_brief:{brief_id}",
+            "destination_id": "{dest_id}"
+          },
+          "expect_status": 200,
+          "why": "prepare the real document through the channel producer",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the freshly minted brief in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".chair [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "wait for the real document destination row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".chair [data-seat=brief] [data-testid=prepared-row]",
+          "why": "wait for the producer's prepared row",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".chair [data-seat=brief] [data-testid=prepared-row]",
+        "why": "open the prepared document row through the real Send well",
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "PREPARED"
+            },
+            {
+              "kind": "readable_text",
+              "value": "BY YOU"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "document_ref": "monday_brief:{brief_id}",
+                      "destination_id": "{dest_id}",
+                      "channel": "file",
+                      "state": "prepared",
+                      "prepared_by.kind": "owner"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".chair [data-seat=brief] [data-testid=prepared-row]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=monday_brief:{brief_id}"
+          }
+        ],
+        "words": "the real producer prepares monday_brief:{brief_id}; the face shows PREPARED BY YOU and the durable prepared row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.monday_brief.intelligence.picked",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P11BriefDecision",
+            "status": "proposed",
+            "decision_markdown": "P11BriefDecisionText."
+          },
+          "expect_status": 201,
+          "why": "create a real proposed decision for the Monday brief",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "mint the Monday brief through the real brief producer",
+          "capture_as": "brief_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the freshly minted brief in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button.desk-dock-app",
+          "why": "open the Intelligence pullout",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .intelligence-pullout",
+          "why": "wait for the real Intelligence window",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Brief",
+          "why": "select the Brief view in Intelligence",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "wait for the real document destination row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "block": "start",
+          "why": "seat the open Send well above the fixed pullout footer",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-window [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+        "why": "pick P11-Folder through the real Send well",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/preview"
+        },
+        "then": [
+          {
+            "kind": "ui",
+            "action": "scroll_into_view",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verbs]",
+            "block": "center"
+          }
+        ],
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/preview",
+              "status": 200,
+              "body_fields": {
+                "payload_digest": {
+                  "nonempty": true
+                }
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "Send"
+            },
+            {
+              "kind": "readable_text",
+              "value": "THIS DEVICE"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {},
+                    "count": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".desk-window [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verbs]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=monday_brief:{brief_id}"
+          }
+        ],
+        "words": "the owner picks P11-Folder for monday_brief:{brief_id}; the real preview opens with Send and the hub has no send row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.monday_brief.intelligence.sent",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P11BriefDecision",
+            "status": "proposed",
+            "decision_markdown": "P11BriefDecisionText."
+          },
+          "expect_status": 201,
+          "why": "create a real proposed decision for the Monday brief",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "mint the Monday brief through the real brief producer",
+          "capture_as": "brief_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the freshly minted brief in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button.desk-dock-app",
+          "why": "open the Intelligence pullout",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .intelligence-pullout",
+          "why": "wait for the real Intelligence window",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Brief",
+          "why": "select the Brief view in Intelligence",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "wait for the real document destination row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "pick P11-Folder and open the inline preview",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+          "why": "wait for the real Send verb after preview",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+          "block": "start",
+          "why": "seat the Send result above the fixed pullout footer",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-window [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+        "why": "press Send through the real file channel",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/send"
+        },
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/send",
+              "status": 200,
+              "body_fields": {
+                "outcome": "sent",
+                "send.state": "sent",
+                "send.channel": "file",
+                "send.proof.path": {
+                  "nonempty": true
+                },
+                "send.proof.sha256": {
+                  "nonempty": true
+                },
+                "receipt.state": "succeeded",
+                "receipt.actor_kind": "owner"
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "SAVED"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "document_ref": "monday_brief:{brief_id}",
+                      "destination_id": "{dest_id}",
+                      "channel": "file",
+                      "state": "sent"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".desk-window [data-seat=brief] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-sent] .surface-state-chip",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=monday_brief:{brief_id}"
+          }
+        ],
+        "words": "the owner sends monday_brief:{brief_id} to P11-Folder; the file proof and owner receipt settle one durable sent row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.monday_brief.intelligence.prepared",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P11BriefDecision",
+            "status": "proposed",
+            "decision_markdown": "P11BriefDecisionText."
+          },
+          "expect_status": 201,
+          "why": "create a real proposed decision for the Monday brief",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "mint the Monday brief through the real brief producer",
+          "capture_as": "brief_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/sends",
+          "adapter": "http-route",
+          "body": {
+            "document_ref": "monday_brief:{brief_id}",
+            "destination_id": "{dest_id}"
+          },
+          "expect_status": 200,
+          "why": "prepare the real document through the channel producer",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the freshly minted brief in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button.desk-dock-app",
+          "why": "open the Intelligence pullout",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .intelligence-pullout",
+          "why": "wait for the real Intelligence window",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Brief",
+          "why": "select the Brief view in Intelligence",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=brief] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "wait for the real document destination row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=brief] [data-testid=prepared-row]",
+          "why": "wait for the producer's prepared row",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-window [data-seat=brief] [data-testid=prepared-row]",
+        "why": "open the prepared document row through the real Send well",
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "PREPARED"
+            },
+            {
+              "kind": "readable_text",
+              "value": "BY YOU"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "document_ref": "monday_brief:{brief_id}",
+                      "destination_id": "{dest_id}",
+                      "channel": "file",
+                      "state": "prepared",
+                      "prepared_by.kind": "owner"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".desk-window [data-seat=brief] [data-testid=prepared-row]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=monday_brief:{brief_id}"
+          }
+        ],
+        "words": "the real producer prepares monday_brief:{brief_id}; the face shows PREPARED BY YOU and the durable prepared row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.desk_decision.window.picked",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P11DeskDecision",
+            "status": "accepted",
+            "decision_markdown": "P11DeskDecisionText."
+          },
+          "expect_status": 201,
+          "why": "create the accepted desk decision through its real producer",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the decision producer result in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "open the Desk palette",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "P11DeskDecision",
+          "why": "find the real desk decision by its title",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-decision:{decision_id}']",
+          "why": "open the decision window through the Desk palette",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=desk-decision] [data-testid=send-well]",
+          "why": "wait for the decision window's document Send well",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=desk-decision] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "wait for the decision destination row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=desk-decision] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "block": "start",
+          "why": "seat the open Send well above the fixed pullout footer",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-window [data-seat=desk-decision] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+        "why": "pick the file destination in the decision window",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/preview"
+        },
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/preview",
+              "status": 200,
+              "body_fields": {
+                "payload_digest": {
+                  "nonempty": true
+                }
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "Send"
+            },
+            {
+              "kind": "readable_text",
+              "value": "THIS DEVICE"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {},
+                    "count": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verbs]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=desk_decision:{decision_id}"
+          }
+        ],
+        "words": "the owner picks P11-Folder for desk_decision:{decision_id}; the real preview opens with Send and the hub has no send row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.desk_decision.window.sent",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P11DeskDecision",
+            "status": "accepted",
+            "decision_markdown": "P11DeskDecisionText."
+          },
+          "expect_status": 201,
+          "why": "create the accepted desk decision through its real producer",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the decision producer result in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "open the Desk palette",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "P11DeskDecision",
+          "why": "find the real desk decision by its title",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-decision:{decision_id}']",
+          "why": "open the decision window through the Desk palette",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=desk-decision] [data-testid=send-well]",
+          "why": "wait for the decision window's document Send well",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=desk-decision] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "wait for the decision destination row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=desk-decision] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "pick the file destination before the owner press",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+          "why": "wait for the real inline Send verb",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+          "block": "start",
+          "why": "seat the Send result above the fixed pullout footer",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+        "why": "press Send through the real file channel",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/send"
+        },
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/send",
+              "status": 200,
+              "body_fields": {
+                "outcome": "sent",
+                "send.state": "sent",
+                "send.channel": "file",
+                "send.proof.path": {
+                  "nonempty": true
+                },
+                "send.proof.sha256": {
+                  "nonempty": true
+                },
+                "receipt.state": "succeeded",
+                "receipt.actor_kind": "owner"
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "SAVED"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "document_ref": "desk_decision:{decision_id}",
+                      "destination_id": "{dest_id}",
+                      "channel": "file",
+                      "state": "sent"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".desk-window [data-seat=desk-decision] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-sent] .surface-state-chip",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=desk_decision:{decision_id}"
+          }
+        ],
+        "words": "the owner sends desk_decision:{decision_id} to P11-Folder; the file proof and owner receipt settle one durable sent row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.desk_decision.window.prepared",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P11DeskDecision",
+            "status": "accepted",
+            "decision_markdown": "P11DeskDecisionText."
+          },
+          "expect_status": 201,
+          "why": "create the accepted desk decision through its real producer",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/sends",
+          "adapter": "http-route",
+          "body": {
+            "document_ref": "desk_decision:{decision_id}",
+            "destination_id": "{dest_id}"
+          },
+          "expect_status": 200,
+          "why": "prepare the real document through the channel producer",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the decision producer result in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "open the Desk palette",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "P11DeskDecision",
+          "why": "find the real desk decision by its title",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-decision:{decision_id}']",
+          "why": "open the decision window through the Desk palette",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=desk-decision] [data-testid=send-well]",
+          "why": "wait for the decision window's document Send well",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window [data-seat=desk-decision] [data-testid=prepared-row]",
+          "why": "wait for the prepared decision row",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-window [data-seat=desk-decision] [data-testid=prepared-row]",
+        "why": "open the prepared decision row through the real Send well",
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "PREPARED"
+            },
+            {
+              "kind": "readable_text",
+              "value": "BY YOU"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "document_ref": "desk_decision:{decision_id}",
+                      "destination_id": "{dest_id}",
+                      "channel": "file",
+                      "state": "prepared",
+                      "prepared_by.kind": "owner"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".desk-window [data-seat=desk-decision] [data-testid=prepared-row]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=desk_decision:{decision_id}"
+          }
+        ],
+        "words": "the real producer prepares desk_decision:{decision_id}; the face shows PREPARED BY YOU and the durable prepared row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.decision_record.intelligence.picked",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11Room"
+          },
+          "expect_status": 200,
+          "why": "create the real project Room for the decision record",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P11Record",
+            "status": "accepted",
+            "decision_markdown": "P11RecordText."
+          },
+          "expect_status": 201,
+          "why": "create the accepted desk decision behind the record",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/mcp",
+          "adapter": "http-route",
+          "body": {
+            "jsonrpc": "2.0",
+            "id": "p11-record-create",
+            "method": "tools/call",
+            "params": {
+              "name": "decision_record.create_from_desk",
+              "arguments": {
+                "decision_id": "{decision_id}"
+              }
+            }
+          },
+          "expect_status": 200,
+          "why": "mint the decision record through the real MCP producer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/decision-records",
+          "adapter": "http-route",
+          "body": null,
+          "expect_status": 200,
+          "why": "read back the real durable record id from its source row",
+          "capture_as": "record_id",
+          "capture_path": "/",
+          "capture_match": {
+            "source_type": "desk",
+            "source_id": "{decision_id}"
+          }
+        },
+        {
+          "kind": "op",
+          "name": "project.resource.add",
+          "adapter": "mcp-http",
+          "args": {
+            "project_id": "{project_id}",
+            "resource_ref": "decision_record:{record_id}",
+            "relationship": "member"
+          },
+          "why": "file the real decision record in the Room"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the durable decision record in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button.desk-dock-app",
+          "why": "open the Intelligence pullout",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .intelligence-pullout",
+          "why": "wait for the real Intelligence window",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Decisions",
+          "why": "select the Decisions view in Intelligence",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipts-results .surface-ledger-line:has-text('P11RecordText.')",
+          "why": "wait for the record in the Decisions list",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipts-results .surface-ledger-line:has-text('P11RecordText.')",
+          "why": "open the durable record detail",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "wait for the record destination row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "block": "start",
+          "why": "seat the open Send well above the fixed pullout footer",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+        "why": "pick the record's file destination",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/preview"
+        },
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/preview",
+              "status": 200,
+              "body_fields": {
+                "payload_digest": {
+                  "nonempty": true
+                }
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "Send"
+            },
+            {
+              "kind": "readable_text",
+              "value": "THIS DEVICE"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {},
+                    "count": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verbs]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=decision_record:{record_id}"
+          }
+        ],
+        "words": "the owner picks P11-Folder for decision_record:{record_id}; the real preview opens with Send and the hub has no send row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.decision_record.intelligence.sent",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11Room"
+          },
+          "expect_status": 200,
+          "why": "create the real project Room for the decision record",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P11Record",
+            "status": "accepted",
+            "decision_markdown": "P11RecordText."
+          },
+          "expect_status": 201,
+          "why": "create the accepted desk decision behind the record",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/mcp",
+          "adapter": "http-route",
+          "body": {
+            "jsonrpc": "2.0",
+            "id": "p11-record-create",
+            "method": "tools/call",
+            "params": {
+              "name": "decision_record.create_from_desk",
+              "arguments": {
+                "decision_id": "{decision_id}"
+              }
+            }
+          },
+          "expect_status": 200,
+          "why": "mint the decision record through the real MCP producer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/decision-records",
+          "adapter": "http-route",
+          "body": null,
+          "expect_status": 200,
+          "why": "read back the real durable record id from its source row",
+          "capture_as": "record_id",
+          "capture_path": "/",
+          "capture_match": {
+            "source_type": "desk",
+            "source_id": "{decision_id}"
+          }
+        },
+        {
+          "kind": "op",
+          "name": "project.resource.add",
+          "adapter": "mcp-http",
+          "args": {
+            "project_id": "{project_id}",
+            "resource_ref": "decision_record:{record_id}",
+            "relationship": "member"
+          },
+          "why": "file the real decision record in the Room"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the durable decision record in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button.desk-dock-app",
+          "why": "open the Intelligence pullout",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .intelligence-pullout",
+          "why": "wait for the real Intelligence window",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Decisions",
+          "why": "select the Decisions view in Intelligence",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipts-results .surface-ledger-line:has-text('P11RecordText.')",
+          "why": "wait for the record in the Decisions list",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipts-results .surface-ledger-line:has-text('P11RecordText.')",
+          "why": "open the durable record detail",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "wait for the record destination row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "pick the file destination before the owner press",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+          "why": "wait for the real record Send verb",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+          "block": "start",
+          "why": "seat the Send result above the fixed pullout footer",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+        "why": "press Send on the decision record through the real file channel",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/send"
+        },
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/send",
+              "status": 200,
+              "body_fields": {
+                "outcome": "sent",
+                "send.state": "sent",
+                "send.channel": "file",
+                "send.proof.path": {
+                  "nonempty": true
+                },
+                "send.proof.sha256": {
+                  "nonempty": true
+                },
+                "receipt.state": "succeeded",
+                "receipt.actor_kind": "owner"
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "SAVED"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "document_ref": "decision_record:{record_id}",
+                      "destination_id": "{dest_id}",
+                      "channel": "file",
+                      "state": "sent"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-sent] .surface-state-chip",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=decision_record:{record_id}"
+          }
+        ],
+        "words": "the owner sends decision_record:{record_id} to P11-Folder; the file proof and owner receipt settle one durable sent row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.decision_record.intelligence.prepared",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11Room"
+          },
+          "expect_status": 200,
+          "why": "create the real project Room for the decision record",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P11Record",
+            "status": "accepted",
+            "decision_markdown": "P11RecordText."
+          },
+          "expect_status": 201,
+          "why": "create the accepted desk decision behind the record",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/mcp",
+          "adapter": "http-route",
+          "body": {
+            "jsonrpc": "2.0",
+            "id": "p11-record-create",
+            "method": "tools/call",
+            "params": {
+              "name": "decision_record.create_from_desk",
+              "arguments": {
+                "decision_id": "{decision_id}"
+              }
+            }
+          },
+          "expect_status": 200,
+          "why": "mint the decision record through the real MCP producer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/decision-records",
+          "adapter": "http-route",
+          "body": null,
+          "expect_status": 200,
+          "why": "read back the real durable record id from its source row",
+          "capture_as": "record_id",
+          "capture_path": "/",
+          "capture_match": {
+            "source_type": "desk",
+            "source_id": "{decision_id}"
+          }
+        },
+        {
+          "kind": "op",
+          "name": "project.resource.add",
+          "adapter": "mcp-http",
+          "args": {
+            "project_id": "{project_id}",
+            "resource_ref": "decision_record:{record_id}",
+            "relationship": "member"
+          },
+          "why": "file the real decision record in the Room"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/sends",
+          "adapter": "http-route",
+          "body": {
+            "document_ref": "decision_record:{record_id}",
+            "destination_id": "{dest_id}"
+          },
+          "expect_status": 200,
+          "why": "prepare the real document through the channel producer",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the durable decision record in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button.desk-dock-app",
+          "why": "open the Intelligence pullout",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .intelligence-pullout",
+          "why": "wait for the real Intelligence window",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Decisions",
+          "why": "select the Decisions view in Intelligence",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipts-results .surface-ledger-line:has-text('P11RecordText.')",
+          "why": "wait for the record in the Decisions list",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipts-results .surface-ledger-line:has-text('P11RecordText.')",
+          "why": "open the durable record detail",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+          "why": "wait for the prepared record row",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+        "why": "open the prepared decision record row through the real Send well",
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "PREPARED"
+            },
+            {
+              "kind": "readable_text",
+              "value": "BY YOU"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "document_ref": "decision_record:{record_id}",
+                      "destination_id": "{dest_id}",
+                      "channel": "file",
+                      "state": "prepared",
+                      "prepared_by.kind": "owner"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".desk-window .receipt-detail [data-seat=decision-record] [data-testid=prepared-row]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=decision_record:{record_id}"
+          }
+        ],
+        "words": "the real producer prepares decision_record:{record_id}; the face shows PREPARED BY YOU and the durable prepared row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.decision_record.room.picked",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11Room"
+          },
+          "expect_status": 200,
+          "why": "create the real project Room for the decision record",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p11-06-model",
+              "profile_id": "p11-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "p11-06-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "select the owner disclosed summary route"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider edge while retaining the real queue and hub"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "import the transcript through the owner meeting route"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/meetings/{meeting_id}",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "file the imported meeting in the real Room before its proposal is bridged"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30,
+          "why": "wait for the real transcript importer"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the imported transcript has durable segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the route hash is read from the durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the route hash before the summary operation"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "p11-decision-plugin",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "meeting.plugin.decision_capture"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign the recorded provider to the real decision extractor"
+        },
+        {
+          "kind": "cli",
+          "action": "queue_meeting_intelligence",
+          "meeting_id": "{meeting_id}",
+          "adapter": "production-queue",
+          "why": "enqueue the imported transcript through the real Stop-style queue producer; the summary-only Run intentionally excludes plugins"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the replayed engine result to settle"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}/follow-through-proposals",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "proposals",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the actual plugin artifact and proposal bridge, not merely for summary text"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}/follow-through-proposals",
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "proposal_id",
+          "capture_path": "proposals",
+          "capture_match": {
+            "kind": "decision"
+          },
+          "why": "read the proposal minted by the real meeting intelligence chain",
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/proposals/{proposal_id}/confirm",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "confirmed_id",
+          "capture_path": "decision_record_id",
+          "why": "confirm the real meeting proposal through the proposal bridge"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/decision-records",
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "record_id",
+          "capture_path": "/",
+          "capture_match": {
+            "id": "{confirmed_id}"
+          },
+          "why": "read the confirmed meeting record before attaching it to the Room project",
+          "body": null
+        },
+        {
+          "kind": "op",
+          "name": "project.resource.add",
+          "args": {
+            "project_id": "{project_id}",
+            "resource_ref": "decision_record:{record_id}",
+            "relationship": "member"
+          },
+          "adapter": "mcp-http",
+          "why": "attach the confirmed meeting decision record to the Room project"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the durable decision record in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "open the Desk palette",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "P11Room",
+          "why": "find the real Room by its project name",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "open the project's Room through the Desk palette",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]",
+          "why": "wait for the Room body",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=decision-row]:has-text('Use one document registry for the channel sources')",
+          "why": "wait for the record's Room decision row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=decision-row]:has-text('Use one document registry for the channel sources')",
+          "why": "open the record row in place",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "wait for the record destination row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "block": "start",
+          "why": "seat the open Send well above the fixed Room footer",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+        "why": "pick the record's file destination",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/preview"
+        },
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/preview",
+              "status": 200,
+              "body_fields": {
+                "payload_digest": {
+                  "nonempty": true
+                }
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "Send"
+            },
+            {
+              "kind": "readable_text",
+              "value": "THIS DEVICE"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {},
+                    "count": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": "[data-testid=room-body] [data-seat=decision-record] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verbs]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=decision_record:{record_id}"
+          }
+        ],
+        "words": "the owner picks P11-Folder for decision_record:{record_id}; the real preview opens with Send and the hub has no send row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.decision_record.room.sent",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11Room"
+          },
+          "expect_status": 200,
+          "why": "create the real project Room for the decision record",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p11-06-model",
+              "profile_id": "p11-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "p11-06-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "select the owner disclosed summary route"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider edge while retaining the real queue and hub"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "import the transcript through the owner meeting route"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/meetings/{meeting_id}",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "file the imported meeting in the real Room before its proposal is bridged"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30,
+          "why": "wait for the real transcript importer"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the imported transcript has durable segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the route hash is read from the durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the route hash before the summary operation"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "p11-decision-plugin",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "meeting.plugin.decision_capture"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign the recorded provider to the real decision extractor"
+        },
+        {
+          "kind": "cli",
+          "action": "queue_meeting_intelligence",
+          "meeting_id": "{meeting_id}",
+          "adapter": "production-queue",
+          "why": "enqueue the imported transcript through the real Stop-style queue producer; the summary-only Run intentionally excludes plugins"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the replayed engine result to settle"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}/follow-through-proposals",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "proposals",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the actual plugin artifact and proposal bridge, not merely for summary text"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}/follow-through-proposals",
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "proposal_id",
+          "capture_path": "proposals",
+          "capture_match": {
+            "kind": "decision"
+          },
+          "why": "read the proposal minted by the real meeting intelligence chain",
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/proposals/{proposal_id}/confirm",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "confirmed_id",
+          "capture_path": "decision_record_id",
+          "why": "confirm the real meeting proposal through the proposal bridge"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/decision-records",
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "record_id",
+          "capture_path": "/",
+          "capture_match": {
+            "id": "{confirmed_id}"
+          },
+          "why": "read the confirmed meeting record before attaching it to the Room project",
+          "body": null
+        },
+        {
+          "kind": "op",
+          "name": "project.resource.add",
+          "args": {
+            "project_id": "{project_id}",
+            "resource_ref": "decision_record:{record_id}",
+            "relationship": "member"
+          },
+          "adapter": "mcp-http",
+          "why": "attach the confirmed meeting decision record to the Room project"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the durable decision record in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "open the Desk palette",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "P11Room",
+          "why": "find the real Room by its project name",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "open the project's Room through the Desk palette",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]",
+          "why": "wait for the Room body",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=decision-row]:has-text('Use one document registry for the channel sources')",
+          "why": "wait for the record's Room decision row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=decision-row]:has-text('Use one document registry for the channel sources')",
+          "why": "open the record row in place",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "wait for the record destination row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=destination-row]:has([data-destination='P11-Folder'])",
+          "why": "pick the file destination before the owner press",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+          "why": "wait for the real record Send verb",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+          "block": "start",
+          "why": "seat the Send result above the fixed Room footer",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-verb]",
+        "why": "press Send on the decision record through the real file channel",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/send"
+        },
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/send",
+              "status": 200,
+              "body_fields": {
+                "outcome": "sent",
+                "send.state": "sent",
+                "send.channel": "file",
+                "send.proof.path": {
+                  "nonempty": true
+                },
+                "send.proof.sha256": {
+                  "nonempty": true
+                },
+                "receipt.state": "succeeded",
+                "receipt.actor_kind": "owner"
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "SAVED"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "document_ref": "decision_record:{record_id}",
+                      "destination_id": "{dest_id}",
+                      "channel": "file",
+                      "state": "sent"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": "[data-testid=room-body] [data-seat=decision-record] [data-testid=send-open][data-destination='P11-Folder'] [data-testid=send-sent] .surface-state-chip",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=decision_record:{record_id}"
+          }
+        ],
+        "words": "the owner sends decision_record:{record_id} to P11-Folder; the file proof and owner receipt settle one durable sent row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p11.decision_record.room.prepared",
+      "job": "p11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.documents.p11_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11Room"
+          },
+          "expect_status": 200,
+          "why": "create the real project Room for the decision record",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p11-06-model",
+              "profile_id": "p11-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "p11-06-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "select the owner disclosed summary route"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider edge while retaining the real queue and hub"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "import the transcript through the owner meeting route"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/meetings/{meeting_id}",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "file the imported meeting in the real Room before its proposal is bridged"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30,
+          "why": "wait for the real transcript importer"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the imported transcript has durable segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the route hash is read from the durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the route hash before the summary operation"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "p11-decision-plugin",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "meeting.plugin.decision_capture"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign the recorded provider to the real decision extractor"
+        },
+        {
+          "kind": "cli",
+          "action": "queue_meeting_intelligence",
+          "meeting_id": "{meeting_id}",
+          "adapter": "production-queue",
+          "why": "enqueue the imported transcript through the real Stop-style queue producer; the summary-only Run intentionally excludes plugins"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the replayed engine result to settle"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}/follow-through-proposals",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "proposals",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the actual plugin artifact and proposal bridge, not merely for summary text"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}/follow-through-proposals",
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "proposal_id",
+          "capture_path": "proposals",
+          "capture_match": {
+            "kind": "decision"
+          },
+          "why": "read the proposal minted by the real meeting intelligence chain",
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/proposals/{proposal_id}/confirm",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "confirmed_id",
+          "capture_path": "decision_record_id",
+          "why": "confirm the real meeting proposal through the proposal bridge"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/decision-records",
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "record_id",
+          "capture_path": "/",
+          "capture_match": {
+            "id": "{confirmed_id}"
+          },
+          "why": "read the confirmed meeting record before attaching it to the Room project",
+          "body": null
+        },
+        {
+          "kind": "op",
+          "name": "project.resource.add",
+          "args": {
+            "project_id": "{project_id}",
+            "resource_ref": "decision_record:{record_id}",
+            "relationship": "member"
+          },
+          "adapter": "mcp-http",
+          "why": "attach the confirmed meeting decision record to the Room project"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P11-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/sends",
+          "adapter": "http-route",
+          "body": {
+            "document_ref": "decision_record:{record_id}",
+            "destination_id": "{dest_id}"
+          },
+          "expect_status": 200,
+          "why": "prepare the real document through the channel producer",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the durable decision record in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "open the Desk palette",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "P11Room",
+          "why": "find the real Room by its project name",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "open the project's Room through the Desk palette",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]",
+          "why": "wait for the Room body",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=decision-row]:has-text('Use one document registry for the channel sources')",
+          "why": "wait for the record's Room decision row",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=decision-row]:has-text('Use one document registry for the channel sources')",
+          "why": "open the record row in place",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=prepared-row]",
+          "why": "wait for the prepared record row",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=room-body] [data-seat=decision-record] [data-testid=prepared-row]",
+        "why": "open the prepared decision record row through the real Send well",
+        "optional": true
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "PREPARED"
+            },
+            {
+              "kind": "readable_text",
+              "value": "BY YOU"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "document_ref": "decision_record:{record_id}",
+                      "destination_id": "{dest_id}",
+                      "channel": "file",
+                      "state": "prepared",
+                      "prepared_by.kind": "owner"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": "[data-testid=room-body] [data-seat=decision-record] [data-testid=prepared-row]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=decision_record:{record_id}"
+          }
+        ],
+        "words": "the real producer prepares decision_record:{record_id}; the face shows PREPARED BY YOU and the durable prepared row"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
     }
   ],
   "states": [
@@ -2488,7 +6573,7 @@
         {
           "path": "holdspeak/services/document_sources.py",
           "symbol": "DOCUMENT_SOURCES",
-          "line": 360,
+          "line": 437,
           "claim": "the registry contains the seven new document source kinds"
         },
         {
@@ -2506,7 +6591,7 @@
         {
           "path": "scripts/graph_walk.py",
           "symbol": "def _op_step",
-          "line": 4581,
+          "line": 4685,
           "claim": "the atlas rig executes canonical operations through the hub"
         }
       ],
@@ -2517,7 +6602,22 @@
         "case.p11.document.meeting_digest.op",
         "case.p11.document.meeting_followup.op",
         "case.p11.document.meeting_decision.op",
-        "case.p11.document.decision_record.op"
+        "case.p11.document.decision_record.op",
+        "case.p11.monday_brief.chair.picked",
+        "case.p11.monday_brief.chair.sent",
+        "case.p11.monday_brief.chair.prepared",
+        "case.p11.monday_brief.intelligence.picked",
+        "case.p11.monday_brief.intelligence.sent",
+        "case.p11.monday_brief.intelligence.prepared",
+        "case.p11.desk_decision.window.picked",
+        "case.p11.desk_decision.window.sent",
+        "case.p11.desk_decision.window.prepared",
+        "case.p11.decision_record.intelligence.picked",
+        "case.p11.decision_record.intelligence.sent",
+        "case.p11.decision_record.intelligence.prepared",
+        "case.p11.decision_record.room.picked",
+        "case.p11.decision_record.room.sent",
+        "case.p11.decision_record.room.prepared"
       ]
     }
   ],

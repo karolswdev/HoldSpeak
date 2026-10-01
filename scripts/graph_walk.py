@@ -168,12 +168,15 @@ PREDICATES (`expected.predicate.kind`):
   protocol_rows_gone {collection, match, min_gone, identity?}
                                  a NAMED row present before and absent after,
                                  by identity — never merely "fewer rows".
-  protocol_status {method, path, status, body_contains?, body_excludes?}
+  protocol_status {method, path, status, body_contains?, body_excludes?, body_integer_fields?}
                                  the TRIGGER's own response status (a 4xx
                                  refusal is a promised result). The call is
                                  never re-fired; the body sha256 is recorded,
                                  and `body_contains` proves the refusal NAMES
                                  what is missing rather than merely failing.
+                                 `body_integer_fields` requires named top-level
+                                 JSON fields to be integers (not booleans or
+                                 numeric strings).
                                  `body_excludes` names what the body must NOT
                                  carry (a previous result's id: a NEW result).
   protocol_field {path, value | absent}
@@ -1202,6 +1205,18 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
              expected.get("pending_marker"),
              _value_selector(predicate)],
         )
+        predicate_parts = (predicate.get("predicates", [])
+                           if isinstance(predicate, dict)
+                           and predicate.get("kind") == "all_of"
+                           else [predicate])
+        selector_presence: dict[str, bool] = {}
+        for part in predicate_parts:
+            if (isinstance(part, dict)
+                    and part.get("kind") == "selector_presence"):
+                selector = str(part.get("selector") or "")
+                selector_presence[selector] = page.locator(selector).count() > 0
+        if selector_presence:
+            raw["selector_presence"] = selector_presence
     raw["observe_at"] = expected.get("observe_at")
     if page is not None and isinstance(predicate, dict) and predicate.get("first_paint_after"):
         raw["transition_probe"] = page.evaluate("window.__graphFirstPaint || null")
@@ -1553,6 +1568,67 @@ def check_predicate(
             readings.append(f"{part.get('kind')}: {why}")
         return True, "all_of: " + " | ".join(readings)
 
+    if kind == "selector_presence":
+        selector = str(predicate.get("selector") or "")
+        states = after.get("selector_presence") or {}
+        if selector not in states:
+            return False, f"BLOCKED: no DOM presence observation for {selector!r}"
+        got = bool(states[selector])
+        want = bool(predicate.get("present"))
+        return got is want, (
+            f"selector {selector!r} is {'present' if got else 'absent'}, "
+            f"wanted {'present' if want else 'absent'}")
+
+    if kind == "protocol_sequence":
+        capture = after.get("trigger_response_capture") or {}
+        seen = capture.get("seen") or []
+        expected = predicate.get("expect") or []
+        routes = {(str(item.get("method", "")).upper(), str(item.get("path", "")))
+                  for item in expected if isinstance(item, dict)}
+        actual = [
+            {"method": str(item.get("method", "")).upper(),
+             "path": str(item.get("path", "")),
+             "status": item.get("status")}
+            for item in seen
+            if item.get("after_arming") is True
+            and (str(item.get("method", "")).upper(), str(item.get("path", ""))) in routes
+        ]
+        if not expected:
+            return False, "BLOCKED: protocol_sequence needs a non-empty `expect` list"
+        if actual != expected:
+            return False, f"same-origin response sequence was {actual!r}, wanted {expected!r}"
+        return True, f"same-origin response sequence matches {expected!r}"
+
+    if kind == "protocol_rows_same":
+        read_index = predicate.get("read_index", 0)
+        if not isinstance(read_index, int) or read_index < 0:
+            return False, "BLOCKED: protocol_rows_same needs a non-negative read_index"
+        match = predicate.get("match") or {}
+        collection = str(predicate.get("collection") or "")
+        identity = str(predicate.get("identity") or "id")
+        snapshots = []
+        for label, record in (("before", before), ("after", after)):
+            api_reads = record.get("api_reads") or []
+            if len(api_reads) <= read_index:
+                return False, f"{label} has no protocol read at index {read_index}"
+            read = api_reads[read_index]
+            if read.get("status") != 200:
+                return False, f"{label} read answered {read.get('status')!r}, wanted 200"
+            found, rows = _json_path(read.get("payload"), collection)
+            if not found or not isinstance(rows, list):
+                return False, f"{label} read has no row list at {collection!r}"
+            selected = [row for row in rows if _op_row_matches(row, match)]
+            if len(selected) != 1:
+                return False, (f"{label} read has {len(selected)} row(s) matching "
+                               f"{match!r}; exactly one required")
+            row_id = _row_identity(selected[0], identity)
+            if not row_id:
+                return False, f"{label} row has no {identity!r} identity"
+            snapshots.append(row_id)
+        return snapshots[0] == snapshots[1], (
+            f"{collection} row identity before={snapshots[0]!r}, "
+            f"after={snapshots[1]!r}")
+
     if kind == "cli_calls":
         # PHILO-10-05: the recording runner's log (every hub process of the run).
         calls = after.get("cli_calls")
@@ -1646,10 +1722,17 @@ def check_predicate(
                 return False, (
                     f"{reading}; body field {field!r} = {value!r}, "
                     f"wanted {wanted!r}")
-        if "body_contains" in predicate or body_fields:
-            return True, (
-                f"{reading}; response body contains the declared admission "
-                "facts")
+        integer_fields = predicate.get("body_integer_fields") or []
+        if not isinstance(integer_fields, list) or any(not isinstance(field, str) for field in integer_fields):
+            return False, f"{reading}; body_integer_fields must be a list of field paths"
+        for field in integer_fields:
+            found, value = _json_path(answer.get("body"), field)
+            if not found or type(value) is not int:
+                return False, (
+                    f"{reading}; body field {field!r} is not an integer "
+                    f"({value!r})")
+        if "body_contains" in predicate or body_fields or integer_fields:
+            return True, f"{reading}; response body matches its declared fields"
         return True, reading
 
     if kind == "protocol_rows_gone":
@@ -4183,7 +4266,7 @@ def unresolved(value: Any) -> list[str]:
 #: The rig's CLOSED ui vocabulary. A step naming anything else is blocked
 #: before it fires, so a typo cannot silently become a no-op that "passed".
 UI_ACTIONS = frozenset({
-    "goto", "reload", "click", "click_role", "fill", "press", "wait_for",
+    "goto", "reload", "click", "click_role", "fill", "select_option", "press", "wait_for",
     # PHILO-7-03: keyboard travel to a control (the owner's Tab), e.g. the
     # Floor's world chip, which only surfaces when focused (desk.css:171).
     "focus",
@@ -4332,6 +4415,14 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         raise Blocked(
             f"ui action {action!r} is not in the rig's vocabulary "
             f"{sorted(UI_ACTIONS)}; nothing was fired")
+    if action == "select_option":
+        selector = step.get("selector")
+        value = step.get("value")
+        if (not isinstance(selector, str) or not selector.strip()
+                or not isinstance(value, str) or not value.strip()):
+            raise Blocked(
+                "ui action 'select_option' needs a nonempty selector and value; "
+                f"got selector={selector!r} value={value!r}; nothing was fired")
     if action == "scroll_into_view" and (not step.get("selector")
                                          or step.get("block", "center") not in ("start", "center", "end")):
         # PHILO-10-05: a malformed seat is refused by name before anything is touched.
@@ -4341,6 +4432,9 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         raise Blocked("headless mode refuses UI/face steps: no Page is opened")
     optional = bool(step.get("optional"))
     record = {"kind": "ui", "action": action, "adapter": step.get("adapter", "ui-pointer")}
+    if action == "select_option":
+        record["selector"] = step["selector"]
+        record["value"] = step["value"]
     # PHILO-7-03: a step the face needs at ONE width only (at 393 the Floor
     # opens as a list, so the owner switches to the spatial view first). The
     # step is recorded as skipped at every other width, never silently.
@@ -4397,8 +4491,18 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
             record["name"] = step["name"]
         elif action == "fill":
             page.locator(step["selector"]).first.fill(step["value"], timeout=timeout)
+        elif action == "select_option":
+            page.locator(step["selector"]).first.select_option(step["value"], timeout=timeout)
         elif action == "press":
-            page.keyboard.press(step["key"])
+            # PHILO-11-06: if the case names a control, deliver the key to
+            # that control. A global keyboard press can land after focus has
+            # moved during the preceding setup/observation boundary.
+            selector = step.get("selector")
+            if selector:
+                page.locator(selector).first.press(step["key"], timeout=timeout)
+                record["selector"] = selector
+            else:
+                page.keyboard.press(step["key"])
             record["key"] = step["key"]
         elif action == "focus":
             page.locator(step["selector"]).first.focus(timeout=timeout)
@@ -4607,6 +4711,16 @@ def _op_step(step: dict[str, Any], hub: Any, provenance: dict[str, Any],
         args = {**args, "path": str(candidate)}
     result = _op_call(hub, name, args)
     record = {"kind": "op", "adapter": step.get("adapter", "mcp-http"), **result}
+    if result.get("refusal") and step.get("optional"):
+        record.update(optional=True, done=False,
+                      skipped="the named operation refusal is retained; no value was captured")
+        if name == "meeting.import" and isinstance(raw_args, dict):
+            declared_path = raw_args.get("path")
+            if isinstance(declared_path, str):
+                fixture_hash = provenance.get("fixture_hashes", {}).get(declared_path)
+                if fixture_hash:
+                    record["fixture"] = {"path": declared_path, "sha256": fixture_hash}
+        return record
     if name == "meeting.import" and isinstance(raw_args, dict):
         declared_path = raw_args.get("path")
         if isinstance(declared_path, str):
@@ -4729,6 +4843,11 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
     step = substitute(step, variables)
     missing = unresolved({f: step.get(f) for f in _SUBSTITUTED_FIELDS})
     if missing:
+        if step.get("optional"):
+            return {"kind": kind, "adapter": step.get("adapter"),
+                    "optional": True, "done": False,
+                    "skipped": ("unresolved placeholder(s) "
+                                f"{sorted(set(missing))}; no request was sent")}
         raise Blocked(
             f"unresolved placeholder(s) {sorted(set(missing))} in the {kind} "
             "step; nothing was sent. A `{name}` is filled by an earlier step's "
@@ -4779,6 +4898,11 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
                       json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()}
         want = step.get("expect_status")
         if want is not None and status != want:
+            if step.get("optional"):
+                record.update(optional=True, done=False,
+                              skipped=f"{step['method']} {step['path']} answered "
+                                      f"{status}, wanted {want}; response retained")
+                return record
             raise Blocked(f"{step['method']} {step['path']} answered {status}, wanted {want}: {record['response']}"[:500])
         # A SETUP step that errors means the preconditions were never reached,
         # so the case is blocked. A TRIGGER's error status is the observation
@@ -5722,7 +5846,9 @@ def exercise(
         answer = trigger_response
         if answer is None and ui_capture is not None:
             answer = ui_capture.chosen()
-            recorder.record["trigger_response_capture"] = ui_capture.record()
+            response_capture = ui_capture.record()
+            recorder.record["trigger_response_capture"] = response_capture
+            snap["trigger_response_capture"] = response_capture
         if answer is not None:
             snap["trigger_response"] = answer
         if trigger_record.get("kind") == "op":
