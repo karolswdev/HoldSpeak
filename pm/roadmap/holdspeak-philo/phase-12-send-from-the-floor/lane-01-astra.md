@@ -1,12 +1,32 @@
 # PHILO-12-01 — Astra's lane record
 
-**Status: DRAFT — UNCHECKED, awaiting Muad'Dib's counsel on built.**
+**Status: built counsel r1 is RATIFY-WITH-CONDITIONS; C1 and C2 are paid in Round Two.**
 
 LANE: PHILO-12-01. Story 01. Worktree `/Users/karol/dev/tools/wt-philo-12-01`; branch `feat/philo-12-01`; base `27d8bf1acffa2a93637e42724949f0426b1dd9b6`. Implementation was delegated to three `gpt-5.6-luna` workers at `xhigh`; Astra inspected the code, raw test output and glass. Orchestrator session `01a0f542-941a-7541-a569-e7f94b7f6874`; [runtime model records](assets/story-01-logs/runtime-models.json) confirm `gpt-6-astra` / `xhigh` and all three `gpt-5.6-luna` / `xhigh` workers.
 
 OUTCOME: built against the ratified design. Artifact text is the ninth channel document source. Meeting synthesis, run output and Ask Keep all use stored text; only the exact canonical footer matching stored lineage is removed. Missing, empty, non-text and oversized artifacts refuse by name. The brief route reads the exact stored ID. The Floor binding accepts resolved facts, performs no reads, keeps unread/loading/failed facts pending, and separates projection layout keys from send identities. No face file changed. Preview remains exempt under XI.5; prepare and Send retain their existing authority.
 
 PROOF: [evidence-story-01.md](evidence-story-01.md) holds the Delivery Workbench captures. Raw worker output and repeatable command scripts are in [assets/story-01-logs](assets/story-01-logs); actual atlas observations and shots are in [assets/story-01-walks](assets/story-01-walks).
+
+## Round two — built counsel r1
+
+LANE: PHILO-12-01, Story 01; worktree `/Users/karol/dev/tools/wt-philo-12-01`, branch `feat/philo-12-01`, PR #717.
+
+OUTCOME: Muad'Dib's accepted r1 counsel is recorded verbatim in [checks/story-01-built-muaddib-r1.md](checks/story-01-built-muaddib-r1.md). C1 and C2 are paid. The public exact-id service read is shared by the route and Monday Brief renderer; no private service reach-in remains.
+
+PROOF:
+
+- C1: regenerated `docs/API_REFERENCE.md`, `docs/generated/api-reference.json`, and `docs/generated/boundary-candidates.json`. Added `philo_api_reference.py` and `philo_boundary_census.py` to the captured generated-checks script. All twelve invocations under `.github/workflows/test.yml:26-38` pass, including the navigation suite, both updated generators, the census/reference checks and documentation coverage.
+- C2: `MondayBriefService.get_by_id(brief_id)` performs the exact-id read. The route retains 401 authentication and `404 brief_not_found`; the document source retains `document_not_found`. The real-producer route test confirms the older stored brief returns the same JSON answer after a later brief is generated.
+- Parent focused selection: 238 collected and passed. Brief route file: 3 collected and passed. Both captures use an isolated HOME and basetemp within it.
+- Generated checks, including both added checks, plus `dw check` and `git diff --check`: passed. `philo_graph_reference.py --check` also passes after regenerating the graph join for updated atlas references.
+- The Round Two service change was delegated to `gpt-5.6-luna` at `xhigh`; Astra reviewed the diff and reran the focused fences.
+
+LEDGER: the first 238-test rerun found one source-reference fence red after the new method shifted lines in `monday_brief_service.py`; the atlas now cites `is_empty` at line 1530 and `SHELF_STATES` at line 1454, in the same commit. The unchanged guard then passed in all 238 cases. `philo_graph_reference.py --check` first reported generated graph drift from those exact atlas changes; the graph join was regenerated and its check passes. No full Python suite was rerun in Round Two, per instruction; Muad'Dib owns the full run on the merged head. The Phase 12 graph census diagnostic remains assigned to story 05.
+
+AMENDMENTS: no authority or design change. C2 moves the exact-id SQL read into the public service; the existing route and source consume it. API references, boundary candidates and the graph join were regenerated; only the two shifted atlas line pointers changed.
+
+UNKNOWN: the full Python suite result on the merged head is pending with Muad'Dib. The seven intermittent class-(c) failures from Round One remain unexplained. Stories 03–04 still own artifact-face integration. CI was not watched; no merge is claimed.
 
 | Claim | Observed proof |
 |---|---|
@@ -49,4 +69,4 @@ AMENDMENTS: none. The dispatch authorizes story 01 now alongside the other named
 
 TUESDAY: the source and binding are ready for story 03 to let the owner pick an artifact and preview it; the existing project-update Send still ends with a visible saved receipt at both widths.
 
-UNKNOWN: Muad'Dib's counsel on built is outstanding. The seven intermittent full-suite failure causes remain unproved; serial passes classify them under ORCHESTRATION §4, not as repaired behavior. Artifact face/menu/drop use belongs to stories 03–04. External-channel sends, a cold external Codex sitting and owner observation are not claimed here. CI was not watched; no merge was performed and no substitute check was invoked.
+UNKNOWN: the seven intermittent full-suite failure causes remain unproved; serial passes classify them under ORCHESTRATION §4, not as repaired behavior. Artifact face/menu/drop use belongs to stories 03–04. External-channel sends, a cold external Codex sitting and owner observation are not claimed here. CI was not watched; the full Python suite remains with Muad'Dib on the merged head.

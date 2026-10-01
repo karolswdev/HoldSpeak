@@ -310,11 +310,9 @@ class _MondayBriefSource:
     def render(self, db: Any, source_id: str) -> Document:
         from .monday_brief_service import MondayBriefService
 
-        with db._connection() as conn:
-            row = conn.execute("SELECT * FROM monday_briefs WHERE id = ?", (source_id,)).fetchone()
-            if row is None:
-                raise _document_not_found("Monday brief", source_id)
-            brief = MondayBriefService._load_brief(conn, row)
+        brief = MondayBriefService(db).get_by_id(source_id)
+        if brief is None:
+            raise _document_not_found("Monday brief", source_id)
         overlay = _brief_person_overlay(db, brief)
         period = _date_text(brief.period_end) or _date_text(brief.generated_at)
         title = f"Monday Brief — {period}" if period else "Monday Brief"

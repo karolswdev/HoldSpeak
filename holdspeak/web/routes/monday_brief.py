@@ -163,13 +163,9 @@ def build_monday_brief_router(ctx: WebContext) -> APIRouter:
 
         registry = ops()
         service = registry.target("brief.latest")
-        with service._db._connection() as conn:
-            row = conn.execute(
-                "SELECT * FROM monday_briefs WHERE id = ?", (brief_id,)
-            ).fetchone()
-            if row is None:
-                raise HTTPException(status_code=404, detail="brief_not_found")
-            brief = service._load_brief(conn, row)
+        brief = service.get_by_id(brief_id)
+        if brief is None:
+            raise HTTPException(status_code=404, detail="brief_not_found")
 
         result = asdict(brief)
         result["period_label"] = _period_label(result)

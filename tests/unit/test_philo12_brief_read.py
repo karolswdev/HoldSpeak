@@ -48,6 +48,10 @@ def test_exact_id_read_keeps_an_older_brief_after_a_newer_brief_exists(rig) -> N
     first_response = hub.client.post("/api/brief/generate")
     assert first_response.status_code == 200, first_response.text
     first = first_response.json()
+    previous_latest_response = hub.client.get("/api/brief/latest")
+    assert previous_latest_response.status_code == 200, previous_latest_response.text
+    previous_latest = previous_latest_response.json()
+    assert previous_latest == first
 
     hub.db.desk_decisions.upsert(
         decision_id="philo12-read-decision",
@@ -63,6 +67,7 @@ def test_exact_id_read_keeps_an_older_brief_after_a_newer_brief_exists(rig) -> N
     exact = hub.client.get(f"/api/brief/{first['id']}")
     assert exact.status_code == 200, exact.text
     assert exact.json() == first
+    assert exact.json() == previous_latest
     assert hub.client.get("/api/brief/latest").json()["id"] == second["id"]
 
 

@@ -766,7 +766,7 @@ Every red is classified in [lane-01-astra.md](lane-01-astra.md), with exact node
 
 [Raw source/lifecycle/brief/binding output](assets/story-01-logs/) includes collection, real-producer reds and greens, and the canonical-footer seam's separate red/green. [Actual atlas observations and shots](assets/story-01-walks/) retain artifact preview/prepare red and green runs, plus the existing project-update Send receipt at 1440 and 393. Astra inspected all four glass shots. The artifact face belongs to story 03. The lane record maps each acceptance criterion to its observed proof and names the rejected proof attempts.
 
-All worker model records, scripts and verification limits are retained beside this evidence. DRAFT / UNCHECKED — awaiting Muad'Dib's counsel on built.
+The first-round worker model records, scripts and verification limits are retained beside this evidence. Round two delegated the public brief-service seam to `gpt-5.6-luna` at `xhigh`; the accepted built counsel and C1/C2 verification follow below. The Phase 12 story 03/04 glass path remains out of this story.
 
 ### Captured run — 2026-10-01T04:07:19Z
 
@@ -794,5 +794,716 @@ note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
 note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
 note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
 graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+dw check: ok
+```
+
+### Captured run — 2026-10-01T04:28:06Z
+
+- **Command:** `uv run --python 3.13 python scripts/philo_api_reference.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+API reference generated
+```
+
+### Captured run — 2026-10-01T04:28:17Z
+
+- **Command:** `uv run --python 3.13 python scripts/philo_boundary_census.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+Boundary candidate census generated
+```
+
+### Captured run — 2026-10-01T04:28:30Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/assets/story-01-logs/documentation-navigation.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.003s
+
+OK
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+Repository census: 5 outputs verified.
+API reference checked
+Boundary candidate census checked
+Doctor reference: 41 check functions
+Configuration declaration reference is current
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+Architecture metadata: 4 shard(s), 149 record(s)
+Architecture metadata validation passed.
+Architecture documentation checked (10 outputs).
+Documentation coverage checked.
+```
+
+### Captured run — 2026-10-01T04:29:33Z
+
+- **Command:** `bash .tmp/philo-12-01/focused.sh`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+238 tests collected in 1.47s
+........................................................................ [ 30%]
+...............................................................F........ [ 60%]
+........................................................................ [ 90%]
+......................                                                   [100%]
+=================================== FAILURES ===================================
+_________ test_every_source_reference_lands_on_its_symbol[atlas.json] __________
+
+every_atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_every_source_reference_lands_on_its_symbol(every_atlas: dict) -> None:
+        """A line number is evidence, not identity (brief section 1).
+
+        The cited line must still hold the cited symbol, or the reference has
+        drifted and the claim behind it is no longer proven.
+        """
+        problems: list[str] = []
+        for state in every_atlas["states"]:
+            for ref in state["sources"]:
+                target = REPO / ref["path"]
+                if not target.is_file():
+                    problems.append(f"{state['id']}: missing file {ref['path']}")
+                    continue
+                lines = target.read_text(errors="replace").splitlines()
+                if not 1 <= ref["line"] <= len(lines):
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} is past the end of the file"
+                    )
+                    continue
+                line = lines[ref["line"] - 1]
+                if ref["symbol"] not in line:
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} no longer holds "
+                        f"{ref['symbol']!r} (line reads {line.strip()[:80]!r})"
+                    )
+>       assert not problems, "\n".join(problems)
+E       AssertionError: state.briefs.generated_empty: holdspeak/services/monday_brief_service.py:1522 no longer holds 'is_empty' (line reads ')')
+E         state.briefs.item.deferred: holdspeak/services/monday_brief_service.py:1446 no longer holds 'SHELF_STATES' (line reads '')
+E       assert not ["state.briefs.generated_empty: holdspeak/services/monday_brief_service.py:1522 no longer holds 'is_empty' (line reads....briefs.item.deferred: holdspeak/services/monday_brief_service.py:1446 no longer holds 'SHELF_STATES' (line reads '')"]
+
+tests/unit/test_philo_graph_atlas.py:279: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas.json]
+1 failed, 237 passed in 72.62s (0:01:12)
+```
+
+### Captured run — 2026-10-01T04:32:14Z
+
+- **Command:** `uv run --python 3.13 python scripts/philo_graph_reference.py --check`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+graph join drift: docs/generated/graph.json (run python scripts/philo_graph_reference.py)
+```
+
+### Captured run — 2026-10-01T04:32:24Z
+
+- **Command:** `uv run --python 3.13 python scripts/philo_graph_reference.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+case-revision: live-astra ran an older revision of case.j10.arrival_generate_brief.generated_empty
+case-revision: live-astra ran an older revision of case.j10.arrival_reload.reload_persisted
+case-revision: live-astra ran an older revision of case.j10.brief_item_shelf.acknowledged
+case-revision: live-astra ran an older revision of case.j10.brief_item_shelf.deferred
+case-revision: live-astra ran an older revision of case.j10.brief_item_shelf.refused
+case-revision: live-astra ran an older revision of case.j10.route_brief_generate.load_failure
+case-revision: live-astra ran an older revision of case.j4.meeting_stop.capture_finalized
+case-revision: live-astra ran an older revision of case.j4.meeting_stop.transcription_absent
+case-revision: live-astra ran an older revision of case.j4.meetings_import.imported
+case-revision: live-astra ran an older revision of case.j4.record_only.no_speech_head
+case-revision: live-astra ran an older revision of case.j4.record_start.capture_recording
+case-revision: live-astra ran an older revision of case.j5.meeting_open.no_engine_no_verb
+case-revision: live-astra ran an older revision of case.j6.route_intelligence_run.no_assignment
+case-revision: live-astra ran an older revision of case.j6.route_intelligence_run.refusal
+case-revision: live-astra ran an older revision of case.j6.run_summary.host_named
+case-revision: live-astra ran an older revision of case.j6.run_summary.intel_failed
+case-revision: live-astra ran an older revision of case.j6.run_summary.intel_queued
+case-revision: live-astra ran an older revision of case.j6.run_summary.intel_ready
+case-revision: live-astra ran an older revision of case.j6.run_summary.intel_retry
+case-revision: live-astra ran an older revision of case.j6.run_summary.intel_running
+case-revision: live-astra ran an older revision of case.j6.run_summary.summary_text
+case-revision: live-astra ran an older revision of case.j9.route_presentation_restore.restored
+case-revision: live-astra ran an older revision of case.j9.shade_acknowledge.acknowledged
+case-revision: live-astra ran an older revision of case.j9.shade_dismiss.dismissed
+case-revision: live-muaddib ran an older revision of case.j10.arrival_generate_again.next_day
+case-revision: live-muaddib ran an older revision of case.j10.arrival_generate_brief.generated_empty
+case-revision: live-muaddib ran an older revision of case.j10.arrival_reload.reload_persisted
+case-revision: live-muaddib ran an older revision of case.j10.brief_item_shelf.acknowledged
+case-revision: live-muaddib ran an older revision of case.j10.brief_item_shelf.deferred
+case-revision: live-muaddib ran an older revision of case.j10.brief_item_shelf.refused
+case-revision: live-muaddib ran an older revision of case.j10.route_brief_generate.load_failure
+case-revision: live-muaddib ran an older revision of case.j3.speech_missing.row_stays
+case-revision: live-muaddib ran an older revision of case.j4.meeting_stop.capture_finalized
+case-revision: live-muaddib ran an older revision of case.j4.meeting_stop.transcription_absent
+case-revision: live-muaddib ran an older revision of case.j4.meetings_import.imported
+case-revision: live-muaddib ran an older revision of case.j4.record_only.no_speech_head
+case-revision: live-muaddib ran an older revision of case.j4.record_start.capture_recording
+case-revision: live-muaddib ran an older revision of case.j5.meeting_open.no_engine_no_verb
+case-revision: live-muaddib ran an older revision of case.j5.meeting_open.planned_host_disclosed
+case-revision: live-muaddib ran an older revision of case.j5.meeting_open.route_disclosed
+case-revision: live-muaddib ran an older revision of case.j6.route_intelligence_run.no_assignment
+case-revision: live-muaddib ran an older revision of case.j6.route_intelligence_run.refusal
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.host_named
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.intel_failed
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.intel_queued
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.intel_ready
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.intel_retry
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.intel_running
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.summary_text
+case-revision: live-muaddib ran an older revision of case.j7.arrival_load.reload_persisted
+case-revision: live-muaddib ran an older revision of case.j7.hub_restart.intel_retained
+case-revision: live-muaddib ran an older revision of case.j9.route_presentation_restore.restored
+case-revision: live-muaddib ran an older revision of case.j9.shade_acknowledge.acknowledged
+case-revision: live-muaddib ran an older revision of case.j9.shade_dismiss.dismissed
+case-revision: live-muaddib ran an older revision of case.j9.shade_open.door_stale
+case-revision: static-astra ran an older revision of case.beyond.first_words_reload.retained_draft
+case-revision: static-astra ran an older revision of case.j1.first_words_continue_later.draft_custody
+case-revision: static-astra ran an older revision of case.j1.first_words_continue_later.idle
+case-revision: static-astra ran an older revision of case.j1.first_words_keep_as_note.kept
+case-revision: static-astra ran an older revision of case.j1.first_words_speak.kept
+case-revision: static-astra ran an older revision of case.j1.first_words_speak.mic_unsupported
+case-revision: static-astra ran an older revision of case.j1.first_words_speak.permission_denied
+case-revision: static-astra ran an older revision of case.j1.first_words_speak.unreachable_hub
+case-revision: static-astra ran an older revision of case.j1.speech_readiness.ready
+case-revision: static-astra ran an older revision of case.j10.arrival_generate_again.next_day
+case-revision: static-astra ran an older revision of case.j10.arrival_generate_again.same_day_idempotent
+case-revision: static-astra ran an older revision of case.j10.arrival_generate_brief.generated_empty
+case-revision: static-astra ran an older revision of case.j10.arrival_generate_brief.populated
+case-revision: static-astra ran an older revision of case.j10.arrival_reload.reload_persisted
+case-revision: static-astra ran an older revision of case.j10.brief_item_shelf.acknowledged
+case-revision: static-astra ran an older revision of case.j10.brief_item_shelf.deferred
+case-revision: static-astra ran an older revision of case.j10.brief_item_shelf.refused
+case-revision: static-astra ran an older revision of case.j10.brief_latest.absent
+case-revision: static-astra ran an older revision of case.j10.route_brief_generate.load_failure
+case-revision: static-astra ran an older revision of case.j11.thought_keep.kept
+case-revision: static-astra ran an older revision of case.j2.arrival_load.engines_both_missing
+case-revision: static-astra ran an older revision of case.j2.arrival_load.read_pending
+case-revision: static-astra ran an older revision of case.j2.arrival_load.read_unknown
+case-revision: static-astra ran an older revision of case.j2.arrival_load.summary_missing_only
+case-revision: static-astra ran an older revision of case.j3.concierge_use_for_summaries.assigned_ready
+case-revision: static-astra ran an older revision of case.j3.speech_missing.row_stays
+case-revision: static-astra ran an older revision of case.j4.meeting_stop.capture_finalized
+case-revision: static-astra ran an older revision of case.j4.meeting_stop.transcription_absent
+case-revision: static-astra ran an older revision of case.j4.meetings_import.imported
+case-revision: static-astra ran an older revision of case.j4.record_only.no_speech_head
+case-revision: static-astra ran an older revision of case.j4.record_start.capture_recording
+case-revision: static-astra ran an older revision of case.j5.meeting_open.no_engine_no_verb
+case-revision: static-astra ran an older revision of case.j5.meeting_open.route_disclosed
+case-revision: static-astra ran an older revision of case.j6.route_intelligence_run.no_assignment
+case-revision: static-astra ran an older revision of case.j6.route_intelligence_run.refusal
+case-revision: static-astra ran an older revision of case.j6.run_summary.host_named
+case-revision: static-astra ran an older revision of case.j6.run_summary.intel_failed
+case-revision: static-astra ran an older revision of case.j6.run_summary.intel_queued
+case-revision: static-astra ran an older revision of case.j6.run_summary.intel_ready
+case-revision: static-astra ran an older revision of case.j6.run_summary.intel_retry
+case-revision: static-astra ran an older revision of case.j6.run_summary.intel_running
+case-revision: static-astra ran an older revision of case.j6.run_summary.summary_text
+case-revision: static-astra ran an older revision of case.j7.arrival_load.reload_persisted
+case-revision: static-astra ran an older revision of case.j7.hub_restart.intel_retained
+case-revision: static-astra ran an older revision of case.j9.route_presentation_restore.restored
+case-revision: static-astra ran an older revision of case.j9.shade_acknowledge.acknowledged
+case-revision: static-astra ran an older revision of case.j9.shade_dismiss.dismissed
+case-revision: static-astra ran an older revision of case.j9.shade_open.door_present
+case-revision: static-astra ran an older revision of case.j9.shade_open.door_stale
+case-revision: static-astra ran an older revision of case.j9.shade_receipt_open.rhythm_face
+case-revision: static-muaddib ran an older revision of case.beyond.first_words_reload.retained_draft
+case-revision: static-muaddib ran an older revision of case.j1.first_words_continue_later.draft_custody
+case-revision: static-muaddib ran an older revision of case.j1.first_words_continue_later.idle
+case-revision: static-muaddib ran an older revision of case.j1.first_words_keep_as_note.kept
+case-revision: static-muaddib ran an older revision of case.j1.first_words_speak.kept
+case-revision: static-muaddib ran an older revision of case.j1.first_words_speak.mic_unsupported
+case-revision: static-muaddib ran an older revision of case.j1.first_words_speak.permission_denied
+case-revision: static-muaddib ran an older revision of case.j1.first_words_speak.unreachable_hub
+case-revision: static-muaddib ran an older revision of case.j1.speech_readiness.ready
+case-revision: static-muaddib ran an older revision of case.j10.arrival_generate_again.next_day
+case-revision: static-muaddib ran an older revision of case.j10.arrival_generate_again.same_day_idempotent
+case-revision: static-muaddib ran an older revision of case.j10.arrival_generate_brief.generated_empty
+case-revision: static-muaddib ran an older revision of case.j10.arrival_generate_brief.populated
+case-revision: static-muaddib ran an older revision of case.j10.arrival_reload.reload_persisted
+case-revision: static-muaddib ran an older revision of case.j10.brief_item_shelf.acknowledged
+case-revision: static-muaddib ran an older revision of case.j10.brief_item_shelf.deferred
+case-revision: static-muaddib ran an older revision of case.j10.brief_item_shelf.refused
+case-revision: static-muaddib ran an older revision of case.j10.brief_latest.absent
+case-revision: static-muaddib ran an older revision of case.j10.route_brief_generate.load_failure
+case-revision: static-muaddib ran an older revision of case.j11.thought_keep.kept
+case-revision: static-muaddib ran an older revision of case.j2.arrival_load.engines_both_missing
+case-revision: static-muaddib ran an older revision of case.j2.arrival_load.read_pending
+case-revision: static-muaddib ran an older revision of case.j2.arrival_load.read_unknown
+case-revision: static-muaddib ran an older revision of case.j2.arrival_load.summary_missing_only
+case-revision: static-muaddib ran an older revision of case.j3.concierge_use_for_summaries.assigned_ready
+case-revision: static-muaddib ran an older revision of case.j3.speech_missing.row_stays
+case-revision: static-muaddib ran an older revision of case.j4.meeting_stop.capture_finalized
+case-revision: static-muaddib ran an older revision of case.j4.meeting_stop.transcription_absent
+case-revision: static-muaddib ran an older revision of case.j4.meetings_import.imported
+case-revision: static-muaddib ran an older revision of case.j4.record_only.no_speech_head
+case-revision: static-muaddib ran an older revision of case.j4.record_start.capture_recording
+case-revision: static-muaddib ran an older revision of case.j5.meeting_open.no_engine_no_verb
+case-revision: static-muaddib ran an older revision of case.j5.meeting_open.route_disclosed
+case-revision: static-muaddib ran an older revision of case.j6.route_intelligence_run.no_assignment
+case-revision: static-muaddib ran an older revision of case.j6.route_intelligence_run.refusal
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.host_named
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.intel_failed
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.intel_queued
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.intel_ready
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.intel_retry
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.intel_running
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.summary_text
+case-revision: static-muaddib ran an older revision of case.j7.arrival_load.reload_persisted
+case-revision: static-muaddib ran an older revision of case.j7.hub_restart.intel_retained
+case-revision: static-muaddib ran an older revision of case.j9.route_presentation_restore.restored
+case-revision: static-muaddib ran an older revision of case.j9.shade_acknowledge.acknowledged
+case-revision: static-muaddib ran an older revision of case.j9.shade_dismiss.dismissed
+case-revision: static-muaddib ran an older revision of case.j9.shade_open.door_present
+case-revision: static-muaddib ran an older revision of case.j9.shade_open.door_stale
+case-revision: static-muaddib ran an older revision of case.j9.shade_receipt_open.rhythm_face
+exposure-disagreement: edge.timer.workbench_conductor: astra=conditional; muaddib=active
+exposure-disagreement: edge.verb.desk_arrange: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_intelligence_brief: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_intelligence_find_receipt: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_intelligence_overdue: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_intelligence_review_decisions: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_agent: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_decision: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_knowledge: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_note: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_project: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_thread: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_workbench: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_workflow: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_zone: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_open_intelligence: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_open_people: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_overview: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_refresh: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_reset_layout: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_reset_to_seed: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_settle: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_toggle_view: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_ask: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_ask_project: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_continue_in_thread: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_delete: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_duplicate: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_edit: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_file: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_info: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_open: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_rename: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.system_search: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.system_sheet: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.thread_compact: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_fork: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_guardrail: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_keep: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_mode: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_new: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_prompt: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_stop: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_todo: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_tools: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.window_close: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.window_cycle: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.window_cycle_reverse: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.window_maximize: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.window_minimize: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.window_snap_left: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.window_snap_right: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.zone_focus: astra=active; muaddib=conditional
+subtype-conflict: edge.cli.hub_restart: astra=process.restart; muaddib=cli
+subtype-conflict: edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+subtype-conflict: edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+subtype-conflict: edge.route.brief_item_shelf: astra=ui; muaddib=http
+subtype-conflict: edge.route.brief_latest: astra=ui; muaddib=http
+subtype-conflict: edge.route.heartbeat_run_now: astra=ui; muaddib=http
+subtype-conflict: edge.route.inference_assignments_set: astra=ui; muaddib=http
+subtype-conflict: edge.route.model_profile_delete: astra=ui; muaddib=http
+subtype-conflict: edge.route.model_profile_unbind: astra=ui; muaddib=http
+subtype-conflict: edge.route.projection_presentation: astra=ui; muaddib=http
+subtype-conflict: edge.route.projections_list: astra=ui; muaddib=http
+subtype-conflict: edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+subtype-conflict: iface.face.arrival: astra=face.section; muaddib=face.window
+subtype-conflict: iface.face.first_words: astra=face.card; muaddib=face.panel
+subtype-normalized: edge.face.arrival_brief_generate: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.arrival_brief_generate_again: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.concierge_add_check: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normali
+[PMO_EVIDENCE_OUTPUT_TRUNCATED]
+```
+
+### Captured run — 2026-10-01T04:32:36Z
+
+- **Command:** `bash .tmp/philo-12-01/focused.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+238 tests collected in 1.22s
+........................................................................ [ 30%]
+........................................................................ [ 60%]
+........................................................................ [ 90%]
+......................                                                   [100%]
+238 passed in 67.20s (0:01:07)
+```
+
+### Captured run — 2026-10-01T04:33:56Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/assets/story-01-logs/brief-route-round2.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+tests/unit/test_philo12_brief_read.py::test_exact_id_read_keeps_an_older_brief_after_a_newer_brief_exists
+tests/unit/test_philo12_brief_read.py::test_unknown_exact_id_is_a_404_and_static_routes_keep_priority
+tests/unit/test_philo12_brief_read.py::test_exact_id_route_requires_the_hub_authenticated_principal
+
+3 tests collected in 0.12s
+...                                                                      [100%]
+3 passed in 3.61s
+```
+
+### Captured run — 2026-10-01T04:34:13Z
+
+- **Command:** `bash .tmp/philo-12-01/generated-checks.sh`
+- **Cwd:** .
+- **Exit code:** 2
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+OK docs/generated/operations.json
+Architecture documentation checked (10 outputs).
+OpenAPI: 582 paths
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+API reference checked
+Boundary candidate census checked
+dw check: ok
+pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/evidence-story-01.md:883: trailing whitespace.
++
+```
+
+### Captured run — 2026-10-01T04:36:37Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/assets/story-01-logs/documentation-navigation.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.006s
+
+OK
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+Repository census: 5 outputs verified.
+API reference checked
+Boundary candidate census checked
+Doctor reference: 41 check functions
+Configuration declaration reference is current
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+Architecture metadata: 4 shard(s), 149 record(s)
+Architecture metadata validation passed.
+Architecture documentation checked (10 outputs).
+Documentation coverage checked.
+```
+
+### Captured run — 2026-10-01T04:37:03Z
+
+- **Command:** `bash .tmp/philo-12-01/generated-checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+OK docs/generated/operations.json
+Architecture documentation checked (10 outputs).
+OpenAPI: 582 paths
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+API reference checked
+Boundary candidate census checked
+dw check: ok
+```
+
+### Captured run — 2026-10-01T04:41:21Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/assets/story-01-logs/brief-route-round2.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+tests/unit/test_philo12_brief_read.py::test_exact_id_read_keeps_an_older_brief_after_a_newer_brief_exists
+tests/unit/test_philo12_brief_read.py::test_unknown_exact_id_is_a_404_and_static_routes_keep_priority
+tests/unit/test_philo12_brief_read.py::test_exact_id_route_requires_the_hub_authenticated_principal
+
+3 tests collected in 0.13s
+...                                                                      [100%]
+3 passed in 3.20s
+```
+
+### Captured run — 2026-10-01T04:41:32Z
+
+- **Command:** `bash .tmp/philo-12-01/focused.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+238 tests collected in 0.96s
+........................................................................ [ 30%]
+........................................................................ [ 60%]
+........................................................................ [ 90%]
+......................                                                   [100%]
+238 passed in 60.29s (0:01:00)
+```
+
+### Captured run — 2026-10-01T04:42:52Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/assets/story-01-logs/documentation-navigation.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.004s
+
+OK
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+Repository census: 5 outputs verified.
+API reference checked
+Boundary candidate census checked
+Doctor reference: 41 check functions
+Configuration declaration reference is current
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+Architecture metadata: 4 shard(s), 149 record(s)
+Architecture metadata validation passed.
+Architecture documentation checked (10 outputs).
+Documentation coverage checked.
+```
+
+### Captured run — 2026-10-01T04:43:19Z
+
+- **Command:** `bash .tmp/philo-12-01/generated-checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+OK docs/generated/operations.json
+Architecture documentation checked (10 outputs).
+OpenAPI: 582 paths
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+API reference checked
+Boundary candidate census checked
+dw check: ok
+```
+
+### Captured run — 2026-10-01T04:44:32Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/assets/story-01-logs/generated-checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+OK docs/generated/operations.json
+Architecture documentation checked (10 outputs).
+OpenAPI: 582 paths
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+API reference checked
+Boundary candidate census checked
+dw check: ok
+```
+
+### Captured run — 2026-10-01T04:44:54Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/assets/story-01-logs/documentation-navigation.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.004s
+
+OK
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+Repository census: 5 outputs verified.
+API reference checked
+Boundary candidate census checked
+Doctor reference: 41 check functions
+Configuration declaration reference is current
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+Architecture metadata: 4 shard(s), 149 record(s)
+Architecture metadata validation passed.
+Architecture documentation checked (10 outputs).
+Documentation coverage checked.
+```
+
+### Captured run — 2026-10-01T04:45:48Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/assets/story-01-logs/generated-checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 183c8ee28f7503585571b42f60bd187c1c29c93e
+
+```text
+OK docs/generated/operations.json
+Architecture documentation checked (10 outputs).
+OpenAPI: 582 paths
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+API reference checked
+Boundary candidate census checked
 dw check: ok
 ```

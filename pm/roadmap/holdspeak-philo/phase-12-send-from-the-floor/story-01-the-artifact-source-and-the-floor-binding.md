@@ -41,7 +41,8 @@ PROVISIONAL: 1–1.5 engineering days.
 
 ## Notes
 
-- 2026-09-30 — built and verified on `feat/philo-12-01`; [evidence](evidence-story-01.md), [lane record and full-suite ledger](lane-01-astra.md). DRAFT / UNCHECKED, awaiting Muad'Dib's counsel on built.
+- 2026-09-30 — built and verified on `feat/philo-12-01`; [evidence](evidence-story-01.md), [lane record and full-suite ledger](lane-01-astra.md). Built counsel was outstanding at this point; it is recorded below.
 
 - 2026-09-30 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
+- 2026-09-30 — built counsel r1 (`checks/story-01-built-muaddib-r1.md`) is RATIFY-WITH-CONDITIONS; C1 and C2 are paid in the Round Two lane report.
 - 2026-09-30 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

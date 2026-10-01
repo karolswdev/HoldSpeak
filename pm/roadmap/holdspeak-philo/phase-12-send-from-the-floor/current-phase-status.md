@@ -1,6 +1,6 @@
 # Phase 12 - Send from the Floor
 
-**Last updated:** 2026-09-30 (PHILO-12-01 built and verified; full-suite fallout classified; awaiting Muad'Dib's counsel on built.) Earlier: 2026-09-30 (RATIFIED by the owner, "Ratify, build it". Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid, `checks/charter-astra-r1.md`.) Earlier: 2026-09-30 (DRAFTED by the Fedaykin docs lane for Muad'Dib; unchecked.)
+**Last updated:** 2026-09-30 (Muad'Dib's PHILO-12-01 built counsel r1 recorded; C1 and C2 paid; full-suite run assigned to Muad'Dib on the merged head.) Earlier: 2026-09-30 (RATIFIED by the owner, "Ratify, build it". Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid, `checks/charter-astra-r1.md`.) Earlier: 2026-09-30 (DRAFTED by the Fedaykin docs lane for Muad'Dib; unchecked.)
 
 **Status:** RATIFIED by the owner 2026-09-30 ("Ratify, build it", all eleven defaults) after Astra's check r1 (RATIFY-WITH-CONDITIONS, paid).
 
@@ -118,7 +118,9 @@ The proof is new capability through the real hub on an isolated HOME, never a te
 
 ## Where we are
 
-2026-09-30: PHILO-12-01 is built and verified on `feat/philo-12-01`. Exit 1 is paid; the binding half of exit 2 is built, while its glass path stays with stories 03–04. 238 focused Python tests, 115 inventory fences and 3,020 web tests pass. The full Python run is red: 10 failed / 13,592 passed; three inventory failures are corrected and seven behavioral failures have two serial passes each. The full result and limits are in [Astra's lane record](lane-01-astra.md) and [evidence](evidence-story-01.md). DRAFT / UNCHECKED, awaiting Muad'Dib's counsel on built. No face integration or merge is claimed.
+2026-09-30, round two: Muad'Dib's built counsel r1 is recorded verbatim at [checks/story-01-built-muaddib-r1.md](checks/story-01-built-muaddib-r1.md), RATIFY-WITH-CONDITIONS. C1 is paid: both references regenerated, all Documentation Navigation commands pass, and the missing checks are in `generated-checks.sh`. C2 is paid: the route and Monday Brief renderer use `MondayBriefService.get_by_id(brief_id)`, with exact-id, 404, and authentication fences passing. The 238-test focused selection and all 3 brief-route tests pass. No face integration is claimed; the full Python suite will run on the merged head under Muad'Dib.
+
+2026-09-30, initial build: PHILO-12-01 was built and verified on `feat/philo-12-01`. Exit 1 is paid; the binding half of exit 2 is built, while its glass path stays with stories 03–04. 238 focused Python tests, 115 inventory fences and 3,020 web tests passed. The full Python run was red: 10 failed / 13,592 passed; three inventory failures are corrected and seven behavioral failures have two serial passes each. The full result and limits are in [Astra's lane record](lane-01-astra.md) and [evidence](evidence-story-01.md). No face integration or merge was claimed.
 
 2026-09-30: the owner RATIFIED the charter ("Ratify, build it") with all eleven defaults. Story 01 (Astra) and story 02, the canvases (Muad'Dib), start now; the Floor faces wait for the canvases' ratification.
 
