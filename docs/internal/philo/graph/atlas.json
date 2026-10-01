@@ -9914,7 +9914,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "is_empty",
-          "line": 1522,
+          "line": 1530,
           "claim": "is_empty is true when no section holds an item"
         },
         {
@@ -10048,7 +10048,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "SHELF_STATES",
-          "line": 1446,
+          "line": 1454,
           "claim": "any other shelf state is refused by name"
         }
       ],

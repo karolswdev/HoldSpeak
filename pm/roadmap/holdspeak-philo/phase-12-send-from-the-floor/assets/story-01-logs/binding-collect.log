@@ -1,0 +1,16 @@
+src/desk/floorSendBinding.test.ts > Floor send binding > exposes send only for the four primitive document kinds
+src/desk/floorSendBinding.test.ts > Floor send binding > binds decision to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > binds artifact to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > binds meeting summary to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > binds meeting digest to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > binds meeting followup to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > binds project latest published update to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > binds brief exact stored id to its exact document reference
+src/desk/floorSendBinding.test.ts > Floor send binding > defaults a meeting to Summary
+src/desk/floorSendBinding.test.ts > Floor send binding > names the known absence for meeting without a summary
+src/desk/floorSendBinding.test.ts > Floor send binding > names the known absence for project without a published update
+src/desk/floorSendBinding.test.ts > Floor send binding > names the known absence for parked destination
+src/desk/floorSendBinding.test.ts > Floor send binding > keeps a unread fact pending instead of refusing
+src/desk/floorSendBinding.test.ts > Floor send binding > keeps a loading fact pending instead of refusing
+src/desk/floorSendBinding.test.ts > Floor send binding > keeps a failed fact pending instead of refusing
+src/desk/floorSendBinding.test.ts > Floor send binding > keeps destination and brief as explicit nonprimitive projection data

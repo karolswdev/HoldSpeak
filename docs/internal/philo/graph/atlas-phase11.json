@@ -6659,7 +6659,7 @@
         {
           "path": "holdspeak/services/document_sources.py",
           "symbol": "DOCUMENT_SOURCES",
-          "line": 437,
+          "line": 542,
           "claim": "the registry contains the seven new document source kinds"
         },
         {

@@ -488,7 +488,8 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
     # its transitions -- replay, Send and Discard in both orders).
     # PHILO-11-02 adds 3 Slack protocol cases on the same lifecycle; PHILO-11-06
     # adds seven document-source operation cases and one long-source refusal.
-    assert len(siblings) == 68
+    # PHILO-12-01 adds the stored artifact's preparation through MCP.
+    assert len(siblings) == 69
     sibling_ids = {case["id"] for case in siblings}
     assert READ_REFUSAL_SIBLINGS <= sibling_ids
     mutating = {
