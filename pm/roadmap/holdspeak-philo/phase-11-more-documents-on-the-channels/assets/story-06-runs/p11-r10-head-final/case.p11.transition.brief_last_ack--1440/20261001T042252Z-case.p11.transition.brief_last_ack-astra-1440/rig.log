@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11-slack.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:63588 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yxv9oxii/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p11
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b1/case.p11.transition.brief_last_ack--1440/20261001T042252Z-case.p11.transition.brief_last_ack-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b1/case.p11.transition.brief_last_ack--1440/20261001T042252Z-case.p11.transition.brief_last_ack-astra-1440/after.png']
+NOTE: predicate: all_of: protocol_status: POST /api/brief/items/brief-item-6355b0ad808442e49886a6276010580f/shelf answered 200, wanted 200 (body sha256 2a1c36a3c3aa); response body matches its declared fields | readable_text: 'POSTED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 256, 'y': 574, 'w': 928, 'h': 97} | protocol_reads: GET /api/channels/sends?document_ref=monday_brief:brief-3569fcc1733a4f7e93341d2b34e2de14 answered 200 with 1 row(s) {'document_ref': 'monday_brief:brief-3569fcc1733a4f7e93341d2b34e2de14', 'state': 'sent', 'channel': 'slack'} | protocol_rows_same: sends row identity before='chs_d62f9da8c183c3dcd44483cb', after='chs_d62f9da8c183c3dcd44483cb'

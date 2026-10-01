@@ -23,7 +23,7 @@ _READ = Admission("exempt", "A read: computation without effect (Article XI.5)."
 _DESTINATION_ID = {"type": "string", "description": "Saved ID from channel.destinations."}
 _DOCUMENT_REF = {"type": "string", "description": "Document ref <kind>:<id>. Kinds: project_update, monday_brief, "
                  "desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, "
-                 "meeting_followup. IDs come from source list/read views."}
+                 "meeting_followup, artifact. IDs come from source list/read views."}
 _DOCUMENT_REF_FROM_PREVIEW = {"type": "string", "description": "The document ref from channel.preview."}
 _SEND_ID = {"type": "string", "description": "The prepared send: send.id from channel.prepare, or sends[].id from "
                                             "channel.sends."}
@@ -191,7 +191,7 @@ CHANNEL_PREVIEW = OperationDescriptor(
     effect="read",
     result="{document_ref, title, destination_id, channel, badge, payload_digest, size, preview: {text} "
            "(confluence: {title, text})}",
-    refusals=_CONTRACT_REFUSALS + ("document_kind_unknown", "document_not_found", "not_published", "no_summary",
+    refusals=_CONTRACT_REFUSALS + ("document_kind_unknown", "document_not_found", "artifact_body_missing", "artifact_not_text", "not_published", "no_summary",
                                    "destination_not_saved", "destination_parked", "payload_too_large:<channel>"),
     completion="synchronous",
     exposure=("http:POST /api/channels/preview", "mcp:channel.preview"),
@@ -203,7 +203,7 @@ CHANNEL_PREVIEW = OperationDescriptor(
 CHANNEL_PREPARE = OperationDescriptor(
     name="channel.prepare",
     version=1,
-    description="Prepare a send of a stored document using \"send the update to <destination>\". The prepared send freezes its destination and exact preview bytes. Nothing leaves the machine. Only the owner can send or discard it.",
+    description="Prepare a send of a stored document using \"send the update to <destination>\" or \"send this artifact to <destination>\". The prepared send freezes its destination and exact preview bytes. Nothing leaves the machine. Only the owner can send or discard it.",
     args_schema={
         "type": "object",
         "properties": {"document_ref": _DOCUMENT_REF_FROM_PREVIEW, "destination_id": _DESTINATION_ID, "command_id": _COMMAND_ID},
@@ -213,7 +213,7 @@ CHANNEL_PREPARE = OperationDescriptor(
     principal=_ROOM_PRINCIPAL,
     effect="write",
     result=_SEND_RESULT + " (state prepared; prepared_by names who prepared it)",
-    refusals=_CONTRACT_REFUSALS + ("document_kind_unknown", "document_not_found", "not_published", "no_summary",
+    refusals=_CONTRACT_REFUSALS + ("document_kind_unknown", "document_not_found", "artifact_body_missing", "artifact_not_text", "not_published", "no_summary",
                                    "destination_not_saved", "destination_parked", "payload_too_large:<channel>"),
     completion="synchronous; channel.sends lists it prepared until the owner sends or discards it",
     exposure=("http:POST /api/channels/sends", "mcp:channel.prepare"),
@@ -277,7 +277,7 @@ CHANNEL_SEND = OperationDescriptor(
     refusals=_CONTRACT_REFUSALS + (_OWNER_ONLY, "NotFound not_found: unknown send", "destination_not_saved",
                                    "destination_parked", "destination_changed", "preview_changed", "payload_changed",
                                    "payload_too_large:<channel>", "send_already_settled", "document_kind_unknown",
-                                   "document_not_found", "not_published", "no_summary",
+                                   "document_not_found", "artifact_body_missing", "artifact_not_text", "not_published", "no_summary",
                                    "path_outside_folder", "github_identity_changed", "github_not_logged_in",
                                    "github_identity_unverified", "atlassian_not_signed_in",
                                    "atlassian_switch_failed", "atlassian_identity_unverified", "lock_timeout",

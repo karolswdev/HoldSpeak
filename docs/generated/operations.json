@@ -5040,7 +5040,7 @@
         "properties": {
           "document_ref": {
             "type": "string",
-            "description": "Document ref <kind>:<id>. Kinds: project_update, monday_brief, desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, meeting_followup. IDs come from source list/read views."
+            "description": "Document ref <kind>:<id>. Kinds: project_update, monday_brief, desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, meeting_followup, artifact. IDs come from source list/read views."
           },
           "destination_id": {
             "type": "string",
@@ -5062,6 +5062,8 @@
         "authority_in_arguments",
         "document_kind_unknown",
         "document_not_found",
+        "artifact_body_missing",
+        "artifact_not_text",
         "not_published",
         "no_summary",
         "destination_not_saved",
@@ -5087,7 +5089,7 @@
     {
       "name": "channel.prepare",
       "version": 1,
-      "description": "Prepare a send of a stored document using \"send the update to <destination>\". The prepared send freezes its destination and exact preview bytes. Nothing leaves the machine. Only the owner can send or discard it.",
+      "description": "Prepare a send of a stored document using \"send the update to <destination>\" or \"send this artifact to <destination>\". The prepared send freezes its destination and exact preview bytes. Nothing leaves the machine. Only the owner can send or discard it.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -5122,6 +5124,8 @@
         "authority_in_arguments",
         "document_kind_unknown",
         "document_not_found",
+        "artifact_body_missing",
+        "artifact_not_text",
         "not_published",
         "no_summary",
         "destination_not_saved",
@@ -5258,6 +5262,8 @@
         "send_already_settled",
         "document_kind_unknown",
         "document_not_found",
+        "artifact_body_missing",
+        "artifact_not_text",
         "not_published",
         "no_summary",
         "path_outside_folder",

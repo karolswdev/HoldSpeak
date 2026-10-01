@@ -1,0 +1,64 @@
+3.13.14 (main, Jul 18 2026, 16:56:45) [Clang 22.1.3 ]
+/Users/karol/dev/tools/wt-philo-12-01/.tmp/philo-12-01/base-27d8bf1a/holdspeak/__init__.py
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________________________ test_speak_loop_393 ______________________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo12-base-speak-dlvhtnbk/pytest/test_speak_loop_3930')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10963ce90>
+
+    @pytest.mark.e2e
+    @pytest.mark.requires_meeting
+    def test_speak_loop_393(tmp_path, monkeypatch):
+        """The same loop at 393: the Learned row wraps, nothing overflows."""
+>       _run(tmp_path, monkeypatch, 393, 852)
+
+tests/e2e/test_hs176_loop_glass.py:372: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/test_hs176_loop_glass.py:345: in _run
+    _init_desk(page, url)
+tests/e2e/test_hs176_loop_glass.py:119: in _init_desk
+    _normal_chair(page)
+tests/e2e/glass_infra.py:360: in _normal_chair
+    chair.wait_for()
+../../../.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:18080: in wait_for
+    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))
+../../../.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:710: in wait_for
+    await self._frame.wait_for_selector(
+../../../.venv/lib/python3.13/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+../../../.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10f7c01a0>
+cb = <function Channel.send.<locals>.<lambda> at 0x10fd57ec0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 30000ms exceeded.
+E           Call log:
+E             - waiting for locator(".chair") to be visible
+
+../../../.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+ERROR    holdspeak.web.routes.setup:runtime_support.py:71 Failed to build setup status: trust destination registry is not available
+=========================== short test summary info ============================
+FAILED tests/e2e/test_hs176_loop_glass.py::test_speak_loop_393 - playwright._...
+1 failed in 32.41s

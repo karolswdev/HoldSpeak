@@ -1,0 +1,21 @@
+{
+  "boundary_substitutions": [],
+  "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+  "clock": {
+    "mechanism": "none \u2014 the real clock; no case may claim an advance",
+    "started_utc": "2026-10-01T12:13:42.371536+00:00",
+    "tz": null
+  },
+  "db_path": null,
+  "dirty": true,
+  "engine_identity": null,
+  "engine_mode": "none",
+  "engine_mode_reason": "the job calls no model: every document is the fixture's stored record",
+  "fixture_hashes": {},
+  "frontend_build": null,
+  "hub": null,
+  "restarts": [],
+  "revision": "b083cf4fafd5ab478186eb53950b34ff4a5041a9",
+  "revision_source": "git",
+  "rig_version": "1.5.2"
+}

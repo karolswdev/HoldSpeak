@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase9.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:50483 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-x_zxn1he/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p9
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b2/case.p9.connections.never_checked_face--1440/20261001T043005Z-case.p9.connections.never_checked_face-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b2/case.p9.connections.never_checked_face--1440/20261001T043005Z-case.p9.connections.never_checked_face-astra-1440/after.png']
+NOTE: predicate: all_of: readable_text: 'NEVER CHECKED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 131, 'y': 190, 'w': 137, 'h': 18} | protocol_reads: GET /api/connections answered 200 with 1 row(s) {'provider_id': 'github', 'state': 'never_checked', 'last_checked_at': None}

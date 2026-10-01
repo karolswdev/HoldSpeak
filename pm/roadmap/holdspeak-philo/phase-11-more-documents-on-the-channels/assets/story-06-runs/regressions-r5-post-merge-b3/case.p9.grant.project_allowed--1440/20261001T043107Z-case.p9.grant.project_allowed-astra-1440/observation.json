@@ -1,0 +1,967 @@
+{
+  "id": "obs-20261001T043107Z-case.p9.grant.project_allowed-astra-1440",
+  "run_id": "20261001T043107Z-case.p9.grant.project_allowed-astra-1440",
+  "case_id": "case.p9.grant.project_allowed",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase9.json",
+  "job": "p9",
+  "edge_ids": [
+    "edge.face.project_grant"
+  ],
+  "state_id": "state.desk_presentation.p9_grant_face",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:51058",
+      "port": 51058,
+      "pid": 18749,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0zq7p5gb",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0zq7p5gb/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:31:07.118534+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase9.json",
+      "sha256": "1d9bac87e1e69ba0b5c17e9e944e6be69fd21b8b37bf2a56360944c5427f7abd",
+      "version": "phase9-room"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T22:31:12.205947"
+        }
+      },
+      "response_sha256": "84212976e7b018b9d997f4a4751f6b982acaf550575f52be49dca046c008fda5"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/settings/remote",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "enabled": true
+      },
+      "response_sha256": "5b1e3cf20eb79591a38a63d8d23b664b3498c02b5f47d6dca5df7bfdb6a66bef"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/settings/remote/credentials",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "token": "RylXzOUo2Q03VLs4axYuMlFPy2ep5VSz3ahwNtWvS78",
+        "id": "0234ea32398d4631",
+        "identity": "sweep-runner",
+        "palette": "PROJECT",
+        "expires_at": 835787.90740825
+      },
+      "response_sha256": "e954da44a2452e532224f90446a33ac04b2b913c7b8ae11e75ecfc5266996e65",
+      "captured": {
+        "name": "identity",
+        "path": "identity",
+        "value": "sweep-runner"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-72c95db8bb73",
+          "name": "Atlas ledger cutover",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-09-30T22:31:12.268602",
+          "updated_at": "2026-09-30T22:31:12.268602",
+          "result_kind": "created",
+          "project_id": "proj-72c95db8bb73",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-72c95db8bb73"
+          ]
+        }
+      },
+      "response_sha256": "aab631505c7c22e512f885c22c87b16ff247ca305ae6b37197d0ed399e1c3137",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-72c95db8bb73"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-settings:system']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "button[aria-label='Projects: sweep-runner']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid='project-line-proj-72c95db8bb73'] [data-testid=project-grant-verb]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0zq7p5gb",
+    "identity": "sweep-runner",
+    "project_id": "proj-72c95db8bb73"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid='project-line-proj-72c95db8bb73'] [data-testid=project-grant-verb]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "\u2713\nRUN AND PUBLISH ALLOWED"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "surface-state-chip",
+        "data-state": "success",
+        "role": "status",
+        "aria-label": "RUN AND PUBLISH ALLOWED",
+        "data-testid": "project-grant-chip"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 323,
+        "y": 460,
+        "w": 218,
+        "h": 18
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-trailing > div.surface-disclosure > button.btn--chrome.surface-disclosure-trigger",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "Projects: sweep-runner",
+      "after": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,"
+    },
+    "document_text_sha256": {
+      "before": "424311be549e28ab02322c122396cc5a53e38ea72c8e2cc6772c0c5647f3e5d8",
+      "after": "e236eb76629590f526b13141c7d27cc239760ef883c610f6b74bff146fa723d6"
+    },
+    "document_text_len": {
+      "before": 1013,
+      "after": 1099
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/settings/remote",
+          "status": 200,
+          "payload": {
+            "enabled": true,
+            "bind_host": null,
+            "port": null,
+            "credentials": [
+              {
+                "id": "0234ea32398d4631",
+                "identity": "sweep-runner",
+                "palette": "PROJECT",
+                "expires_at": 1790872272.2622333,
+                "last_used_at": null,
+                "active": true,
+                "delegation": null,
+                "project_delegations": []
+              }
+            ],
+            "delegations": [],
+            "project_delegations": [],
+            "active_count": 1,
+            "total_count": 1
+          },
+          "body_sha256": "2e439fa4624536401452705ae16ac1de442d9c0ca49466eee95d43d52a5a2f34"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/settings/remote",
+          "status": 200,
+          "payload": {
+            "enabled": true,
+            "bind_host": null,
+            "port": null,
+            "credentials": [
+              {
+                "id": "0234ea32398d4631",
+                "identity": "sweep-runner",
+                "palette": "PROJECT",
+                "expires_at": 1790872272.2622387,
+                "last_used_at": null,
+                "active": true,
+                "delegation": null,
+                "project_delegations": [
+                  {
+                    "project_id": "proj-72c95db8bb73",
+                    "project_name": "Atlas ledger cutover",
+                    "project_archived": false,
+                    "state": "LIVE",
+                    "grant_id": "projdeleg_e50efaab6cf7485ea83f4d1ebd1c7ffa",
+                    "expires_at": null
+                  }
+                ]
+              }
+            ],
+            "delegations": [],
+            "project_delegations": [],
+            "active_count": 1,
+            "total_count": 1
+          },
+          "body_sha256": "71de832a3b481d47180c24eacf3b76adfd1b4abc89b02694b5218eb1ed2ba04a"
+        }
+      ]
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input",
+          "value": ""
+        },
+        {
+          "selector": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-cycle > select",
+          "value": "ON"
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid='project-line-proj-72c95db8bb73'] [data-testid=project-grant-chip]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input",
+        "value": ""
+      },
+      {
+        "selector": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-cycle > select",
+        "value": "ON"
+      }
+    ],
+    "field_value": null,
+    "focus": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-trailing > div.surface-disclosure > button.btn--chrome.surface-disclosure-trigger",
+    "focus_label": "Projects: sweep-runner",
+    "url": "http://127.0.0.1:51058/",
+    "windows": [
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 1392,
+          "h": 600
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "424311be549e28ab02322c122396cc5a53e38ea72c8e2cc6772c0c5647f3e5d8",
+    "document_text_len": 1013,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/settings/remote",
+        "status": 200,
+        "payload": {
+          "enabled": true,
+          "bind_host": null,
+          "port": null,
+          "credentials": [
+            {
+              "id": "0234ea32398d4631",
+              "identity": "sweep-runner",
+              "palette": "PROJECT",
+              "expires_at": 1790872272.2622333,
+              "last_used_at": null,
+              "active": true,
+              "delegation": null,
+              "project_delegations": []
+            }
+          ],
+          "delegations": [],
+          "project_delegations": [],
+          "active_count": 1,
+          "total_count": 1
+        },
+        "body_sha256": "2e439fa4624536401452705ae16ac1de442d9c0ca49466eee95d43d52a5a2f34"
+      }
+    ],
+    "at_utc": "2026-10-01T04:31:15.429880+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid='project-line-proj-72c95db8bb73'] [data-testid=project-grant-chip]",
+    "target_present": true,
+    "text": "\u2713\nRUN AND PUBLISH ALLOWED",
+    "attrs": {
+      "class": "surface-state-chip",
+      "data-state": "success",
+      "role": "status",
+      "aria-label": "RUN AND PUBLISH ALLOWED",
+      "data-testid": "project-grant-chip"
+    },
+    "rect": {
+      "x": 323,
+      "y": 460,
+      "w": 218,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 323,
+        "y": 460,
+        "w": 218,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 325,
+          "y": 462,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 325,
+          "y": 469,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 325,
+          "y": 476,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 432,
+          "y": 462,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 432,
+          "y": 469,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 432,
+          "y": 476,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 539,
+          "y": 462,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 539,
+          "y": 469,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 539,
+          "y": 476,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:51058/",
+    "windows": [
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 1392,
+          "h": 600
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "e236eb76629590f526b13141c7d27cc239760ef883c610f6b74bff146fa723d6",
+    "document_text_len": 1099,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/settings/remote",
+        "status": 200,
+        "payload": {
+          "enabled": true,
+          "bind_host": null,
+          "port": null,
+          "credentials": [
+            {
+              "id": "0234ea32398d4631",
+              "identity": "sweep-runner",
+              "palette": "PROJECT",
+              "expires_at": 1790872272.2622387,
+              "last_used_at": null,
+              "active": true,
+              "delegation": null,
+              "project_delegations": [
+                {
+                  "project_id": "proj-72c95db8bb73",
+                  "project_name": "Atlas ledger cutover",
+                  "project_archived": false,
+                  "state": "LIVE",
+                  "grant_id": "projdeleg_e50efaab6cf7485ea83f4d1ebd1c7ffa",
+                  "expires_at": null
+                }
+              ]
+            }
+          ],
+          "delegations": [],
+          "project_delegations": [],
+          "active_count": 1,
+          "total_count": 1
+        },
+        "body_sha256": "71de832a3b481d47180c24eacf3b76adfd1b4abc89b02694b5218eb1ed2ba04a"
+      }
+    ],
+    "at_utc": "2026-10-01T04:31:16.642998+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+      "chosen": {
+        "method": "PUT",
+        "path": "/api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+        "status": 200,
+        "body_sha256": "b8227d9b7ca956e5ad0fd76516a13a1a40451c8ecc952c432f3cd0303b478dec",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73"
+      },
+      "why": "chosen by the declared trigger_route PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+      "seen": [
+        {
+          "method": "PUT",
+          "path": "/api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/remote",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "PUT",
+      "path": "/api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+      "status": 200,
+      "body_sha256": "b8227d9b7ca956e5ad0fd76516a13a1a40451c8ecc952c432f3cd0303b478dec",
+      "body": {
+        "success": true,
+        "operation_id": "op_15ddd5dc7cd244518250349685af647d",
+        "receipt": {
+          "receipt_id": "rcpt_24dbc901f1684d9c9e2cfca59a8c52b2",
+          "operation_id": "op_15ddd5dc7cd244518250349685af647d",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project-delegation:projdeleg_e50efaab6cf7485ea83f4d1ebd1c7ffa",
+          "created_at": 1790829075.6064792,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project:proj-72c95db8bb73"
+        },
+        "grant_id": "projdeleg_e50efaab6cf7485ea83f4d1ebd1c7ffa",
+        "agent_identity": "sweep-runner",
+        "project_id": "proj-72c95db8bb73"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid='project-line-proj-72c95db8bb73'] [data-testid=project-grant-chip]",
+    "target_present": true,
+    "text": "\u2713\nRUN AND PUBLISH ALLOWED",
+    "attrs": {
+      "class": "surface-state-chip",
+      "data-state": "success",
+      "role": "status",
+      "aria-label": "RUN AND PUBLISH ALLOWED",
+      "data-testid": "project-grant-chip"
+    },
+    "rect": {
+      "x": 323,
+      "y": 460,
+      "w": 218,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 323,
+        "y": 460,
+        "w": 218,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 325,
+          "y": 462,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 325,
+          "y": 469,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 325,
+          "y": 476,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 432,
+          "y": 462,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 432,
+          "y": 469,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 432,
+          "y": 476,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 539,
+          "y": 462,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 539,
+          "y": 469,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        },
+        {
+          "x": 539,
+          "y": 476,
+          "owned": true,
+          "owner": "div#project-lines-0234ea32398d4631 > div.gadget-row > span.gadget-row-gadget > span.prefs-project-line > span.surface-state-chip"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:51058/",
+    "windows": [
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 1392,
+          "h": 600
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "e236eb76629590f526b13141c7d27cc239760ef883c610f6b74bff146fa723d6",
+    "document_text_len": 1099,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/settings/remote",
+        "status": 200,
+        "payload": {
+          "enabled": true,
+          "bind_host": null,
+          "port": null,
+          "credentials": [
+            {
+              "id": "0234ea32398d4631",
+              "identity": "sweep-runner",
+              "palette": "PROJECT",
+              "expires_at": 1790872272.2622385,
+              "last_used_at": null,
+              "active": true,
+              "delegation": null,
+              "project_delegations": [
+                {
+                  "project_id": "proj-72c95db8bb73",
+                  "project_name": "Atlas ledger cutover",
+                  "project_archived": false,
+                  "state": "LIVE",
+                  "grant_id": "projdeleg_e50efaab6cf7485ea83f4d1ebd1c7ffa",
+                  "expires_at": null
+                }
+              ]
+            }
+          ],
+          "delegations": [],
+          "project_delegations": [],
+          "active_count": 1,
+          "total_count": 1
+        },
+        "body_sha256": "b2b48ca261c120db06166cb8aae0b04d642aa9a28d71980f72b2e3aaea13ea2c"
+      }
+    ],
+    "at_utc": "2026-10-01T04:31:16.508144+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+      "chosen": {
+        "method": "PUT",
+        "path": "/api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+        "status": 200,
+        "body_sha256": "b8227d9b7ca956e5ad0fd76516a13a1a40451c8ecc952c432f3cd0303b478dec",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73"
+      },
+      "why": "chosen by the declared trigger_route PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+      "seen": [
+        {
+          "method": "PUT",
+          "path": "/api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/remote",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "PUT",
+      "path": "/api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+      "status": 200,
+      "body_sha256": "b8227d9b7ca956e5ad0fd76516a13a1a40451c8ecc952c432f3cd0303b478dec",
+      "body": {
+        "success": true,
+        "operation_id": "op_15ddd5dc7cd244518250349685af647d",
+        "receipt": {
+          "receipt_id": "rcpt_24dbc901f1684d9c9e2cfca59a8c52b2",
+          "operation_id": "op_15ddd5dc7cd244518250349685af647d",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project-delegation:projdeleg_e50efaab6cf7485ea83f4d1ebd1c7ffa",
+          "created_at": 1790829075.6064792,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project:proj-72c95db8bb73"
+        },
+        "grant_id": "projdeleg_e50efaab6cf7485ea83f4d1ebd1c7ffa",
+        "agent_identity": "sweep-runner",
+        "project_id": "proj-72c95db8bb73"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73"
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73 answered 200, wanted 200 (body sha256 b8227d9b7ca9); response body matches its declared fields | readable_text: 'RUN AND PUBLISH ALLOWED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 323, 'y': 460, 'w': 218, 'h': 18} | protocol_reads: GET /api/settings/remote answered 200 with 1 row(s) {'identity': 'sweep-runner', 'project_delegations.0.project_id': 'proj-72c95db8bb73', 'project_delegations.0.state': 'LIVE'}",
+    "elapsed_s": 0.939
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73 answered 200, wanted 200 (body sha256 b8227d9b7ca9); response body matches its declared fields | readable_text: 'RUN AND PUBLISH ALLOWED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 323, 'y': 460, 'w': 218, 'h': 18} | protocol_reads: GET /api/settings/remote answered 200 with 1 row(s) {'identity': 'sweep-runner', 'project_delegations.0.project_id': 'proj-72c95db8bb73', 'project_delegations.0.state': 'LIVE'}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.071,
+    "first_satisfied_at_s": 0.939,
+    "completion_bound_s": 25.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_status: PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73 answered 200, wanted 200 (body sha256 b8227d9b7ca9); response body matches its declared fields | readable_text: 'RUN AND PUBLISH ALLOWED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 323, 'y': 460, 'w': 218, 'h': 18} | protocol_reads: GET /api/settings/remote answered 200 with 1 row(s) {'identity': 'sweep-runner', 'project_delegations.0.project_id': 'proj-72c95db8bb73', 'project_delegations.0.state': 'LIVE'}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+    "chosen": {
+      "method": "PUT",
+      "path": "/api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+      "status": 200,
+      "body_sha256": "b8227d9b7ca956e5ad0fd76516a13a1a40451c8ecc952c432f3cd0303b478dec",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73"
+    },
+    "why": "chosen by the declared trigger_route PUT /api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+    "seen": [
+      {
+        "method": "PUT",
+        "path": "/api/settings/remote/delegations/sweep-runner/projects/proj-72c95db8bb73",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings/remote",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b3/case.p9.grant.project_allowed--1440/20261001T043107Z-case.p9.grant.project_allowed-astra-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b3/case.p9.grant.project_allowed--1440/20261001T043107Z-case.p9.grant.project_allowed-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0zq7p5gb/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0zq7p5gb/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:51058"
+  ],
+  "duration_s": 9.749
+}

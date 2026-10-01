@@ -1,0 +1,374 @@
+{
+  "id": "obs-20261001T045619Z-case.p8.delete_then_leave.gone-astra-1440",
+  "run_id": "20261001T045619Z-case.p8.delete_then_leave.gone-astra-1440",
+  "case_id": "case.p8.delete_then_leave.gone",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.decision_delete"
+  ],
+  "state_id": "state.desk_presentation.p8_one_delete",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:59467",
+      "port": 59467,
+      "pid": 44618,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z_s4z69n",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z_s4z69n/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:56:19.006423+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "582435241baa534b84dd2ccecf25d381d0abe8841984a83ec60ff836f263572a",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 2.32,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_040fb6e29f6b",
+          "title": "Atlas leave",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:56:35Z",
+          "updated_at": "2026-10-01T04:56:35Z",
+          "deleted": false
+        },
+        "operation_id": "op_c8590fb96c134c0883bf3a57b1af538b",
+        "receipt": {
+          "receipt_id": "rcpt_ab3041ae08ed41aea472a4b40adc2f7e",
+          "operation_id": "op_c8590fb96c134c0883bf3a57b1af538b",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_040fb6e29f6b",
+          "created_at": 1790830595.007638,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_040fb6e29f6b"
+        }
+      },
+      "response_sha256": "a70a2141c74fbada29a1c93288cf835bd5ec869e80f01e6efe585b5da7a24b0d",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_040fb6e29f6b"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 393; this run is 1440"
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": false,
+      "skipped": "at_width 393; this run is 1440"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 393; this run is 1440"
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-world-a11y",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-obj-id='decision:decision_040fb6e29f6b']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "focus",
+      "adapter": "ui-keyboard",
+      "selector": "[data-obj-id='decision:decision_040fb6e29f6b']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "press",
+      "adapter": "ui-keyboard",
+      "key": "Shift+Enter",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-floor-toggle]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "aria-pressed",
+        "value": "true"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "aria-pressed='true', wanted 'true'"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z_s4z69n",
+    "decision_id": "decision_040fb6e29f6b"
+  },
+  "trigger": null,
+  "diff": {},
+  "before": {
+    "observe_at": "protocol: GET /api/decisions/decision_040fb6e29f6b",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-world > div.desk-world-a11y > button",
+    "focus_label": "Atlas leave",
+    "url": "http://127.0.0.1:59467/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/decisions/decision_040fb6e29f6b",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "b3b9585a0ef6e39b16b13a9caffcab972caf9570e1c6f0217fbd94b611993a4c",
+      "rows": [],
+      "payload": {
+        "decision": {
+          "id": "decision_040fb6e29f6b",
+          "title": "Atlas leave",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-10-01T04:56:35Z",
+          "updated_at": "2026-10-01T04:56:35Z",
+          "deleted": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "b3b9585a0ef6e39b16b13a9caffcab972caf9570e1c6f0217fbd94b611993a4c"
+    },
+    "document_text_sha256": "7f21ea5ea899dacc37fc4557f9b8abd252602b9fc22b5f615e67b361d0a61fb2",
+    "document_text_len": 376,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_040fb6e29f6b",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_040fb6e29f6b",
+            "title": "Atlas leave",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-10-01T04:56:35Z",
+            "updated_at": "2026-10-01T04:56:35Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "b3b9585a0ef6e39b16b13a9caffcab972caf9570e1c6f0217fbd94b611993a4c"
+      }
+    ],
+    "at_utc": "2026-10-01T04:56:52.533151+00:00"
+  },
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "blocked",
+  "notes": [
+    "BLOCKED: ui step wait_for on '.undo-receipt.is-pending' failed: TimeoutError: Locator.wait_for: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\".undo-receipt.is-pending\").first to be visible\n    - locator resolved to visible <span class=\"undo-receipt is-pending\">\u2026</"
+  ],
+  "complete": true,
+  "trigger_error": {
+    "step": {
+      "kind": "ui",
+      "action": "press",
+      "adapter": "ui-keyboard",
+      "key": "Delete",
+      "trigger_route": {
+        "method": "DELETE",
+        "path": "/api/decisions/{decision_id}"
+      },
+      "then": [
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".undo-receipt.is-pending",
+          "timeout_s": 3,
+          "why": "the first delete is still inside its window (the receipt's pending phase)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "requires": {
+            "visible": ".undo-receipt.is-pending",
+            "text": "Undo",
+            "seconds_left": {
+              "selector": ".undo-receipt-time",
+              "min": 2
+            }
+          },
+          "why": "leave the Floor for the Chair inside the window, re-checked at delivery (the receipt pending with Undo and at least 2 s left): a face change commits the pending delete (deleteReceipt.tsx)"
+        }
+      ]
+    },
+    "error": "ui step wait_for on '.undo-receipt.is-pending' failed: TimeoutError: Locator.wait_for: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\".undo-receipt.is-pending\").first to be visible\n    - locator resolved to visible <span class=\"undo-receipt is-pending\">\u2026</"
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r6-serial-r2/case.p8.delete_then_leave.gone--1440/20261001T045619Z-case.p8.delete_then_leave.gone-astra-1440/blocked.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z_s4z69n/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z_s4z69n/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:59467"
+  ],
+  "duration_s": 55.51
+}

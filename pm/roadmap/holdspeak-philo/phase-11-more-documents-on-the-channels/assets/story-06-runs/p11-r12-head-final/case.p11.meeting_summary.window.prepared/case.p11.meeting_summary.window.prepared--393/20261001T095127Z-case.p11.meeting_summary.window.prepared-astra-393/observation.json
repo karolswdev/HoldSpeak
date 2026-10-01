@@ -1,0 +1,1681 @@
+{
+  "id": "obs-20261001T095127Z-case.p11.meeting_summary.window.prepared-astra-393",
+  "run_id": "20261001T095127Z-case.p11.meeting_summary.window.prepared-astra-393",
+  "case_id": "case.p11.meeting_summary.window.prepared",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase11-slack.json",
+  "job": "p11",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p11_meeting_send_faces",
+  "provenance": {
+    "revision": "abb8a94e50b2d3634b30bd4a8091c4bc7ef31c7b",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55804",
+      "port": 55804,
+      "pid": 42523,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo11_documents/meeting_summary_reply.json": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+      "tests/fixtures/philo11_documents/meeting_transcript.vtt": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T09:51:27.734894+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "replayed",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "recorded meeting intelligence provider",
+        "substitute": "engine_reply",
+        "installed_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase11-slack.json",
+      "sha256": "17c33be4e0a121d4d12a3f2659eb25b959216b099032a7bc1c82a6ccd63c2db1",
+      "version": "phase11-slack-backend"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDED provider reply at the real provider seam",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+    "engine_provider_url": "http://127.0.0.1:55805/v1",
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-01T03:51:31.596809"
+        }
+      },
+      "response_sha256": "25c68ea3f64652290a5e1ca24cafd270b8a653e8e54270e55f78cdff37980c5e"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/setup/discover-models",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "ok": true,
+        "models": [
+          "philo11-atlas"
+        ],
+        "detail": "Found 1 model.",
+        "status": 200
+      },
+      "response_sha256": "96a392df2be73d8a3ee78bc0d3c00e3a80b97ec6b45d72ec4071081558f5088f",
+      "captured": {
+        "name": "engine_model",
+        "path": "models.0",
+        "value": "philo11-atlas"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/inference/model-library/define-endpoint",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "receipt": {
+          "kind": "model_library_provider",
+          "message": "Added to the Model Library. Assignments are unchanged.",
+          "assignments_unchanged": true,
+          "assignments_before": {
+            "heads": [
+              {
+                "assignment_key": "capability:speech.transcribe",
+                "assignment_id": "ia_213acee1077d4871b526697012b4ff27",
+                "revision": 1,
+                "cleared": false
+              }
+            ],
+            "sha256": "sha256:e60617f9e80f84a1333b74994e0d0935add7a421115e360adc2db34de9e8aeba"
+          },
+          "assignments_after": {
+            "heads": [
+              {
+                "assignment_key": "capability:speech.transcribe",
+                "assignment_id": "ia_213acee1077d4871b526697012b4ff27",
+                "revision": 1,
+                "cleared": false
+              }
+            ],
+            "sha256": "sha256:e60617f9e80f84a1333b74994e0d0935add7a421115e360adc2db34de9e8aeba"
+          }
+        },
+        "provider": {
+          "profile_id": "p11-recorded-engine",
+          "profile_revision": 1,
+          "binding_id": "binding-p11-recorded-engine",
+          "binding_revision": 1,
+          "provider_family": "openai_compatible",
+          "secret": {
+            "required": false,
+            "present": false
+          }
+        }
+      },
+      "response_sha256": "5b4f7a5ad406c59c020eaaf4f3e4dd733e378a44e7ddaa48ee605e270474949d",
+      "captured": {
+        "name": "profile_id",
+        "path": "provider.profile_id",
+        "value": "p11-recorded-engine"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/concierge/summary-selection",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "schema": "ConciergeSummaryAssignmentReceipt@1",
+        "status": "succeeded",
+        "capabilityId": "meeting.deferred_analysis",
+        "result": {
+          "capabilityId": "meeting.deferred_analysis",
+          "state": "READY",
+          "profileId": "p11-recorded-engine",
+          "profileRevision": 1,
+          "assignment": {
+            "revision": 1,
+            "entries": [
+              {
+                "profileId": "p11-recorded-engine",
+                "profileRevision": 1,
+                "label": "Recorded loopback provider",
+                "boundary": "lan",
+                "readiness": "ready"
+              }
+            ]
+          }
+        },
+        "receipt": {
+          "id": "concierge-summary-29ea056a374a",
+          "visible": true
+        },
+        "summaryAssignment": {
+          "schema": "ConciergeSummaryAssignmentProjection@1",
+          "capabilityId": "meeting.deferred_analysis",
+          "status": "assigned",
+          "assignmentRevision": 1,
+          "profileId": "p11-recorded-engine",
+          "profileRevision": 1,
+          "label": "Recorded loopback provider",
+          "boundary": "lan",
+          "readiness": "ready"
+        }
+      },
+      "response_sha256": "838cf6e0633f8e5031d0abdcd5a75631fe363533effd7131d78add64d7531145"
+    },
+    {
+      "kind": "boundary",
+      "label": "recorded meeting intelligence provider",
+      "substitute": "engine_reply",
+      "adapter": "hub-engine-boundary",
+      "installed_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+      "seam": "holdspeak.intel.providers._configured_engine + holdspeak.intel.engine.MeetingIntel"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.import",
+      "args": {
+        "path": "/Users/karol/dev/tools/wt-philo-11-06/tests/fixtures/philo11_documents/meeting_transcript.vtt",
+        "title": "Document source review"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.import",
+          "arguments": {
+            "path": "/Users/karol/dev/tools/wt-philo-11-06/tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          }
+        }
+      },
+      "response": {
+        "meeting_id": "5cb3e81b",
+        "transcription_status": "importing"
+      },
+      "domain_response": {
+        "meeting_id": "5cb3e81b",
+        "transcription_status": "importing"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"meeting_id\": \"5cb3e81b\", \"transcription_status\": \"importing\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003,
+      "fixture": {
+        "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+        "sha256": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "5cb3e81b"
+      }
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "5cb3e81b"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "transcription_status",
+        "value": "complete"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "transcription_status equals the declared value"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "5cb3e81b"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "segments",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "segments is non-empty"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "5cb3e81b"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "5cb3e81b"
+          }
+        }
+      },
+      "response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 24.0,
+        "ended_at": "2026-10-01T03:51:55.633409",
+        "formatted_duration": "00:24",
+        "id": "5cb3e81b",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_dd7838cbd27d7ba53941ea95d0197ea127c6954a001322c054e67ba5b0904186",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:896815b3b6f3213022b4cb97d79b55275654c3865692cd2a4eddfac68c33ee56",
+          "status": "ready"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 8.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Avery: We agree to use one document registry for the channel sources."
+          },
+          {
+            "device_id": null,
+            "end_time": 16.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 8.0,
+            "text": "Blair: Avery will check the frozen bytes before the next review."
+          },
+          {
+            "device_id": null,
+            "end_time": 24.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 16.0,
+            "text": "Avery: The channel reads durable records and keeps the transcript private."
+          }
+        ],
+        "started_at": "2026-10-01T03:51:31.633409",
+        "sync_modified_at": "2026-10-01T03:51:31.636713",
+        "tags": [],
+        "title": "Document source review",
+        "transcriptWords": 34,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "domain_response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 24.0,
+        "ended_at": "2026-10-01T03:51:55.633409",
+        "formatted_duration": "00:24",
+        "id": "5cb3e81b",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_dd7838cbd27d7ba53941ea95d0197ea127c6954a001322c054e67ba5b0904186",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:896815b3b6f3213022b4cb97d79b55275654c3865692cd2a4eddfac68c33ee56",
+          "status": "ready"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 8.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Avery: We agree to use one document registry for the channel sources."
+          },
+          {
+            "device_id": null,
+            "end_time": 16.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 8.0,
+            "text": "Blair: Avery will check the frozen bytes before the next review."
+          },
+          {
+            "device_id": null,
+            "end_time": 24.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 16.0,
+            "text": "Avery: The channel reads durable records and keeps the transcript private."
+          }
+        ],
+        "started_at": "2026-10-01T03:51:31.633409",
+        "sync_modified_at": "2026-10-01T03:51:31.636713",
+        "tags": [],
+        "title": "Document source review",
+        "transcriptWords": 34,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 24.0, \"ended_at\": \"2026-10-01T03:51:55.633409\", \"formatted_duration\": \"00:24\", \"id\": \"5cb3e81b\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_dd7838cbd27d7ba53941ea95d0197ea127c6954a001322c054e67ba5b0904186\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:896815b3b6f3213022b4cb97d79b55275654c3865692cd2a4eddfac68c33ee56\", \"status\": \"ready\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 8.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Avery: We agree to use one document registry for the channel sources.\"}, {\"device_id\": null, \"end_time\": 16.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 8.0, \"text\": \"Blair: Avery will check the frozen bytes before the next review.\"}, {\"device_id\": null, \"end_time\": 24.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 16.0, \"text\": \"Avery: The channel reads durable records and keeps the transcript private.\"}], \"started_at\": \"2026-10-01T03:51:31.633409\", \"sync_modified_at\": \"2026-10-01T03:51:31.636713\", \"tags\": [], \"title\": \"Document source review\", \"transcriptWords\": 34, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002,
+      "captured": {
+        "name": "selection_hash",
+        "path": "planned_route.selection_hash",
+        "value": "sha256:896815b3b6f3213022b4cb97d79b55275654c3865692cd2a4eddfac68c33ee56"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.summary.run",
+      "args": {
+        "meeting_id": "5cb3e81b",
+        "expected_selection_hash": "sha256:896815b3b6f3213022b4cb97d79b55275654c3865692cd2a4eddfac68c33ee56"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.run_intelligence",
+          "arguments": {
+            "meeting_id": "5cb3e81b",
+            "expected_selection_hash": "sha256:896815b3b6f3213022b4cb97d79b55275654c3865692cd2a4eddfac68c33ee56"
+          }
+        }
+      },
+      "response": {
+        "drainer": "running",
+        "expectedWithinSeconds": 0,
+        "host": "127.0.0.1",
+        "jobId": "ij_fd2b010ba5a07f03555520a6c216a990703197068c5730744fb8ce3b07d3c772",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_dd7838cbd27d7ba53941ea95d0197ea127c6954a001322c054e67ba5b0904186",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:896815b3b6f3213022b4cb97d79b55275654c3865692cd2a4eddfac68c33ee56",
+          "status": "ready"
+        },
+        "run_receipt": null,
+        "state": "queued"
+      },
+      "domain_response": {
+        "drainer": "running",
+        "expectedWithinSeconds": 0,
+        "host": "127.0.0.1",
+        "jobId": "ij_fd2b010ba5a07f03555520a6c216a990703197068c5730744fb8ce3b07d3c772",
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_dd7838cbd27d7ba53941ea95d0197ea127c6954a001322c054e67ba5b0904186",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:896815b3b6f3213022b4cb97d79b55275654c3865692cd2a4eddfac68c33ee56",
+          "status": "ready"
+        },
+        "run_receipt": null,
+        "state": "queued"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"drainer\": \"running\", \"expectedWithinSeconds\": 0, \"host\": \"127.0.0.1\", \"jobId\": \"ij_fd2b010ba5a07f03555520a6c216a990703197068c5730744fb8ce3b07d3c772\", \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_dd7838cbd27d7ba53941ea95d0197ea127c6954a001322c054e67ba5b0904186\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:896815b3b6f3213022b4cb97d79b55275654c3865692cd2a4eddfac68c33ee56\", \"status\": \"ready\"}, \"run_receipt\": null, \"state\": \"queued\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "5cb3e81b"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "intel.summary",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.31,
+      "holds": true,
+      "reading": "intel.summary is non-empty"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.save_destination",
+      "args": {
+        "channel": "file",
+        "name": "File archive",
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_",
+        "synced": false
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.save_destination",
+          "arguments": {
+            "channel": "file",
+            "name": "File archive",
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_",
+            "synced": false
+          }
+        }
+      },
+      "response": {
+        "destination": {
+          "account": {},
+          "badge": "local",
+          "channel": "file",
+          "connection": null,
+          "created_at": "2026-10-01T09:51:31+00:00",
+          "id": "chd_b50cf20d33184a44fd52e338",
+          "name": "File archive",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_"
+          },
+          "target_digest": "8006e7ec1c7a45a89236afd8596055ab5963c5065eeed5152ca504ab7742c7ed"
+        },
+        "operation_id": "op_6ec508ef2a534a4b9ee27fd52151821c",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790848291.968408,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_6ec508ef2a534a4b9ee27fd52151821c",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_9a9aa602bef24618871b98c461bcc3fc",
+          "result_ref": "channel_destination:chd_b50cf20d33184a44fd52e338",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "domain_response": {
+        "destination": {
+          "account": {},
+          "badge": "local",
+          "channel": "file",
+          "connection": null,
+          "created_at": "2026-10-01T09:51:31+00:00",
+          "id": "chd_b50cf20d33184a44fd52e338",
+          "name": "File archive",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_"
+          },
+          "target_digest": "8006e7ec1c7a45a89236afd8596055ab5963c5065eeed5152ca504ab7742c7ed"
+        },
+        "operation_id": "op_6ec508ef2a534a4b9ee27fd52151821c",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790848291.968408,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_6ec508ef2a534a4b9ee27fd52151821c",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_9a9aa602bef24618871b98c461bcc3fc",
+          "result_ref": "channel_destination:chd_b50cf20d33184a44fd52e338",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"destination\": {\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"connection\": null, \"created_at\": \"2026-10-01T09:51:31+00:00\", \"id\": \"chd_b50cf20d33184a44fd52e338\", \"name\": \"File archive\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_\"}, \"target_digest\": \"8006e7ec1c7a45a89236afd8596055ab5963c5065eeed5152ca504ab7742c7ed\"}, \"operation_id\": \"op_6ec508ef2a534a4b9ee27fd52151821c\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790848291.968408, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_6ec508ef2a534a4b9ee27fd52151821c\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_9a9aa602bef24618871b98c461bcc3fc\", \"result_ref\": \"channel_destination:chd_b50cf20d33184a44fd52e338\", \"state\": \"succeeded\", \"target_ref\": \"desk:channel.save_destination\"}, \"replaced\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.007,
+      "captured": {
+        "name": "dest_id",
+        "path": "destination.id",
+        "value": "chd_b50cf20d33184a44fd52e338"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.preview",
+      "args": {
+        "document_ref": "meeting_summary:5cb3e81b",
+        "destination_id": "chd_b50cf20d33184a44fd52e338"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.preview",
+          "arguments": {
+            "document_ref": "meeting_summary:5cb3e81b",
+            "destination_id": "chd_b50cf20d33184a44fd52e338"
+          }
+        }
+      },
+      "response": {
+        "badge": "local",
+        "channel": "file",
+        "destination_id": "chd_b50cf20d33184a44fd52e338",
+        "document_ref": "meeting_summary:5cb3e81b",
+        "payload_digest": "e5da6232adabb03d4e662b1750b7be428b8d0f4efe3466822aa1bf14d0cd6c75",
+        "preview": {
+          "text": "# Document source review\nDate: 2026-10-01\n\n## Summary\nThe meeting agreed to use one document registry and to check frozen bytes before review.\n\n## Topics\n- document registry\n- frozen bytes\n"
+        },
+        "size": 189,
+        "title": "Document source review"
+      },
+      "domain_response": {
+        "badge": "local",
+        "channel": "file",
+        "destination_id": "chd_b50cf20d33184a44fd52e338",
+        "document_ref": "meeting_summary:5cb3e81b",
+        "payload_digest": "e5da6232adabb03d4e662b1750b7be428b8d0f4efe3466822aa1bf14d0cd6c75",
+        "preview": {
+          "text": "# Document source review\nDate: 2026-10-01\n\n## Summary\nThe meeting agreed to use one document registry and to check frozen bytes before review.\n\n## Topics\n- document registry\n- frozen bytes\n"
+        },
+        "size": 189,
+        "title": "Document source review"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"badge\": \"local\", \"channel\": \"file\", \"destination_id\": \"chd_b50cf20d33184a44fd52e338\", \"document_ref\": \"meeting_summary:5cb3e81b\", \"payload_digest\": \"e5da6232adabb03d4e662b1750b7be428b8d0f4efe3466822aa1bf14d0cd6c75\", \"preview\": {\"text\": \"# Document source review\\nDate: 2026-10-01\\n\\n## Summary\\nThe meeting agreed to use one document registry and to check frozen bytes before review.\\n\\n## Topics\\n- document registry\\n- frozen bytes\\n\"}, \"size\": 189, \"title\": \"Document source review\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.004
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.prepare",
+      "args": {
+        "document_ref": "meeting_summary:5cb3e81b",
+        "destination_id": "chd_b50cf20d33184a44fd52e338"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 10,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.prepare",
+          "arguments": {
+            "document_ref": "meeting_summary:5cb3e81b",
+            "destination_id": "chd_b50cf20d33184a44fd52e338"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_4bec59d72bf84a47a7cf494b5190f22c",
+        "outcome": "prepared",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790848291.976607,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_4bec59d72bf84a47a7cf494b5190f22c",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_18048bf8c5404de5aaad51d793e552d3",
+          "result_ref": "channel_send:chs_5be62729e7057ce96e9ac6b6",
+          "state": "succeeded",
+          "target_ref": "document:meeting_summary:5cb3e81b"
+        },
+        "send": {
+          "account": {},
+          "badge": "local",
+          "channel": "file",
+          "created_at": "2026-10-01T09:51:31+00:00",
+          "destination_id": "chd_b50cf20d33184a44fd52e338",
+          "destination_name": "File archive",
+          "dispatch_seq": null,
+          "dispatch_started_at": null,
+          "document_json": {
+            "label": "SUMMARY 2026-10-01",
+            "slug": "document-source-review",
+            "title": "Document source review"
+          },
+          "document_ref": "meeting_summary:5cb3e81b",
+          "file_path": null,
+          "id": "chs_5be62729e7057ce96e9ac6b6",
+          "payload_digest": "e5da6232adabb03d4e662b1750b7be428b8d0f4efe3466822aa1bf14d0cd6c75",
+          "prepare_operation_id": "op_4bec59d72bf84a47a7cf494b5190f22c",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "# Document source review\nDate: 2026-10-01\n\n## Summary\nThe meeting agreed to use one document registry and to check frozen bytes before review.\n\n## Topics\n- document registry\n- frozen bytes\n"
+          },
+          "proof": null,
+          "reason": null,
+          "send_operation_id": null,
+          "settled_at": null,
+          "size": 189,
+          "state": "prepared",
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_"
+          },
+          "target_digest": "8006e7ec1c7a45a89236afd8596055ab5963c5065eeed5152ca504ab7742c7ed"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_4bec59d72bf84a47a7cf494b5190f22c",
+        "outcome": "prepared",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790848291.976607,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_4bec59d72bf84a47a7cf494b5190f22c",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_18048bf8c5404de5aaad51d793e552d3",
+          "result_ref": "channel_send:chs_5be62729e7057ce96e9ac6b6",
+          "state": "succeeded",
+          "target_ref": "document:meeting_summary:5cb3e81b"
+        },
+        "send": {
+          "account": {},
+          "badge": "local",
+          "channel": "file",
+          "created_at": "2026-10-01T09:51:31+00:00",
+          "destination_id": "chd_b50cf20d33184a44fd52e338",
+          "destination_name": "File archive",
+          "dispatch_seq": null,
+          "dispatch_started_at": null,
+          "document_json": {
+            "label": "SUMMARY 2026-10-01",
+            "slug": "document-source-review",
+            "title": "Document source review"
+          },
+          "document_ref": "meeting_summary:5cb3e81b",
+          "file_path": null,
+          "id": "chs_5be62729e7057ce96e9ac6b6",
+          "payload_digest": "e5da6232adabb03d4e662b1750b7be428b8d0f4efe3466822aa1bf14d0cd6c75",
+          "prepare_operation_id": "op_4bec59d72bf84a47a7cf494b5190f22c",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "# Document source review\nDate: 2026-10-01\n\n## Summary\nThe meeting agreed to use one document registry and to check frozen bytes before review.\n\n## Topics\n- document registry\n- frozen bytes\n"
+          },
+          "proof": null,
+          "reason": null,
+          "send_operation_id": null,
+          "settled_at": null,
+          "size": 189,
+          "state": "prepared",
+          "target": {
+            "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_"
+          },
+          "target_digest": "8006e7ec1c7a45a89236afd8596055ab5963c5065eeed5152ca504ab7742c7ed"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 10,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_4bec59d72bf84a47a7cf494b5190f22c\", \"outcome\": \"prepared\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790848291.976607, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_4bec59d72bf84a47a7cf494b5190f22c\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_18048bf8c5404de5aaad51d793e552d3\", \"result_ref\": \"channel_send:chs_5be62729e7057ce96e9ac6b6\", \"state\": \"succeeded\", \"target_ref\": \"document:meeting_summary:5cb3e81b\"}, \"send\": {\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"created_at\": \"2026-10-01T09:51:31+00:00\", \"destination_id\": \"chd_b50cf20d33184a44fd52e338\", \"destination_name\": \"File archive\", \"dispatch_seq\": null, \"dispatch_started_at\": null, \"document_json\": {\"label\": \"SUMMARY 2026-10-01\", \"slug\": \"document-source-review\", \"title\": \"Document source review\"}, \"document_ref\": \"meeting_summary:5cb3e81b\", \"file_path\": null, \"id\": \"chs_5be62729e7057ce96e9ac6b6\", \"payload_digest\": \"e5da6232adabb03d4e662b1750b7be428b8d0f4efe3466822aa1bf14d0cd6c75\", \"prepare_operation_id\": \"op_4bec59d72bf84a47a7cf494b5190f22c\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"# Document source review\\nDate: 2026-10-01\\n\\n## Summary\\nThe meeting agreed to use one document registry and to check frozen bytes before review.\\n\\n## Topics\\n- document registry\\n- frozen bytes\\n\"}, \"proof\": null, \"reason\": null, \"send_operation_id\": null, \"settled_at\": null, \"size\": 189, \"state\": \"prepared\", \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_\"}, \"target_digest\": \"8006e7ec1c7a45a89236afd8596055ab5963c5065eeed5152ca504ab7742c7ed\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-pointer",
+      "url": "/?open=meeting:5cb3e81b&token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-pullout [data-testid=meeting-send-well]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-pullout [data-testid=meeting-send-well] [data-testid=prepared-row]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "scroll_into_view",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=prepared-open]",
+      "block": "end",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": ".desk-pullout [data-testid=meeting-send-well] [data-testid=prepared-row]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "Fresh isolated HOME and browser; the meeting and Slack destination are produced in this run.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_",
+    "replay_provider_url": "http://127.0.0.1:55805/v1",
+    "engine_model": "philo11-atlas",
+    "profile_id": "p11-recorded-engine",
+    "meeting_id": "5cb3e81b",
+    "selection_hash": "sha256:896815b3b6f3213022b4cb97d79b55275654c3865692cd2a4eddfac68c33ee56",
+    "dest_id": "chd_b50cf20d33184a44fd52e338"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": ".desk-pullout [data-testid=meeting-send-well] [data-testid=prepared-row]",
+    "done": true
+  },
+  "diff": {
+    "attrs": {
+      "before": {
+        "role": "button",
+        "tabindex": "0",
+        "class": "surface-ledger-line",
+        "data-testid": "prepared-row",
+        "aria-expanded": "false",
+        "aria-label": "File archive, PREPARED"
+      },
+      "after": {
+        "role": "button",
+        "tabindex": "0",
+        "class": "surface-ledger-line",
+        "data-testid": "prepared-row",
+        "aria-expanded": "true",
+        "aria-label": "File archive, PREPARED"
+      }
+    },
+    "document_text_sha256": {
+      "before": "61a298cb7465bed788832cb9ecee32920b6d9d6f797776f9db78094ab9d1f6e2",
+      "after": "956f6dfe6d1d394e908e84f7b08367a8ce1655ddc5105ffcd4f277afe906e417"
+    },
+    "document_text_len": {
+      "before": 1363,
+      "after": 1949
+    }
+  },
+  "before": {
+    "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
+    "target_present": true,
+    "text": "\u25c6\nFile archive\n\u25c6\nPREPARED\nBY YOU\nSUMMARY OCT 1\nOCT 1 03:51\nTHIS DEVICE",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "prepared-row",
+      "aria-expanded": "false",
+      "aria-label": "File archive, PREPARED"
+    },
+    "rect": {
+      "x": 15,
+      "y": 345,
+      "w": 363,
+      "h": 78
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 345,
+        "w": 363,
+        "h": 78
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 347,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 17,
+          "y": 384,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 17,
+          "y": 421,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 347,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 384,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-cells > span.surface-token"
+        },
+        {
+          "x": 197,
+          "y": 421,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 376,
+          "y": 347,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 376,
+          "y": 384,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 376,
+          "y": 421,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 819,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": {
+      "selector": ".desk-pullout [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
+      "present": true,
+      "value": "meeting_summary"
+    },
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "File archive, PREPARED",
+    "url": "http://127.0.0.1:55804/?open=meeting%3A5cb3e81b",
+    "windows": [
+      {
+        "title": "Document source review",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "61a298cb7465bed788832cb9ecee32920b6d9d6f797776f9db78094ab9d1f6e2",
+    "document_text_len": 1363,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=meeting_summary:5cb3e81b",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_5be62729e7057ce96e9ac6b6",
+              "document_ref": "meeting_summary:5cb3e81b",
+              "destination_id": "chd_b50cf20d33184a44fd52e338",
+              "destination_name": "File archive",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_"
+              },
+              "target_digest": "8006e7ec1c7a45a89236afd8596055ab5963c5065eeed5152ca504ab7742c7ed",
+              "payload_digest": "e5da6232adabb03d4e662b1750b7be428b8d0f4efe3466822aa1bf14d0cd6c75",
+              "document_json": {
+                "label": "SUMMARY 2026-10-01",
+                "slug": "document-source-review",
+                "title": "Document source review"
+              },
+              "size": 189,
+              "preview": {
+                "text": "# Document source review\nDate: 2026-10-01\n\n## Summary\nThe meeting agreed to use one document registry and to check frozen bytes before review.\n\n## Topics\n- document registry\n- frozen bytes\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_4bec59d72bf84a47a7cf494b5190f22c",
+              "send_operation_id": null,
+              "state": "prepared",
+              "reason": null,
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T09:51:31+00:00",
+              "dispatch_started_at": null,
+              "settled_at": null,
+              "dispatch_seq": null
+            }
+          ]
+        },
+        "body_sha256": "56497b6a2503c706ecb55271a0490a046bb7ba90b5279881d655112b4ca1e94e"
+      }
+    ],
+    "at_utc": "2026-10-01T09:51:34.415322+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
+    "target_present": true,
+    "text": "\u25c6\nFile archive\n\u25c6\nPREPARED\nBY YOU\nSUMMARY OCT 1\nOCT 1 03:51\nTHIS DEVICE",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "prepared-row",
+      "aria-expanded": "true",
+      "aria-label": "File archive, PREPARED"
+    },
+    "rect": {
+      "x": 15,
+      "y": 345,
+      "w": 363,
+      "h": 78
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 345,
+        "w": 363,
+        "h": 78
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 347,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 17,
+          "y": 384,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 17,
+          "y": 421,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 347,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 384,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-cells > span.surface-token"
+        },
+        {
+          "x": 197,
+          "y": 421,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 376,
+          "y": 347,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 376,
+          "y": 384,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 376,
+          "y": 421,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 819,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": {
+      "selector": ".desk-pullout [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
+      "present": true,
+      "value": "meeting_summary"
+    },
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "File archive, PREPARED",
+    "url": "http://127.0.0.1:55804/?open=meeting%3A5cb3e81b",
+    "windows": [
+      {
+        "title": "Document source review",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "956f6dfe6d1d394e908e84f7b08367a8ce1655ddc5105ffcd4f277afe906e417",
+    "document_text_len": 1949,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=meeting_summary:5cb3e81b",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_5be62729e7057ce96e9ac6b6",
+              "document_ref": "meeting_summary:5cb3e81b",
+              "destination_id": "chd_b50cf20d33184a44fd52e338",
+              "destination_name": "File archive",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_"
+              },
+              "target_digest": "8006e7ec1c7a45a89236afd8596055ab5963c5065eeed5152ca504ab7742c7ed",
+              "payload_digest": "e5da6232adabb03d4e662b1750b7be428b8d0f4efe3466822aa1bf14d0cd6c75",
+              "document_json": {
+                "label": "SUMMARY 2026-10-01",
+                "slug": "document-source-review",
+                "title": "Document source review"
+              },
+              "size": 189,
+              "preview": {
+                "text": "# Document source review\nDate: 2026-10-01\n\n## Summary\nThe meeting agreed to use one document registry and to check frozen bytes before review.\n\n## Topics\n- document registry\n- frozen bytes\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_4bec59d72bf84a47a7cf494b5190f22c",
+              "send_operation_id": null,
+              "state": "prepared",
+              "reason": null,
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T09:51:31+00:00",
+              "dispatch_started_at": null,
+              "settled_at": null,
+              "dispatch_seq": null
+            }
+          ]
+        },
+        "body_sha256": "56497b6a2503c706ecb55271a0490a046bb7ba90b5279881d655112b4ca1e94e"
+      }
+    ],
+    "at_utc": "2026-10-01T09:51:35.571425+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:55804) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:55804) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-window [data-testid=meeting-send-well] [data-testid=prepared-row]",
+    "target_present": true,
+    "text": "\u25c6\nFile archive\n\u25c6\nPREPARED\nBY YOU\nSUMMARY OCT 1\nOCT 1 03:51\nTHIS DEVICE",
+    "attrs": {
+      "role": "button",
+      "tabindex": "0",
+      "class": "surface-ledger-line",
+      "data-testid": "prepared-row",
+      "aria-expanded": "true",
+      "aria-label": "File archive, PREPARED"
+    },
+    "rect": {
+      "x": 15,
+      "y": 345,
+      "w": 363,
+      "h": 78
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 345,
+        "w": 363,
+        "h": 78
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 347,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 17,
+          "y": 384,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 17,
+          "y": 421,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 347,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 384,
+          "owned": true,
+          "owner": "div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.send-cells > span.surface-token"
+        },
+        {
+          "x": 197,
+          "y": 421,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 376,
+          "y": 347,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 376,
+          "y": 384,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 376,
+          "y": 421,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 819,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": {
+      "selector": ".desk-pullout [data-testid=meeting-send-well] [data-testid=doc-forms] select[aria-label='Document']",
+      "present": true,
+      "value": "meeting_summary"
+    },
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "File archive, PREPARED",
+    "url": "http://127.0.0.1:55804/?open=meeting%3A5cb3e81b",
+    "windows": [
+      {
+        "title": "Document source review",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "956f6dfe6d1d394e908e84f7b08367a8ce1655ddc5105ffcd4f277afe906e417",
+    "document_text_len": 1949,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=meeting_summary:5cb3e81b",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_5be62729e7057ce96e9ac6b6",
+              "document_ref": "meeting_summary:5cb3e81b",
+              "destination_id": "chd_b50cf20d33184a44fd52e338",
+              "destination_name": "File archive",
+              "channel": "file",
+              "badge": "local",
+              "account": {},
+              "target": {
+                "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_"
+              },
+              "target_digest": "8006e7ec1c7a45a89236afd8596055ab5963c5065eeed5152ca504ab7742c7ed",
+              "payload_digest": "e5da6232adabb03d4e662b1750b7be428b8d0f4efe3466822aa1bf14d0cd6c75",
+              "document_json": {
+                "label": "SUMMARY 2026-10-01",
+                "slug": "document-source-review",
+                "title": "Document source review"
+              },
+              "size": 189,
+              "preview": {
+                "text": "# Document source review\nDate: 2026-10-01\n\n## Summary\nThe meeting agreed to use one document registry and to check frozen bytes before review.\n\n## Topics\n- document registry\n- frozen bytes\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": "op_4bec59d72bf84a47a7cf494b5190f22c",
+              "send_operation_id": null,
+              "state": "prepared",
+              "reason": null,
+              "proof": null,
+              "file_path": null,
+              "created_at": "2026-10-01T09:51:31+00:00",
+              "dispatch_started_at": null,
+              "settled_at": null,
+              "dispatch_seq": null
+            }
+          ]
+        },
+        "body_sha256": "56497b6a2503c706ecb55271a0490a046bb7ba90b5279881d655112b4ca1e94e"
+      }
+    ],
+    "at_utc": "2026-10-01T09:51:35.431391+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:55804) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:55804) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'PREPARED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 345, 'w': 363, 'h': 78} | readable_text: 'BY YOU' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 345, 'w': 363, 'h': 78} | protocol_reads: GET /api/channels/sends?document_ref=meeting_summary:5cb3e81b answered 200 with 1 row(s) {'state': 'prepared', 'destination_id': 'chd_b50cf20d33184a44fd52e338', 'channel': 'file'} | input_value: value is 'meeting_summary', wanted 'meeting_summary'",
+    "elapsed_s": 0.944
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'PREPARED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 345, 'w': 363, 'h': 78} | readable_text: 'BY YOU' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 345, 'w': 363, 'h': 78} | protocol_reads: GET /api/channels/sends?document_ref=meeting_summary:5cb3e81b answered 200 with 1 row(s) {'state': 'prepared', 'destination_id': 'chd_b50cf20d33184a44fd52e338', 'channel': 'file'} | input_value: value is 'meeting_summary', wanted 'meeting_summary'",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.084,
+    "first_satisfied_at_s": 0.944,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: readable_text: 'PREPARED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 345, 'w': 363, 'h': 78} | readable_text: 'BY YOU' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 345, 'w': 363, 'h': 78} | protocol_reads: GET /api/channels/sends?document_ref=meeting_summary:5cb3e81b answered 200 with 1 row(s) {'state': 'prepared', 'destination_id': 'chd_b50cf20d33184a44fd52e338', 'channel': 'file'} | input_value: value is 'meeting_summary', wanted 'meeting_summary'"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:55804) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:55804) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/r3-r4-head-case.p11.meeting_summary.window.prepared/case.p11.meeting_summary.window.prepared--393/20261001T095127Z-case.p11.meeting_summary.window.prepared-astra-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/r3-r4-head-case.p11.meeting_summary.window.prepared/case.p11.meeting_summary.window.prepared--393/20261001T095127Z-case.p11.meeting_summary.window.prepared-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2079675_/.config/holdspeak/config.json",
+    "ENGINE_REPLAY bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+    "ENGINE_PROVIDER http://127.0.0.1:55805/v1",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDED provider reply at the real provider seam\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55804"
+  ],
+  "duration_s": 8.33
+}

@@ -1,0 +1,1581 @@
+{
+  "id": "obs-20261001T043224Z-case.p10.send.failed-astra-393",
+  "run_id": "20261001T043224Z-case.p10.send.failed-astra-393",
+  "case_id": "case.p10.send.failed",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase10.json",
+  "job": "p10",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p10_send_face",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:51954",
+      "port": 51954,
+      "pid": 20670,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-9l33trmh",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-9l33trmh/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo10_atlas/gh-not-found.json": "0c20c79d00baa056ed99c1cc7fca7816b38a6e7443362a03864f913d478fd269"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:32:24.436009+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "the CLI process edge: gh-not-found.json",
+        "substitute": "cli_runner",
+        "installed_sha256": "0c20c79d00baa056ed99c1cc7fca7816b38a6e7443362a03864f913d478fd269"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase10.json",
+      "sha256": "d8b8b49c13b0ef70d03b5b3eefc41b7fe9502c14a69db3ef387aae2919702dd2",
+      "version": "phase10-send"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDING runner at the CLI channels' process edge (no real gh or acli)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": "0c20c79d00baa056ed99c1cc7fca7816b38a6e7443362a03864f913d478fd269"
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T22:32:28.913114"
+        }
+      },
+      "response_sha256": "dadd33e70f452f8a24bd4270b6f40c7cb3030b39ce41de367ab52a1989a885e9"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "boundary",
+      "label": "the CLI process edge: gh-not-found.json",
+      "substitute": "cli_runner",
+      "adapter": "cli-process-edge",
+      "installed_sha256": "0c20c79d00baa056ed99c1cc7fca7816b38a6e7443362a03864f913d478fd269",
+      "seam": "holdspeak.services.channel_cli.CLI_RUNNER"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-7b3286ea93cc",
+          "name": "Atlas send ledger",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-09-30T22:32:28.968747",
+          "updated_at": "2026-09-30T22:32:28.968747",
+          "result_kind": "created",
+          "project_id": "proj-7b3286ea93cc",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-7b3286ea93cc"
+          ]
+        }
+      },
+      "response_sha256": "fc64535a2fc9fa9cf2776acb1d0e52b95427a43351a39d10f8378fcce963c5fd",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-7b3286ea93cc"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects/proj-7b3286ea93cc/updates/draft",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_f676e73192414c8794f5c6f1431132c4",
+          "project_id": "proj-7b3286ea93cc",
+          "project_revision": 1,
+          "review_id": null,
+          "lifecycle": "draft",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-10-01T04:32:28+00:00",
+          "updated_at": "2026-10-01T04:32:28+00:00",
+          "published_at": null,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generatorHost": null,
+          "generatorModel": null
+        }
+      },
+      "response_sha256": "d714ba3cce528c72814032368fa498059b04b78ee0cf4e24e751db3d0a07d57c",
+      "captured": {
+        "name": "update_id",
+        "path": "update.id",
+        "value": "pupd_f676e73192414c8794f5c6f1431132c4"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/updates/pupd_f676e73192414c8794f5c6f1431132c4/publish",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_f676e73192414c8794f5c6f1431132c4",
+          "project_id": "proj-7b3286ea93cc",
+          "project_revision": 2,
+          "review_id": null,
+          "lifecycle": "published",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-10-01T04:32:28+00:00",
+          "updated_at": "2026-10-01T04:32:28+00:00",
+          "published_at": "2026-10-01T04:32:28+00:00",
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "result_kind": "updated",
+          "changed_refs": [
+            "project:proj-7b3286ea93cc"
+          ],
+          "generatorHost": null,
+          "generatorModel": null
+        },
+        "operation_id": "op_47d60ee03a4b49e7a4be739c109a00a6",
+        "receipt": {
+          "receipt_id": "rcpt_9f637cb5437a4574bf5cb3830bebd168",
+          "operation_id": "op_47d60ee03a4b49e7a4be739c109a00a6",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project_update:pupd_f676e73192414c8794f5c6f1431132c4",
+          "created_at": 1790829148.985759,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project_update:pupd_f676e73192414c8794f5c6f1431132c4"
+        }
+      },
+      "response_sha256": "b5e7d09af8ecef4d6cc799ec3e86d51a4ddab50f0d4300beccf4e98148f2f832"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/destinations",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "destination": {
+          "id": "chd_88c205a9a18f8e9921ba0802",
+          "name": "Issue42",
+          "channel": "github",
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017",
+          "synced": false,
+          "state": "active",
+          "badge": "cloud",
+          "created_at": "2026-10-01T04:32:29+00:00",
+          "parked_at": null,
+          "connection": {
+            "id": "wpc_github",
+            "state": "never_checked",
+            "last_checked_at": null
+          }
+        },
+        "replaced": null,
+        "operation_id": "op_d985a869116546edb8beb93e4ba34100",
+        "receipt": {
+          "receipt_id": "rcpt_1f978c107e8d4732960000e050f939aa",
+          "operation_id": "op_d985a869116546edb8beb93e4ba34100",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "channel_destination:chd_88c205a9a18f8e9921ba0802",
+          "created_at": 1790829149.003555,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_destination"
+        }
+      },
+      "response_sha256": "3cc247d0939a07269607f8617c3ea2ea6f9192fe8766c73a2742ae211d0f27f9",
+      "captured": {
+        "name": "gh_id",
+        "path": "destination.id",
+        "value": "chd_88c205a9a18f8e9921ba0802"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-project.open.proj-7b3286ea93cc']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=room-body]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=updates-verb]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=update-list]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=update-list-item] [data-update-id='pupd_f676e73192414c8794f5c6f1431132c4']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=send-well]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=destination-row]:has([data-destination='Issue42'])",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=destination-row]:has([data-destination='Issue42'])",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=send-open][data-destination='Issue42'] [data-testid=send-preview]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "scroll_into_view",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=send-open][data-destination='Issue42'] [data-testid=send-verbs]",
+      "block": "center",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-9l33trmh",
+    "project_id": "proj-7b3286ea93cc",
+    "update_id": "pupd_f676e73192414c8794f5c6f1431132c4",
+    "gh_id": "chd_88c205a9a18f8e9921ba0802"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=send-open][data-destination='Issue42'] [data-testid=send-verb]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "\u2717\nFAILED\nISSUE NOT FOUND\nNOTHING SENT"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "send-line",
+        "data-testid": "send-failed",
+        "data-receipt": "latest",
+        "data-state": "failed",
+        "data-code": "github_target_not_found"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 51,
+        "y": 416,
+        "w": 307,
+        "h": 42
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "Issue42, GITHUB",
+      "after": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n10:32 PM\n1 need you\n\u25cf\n3 OF"
+    },
+    "document_text_sha256": {
+      "before": "0eb484671bb2c1a4b3cc70cdc137f8b2d912add2b4fb6c24795d0a5fde3147be",
+      "after": "51d791c90b9d96322d0d7f99437ff5bd97576342aa98cf9b975b109d0cdb45af"
+    },
+    "document_text_len": {
+      "before": 1172,
+      "after": 1235
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends?document_ref=project_update:pupd_f676e73192414c8794f5c6f1431132c4",
+          "status": 200,
+          "payload": {
+            "sends": []
+          },
+          "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/proj-7b3286ea93cc/updates",
+          "status": 200,
+          "payload": {
+            "updates": [
+              {
+                "id": "pupd_f676e73192414c8794f5c6f1431132c4",
+                "project_id": "proj-7b3286ea93cc",
+                "project_revision": 1,
+                "review_id": null,
+                "lifecycle": "published",
+                "draft_revision": 1,
+                "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+                "claims_json": "[]",
+                "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "created_at": "2026-10-01T04:32:28+00:00",
+                "updated_at": "2026-10-01T04:32:28+00:00",
+                "published_at": "2026-10-01T04:32:28+00:00",
+                "fallback_reason": null,
+                "fallback_receipt": null,
+                "deliveries": [],
+                "generatorHost": null,
+                "generatorModel": null
+              }
+            ]
+          },
+          "body_sha256": "a294361f1aed0a00f9b739bae477c8e2e2f9438f94781d80ba9e60f869684c24"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends?document_ref=project_update:pupd_f676e73192414c8794f5c6f1431132c4",
+          "status": 200,
+          "payload": {
+            "sends": [
+              {
+                "id": "chs_ef4cd3d586b9b737afc0ae42",
+                "document_ref": "project_update:pupd_f676e73192414c8794f5c6f1431132c4",
+                "destination_id": "chd_88c205a9a18f8e9921ba0802",
+                "destination_name": "Issue42",
+                "channel": "github",
+                "badge": "cloud",
+                "account": {
+                  "host": "github.com",
+                  "login": "octo-owner"
+                },
+                "target": {
+                  "host": "github.com",
+                  "kind": "issue",
+                  "number": 42,
+                  "repo": "acme/payments"
+                },
+                "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017",
+                "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+                "document_json": {
+                  "label": "REV 1",
+                  "slug": "atlas-send-ledger",
+                  "title": "Atlas send ledger \u2014 update r1 (2026-10-01)"
+                },
+                "size": 286,
+                "preview": {
+                  "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+                },
+                "prepared_by": {
+                  "kind": "owner",
+                  "identity": "owner-session"
+                },
+                "prepare_operation_id": null,
+                "send_operation_id": "op_9475e8f18652483b9bf46f7b2667cd71",
+                "state": "failed",
+                "reason": "github_target_not_found",
+                "proof": {
+                  "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+                },
+                "file_path": null,
+                "created_at": "2026-10-01T04:32:32.797483+00:00",
+                "dispatch_started_at": "2026-10-01T04:32:32.797483+00:00",
+                "settled_at": "2026-10-01T04:32:32+00:00",
+                "dispatch_seq": 1
+              }
+            ]
+          },
+          "body_sha256": "67f4c77af98860f0063f84d6d5b0ed4c6df549f1c2949b9cf642dfa21257f7dc"
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/proj-7b3286ea93cc/updates",
+          "status": 200,
+          "payload": {
+            "updates": [
+              {
+                "id": "pupd_f676e73192414c8794f5c6f1431132c4",
+                "project_id": "proj-7b3286ea93cc",
+                "project_revision": 1,
+                "review_id": null,
+                "lifecycle": "published",
+                "draft_revision": 1,
+                "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+                "claims_json": "[]",
+                "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "created_at": "2026-10-01T04:32:28+00:00",
+                "updated_at": "2026-10-01T04:32:28+00:00",
+                "published_at": "2026-10-01T04:32:28+00:00",
+                "fallback_reason": null,
+                "fallback_receipt": null,
+                "deliveries": [],
+                "generatorHost": null,
+                "generatorModel": null
+              }
+            ]
+          },
+          "body_sha256": "a294361f1aed0a00f9b739bae477c8e2e2f9438f94781d80ba9e60f869684c24"
+        }
+      ]
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "div > section.surface-section > div.update-deliver-line.send-manual > span.update-deliver-to > span.gadget-string > input",
+          "value": ""
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=send-open][data-destination='Issue42'] [data-testid=send-failed]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [
+      {
+        "selector": "div > section.surface-section > div.update-deliver-line.send-manual > span.update-deliver-to > span.gadget-string > input",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "div > section.surface-section > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "Issue42, GITHUB",
+    "url": "http://127.0.0.1:51954/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "0eb484671bb2c1a4b3cc70cdc137f8b2d912add2b4fb6c24795d0a5fde3147be",
+    "document_text_len": 1172,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=project_update:pupd_f676e73192414c8794f5c6f1431132c4",
+        "status": 200,
+        "payload": {
+          "sends": []
+        },
+        "body_sha256": "c1104ac07156ac01a8e3c878a759781ff2ab9c394dd9418b8856bde06ff67297"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-7b3286ea93cc/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_f676e73192414c8794f5c6f1431132c4",
+              "project_id": "proj-7b3286ea93cc",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-01T04:32:28+00:00",
+              "updated_at": "2026-10-01T04:32:28+00:00",
+              "published_at": "2026-10-01T04:32:28+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "a294361f1aed0a00f9b739bae477c8e2e2f9438f94781d80ba9e60f869684c24"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 20670,
+        "at": "2026-10-01T04:32:29.002776+00:00",
+        "answer": 0,
+        "hold": false
+      }
+    ],
+    "at_utc": "2026-10-01T04:32:32.684471+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=send-open][data-destination='Issue42'] [data-testid=send-failed]",
+    "target_present": true,
+    "text": "\u2717\nFAILED\nISSUE NOT FOUND\nNOTHING SENT",
+    "attrs": {
+      "class": "send-line",
+      "data-testid": "send-failed",
+      "data-receipt": "latest",
+      "data-state": "failed",
+      "data-code": "github_target_not_found"
+    },
+    "rect": {
+      "x": 51,
+      "y": 416,
+      "w": 307,
+      "h": 42
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 51,
+        "y": 416,
+        "w": 307,
+        "h": 42
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 53,
+          "y": 418,
+          "owned": true,
+          "owner": "div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 53,
+          "y": 437,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line"
+        },
+        {
+          "x": 53,
+          "y": 456,
+          "owned": true,
+          "owner": "div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line > span.surface-token"
+        },
+        {
+          "x": 205,
+          "y": 418,
+          "owned": true,
+          "owner": "div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line > span.surface-token"
+        },
+        {
+          "x": 205,
+          "y": 437,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line"
+        },
+        {
+          "x": 205,
+          "y": 456,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line"
+        },
+        {
+          "x": 356,
+          "y": 418,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line"
+        },
+        {
+          "x": 356,
+          "y": 437,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line"
+        },
+        {
+          "x": 356,
+          "y": 456,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n10:32 PM\n1 need you\n\u25cf\n3 OF",
+    "url": "http://127.0.0.1:51954/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "51d791c90b9d96322d0d7f99437ff5bd97576342aa98cf9b975b109d0cdb45af",
+    "document_text_len": 1235,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=project_update:pupd_f676e73192414c8794f5c6f1431132c4",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_ef4cd3d586b9b737afc0ae42",
+              "document_ref": "project_update:pupd_f676e73192414c8794f5c6f1431132c4",
+              "destination_id": "chd_88c205a9a18f8e9921ba0802",
+              "destination_name": "Issue42",
+              "channel": "github",
+              "badge": "cloud",
+              "account": {
+                "host": "github.com",
+                "login": "octo-owner"
+              },
+              "target": {
+                "host": "github.com",
+                "kind": "issue",
+                "number": 42,
+                "repo": "acme/payments"
+              },
+              "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017",
+              "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "document_json": {
+                "label": "REV 1",
+                "slug": "atlas-send-ledger",
+                "title": "Atlas send ledger \u2014 update r1 (2026-10-01)"
+              },
+              "size": 286,
+              "preview": {
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": null,
+              "send_operation_id": "op_9475e8f18652483b9bf46f7b2667cd71",
+              "state": "failed",
+              "reason": "github_target_not_found",
+              "proof": {
+                "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+              },
+              "file_path": null,
+              "created_at": "2026-10-01T04:32:32.797483+00:00",
+              "dispatch_started_at": "2026-10-01T04:32:32.797483+00:00",
+              "settled_at": "2026-10-01T04:32:32+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "67f4c77af98860f0063f84d6d5b0ed4c6df549f1c2949b9cf642dfa21257f7dc"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-7b3286ea93cc/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_f676e73192414c8794f5c6f1431132c4",
+              "project_id": "proj-7b3286ea93cc",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-01T04:32:28+00:00",
+              "updated_at": "2026-10-01T04:32:28+00:00",
+              "published_at": "2026-10-01T04:32:28+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "a294361f1aed0a00f9b739bae477c8e2e2f9438f94781d80ba9e60f869684c24"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 20670,
+        "at": "2026-10-01T04:32:29.002776+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 20670,
+        "at": "2026-10-01T04:32:32.797332+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "issue",
+          "comment",
+          "42",
+          "--repo",
+          "acme/payments",
+          "--body-file",
+          "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/holdspeak-send-r98oxrz5/payload.md"
+        ],
+        "body_sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "pid": 20670,
+        "at": "2026-10-01T04:32:32.799461+00:00",
+        "answer": 1,
+        "hold": false
+      }
+    ],
+    "at_utc": "2026-10-01T04:32:33.838614+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/channels/send",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/channels/send",
+        "status": 200,
+        "body_sha256": "cb65b16156235a1a4bbe656d1829173f947354f3f14865b89cdbe3f9c5ab3d51",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/channels/send"
+      },
+      "why": "chosen by the declared trigger_route POST /api/channels/send",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/channels/send",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/proj-7b3286ea93cc/updates",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/channels/send",
+      "status": 200,
+      "body_sha256": "cb65b16156235a1a4bbe656d1829173f947354f3f14865b89cdbe3f9c5ab3d51",
+      "body": {
+        "send": {
+          "id": "chs_ef4cd3d586b9b737afc0ae42",
+          "document_ref": "project_update:pupd_f676e73192414c8794f5c6f1431132c4",
+          "destination_id": "chd_88c205a9a18f8e9921ba0802",
+          "destination_name": "Issue42",
+          "channel": "github",
+          "badge": "cloud",
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-10-01)"
+          },
+          "size": 286,
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": null,
+          "send_operation_id": "op_9475e8f18652483b9bf46f7b2667cd71",
+          "state": "failed",
+          "reason": "github_target_not_found",
+          "proof": {
+            "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+          },
+          "file_path": null,
+          "created_at": "2026-10-01T04:32:32.797483+00:00",
+          "dispatch_started_at": "2026-10-01T04:32:32.797483+00:00",
+          "settled_at": "2026-10-01T04:32:32+00:00",
+          "dispatch_seq": 1
+        },
+        "outcome": "failed",
+        "operation_id": "op_9475e8f18652483b9bf46f7b2667cd71",
+        "receipt": {
+          "receipt_id": "rcpt_14e7359627134ab288397ba86effaceb",
+          "operation_id": "op_9475e8f18652483b9bf46f7b2667cd71",
+          "state": "failed",
+          "outcome": "github_target_not_found",
+          "result_ref": "channel_send:chs_ef4cd3d586b9b737afc0ae42",
+          "created_at": 1790829152.800263,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "document:project_update:pupd_f676e73192414c8794f5c6f1431132c4"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/send"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=send-open][data-destination='Issue42'] [data-testid=send-failed]",
+    "target_present": true,
+    "text": "\u2717\nFAILED\nISSUE NOT FOUND\nNOTHING SENT",
+    "attrs": {
+      "class": "send-line",
+      "data-testid": "send-failed",
+      "data-receipt": "latest",
+      "data-state": "failed",
+      "data-code": "github_target_not_found"
+    },
+    "rect": {
+      "x": 51,
+      "y": 416,
+      "w": 307,
+      "h": 42
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 51,
+        "y": 416,
+        "w": 307,
+        "h": 42
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 53,
+          "y": 418,
+          "owned": true,
+          "owner": "div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 53,
+          "y": 437,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line"
+        },
+        {
+          "x": 53,
+          "y": 456,
+          "owned": true,
+          "owner": "div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line > span.surface-token"
+        },
+        {
+          "x": 205,
+          "y": 418,
+          "owned": true,
+          "owner": "div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line > span.surface-token"
+        },
+        {
+          "x": 205,
+          "y": 437,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line"
+        },
+        {
+          "x": 205,
+          "y": 456,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line"
+        },
+        {
+          "x": 356,
+          "y": 418,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line"
+        },
+        {
+          "x": 356,
+          "y": 437,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line"
+        },
+        {
+          "x": 356,
+          "y": 456,
+          "owned": true,
+          "owner": "div.send-open > div.send-preview > div.surface-well > div.surface-well-body > div.send-verbs > span.send-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n10:32 PM\n1 need you\n\u25cf\n3 OF",
+    "url": "http://127.0.0.1:51954/",
+    "windows": [
+      {
+        "title": "Atlas send ledger",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "51d791c90b9d96322d0d7f99437ff5bd97576342aa98cf9b975b109d0cdb45af",
+    "document_text_len": 1235,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends?document_ref=project_update:pupd_f676e73192414c8794f5c6f1431132c4",
+        "status": 200,
+        "payload": {
+          "sends": [
+            {
+              "id": "chs_ef4cd3d586b9b737afc0ae42",
+              "document_ref": "project_update:pupd_f676e73192414c8794f5c6f1431132c4",
+              "destination_id": "chd_88c205a9a18f8e9921ba0802",
+              "destination_name": "Issue42",
+              "channel": "github",
+              "badge": "cloud",
+              "account": {
+                "host": "github.com",
+                "login": "octo-owner"
+              },
+              "target": {
+                "host": "github.com",
+                "kind": "issue",
+                "number": 42,
+                "repo": "acme/payments"
+              },
+              "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017",
+              "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "document_json": {
+                "label": "REV 1",
+                "slug": "atlas-send-ledger",
+                "title": "Atlas send ledger \u2014 update r1 (2026-10-01)"
+              },
+              "size": 286,
+              "preview": {
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "prepared_by": {
+                "kind": "owner",
+                "identity": "owner-session"
+              },
+              "prepare_operation_id": null,
+              "send_operation_id": "op_9475e8f18652483b9bf46f7b2667cd71",
+              "state": "failed",
+              "reason": "github_target_not_found",
+              "proof": {
+                "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+              },
+              "file_path": null,
+              "created_at": "2026-10-01T04:32:32.797483+00:00",
+              "dispatch_started_at": "2026-10-01T04:32:32.797483+00:00",
+              "settled_at": "2026-10-01T04:32:32+00:00",
+              "dispatch_seq": 1
+            }
+          ]
+        },
+        "body_sha256": "67f4c77af98860f0063f84d6d5b0ed4c6df549f1c2949b9cf642dfa21257f7dc"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-7b3286ea93cc/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_f676e73192414c8794f5c6f1431132c4",
+              "project_id": "proj-7b3286ea93cc",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-01T04:32:28+00:00",
+              "updated_at": "2026-10-01T04:32:28+00:00",
+              "published_at": "2026-10-01T04:32:28+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "a294361f1aed0a00f9b739bae477c8e2e2f9438f94781d80ba9e60f869684c24"
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 20670,
+        "at": "2026-10-01T04:32:29.002776+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 20670,
+        "at": "2026-10-01T04:32:32.797332+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "issue",
+          "comment",
+          "42",
+          "--repo",
+          "acme/payments",
+          "--body-file",
+          "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/holdspeak-send-r98oxrz5/payload.md"
+        ],
+        "body_sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "pid": 20670,
+        "at": "2026-10-01T04:32:32.799461+00:00",
+        "answer": 1,
+        "hold": false
+      }
+    ],
+    "at_utc": "2026-10-01T04:32:33.704015+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/channels/send",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/channels/send",
+        "status": 200,
+        "body_sha256": "cb65b16156235a1a4bbe656d1829173f947354f3f14865b89cdbe3f9c5ab3d51",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/channels/send"
+      },
+      "why": "chosen by the declared trigger_route POST /api/channels/send",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/channels/send",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/proj-7b3286ea93cc/updates",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/channels/send",
+      "status": 200,
+      "body_sha256": "cb65b16156235a1a4bbe656d1829173f947354f3f14865b89cdbe3f9c5ab3d51",
+      "body": {
+        "send": {
+          "id": "chs_ef4cd3d586b9b737afc0ae42",
+          "document_ref": "project_update:pupd_f676e73192414c8794f5c6f1431132c4",
+          "destination_id": "chd_88c205a9a18f8e9921ba0802",
+          "destination_name": "Issue42",
+          "channel": "github",
+          "badge": "cloud",
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-10-01)"
+          },
+          "size": 286,
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "prepared_by": {
+            "kind": "owner",
+            "identity": "owner-session"
+          },
+          "prepare_operation_id": null,
+          "send_operation_id": "op_9475e8f18652483b9bf46f7b2667cd71",
+          "state": "failed",
+          "reason": "github_target_not_found",
+          "proof": {
+            "error": "GraphQL: Could not resolve to an issue or pull request with the number of 42. (repository.issue)"
+          },
+          "file_path": null,
+          "created_at": "2026-10-01T04:32:32.797483+00:00",
+          "dispatch_started_at": "2026-10-01T04:32:32.797483+00:00",
+          "settled_at": "2026-10-01T04:32:32+00:00",
+          "dispatch_seq": 1
+        },
+        "outcome": "failed",
+        "operation_id": "op_9475e8f18652483b9bf46f7b2667cd71",
+        "receipt": {
+          "receipt_id": "rcpt_14e7359627134ab288397ba86effaceb",
+          "operation_id": "op_9475e8f18652483b9bf46f7b2667cd71",
+          "state": "failed",
+          "outcome": "github_target_not_found",
+          "result_ref": "channel_send:chs_ef4cd3d586b9b737afc0ae42",
+          "created_at": 1790829152.800263,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "document:project_update:pupd_f676e73192414c8794f5c6f1431132c4"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/send"
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 cb65b1615623); response body matches its declared fields | readable_text: 'FAILED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 416, 'w': 307, 'h': 42} | readable_text: 'ISSUE NOT FOUND' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 416, 'w': 307, 'h': 42} | readable_text: 'NOTHING SENT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 416, 'w': 307, 'h': 42} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_f676e73192414c8794f5c6f1431132c4 answered 200 with 1 row(s) {'state': 'failed', 'reason': 'github_target_not_found'}; GET /api/projects/proj-7b3286ea93cc/updates answered 200 with 1 row(s) {'id': 'pupd_f676e73192414c8794f5c6f1431132c4', 'deliveries': []} | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [20670]; 3 call(s) in all), wanted 1",
+    "elapsed_s": 0.941
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 cb65b1615623); response body matches its declared fields | readable_text: 'FAILED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 416, 'w': 307, 'h': 42} | readable_text: 'ISSUE NOT FOUND' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 416, 'w': 307, 'h': 42} | readable_text: 'NOTHING SENT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 416, 'w': 307, 'h': 42} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_f676e73192414c8794f5c6f1431132c4 answered 200 with 1 row(s) {'state': 'failed', 'reason': 'github_target_not_found'}; GET /api/projects/proj-7b3286ea93cc/updates answered 200 with 1 row(s) {'id': 'pupd_f676e73192414c8794f5c6f1431132c4', 'deliveries': []} | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [20670]; 3 call(s) in all), wanted 1",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.072,
+    "first_satisfied_at_s": 0.941,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 cb65b1615623); response body matches its declared fields | readable_text: 'FAILED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 416, 'w': 307, 'h': 42} | readable_text: 'ISSUE NOT FOUND' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 416, 'w': 307, 'h': 42} | readable_text: 'NOTHING SENT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 416, 'w': 307, 'h': 42} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_f676e73192414c8794f5c6f1431132c4 answered 200 with 1 row(s) {'state': 'failed', 'reason': 'github_target_not_found'}; GET /api/projects/proj-7b3286ea93cc/updates answered 200 with 1 row(s) {'id': 'pupd_f676e73192414c8794f5c6f1431132c4', 'deliveries': []} | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [20670]; 3 call(s) in all), wanted 1"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/channels/send",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/channels/send",
+      "status": 200,
+      "body_sha256": "cb65b16156235a1a4bbe656d1829173f947354f3f14865b89cdbe3f9c5ab3d51",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/send"
+    },
+    "why": "chosen by the declared trigger_route POST /api/channels/send",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/channels/send",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-7b3286ea93cc/updates",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b3/case.p10.send.failed--393/20261001T043224Z-case.p10.send.failed-astra-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b3/case.p10.send.failed--393/20261001T043224Z-case.p10.send.failed-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-9l33trmh/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-9l33trmh/.config/holdspeak/config.json",
+    "CLI_RUNNER 0c20c79d00baa056ed99c1cc7fca7816b38a6e7443362a03864f913d478fd269",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDING runner at the CLI channels' process edge (no real gh or acli)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:51954",
+    "CLI_CALL [\"gh\", \"api\", \"user\", \"--hostname\"]",
+    "CLI_CALL [\"gh\", \"api\", \"user\", \"--hostname\"]",
+    "CLI_CALL [\"gh\", \"issue\", \"comment\", \"42\"]"
+  ],
+  "duration_s": 9.535
+}

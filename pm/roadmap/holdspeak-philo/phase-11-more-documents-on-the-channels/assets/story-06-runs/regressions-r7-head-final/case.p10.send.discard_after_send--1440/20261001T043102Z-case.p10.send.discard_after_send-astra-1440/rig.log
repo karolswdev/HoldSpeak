@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:51030 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xgxcenip/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p10
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b2/case.p10.send.discard_after_send--1440/20261001T043102Z-case.p10.send.discard_after_send-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b2/case.p10.send.discard_after_send--1440/20261001T043102Z-case.p10.send.discard_after_send-astra-1440/after.png']
+NOTE: predicate: all_of: protocol_status: POST /api/channels/sends/chs_87832a4786e56fff45cb73ab/discard answered 409, wanted 409 (body sha256 9746790dd8ca); response body matches its declared fields | readable_text: 'SAVED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 71, 'y': 269, 'w': 732, 'h': 50} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_e144c6353b5e4640b013af4c65a3a4c0 answered 200 with 1 row(s) {'id': 'chs_87832a4786e56fff45cb73ab', 'state': 'sent'}

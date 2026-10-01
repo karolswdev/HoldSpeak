@@ -1,0 +1,64 @@
+{
+  "engine_mode": "none",
+  "fixture_sha256": "21e46c0900faf4f9039fe1daf8d5255062523cc38ca9fbc37e0dd913eb3277fa",
+  "folder": "/Users/karol/Documents/HoldSpeak",
+  "label": "REHEARSED; OWNER REVIEW PENDING",
+  "leg": "B (real sends)",
+  "mode": "real",
+  "named_limits": {
+    "artifact": "the ninth registry kind (artifact) is not a Phase 11 kind; it is outside this story",
+    "confluence": "the owner has no account yet; the contract is proven by Phase 10 story 02's fences",
+    "email": "the owner has not yet given the Resend details (2026-10-01); the contract is proven by Phase 10 stories 03 and 07 and the Phase 11 fences",
+    "jira": "the owner has no account yet; the contract is proven by Phase 10 story 02's fences",
+    "slack": "the owner has given no webhook (2026-10-01); the contract is proven by story 02's recording-edge fences and story 06's atlas cases; the Slack text length of each real brief is recorded below"
+  },
+  "observed_sitting": false,
+  "plan": [
+    [
+      "monday_brief",
+      "file"
+    ],
+    [
+      "monday_brief",
+      "github"
+    ],
+    [
+      "decision_record",
+      "file"
+    ],
+    [
+      "decision_record",
+      "github"
+    ],
+    [
+      "meeting_summary",
+      "file"
+    ],
+    [
+      "meeting_summary",
+      "github"
+    ],
+    [
+      "project_update",
+      "file"
+    ],
+    [
+      "desk_decision",
+      "file"
+    ],
+    [
+      "meeting_decision",
+      "file"
+    ],
+    [
+      "meeting_digest",
+      "file"
+    ],
+    [
+      "meeting_followup",
+      "file"
+    ]
+  ],
+  "press": "the owner's press, made by the driver AS THE OWNER by the owner's word (charter D3, 2026-09-29) for exactly these targets; Codex never sends; through POST /api/channels/send (the SEND well's inline Send route), after the owner's preview",
+  "story": "PHILO-11-07"
+}

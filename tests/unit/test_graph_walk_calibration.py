@@ -271,8 +271,9 @@ def test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires():
     """(4) A typo must not become a silent no-op that 'passed'."""
     # PHILO-7-03 added `focus` (keyboard travel to a Floor world chip).
     # PHILO-10-05 added `scroll_into_view` (the owner seats Send before he presses).
+    # PHILO-11-06 adds `select_option` for native destination selectors.
     assert UI_ACTIONS == {"goto", "reload", "click", "click_role", "fill",
-                          "press", "wait_for", "focus", "scroll_into_view"}
+                          "select_option", "press", "wait_for", "focus", "scroll_into_view"}
     # PHILO-10-05: a malformed seat blocks by name, before any page is reached.
     for bad in ({"selector": "#a", "block": "middle"}, {"block": "start"}):
         with pytest.raises(Blocked) as raised:
@@ -398,6 +399,28 @@ def test_a_capture_without_a_value_blocks():
                   "capture_as": "row_id"},
                  page=None, hub=_Hub(), provenance={}, variables={})
     assert "no value at 'id'" in str(raised.value)
+
+
+def test_optional_setup_api_keeps_the_real_missing_route_response():
+    class _Hub:
+        def __init__(self):
+            self.calls = []
+
+        def api(self, method, path, body=None):
+            self.calls.append((method, path, body))
+            return 404, {"detail": "Not Found"}
+
+    hub = _Hub()
+    record = run_step(
+        {"kind": "api", "method": "POST", "path": "/api/new-face",
+         "body": {}, "expect_status": 200, "optional": True},
+        page=None, hub=hub, provenance={}, variables={},
+    )
+    assert hub.calls == [("POST", "/api/new-face", {})]
+    assert record["status"] == 404
+    assert record["response"] == {"detail": "Not Found"}
+    assert record["optional"] is True and record["done"] is False
+    assert "response retained" in record["skipped"]
 
 
 def test_a_check_step_in_setup_blocks_where_it_stands(negatives):
@@ -726,6 +749,53 @@ def test_a_row_gone_is_named_never_merely_fewer(predicate_calibration):
     grew = {"protocol": {"rows": [{"id": "b", "subject_ref": "profile:cal-p1"},
                                   {"id": "c", "subject_ref": "profile:cal-p1"}]}}
     assert check_predicate(predicate, kept, grew)[0] is True
+
+
+def test_selector_presence_reads_the_named_dom_presence_observation():
+    predicate = {"kind": "selector_presence", "selector": "[data-testid=send-well]",
+                 "present": False}
+    absent = {"selector_presence": {"[data-testid=send-well]": False}}
+    present = {"selector_presence": {"[data-testid=send-well]": True}}
+    assert check_predicate(predicate, {}, absent)[0] is True
+    assert check_predicate(predicate, {}, present)[0] is False
+    assert check_predicate(predicate, {}, {})[0] is False
+
+
+def test_protocol_sequence_requires_the_preview_between_both_send_responses():
+    predicate = {"kind": "protocol_sequence", "expect": [
+        {"method": "POST", "path": "/api/channels/send", "status": 409},
+        {"method": "POST", "path": "/api/channels/preview", "status": 200},
+        {"method": "POST", "path": "/api/channels/send", "status": 200},
+    ]}
+    exact = {"trigger_response_capture": {"seen": [
+        {"method": "GET", "path": "/api/channels/sends", "status": 200,
+         "after_arming": True},
+        *[{**part, "after_arming": True} for part in predicate["expect"]],
+    ]}}
+    assert check_predicate(predicate, {}, exact)[0] is True
+    no_refresh = {"trigger_response_capture": {"seen": [
+        {**predicate["expect"][0], "after_arming": True},
+        {**predicate["expect"][2], "after_arming": True},
+    ]}}
+    assert check_predicate(predicate, {}, no_refresh)[0] is False
+
+
+def test_protocol_rows_same_requires_one_matching_identity_before_and_after():
+    predicate = {"kind": "protocol_rows_same", "collection": "sends",
+                 "match": {"document_ref": "monday_brief:b1", "state": "sent"}}
+    before = {"api_reads": [{"status": 200, "payload": {"sends": [
+        {"id": "s1", "document_ref": "monday_brief:b1", "state": "sent"},
+    ]}}]}
+    same = {"api_reads": [{"status": 200, "payload": {"sends": [
+        {"id": "s1", "document_ref": "monday_brief:b1", "state": "sent"},
+    ]}}]}
+    replaced = {"api_reads": [{"status": 200, "payload": {"sends": [
+        {"id": "s2", "document_ref": "monday_brief:b1", "state": "sent"},
+    ]}}]}
+    missing = {"api_reads": [{"status": 200, "payload": {"sends": []}}]}
+    assert check_predicate(predicate, before, same)[0] is True
+    assert check_predicate(predicate, before, replaced)[0] is False
+    assert check_predicate(predicate, before, missing)[0] is False
 
 
 def test_protocol_field_reads_one_named_field(predicate_calibration):

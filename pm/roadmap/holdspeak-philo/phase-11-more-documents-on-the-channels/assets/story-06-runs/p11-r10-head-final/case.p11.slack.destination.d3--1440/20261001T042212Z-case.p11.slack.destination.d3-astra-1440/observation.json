@@ -1,0 +1,1011 @@
+{
+  "id": "obs-20261001T042212Z-case.p11.slack.destination.d3-astra-1440",
+  "run_id": "20261001T042212Z-case.p11.slack.destination.d3-astra-1440",
+  "case_id": "case.p11.slack.destination.d3",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase11-slack.json",
+  "job": "p11",
+  "edge_ids": [
+    "edge.face.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p11_slack_destinations",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:63187",
+      "port": 63187,
+      "pid": 8825,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1d275q0i",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1d275q0i/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo11_slack/posted.json": "8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:22:12.539193+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "Slack HTTPS edge: destination check",
+        "substitute": "cli_runner",
+        "installed_sha256": "8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase11-slack.json",
+      "sha256": "2c756a0a38aa18199d352d473a0d656c1dc792c7e3d7ac086ea8279aa08bf461",
+      "version": "phase11-slack-backend"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDING runner at the CLI channels' process edge (no real gh or acli)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": "8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541"
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T22:22:18.141135"
+        }
+      },
+      "response_sha256": "89f743baf138bc3904bf4133bef24ba30dab0cd28b41cf59ef5be7917a92f770"
+    },
+    {
+      "kind": "boundary",
+      "label": "Slack HTTPS edge: destination check",
+      "substitute": "cli_runner",
+      "adapter": "slack-https-edge",
+      "installed_sha256": "8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541",
+      "seam": "holdspeak.services.channel_cli.CLI_RUNNER"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/slack-webhooks",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "key_ref": "slack_e6de41e01261a9e1294a9d47",
+        "saved": true,
+        "operation_id": "op_ae32dcc24ea44511afb7c8b78133914f",
+        "receipt": {
+          "receipt_id": "rcpt_0024a016a10343fab7016737cce062d0",
+          "operation_id": "op_ae32dcc24ea44511afb7c8b78133914f",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "slack_webhook:slack_e6de41e01261a9e1294a9d47",
+          "created_at": 1790828538.186904,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_slack_webhook"
+        }
+      },
+      "response_sha256": "2d634b341a8ec30287b98f0cfca871d7a92ad73aba3e26f77f6c0ffe5170dde9",
+      "captured": {
+        "name": "key_ref",
+        "path": "key_ref",
+        "value": "slack_e6de41e01261a9e1294a9d47"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.save_destination",
+      "args": {
+        "channel": "slack",
+        "name": "Slack #leads",
+        "key_ref": "slack_e6de41e01261a9e1294a9d47",
+        "channel_label": "#leads"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.save_destination",
+          "arguments": {
+            "channel": "slack",
+            "name": "Slack #leads",
+            "key_ref": "slack_e6de41e01261a9e1294a9d47",
+            "channel_label": "#leads"
+          }
+        }
+      },
+      "response": {
+        "destination": {
+          "account": {
+            "key_ref": "slack_e6de41e01261a9e1294a9d47"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "connection": null,
+          "created_at": "2026-10-01T04:22:18+00:00",
+          "id": "chd_4a07adde17172ec256b763fd",
+          "name": "Slack #leads",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "14c30ffe404b8c312000e40f4a38e6a1ee842e36a88c893dbf88fff57a094b0e"
+        },
+        "operation_id": "op_fa37047b634045e1997329b778628a94",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790828538.194443,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_fa37047b634045e1997329b778628a94",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_e7174b45ac36400ebf4f8f3a77ebc147",
+          "result_ref": "channel_destination:chd_4a07adde17172ec256b763fd",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "domain_response": {
+        "destination": {
+          "account": {
+            "key_ref": "slack_e6de41e01261a9e1294a9d47"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "connection": null,
+          "created_at": "2026-10-01T04:22:18+00:00",
+          "id": "chd_4a07adde17172ec256b763fd",
+          "name": "Slack #leads",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "14c30ffe404b8c312000e40f4a38e6a1ee842e36a88c893dbf88fff57a094b0e"
+        },
+        "operation_id": "op_fa37047b634045e1997329b778628a94",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790828538.194443,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_fa37047b634045e1997329b778628a94",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_e7174b45ac36400ebf4f8f3a77ebc147",
+          "result_ref": "channel_destination:chd_4a07adde17172ec256b763fd",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"destination\": {\"account\": {\"key_ref\": \"slack_e6de41e01261a9e1294a9d47\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"connection\": null, \"created_at\": \"2026-10-01T04:22:18+00:00\", \"id\": \"chd_4a07adde17172ec256b763fd\", \"name\": \"Slack #leads\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"14c30ffe404b8c312000e40f4a38e6a1ee842e36a88c893dbf88fff57a094b0e\"}, \"operation_id\": \"op_fa37047b634045e1997329b778628a94\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790828538.194443, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_fa37047b634045e1997329b778628a94\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_e7174b45ac36400ebf4f8f3a77ebc147\", \"result_ref\": \"channel_destination:chd_4a07adde17172ec256b763fd\", \"state\": \"succeeded\", \"target_ref\": \"desk:channel.save_destination\"}, \"replaced\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.008,
+      "captured": {
+        "name": "dest_id",
+        "path": "destination.id",
+        "value": "chd_4a07adde17172ec256b763fd"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-go.configure-integrations']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=destinations]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=dest-row]:has([data-destination^='Slack'])",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=dest-row]:has([data-destination^='Slack'])",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=dest-open]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A Slack destination is saved by this run; Check reads local key presence and host validity without posting.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1d275q0i",
+    "key_ref": "slack_e6de41e01261a9e1294a9d47",
+    "dest_id": "chd_4a07adde17172ec256b763fd"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=dest-check]",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "scroll_into_view",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=dest-check-result]",
+        "block": "center",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "\u2713\nWEBHOOK SET \u00b7 HOST OK"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "send-line",
+        "data-testid": "dest-check-result",
+        "data-code": "ready"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 447,
+        "y": 365,
+        "w": 202,
+        "h": 18
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "section.gadget-group > div.gadget-sheet > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "Slack #leads, SLACK",
+      "after": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,"
+    },
+    "document_text_sha256": {
+      "before": "2890540688060cb057cbee1287016155968d58fca63b2a1bfa0c433a19c80033",
+      "after": "2a8a21374b8e91e34325a8aa07b4127a088e0227c73ce3b6cd5c0ad6c231b37e"
+    },
+    "document_text_len": {
+      "before": 1052,
+      "after": 1117
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "div.gadget-sheet > div.connections-tool-row.connections-jira-ghost > div.connections-jira-ghost-fields > label.connections-field-label > span.gadget-string > input",
+          "value": ""
+        },
+        {
+          "selector": "div.gadget-sheet > div.connections-tool-row.connections-jira-ghost > div.connections-jira-ghost-fields > label.connections-field-label > span.gadget-string > input",
+          "value": ""
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=dest-check-result]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "div.gadget-sheet > div.connections-tool-row.connections-jira-ghost > div.connections-jira-ghost-fields > label.connections-field-label > span.gadget-string > input",
+        "value": ""
+      },
+      {
+        "selector": "div.gadget-sheet > div.connections-tool-row.connections-jira-ghost > div.connections-jira-ghost-fields > label.connections-field-label > span.gadget-string > input",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "section.gadget-group > div.gadget-sheet > div.surface-ledger > ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line",
+    "focus_label": "Slack #leads, SLACK",
+    "url": "http://127.0.0.1:63187/",
+    "windows": [
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 1392,
+          "h": 600
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "2890540688060cb057cbee1287016155968d58fca63b2a1bfa0c433a19c80033",
+    "document_text_len": 1052,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/destinations",
+        "status": 200,
+        "payload": {
+          "destinations": [
+            {
+              "id": "chd_4a07adde17172ec256b763fd",
+              "name": "Slack #leads",
+              "channel": "slack",
+              "account": {
+                "key_ref": "slack_e6de41e01261a9e1294a9d47"
+              },
+              "target": {
+                "channel_label": "#leads"
+              },
+              "target_digest": "14c30ffe404b8c312000e40f4a38e6a1ee842e36a88c893dbf88fff57a094b0e",
+              "synced": false,
+              "state": "active",
+              "badge": "cloud",
+              "created_at": "2026-10-01T04:22:18+00:00",
+              "parked_at": null,
+              "connection": null
+            }
+          ]
+        },
+        "body_sha256": "2fa284ce967f845b886bb786042aabaf804479117e22949d5271c7d72ac12ea3"
+      }
+    ],
+    "cli_calls": [],
+    "at_utc": "2026-10-01T04:22:21.188240+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=dest-check-result]",
+    "target_present": true,
+    "text": "\u2713\nWEBHOOK SET \u00b7 HOST OK",
+    "attrs": {
+      "class": "send-line",
+      "data-testid": "dest-check-result",
+      "data-code": "ready"
+    },
+    "rect": {
+      "x": 447,
+      "y": 365,
+      "w": 202,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 447,
+        "y": 365,
+        "w": 202,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 449,
+          "y": 367,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 449,
+          "y": 374,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 449,
+          "y": 381,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 548,
+          "y": 367,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 548,
+          "y": 374,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 548,
+          "y": 381,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 647,
+          "y": 367,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 647,
+          "y": 374,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 647,
+          "y": 381,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:63187/",
+    "windows": [
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 1392,
+          "h": 600
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "2a8a21374b8e91e34325a8aa07b4127a088e0227c73ce3b6cd5c0ad6c231b37e",
+    "document_text_len": 1117,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/destinations",
+        "status": 200,
+        "payload": {
+          "destinations": [
+            {
+              "id": "chd_4a07adde17172ec256b763fd",
+              "name": "Slack #leads",
+              "channel": "slack",
+              "account": {
+                "key_ref": "slack_e6de41e01261a9e1294a9d47"
+              },
+              "target": {
+                "channel_label": "#leads"
+              },
+              "target_digest": "14c30ffe404b8c312000e40f4a38e6a1ee842e36a88c893dbf88fff57a094b0e",
+              "synced": false,
+              "state": "active",
+              "badge": "cloud",
+              "created_at": "2026-10-01T04:22:18+00:00",
+              "parked_at": null,
+              "connection": null
+            }
+          ]
+        },
+        "body_sha256": "2fa284ce967f845b886bb786042aabaf804479117e22949d5271c7d72ac12ea3"
+      }
+    ],
+    "cli_calls": [],
+    "at_utc": "2026-10-01T04:22:22.734670+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+        "status": 200,
+        "body_sha256": "8fcbb3189eeb762e7484cd1ff217f9798b7821c27bc7f0461615f676982159b7",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check"
+      },
+      "why": "chosen by the declared trigger_route POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+      "seen": [
+        {
+          "method": "POST",
+          "path": "/api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+      "status": 200,
+      "body_sha256": "8fcbb3189eeb762e7484cd1ff217f9798b7821c27bc7f0461615f676982159b7",
+      "body": {
+        "destination": {
+          "id": "chd_4a07adde17172ec256b763fd",
+          "name": "Slack #leads",
+          "channel": "slack",
+          "account": {
+            "key_ref": "slack_e6de41e01261a9e1294a9d47"
+          },
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "14c30ffe404b8c312000e40f4a38e6a1ee842e36a88c893dbf88fff57a094b0e",
+          "synced": false,
+          "state": "active",
+          "badge": "cloud",
+          "created_at": "2026-10-01T04:22:18+00:00",
+          "parked_at": null,
+          "connection": null
+        },
+        "check": {
+          "state": "ready",
+          "resolved": null
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=dest-check-result]",
+    "target_present": true,
+    "text": "\u2713\nWEBHOOK SET \u00b7 HOST OK",
+    "attrs": {
+      "class": "send-line",
+      "data-testid": "dest-check-result",
+      "data-code": "ready"
+    },
+    "rect": {
+      "x": 447,
+      "y": 365,
+      "w": 202,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 447,
+        "y": 365,
+        "w": 202,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 449,
+          "y": 367,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 449,
+          "y": 374,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 449,
+          "y": 381,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 548,
+          "y": 367,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 548,
+          "y": 374,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 548,
+          "y": 381,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 647,
+          "y": 367,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 647,
+          "y": 374,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        },
+        {
+          "x": 647,
+          "y": 381,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.send-open > div.send-verbs > span.send-line > span.surface-state-chip"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:63187/",
+    "windows": [
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 1392,
+          "h": 600
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "2a8a21374b8e91e34325a8aa07b4127a088e0227c73ce3b6cd5c0ad6c231b37e",
+    "document_text_len": 1117,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/channels/destinations",
+        "status": 200,
+        "payload": {
+          "destinations": [
+            {
+              "id": "chd_4a07adde17172ec256b763fd",
+              "name": "Slack #leads",
+              "channel": "slack",
+              "account": {
+                "key_ref": "slack_e6de41e01261a9e1294a9d47"
+              },
+              "target": {
+                "channel_label": "#leads"
+              },
+              "target_digest": "14c30ffe404b8c312000e40f4a38e6a1ee842e36a88c893dbf88fff57a094b0e",
+              "synced": false,
+              "state": "active",
+              "badge": "cloud",
+              "created_at": "2026-10-01T04:22:18+00:00",
+              "parked_at": null,
+              "connection": null
+            }
+          ]
+        },
+        "body_sha256": "2fa284ce967f845b886bb786042aabaf804479117e22949d5271c7d72ac12ea3"
+      }
+    ],
+    "cli_calls": [],
+    "at_utc": "2026-10-01T04:22:22.593535+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+        "status": 200,
+        "body_sha256": "8fcbb3189eeb762e7484cd1ff217f9798b7821c27bc7f0461615f676982159b7",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check"
+      },
+      "why": "chosen by the declared trigger_route POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+      "seen": [
+        {
+          "method": "POST",
+          "path": "/api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+      "status": 200,
+      "body_sha256": "8fcbb3189eeb762e7484cd1ff217f9798b7821c27bc7f0461615f676982159b7",
+      "body": {
+        "destination": {
+          "id": "chd_4a07adde17172ec256b763fd",
+          "name": "Slack #leads",
+          "channel": "slack",
+          "account": {
+            "key_ref": "slack_e6de41e01261a9e1294a9d47"
+          },
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "14c30ffe404b8c312000e40f4a38e6a1ee842e36a88c893dbf88fff57a094b0e",
+          "synced": false,
+          "state": "active",
+          "badge": "cloud",
+          "created_at": "2026-10-01T04:22:18+00:00",
+          "parked_at": null,
+          "connection": null
+        },
+        "check": {
+          "state": "ready",
+          "resolved": null
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check"
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check answered 200, wanted 200 (body sha256 8fcbb3189eeb); response body matches its declared fields | readable_text: 'WEBHOOK SET \u00b7 HOST OK' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 447, 'y': 365, 'w': 202, 'h': 18} | protocol_reads: GET /api/channels/destinations answered 200 with 1 row(s) {'channel': 'slack'}",
+    "elapsed_s": 1.26
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check answered 200, wanted 200 (body sha256 8fcbb3189eeb); response body matches its declared fields | readable_text: 'WEBHOOK SET \u00b7 HOST OK' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 447, 'y': 365, 'w': 202, 'h': 18} | protocol_reads: GET /api/channels/destinations answered 200 with 1 row(s) {'channel': 'slack'}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.399,
+    "first_satisfied_at_s": 1.26,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_status: POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check answered 200, wanted 200 (body sha256 8fcbb3189eeb); response body matches its declared fields | readable_text: 'WEBHOOK SET \u00b7 HOST OK' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 447, 'y': 365, 'w': 202, 'h': 18} | protocol_reads: GET /api/channels/destinations answered 200 with 1 row(s) {'channel': 'slack'}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+      "status": 200,
+      "body_sha256": "8fcbb3189eeb762e7484cd1ff217f9798b7821c27bc7f0461615f676982159b7",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check"
+    },
+    "why": "chosen by the declared trigger_route POST /api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/channels/destinations/chd_4a07adde17172ec256b763fd/check",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b3/case.p11.slack.destination.d3--1440/20261001T042212Z-case.p11.slack.destination.d3-astra-1440/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b3/case.p11.slack.destination.d3--1440/20261001T042212Z-case.p11.slack.destination.d3-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1d275q0i/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1d275q0i/.config/holdspeak/config.json",
+    "CLI_RUNNER 8bc91dfcd8a9cd0f4a4f41e4edf0e3358b02d19cc1130bffc71edb41cd94f541",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDING runner at the CLI channels' process edge (no real gh or acli)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:63187"
+  ],
+  "duration_s": 10.423
+}

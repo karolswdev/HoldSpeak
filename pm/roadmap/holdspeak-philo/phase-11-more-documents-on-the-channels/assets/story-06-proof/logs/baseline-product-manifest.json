@@ -1,0 +1,2873 @@
+{
+  "source_revision": "332d91586bdbd7fe40e3c2c00851a46adc4650e4",
+  "product_tree_unchanged": true,
+  "product_blobs": [
+    {
+      "path": "holdspeak/__init__.py",
+      "blob": "87eb0b8755625bffc433c21ebe1364102cf3252b"
+    },
+    {
+      "path": "holdspeak/activity_candidates.py",
+      "blob": "dc564310c87778e3b865417960027347e223e0b4"
+    },
+    {
+      "path": "holdspeak/activity_connector_preview.py",
+      "blob": "91273f519cf88a9bfea9263c137ff19335acd498"
+    },
+    {
+      "path": "holdspeak/activity_connectors.py",
+      "blob": "d2c2561882e414dc6019929e83f85a4f75eedd3d"
+    },
+    {
+      "path": "holdspeak/activity_context.py",
+      "blob": "8fa0b7a0a50b3fa7306327647fc523c96b08b8ba"
+    },
+    {
+      "path": "holdspeak/activity_entities.py",
+      "blob": "014b616ebc67f8df32543cf8fb540bd0dc257e5f"
+    },
+    {
+      "path": "holdspeak/activity_extension.py",
+      "blob": "2bec36853a0a6944db462f2afad244eaab1506e8"
+    },
+    {
+      "path": "holdspeak/activity_github.py",
+      "blob": "59320d63f68c5642d3a279eda81c69a2a6e477d0"
+    },
+    {
+      "path": "holdspeak/activity_history.py",
+      "blob": "463def4b8aff2d7f8228d72ae6f2acbd07ad971d"
+    },
+    {
+      "path": "holdspeak/activity_jira.py",
+      "blob": "6a5dd5717344c5711087da1575bf086c139319cb"
+    },
+    {
+      "path": "holdspeak/activity_mapping.py",
+      "blob": "231fa8acae9d2711bc6dfe938fcd29db83f5cd79"
+    },
+    {
+      "path": "holdspeak/activity_nudges.py",
+      "blob": "cc9041d597b26ea4a57a8ca70d9ce03df50e7079"
+    },
+    {
+      "path": "holdspeak/activity_tracker.py",
+      "blob": "a0f840c2c1d1dce5da386f4c8ad48e7a98ec8a1c"
+    },
+    {
+      "path": "holdspeak/actuator_authority.py",
+      "blob": "988049df19956559316c429eaf96972ae6c81172"
+    },
+    {
+      "path": "holdspeak/agent_capabilities.py",
+      "blob": "9d6a7ac2bd4b1211eaf2f51f55f73bda4d939f57"
+    },
+    {
+      "path": "holdspeak/agent_context/__init__.py",
+      "blob": "67b0a874c67069e5d043a39dbe8ff8e4aa242136"
+    },
+    {
+      "path": "holdspeak/agent_context/_common.py",
+      "blob": "7c92d0b55aeed1afec69e65c67068ef669eb698e"
+    },
+    {
+      "path": "holdspeak/agent_context/hooks.py",
+      "blob": "1043178f83228adb294595cd6a22edb5ed3273f8"
+    },
+    {
+      "path": "holdspeak/agent_context/hs_context.py",
+      "blob": "bfe24415bf407396f0c4c5d510c0098c50190951"
+    },
+    {
+      "path": "holdspeak/agent_context/models.py",
+      "blob": "a67658002cdd4b7a1c7543fdd810a3d8f0ad4662"
+    },
+    {
+      "path": "holdspeak/agent_context/sessions.py",
+      "blob": "47870ad05fa812260100e042106fbe6378316952"
+    },
+    {
+      "path": "holdspeak/agent_device.py",
+      "blob": "b199b481eb96f9e57acdf39811e8c3265aa91465"
+    },
+    {
+      "path": "holdspeak/agent_summarizer.py",
+      "blob": "7c7fea4ce066e6ee75ff89e6d5e5e50ae8eb694e"
+    },
+    {
+      "path": "holdspeak/artifacts.py",
+      "blob": "c94807f7ae5166687c45d225c3c84d0acff829ce"
+    },
+    {
+      "path": "holdspeak/audio.py",
+      "blob": "2fb7ba7ac855010b046dccb4b310efd9980c9c4a"
+    },
+    {
+      "path": "holdspeak/audio_devices.py",
+      "blob": "d61ff234057d0d0c95c9a450c67af058ca34686a"
+    },
+    {
+      "path": "holdspeak/automation_presets.py",
+      "blob": "c422a5699b952f90c66f98d53bd425252d713edd"
+    },
+    {
+      "path": "holdspeak/cadence/__init__.py",
+      "blob": "f676f054bb56519d6a3d300c65dc5428c57e6687"
+    },
+    {
+      "path": "holdspeak/cadence/audit.py",
+      "blob": "b44a163bb0d078d970f5bbc043b15a943b77b8d5"
+    },
+    {
+      "path": "holdspeak/cadence/brief.py",
+      "blob": "b009ff43e0f6ead0a0ae755838a71c15e85520de"
+    },
+    {
+      "path": "holdspeak/cadence/closeout.py",
+      "blob": "5070c84abdb74fdd9a4c79e6bf994d521bb8a338"
+    },
+    {
+      "path": "holdspeak/cadence/collector.py",
+      "blob": "6b8656390eccbb353c4df9a6898accb8fc7e9bc8"
+    },
+    {
+      "path": "holdspeak/cadence/llm_action.py",
+      "blob": "b32c1c2c0aa92ce937bde8c445f12af8077c8d1d"
+    },
+    {
+      "path": "holdspeak/cadence/models.py",
+      "blob": "5d1d398299c774ad9a23ccdc697b2260c7097e71"
+    },
+    {
+      "path": "holdspeak/cadence/next_action.py",
+      "blob": "121931756cf8c2a745c2b12d7e9d71df8472ac5a"
+    },
+    {
+      "path": "holdspeak/cadence/policies.py",
+      "blob": "58c748885ba83c23c58235f46fd2df14d4d19ce9"
+    },
+    {
+      "path": "holdspeak/cadence/projects.py",
+      "blob": "15025ce292089e3301941dc6793719028c48ef31"
+    },
+    {
+      "path": "holdspeak/cadence/scheduler.py",
+      "blob": "8eaafa386c40035c15dac2e4127c98c276d38e19"
+    },
+    {
+      "path": "holdspeak/cadence/scoring.py",
+      "blob": "27d59bfd14b9280e18b6fd6c85f2932b24c08375"
+    },
+    {
+      "path": "holdspeak/cadence/service.py",
+      "blob": "1da196e4bc112e377b728151218cf7bbdc41c770"
+    },
+    {
+      "path": "holdspeak/cadence_telegram.py",
+      "blob": "71df2b49aecd62fdf1420113c7c1707df88826a9"
+    },
+    {
+      "path": "holdspeak/calendar_ingest.py",
+      "blob": "50aef392316eef734673c68e33ce4297b71e72e7"
+    },
+    {
+      "path": "holdspeak/calendar_ingest_conductor.py",
+      "blob": "feee058ae68d0353a066d4e8e41227bc4282577c"
+    },
+    {
+      "path": "holdspeak/channel_operations.py",
+      "blob": "5fd35408155a806ef77d1e7c363b71c2557aeeca"
+    },
+    {
+      "path": "holdspeak/coder_factory.py",
+      "blob": "c8bed60915ec7e76786e95cf897e0e67901b80a5"
+    },
+    {
+      "path": "holdspeak/coder_gate.py",
+      "blob": "75a4f4418e515a8f59d88c3187bf2810572bbc4f"
+    },
+    {
+      "path": "holdspeak/coder_steering.py",
+      "blob": "fe0023c421a3e08fa88e729d658ad45d91d8176a"
+    },
+    {
+      "path": "holdspeak/coder_steering_relay.py",
+      "blob": "0da37c90382752d1e06a53b7e6c4018c915b751d"
+    },
+    {
+      "path": "holdspeak/commands/__init__.py",
+      "blob": "1cba764dde2b667a165da5706df66a3846bbda1c"
+    },
+    {
+      "path": "holdspeak/commands/actions.py",
+      "blob": "119a20884e3d6f237fda981d360e503d91ca200e"
+    },
+    {
+      "path": "holdspeak/commands/agent_hook.py",
+      "blob": "60e1b55e5d37dc9d294a9a3ee58ed019bd253d8a"
+    },
+    {
+      "path": "holdspeak/commands/backup.py",
+      "blob": "4a07fe43dd0da41171c0a27dfec65b16d6f4a133"
+    },
+    {
+      "path": "holdspeak/commands/cadence.py",
+      "blob": "8a0bec680fa250358b56ad2722e9caa392438c14"
+    },
+    {
+      "path": "holdspeak/commands/device.py",
+      "blob": "9d12359ae269184752a0e2971af03fdc957383f6"
+    },
+    {
+      "path": "holdspeak/commands/dictation.py",
+      "blob": "6aa839e0c8c0f359b9feba5b3a76f6ddfd1c3869"
+    },
+    {
+      "path": "holdspeak/commands/doctor.py",
+      "blob": "2c7d6bd35dd6b1b72c508427769de074a3e6e4f0"
+    },
+    {
+      "path": "holdspeak/commands/gate.py",
+      "blob": "12f909834816a17d70445843ca4810ff79497d26"
+    },
+    {
+      "path": "holdspeak/commands/history.py",
+      "blob": "c60f8be3f578cace9da74216463d3dba9566675a"
+    },
+    {
+      "path": "holdspeak/commands/import_recording.py",
+      "blob": "77abbe3556a9c70f3a529e0e9a6292572b9fac14"
+    },
+    {
+      "path": "holdspeak/commands/intel.py",
+      "blob": "2c21d890320a873dc7ecde9ebbfb183e8a35517a"
+    },
+    {
+      "path": "holdspeak/commands/mesh_serve.py",
+      "blob": "32c1eed3398c14543f773208c552d83f5edc0211"
+    },
+    {
+      "path": "holdspeak/commands/node_serve.py",
+      "blob": "c4d559863b6ee4d97c33c1c59b89097afad781f6"
+    },
+    {
+      "path": "holdspeak/commands/seed.py",
+      "blob": "2829533256fa0796f63d0a31d8aa1fe5f80ce1b4"
+    },
+    {
+      "path": "holdspeak/config/__init__.py",
+      "blob": "85eaee10ac23b23552a3e50eced66b8fce8cf15e"
+    },
+    {
+      "path": "holdspeak/config/core.py",
+      "blob": "bd42aa2977873e407e539cbb1e15d8f6509e01f9"
+    },
+    {
+      "path": "holdspeak/config/device.py",
+      "blob": "e8e0a13f1838a06a6a66b65c5ad9ad8edfffc41d"
+    },
+    {
+      "path": "holdspeak/config/integrations.py",
+      "blob": "db60c788f24efcc2191700497482b48c152686f4"
+    },
+    {
+      "path": "holdspeak/config/meeting.py",
+      "blob": "0999f46dcd169784be62e059126b6d73f3a8c79d"
+    },
+    {
+      "path": "holdspeak/config/model.py",
+      "blob": "3372e2546610a5b5ce129684f502e7c225436661"
+    },
+    {
+      "path": "holdspeak/config/ui.py",
+      "blob": "94ea8ace1c6d0331465efa0cb700264a05ff731f"
+    },
+    {
+      "path": "holdspeak/confluence_templates.py",
+      "blob": "6daa5d565fc95b42715c7afcde8374d0b3124a2e"
+    },
+    {
+      "path": "holdspeak/connector_fixtures.py",
+      "blob": "ac27f3423751d85058d4667dd5053f1c9d2d358c"
+    },
+    {
+      "path": "holdspeak/connector_pack_loader.py",
+      "blob": "5d4cb82af16f5bb23d51b5a2a76df0dd3a967bf4"
+    },
+    {
+      "path": "holdspeak/connector_packs/__init__.py",
+      "blob": "d27fc6af531e0348abbcaae76556aa0c713ff959"
+    },
+    {
+      "path": "holdspeak/connector_packs/acli_confluence.py",
+      "blob": "9321a712f008044a1c6c17a602b0b730517f5e49"
+    },
+    {
+      "path": "holdspeak/connector_packs/acli_jira.py",
+      "blob": "55a61161e32c65dc892a88ac51cfb1e7bcae3365"
+    },
+    {
+      "path": "holdspeak/connector_packs/calendar_activity.py",
+      "blob": "7f0ab7977913c6bedd6ce509207de3c09c316271"
+    },
+    {
+      "path": "holdspeak/connector_packs/firefox_ext.py",
+      "blob": "f9a4ddac7f9ebe4f70830040df1c887763142657"
+    },
+    {
+      "path": "holdspeak/connector_packs/github_cli.py",
+      "blob": "0e31e73be0ec6d55444985bc3329cb5db2add10b"
+    },
+    {
+      "path": "holdspeak/connector_packs/jira_cli.py",
+      "blob": "13c0f8b299a0dfd6645a482de743bdd00c76593b"
+    },
+    {
+      "path": "holdspeak/connector_packs/meeting_context.py",
+      "blob": "2138480c8dda01481ecf8816859c4cfefd53badb"
+    },
+    {
+      "path": "holdspeak/connector_runtime.py",
+      "blob": "a7148e1e2f35a698f6167c200dd991def05d8e09"
+    },
+    {
+      "path": "holdspeak/connector_sdk.py",
+      "blob": "f90dab64e8613779063b9e933a5ec287b4c30eff"
+    },
+    {
+      "path": "holdspeak/constitutional_context.py",
+      "blob": "c9ed7fe9e9cba3d4645134ae24a2e6d60eba55cc"
+    },
+    {
+      "path": "holdspeak/cron.py",
+      "blob": "b5e65feb22fe75ee213d98509f4655415951cf26"
+    },
+    {
+      "path": "holdspeak/db/__init__.py",
+      "blob": "bbf2d826e4a31ce423ace4455068d61e8f5eb921"
+    },
+    {
+      "path": "holdspeak/db/activity/__init__.py",
+      "blob": "d4b7b9231b81dd2add8997599baefd84d2733e9c"
+    },
+    {
+      "path": "holdspeak/db/activity/annotations.py",
+      "blob": "3a0948fa0249c9ee33b97f17265cc92a4898bb93"
+    },
+    {
+      "path": "holdspeak/db/activity/candidates.py",
+      "blob": "cf802e2440d314c43d82af54e0da877354b2f278"
+    },
+    {
+      "path": "holdspeak/db/activity/enrichment.py",
+      "blob": "e1e57672f307212b4c0bef23de6c472d3309e533"
+    },
+    {
+      "path": "holdspeak/db/activity/records.py",
+      "blob": "b0349fd0dfb18bcfe2fc41964e0cc76a4edc922f"
+    },
+    {
+      "path": "holdspeak/db/activity/rules.py",
+      "blob": "4b1b20b61cf1b2867dddb59a9f731708996f1935"
+    },
+    {
+      "path": "holdspeak/db/activity/settings.py",
+      "blob": "52dba9288191c2d519be376a16d13defc405579d"
+    },
+    {
+      "path": "holdspeak/db/actuators.py",
+      "blob": "63926bac7e518196c311825d3bb8d15a64587668"
+    },
+    {
+      "path": "holdspeak/db/automations.py",
+      "blob": "08517df7e559fc9747fa49eb0dccedf3f215e8c5"
+    },
+    {
+      "path": "holdspeak/db/base.py",
+      "blob": "f4c6e46b48a55eff5d2f0db763c520d4c7d2ecc6"
+    },
+    {
+      "path": "holdspeak/db/cadence.py",
+      "blob": "7d2dd83f8c723c3280f71229ff3c538e02ae6e4b"
+    },
+    {
+      "path": "holdspeak/db/calendar_event_projects.py",
+      "blob": "0eb018c33f69fe5e000f3b725d5f7a89913c2446"
+    },
+    {
+      "path": "holdspeak/db/calendar_events.py",
+      "blob": "4f8a81d6b8f395d05cdf1ab331cd9b27f218d4a8"
+    },
+    {
+      "path": "holdspeak/db/channels.py",
+      "blob": "c89e06ff6a739f11982f27537b0abb0144e13bef"
+    },
+    {
+      "path": "holdspeak/db/connection.py",
+      "blob": "281336a757cb7cb1d0794ca1eb8ea5269ae1bd85"
+    },
+    {
+      "path": "holdspeak/db/core.py",
+      "blob": "da3adefb53824f267021e12657e3a2a0a71f87f2"
+    },
+    {
+      "path": "holdspeak/db/corrections.py",
+      "blob": "e171b6dcecf17065734484c4ee2e584555d53ed8"
+    },
+    {
+      "path": "holdspeak/db/decisions.py",
+      "blob": "c124fefb5d152c1e2ecca154c43986ab2c398f6b"
+    },
+    {
+      "path": "holdspeak/db/delivery_attempts.py",
+      "blob": "7578b1af33815e4ff3b735a827d60f3fb0a9e9fd"
+    },
+    {
+      "path": "holdspeak/db/delivery_receipts.py",
+      "blob": "076aa6adda8f69ea7ada3b66ccd3e5c7412c2aa5"
+    },
+    {
+      "path": "holdspeak/db/delta.py",
+      "blob": "b6ba7990235019e73cf4ef10f9a9a10242fb5596"
+    },
+    {
+      "path": "holdspeak/db/desktop_typing.py",
+      "blob": "d93e858411c57827e8b1525974f101a52f022a15"
+    },
+    {
+      "path": "holdspeak/db/dictation_delivery.py",
+      "blob": "17f9af08d5572f12306d2c9f3ab01b2c7a573a72"
+    },
+    {
+      "path": "holdspeak/db/front_door.py",
+      "blob": "c02a72f5466a4a3ddb019c9d1c8a273f8a1b1138"
+    },
+    {
+      "path": "holdspeak/db/gate.py",
+      "blob": "e232d523c69e573735cba7b4a3be8365403e6b8f"
+    },
+    {
+      "path": "holdspeak/db/intel.py",
+      "blob": "c0ae81c009277e9189f9e49a5d834c5e9f9e7dfa"
+    },
+    {
+      "path": "holdspeak/db/invocations.py",
+      "blob": "e239b0fc5d8eb0c39915f5fb5535af74e841e34a"
+    },
+    {
+      "path": "holdspeak/db/journal.py",
+      "blob": "07f10c663a86b29687e7b941bb7c03b8c25755e4"
+    },
+    {
+      "path": "holdspeak/db/meetings.py",
+      "blob": "fc252896d2ff98865fc2cbc148930b1e6ce9e678"
+    },
+    {
+      "path": "holdspeak/db/memory.py",
+      "blob": "7caa760bedd9694521e9e645628cecc3704d3ef6"
+    },
+    {
+      "path": "holdspeak/db/mesh_relay.py",
+      "blob": "0894d67639c4ab0d2117c0145c513b25560b93ab"
+    },
+    {
+      "path": "holdspeak/db/mesh_worker.py",
+      "blob": "d7d0dbb44dbe8db5fa5765219b35a6bfa72a5bd7"
+    },
+    {
+      "path": "holdspeak/db/milestones.py",
+      "blob": "ed58b64bac44c6799d062980bdbc26f77987861f"
+    },
+    {
+      "path": "holdspeak/db/models/__init__.py",
+      "blob": "4cca8313b86bba1c99dace5018cf0e10202cc159"
+    },
+    {
+      "path": "holdspeak/db/models/actions.py",
+      "blob": "20f253393c3da0aa52693d4b710c41a8c08a0a7d"
+    },
+    {
+      "path": "holdspeak/db/models/activity.py",
+      "blob": "6982e99ac2f39791cd5febd382b098ae0e667724"
+    },
+    {
+      "path": "holdspeak/db/models/infra.py",
+      "blob": "4bd74ecf543bf386c72879b1a08beb1de017fe65"
+    },
+    {
+      "path": "holdspeak/db/models/knowledge.py",
+      "blob": "d655b674d5fc10dbf454cbbb32ef4cb70bdf332d"
+    },
+    {
+      "path": "holdspeak/db/models/meeting.py",
+      "blob": "bfa327d4b8c08b8224e9c50ef87256dc0d6e8288"
+    },
+    {
+      "path": "holdspeak/db/models/mixins.py",
+      "blob": "1886c140d56cc8b4a4d6cef2ab36736b2a10ffa1"
+    },
+    {
+      "path": "holdspeak/db/models/workbench.py",
+      "blob": "80139fde74587ebae79034ea211445d7d53adbe2"
+    },
+    {
+      "path": "holdspeak/db/onboarding.py",
+      "blob": "f36b77473bb85009e22c8d0cd3435f66974a2bb9"
+    },
+    {
+      "path": "holdspeak/db/plugins.py",
+      "blob": "5ab9153192c5a577eda7465062abac0f6dc6051f"
+    },
+    {
+      "path": "holdspeak/db/primitives.py",
+      "blob": "a7f7506f196b8093192a6e02c3d3c6cf2ad7a1a9"
+    },
+    {
+      "path": "holdspeak/db/projections.py",
+      "blob": "f798f9378b6352054058171c4be7c759c36d981c"
+    },
+    {
+      "path": "holdspeak/db/projects.py",
+      "blob": "f4ede46d08205b1b8801f734bfb3b3b20ab487ae"
+    },
+    {
+      "path": "holdspeak/db/proposals.py",
+      "blob": "bbeb4d31fdaf14e09a138d362d556bd106fa5be4"
+    },
+    {
+      "path": "holdspeak/db/reconcile.py",
+      "blob": "d6bc5c41e65df967f77e8a3e3c9960fc7bdf40fa"
+    },
+    {
+      "path": "holdspeak/db/refinement_thoughts.py",
+      "blob": "6180d8c9791cad6e7de131cddbdc891a5e60a447"
+    },
+    {
+      "path": "holdspeak/db/relationships.py",
+      "blob": "443479b7f0fc1578d994bb875ef67832307a6d33"
+    },
+    {
+      "path": "holdspeak/db/resourceful.py",
+      "blob": "e45e2209c63d1ce84b74fc1e411bb528435b4e80"
+    },
+    {
+      "path": "holdspeak/db/scheduled_recordings.py",
+      "blob": "c1accb157c41716fde8ff2c65441d59ee5fbaa10"
+    },
+    {
+      "path": "holdspeak/db/schema.py",
+      "blob": "ade8601d4b1f4909657bcab5f69e34e02c1a2841"
+    },
+    {
+      "path": "holdspeak/db/seed.py",
+      "blob": "573fc456818c37164d6ffe5b134452a90834cabe"
+    },
+    {
+      "path": "holdspeak/db/steering.py",
+      "blob": "37a57cce6ba779a4c28fda69c0343325c44c1ee6"
+    },
+    {
+      "path": "holdspeak/db/steward.py",
+      "blob": "e49b86ce539dbb6c49775de45260d8cf6460b64e"
+    },
+    {
+      "path": "holdspeak/db/task_resume.py",
+      "blob": "94a4be9c40b523a18dd5eebea66b4632b424608d"
+    },
+    {
+      "path": "holdspeak/db/threads.py",
+      "blob": "7af36fcfb7971f5f2a5213cb723b0b178e9d0184"
+    },
+    {
+      "path": "holdspeak/db/updates.py",
+      "blob": "07c2bad3acdcbd432b97dce99761efbfe761197e"
+    },
+    {
+      "path": "holdspeak/db/workbenches.py",
+      "blob": "509e387dd07bb5f4a6b9ff0bcc37b184f028ba58"
+    },
+    {
+      "path": "holdspeak/delivery/__init__.py",
+      "blob": "5f04568f7bc46888fbd38c2cda1260d96da38d8c"
+    },
+    {
+      "path": "holdspeak/delivery/attempts.py",
+      "blob": "389cd628934d734d6093d09d077f64f106915f97"
+    },
+    {
+      "path": "holdspeak/delivery/collector.py",
+      "blob": "fb2e614ccbc1b31cd58a4d37a828e3b0af36b2c7"
+    },
+    {
+      "path": "holdspeak/delivery/commands.py",
+      "blob": "3201fbcc092263ad900b08ad39a1e0374c70c937"
+    },
+    {
+      "path": "holdspeak/delivery/direct_gesture_input.py",
+      "blob": "47072d73500cbf6dc5dcdf02f58d5bfcca0766fc"
+    },
+    {
+      "path": "holdspeak/delivery/dossiers.py",
+      "blob": "e04a863cbedecad8c19e25d98b45d4c568e96940"
+    },
+    {
+      "path": "holdspeak/delivery/factory_launch.py",
+      "blob": "df3c1a5b46899919f98be0427c0ff14c0e585d04"
+    },
+    {
+      "path": "holdspeak/delivery/node_credentials.py",
+      "blob": "3632d5e459f6f46b85bddb4a53eee9f7752c51c5"
+    },
+    {
+      "path": "holdspeak/delivery/node_link.py",
+      "blob": "36d25018a82e465947dc0fcdf7b8dfbe2bbde636"
+    },
+    {
+      "path": "holdspeak/delivery/pr_receipts.py",
+      "blob": "628871d116b68072b3d595ef01795580baeabd18"
+    },
+    {
+      "path": "holdspeak/delivery/read_model.py",
+      "blob": "ca77350fd66e6fe19eb9c0c982b8f96d046d6077"
+    },
+    {
+      "path": "holdspeak/delivery/registry.py",
+      "blob": "4143ab91c265a2a7db83ad871e1cda083e14ad64"
+    },
+    {
+      "path": "holdspeak/delivery/terminal.py",
+      "blob": "9c36b7c19ba6e585a8f4d0b35500f06f255df738"
+    },
+    {
+      "path": "holdspeak/deployment_revisions.py",
+      "blob": "d604e51dc68c894a2f67126cab8cc73db44d6bee"
+    },
+    {
+      "path": "holdspeak/desktop_focus.py",
+      "blob": "d217fce6860c44141b6667b67b04bd689a2999cd"
+    },
+    {
+      "path": "holdspeak/desktop_notify.py",
+      "blob": "86385d7d279d63374853f8f49d07cbfd9c723041"
+    },
+    {
+      "path": "holdspeak/desktop_permissions.py",
+      "blob": "b4b15ac8e4461efd765ddebbbd44631222654c02"
+    },
+    {
+      "path": "holdspeak/desktop_presence.py",
+      "blob": "734e1012e8d71398b6c09ad09a59650e4767b29b"
+    },
+    {
+      "path": "holdspeak/desktop_presence_cocoa.py",
+      "blob": "951783e81c25e1227ea1ece237748c4e58ad6157"
+    },
+    {
+      "path": "holdspeak/desktop_presence_freedesktop.py",
+      "blob": "4b469d979169c911667446a3ee3f89c44f2d1964"
+    },
+    {
+      "path": "holdspeak/desktop_presence_gtk.py",
+      "blob": "1485aace0bcef0d43e166c677174f96c8cf087a4"
+    },
+    {
+      "path": "holdspeak/desktop_typing.py",
+      "blob": "98e9727b60aeaefef796b2213bb3a843290c4f1a"
+    },
+    {
+      "path": "holdspeak/device_audio.py",
+      "blob": "65e9d885e8f46f8a3863c2f8ceaa4a9e53bca57b"
+    },
+    {
+      "path": "holdspeak/device_audio_ws.py",
+      "blob": "e14cb1e2e6379f3fc28dd3a58a1b1c79081122bb"
+    },
+    {
+      "path": "holdspeak/device_meeting_stats.py",
+      "blob": "8fa2c697aef9aeef0caaf8a4d6ccebce0b33b0e1"
+    },
+    {
+      "path": "holdspeak/device_recording_tick.py",
+      "blob": "f8d9ac7c0c3e82849ab03c2705a26c128e1471f2"
+    },
+    {
+      "path": "holdspeak/device_status.py",
+      "blob": "84ac36c55c4ff286eb663f1995bd0d43fe0316cf"
+    },
+    {
+      "path": "holdspeak/dictation_learning.py",
+      "blob": "889d089b94aaa996154e6ea8a2f7794a963263e4"
+    },
+    {
+      "path": "holdspeak/dictation_runner.py",
+      "blob": "8594aaa95289d9a0e3b1a60d12b9e7bf1902d722"
+    },
+    {
+      "path": "holdspeak/dictation_selection.py",
+      "blob": "3f076e5e82fb7aa2742f2137480087e258f2efe2"
+    },
+    {
+      "path": "holdspeak/dictation_telemetry.py",
+      "blob": "6accbd3511c790f26cc69e5fa2966681a283b48d"
+    },
+    {
+      "path": "holdspeak/doctor.py",
+      "blob": "7cf4fb923cea6760089788584b5c735d6dc11113"
+    },
+    {
+      "path": "holdspeak/errors.py",
+      "blob": "56655e62f6aa8eba6f3a3463434f3469e55b8a18"
+    },
+    {
+      "path": "holdspeak/faults.py",
+      "blob": "6b2379d9368130b13ee763c4503496c227ea49bb"
+    },
+    {
+      "path": "holdspeak/github_templates.py",
+      "blob": "f8c20e7164cb299bab2b3679596b076c5317b012"
+    },
+    {
+      "path": "holdspeak/grounding.py",
+      "blob": "61a1dbf8ebbaffe54ad6332836b8d0b8c56ce0c4"
+    },
+    {
+      "path": "holdspeak/grounding_rails.py",
+      "blob": "7442f542fead156186fa01950fa9c5875d9d3852"
+    },
+    {
+      "path": "holdspeak/hotkey.py",
+      "blob": "002f2e39dee99f04dddf8c312841920250c95ba8"
+    },
+    {
+      "path": "holdspeak/inference_capabilities.py",
+      "blob": "98a5c83204066e071467677210cd160e158bcef7"
+    },
+    {
+      "path": "holdspeak/inference_setup_catalog.py",
+      "blob": "6027b09fc615b61125ba343a9e6355983b7b0570"
+    },
+    {
+      "path": "holdspeak/inference_targets.py",
+      "blob": "15855f69274b160354786e054e3879d7616e5e17"
+    },
+    {
+      "path": "holdspeak/intel/__init__.py",
+      "blob": "2d83f331596835178c8fa017d28949b314dc9d2e"
+    },
+    {
+      "path": "holdspeak/intel/endpoint_health.py",
+      "blob": "9e644c3446e043d068d83db0e2810c009a78282d"
+    },
+    {
+      "path": "holdspeak/intel/engine.py",
+      "blob": "554605b4d0a74bf528d6dacc32c5d9e802bad763"
+    },
+    {
+      "path": "holdspeak/intel/mesh_relay.py",
+      "blob": "815265e15263e7c69a5b0fff5949de060a1594cb"
+    },
+    {
+      "path": "holdspeak/intel/models.py",
+      "blob": "763b533bfbcb6f00ada1f77d8d2ae7004792f884"
+    },
+    {
+      "path": "holdspeak/intel/parsing.py",
+      "blob": "4d82ed464cfdd60f627c95bcaedfa57675c05c62"
+    },
+    {
+      "path": "holdspeak/intel/providers.py",
+      "blob": "b071be37f10cfa52b82297f9a3d3ecd87dd61172"
+    },
+    {
+      "path": "holdspeak/intel_queue.py",
+      "blob": "ee16a06eea600e4c22f7959f4b2e3146ed149190"
+    },
+    {
+      "path": "holdspeak/intel_queue_conductor.py",
+      "blob": "befcf9060b58537b4d3bbb65e63b6a37ae1692f3"
+    },
+    {
+      "path": "holdspeak/intent_timeline.py",
+      "blob": "f645fd89975af233492bd9ee014d7e569444c3ed"
+    },
+    {
+      "path": "holdspeak/jira_templates.py",
+      "blob": "566dffe60890ace287f484d6d96d28f51c2f2845"
+    },
+    {
+      "path": "holdspeak/kernel/__init__.py",
+      "blob": "d24ae95abc8e5b87500f0a5d98e55b4f1e3154af"
+    },
+    {
+      "path": "holdspeak/kernel/actuator.py",
+      "blob": "a2c952b6dc3ce750288cde5d3043badcb71faad0"
+    },
+    {
+      "path": "holdspeak/kernel/admission.py",
+      "blob": "df0aa083156ad82b037636629a87f99a96ced69b"
+    },
+    {
+      "path": "holdspeak/kernel/ask_projection.py",
+      "blob": "0dd3ba40eb75878ecf14d61e5580a57bf35ed051"
+    },
+    {
+      "path": "holdspeak/kernel/broker.py",
+      "blob": "1db73d19531506f746143b7fb0fdf5ea9dd92d19"
+    },
+    {
+      "path": "holdspeak/kernel/causation.py",
+      "blob": "f9629c9ca884210a873b203839a68411003f520c"
+    },
+    {
+      "path": "holdspeak/kernel/channel_send.py",
+      "blob": "157240b77c19d5c282b5f839c72c15008eb184e9"
+    },
+    {
+      "path": "holdspeak/kernel/claim_witness.py",
+      "blob": "80cb2cab49a2b9440544c414566194b8326abe4c"
+    },
+    {
+      "path": "holdspeak/kernel/desk.py",
+      "blob": "6268cdb1c3677a773c65e9f56ebeb4ae1915b688"
+    },
+    {
+      "path": "holdspeak/kernel/desk_broker.py",
+      "blob": "fbd3447981923a894bac2f26d322e7937a8bed8e"
+    },
+    {
+      "path": "holdspeak/kernel/desk_codec.py",
+      "blob": "1afe1d1379fa5f412fa4b59e54f42028f360a144"
+    },
+    {
+      "path": "holdspeak/kernel/desktop_type_text.py",
+      "blob": "2117a42da69547ade94be8994755c6d9e347d975"
+    },
+    {
+      "path": "holdspeak/kernel/dispatch_context.py",
+      "blob": "47cf01f3a93970a2e579e7c9d652cf91c2d819ea"
+    },
+    {
+      "path": "holdspeak/kernel/effect_ledger.json",
+      "blob": "0035f711f46f00a9ff82260bf724438dd3b772cf"
+    },
+    {
+      "path": "holdspeak/kernel/egress_material.py",
+      "blob": "6f78600dcc59bcb6cf480fa5de393b0ab551af24"
+    },
+    {
+      "path": "holdspeak/kernel/executor.py",
+      "blob": "1520c35e06d6d074de7d439269961f760e3e559e"
+    },
+    {
+      "path": "holdspeak/kernel/external_egress.py",
+      "blob": "b8b10ae1630ed0131d909d978cc84450faafe578"
+    },
+    {
+      "path": "holdspeak/kernel/inference.py",
+      "blob": "a86e84a93208b1bd62fb00e9afcb9020ef6265b3"
+    },
+    {
+      "path": "holdspeak/kernel/inference_cancel.py",
+      "blob": "5b1d8cf8228403f2fb3c533a782c6e136b730314"
+    },
+    {
+      "path": "holdspeak/kernel/inference_cancel_signal.py",
+      "blob": "8339ea7a94b32f109e449ade63cb1c5cb5c21d1a"
+    },
+    {
+      "path": "holdspeak/kernel/inference_invoke.py",
+      "blob": "084a0e71939f811ce26366ae77fa2408a68689e1"
+    },
+    {
+      "path": "holdspeak/kernel/inference_runner.py",
+      "blob": "a729ab1e8137e01c96ebf59c2f2b064b9563e421"
+    },
+    {
+      "path": "holdspeak/kernel/inference_shared.py",
+      "blob": "5dedf87cc58c437d9cf4aa287146b39991e948f3"
+    },
+    {
+      "path": "holdspeak/kernel/inference_stream.py",
+      "blob": "0cc47146f49b085a5f502417eff4bd22c44a4a1a"
+    },
+    {
+      "path": "holdspeak/kernel/invocation_sequence.py",
+      "blob": "4f3b97423fecc9a3019c6a2e709094ebac24f923"
+    },
+    {
+      "path": "holdspeak/kernel/journal.py",
+      "blob": "e2bdba4c2da31912d911b7f41c0ba94936375828"
+    },
+    {
+      "path": "holdspeak/kernel/journal_atomic.py",
+      "blob": "2ef2d4684a8b84448c32f0be7face0c1aa19f44f"
+    },
+    {
+      "path": "holdspeak/kernel/journal_txn.py",
+      "blob": "7fc28f55b744334e483149e30e1beb46e976986f"
+    },
+    {
+      "path": "holdspeak/kernel/liveness.py",
+      "blob": "8423bce74d682011163148b407339f0ab9438898"
+    },
+    {
+      "path": "holdspeak/kernel/local_runtime_lease.py",
+      "blob": "0df30272b3fe69c3aacb12c979bdac3a36bca92e"
+    },
+    {
+      "path": "holdspeak/kernel/meeting_plugin_projection.py",
+      "blob": "7a096f361b3c213904c624a33701e7d9748e2a28"
+    },
+    {
+      "path": "holdspeak/kernel/mesh_local_authority.py",
+      "blob": "3c9b5f2e596807333cc525590e280798daa061db"
+    },
+    {
+      "path": "holdspeak/kernel/mesh_local_runner.py",
+      "blob": "9fe40a69379e12b9237cfee1187fdfa6ca7cd14b"
+    },
+    {
+      "path": "holdspeak/kernel/model.py",
+      "blob": "d742bbb5539c256735abbf852bb6f9b026343189"
+    },
+    {
+      "path": "holdspeak/kernel/orphan_lease.py",
+      "blob": "f4f5829e13ac5a98b0abc27b3e029684719bc2ba"
+    },
+    {
+      "path": "holdspeak/kernel/parent_checkpoint.py",
+      "blob": "14478600920c6e462ad5b6e36dad25d0a5aceb5f"
+    },
+    {
+      "path": "holdspeak/kernel/parent_lease.py",
+      "blob": "18759fe2e0bbdbb7cbd772e0f1cdd9149c62c3c8"
+    },
+    {
+      "path": "holdspeak/kernel/parent_run.py",
+      "blob": "53c0eaebe40f4daf815310f0d2c92122aa3af7f6"
+    },
+    {
+      "path": "holdspeak/kernel/parent_terminal.py",
+      "blob": "e8ecc935f8a5e9abd8c12a71a2dd98b269f28afb"
+    },
+    {
+      "path": "holdspeak/kernel/people_store_setup.py",
+      "blob": "49ed7b8a66f0085c31f340e8aeb9bb7cc1939dcc"
+    },
+    {
+      "path": "holdspeak/kernel/process_input.py",
+      "blob": "29f0b8b5b0fce55e4b9994f0008eacacd9c90348"
+    },
+    {
+      "path": "holdspeak/kernel/process_spawn.py",
+      "blob": "51cfd37279a2b7c287ff4640c663f963981d5b68"
+    },
+    {
+      "path": "holdspeak/kernel/project.py",
+      "blob": "60f3b9e0509ce7f2d3e47249a10b459e71b09ddb"
+    },
+    {
+      "path": "holdspeak/kernel/project_codec.py",
+      "blob": "d5638ffca598482440a15b7599b2814914eada32"
+    },
+    {
+      "path": "holdspeak/kernel/project_grant.py",
+      "blob": "7ef04d6956157116e7579cb367bff8494c76ac28"
+    },
+    {
+      "path": "holdspeak/kernel/projection_publisher.py",
+      "blob": "9a9d5635288b1742cb3e13c0779f030c9c189d8a"
+    },
+    {
+      "path": "holdspeak/kernel/projection_stager.py",
+      "blob": "1b226efc39bf664d1aa1a99fbf20d827bbeb104e"
+    },
+    {
+      "path": "holdspeak/kernel/prompt_adapter.py",
+      "blob": "18c038097e2de50c278041a03a7d6e95f1236c37"
+    },
+    {
+      "path": "holdspeak/kernel/provider_signals.py",
+      "blob": "6d6c1ef4cdb1bf1ccdebdc5ea659b6ab8be46c07"
+    },
+    {
+      "path": "holdspeak/kernel/publication_transition.py",
+      "blob": "e42a592d14216f70539e5d469e756481ba83a9e3"
+    },
+    {
+      "path": "holdspeak/kernel/rails_journal_projection.py",
+      "blob": "0902f2bd6a792cb6110bec13b454bb168e6c5c49"
+    },
+    {
+      "path": "holdspeak/kernel/recipe_projection.py",
+      "blob": "ba2e10fc07aef5442362d3db219956fe5243bc6a"
+    },
+    {
+      "path": "holdspeak/kernel/runner_receipt_evidence.py",
+      "blob": "c89e3f428aa5fbb35004e8a444cd8bf49df97e35"
+    },
+    {
+      "path": "holdspeak/kernel/runtime.py",
+      "blob": "3c57ef2492f8436d34235ebd3f1c6246033c7d7c"
+    },
+    {
+      "path": "holdspeak/kernel/schedule_delegated.py",
+      "blob": "63cbd538ced70f673fdc129cb9a9a38bbfc56d1d"
+    },
+    {
+      "path": "holdspeak/kernel/sequence_workflow_projection.py",
+      "blob": "603bd6d85c5d1f05fa835a4341c430679f5a469c"
+    },
+    {
+      "path": "holdspeak/kernel/subprocess_exec.py",
+      "blob": "fd5408b82555ae4e4181fe3e56c19954c398a9bc"
+    },
+    {
+      "path": "holdspeak/kernel/tool_call.py",
+      "blob": "8699c942604f7ced64d15008575f24630750f9f0"
+    },
+    {
+      "path": "holdspeak/kernel/trusted_child.py",
+      "blob": "d2a636d451d04edb642d39a0362648ba27bdfc0b"
+    },
+    {
+      "path": "holdspeak/kernel/vision_prompt_adapter.py",
+      "blob": "0df386835ac383a8677259e0175a900299eaa072"
+    },
+    {
+      "path": "holdspeak/kernel/voice_resolve.py",
+      "blob": "eded074ab80cfbb9803f611e3e3bbe6dc9d61883"
+    },
+    {
+      "path": "holdspeak/kernel/workbench_mint.py",
+      "blob": "1c47b5f2b22c1c3d849e8b8d4c00ed3b734ce34a"
+    },
+    {
+      "path": "holdspeak/kernel/workbench_projection.py",
+      "blob": "38e87af179a049c1634c53041ac643fabb479659"
+    },
+    {
+      "path": "holdspeak/kernel/workbench_triage.py",
+      "blob": "b74be1e01d1ccc2f9148dfc93fc0a154d2c741bb"
+    },
+    {
+      "path": "holdspeak/languages.py",
+      "blob": "91e080d486d2364f8f7993695ecda8352f769579"
+    },
+    {
+      "path": "holdspeak/logging_config.py",
+      "blob": "aac7dc6d07a2f0d00850efd8cdd79a0771b2281b"
+    },
+    {
+      "path": "holdspeak/main.py",
+      "blob": "2360473d5af98b33980c50ad4f40b4f7b98e5ccc"
+    },
+    {
+      "path": "holdspeak/mcp/__init__.py",
+      "blob": "5c724eae8dd95ea63cf78b30b4537041129880d8"
+    },
+    {
+      "path": "holdspeak/mcp/__main__.py",
+      "blob": "085b473b86943b1cb998a0c69845091ae5d8ba0d"
+    },
+    {
+      "path": "holdspeak/mcp/auth.py",
+      "blob": "a307fd375451562f826f83d2b9abecdd586bb318"
+    },
+    {
+      "path": "holdspeak/mcp/families/__init__.py",
+      "blob": "14c491d1b9dcbddbfc016c26573dcf4093482b42"
+    },
+    {
+      "path": "holdspeak/mcp/families/ask.py",
+      "blob": "4da8a9fe18d92086b5e2ddad2cdae5139d6b4947"
+    },
+    {
+      "path": "holdspeak/mcp/families/cadence.py",
+      "blob": "f3e1175fef93bb47dbd1deee7fc092797d92c26d"
+    },
+    {
+      "path": "holdspeak/mcp/families/channel.py",
+      "blob": "c485eab3a31b669f802be238f921bce3e3d18bbd"
+    },
+    {
+      "path": "holdspeak/mcp/families/coder.py",
+      "blob": "275cb400142c75d4cd9bee2df1d45d2fce50635b"
+    },
+    {
+      "path": "holdspeak/mcp/families/concierge.py",
+      "blob": "77fb897fcb4b15cf109104134b5400e0fb9a3487"
+    },
+    {
+      "path": "holdspeak/mcp/families/door.py",
+      "blob": "1ba4849c4f8a1ca5c23fb0db319efe28f78e008b"
+    },
+    {
+      "path": "holdspeak/mcp/families/heartbeat.py",
+      "blob": "193d63b57c8aebe6848a03563f154a45a4e991c9"
+    },
+    {
+      "path": "holdspeak/mcp/families/inference.py",
+      "blob": "729b9090f18d4a3f74382429cad07f1f3b8ca87b"
+    },
+    {
+      "path": "holdspeak/mcp/families/inference_assignments.py",
+      "blob": "6de62dfbfb919cbd852828d9dfe58224656c29d5"
+    },
+    {
+      "path": "holdspeak/mcp/families/interview.py",
+      "blob": "1c57bb1f5f9b8e99622365a493ef76013be344b1"
+    },
+    {
+      "path": "holdspeak/mcp/families/memory.py",
+      "blob": "4a5d3af48b5672bfb7ae46b715bbecf1d05a2352"
+    },
+    {
+      "path": "holdspeak/mcp/families/model_library.py",
+      "blob": "3d2e6259dc70e5ac6116b6d135f42794bd4962d6"
+    },
+    {
+      "path": "holdspeak/mcp/families/people.py",
+      "blob": "3923c98a144ace78fa26c44974751c5828df24c2"
+    },
+    {
+      "path": "holdspeak/mcp/families/plugin_job.py",
+      "blob": "b566b10f370bb59f429a941f431a2338fc05ed29"
+    },
+    {
+      "path": "holdspeak/mcp/families/practice_recipe.py",
+      "blob": "4580e750d78aaab19f4490581f403d6d5cd5b357"
+    },
+    {
+      "path": "holdspeak/mcp/families/project.py",
+      "blob": "2195ab0d75b615b1ae987f39b8c9a2d7a629d52b"
+    },
+    {
+      "path": "holdspeak/mcp/families/reactions.py",
+      "blob": "3df34ef87593974fa23784fac31287eeb822ea7c"
+    },
+    {
+      "path": "holdspeak/mcp/families/sequence.py",
+      "blob": "48de7996e22e54378ddb9b362b9468c2ae917262"
+    },
+    {
+      "path": "holdspeak/mcp/families/settings.py",
+      "blob": "40e42bced849c31d54575266ab0f70cace5dacd4"
+    },
+    {
+      "path": "holdspeak/mcp/families/thought.py",
+      "blob": "c42a1fc2b5e5b402ddff60aadc3bff3ecf609d62"
+    },
+    {
+      "path": "holdspeak/mcp/families/thread.py",
+      "blob": "3de1c2f6d00b911202e8d4412dc943d36ea0b27c"
+    },
+    {
+      "path": "holdspeak/mcp/palettes.py",
+      "blob": "b89351ccee0779b0bdc05f2907d1919fc8bcff25"
+    },
+    {
+      "path": "holdspeak/mcp/refinement_runtime.py",
+      "blob": "8d9b8a60885f82451ea1bce836cbda957f4a37ad"
+    },
+    {
+      "path": "holdspeak/mcp/resources.py",
+      "blob": "b0ffcac27ba923d10e6175fd514fde7a9208ff2b"
+    },
+    {
+      "path": "holdspeak/mcp/server.py",
+      "blob": "e66152fa1b0c2e3adc5c6968a302ba49ab17f44e"
+    },
+    {
+      "path": "holdspeak/mcp/tool_authority.py",
+      "blob": "5c5d5c959ae36e01ac48b9acd870403192cc5071"
+    },
+    {
+      "path": "holdspeak/mcp/tools.py",
+      "blob": "5f2dee618cd6b1dfc93bb192e9efa960692e638e"
+    },
+    {
+      "path": "holdspeak/meeting_aftercare.py",
+      "blob": "94622d1fe7928dc6a516868d138c768194e33cd0"
+    },
+    {
+      "path": "holdspeak/meeting_capture_journal.py",
+      "blob": "49dae576d40724bc4b7977d2af07cd37f4999f74"
+    },
+    {
+      "path": "holdspeak/meeting_exports.py",
+      "blob": "185b9c95da10225170999bdcc63578b20f39abbc"
+    },
+    {
+      "path": "holdspeak/meeting_import.py",
+      "blob": "8e5eb99a8bd9e56aec9d098653188b6fbcaf84ba"
+    },
+    {
+      "path": "holdspeak/meeting_plugins.py",
+      "blob": "9fdf8607699cbb278574260a003d5c8cceb41af9"
+    },
+    {
+      "path": "holdspeak/meeting_recorder.py",
+      "blob": "6ddba69be7afa5d82906ff1a1b69e474dc111f12"
+    },
+    {
+      "path": "holdspeak/meeting_session/__init__.py",
+      "blob": "d788eadb80f42c151b4e3f83c157b2c719232b85"
+    },
+    {
+      "path": "holdspeak/meeting_session/bookmarks.py",
+      "blob": "159e426f7a0facbf02ca606b64102701e3979354"
+    },
+    {
+      "path": "holdspeak/meeting_session/deferred_admission.py",
+      "blob": "a121d9e39ed7e784921d078e1ed3b245008be9fe"
+    },
+    {
+      "path": "holdspeak/meeting_session/deferred_bound.py",
+      "blob": "5b36bb9ea3d220cc38afef598b2aa238af4a7ebf"
+    },
+    {
+      "path": "holdspeak/meeting_session/intel_admission.py",
+      "blob": "f30c3604abe43477381088961b296724b7a380b6"
+    },
+    {
+      "path": "holdspeak/meeting_session/intel_analysis.py",
+      "blob": "5982f469d7e6c21f1a38a3683e2367d0624db136"
+    },
+    {
+      "path": "holdspeak/meeting_session/intel_plan.py",
+      "blob": "f5fe3ea1005e706d1ba3bc5644e63a404515159f"
+    },
+    {
+      "path": "holdspeak/meeting_session/intel_routed_children.py",
+      "blob": "517a56c5b908d661aff7d9a0e83723bb3b8b0fe0"
+    },
+    {
+      "path": "holdspeak/meeting_session/live_readiness.py",
+      "blob": "61fbc247255ea132ab7bdd77de35c25d5cfd9de7"
+    },
+    {
+      "path": "holdspeak/meeting_session/models.py",
+      "blob": "7f36fcdaa49e0a95dc2c0b2b36ed701fc65b5e32"
+    },
+    {
+      "path": "holdspeak/meeting_session/mutations.py",
+      "blob": "bce364cd8572fb8840a4ce9ab4cfa6aaddbf171a"
+    },
+    {
+      "path": "holdspeak/meeting_session/persistence.py",
+      "blob": "b1aa2a7a3673c5eca43e21847bcecc03996b1492"
+    },
+    {
+      "path": "holdspeak/meeting_session/session.py",
+      "blob": "fefe12d51fa6006ac02c82f65df614d1dc279aef"
+    },
+    {
+      "path": "holdspeak/meeting_session/transcribe_admission.py",
+      "blob": "2f14150e0054080273d59672bf3cd239a06ca991"
+    },
+    {
+      "path": "holdspeak/meeting_session/transcribe_loop.py",
+      "blob": "ebe98e18ae203e839e812e0864186360a44a8f08"
+    },
+    {
+      "path": "holdspeak/meeting_templates.py",
+      "blob": "dca0ade67f6e13c8bceb9774713304c4ac17ac0d"
+    },
+    {
+      "path": "holdspeak/mesh.py",
+      "blob": "6c6c1ef00f169d1dc5c4a7258d60f2d0d0501ad6"
+    },
+    {
+      "path": "holdspeak/mesh_authority/__init__.py",
+      "blob": "6163cc370ec6d3488f7572be0bba6d4f1f05647c"
+    },
+    {
+      "path": "holdspeak/mesh_authority/ed25519.py",
+      "blob": "8b88061e318468cbc87050ada3e4760f9596f9d5"
+    },
+    {
+      "path": "holdspeak/mesh_authority/offer.py",
+      "blob": "44387edef64f2d39a3d3449a2b235e49f36e52df"
+    },
+    {
+      "path": "holdspeak/mesh_authority/refusals.py",
+      "blob": "1c8933dc86188f9abd9b7f4088ef8fddb4a34ece"
+    },
+    {
+      "path": "holdspeak/mesh_authority/report.py",
+      "blob": "2acb40811400bc549033fc252231e9431493dffa"
+    },
+    {
+      "path": "holdspeak/mesh_authority/revision.py",
+      "blob": "cb24494d306ddd22d4e9a2bf840564a74ca78c51"
+    },
+    {
+      "path": "holdspeak/missioncontrol_bridge.py",
+      "blob": "879d8a2f34eb900cdd3049e418731f0696e05738"
+    },
+    {
+      "path": "holdspeak/operation_policy.py",
+      "blob": "debe63d726862698d062e575867bc83a5740804e"
+    },
+    {
+      "path": "holdspeak/operations.py",
+      "blob": "edb43ac9153b4f0a72eca349dea679e9934cddfb"
+    },
+    {
+      "path": "holdspeak/people/__init__.py",
+      "blob": "644f2b19f20599dd3543e44c1caece5c056fad52"
+    },
+    {
+      "path": "holdspeak/people/crypto.py",
+      "blob": "fb296d21286f20eb10da71da24413b3165a9e907"
+    },
+    {
+      "path": "holdspeak/people/keys.py",
+      "blob": "e76cae83ee00b5d8f8d3942f72e2666e8ff9e7a8"
+    },
+    {
+      "path": "holdspeak/people/policy.py",
+      "blob": "7ed75c0cc5df5e96a83d221f17765a081fe98ade"
+    },
+    {
+      "path": "holdspeak/people/store.py",
+      "blob": "e89e1862b16cedcb8a50a14d2b0c3942ca784970"
+    },
+    {
+      "path": "holdspeak/plugin_pack_loader.py",
+      "blob": "8a6dc1d8197553a3ae3493342fdcb412d4a4ad4a"
+    },
+    {
+      "path": "holdspeak/plugin_packs/__init__.py",
+      "blob": "7f18a7e272be50096a7684b131925d7787c67689"
+    },
+    {
+      "path": "holdspeak/plugin_sdk.py",
+      "blob": "ad5f42b8557f2ee78a4621994b5831c9c8844a96"
+    },
+    {
+      "path": "holdspeak/plugins/__init__.py",
+      "blob": "c84a95de906b2c709f357a34143c674c87851bed"
+    },
+    {
+      "path": "holdspeak/plugins/actuator_executor.py",
+      "blob": "6791aa9dbe10774716b85c87eb994cacb51033eb"
+    },
+    {
+      "path": "holdspeak/plugins/actuators.py",
+      "blob": "904956968626b60363b4bf470226d401c0ec179c"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/__init__.py",
+      "blob": "d2d57e2b9edd7c0a4d9b72c06e5c0b9e9b639144"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/action_owner_enforcer.py",
+      "blob": "dbde5bd331028a41581bbaf41622e185e4529935"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/adr_drafter.py",
+      "blob": "cedb0e2af767e36f100b17c67ee63c2c7846e626"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/customer_signal_extractor.py",
+      "blob": "959983b7ade01a9e97f057e6cfdb3994da1a53f0"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/decision_announcement_drafter.py",
+      "blob": "770b881f482e33b8ff3031b95f4f10e8426ad085"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/decision_capture.py",
+      "blob": "28eb63a2ae83f4f2c9938ea6032ecbce6ecc4c14"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/dependency_mapper.py",
+      "blob": "c0b9dc06351b422b99d60532f1c24be7fd96ddcc"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/followup_ticket_actuator.py",
+      "blob": "7c0a375865f550c9154ebc685537dc38b685d7c3"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/github_issue_actuator.py",
+      "blob": "83014cc5aa4006d0765dff8de1388dcfb0ddd21a"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/github_pr_actuator.py",
+      "blob": "2a445babb6f4f4c610e4c2a604ee86aca3328500"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/incident_timeline.py",
+      "blob": "e0afe6afc520a500cfc3fe82236b7be43401eda6"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/mermaid_architecture.py",
+      "blob": "19111c80aa0c04f4e1100173e215e62b50460165"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/milestone_planner.py",
+      "blob": "2027e9dc95552ec12493e28cbe343d06ec946976"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/requirements_extractor.py",
+      "blob": "127c21a0c023f1b92000b442bae2c099e1f80c54"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/risk_heatmap.py",
+      "blob": "0be27130c77ea7bc7d8d8c19d7bec6ab96b71999"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/runbook_delta.py",
+      "blob": "cb750c9851c2c05ca9cd5807e7549b06e1c3e550"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/scope_guard.py",
+      "blob": "c205bddc4b0597d13eeab46e436f233e4041994e"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/stakeholder_update_drafter.py",
+      "blob": "be5f828b428b23fcf8f6450ad7991f4c0e51c256"
+    },
+    {
+      "path": "holdspeak/plugins/builtin/webhook_post_actuator.py",
+      "blob": "d8eea3f6d012e22c699cd0eae8203e9869ed3849"
+    },
+    {
+      "path": "holdspeak/plugins/contracts.py",
+      "blob": "23362f8d4c49cd8f9146a050ba9580a5660fe2b7"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/__init__.py",
+      "blob": "8f40b1671ad456eb62c065ae949411e97fe96866"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/assembly.py",
+      "blob": "86c44c3e2bf1fbee7a588cf6201f1e36916b18ac"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/blocks.py",
+      "blob": "a8f12f03d74ccec923f3b02ff99d2a2cdc07b305"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/builtin/__init__.py",
+      "blob": "bd5a8a7ebb846975ab69a5e280c5cfe436a89ea5"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/builtin/intent_router.py",
+      "blob": "3f9bf703a92438ed3b27b60596f22c84e8572764"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/builtin/kb_enricher.py",
+      "blob": "d060183645cae568c5b4e801bd3bdb15bb9747f8"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/builtin/project_rewriter.py",
+      "blob": "f6e13fa140228e9efc4d3f24096854229076cc71"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/contracts.py",
+      "blob": "783ba709c775814837969df79d83bbdb790cf446"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/corrections.py",
+      "blob": "aad7832b4e9c38f9b4ce577cb8c5edd2777eac34"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/grammars.py",
+      "blob": "2925c09cdd599231baf41420124bdafd4837908b"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/guidance.py",
+      "blob": "abd7421f4abfca3f93b5d1dafc2b84b43aab29e8"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/journal.py",
+      "blob": "43f3f79c109b532713735da8b8778d79b0709065"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/pipeline.py",
+      "blob": "9f22b5f5ed125e9130e3d94e9b1390ee70ec35b5"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/project_kb.py",
+      "blob": "b97020b94da325750aaf3bd9733e6c11b20fed3e"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/project_root.py",
+      "blob": "caf5dd8f9561b82c2cfcc07b7d6bab51d807b3b9"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/runtime.py",
+      "blob": "80b631a00340f76069f05388fc9b991fb64109fa"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/runtime_counters.py",
+      "blob": "4c910453bcbae9334117fdc50106081b5d6c2a1d"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/runtime_llama_cpp.py",
+      "blob": "8796efb756e8811b905aa9daa70560e0d89604ac"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/runtime_mesh_relay.py",
+      "blob": "b791e014e42ec14f829ba89e0b8cff8337a83af2"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/runtime_mlx.py",
+      "blob": "f4ed96bd467d19433a315ca4a24b879fdd5be232"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/runtime_openai_compatible.py",
+      "blob": "ab62d21ab422a295e98bada989c4936cc57ca7d2"
+    },
+    {
+      "path": "holdspeak/plugins/dictation/telemetry_store.py",
+      "blob": "d83d9c5b055becb272dbfb8f79c7215565133594"
+    },
+    {
+      "path": "holdspeak/plugins/dispatch.py",
+      "blob": "1b87ca4c1adf8cc1077afd9c9ed0e35c51a7ebda"
+    },
+    {
+      "path": "holdspeak/plugins/gated_connector.py",
+      "blob": "040f608527e573bf213f298189efd3abc7a7bf90"
+    },
+    {
+      "path": "holdspeak/plugins/host.py",
+      "blob": "b62f4efa253af237903f4b24c8d313b5ea216268"
+    },
+    {
+      "path": "holdspeak/plugins/intelligence.py",
+      "blob": "aeae15e25934a6607aa03b455d0823c86350301a"
+    },
+    {
+      "path": "holdspeak/plugins/persistence.py",
+      "blob": "2cba834821e3ae4476bd15cf5c1c98417f1683d8"
+    },
+    {
+      "path": "holdspeak/plugins/pipeline.py",
+      "blob": "ea9d9e977bf71f807c776fed7cab9969eebebf44"
+    },
+    {
+      "path": "holdspeak/plugins/project_detector.py",
+      "blob": "405ca07275f92407f0da88a553621100375b225d"
+    },
+    {
+      "path": "holdspeak/plugins/queue.py",
+      "blob": "68390e8603a129eb73f73e96412dc2cd1a5c3b42"
+    },
+    {
+      "path": "holdspeak/plugins/router.py",
+      "blob": "73caf19c5c914d1caf3f1c8f343d6d2c7d4c57b9"
+    },
+    {
+      "path": "holdspeak/plugins/scoring.py",
+      "blob": "2cddec3e8ffddb92e5da5608abad2a1e80727847"
+    },
+    {
+      "path": "holdspeak/plugins/segment_probe.py",
+      "blob": "06b5efa4fb70d5e5138d5bf0e0b1d7f6a6cabb39"
+    },
+    {
+      "path": "holdspeak/plugins/signals.py",
+      "blob": "de1b0b1d17bc4423b5bc1fd5d395cf99a664b301"
+    },
+    {
+      "path": "holdspeak/plugins/synthesis.py",
+      "blob": "afb0d1c6e42521122965b48f31c93a65f4c37b05"
+    },
+    {
+      "path": "holdspeak/plugins/voice_macro_connector.py",
+      "blob": "d58f5b3da91aa2852be72a19379d9b51665138f5"
+    },
+    {
+      "path": "holdspeak/principals.py",
+      "blob": "f5beed4c573315a252503de14a87fa39ef0fa97e"
+    },
+    {
+      "path": "holdspeak/privileged_effects/__init__.py",
+      "blob": "6239c6c8d58399f6110a281e166d2183d50dba7a"
+    },
+    {
+      "path": "holdspeak/privileged_effects/desktop_driver.py",
+      "blob": "3294d6ead3c208fac3a9946049ca0c761fdbe5a8"
+    },
+    {
+      "path": "holdspeak/privileged_effects/desktop_executor.py",
+      "blob": "26d589691543351263aed4f4b53d055abf0b1d8d"
+    },
+    {
+      "path": "holdspeak/product_copy.py",
+      "blob": "949ed3f2103e82ef91366d5c4ce3bee50349ec17"
+    },
+    {
+      "path": "holdspeak/product_language.py",
+      "blob": "bd4dbbc1f065a5c7cc82e44f7735fd45002d34c4"
+    },
+    {
+      "path": "holdspeak/profile_key_store.py",
+      "blob": "e35b16974501c07b6d9a2ebadca8381216426a5c"
+    },
+    {
+      "path": "holdspeak/project_contracts.py",
+      "blob": "d21eea2d94856573b4c70d3c75887cf150770ad7"
+    },
+    {
+      "path": "holdspeak/project_doc_suggestions.py",
+      "blob": "73ee5f0d6d04560d56e235121f6130fbb5a3a079"
+    },
+    {
+      "path": "holdspeak/rails_observer.py",
+      "blob": "062f2abffe7c5b232a9a292336f08f484bf9aa0c"
+    },
+    {
+      "path": "holdspeak/realtime_frames.py",
+      "blob": "d3b01b1a06dc3879814d88b1269b67456c99c5a9"
+    },
+    {
+      "path": "holdspeak/refs.py",
+      "blob": "00b0d458468c8d138e3988692ad1d4478e633dd8"
+    },
+    {
+      "path": "holdspeak/room_operations.py",
+      "blob": "3247e554414d262bb393d9d7b2d95bc8092b7650"
+    },
+    {
+      "path": "holdspeak/runtime/__init__.py",
+      "blob": "02e42b475554f78d086d7c4dc2f9199ab177d731"
+    },
+    {
+      "path": "holdspeak/runtime/activity.py",
+      "blob": "f320cf49b2c12ce763b3dee73ed090e2c63b9c57"
+    },
+    {
+      "path": "holdspeak/runtime/cadence.py",
+      "blob": "a071394ff8671d3ef7545e52301ab4e91728c751"
+    },
+    {
+      "path": "holdspeak/runtime/composition.py",
+      "blob": "a450adc473828b910842eddd9893bf165bebe0ef"
+    },
+    {
+      "path": "holdspeak/runtime/device_glue.py",
+      "blob": "cb2d6e596bc33cb51447ae4400b04bca94bfe8fc"
+    },
+    {
+      "path": "holdspeak/runtime/dictation_capture.py",
+      "blob": "fc50ff7a6d2460cea1f9a2667614f532414e2769"
+    },
+    {
+      "path": "holdspeak/runtime/dictation_delivery.py",
+      "blob": "2f41b34c16840b391f64fa0b61e970049356c075"
+    },
+    {
+      "path": "holdspeak/runtime/dictation_previews.py",
+      "blob": "1c2a49abaea8b69d68ad00f89896e297e54e25c0"
+    },
+    {
+      "path": "holdspeak/runtime/dictation_processing.py",
+      "blob": "950359db55308348a5a0df7877db30e0ec4f704b"
+    },
+    {
+      "path": "holdspeak/runtime/dictation_session.py",
+      "blob": "d0ac0e34c2d8301daa82facd6f8119cb7522a958"
+    },
+    {
+      "path": "holdspeak/runtime/heartbeat.py",
+      "blob": "aea870cc9fc752f49f72abfc8fd7b7f5d1a323fc"
+    },
+    {
+      "path": "holdspeak/runtime/launch_nudge.py",
+      "blob": "d216bfcd3ae3a90ba69502eb0f57f5582971d0d7"
+    },
+    {
+      "path": "holdspeak/runtime/meeting_glue.py",
+      "blob": "61046c26d201f69b2fee749b41658b95cd31bc2b"
+    },
+    {
+      "path": "holdspeak/runtime/ownership.py",
+      "blob": "64054331203540a4331f7e6f76bf5d7baf3d5d55"
+    },
+    {
+      "path": "holdspeak/runtime/plugin_queue.py",
+      "blob": "e60088b85390ded47b8017c967abee780ba09239"
+    },
+    {
+      "path": "holdspeak/runtime/room_composition.py",
+      "blob": "a8d6e68cc2aaa5ce8d92ab70e820cf42117ef509"
+    },
+    {
+      "path": "holdspeak/runtime/routing_glue.py",
+      "blob": "95a339e02dc66e3054a82dceb63c44e6b1226680"
+    },
+    {
+      "path": "holdspeak/runtime/transcriber_state.py",
+      "blob": "9d119dbdfabaeb7fd5d7210a8eb19ad7e1616f5f"
+    },
+    {
+      "path": "holdspeak/runtime/wake_glue.py",
+      "blob": "199f1db664d7cc17056b2babcad10e64b5b66e83"
+    },
+    {
+      "path": "holdspeak/runtime_identity.py",
+      "blob": "23e22eddcae50c27b9b867901bb57f04733024af"
+    },
+    {
+      "path": "holdspeak/runtime_lock.py",
+      "blob": "669cf85a478566e4c4e0b5621ce47c4cf8aebc7f"
+    },
+    {
+      "path": "holdspeak/scheduled_recording_conductor.py",
+      "blob": "7b502a917c4280080f37240d6c76fb882470eb9f"
+    },
+    {
+      "path": "holdspeak/seeds/fresh-desk.yaml",
+      "blob": "ff1166331c4fe1248266ab100f4980949cbf3168"
+    },
+    {
+      "path": "holdspeak/services/__init__.py",
+      "blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "holdspeak/services/activity_enrichment_service.py",
+      "blob": "49e50c1ac6d2a030e7527aaa05b732fd656250d1"
+    },
+    {
+      "path": "holdspeak/services/activity_ledger_service.py",
+      "blob": "1f352ef8eb52400328561372cce4e98a004036dd"
+    },
+    {
+      "path": "holdspeak/services/activity_meeting_candidate_service.py",
+      "blob": "217ce4f6a93b9ca9528b0c43bd9a24aa6798fb60"
+    },
+    {
+      "path": "holdspeak/services/activity_nudge_service.py",
+      "blob": "a5829ac7f25b16d952038daccf50b7241cbff405"
+    },
+    {
+      "path": "holdspeak/services/activity_rules_service.py",
+      "blob": "91b254561875f8f7be40e4acabb97b4f72f957d4"
+    },
+    {
+      "path": "holdspeak/services/actuator_service.py",
+      "blob": "9d1f760b939e4b829bfa0fcc076b0dabd3fee890"
+    },
+    {
+      "path": "holdspeak/services/agent_turn_service.py",
+      "blob": "93259e2d296d19cde1fa0f6714112a99df0cc8b7"
+    },
+    {
+      "path": "holdspeak/services/ask_service.py",
+      "blob": "5933e76f9cfe4c37bce2e802e69f23d733bae630"
+    },
+    {
+      "path": "holdspeak/services/attention_ranking.py",
+      "blob": "61e837580379c894e8015f345b7666abb1e67994"
+    },
+    {
+      "path": "holdspeak/services/authority_service.py",
+      "blob": "ca586a63634bba7b49de82e9610457e7237977e9"
+    },
+    {
+      "path": "holdspeak/services/brief_carry.py",
+      "blob": "57e77d82696f0a54919099a4dbce6698d895304c"
+    },
+    {
+      "path": "holdspeak/services/cadence_service.py",
+      "blob": "4f916efd79b179fca8ec1c32758082f8726dd87a"
+    },
+    {
+      "path": "holdspeak/services/calendar_snapshot_service.py",
+      "blob": "77476cb05ae060bc14afc8360a98cc9877ea39fc"
+    },
+    {
+      "path": "holdspeak/services/channel_cli.py",
+      "blob": "aae6814fedea8281c47a7f71ecf14ca73fb6dc62"
+    },
+    {
+      "path": "holdspeak/services/channel_contract.py",
+      "blob": "48fe4855503e5874068264747c791648010ba819"
+    },
+    {
+      "path": "holdspeak/services/channel_email.py",
+      "blob": "1679dd9a83a7c445a022cd56503086e3e7857ed0"
+    },
+    {
+      "path": "holdspeak/services/channel_service.py",
+      "blob": "f861653cf6fefb8393ff7251634e569332cfa598"
+    },
+    {
+      "path": "holdspeak/services/coder_service.py",
+      "blob": "3846a32a0d96817ddd2aa83725f3b6494441c2dc"
+    },
+    {
+      "path": "holdspeak/services/concierge_service.py",
+      "blob": "2a7d1f243b077ed17471d94c2aad2cc9bc4a08ba"
+    },
+    {
+      "path": "holdspeak/services/confluence_provider.py",
+      "blob": "b047132625c2b4809c858aa6c3bfec561aac14e6"
+    },
+    {
+      "path": "holdspeak/services/connections_service.py",
+      "blob": "618653ed977ccfd4ea3a9111f994519121be9263"
+    },
+    {
+      "path": "holdspeak/services/credential_service.py",
+      "blob": "5f8bf06cc09537c1600942900fb4d4cb60bf274d"
+    },
+    {
+      "path": "holdspeak/services/decision_lifecycle_service.py",
+      "blob": "2ccda30b3becd196016c57bcf8773ba938073b1c"
+    },
+    {
+      "path": "holdspeak/services/decision_record_service.py",
+      "blob": "f7b6f2fb93648a5461856c7ad7c97f71af75394b"
+    },
+    {
+      "path": "holdspeak/services/delivery_service.py",
+      "blob": "d1ce7a0f8ede41c73e544a5736eea0643dfe9ec5"
+    },
+    {
+      "path": "holdspeak/services/desk_delegation.py",
+      "blob": "160ca0000d6aefdfbe82b228ba7e82875d53a245"
+    },
+    {
+      "path": "holdspeak/services/desk_kernel.py",
+      "blob": "0f0f5c9d81db98da03d42f3da688feb8a38af504"
+    },
+    {
+      "path": "holdspeak/services/desk_service.py",
+      "blob": "8911452ccd5e11dd76efd488c46b6e7b4a8fa906"
+    },
+    {
+      "path": "holdspeak/services/dictation_service.py",
+      "blob": "586d496454ba07b705f518a12cbde579dc9ccaf4"
+    },
+    {
+      "path": "holdspeak/services/door_service.py",
+      "blob": "ef149ad8cf1b007cfa638f4d4f30407e263da56b"
+    },
+    {
+      "path": "holdspeak/services/errors.py",
+      "blob": "1ec0f156701c5c0f3a44f5e42d429cd32f85adc9"
+    },
+    {
+      "path": "holdspeak/services/event_query_service.py",
+      "blob": "c05246dcf80d657692e92766dace548fd8a1d3b8"
+    },
+    {
+      "path": "holdspeak/services/follow_through_service.py",
+      "blob": "1aac3316fa97367912a65da129429c9690b61b8b"
+    },
+    {
+      "path": "holdspeak/services/front_door_service.py",
+      "blob": "9b261436c1b5dbc636867b52eca715931372d7c3"
+    },
+    {
+      "path": "holdspeak/services/gate_service.py",
+      "blob": "cd5b6e473dda33dc363218c7a9a8341f06972c95"
+    },
+    {
+      "path": "holdspeak/services/github_provider.py",
+      "blob": "50aa35d1f142e40e880767026c4b269aaacc6ea7"
+    },
+    {
+      "path": "holdspeak/services/heartbeat_service.py",
+      "blob": "248f06b613499e774f7373632615642ea034f88e"
+    },
+    {
+      "path": "holdspeak/services/inference_acquisition_service.py",
+      "blob": "e3e7e5445e36bd79a473a17ec0a3c47d17ece480"
+    },
+    {
+      "path": "holdspeak/services/inference_adoption_service.py",
+      "blob": "e991f4c440d9918a9329ed3bed32e4e104ba0c40"
+    },
+    {
+      "path": "holdspeak/services/inference_assignment_service.py",
+      "blob": "7c5a671929f92973dcca97710a92f7535b8ba868"
+    },
+    {
+      "path": "holdspeak/services/inference_capability_service.py",
+      "blob": "40756ccc0734b7fa00c8dd52879e6abdb20fcc68"
+    },
+    {
+      "path": "holdspeak/services/inference_fallback_controller.py",
+      "blob": "02844100d736706c3fb128d12b287f617e6a9fc0"
+    },
+    {
+      "path": "holdspeak/services/inference_outcomes.py",
+      "blob": "9464ad8a609ab1b83c53c6c07e8fcf40262648e0"
+    },
+    {
+      "path": "holdspeak/services/inference_owner_draft.py",
+      "blob": "725c78cd10e9932b2552fd18a0ae7bd18739c442"
+    },
+    {
+      "path": "holdspeak/services/inference_parent_route_bundle_service.py",
+      "blob": "276b1e3c8c13b05e90c52c7bc846f22c1f2a4dbf"
+    },
+    {
+      "path": "holdspeak/services/inference_route_plan_service.py",
+      "blob": "ecec1a8c5225fd78a5c0cf0ca8c80d8afe86f2b7"
+    },
+    {
+      "path": "holdspeak/services/inference_semantic_adapters.py",
+      "blob": "2b4131e8a318bfa202974f86e4a8b46d1408fa49"
+    },
+    {
+      "path": "holdspeak/services/inference_service_route_policy.py",
+      "blob": "d3097654db26423a57fcfec9c35c344f01d48aad"
+    },
+    {
+      "path": "holdspeak/services/inference_setup_service.py",
+      "blob": "6ddba203e07d3fc50e69c3d28ebf08b259b0d2fc"
+    },
+    {
+      "path": "holdspeak/services/interview_contracts.py",
+      "blob": "af23268cc58890df2e814433a245670fb83691dd"
+    },
+    {
+      "path": "holdspeak/services/interview_service.py",
+      "blob": "33871b1c6bb1cd58de5c0ec7d797e141e1cb24fd"
+    },
+    {
+      "path": "holdspeak/services/invocation_service.py",
+      "blob": "bb07a691cf82a2afc79f44f897a732a958de201a"
+    },
+    {
+      "path": "holdspeak/services/jira_provider.py",
+      "blob": "0711d6d30d474b99256497f55349fac3afeb9b00"
+    },
+    {
+      "path": "holdspeak/services/kernel_read_service.py",
+      "blob": "11cb2a2f3e0c91e0d11ab021f549428f95e09aa4"
+    },
+    {
+      "path": "holdspeak/services/meeting_aftercare_service.py",
+      "blob": "90e0474ec8a916251a39ce2b99a2cfe02c2fec81"
+    },
+    {
+      "path": "holdspeak/services/meeting_deferred_queue_binding.py",
+      "blob": "a5e138e210b4aadc3520dd34d095a7267866ff35"
+    },
+    {
+      "path": "holdspeak/services/meeting_intel_service.py",
+      "blob": "1b72f2068ddbad35f6e102083f8d10cb15243a58"
+    },
+    {
+      "path": "holdspeak/services/meeting_route_projection.py",
+      "blob": "bbb3810714ca84ef8c93198da1642e744b5e2830"
+    },
+    {
+      "path": "holdspeak/services/meeting_service.py",
+      "blob": "33d68903c82c86b0cb7f8fe4da90f2ec28d63fb8"
+    },
+    {
+      "path": "holdspeak/services/memory_service.py",
+      "blob": "7d6020a80572a5ed2720df01610f311080e48c45"
+    },
+    {
+      "path": "holdspeak/services/mesh_relay_authority.py",
+      "blob": "359e25d3de40d1b1915aa10507c756d48e82f8c4"
+    },
+    {
+      "path": "holdspeak/services/mesh_service.py",
+      "blob": "4ef5dcd4178f48ce55afe64e8436d3bb8da07fde"
+    },
+    {
+      "path": "holdspeak/services/mission_control_service.py",
+      "blob": "6c2f5bca30dea4f5157d0995dba8906cceab2f2c"
+    },
+    {
+      "path": "holdspeak/services/model_library_service.py",
+      "blob": "36da696c3777e7b53d98ef4d6b536533d7760c02"
+    },
+    {
+      "path": "holdspeak/services/model_profile_service.py",
+      "blob": "0373eb9399312b689940cd0d9f9868fc3139e8cf"
+    },
+    {
+      "path": "holdspeak/services/monday_brief_service.py",
+      "blob": "583ffc6fed21b117d12cb5224ea39d855a30f3e5"
+    },
+    {
+      "path": "holdspeak/services/needs_you_aggregate.py",
+      "blob": "ee9947240eb36b5028ac1e3bb16a10f0ee025800"
+    },
+    {
+      "path": "holdspeak/services/observer.py",
+      "blob": "562b24a719280330f05af323f2f38d8e20e17e79"
+    },
+    {
+      "path": "holdspeak/services/people_service.py",
+      "blob": "7ce1385858da4e07aca95aa7b73656b12c850fe2"
+    },
+    {
+      "path": "holdspeak/services/person_overlay.py",
+      "blob": "f99e9fc177895b9c841feebf11240b1555021381"
+    },
+    {
+      "path": "holdspeak/services/plugin_job_service.py",
+      "blob": "e8d4238f4737ccdce9da02d26dd0428e4de84ebf"
+    },
+    {
+      "path": "holdspeak/services/preparation_brief_service.py",
+      "blob": "f0c35f7a5ec710499f37fc68b58505997ec2d312"
+    },
+    {
+      "path": "holdspeak/services/primitive_service.py",
+      "blob": "a5993ff2c542ec7586bb1fd88a89b859567c21dc"
+    },
+    {
+      "path": "holdspeak/services/profile_key_service.py",
+      "blob": "bd909c17f2568ec1c65efcd225d90383c96cb66e"
+    },
+    {
+      "path": "holdspeak/services/profile_service.py",
+      "blob": "2623a6283b42491d6c92eac3842f8852b975abf4"
+    },
+    {
+      "path": "holdspeak/services/project_delegation.py",
+      "blob": "afcde1e7a9b9ca7853354ec7a98d326fffa0e9c2"
+    },
+    {
+      "path": "holdspeak/services/project_delta_service.py",
+      "blob": "24178e030e4a7d2f29ebae0c614f433cb0b75e66"
+    },
+    {
+      "path": "holdspeak/services/project_door_service.py",
+      "blob": "894d28a39cfdce73647ed47c1abac417ebb38e01"
+    },
+    {
+      "path": "holdspeak/services/project_evidence_collector.py",
+      "blob": "3f5a860f780fd27bd7d6918297088df5aac10775"
+    },
+    {
+      "path": "holdspeak/services/project_kernel.py",
+      "blob": "6eeede15668edb42a8fa60f2d135d395976251d8"
+    },
+    {
+      "path": "holdspeak/services/project_service.py",
+      "blob": "00a276a6b69ed93586c1087f9e2acceb722e1038"
+    },
+    {
+      "path": "holdspeak/services/project_setup_service.py",
+      "blob": "60cf2b94440c9a33b251550df13fb726102acc64"
+    },
+    {
+      "path": "holdspeak/services/project_steward_service.py",
+      "blob": "901259b496973d09115b238d251fb42eb49b3da2"
+    },
+    {
+      "path": "holdspeak/services/project_update_service.py",
+      "blob": "b76d7829a02c91086ce86f1acd99101a6990774b"
+    },
+    {
+      "path": "holdspeak/services/projection_service.py",
+      "blob": "2b5e61ad48b9bad0bfb91a5f37c69fe811ef3698"
+    },
+    {
+      "path": "holdspeak/services/proposal_bridge_service.py",
+      "blob": "ad60764889af6fa06638f604a670a1f5c69bf8b2"
+    },
+    {
+      "path": "holdspeak/services/reaction_service.py",
+      "blob": "5fbf4d1c7475a6b04ed05548fe5c6e5b152d3581"
+    },
+    {
+      "path": "holdspeak/services/recall_service.py",
+      "blob": "55b6b689efe51f28bd468310db06dcdd169491c3"
+    },
+    {
+      "path": "holdspeak/services/recipe_catalog.py",
+      "blob": "efe08f53ea0647f3076b00a169735ba1413f7ce6"
+    },
+    {
+      "path": "holdspeak/services/recipe_service.py",
+      "blob": "943f9b8e2b680a8f14148ced4daa4ffbdf134605"
+    },
+    {
+      "path": "holdspeak/services/refinement_application_service.py",
+      "blob": "04ad041256f4aa275475183151c425715a09dcbf"
+    },
+    {
+      "path": "holdspeak/services/refinement_context_service.py",
+      "blob": "fa2688fa7067f2d8d7c27bb24872402c77117b6e"
+    },
+    {
+      "path": "holdspeak/services/refinement_coordinator.py",
+      "blob": "f511c4c805003e6963746d57f3a73550fc6c17b4"
+    },
+    {
+      "path": "holdspeak/services/refinement_thought_service.py",
+      "blob": "f19646ea6ee64e4009e40c8d07450bcf9f6bfdba"
+    },
+    {
+      "path": "holdspeak/services/resourceful_service.py",
+      "blob": "b4f96b1eb87e54fd372747e3aa59c66e1699e024"
+    },
+    {
+      "path": "holdspeak/services/room_health_service.py",
+      "blob": "6ba6a1ce29c84a10ce030df67349190a85db4f90"
+    },
+    {
+      "path": "holdspeak/services/room_people_service.py",
+      "blob": "4aeb9ad7547f05eef6dabeef83a88605fae134e8"
+    },
+    {
+      "path": "holdspeak/services/route_probe.py",
+      "blob": "061985fefc8a588606fb46790aa57a3678ab7e93"
+    },
+    {
+      "path": "holdspeak/services/schedule_delegation.py",
+      "blob": "6548cb4ab14ad73ee6c56ce2b30d0d86a00048b3"
+    },
+    {
+      "path": "holdspeak/services/scheduled_recording_service.py",
+      "blob": "e857034efd1a407f93f89f9f0c644016c1572462"
+    },
+    {
+      "path": "holdspeak/services/sequence_workflow_service.py",
+      "blob": "5c37a4a637603d06c3d3105d0b1d8da7e9492f4a"
+    },
+    {
+      "path": "holdspeak/services/service_event_ledger.py",
+      "blob": "a07b0d5e2deb34365a7311804389a2cdcd563744"
+    },
+    {
+      "path": "holdspeak/services/settings_service.py",
+      "blob": "42ea00a7e8f3992df1aeffa867facc5db9c874de"
+    },
+    {
+      "path": "holdspeak/services/setup_service.py",
+      "blob": "a553db4dda182b16a737eaf920ff779bac0327de"
+    },
+    {
+      "path": "holdspeak/services/sqlite_observer.py",
+      "blob": "6cb0a880475c6537d72cd3fc03a284bdd6c2ae06"
+    },
+    {
+      "path": "holdspeak/services/steward_contract.py",
+      "blob": "0cf450f395b3d6dd7b2ed2c397cde897a64fe09a"
+    },
+    {
+      "path": "holdspeak/services/suggested_source_service.py",
+      "blob": "33bd75b8326bfc920637901895bffa8dbb2bd07b"
+    },
+    {
+      "path": "holdspeak/services/support.py",
+      "blob": "ba993029a86996b9917ab47b332552e5d0f34252"
+    },
+    {
+      "path": "holdspeak/services/sync_service.py",
+      "blob": "3cc823c21f65f37977ca8194ac5d78d2be4cdbad"
+    },
+    {
+      "path": "holdspeak/services/thread_modes.py",
+      "blob": "cde72dbd1ec388669bb6be970a988e2e5f14a47f"
+    },
+    {
+      "path": "holdspeak/services/thread_practice.py",
+      "blob": "af528cf39a54a25e809b014e2b955e052324c1f8"
+    },
+    {
+      "path": "holdspeak/services/thread_service.py",
+      "blob": "f1774fb7d4d86d28f978e60d40b6f858491d6c3d"
+    },
+    {
+      "path": "holdspeak/services/thread_tool_protocol.py",
+      "blob": "034cfd43d3f957ddd9e00cac5a1891959765e85a"
+    },
+    {
+      "path": "holdspeak/services/thread_tools.py",
+      "blob": "712b311bc22f23bc278f7f05d11edbfc10f665cd"
+    },
+    {
+      "path": "holdspeak/services/tool_capability_service.py",
+      "blob": "c56cca598de8e97745fd5487a4a66062b6e078b2"
+    },
+    {
+      "path": "holdspeak/services/tool_model_adapter.py",
+      "blob": "eafe0bf1e02a8eface64f0040fe9dedc89687aed"
+    },
+    {
+      "path": "holdspeak/services/tool_turn_controller.py",
+      "blob": "193e89dce88342507a6848c8504740324dd3099a"
+    },
+    {
+      "path": "holdspeak/services/tool_turn_service.py",
+      "blob": "9f07e806566d8263d9b70ced92eb68db08638200"
+    },
+    {
+      "path": "holdspeak/services/watch_service.py",
+      "blob": "99c3e2294dc06f4f3061802bba42fc48b0d30127"
+    },
+    {
+      "path": "holdspeak/services/watch_sources.py",
+      "blob": "2bf0c4376237e8f70c47335ebbc615dd7f660718"
+    },
+    {
+      "path": "holdspeak/services/workbench_runner.py",
+      "blob": "e5bf9e514aae02dd1b6d7de01bce4bb369f472e2"
+    },
+    {
+      "path": "holdspeak/services/workbench_service.py",
+      "blob": "3c8964dc3a5116a9c2c615f2405d9283436750c9"
+    },
+    {
+      "path": "holdspeak/session_receipts.py",
+      "blob": "3e16f6046e9d6d094a35ed8c9d46448226a5a41b"
+    },
+    {
+      "path": "holdspeak/setup_runtime.py",
+      "blob": "8a738b426b11b83ec3df0d4d668882e3140ffff2"
+    },
+    {
+      "path": "holdspeak/setup_status.py",
+      "blob": "b199442b3a23463aef0e686053c45dbd6d61b1da"
+    },
+    {
+      "path": "holdspeak/skills_library/__init__.py",
+      "blob": "2ca15d56d4a5bc8633fb1daa4dec12cfb5ae7083"
+    },
+    {
+      "path": "holdspeak/skills_library/action-item-extraction.md",
+      "blob": "305ae7b201596728717c2939354703a3d5e19dcd"
+    },
+    {
+      "path": "holdspeak/skills_library/code-review.md",
+      "blob": "0a8728998839cce946fd031a826ef7cbf45d35b4"
+    },
+    {
+      "path": "holdspeak/skills_library/grounded-citations.md",
+      "blob": "575af84c1fa64d9e7e9b16ff786d99f64099fc38"
+    },
+    {
+      "path": "holdspeak/skills_library/meeting-preparation.md",
+      "blob": "bd12d433056d4f3cadde01527bc547821778b0bb"
+    },
+    {
+      "path": "holdspeak/skills_library/ocr-and-documents.md",
+      "blob": "9f417671ea98741d07134089de6b3fe05f3bbc98"
+    },
+    {
+      "path": "holdspeak/skills_library/research-with-sources.md",
+      "blob": "1e076ef78236d694cc54e0f77a7def8b8eca7463"
+    },
+    {
+      "path": "holdspeak/skills_library/structured-summarization.md",
+      "blob": "7f44446dc5379ba23baf9d3072e5c340a76610ba"
+    },
+    {
+      "path": "holdspeak/skills_library/systematic-debugging.md",
+      "blob": "d9b87761444ecb3a06667167c70136ca71c28dca"
+    },
+    {
+      "path": "holdspeak/skills_library/systematic-task-processing.md",
+      "blob": "4edf320252394914b805a7774ac4a2804d7e4a45"
+    },
+    {
+      "path": "holdspeak/skills_library/test-driven-approach.md",
+      "blob": "c6899441e1fe1a2e21688c49750d9cf1ccd506d6"
+    },
+    {
+      "path": "holdspeak/slack_export.py",
+      "blob": "cba982af8861f9ed69eda9f8eeed6f148618ab24"
+    },
+    {
+      "path": "holdspeak/speaker_intel.py",
+      "blob": "82dbc188d05a685c5c66862048b01fdf327fbfcc"
+    },
+    {
+      "path": "holdspeak/speech_session/__init__.py",
+      "blob": "c6043e0b2933446875a4afebd265cc55ad378bff"
+    },
+    {
+      "path": "holdspeak/speech_session/browser_mic.py",
+      "blob": "1c5ba4363ead48b8c479d3ac38d5883c024cc18b"
+    },
+    {
+      "path": "holdspeak/speech_session/child.py",
+      "blob": "775674009fbc98cf2cd329eadced6e6d5875200f"
+    },
+    {
+      "path": "holdspeak/speech_session/fence.py",
+      "blob": "a704d1ba445bafe6bd54338c886fe9446fdc4a00"
+    },
+    {
+      "path": "holdspeak/speech_session/plan.py",
+      "blob": "65637b193ebff2624b52bc83bf288fe0ae184d09"
+    },
+    {
+      "path": "holdspeak/speech_session/provider.py",
+      "blob": "9941ec659a9b35a399550282761cdacf5e729be6"
+    },
+    {
+      "path": "holdspeak/speech_session/revision_target.py",
+      "blob": "a99f723eb2ccf7816944cd5aaec4a2ae1e33e675"
+    },
+    {
+      "path": "holdspeak/speech_session/session.py",
+      "blob": "e7754a9d2a88d2fc378a45cffcc26954117b8a58"
+    },
+    {
+      "path": "holdspeak/speech_session/transcription.py",
+      "blob": "090102fbaf94d0117067a418681d82ad3ee39ece"
+    },
+    {
+      "path": "holdspeak/target_profile.py",
+      "blob": "36eda9853d40c26b80d75dcdb89c89e0cd7f89af"
+    },
+    {
+      "path": "holdspeak/text_processor.py",
+      "blob": "b859fa84199117a2a84ddf76a9e78bb36b7247fc"
+    },
+    {
+      "path": "holdspeak/tmux_transport.py",
+      "blob": "3bf2f5838f4e349618a516040283e04ad74a3051"
+    },
+    {
+      "path": "holdspeak/transcribe.py",
+      "blob": "d915e443471c076b0908a012b254c7e2d777bbbb"
+    },
+    {
+      "path": "holdspeak/transcript_parse.py",
+      "blob": "e9965918b4c2de2a8b2749e89d837f2ee5489c81"
+    },
+    {
+      "path": "holdspeak/trust_destinations.py",
+      "blob": "e02b435cdbbc572f55bb6b781afbf7d1574886ca"
+    },
+    {
+      "path": "holdspeak/typer.py",
+      "blob": "c854e455d95bbdff5eb68329c982feea50e8cf64"
+    },
+    {
+      "path": "holdspeak/voice_resolver.py",
+      "blob": "0936da1d90666aacec9941fc10121d11b6bdc412"
+    },
+    {
+      "path": "holdspeak/voice_typing.py",
+      "blob": "0b7645133621445f279fc9989f59ea9d492b7bdc"
+    },
+    {
+      "path": "holdspeak/wake_word.py",
+      "blob": "a13f07561dbb91cceec12cdc73a072436c395989"
+    },
+    {
+      "path": "holdspeak/watch_condition_matcher.py",
+      "blob": "da79b055345da265feecc693f96538d97f3fb605"
+    },
+    {
+      "path": "holdspeak/watch_validation.py",
+      "blob": "f29890acdf7451d2794549bf8cb5f4d6704e0e57"
+    },
+    {
+      "path": "holdspeak/web/__init__.py",
+      "blob": "c4ddb9bb7f73d817dc9bc4d18549c3ae8eb8d8f0"
+    },
+    {
+      "path": "holdspeak/web/context.py",
+      "blob": "6cbec35c9493ecdd345c342ed4edcebbdfd555ba"
+    },
+    {
+      "path": "holdspeak/web/routes/__init__.py",
+      "blob": "53c7a9b326ca49c7588785897722fb4bb9c47659"
+    },
+    {
+      "path": "holdspeak/web/routes/_room_kernel.py",
+      "blob": "266b07070ec34430a85b7765b997c2c2fd9fcc4e"
+    },
+    {
+      "path": "holdspeak/web/routes/_thread_factory.py",
+      "blob": "60fabedc562373256797954ec48cbce5e7446ac8"
+    },
+    {
+      "path": "holdspeak/web/routes/activity/__init__.py",
+      "blob": "0cd0fc4871066d4114910043719e2bcbd08e5053"
+    },
+    {
+      "path": "holdspeak/web/routes/activity/candidates.py",
+      "blob": "2385e3509814adb59e0acd282cc08e9659b59572"
+    },
+    {
+      "path": "holdspeak/web/routes/activity/enrichment.py",
+      "blob": "3ad1a6d7690e884c5aafc9bf3d43f89ff7aa4a91"
+    },
+    {
+      "path": "holdspeak/web/routes/activity/ledger.py",
+      "blob": "59f141d4a0c338c36ba7b1b79710d82970f98660"
+    },
+    {
+      "path": "holdspeak/web/routes/activity/nudges.py",
+      "blob": "7eeb864152410bab6efc7ff6bdd7e38f5dd6da55"
+    },
+    {
+      "path": "holdspeak/web/routes/activity/plugin_jobs.py",
+      "blob": "1975779ad8122dcb58429764badebcf335b51ec9"
+    },
+    {
+      "path": "holdspeak/web/routes/activity/rules.py",
+      "blob": "db24c6749e6a70d08a4d3fc3a5deb470d159d209"
+    },
+    {
+      "path": "holdspeak/web/routes/actuator_shared.py",
+      "blob": "2ee1d76e1fc416ebe3d5d23d45ec5d9470f6f1e6"
+    },
+    {
+      "path": "holdspeak/web/routes/authority.py",
+      "blob": "1a5e042fe22331cdd21a29713df2402b0fb9483d"
+    },
+    {
+      "path": "holdspeak/web/routes/automations.py",
+      "blob": "e8f03730f7c1a4347df91b9f067e9ab8ab16e80f"
+    },
+    {
+      "path": "holdspeak/web/routes/cadence.py",
+      "blob": "26ecd8a61ffe359945a7fb4befc7fa2959375a1c"
+    },
+    {
+      "path": "holdspeak/web/routes/calendar_events.py",
+      "blob": "6c0c3aa1db9352141fdf5f8edc87fc7bf9cbc5a0"
+    },
+    {
+      "path": "holdspeak/web/routes/calendar_snapshot.py",
+      "blob": "344a5c620101d7aef181cefa57a2d0a72ae930fd"
+    },
+    {
+      "path": "holdspeak/web/routes/calendar_sources.py",
+      "blob": "3ff08123eb3a6bcacd362e600ce79e64dc7c09c1"
+    },
+    {
+      "path": "holdspeak/web/routes/channels.py",
+      "blob": "76ee6930a4d9bd5aba1d7a8197de02a527e6cb3d"
+    },
+    {
+      "path": "holdspeak/web/routes/concierge.py",
+      "blob": "aa74180f01f7147b87756255bd6961705340168c"
+    },
+    {
+      "path": "holdspeak/web/routes/connections.py",
+      "blob": "4a96984c9de065e50b0f53e24021ec73e9abc16e"
+    },
+    {
+      "path": "holdspeak/web/routes/constitutional.py",
+      "blob": "26723372fbb5d58c692276e88cf9c202d903999e"
+    },
+    {
+      "path": "holdspeak/web/routes/core.py",
+      "blob": "e0778eacc964c38b4ee6144500d7b5f63c532c4b"
+    },
+    {
+      "path": "holdspeak/web/routes/decision_records.py",
+      "blob": "5fc6fa780fb1b47aae54a4aa8d8b35e25e119ef8"
+    },
+    {
+      "path": "holdspeak/web/routes/decisions.py",
+      "blob": "6e7955b01ac7babb7d405ebc4cfd344b130b7a9e"
+    },
+    {
+      "path": "holdspeak/web/routes/delivery.py",
+      "blob": "6d01fa08b22f4c66612c4baec4f3a9dcd9fd0731"
+    },
+    {
+      "path": "holdspeak/web/routes/delivery_attempts.py",
+      "blob": "ab8ba0437a3b9d7f7ae84da268e8613bd33e8f82"
+    },
+    {
+      "path": "holdspeak/web/routes/delivery_dossiers.py",
+      "blob": "f1b87a2a055643d853ed9954e3ced998258ba187"
+    },
+    {
+      "path": "holdspeak/web/routes/delivery_factory.py",
+      "blob": "66ef8efbd5a468fded467506eaa352634efda5af"
+    },
+    {
+      "path": "holdspeak/web/routes/delivery_node.py",
+      "blob": "e09c0638964cf9a5984189ca5292c5393b3d5ade"
+    },
+    {
+      "path": "holdspeak/web/routes/delivery_prs.py",
+      "blob": "6d2b906c79ca21959d3703b66b6ad8ea8620bda4"
+    },
+    {
+      "path": "holdspeak/web/routes/delivery_terminal.py",
+      "blob": "4e3aebb4b04d9f65c311a95375f5d4b0a71aead7"
+    },
+    {
+      "path": "holdspeak/web/routes/desk_actuators.py",
+      "blob": "2e959928914bc7e91c0b666c8d546292a653f49b"
+    },
+    {
+      "path": "holdspeak/web/routes/desk_seed.py",
+      "blob": "32d1f8eeb113e966302a837a0dad6d58702fbdf8"
+    },
+    {
+      "path": "holdspeak/web/routes/dictation/__init__.py",
+      "blob": "33dab03822080252421bc2c6343e730880ef02ba"
+    },
+    {
+      "path": "holdspeak/web/routes/dictation/_helpers.py",
+      "blob": "a06aba5eb997140f8c95c2e4cf9eecf90ae70b06"
+    },
+    {
+      "path": "holdspeak/web/routes/dictation/agent.py",
+      "blob": "c4d9bcb5e2fe73ab1f3953c42cd3527788fc9d2c"
+    },
+    {
+      "path": "holdspeak/web/routes/dictation/blocks.py",
+      "blob": "072f6fd8501eaac68a6d4835809060155f6260d4"
+    },
+    {
+      "path": "holdspeak/web/routes/dictation/floor.py",
+      "blob": "15e7837fdf7a55c314063aa54ba033da6da0706a"
+    },
+    {
+      "path": "holdspeak/web/routes/dictation/intents.py",
+      "blob": "26db5e6f04c13e945f4425bfb4cd7aedffdd950d"
+    },
+    {
+      "path": "holdspeak/web/routes/dictation/kb.py",
+      "blob": "883aeac44e5cb4cf1798437e9d700f9a076f0e25"
+    },
+    {
+      "path": "holdspeak/web/routes/dictation/pipeline.py",
+      "blob": "a5cc4553a123ce75f55037ffc0a6b299e49cce15"
+    },
+    {
+      "path": "holdspeak/web/routes/dictation/project_docs.py",
+      "blob": "940a614170ba84812954234e8bb98dab607e180b"
+    },
+    {
+      "path": "holdspeak/web/routes/door.py",
+      "blob": "81e685ddfdbea52e7687d70d94022841506447da"
+    },
+    {
+      "path": "holdspeak/web/routes/follow_through.py",
+      "blob": "622ba57a2c886d876aa8d2377cf180304da3cfb8"
+    },
+    {
+      "path": "holdspeak/web/routes/front_door.py",
+      "blob": "45cfd3e20a2d9c6d6258f8fd7d743b8865f06ade"
+    },
+    {
+      "path": "holdspeak/web/routes/inference_assignments.py",
+      "blob": "5cb7ef8094b32ad46c3e55a29fa755643b96e896"
+    },
+    {
+      "path": "holdspeak/web/routes/mcp_http.py",
+      "blob": "dbfa57e4e4a91204783aee0b694b7b95a9c4a062"
+    },
+    {
+      "path": "holdspeak/web/routes/meeting_import.py",
+      "blob": "8ed11fed9721837eec18de78fb06ca3015dc7963"
+    },
+    {
+      "path": "holdspeak/web/routes/meetings/__init__.py",
+      "blob": "473a1e0c06b20c42b169db5e4044d09a800ee7f9"
+    },
+    {
+      "path": "holdspeak/web/routes/meetings/_shared.py",
+      "blob": "091fc239bc97430424803870c4a61b70935c19a9"
+    },
+    {
+      "path": "holdspeak/web/routes/meetings/action_items.py",
+      "blob": "a4ef97e175bcf1adecfabde2558a08571c4c01b2"
+    },
+    {
+      "path": "holdspeak/web/routes/meetings/aftercare.py",
+      "blob": "40be683aa34cbeab6146b465b6d7d80357459114"
+    },
+    {
+      "path": "holdspeak/web/routes/meetings/crud.py",
+      "blob": "c11f884918f33f3f37eeda9a28bdf8e2a3e59114"
+    },
+    {
+      "path": "holdspeak/web/routes/meetings/insights.py",
+      "blob": "a6c3cd0de8ad56cfd1628e3a9b5129bdd897cea0"
+    },
+    {
+      "path": "holdspeak/web/routes/meetings/intel.py",
+      "blob": "181b5fe732369129258118c27d774fffba9b8d08"
+    },
+    {
+      "path": "holdspeak/web/routes/meetings/live.py",
+      "blob": "505e46ab553e1e2ec08acc56f3d0516872e53506"
+    },
+    {
+      "path": "holdspeak/web/routes/meetings/speakers.py",
+      "blob": "972bc8d66a6ddeffe5792ad21e49c9d029384938"
+    },
+    {
+      "path": "holdspeak/web/routes/memory.py",
+      "blob": "4e32175227f4e18089c060c9236c0267087836ee"
+    },
+    {
+      "path": "holdspeak/web/routes/mesh.py",
+      "blob": "6a26ecb2b9a04863aa09370f15563f995035d8a3"
+    },
+    {
+      "path": "holdspeak/web/routes/missioncontrol.py",
+      "blob": "14f550d464adf2056f3856cf760ccf6f8d49572b"
+    },
+    {
+      "path": "holdspeak/web/routes/model_library.py",
+      "blob": "c38255a3a24389d538d8d7e503aa8382f1194756"
+    },
+    {
+      "path": "holdspeak/web/routes/monday_brief.py",
+      "blob": "ac0bcaa6a4be1532a6efbedf034e99340f555cc3"
+    },
+    {
+      "path": "holdspeak/web/routes/pages.py",
+      "blob": "c4d56559c4b69a205252c8e97916ec38344d348e"
+    },
+    {
+      "path": "holdspeak/web/routes/people.py",
+      "blob": "1d9d1766fbe5b8275f6fd2d3a3e2f3b7032ced73"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/__init__.py",
+      "blob": "bc34d24c63afc42dbabc7f766506734d8ca0ae98"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/_shared.py",
+      "blob": "aa8dbb108fe8eb85311dd2e32cddb88340c2a07d"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/ask.py",
+      "blob": "6bc4fce66e35bc208154a4f4bbf0e8b8bcbac818"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/chains.py",
+      "blob": "1ee9f2970e0400febb9ef2dea17e84076904e0d3"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/decisions.py",
+      "blob": "b14e21a4e4e5f5648151913e2decdf72230f0f32"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/directories.py",
+      "blob": "0c96964d38247984b1ef3b6b25115843a2854e7b"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/invocations.py",
+      "blob": "a563ea31f59328018606d92cd5782f7f963266e2"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/kbs.py",
+      "blob": "159a848184e0c9254831fd03d3c8cf2e3f7f790a"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/model_profiles.py",
+      "blob": "ac223a17981631006b26b721b93791b42d3379f8"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/notes.py",
+      "blob": "19b2b2d7402c81cda432fb093a2154ea5c13fd0b"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/profiles.py",
+      "blob": "83a0f7fa18d9ad6703bb44d15f504288e777d512"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/recipes.py",
+      "blob": "c0683773da503f794fd8674bcc2d885aa9cd210e"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/thoughts.py",
+      "blob": "f9dc1d6fd0b24ffe6c74862837288375a8f86a07"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/workbenches.py",
+      "blob": "00968888ad94242a30e283c914e3dd44c505e48e"
+    },
+    {
+      "path": "holdspeak/web/routes/primitives/workflows.py",
+      "blob": "d231df0031a79f742832d6993d6139c2cedaffe7"
+    },
+    {
+      "path": "holdspeak/web/routes/project_briefs.py",
+      "blob": "a021f4d9bfba1969e90f4ba7affc95c6c333c6ea"
+    },
+    {
+      "path": "holdspeak/web/routes/project_door.py",
+      "blob": "e920365bfc9ef5ee6d6bd2d8b70aec8d2777b99e"
+    },
+    {
+      "path": "holdspeak/web/routes/project_reviews.py",
+      "blob": "780cc417709f99bfd1add3dca2e92fdb019de495"
+    },
+    {
+      "path": "holdspeak/web/routes/project_setup.py",
+      "blob": "399d3d26f03ef7fb0eece1fe3c82e01fff0f5635"
+    },
+    {
+      "path": "holdspeak/web/routes/project_updates.py",
+      "blob": "b6a670f1059d81c4705632ee139ffc806ecd4eb2"
+    },
+    {
+      "path": "holdspeak/web/routes/projections.py",
+      "blob": "0b565e9b58f780b5d9b666415e581346f4b7de1e"
+    },
+    {
+      "path": "holdspeak/web/routes/projects.py",
+      "blob": "999b5a8a98cda0922e5d08f9fb74fccf77cf2059"
+    },
+    {
+      "path": "holdspeak/web/routes/proposals.py",
+      "blob": "801c8b7c5e4d3834b2b34efe64494ad8d846e1bb"
+    },
+    {
+      "path": "holdspeak/web/routes/providers.py",
+      "blob": "72dc5babe8b83981ca1571ec1b90f584bb99e3d8"
+    },
+    {
+      "path": "holdspeak/web/routes/repositories.py",
+      "blob": "b7cba2d100d7bcead38dd5bbfae1c5918fdd499b"
+    },
+    {
+      "path": "holdspeak/web/routes/roadmaps.py",
+      "blob": "bba30646af58b14bea1de0fc07c2337607906be0"
+    },
+    {
+      "path": "holdspeak/web/routes/scheduled_recordings.py",
+      "blob": "56cea649f020c0b7fdb61700b20beb6ee1fb5aab"
+    },
+    {
+      "path": "holdspeak/web/routes/setup.py",
+      "blob": "2877836c6600a2868f353093756c8fdb8116da88"
+    },
+    {
+      "path": "holdspeak/web/routes/steward.py",
+      "blob": "6b72676b6a39694d0d80dc87e0d414737d2cbc2a"
+    },
+    {
+      "path": "holdspeak/web/routes/sync.py",
+      "blob": "cd624fa2c3e9d3e76274e921cab39d73c0351896"
+    },
+    {
+      "path": "holdspeak/web/routes/system/__init__.py",
+      "blob": "d42aad812e754c28bb1c12eaee1f31d2e5a6aa37"
+    },
+    {
+      "path": "holdspeak/web/routes/system/_shared.py",
+      "blob": "6ad7c8cde07a6425ede91b42e55ce7814978f9bd"
+    },
+    {
+      "path": "holdspeak/web/routes/system/agent_capabilities.py",
+      "blob": "44870ef261a923f94e5d1b05b118f86a64afc5ae"
+    },
+    {
+      "path": "holdspeak/web/routes/system/coder_factory_routes.py",
+      "blob": "ebfab98016ecc17a6fe9312b083539e2518ecfd9"
+    },
+    {
+      "path": "holdspeak/web/routes/system/coder_steering_routes.py",
+      "blob": "143e3568c7a1ea5bca78b61baeec36ea8083d235"
+    },
+    {
+      "path": "holdspeak/web/routes/system/coder_steering_support.py",
+      "blob": "4a3c26bccf53c9c75e538b4734fe31893e8232ff"
+    },
+    {
+      "path": "holdspeak/web/routes/system/coders.py",
+      "blob": "b7ed49f0469177ab12468971cc02fa9418259c72"
+    },
+    {
+      "path": "holdspeak/web/routes/system/gate_routes.py",
+      "blob": "df6d04d42aad92e24839e434c8498a1c170313d3"
+    },
+    {
+      "path": "holdspeak/web/routes/system/health.py",
+      "blob": "e2f041380132ebd4ba6c7cbc6f809d438c0d934f"
+    },
+    {
+      "path": "holdspeak/web/routes/system/kernel_routes.py",
+      "blob": "d9ced5a5c1b1f9194fb5854b13c75e4ed4c5ea43"
+    },
+    {
+      "path": "holdspeak/web/routes/system/settings.py",
+      "blob": "2b9ebdcf7c2e04511b8ce5e2b064e5ad49dd160f"
+    },
+    {
+      "path": "holdspeak/web/routes/system/settings_secrets.py",
+      "blob": "dc16ac564fe06839b3349a1224396a2d122f3f5f"
+    },
+    {
+      "path": "holdspeak/web/routes/system/voice.py",
+      "blob": "a3221bc1f6f0b7d289caead35f2160426af3beaa"
+    },
+    {
+      "path": "holdspeak/web/routes/system/voice_stream.py",
+      "blob": "f9dfc7c314ebf457dfe54726ef4ecae16bed6e13"
+    },
+    {
+      "path": "holdspeak/web/routes/system/voice_support.py",
+      "blob": "d18b06521be6b02fe252f216b58d2efda2d86b16"
+    },
+    {
+      "path": "holdspeak/web/routes/system/ws.py",
+      "blob": "45c669cb8633e41a27ae84d9bf470c0715cd0e29"
+    },
+    {
+      "path": "holdspeak/web/routes/threads.py",
+      "blob": "667666933ad2c91aa7049d92d704639d960a1b99"
+    },
+    {
+      "path": "holdspeak/web/routes/tts.py",
+      "blob": "decc0133234aa2f8140f6f0aa2c2cb3f39daf96c"
+    },
+    {
+      "path": "holdspeak/web/routes/watches.py",
+      "blob": "c94059fe6502887ff834f85fb2d9681d968345db"
+    },
+    {
+      "path": "holdspeak/web/runtime_support.py",
+      "blob": "5dabba82e6b117be99d264d7bfce959af68d65fc"
+    },
+    {
+      "path": "holdspeak/web_auth.py",
+      "blob": "9ae95e7922b9d49d19f008310c6a09bfce64ad72"
+    },
+    {
+      "path": "holdspeak/web_requests.py",
+      "blob": "2683f5c84958cc8bcad553c15a0c7e39ab4aaa3e"
+    },
+    {
+      "path": "holdspeak/web_runtime.py",
+      "blob": "fe3a6e97eb9fb7378cb74a7d6d62747677545a47"
+    },
+    {
+      "path": "holdspeak/web_server.py",
+      "blob": "b99e1a67a55cdf5ddbd2fd427d0b2b99fc1e2c2d"
+    },
+    {
+      "path": "holdspeak/workbench_conductor.py",
+      "blob": "63d3dd6d8d38bf0b24102423df4f0ec6c19b6234"
+    },
+    {
+      "path": "holdspeak/workbench_memory.py",
+      "blob": "a1edc806f7d267ac161ebdb08d66e168723fa811"
+    },
+    {
+      "path": "holdspeak/workbench_templates.py",
+      "blob": "d95b79f0cd9544be3954c7c46ef6ea1404b86ffb"
+    },
+    {
+      "path": "holdspeak/workrooms.py",
+      "blob": "03da3f2103895d13f349f66a1d86c36b905bcbd2"
+    }
+  ],
+  "overlays": [
+    "scripts/graph_walk.py",
+    "docs/internal/philo/graph/atlas-phase11.json",
+    "docs/internal/philo/graph/atlas-phase11-slack.json",
+    "tests/fixtures/philo11_documents/",
+    "tests/fixtures/philo11_slack/"
+  ]
+}

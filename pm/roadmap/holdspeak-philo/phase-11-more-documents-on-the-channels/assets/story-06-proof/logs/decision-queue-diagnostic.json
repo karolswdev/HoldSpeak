@@ -1,0 +1,14 @@
+[
+  [
+    "model_profile_readiness_observations",
+    {
+      "reason_code": "artifact_unobserved"
+    }
+  ],
+  [
+    "model_profile_readiness_observations",
+    {
+      "reason_code": "ready"
+    }
+  ]
+]

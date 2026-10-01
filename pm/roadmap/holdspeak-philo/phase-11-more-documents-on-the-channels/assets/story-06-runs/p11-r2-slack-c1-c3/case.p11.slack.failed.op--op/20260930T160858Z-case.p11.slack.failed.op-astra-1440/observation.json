@@ -1,0 +1,2503 @@
+{
+  "id": "obs-20260930T160858Z-case.p11.slack.failed.op-astra-1440",
+  "run_id": "20260930T160858Z-case.p11.slack.failed.op-astra-1440",
+  "case_id": "case.p11.slack.failed.op",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": ".tmp/philo11-06/r2-mutation-atlases/no-answer.json",
+  "job": "p11",
+  "edge_ids": [
+    "edge.tool.channel_send"
+  ],
+  "state_id": "state.desk_presentation.p11_slack_channel",
+  "provenance": {
+    "revision": "4a08e4bd4cef9633c10a78d9fba9c83105d2c3ea",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "5af70edb856e3d3d9620f2924959f5718a9cb4cb408352e0eca3f34f59e21b86",
+      "assets": [
+        "index-DOMEgTb7.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:52750",
+      "port": 52750,
+      "pid": 19599,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2vd42m_2",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2vd42m_2/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-proof/r2-slack-mutations/failed-no-answer.json": "a688874ac2d9623159e12029aa8a19b39af0379ca3eae18c35efa45815f597c4"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-30T16:08:58.943863+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "Slack HTTPS edge: failed",
+        "substitute": "cli_runner",
+        "installed_sha256": "a688874ac2d9623159e12029aa8a19b39af0379ca3eae18c35efa45815f597c4"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": ".tmp/philo11-06/r2-mutation-atlases/no-answer.json",
+      "sha256": "769d81c7be370cd0fa4d8379e72d20bff891f06177fd12d7a8eab2b851ed6fce",
+      "version": "phase11-slack-backend"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDING runner at the CLI channels' process edge (no real gh or acli)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": "a688874ac2d9623159e12029aa8a19b39af0379ca3eae18c35efa45815f597c4"
+  },
+  "setup": [
+    {
+      "kind": "boundary",
+      "label": "Slack HTTPS edge: failed",
+      "substitute": "cli_runner",
+      "adapter": "slack-https-edge",
+      "installed_sha256": "a688874ac2d9623159e12029aa8a19b39af0379ca3eae18c35efa45815f597c4",
+      "seam": "holdspeak.services.channel_cli.CLI_RUNNER"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.create",
+      "args": {
+        "name": "Atlas send ledger"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "project.create",
+          "arguments": {
+            "name": "Atlas send ledger"
+          }
+        }
+      },
+      "response": {
+        "project": {
+          "changed_refs": [
+            "project:proj-2b71613951d6"
+          ],
+          "context": {},
+          "created_at": "2026-09-30T10:09:02.015361",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-2b71613951d6",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "Atlas send ledger",
+          "project_id": "proj-2b71613951d6",
+          "project_revision": 1,
+          "result_kind": "created",
+          "team_members": [],
+          "updated_at": "2026-09-30T10:09:02.015361"
+        },
+        "success": true
+      },
+      "domain_response": {
+        "project": {
+          "changed_refs": [
+            "project:proj-2b71613951d6"
+          ],
+          "context": {},
+          "created_at": "2026-09-30T10:09:02.015361",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-2b71613951d6",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "Atlas send ledger",
+          "project_id": "proj-2b71613951d6",
+          "project_revision": 1,
+          "result_kind": "created",
+          "team_members": [],
+          "updated_at": "2026-09-30T10:09:02.015361"
+        },
+        "success": true
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"project\": {\"changed_refs\": [\"project:proj-2b71613951d6\"], \"context\": {}, \"created_at\": \"2026-09-30T10:09:02.015361\", \"description\": \"\", \"detection_threshold\": 0.4, \"id\": \"proj-2b71613951d6\", \"is_archived\": false, \"keywords\": [], \"meeting_count\": 0, \"name\": \"Atlas send ledger\", \"project_id\": \"proj-2b71613951d6\", \"project_revision\": 1, \"result_kind\": \"created\", \"team_members\": [], \"updated_at\": \"2026-09-30T10:09:02.015361\"}, \"success\": true}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.013,
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-2b71613951d6"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.draft_update",
+      "args": {
+        "project_id": "proj-2b71613951d6",
+        "generator": "deterministic"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "project.draft_update",
+          "arguments": {
+            "project_id": "proj-2b71613951d6",
+            "generator": "deterministic"
+          }
+        }
+      },
+      "response": {
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_facc72bca83744bca22f2fef7d49d000",
+          "lifecycle": "draft",
+          "project_id": "proj-2b71613951d6",
+          "project_revision": 1,
+          "published_at": null,
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-09-30T16:09:02+00:00"
+        }
+      },
+      "domain_response": {
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_facc72bca83744bca22f2fef7d49d000",
+          "lifecycle": "draft",
+          "project_id": "proj-2b71613951d6",
+          "project_revision": 1,
+          "published_at": null,
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-09-30T16:09:02+00:00"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"success\": true, \"update\": {\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[]\", \"created_at\": \"2026-09-30T16:09:02+00:00\", \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_facc72bca83744bca22f2fef7d49d000\", \"lifecycle\": \"draft\", \"project_id\": \"proj-2b71613951d6\", \"project_revision\": 1, \"published_at\": null, \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-09-30T16:09:02+00:00\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.004,
+      "captured": {
+        "name": "update_id",
+        "path": "update.id",
+        "value": "pupd_facc72bca83744bca22f2fef7d49d000"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.publish_update",
+      "args": {
+        "update_id": "pupd_facc72bca83744bca22f2fef7d49d000"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "project.publish_update",
+          "arguments": {
+            "update_id": "pupd_facc72bca83744bca22f2fef7d49d000"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_4c199c29a7cc487cb6eda557a37607c6",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790784542.028981,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_4c199c29a7cc487cb6eda557a37607c6",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_4fb41d9ed7cb427089d6a1a1eb91dad4",
+          "result_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+          "state": "succeeded",
+          "target_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+        },
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "changed_refs": [
+            "project:proj-2b71613951d6"
+          ],
+          "claims_json": "[]",
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_facc72bca83744bca22f2fef7d49d000",
+          "lifecycle": "published",
+          "project_id": "proj-2b71613951d6",
+          "project_revision": 2,
+          "published_at": "2026-09-30T16:09:02+00:00",
+          "result_kind": "updated",
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-09-30T16:09:02+00:00"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_4c199c29a7cc487cb6eda557a37607c6",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790784542.028981,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_4c199c29a7cc487cb6eda557a37607c6",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_4fb41d9ed7cb427089d6a1a1eb91dad4",
+          "result_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+          "state": "succeeded",
+          "target_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+        },
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "changed_refs": [
+            "project:proj-2b71613951d6"
+          ],
+          "claims_json": "[]",
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_facc72bca83744bca22f2fef7d49d000",
+          "lifecycle": "published",
+          "project_id": "proj-2b71613951d6",
+          "project_revision": 2,
+          "published_at": "2026-09-30T16:09:02+00:00",
+          "result_kind": "updated",
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-09-30T16:09:02+00:00"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_4c199c29a7cc487cb6eda557a37607c6\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790784542.028981, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_4c199c29a7cc487cb6eda557a37607c6\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_4fb41d9ed7cb427089d6a1a1eb91dad4\", \"result_ref\": \"project_update:pupd_facc72bca83744bca22f2fef7d49d000\", \"state\": \"succeeded\", \"target_ref\": \"project_update:pupd_facc72bca83744bca22f2fef7d49d000\"}, \"success\": true, \"update\": {\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"changed_refs\": [\"project:proj-2b71613951d6\"], \"claims_json\": \"[]\", \"created_at\": \"2026-09-30T16:09:02+00:00\", \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_facc72bca83744bca22f2fef7d49d000\", \"lifecycle\": \"published\", \"project_id\": \"proj-2b71613951d6\", \"project_revision\": 2, \"published_at\": \"2026-09-30T16:09:02+00:00\", \"result_kind\": \"updated\", \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-09-30T16:09:02+00:00\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/channels/slack-webhooks",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "key_ref": "slack_858fcb5e3ddc67f0b46ba28a",
+        "saved": true,
+        "operation_id": "op_32a48dbed3b44af4a7bba7a2661ee0c0",
+        "receipt": {
+          "receipt_id": "rcpt_ccfd1d5ba44c448b9a65d208a4456520",
+          "operation_id": "op_32a48dbed3b44af4a7bba7a2661ee0c0",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "slack_webhook:slack_858fcb5e3ddc67f0b46ba28a",
+          "created_at": 1790784542.037756,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "desk:channel.save_slack_webhook"
+        }
+      },
+      "response_sha256": "c5ee7759efa1bcbb0bb7604d7270b103e624c30b023b6b77bcc55895c494cb2e",
+      "captured": {
+        "name": "key_ref",
+        "path": "key_ref",
+        "value": "slack_858fcb5e3ddc67f0b46ba28a"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.save_destination",
+      "args": {
+        "channel": "slack",
+        "name": "Slack leads",
+        "key_ref": "slack_858fcb5e3ddc67f0b46ba28a",
+        "channel_label": "#leads"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.save_destination",
+          "arguments": {
+            "channel": "slack",
+            "name": "Slack leads",
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a",
+            "channel_label": "#leads"
+          }
+        }
+      },
+      "response": {
+        "destination": {
+          "account": {
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "connection": null,
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "id": "chd_fb6d3e51bfd5940d5c096aaf",
+          "name": "Slack leads",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+        },
+        "operation_id": "op_52a14903ce5d4277830a1896556ee429",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790784542.040874,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_52a14903ce5d4277830a1896556ee429",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_c054f044262448cf9dc3a8a1df20555e",
+          "result_ref": "channel_destination:chd_fb6d3e51bfd5940d5c096aaf",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "domain_response": {
+        "destination": {
+          "account": {
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "connection": null,
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "id": "chd_fb6d3e51bfd5940d5c096aaf",
+          "name": "Slack leads",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+        },
+        "operation_id": "op_52a14903ce5d4277830a1896556ee429",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790784542.040874,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_52a14903ce5d4277830a1896556ee429",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_c054f044262448cf9dc3a8a1df20555e",
+          "result_ref": "channel_destination:chd_fb6d3e51bfd5940d5c096aaf",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"destination\": {\"account\": {\"key_ref\": \"slack_858fcb5e3ddc67f0b46ba28a\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"connection\": null, \"created_at\": \"2026-09-30T16:09:02+00:00\", \"id\": \"chd_fb6d3e51bfd5940d5c096aaf\", \"name\": \"Slack leads\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c\"}, \"operation_id\": \"op_52a14903ce5d4277830a1896556ee429\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790784542.040874, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_52a14903ce5d4277830a1896556ee429\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_c054f044262448cf9dc3a8a1df20555e\", \"result_ref\": \"channel_destination:chd_fb6d3e51bfd5940d5c096aaf\", \"state\": \"succeeded\", \"target_ref\": \"desk:channel.save_destination\"}, \"replaced\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003,
+      "captured": {
+        "name": "dest_id",
+        "path": "destination.id",
+        "value": "chd_fb6d3e51bfd5940d5c096aaf"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.check_destination",
+      "args": {
+        "destination_id": "chd_fb6d3e51bfd5940d5c096aaf"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.check_destination",
+          "arguments": {
+            "destination_id": "chd_fb6d3e51bfd5940d5c096aaf"
+          }
+        }
+      },
+      "response": {
+        "check": {
+          "resolved": null,
+          "state": "ready"
+        },
+        "destination": {
+          "account": {
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "connection": null,
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "id": "chd_fb6d3e51bfd5940d5c096aaf",
+          "name": "Slack leads",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+        }
+      },
+      "domain_response": {
+        "check": {
+          "resolved": null,
+          "state": "ready"
+        },
+        "destination": {
+          "account": {
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "connection": null,
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "id": "chd_fb6d3e51bfd5940d5c096aaf",
+          "name": "Slack leads",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"check\": {\"resolved\": null, \"state\": \"ready\"}, \"destination\": {\"account\": {\"key_ref\": \"slack_858fcb5e3ddc67f0b46ba28a\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"connection\": null, \"created_at\": \"2026-09-30T16:09:02+00:00\", \"id\": \"chd_fb6d3e51bfd5940d5c096aaf\", \"name\": \"Slack leads\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.preview",
+      "args": {
+        "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+        "destination_id": "chd_fb6d3e51bfd5940d5c096aaf"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.preview",
+          "arguments": {
+            "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+            "destination_id": "chd_fb6d3e51bfd5940d5c096aaf"
+          }
+        }
+      },
+      "response": {
+        "badge": "cloud",
+        "channel": "slack",
+        "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+        "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+        "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+        "preview": {
+          "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+        },
+        "size": 280,
+        "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+      },
+      "domain_response": {
+        "badge": "cloud",
+        "channel": "slack",
+        "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+        "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+        "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+        "preview": {
+          "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+        },
+        "size": 280,
+        "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"badge\": \"cloud\", \"channel\": \"slack\", \"destination_id\": \"chd_fb6d3e51bfd5940d5c096aaf\", \"document_ref\": \"project_update:pupd_facc72bca83744bca22f2fef7d49d000\", \"payload_digest\": \"e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046\", \"preview\": {\"text\": \"*Progress*\\n\\nNo focus items in this window.\\n\\n*Decisions*\\n\\nNo decisions in this window.\\n\\n*Risks & Blockers*\\n\\nNo risks or blockers in this window.\\n\\n*Dependencies*\\n\\nNo dependencies tracked.\\n\\n*Next Actions*\\n\\nNo upcoming actions.\\n\\n*Source Coverage*\\n\\nAll sources consulted successfully.\\n\"}, \"size\": 280, \"title\": \"Atlas send ledger \\u2014 update r1 (2026-09-30)\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002,
+      "captured": {
+        "name": "digest",
+        "path": "payload_digest",
+        "value": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.prepare",
+      "args": {
+        "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+        "destination_id": "chd_fb6d3e51bfd5940d5c096aaf"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.prepare",
+          "arguments": {
+            "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+            "destination_id": "chd_fb6d3e51bfd5940d5c096aaf"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+        "outcome": "prepared",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790784542.0470378,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_21f3f98280a742ce98105416661921af",
+          "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+          "state": "succeeded",
+          "target_ref": "document:project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+        },
+        "send": {
+          "account": {
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+          "destination_name": "Slack leads",
+          "dispatch_seq": null,
+          "dispatch_started_at": null,
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+          },
+          "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+          "file_path": null,
+          "id": "chs_8a1003fddfb6e7ef9d02186f",
+          "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+          "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+          },
+          "proof": null,
+          "reason": null,
+          "send_operation_id": null,
+          "settled_at": null,
+          "size": 280,
+          "state": "prepared",
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+        "outcome": "prepared",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790784542.0470378,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_21f3f98280a742ce98105416661921af",
+          "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+          "state": "succeeded",
+          "target_ref": "document:project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+        },
+        "send": {
+          "account": {
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+          "destination_name": "Slack leads",
+          "dispatch_seq": null,
+          "dispatch_started_at": null,
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+          },
+          "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+          "file_path": null,
+          "id": "chs_8a1003fddfb6e7ef9d02186f",
+          "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+          "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+          },
+          "proof": null,
+          "reason": null,
+          "send_operation_id": null,
+          "settled_at": null,
+          "size": 280,
+          "state": "prepared",
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_8c69fce8370f48b18bc7bc2222cd147e\", \"outcome\": \"prepared\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790784542.0470378, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_8c69fce8370f48b18bc7bc2222cd147e\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_21f3f98280a742ce98105416661921af\", \"result_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"state\": \"succeeded\", \"target_ref\": \"document:project_update:pupd_facc72bca83744bca22f2fef7d49d000\"}, \"send\": {\"account\": {\"key_ref\": \"slack_858fcb5e3ddc67f0b46ba28a\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"created_at\": \"2026-09-30T16:09:02+00:00\", \"destination_id\": \"chd_fb6d3e51bfd5940d5c096aaf\", \"destination_name\": \"Slack leads\", \"dispatch_seq\": null, \"dispatch_started_at\": null, \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-09-30)\"}, \"document_ref\": \"project_update:pupd_facc72bca83744bca22f2fef7d49d000\", \"file_path\": null, \"id\": \"chs_8a1003fddfb6e7ef9d02186f\", \"payload_digest\": \"e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046\", \"prepare_operation_id\": \"op_8c69fce8370f48b18bc7bc2222cd147e\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"*Progress*\\n\\nNo focus items in this window.\\n\\n*Decisions*\\n\\nNo decisions in this window.\\n\\n*Risks & Blockers*\\n\\nNo risks or blockers in this window.\\n\\n*Dependencies*\\n\\nNo dependencies tracked.\\n\\n*Next Actions*\\n\\nNo upcoming actions.\\n\\n*Source Coverage*\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": null, \"reason\": null, \"send_operation_id\": null, \"settled_at\": null, \"size\": 280, \"state\": \"prepared\", \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.005,
+      "captured": {
+        "name": "send_id",
+        "path": "send.id",
+        "value": "chs_8a1003fddfb6e7ef9d02186f"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. Every id is captured from this run's own producer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2vd42m_2",
+    "project_id": "proj-2b71613951d6",
+    "update_id": "pupd_facc72bca83744bca22f2fef7d49d000",
+    "key_ref": "slack_858fcb5e3ddc67f0b46ba28a",
+    "dest_id": "chd_fb6d3e51bfd5940d5c096aaf",
+    "digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+    "send_id": "chs_8a1003fddfb6e7ef9d02186f",
+    "send_op": "op_6a35064c0f44408ba2635ab9f36f0dee"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "channel.send",
+    "args": {
+      "send_id": "chs_8a1003fddfb6e7ef9d02186f",
+      "command_id": "atlas-p11-slack-failed"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 9,
+      "method": "tools/call",
+      "params": {
+        "name": "channel.send",
+        "arguments": {
+          "send_id": "chs_8a1003fddfb6e7ef9d02186f",
+          "command_id": "atlas-p11-slack-failed"
+        }
+      }
+    },
+    "response": {
+      "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+      "outcome": "failed",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790784542.067886,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+        "outcome": "connect_refused",
+        "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+        "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+        "state": "failed",
+        "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+      },
+      "send": {
+        "account": {
+          "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+        },
+        "badge": "cloud",
+        "channel": "slack",
+        "created_at": "2026-09-30T16:09:02+00:00",
+        "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+        "destination_name": "Slack leads",
+        "dispatch_seq": 1,
+        "dispatch_started_at": "2026-09-30T16:09:02.064228+00:00",
+        "document_json": {
+          "label": "REV 1",
+          "slug": "atlas-send-ledger",
+          "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+        },
+        "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+        "file_path": null,
+        "id": "chs_8a1003fddfb6e7ef9d02186f",
+        "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+        "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+        "prepared_by": {
+          "identity": "owner-session",
+          "kind": "owner"
+        },
+        "preview": {
+          "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+        },
+        "proof": null,
+        "reason": "connect_refused",
+        "send_operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+        "settled_at": "2026-09-30T16:09:02+00:00",
+        "size": 280,
+        "state": "failed",
+        "target": {
+          "channel_label": "#leads"
+        },
+        "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+      }
+    },
+    "domain_response": {
+      "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+      "outcome": "failed",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790784542.067886,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+        "outcome": "connect_refused",
+        "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+        "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+        "state": "failed",
+        "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+      },
+      "send": {
+        "account": {
+          "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+        },
+        "badge": "cloud",
+        "channel": "slack",
+        "created_at": "2026-09-30T16:09:02+00:00",
+        "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+        "destination_name": "Slack leads",
+        "dispatch_seq": 1,
+        "dispatch_started_at": "2026-09-30T16:09:02.064228+00:00",
+        "document_json": {
+          "label": "REV 1",
+          "slug": "atlas-send-ledger",
+          "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+        },
+        "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+        "file_path": null,
+        "id": "chs_8a1003fddfb6e7ef9d02186f",
+        "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+        "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+        "prepared_by": {
+          "identity": "owner-session",
+          "kind": "owner"
+        },
+        "preview": {
+          "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+        },
+        "proof": null,
+        "reason": "connect_refused",
+        "send_operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+        "settled_at": "2026-09-30T16:09:02+00:00",
+        "size": 280,
+        "state": "failed",
+        "target": {
+          "channel_label": "#leads"
+        },
+        "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+      }
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 9,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"failed\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790784542.067886, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"connect_refused\", \"receipt_id\": \"rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e\", \"result_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"state\": \"failed\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\"}, \"send\": {\"account\": {\"key_ref\": \"slack_858fcb5e3ddc67f0b46ba28a\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"created_at\": \"2026-09-30T16:09:02+00:00\", \"destination_id\": \"chd_fb6d3e51bfd5940d5c096aaf\", \"destination_name\": \"Slack leads\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-30T16:09:02.064228+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-09-30)\"}, \"document_ref\": \"project_update:pupd_facc72bca83744bca22f2fef7d49d000\", \"file_path\": null, \"id\": \"chs_8a1003fddfb6e7ef9d02186f\", \"payload_digest\": \"e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046\", \"prepare_operation_id\": \"op_8c69fce8370f48b18bc7bc2222cd147e\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"*Progress*\\n\\nNo focus items in this window.\\n\\n*Decisions*\\n\\nNo decisions in this window.\\n\\n*Risks & Blockers*\\n\\nNo risks or blockers in this window.\\n\\n*Dependencies*\\n\\nNo dependencies tracked.\\n\\n*Next Actions*\\n\\nNo upcoming actions.\\n\\n*Source Coverage*\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": null, \"reason\": \"connect_refused\", \"send_operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"settled_at\": \"2026-09-30T16:09:02+00:00\", \"size\": 280, \"state\": \"failed\", \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c\"}}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.006,
+    "captured": {
+      "name": "send_op",
+      "path": "operation_id",
+      "value": "op_6a35064c0f44408ba2635ab9f36f0dee"
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": "c54819367c6c70a6680b23340c8aba59f7beb789705f42f04b933cc58a465d75",
+      "after": "d421d06113213a56fcca24dd8851a8cad65649839b38430dfdae52a22127c120"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": null,
+          "skipped": "unresolved placeholder; not sent"
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 137,
+            "method": "tools/call",
+            "params": {
+              "name": "kernel.receipt",
+              "arguments": {
+                "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee"
+              }
+            }
+          },
+          "response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-project-writer",
+                  "correlation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                  "created_at": 1790784542.0630322,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf",
+                  "idempotency_key": "channel.send:cmd:atlas-p11-slack-failed",
+                  "name": "channel.send",
+                  "native_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                  "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                  "revision": 5,
+                  "state": "failed",
+                  "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                  "updated_at": 1790784542.06786,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf",
+                    "execution_expires_at": 1790788142.063544,
+                    "expires_at": 1790784572.063544,
+                    "issued_at": 1790784542.063544,
+                    "native_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                    "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-project-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "0ec374f0183868a61a4ccd04df3e9b46deec1dff361baab7eeb3877d14c2940b",
+                    "target_binding": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                    "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                    "uses": 1,
+                    "warrant_id": "war_127f2cd7a562439da1ddd91f42a78f6f"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790784542.067886,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                  "outcome": "connect_refused",
+                  "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+                  "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                  "state": "failed",
+                  "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+                },
+                "ref": "operation:op_6a35064c0f44408ba2635ab9f36f0dee"
+              }
+            ],
+            "view": "receipt"
+          },
+          "domain_response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-project-writer",
+                  "correlation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                  "created_at": 1790784542.0630322,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf",
+                  "idempotency_key": "channel.send:cmd:atlas-p11-slack-failed",
+                  "name": "channel.send",
+                  "native_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                  "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                  "revision": 5,
+                  "state": "failed",
+                  "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                  "updated_at": 1790784542.06786,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf",
+                    "execution_expires_at": 1790788142.063544,
+                    "expires_at": 1790784572.063544,
+                    "issued_at": 1790784542.063544,
+                    "native_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                    "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-project-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "0ec374f0183868a61a4ccd04df3e9b46deec1dff361baab7eeb3877d14c2940b",
+                    "target_binding": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                    "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                    "uses": 1,
+                    "warrant_id": "war_127f2cd7a562439da1ddd91f42a78f6f"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790784542.067886,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                  "outcome": "connect_refused",
+                  "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+                  "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                  "state": "failed",
+                  "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+                },
+                "ref": "operation:op_6a35064c0f44408ba2635ab9f36f0dee"
+              }
+            ],
+            "view": "receipt"
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 137,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-project-writer\", \"correlation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"created_at\": 1790784542.0630322, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf\", \"idempotency_key\": \"channel.send:cmd:atlas-p11-slack-failed\", \"name\": \"channel.send\", \"native_id\": \"e0561aac-c00f-5ba1-9295-d6674253b0ec\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"e0561aac-c00f-5ba1-9295-d6674253b0ec\", \"revision\": 5, \"state\": \"failed\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"updated_at\": 1790784542.06786, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf\", \"execution_expires_at\": 1790788142.063544, \"expires_at\": 1790784572.063544, \"issued_at\": 1790784542.063544, \"native_id\": \"e0561aac-c00f-5ba1-9295-d6674253b0ec\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"0ec374f0183868a61a4ccd04df3e9b46deec1dff361baab7eeb3877d14c2940b\", \"target_binding\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"uses\": 1, \"warrant_id\": \"war_127f2cd7a562439da1ddd91f42a78f6f\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790784542.067886, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"connect_refused\", \"receipt_id\": \"rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e\", \"result_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"state\": \"failed\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\"}, \"ref\": \"operation:op_6a35064c0f44408ba2635ab9f36f0dee\"}], \"view\": \"receipt\"}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:52750",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "channel.sends",
+      "args": {
+        "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+      }
+    },
+    "op": {
+      "name": "channel.sends",
+      "args": {
+        "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.sends",
+          "arguments": {
+            "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+          }
+        }
+      },
+      "response": {
+        "sends": [
+          {
+            "account": {
+              "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+            },
+            "badge": "cloud",
+            "channel": "slack",
+            "created_at": "2026-09-30T16:09:02+00:00",
+            "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+            "destination_name": "Slack leads",
+            "dispatch_seq": null,
+            "dispatch_started_at": null,
+            "document_json": {
+              "label": "REV 1",
+              "slug": "atlas-send-ledger",
+              "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+            },
+            "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+            "file_path": null,
+            "id": "chs_8a1003fddfb6e7ef9d02186f",
+            "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+            "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+            },
+            "proof": null,
+            "reason": null,
+            "send_operation_id": null,
+            "settled_at": null,
+            "size": 280,
+            "state": "prepared",
+            "target": {
+              "channel_label": "#leads"
+            },
+            "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+          }
+        ]
+      },
+      "domain_response": {
+        "sends": [
+          {
+            "account": {
+              "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+            },
+            "badge": "cloud",
+            "channel": "slack",
+            "created_at": "2026-09-30T16:09:02+00:00",
+            "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+            "destination_name": "Slack leads",
+            "dispatch_seq": null,
+            "dispatch_started_at": null,
+            "document_json": {
+              "label": "REV 1",
+              "slug": "atlas-send-ledger",
+              "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+            },
+            "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+            "file_path": null,
+            "id": "chs_8a1003fddfb6e7ef9d02186f",
+            "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+            "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+            },
+            "proof": null,
+            "reason": null,
+            "send_operation_id": null,
+            "settled_at": null,
+            "size": 280,
+            "state": "prepared",
+            "target": {
+              "channel_label": "#leads"
+            },
+            "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+          }
+        ]
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"sends\": [{\"account\": {\"key_ref\": \"slack_858fcb5e3ddc67f0b46ba28a\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"created_at\": \"2026-09-30T16:09:02+00:00\", \"destination_id\": \"chd_fb6d3e51bfd5940d5c096aaf\", \"destination_name\": \"Slack leads\", \"dispatch_seq\": null, \"dispatch_started_at\": null, \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-09-30)\"}, \"document_ref\": \"project_update:pupd_facc72bca83744bca22f2fef7d49d000\", \"file_path\": null, \"id\": \"chs_8a1003fddfb6e7ef9d02186f\", \"payload_digest\": \"e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046\", \"prepare_operation_id\": \"op_8c69fce8370f48b18bc7bc2222cd147e\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"*Progress*\\n\\nNo focus items in this window.\\n\\n*Decisions*\\n\\nNo decisions in this window.\\n\\n*Risks & Blockers*\\n\\nNo risks or blockers in this window.\\n\\n*Dependencies*\\n\\nNo dependencies tracked.\\n\\n*Next Actions*\\n\\nNo upcoming actions.\\n\\n*Source Coverage*\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": null, \"reason\": null, \"send_operation_id\": null, \"settled_at\": null, \"size\": 280, \"state\": \"prepared\", \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c\"}]}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "c54819367c6c70a6680b23340c8aba59f7beb789705f42f04b933cc58a465d75",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": null,
+        "skipped": "unresolved placeholder; not sent"
+      }
+    ],
+    "cli_calls": [],
+    "at_utc": "2026-09-30T16:09:02.061794+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:52750",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "channel.sends",
+      "args": {
+        "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+      }
+    },
+    "op": {
+      "name": "channel.sends",
+      "args": {
+        "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 136,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.sends",
+          "arguments": {
+            "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+          }
+        }
+      },
+      "response": {
+        "sends": [
+          {
+            "account": {
+              "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+            },
+            "badge": "cloud",
+            "channel": "slack",
+            "created_at": "2026-09-30T16:09:02+00:00",
+            "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+            "destination_name": "Slack leads",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-30T16:09:02.064228+00:00",
+            "document_json": {
+              "label": "REV 1",
+              "slug": "atlas-send-ledger",
+              "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+            },
+            "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+            "file_path": null,
+            "id": "chs_8a1003fddfb6e7ef9d02186f",
+            "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+            "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+            },
+            "proof": null,
+            "reason": "connect_refused",
+            "send_operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+            "settled_at": "2026-09-30T16:09:02+00:00",
+            "size": 280,
+            "state": "failed",
+            "target": {
+              "channel_label": "#leads"
+            },
+            "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+          }
+        ]
+      },
+      "domain_response": {
+        "sends": [
+          {
+            "account": {
+              "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+            },
+            "badge": "cloud",
+            "channel": "slack",
+            "created_at": "2026-09-30T16:09:02+00:00",
+            "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+            "destination_name": "Slack leads",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-30T16:09:02.064228+00:00",
+            "document_json": {
+              "label": "REV 1",
+              "slug": "atlas-send-ledger",
+              "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+            },
+            "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+            "file_path": null,
+            "id": "chs_8a1003fddfb6e7ef9d02186f",
+            "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+            "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+            },
+            "proof": null,
+            "reason": "connect_refused",
+            "send_operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+            "settled_at": "2026-09-30T16:09:02+00:00",
+            "size": 280,
+            "state": "failed",
+            "target": {
+              "channel_label": "#leads"
+            },
+            "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+          }
+        ]
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 136,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"sends\": [{\"account\": {\"key_ref\": \"slack_858fcb5e3ddc67f0b46ba28a\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"created_at\": \"2026-09-30T16:09:02+00:00\", \"destination_id\": \"chd_fb6d3e51bfd5940d5c096aaf\", \"destination_name\": \"Slack leads\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-30T16:09:02.064228+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-09-30)\"}, \"document_ref\": \"project_update:pupd_facc72bca83744bca22f2fef7d49d000\", \"file_path\": null, \"id\": \"chs_8a1003fddfb6e7ef9d02186f\", \"payload_digest\": \"e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046\", \"prepare_operation_id\": \"op_8c69fce8370f48b18bc7bc2222cd147e\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"*Progress*\\n\\nNo focus items in this window.\\n\\n*Decisions*\\n\\nNo decisions in this window.\\n\\n*Risks & Blockers*\\n\\nNo risks or blockers in this window.\\n\\n*Dependencies*\\n\\nNo dependencies tracked.\\n\\n*Next Actions*\\n\\nNo upcoming actions.\\n\\n*Source Coverage*\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": null, \"reason\": \"connect_refused\", \"send_operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"settled_at\": \"2026-09-30T16:09:02+00:00\", \"size\": 280, \"state\": \"failed\", \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c\"}]}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "d421d06113213a56fcca24dd8851a8cad65649839b38430dfdae52a22127c120",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 137,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                "created_at": 1790784542.0630322,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf",
+                "idempotency_key": "channel.send:cmd:atlas-p11-slack-failed",
+                "name": "channel.send",
+                "native_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                "revision": 5,
+                "state": "failed",
+                "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                "updated_at": 1790784542.06786,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf",
+                  "execution_expires_at": 1790788142.063544,
+                  "expires_at": 1790784572.063544,
+                  "issued_at": 1790784542.063544,
+                  "native_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                  "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "0ec374f0183868a61a4ccd04df3e9b46deec1dff361baab7eeb3877d14c2940b",
+                  "target_binding": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                  "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                  "uses": 1,
+                  "warrant_id": "war_127f2cd7a562439da1ddd91f42a78f6f"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790784542.067886,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                "outcome": "connect_refused",
+                "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+                "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                "state": "failed",
+                "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+              },
+              "ref": "operation:op_6a35064c0f44408ba2635ab9f36f0dee"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                "created_at": 1790784542.0630322,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf",
+                "idempotency_key": "channel.send:cmd:atlas-p11-slack-failed",
+                "name": "channel.send",
+                "native_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                "revision": 5,
+                "state": "failed",
+                "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                "updated_at": 1790784542.06786,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf",
+                  "execution_expires_at": 1790788142.063544,
+                  "expires_at": 1790784572.063544,
+                  "issued_at": 1790784542.063544,
+                  "native_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                  "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "0ec374f0183868a61a4ccd04df3e9b46deec1dff361baab7eeb3877d14c2940b",
+                  "target_binding": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                  "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                  "uses": 1,
+                  "warrant_id": "war_127f2cd7a562439da1ddd91f42a78f6f"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790784542.067886,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                "outcome": "connect_refused",
+                "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+                "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                "state": "failed",
+                "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+              },
+              "ref": "operation:op_6a35064c0f44408ba2635ab9f36f0dee"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 137,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-project-writer\", \"correlation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"created_at\": 1790784542.0630322, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf\", \"idempotency_key\": \"channel.send:cmd:atlas-p11-slack-failed\", \"name\": \"channel.send\", \"native_id\": \"e0561aac-c00f-5ba1-9295-d6674253b0ec\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"e0561aac-c00f-5ba1-9295-d6674253b0ec\", \"revision\": 5, \"state\": \"failed\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"updated_at\": 1790784542.06786, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf\", \"execution_expires_at\": 1790788142.063544, \"expires_at\": 1790784572.063544, \"issued_at\": 1790784542.063544, \"native_id\": \"e0561aac-c00f-5ba1-9295-d6674253b0ec\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"0ec374f0183868a61a4ccd04df3e9b46deec1dff361baab7eeb3877d14c2940b\", \"target_binding\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"uses\": 1, \"warrant_id\": \"war_127f2cd7a562439da1ddd91f42a78f6f\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790784542.067886, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"connect_refused\", \"receipt_id\": \"rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e\", \"result_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"state\": \"failed\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\"}, \"ref\": \"operation:op_6a35064c0f44408ba2635ab9f36f0dee\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "https",
+          "POST",
+          "hooks.slack.com",
+          "/services/[redacted]"
+        ],
+        "body_sha256": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+        "pid": 19599,
+        "at": "2026-09-30T16:09:02.065705+00:00",
+        "answer": null,
+        "auth": null,
+        "user_agent": "HoldSpeak"
+      }
+    ],
+    "at_utc": "2026-09-30T16:09:32.097350+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "channel.send",
+      "body_sha256": "6f0fa31d44a93b7187c9c1fe248d9391caeb4b531ef674b26f9cba4677d0f491",
+      "body": {
+        "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+        "outcome": "failed",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790784542.067886,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+          "outcome": "connect_refused",
+          "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+          "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+          "state": "failed",
+          "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+        },
+        "send": {
+          "account": {
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+          "destination_name": "Slack leads",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-30T16:09:02.064228+00:00",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+          },
+          "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+          "file_path": null,
+          "id": "chs_8a1003fddfb6e7ef9d02186f",
+          "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+          "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+          },
+          "proof": null,
+          "reason": "connect_refused",
+          "send_operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+          "settled_at": "2026-09-30T16:09:02+00:00",
+          "size": 280,
+          "state": "failed",
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"failed\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790784542.067886, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"connect_refused\", \"receipt_id\": \"rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e\", \"result_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"state\": \"failed\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\"}, \"send\": {\"account\": {\"key_ref\": \"slack_858fcb5e3ddc67f0b46ba28a\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"created_at\": \"2026-09-30T16:09:02+00:00\", \"destination_id\": \"chd_fb6d3e51bfd5940d5c096aaf\", \"destination_name\": \"Slack leads\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-30T16:09:02.064228+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-09-30)\"}, \"document_ref\": \"project_update:pupd_facc72bca83744bca22f2fef7d49d000\", \"file_path\": null, \"id\": \"chs_8a1003fddfb6e7ef9d02186f\", \"payload_digest\": \"e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046\", \"prepare_operation_id\": \"op_8c69fce8370f48b18bc7bc2222cd147e\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"*Progress*\\n\\nNo focus items in this window.\\n\\n*Decisions*\\n\\nNo decisions in this window.\\n\\n*Risks & Blockers*\\n\\nNo risks or blockers in this window.\\n\\n*Dependencies*\\n\\nNo dependencies tracked.\\n\\n*Next Actions*\\n\\nNo upcoming actions.\\n\\n*Source Coverage*\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": null, \"reason\": \"connect_refused\", \"send_operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"settled_at\": \"2026-09-30T16:09:02+00:00\", \"size\": 280, \"state\": \"failed\", \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c\"}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.send",
+      "args": {
+        "send_id": "chs_8a1003fddfb6e7ef9d02186f",
+        "command_id": "atlas-p11-slack-failed"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.send",
+          "arguments": {
+            "send_id": "chs_8a1003fddfb6e7ef9d02186f",
+            "command_id": "atlas-p11-slack-failed"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+        "outcome": "failed",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790784542.067886,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+          "outcome": "connect_refused",
+          "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+          "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+          "state": "failed",
+          "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+        },
+        "send": {
+          "account": {
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+          "destination_name": "Slack leads",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-30T16:09:02.064228+00:00",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+          },
+          "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+          "file_path": null,
+          "id": "chs_8a1003fddfb6e7ef9d02186f",
+          "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+          "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+          },
+          "proof": null,
+          "reason": "connect_refused",
+          "send_operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+          "settled_at": "2026-09-30T16:09:02+00:00",
+          "size": 280,
+          "state": "failed",
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+        "outcome": "failed",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790784542.067886,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+          "outcome": "connect_refused",
+          "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+          "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+          "state": "failed",
+          "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+        },
+        "send": {
+          "account": {
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+          "destination_name": "Slack leads",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-30T16:09:02.064228+00:00",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+          },
+          "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+          "file_path": null,
+          "id": "chs_8a1003fddfb6e7ef9d02186f",
+          "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+          "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+          },
+          "proof": null,
+          "reason": "connect_refused",
+          "send_operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+          "settled_at": "2026-09-30T16:09:02+00:00",
+          "size": 280,
+          "state": "failed",
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"failed\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790784542.067886, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"connect_refused\", \"receipt_id\": \"rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e\", \"result_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"state\": \"failed\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\"}, \"send\": {\"account\": {\"key_ref\": \"slack_858fcb5e3ddc67f0b46ba28a\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"created_at\": \"2026-09-30T16:09:02+00:00\", \"destination_id\": \"chd_fb6d3e51bfd5940d5c096aaf\", \"destination_name\": \"Slack leads\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-30T16:09:02.064228+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-09-30)\"}, \"document_ref\": \"project_update:pupd_facc72bca83744bca22f2fef7d49d000\", \"file_path\": null, \"id\": \"chs_8a1003fddfb6e7ef9d02186f\", \"payload_digest\": \"e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046\", \"prepare_operation_id\": \"op_8c69fce8370f48b18bc7bc2222cd147e\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"*Progress*\\n\\nNo focus items in this window.\\n\\n*Decisions*\\n\\nNo decisions in this window.\\n\\n*Risks & Blockers*\\n\\nNo risks or blockers in this window.\\n\\n*Dependencies*\\n\\nNo dependencies tracked.\\n\\n*Next Actions*\\n\\nNo upcoming actions.\\n\\n*Source Coverage*\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": null, \"reason\": \"connect_refused\", \"send_operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"settled_at\": \"2026-09-30T16:09:02+00:00\", \"size\": 280, \"state\": \"failed\", \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.006,
+      "captured": {
+        "name": "send_op",
+        "path": "operation_id",
+        "value": "op_6a35064c0f44408ba2635ab9f36f0dee"
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:52750",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "channel.sends",
+      "args": {
+        "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+      }
+    },
+    "op": {
+      "name": "channel.sends",
+      "args": {
+        "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 10,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.sends",
+          "arguments": {
+            "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000"
+          }
+        }
+      },
+      "response": {
+        "sends": [
+          {
+            "account": {
+              "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+            },
+            "badge": "cloud",
+            "channel": "slack",
+            "created_at": "2026-09-30T16:09:02+00:00",
+            "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+            "destination_name": "Slack leads",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-30T16:09:02.064228+00:00",
+            "document_json": {
+              "label": "REV 1",
+              "slug": "atlas-send-ledger",
+              "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+            },
+            "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+            "file_path": null,
+            "id": "chs_8a1003fddfb6e7ef9d02186f",
+            "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+            "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+            },
+            "proof": null,
+            "reason": "connect_refused",
+            "send_operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+            "settled_at": "2026-09-30T16:09:02+00:00",
+            "size": 280,
+            "state": "failed",
+            "target": {
+              "channel_label": "#leads"
+            },
+            "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+          }
+        ]
+      },
+      "domain_response": {
+        "sends": [
+          {
+            "account": {
+              "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+            },
+            "badge": "cloud",
+            "channel": "slack",
+            "created_at": "2026-09-30T16:09:02+00:00",
+            "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+            "destination_name": "Slack leads",
+            "dispatch_seq": 1,
+            "dispatch_started_at": "2026-09-30T16:09:02.064228+00:00",
+            "document_json": {
+              "label": "REV 1",
+              "slug": "atlas-send-ledger",
+              "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+            },
+            "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+            "file_path": null,
+            "id": "chs_8a1003fddfb6e7ef9d02186f",
+            "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+            "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+            "prepared_by": {
+              "identity": "owner-session",
+              "kind": "owner"
+            },
+            "preview": {
+              "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+            },
+            "proof": null,
+            "reason": "connect_refused",
+            "send_operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+            "settled_at": "2026-09-30T16:09:02+00:00",
+            "size": 280,
+            "state": "failed",
+            "target": {
+              "channel_label": "#leads"
+            },
+            "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+          }
+        ]
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 10,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"sends\": [{\"account\": {\"key_ref\": \"slack_858fcb5e3ddc67f0b46ba28a\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"created_at\": \"2026-09-30T16:09:02+00:00\", \"destination_id\": \"chd_fb6d3e51bfd5940d5c096aaf\", \"destination_name\": \"Slack leads\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-30T16:09:02.064228+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-09-30)\"}, \"document_ref\": \"project_update:pupd_facc72bca83744bca22f2fef7d49d000\", \"file_path\": null, \"id\": \"chs_8a1003fddfb6e7ef9d02186f\", \"payload_digest\": \"e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046\", \"prepare_operation_id\": \"op_8c69fce8370f48b18bc7bc2222cd147e\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"*Progress*\\n\\nNo focus items in this window.\\n\\n*Decisions*\\n\\nNo decisions in this window.\\n\\n*Risks & Blockers*\\n\\nNo risks or blockers in this window.\\n\\n*Dependencies*\\n\\nNo dependencies tracked.\\n\\n*Next Actions*\\n\\nNo upcoming actions.\\n\\n*Source Coverage*\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": null, \"reason\": \"connect_refused\", \"send_operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"settled_at\": \"2026-09-30T16:09:02+00:00\", \"size\": 280, \"state\": \"failed\", \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c\"}]}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    "op_digest": "d421d06113213a56fcca24dd8851a8cad65649839b38430dfdae52a22127c120",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 11,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                "created_at": 1790784542.0630322,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf",
+                "idempotency_key": "channel.send:cmd:atlas-p11-slack-failed",
+                "name": "channel.send",
+                "native_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                "revision": 5,
+                "state": "failed",
+                "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                "updated_at": 1790784542.06786,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf",
+                  "execution_expires_at": 1790788142.063544,
+                  "expires_at": 1790784572.063544,
+                  "issued_at": 1790784542.063544,
+                  "native_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                  "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "0ec374f0183868a61a4ccd04df3e9b46deec1dff361baab7eeb3877d14c2940b",
+                  "target_binding": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                  "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                  "uses": 1,
+                  "warrant_id": "war_127f2cd7a562439da1ddd91f42a78f6f"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790784542.067886,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                "outcome": "connect_refused",
+                "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+                "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                "state": "failed",
+                "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+              },
+              "ref": "operation:op_6a35064c0f44408ba2635ab9f36f0dee"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-project-writer",
+                "correlation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                "created_at": 1790784542.0630322,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf",
+                "idempotency_key": "channel.send:cmd:atlas-p11-slack-failed",
+                "name": "channel.send",
+                "native_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                "parent_operation_id": "",
+                "placement": "node:hub-project-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                "revision": 5,
+                "state": "failed",
+                "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                "updated_at": 1790784542.06786,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf",
+                  "execution_expires_at": 1790788142.063544,
+                  "expires_at": 1790784572.063544,
+                  "issued_at": 1790784542.063544,
+                  "native_id": "e0561aac-c00f-5ba1-9295-d6674253b0ec",
+                  "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "0ec374f0183868a61a4ccd04df3e9b46deec1dff361baab7eeb3877d14c2940b",
+                  "target_binding": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                  "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                  "uses": 1,
+                  "warrant_id": "war_127f2cd7a562439da1ddd91f42a78f6f"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790784542.067886,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+                "outcome": "connect_refused",
+                "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+                "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+                "state": "failed",
+                "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+              },
+              "ref": "operation:op_6a35064c0f44408ba2635ab9f36f0dee"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 11,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-project-writer\", \"correlation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"created_at\": 1790784542.0630322, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf\", \"idempotency_key\": \"channel.send:cmd:atlas-p11-slack-failed\", \"name\": \"channel.send\", \"native_id\": \"e0561aac-c00f-5ba1-9295-d6674253b0ec\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"e0561aac-c00f-5ba1-9295-d6674253b0ec\", \"revision\": 5, \"state\": \"failed\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"updated_at\": 1790784542.06786, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:512d0a296dddead2c7394279db41c8cb0003420d22fae35ef6ed365b8a853fdf\", \"execution_expires_at\": 1790788142.063544, \"expires_at\": 1790784572.063544, \"issued_at\": 1790784542.063544, \"native_id\": \"e0561aac-c00f-5ba1-9295-d6674253b0ec\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-project-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"0ec374f0183868a61a4ccd04df3e9b46deec1dff361baab7eeb3877d14c2940b\", \"target_binding\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"uses\": 1, \"warrant_id\": \"war_127f2cd7a562439da1ddd91f42a78f6f\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790784542.067886, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"connect_refused\", \"receipt_id\": \"rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e\", \"result_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"state\": \"failed\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\"}, \"ref\": \"operation:op_6a35064c0f44408ba2635ab9f36f0dee\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.003
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "https",
+          "POST",
+          "hooks.slack.com",
+          "/services/[redacted]"
+        ],
+        "body_sha256": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+        "pid": 19599,
+        "at": "2026-09-30T16:09:02.065705+00:00",
+        "answer": null,
+        "auth": null,
+        "user_agent": "HoldSpeak"
+      }
+    ],
+    "at_utc": "2026-09-30T16:09:02.985717+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "channel.send",
+      "body_sha256": "6f0fa31d44a93b7187c9c1fe248d9391caeb4b531ef674b26f9cba4677d0f491",
+      "body": {
+        "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+        "outcome": "failed",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790784542.067886,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+          "outcome": "connect_refused",
+          "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+          "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+          "state": "failed",
+          "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+        },
+        "send": {
+          "account": {
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+          "destination_name": "Slack leads",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-30T16:09:02.064228+00:00",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+          },
+          "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+          "file_path": null,
+          "id": "chs_8a1003fddfb6e7ef9d02186f",
+          "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+          "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+          },
+          "proof": null,
+          "reason": "connect_refused",
+          "send_operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+          "settled_at": "2026-09-30T16:09:02+00:00",
+          "size": 280,
+          "state": "failed",
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"failed\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790784542.067886, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"connect_refused\", \"receipt_id\": \"rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e\", \"result_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"state\": \"failed\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\"}, \"send\": {\"account\": {\"key_ref\": \"slack_858fcb5e3ddc67f0b46ba28a\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"created_at\": \"2026-09-30T16:09:02+00:00\", \"destination_id\": \"chd_fb6d3e51bfd5940d5c096aaf\", \"destination_name\": \"Slack leads\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-30T16:09:02.064228+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-09-30)\"}, \"document_ref\": \"project_update:pupd_facc72bca83744bca22f2fef7d49d000\", \"file_path\": null, \"id\": \"chs_8a1003fddfb6e7ef9d02186f\", \"payload_digest\": \"e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046\", \"prepare_operation_id\": \"op_8c69fce8370f48b18bc7bc2222cd147e\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"*Progress*\\n\\nNo focus items in this window.\\n\\n*Decisions*\\n\\nNo decisions in this window.\\n\\n*Risks & Blockers*\\n\\nNo risks or blockers in this window.\\n\\n*Dependencies*\\n\\nNo dependencies tracked.\\n\\n*Next Actions*\\n\\nNo upcoming actions.\\n\\n*Source Coverage*\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": null, \"reason\": \"connect_refused\", \"send_operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"settled_at\": \"2026-09-30T16:09:02+00:00\", \"size\": 280, \"state\": \"failed\", \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c\"}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.send",
+      "args": {
+        "send_id": "chs_8a1003fddfb6e7ef9d02186f",
+        "command_id": "atlas-p11-slack-failed"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.send",
+          "arguments": {
+            "send_id": "chs_8a1003fddfb6e7ef9d02186f",
+            "command_id": "atlas-p11-slack-failed"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+        "outcome": "failed",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790784542.067886,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+          "outcome": "connect_refused",
+          "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+          "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+          "state": "failed",
+          "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+        },
+        "send": {
+          "account": {
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+          "destination_name": "Slack leads",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-30T16:09:02.064228+00:00",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+          },
+          "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+          "file_path": null,
+          "id": "chs_8a1003fddfb6e7ef9d02186f",
+          "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+          "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+          },
+          "proof": null,
+          "reason": "connect_refused",
+          "send_operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+          "settled_at": "2026-09-30T16:09:02+00:00",
+          "size": 280,
+          "state": "failed",
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+        "outcome": "failed",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790784542.067886,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+          "outcome": "connect_refused",
+          "receipt_id": "rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e",
+          "result_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f",
+          "state": "failed",
+          "target_ref": "channel_send:chs_8a1003fddfb6e7ef9d02186f"
+        },
+        "send": {
+          "account": {
+            "key_ref": "slack_858fcb5e3ddc67f0b46ba28a"
+          },
+          "badge": "cloud",
+          "channel": "slack",
+          "created_at": "2026-09-30T16:09:02+00:00",
+          "destination_id": "chd_fb6d3e51bfd5940d5c096aaf",
+          "destination_name": "Slack leads",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-09-30T16:09:02.064228+00:00",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-09-30)"
+          },
+          "document_ref": "project_update:pupd_facc72bca83744bca22f2fef7d49d000",
+          "file_path": null,
+          "id": "chs_8a1003fddfb6e7ef9d02186f",
+          "payload_digest": "e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046",
+          "prepare_operation_id": "op_8c69fce8370f48b18bc7bc2222cd147e",
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "*Progress*\n\nNo focus items in this window.\n\n*Decisions*\n\nNo decisions in this window.\n\n*Risks & Blockers*\n\nNo risks or blockers in this window.\n\n*Dependencies*\n\nNo dependencies tracked.\n\n*Next Actions*\n\nNo upcoming actions.\n\n*Source Coverage*\n\nAll sources consulted successfully.\n"
+          },
+          "proof": null,
+          "reason": "connect_refused",
+          "send_operation_id": "op_6a35064c0f44408ba2635ab9f36f0dee",
+          "settled_at": "2026-09-30T16:09:02+00:00",
+          "size": 280,
+          "state": "failed",
+          "target": {
+            "channel_label": "#leads"
+          },
+          "target_digest": "43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"failed\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790784542.067886, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"outcome\": \"connect_refused\", \"receipt_id\": \"rcpt_c73a6bede7cc44ce9871f9f5ed4a5a9e\", \"result_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\", \"state\": \"failed\", \"target_ref\": \"channel_send:chs_8a1003fddfb6e7ef9d02186f\"}, \"send\": {\"account\": {\"key_ref\": \"slack_858fcb5e3ddc67f0b46ba28a\"}, \"badge\": \"cloud\", \"channel\": \"slack\", \"created_at\": \"2026-09-30T16:09:02+00:00\", \"destination_id\": \"chd_fb6d3e51bfd5940d5c096aaf\", \"destination_name\": \"Slack leads\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-09-30T16:09:02.064228+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-09-30)\"}, \"document_ref\": \"project_update:pupd_facc72bca83744bca22f2fef7d49d000\", \"file_path\": null, \"id\": \"chs_8a1003fddfb6e7ef9d02186f\", \"payload_digest\": \"e8bc15fc20dd46eb4ed806ba928479abadc5cf080bcc470fe9602c3f7d45d046\", \"prepare_operation_id\": \"op_8c69fce8370f48b18bc7bc2222cd147e\", \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"*Progress*\\n\\nNo focus items in this window.\\n\\n*Decisions*\\n\\nNo decisions in this window.\\n\\n*Risks & Blockers*\\n\\nNo risks or blockers in this window.\\n\\n*Dependencies*\\n\\nNo dependencies tracked.\\n\\n*Next Actions*\\n\\nNo upcoming actions.\\n\\n*Source Coverage*\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": null, \"reason\": \"connect_refused\", \"send_operation_id\": \"op_6a35064c0f44408ba2635ab9f36f0dee\", \"settled_at\": \"2026-09-30T16:09:02+00:00\", \"size\": 280, \"state\": \"failed\", \"target\": {\"channel_label\": \"#leads\"}, \"target_digest\": \"43da728d1468f263e10f713abef4d5f0c9da60cfb6984e733c400439c3aeaf4c\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.006,
+      "captured": {
+        "name": "send_op",
+        "path": "operation_id",
+        "value": "op_6a35064c0f44408ba2635ab9f36f0dee"
+      }
+    },
+    "predicate_satisfied": false,
+    "reading": "all_of part op_facts: fact #4 failed: observe_at sends.0.reason = 'connect_refused', wanted 'invalid_payload'",
+    "elapsed_s": 0.924
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "all_of part op_facts: fact #4 failed: observe_at sends.0.reason = 'connect_refused', wanted 'invalid_payload'",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 30.035,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "placeholder(s) ['send_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: all_of part op_facts: fact #4 failed: observe_at sends.0.reason = 'connect_refused', wanted 'invalid_payload'",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['op_digest', 'op_reads'])."
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "send_op"
+  ],
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2vd42m_2/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2vd42m_2/.config/holdspeak/config.json",
+    "CLI_RUNNER a688874ac2d9623159e12029aa8a19b39af0379ca3eae18c35efa45815f597c4",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDING runner at the CLI channels' process edge (no real gh or acli)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:52750",
+    "CLI_CALL [\"https\", \"POST\", \"hooks.slack.com\", \"/services/[redacted]\"]"
+  ],
+  "duration_s": 36.446
+}

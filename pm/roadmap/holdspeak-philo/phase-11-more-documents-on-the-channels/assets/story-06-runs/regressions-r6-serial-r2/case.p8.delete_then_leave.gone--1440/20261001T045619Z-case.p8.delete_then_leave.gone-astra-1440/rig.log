@@ -1,0 +1,12 @@
+PASS: live
+BRAIN: astra
+SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase8.json
+RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:59467 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z_s4z69n/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p8
+VERDICT: blocked terminal=None
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r6-serial-r2/case.p8.delete_then_leave.gone--1440/20261001T045619Z-case.p8.delete_then_leave.gone-astra-1440/blocked.png']
+NOTE: BLOCKED: ui step wait_for on '.undo-receipt.is-pending' failed: TimeoutError: Locator.wait_for: Timeout 3000ms exceeded.
+Call log:
+  - waiting for locator(".undo-receipt.is-pending").first to be visible
+    - locator resolved to visible <span class="undo-receipt is-pending">…</

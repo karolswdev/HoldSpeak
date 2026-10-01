@@ -19,6 +19,12 @@ New portfolio surfaces, extra connectors, native parity, and additional worker a
 need a measured Phase 200 pilot gap before they take delivery capacity.
 The outcome review in HS-200-37 records each expansion decision.
 
+## Phase 11 face observations (2026-10-01)
+
+- At 393, the floating TALK / Write a thought / Record meeting / Schedule dock covers the Chair meeting row's send preview. The observed shot is [meeting_summary.chair.picked at 393](../holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-runs/p11-r10-head-final/case.p11.meeting_summary.chair.picked--393/20261001T042051Z-case.p11.meeting_summary.chair.picked-astra-393/after.png). Home: a future Phase 11 face follow-up.
+- In the Meetings window, the list can say “No meetings yet” while the record detail is open beside it. The paired 1440 captures from the same walk show the list/footer mismatch across the trigger: the [before shot](../holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-runs/p11-r10-head-final/case.p11.meeting_summary.meetings_record.no_summary--1440/20261001T042210Z-case.p11.meeting_summary.meetings_record.no_summary-astra-1440/before.png) shows “1 RECORD” and the [after shot](../holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-runs/p11-r10-head-final/case.p11.meeting_summary.meetings_record.no_summary--1440/20261001T042210Z-case.p11.meeting_summary.meetings_record.no_summary-astra-1440/after.png) shows “No meetings yet” with the record detail still open. Home: a future Phase 11 face follow-up.
+- After the brief's prepared send settles, the Chair's `BRIEF · N THINGS WAITING` head keeps a lone `THIS DEVICE` chip where `◆ PREPARED ×1` stood. The chip has no subject left (the prepared count is gone, so the egress chip names nothing). Tenet 3 (help, not leftover chrome); UX-CANON A.9 (egress exactly where egress happens: here the chip names no egress). The observed shot is [4-record-saved at 1440](../holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-07-shots/final/20261001T115906Z-rehearse/shots/4-record-saved-1440.png) (left pane, the BRIEF head). Inherited; seen in PHILO-11-07, homed by Astra r1 on #719. Home: a future Phase 11 face follow-up.
+
 ## Phase 201 parked summary follow-through
 
 **2026-09-19 — Astra, ratified by Muad'Dib.** The first-use summary gesture
@@ -1376,6 +1382,12 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 | The real-pointer passes in `tests/e2e/test_philo9_04_desk_debts_glass.py` run about 15× slower with motion on: 5.65 s against 0.38 s per nine-point sample under reduced motion (Codex Astra's measure). Run the rig's pointer passes with reduced motion (`reduced_motion="reduce"` on the browser context) wherever motion is not what the test proves, then lower the `timeout(900)` on the Launch-submenu fence and the `timeout(600)` on the sort-Button and row-menu fences. | test speed (Tenet 3) | `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/checks/story-04-built-astra-r2.md` | UNASSIGNED |
 | At 393 the open row menu covers the dock (the keep-in-view rule keeps it inside the viewport, not above the dock). Stated as a limit on the ratified canvas (`assets/story-04-list-canvas/README.md` "Limits"). | face | the ratified canvas | recorded; no action |
 
+## PHILO-10-06 follow-ups — 2026-09-29 (Codex Astra r1 on #700, `pm/roadmap/holdspeak-philo/phase-10-the-channels/checks/story-06-built-astra-r1.md` finding 5)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| The prepared file preview shows FOLDER only, not FILE. The ratified Send canvas (`pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-04-send-canvas/README.md:39`) shows the file name before Send, the same name as the receipt. Production chooses the name at the dispatch boundary (`holdspeak/services/channel_service.py:469`, `choose_path`), so a prepared row has `file_path: null`. Inherited from main `05d01ffb`; story 06 did not introduce it. Seen in the real run's shot 2 at both widths. | face deviation from the ratified canvas (Tenet 3; UX-CANON A.2) | Codex Astra r1 on #700 | **RULED 2026-09-29 by the owner: "Folder is fine"**: an ACCEPTED CANVAS CHANGE. The prepared preview shows FOLDER; the file name shows in the receipt. No repair. Closed. |
+
 ## PHILO-10-05 follow-ups — 2026-09-29 (the Fedaykin lane, `pm/roadmap/holdspeak-philo/phase-10-the-channels/evidence-story-05.md`)
 
 | Item | Kind | Source | Home |
@@ -1471,4 +1483,3 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 |---|---|---|---|
 | Unify DELIVERY rows into the one row grammar: the update's DELIVERY history (`web/src/features/channels/SendWell.tsx`, `DeliveryHistory`) keeps its Phase 10 row look while the SEND well and `SENDS N` use the species' grammar (name on line 1, chips under the name on line 2). Draw it on the owner's canvas first (UX-CANON A.2), then build. | face consistency (Tenet 5) | `pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/checks/story-04-built-astra-r1.md` F4; ruling on #708 | UNASSIGNED; the owner's canvas |
 | Carry the unit on a size refusal if a byte-limited channel reuses it: the well renders `<size> / <limit> CHARACTERS` (`web/src/desk/surface/send/SendWell.tsx`, `PreviewFailed`); only Slack's `payload_too_large:slack` carries `size` / `limit` today, in characters. A channel limited in bytes (email) must send its unit and the face must render it. | face words | same check, MISSED 3 | UNASSIGNED; with the first byte-limited producer |
-

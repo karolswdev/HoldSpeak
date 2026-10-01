@@ -1,0 +1,21 @@
+........................................................................ [ 17%]
+........................................................................ [ 35%]
+........................................................................ [ 52%]
+........................................................................ [ 70%]
+........................................................................ [ 87%]
+...................................................                      [100%]
+=============================== warnings summary ===============================
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:260: SyntaxWarning: invalid escape sequence '\s'
+    ? '.' + el.className.trim().split(/\s+/)
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:439: SyntaxWarning: invalid escape sequence '\('
+    const m = /rgba?\(([^)]+)\)/.exec(s || '');
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_philo9_03_room_face_glass.py:807: SyntaxWarning: invalid escape sequence '\s'
+    face = row.evaluate("""r => ({text: r.innerText.replace(/\s+/g, ' ').trim(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+411 passed, 3 warnings in 7.11s

@@ -90,7 +90,8 @@
               "p8",
               "p9",
               "p10",
-              "p11"
+              "p11",
+              "p12"
             ]
           },
           "words": {
@@ -239,6 +240,10 @@
               "type": "string",
               "minLength": 1
             },
+            "optional": {
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
+            },
             "capture_as": {
               "type": "string",
               "pattern": "^[a-z][a-z0-9_]*$"
@@ -345,7 +350,8 @@
               "minLength": 1
             },
             "optional": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "timeout_s": {
               "type": "number",
@@ -389,6 +395,7 @@
                 "click",
                 "click_role",
                 "fill",
+                "select_option",
                 "press",
                 "wait_for",
                 "focus",
@@ -405,7 +412,8 @@
               "minLength": 1
             },
             "optional": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "timeout_s": {
               "type": "number",
@@ -538,6 +546,7 @@
                     "enum": [
                       "click",
                       "fill",
+                      "select_option",
                       "wait_for",
                       "focus",
                       "scroll_into_view"
@@ -569,6 +578,30 @@
                 "required": [
                   "value"
                 ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "action": {
+                    "const": "select_option"
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              },
+              "then": {
+                "required": [
+                  "selector",
+                  "value"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
               }
             },
             {
@@ -635,7 +668,8 @@
               "minLength": 1
             },
             "optional": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "timeout_s": {
               "type": "number",
@@ -685,7 +719,8 @@
               "minLength": 1
             },
             "optional": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "timeout_s": {
               "type": "number",
@@ -824,7 +859,8 @@
               "minLength": 1
             },
             "optional": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "timeout_s": {
               "type": "number",
@@ -884,7 +920,8 @@
               "minLength": 1
             },
             "optional": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On a setup step, skip an unavailable precondition and continue; on the trigger, skip an unavailable gesture and continue; the case's expected predicate remains mandatory."
             },
             "timeout_s": {
               "type": "number",
@@ -892,7 +929,8 @@
             },
             "action": {
               "enum": [
-                "restart_hub"
+                "restart_hub",
+                "queue_meeting_intelligence"
               ]
             },
             "capture_as": {
@@ -916,6 +954,11 @@
                 }
               },
               "description": "Pins which network response the rig records as the clicked trigger's own response."
+            },
+            "meeting_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Imported meeting id passed to the real Stop-style intelligence queue producer; no result rows are injected."
             }
           }
         },
@@ -1176,7 +1219,10 @@
                     "protocol_field",
                     "protocol_rows",
                     "protocol_rows_gone",
+                    "protocol_rows_same",
+                    "protocol_sequence",
                     "protocol_status",
+                    "selector_presence",
                     "text_absent",
                     "text_contains",
                     "text_equals",
@@ -1352,7 +1398,7 @@
           "properties": {
             "id": {
               "type": "string",
-              "pattern": "^case\\.[a-z0-9_]+\\.[a-z0-9_]+\\.[a-z0-9_]+(?:\\.(?:op(?:\\.replayed)?|replayed))?$"
+              "pattern": "^case\\.[a-z0-9_]+(?:\\.[a-z0-9_]+){2,3}(?:\\.(?:op(?:\\.replayed)?|replayed))?$"
             },
             "job": {
               "enum": [
@@ -1376,7 +1422,8 @@
                 "p8",
                 "p9",
                 "p10",
-                "p11"
+                "p11",
+                "p12"
               ]
             },
             "edge_ids": {

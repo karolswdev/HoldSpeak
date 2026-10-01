@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 332d91586bdbd7fe40e3c2c00851a46adc4650e4 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11.json
+RUNTIME: build=None hub=http://127.0.0.1:54190 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-pm6wh2bh/.local/share/holdspeak/holdspeak.db engine=replayed
+JOB: p11
+VERDICT: blocked terminal=None
+EVIDENCE: []
+NOTE: BLOCKED: capture_as 'digest': no value at 'payload_digest' in the decoded response of operation 'channel.preview'

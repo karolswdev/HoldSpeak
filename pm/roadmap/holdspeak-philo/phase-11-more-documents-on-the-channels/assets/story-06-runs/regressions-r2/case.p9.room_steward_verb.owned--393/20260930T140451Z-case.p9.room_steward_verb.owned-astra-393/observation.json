@@ -1,0 +1,681 @@
+{
+  "id": "obs-20260930T140451Z-case.p9.room_steward_verb.owned-astra-393",
+  "run_id": "20260930T140451Z-case.p9.room_steward_verb.owned-astra-393",
+  "case_id": "case.p9.room_steward_verb.owned",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase9.json",
+  "job": "p9",
+  "edge_ids": [
+    "edge.face.room_open"
+  ],
+  "state_id": "state.desk_presentation.p9_room_face",
+  "provenance": {
+    "revision": "8a6b807d6682d9446d9b75216bbd3844d203cdcc",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "5af70edb856e3d3d9620f2924959f5718a9cb4cb408352e0eca3f34f59e21b86",
+      "assets": [
+        "index-DOMEgTb7.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:65202",
+      "port": 65202,
+      "pid": 2724,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fs0fzx85",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fs0fzx85/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-30T14:04:51.979756+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase9.json",
+      "sha256": "79acbbf975ed3f11c117926151cf35787b6ab59cab40425b5f3c3a1aa0e305e9",
+      "version": "phase9-room"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-09-30T08:04:55.848763"
+        }
+      },
+      "response_sha256": "84caef3214d161f116c8f2e08eb46a3ccf36c4d99399e78bb3833a6d35ee5025"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-d8766fb50e8e",
+          "name": "Atlas ledger cutover",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-09-30T08:04:55.878177",
+          "updated_at": "2026-09-30T08:04:55.878177",
+          "result_kind": "created",
+          "project_id": "proj-d8766fb50e8e",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-d8766fb50e8e"
+          ]
+        }
+      },
+      "response_sha256": "78b6abfb9641316ecc2f453d58aa99e0784d8f3dc25ed0af119c2253fe012b1b",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-d8766fb50e8e"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects/proj-d8766fb50e8e/items",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "item": {
+          "id": "pitem_c17354a496564e56bdffed6bdf14a85f",
+          "project_id": "proj-d8766fb50e8e",
+          "item_type": "milestone",
+          "title": "Atlas rehearsal",
+          "summary": null,
+          "lifecycle": "planned",
+          "severity": null,
+          "owner_ref": null,
+          "due_at": "2020-01-06",
+          "sort_key": null,
+          "details_json": "{}",
+          "provenance_kind": "owner",
+          "source_observation_id": null,
+          "created_by_ref": "principal:owner-session",
+          "revision": 0,
+          "created_at": "2026-09-30T08:04:55.880988",
+          "updated_at": "2026-09-30T08:04:55.880988",
+          "result_kind": "updated",
+          "project_revision": 2,
+          "changed_refs": [
+            "project:proj-d8766fb50e8e"
+          ],
+          "item_id": "pitem_c17354a496564e56bdffed6bdf14a85f"
+        }
+      },
+      "response_sha256": "414d6ad8acfbdcc9d4bc0cc61c7e8d3bf58a30c9414d97b80646d79bc978ca0e"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-project.open.proj-d8766fb50e8e']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=room-body]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fs0fzx85",
+    "project_id": "proj-d8766fb50e8e"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "focus",
+    "adapter": "ui-keyboard",
+    "selector": "[data-testid=steward-verb]",
+    "done": true
+  },
+  "diff": {
+    "rect": {
+      "before": {
+        "x": 300,
+        "y": 654,
+        "w": 68,
+        "h": 24
+      },
+      "after": {
+        "x": 300,
+        "y": 350,
+        "w": 68,
+        "h": 24
+      }
+    },
+    "focus": {
+      "before": "div#surface-project-memory",
+      "after": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+    },
+    "focus_label": {
+      "before": "Atlas ledger cutover",
+      "after": "Steward"
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=steward-verb]",
+    "target_present": true,
+    "text": "Steward",
+    "attrs": {
+      "type": "button",
+      "class": "btn btn--ghost btn--sm ",
+      "data-testid": "steward-verb",
+      "data-verb": "steward"
+    },
+    "rect": {
+      "x": 300,
+      "y": 654,
+      "w": 68,
+      "h": 24
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 300,
+        "y": 654,
+        "w": 68,
+        "h": 24
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 302,
+          "y": 656,
+          "owned": false,
+          "owner": "div#surface-project-memory > footer.desk-surface-foot.surface-footer > div.surface-footer-layout > div.surface-footer-receipt"
+        },
+        {
+          "x": 302,
+          "y": 666,
+          "owned": false,
+          "owner": "div#surface-project-memory > footer.desk-surface-foot.surface-footer > div.surface-footer-layout > div.surface-footer-receipt"
+        },
+        {
+          "x": 302,
+          "y": 676,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock"
+        },
+        {
+          "x": 334,
+          "y": 656,
+          "owned": false,
+          "owner": "div#surface-project-memory > footer.desk-surface-foot.surface-footer > div.surface-footer-layout > div.surface-footer-receipt"
+        },
+        {
+          "x": 334,
+          "y": 666,
+          "owned": false,
+          "owner": "div#surface-project-memory > footer.desk-surface-foot.surface-footer > div.surface-footer-layout > div.surface-footer-receipt"
+        },
+        {
+          "x": 334,
+          "y": 676,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock"
+        },
+        {
+          "x": 366,
+          "y": 656,
+          "owned": false,
+          "owner": "div#surface-project-memory > footer.desk-surface-foot.surface-footer > div.surface-footer-layout > div.surface-footer-receipt"
+        },
+        {
+          "x": 366,
+          "y": 666,
+          "owned": false,
+          "owner": "div#surface-project-memory > footer.desk-surface-foot.surface-footer > div.surface-footer-layout > div.surface-footer-receipt"
+        },
+        {
+          "x": 366,
+          "y": 676,
+          "owned": false,
+          "owner": "div#desk-next > div.desk-dock"
+        }
+      ],
+      "all_owned": false
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#surface-project-memory",
+    "focus_label": "Atlas ledger cutover",
+    "url": "http://127.0.0.1:65202/",
+    "windows": [
+      {
+        "title": "Atlas ledger cutover",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "7f15e2c970b8be85d863713fc5932c7a11928c85ff39f4815c7edecc029764c9",
+    "document_text_len": 785,
+    "replay_identity": null,
+    "at_utc": "2026-09-30T14:04:58.357114+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=steward-verb]",
+    "target_present": true,
+    "text": "Steward",
+    "attrs": {
+      "type": "button",
+      "class": "btn btn--ghost btn--sm ",
+      "data-testid": "steward-verb",
+      "data-verb": "steward"
+    },
+    "rect": {
+      "x": 300,
+      "y": 350,
+      "w": 68,
+      "h": 24
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 300,
+        "y": 350,
+        "w": 68,
+        "h": 24
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 302,
+          "y": 352,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 302,
+          "y": 362,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 302,
+          "y": 372,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 334,
+          "y": 352,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 334,
+          "y": 362,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 334,
+          "y": 372,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 366,
+          "y": 352,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 366,
+          "y": 362,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 366,
+          "y": 372,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost",
+    "focus_label": "Steward",
+    "url": "http://127.0.0.1:65202/",
+    "windows": [
+      {
+        "title": "Atlas ledger cutover",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "7f15e2c970b8be85d863713fc5932c7a11928c85ff39f4815c7edecc029764c9",
+    "document_text_len": 785,
+    "replay_identity": null,
+    "at_utc": "2026-09-30T14:04:59.471244+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=steward-verb]",
+    "target_present": true,
+    "text": "Steward",
+    "attrs": {
+      "type": "button",
+      "class": "btn btn--ghost btn--sm ",
+      "data-testid": "steward-verb",
+      "data-verb": "steward"
+    },
+    "rect": {
+      "x": 300,
+      "y": 350,
+      "w": 68,
+      "h": 24
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 300,
+        "y": 350,
+        "w": 68,
+        "h": 24
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 302,
+          "y": 352,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 302,
+          "y": 362,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 302,
+          "y": 372,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 334,
+          "y": 352,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 334,
+          "y": 362,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 334,
+          "y": 372,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 366,
+          "y": 352,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 366,
+          "y": 362,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        },
+        {
+          "x": 366,
+          "y": 372,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div.desk-surface-body > div.room-body > div.room-section-rise > section.surface-section > header.surface-section-head > button.btn.btn--ghost",
+    "focus_label": "Steward",
+    "url": "http://127.0.0.1:65202/",
+    "windows": [
+      {
+        "title": "Atlas ledger cutover",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "7f15e2c970b8be85d863713fc5932c7a11928c85ff39f4815c7edecc029764c9",
+    "document_text_len": 785,
+    "replay_identity": null,
+    "at_utc": "2026-09-30T14:04:59.343041+00:00",
+    "predicate_satisfied": true,
+    "reading": "control owns all 9 hit points in viewport {'width': 393, 'height': 852} with rect {'x': 300, 'y': 350, 'w': 68, 'h': 24}",
+    "elapsed_s": 0.909
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "control owns all 9 hit points in viewport {'width': 393, 'height': 852} with rect {'x': 300, 'y': 350, 'w': 68, 'h': 24}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.037,
+    "first_satisfied_at_s": 0.909,
+    "completion_bound_s": 25.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: control owns all 9 hit points in viewport {'width': 393, 'height': 852} with rect {'x': 300, 'y': 350, 'w': 68, 'h': 24}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:65202) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:65202) non-GET response after the click; the click fired none",
+    "seen": []
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p9.room_steward_verb.owned--393/20260930T140451Z-case.p9.room_steward_verb.owned-astra-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p9.room_steward_verb.owned--393/20260930T140451Z-case.p9.room_steward_verb.owned-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fs0fzx85/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-fs0fzx85/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:65202"
+  ],
+  "duration_s": 7.891
+}

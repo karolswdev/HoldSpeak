@@ -164,6 +164,8 @@ const REFUSED: Record<string, string> = {
   document_unknown: "NO DOCUMENT",
   document_kind_unknown: "DOCUMENT TYPE UNKNOWN",
   document_not_found: "DOCUMENT NOT FOUND",
+  artifact_body_missing: "ARTIFACT BODY MISSING",
+  artifact_not_text: "ARTIFACT NOT TEXT",
   email_address_invalid: "ADDRESS NOT VALID",
   email_key_invalid: "KEY NOT VALID",
   email_key_missing: "NO KEY",

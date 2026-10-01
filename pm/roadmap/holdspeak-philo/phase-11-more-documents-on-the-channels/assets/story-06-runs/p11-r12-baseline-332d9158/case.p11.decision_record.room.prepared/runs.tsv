@@ -1,0 +1,3 @@
+file	case	width	verdict	seconds	load1	reading	run_dir	exit_code	source_revision	source_dirty
+atlas-phase11.json	case.p11.decision_record.room.prepared	1440	fail	82.708	4.90	a nonzero diff with the wrong result is a finding, not a pass (changed: ['document_text_sha256']).	case.p11.decision_record.room.prepared--1440/20261001T092203Z-case.p11.decision_record.room.prepared-astra-1440	1	332d91586bdbd7fe40e3c2c00851a46adc4650e4	true
+atlas-phase11.json	case.p11.decision_record.room.prepared	393	fail	82.032	2.91	UNRESOLVED: the promised result is absent and nothing moved at all. A zero diff is never a pass (brief §3).	case.p11.decision_record.room.prepared--393/20261001T092326Z-case.p11.decision_record.room.prepared-astra-393	1	332d91586bdbd7fe40e3c2c00851a46adc4650e4	true

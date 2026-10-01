@@ -1,0 +1,864 @@
+{
+  "id": "obs-20261001T042734Z-case.j1.first_words_keep_as_note.kept.op-astra-1440",
+  "run_id": "20261001T042734Z-case.j1.first_words_keep_as_note.kept.op-astra-1440",
+  "case_id": "case.j1.first_words_keep_as_note.kept.op",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase7.json",
+  "job": "j1",
+  "edge_ids": [
+    "edge.face.first_words_keep_note"
+  ],
+  "state_id": "state.first_value.kept",
+  "provenance": {
+    "revision": "5ae061c2a8c33b24c257569dd663460f6b8f2830",
+    "revision_source": "environment",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7cea45e73f6063bc337a88f5690e07adfe4e06c8ede597264b0f43aad2023559",
+      "assets": [
+        "index-yedq4BGL.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:49399",
+      "port": 49399,
+      "pid": 14953,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nin8la9j",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nin8la9j/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-01T04:27:34.721519+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase7.json",
+      "sha256": "3da3105d83caa95a8688defd8920381332fea7637c5dce0400dc85b737778428",
+      "version": "phase7-desk"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. Every id is captured from this run's own producer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nin8la9j",
+    "note_id": "note_13bc68abe641"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "note.create",
+    "args": {
+      "title": "First dictation",
+      "body_markdown": "one sentence",
+      "tags": [
+        "dictation"
+      ]
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "tools/call",
+      "params": {
+        "name": "desk.create",
+        "arguments": {
+          "kind": "notes",
+          "data": {
+            "title": "First dictation",
+            "body_markdown": "one sentence",
+            "tags": [
+              "dictation"
+            ]
+          }
+        }
+      }
+    },
+    "response": {
+      "body_markdown": "one sentence",
+      "created_at": "2026-10-01T04:27:36Z",
+      "deleted": false,
+      "id": "note_13bc68abe641",
+      "last_modified": "2026-10-01T04:27:36Z",
+      "tags": [
+        "dictation"
+      ],
+      "title": "First dictation",
+      "updated_at": "2026-10-01T04:27:36Z"
+    },
+    "domain_response": {
+      "body_markdown": "one sentence",
+      "created_at": "2026-10-01T04:27:36Z",
+      "deleted": false,
+      "id": "note_13bc68abe641",
+      "last_modified": "2026-10-01T04:27:36Z",
+      "tags": [
+        "dictation"
+      ],
+      "title": "First dictation",
+      "updated_at": "2026-10-01T04:27:36Z"
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"body_markdown\": \"one sentence\", \"created_at\": \"2026-10-01T04:27:36Z\", \"deleted\": false, \"id\": \"note_13bc68abe641\", \"last_modified\": \"2026-10-01T04:27:36Z\", \"tags\": [\"dictation\"], \"title\": \"First dictation\", \"updated_at\": \"2026-10-01T04:27:36Z\"}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.01,
+    "captured": {
+      "name": "note_id",
+      "path": "id",
+      "value": "note_13bc68abe641"
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+      "after": "8c21c99ac2fa4430a2a24aaefa9a8bceff1a5ef7da8a8a0a6387f5f1c49078d7"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "note.list",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+              "name": "desk.list",
+              "arguments": {
+                "kind": "notes"
+              }
+            }
+          },
+          "response": [],
+          "domain_response": [],
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.02
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "note.list",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "tools/call",
+            "params": {
+              "name": "desk.list",
+              "arguments": {
+                "kind": "notes"
+              }
+            }
+          },
+          "response": [
+            {
+              "body_markdown": "one sentence",
+              "created_at": "2026-10-01T04:27:36Z",
+              "deleted": false,
+              "id": "note_13bc68abe641",
+              "last_modified": "2026-10-01T04:27:36Z",
+              "tags": [
+                "dictation"
+              ],
+              "title": "First dictation",
+              "updated_at": "2026-10-01T04:27:36Z"
+            }
+          ],
+          "domain_response": [
+            {
+              "body_markdown": "one sentence",
+              "created_at": "2026-10-01T04:27:36Z",
+              "deleted": false,
+              "id": "note_13bc68abe641",
+              "last_modified": "2026-10-01T04:27:36Z",
+              "tags": [
+                "dictation"
+              ],
+              "title": "First dictation",
+              "updated_at": "2026-10-01T04:27:36Z"
+            }
+          ],
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"body_markdown\": \"one sentence\", \"created_at\": \"2026-10-01T04:27:36Z\", \"deleted\": false, \"id\": \"note_13bc68abe641\", \"last_modified\": \"2026-10-01T04:27:36Z\", \"tags\": [\"dictation\"], \"title\": \"First dictation\", \"updated_at\": \"2026-10-01T04:27:36Z\"}]"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:49399",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "note.read",
+      "args": null
+    },
+    "op": {
+      "name": "note.read",
+      "args": {},
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "unresolved_arguments",
+        "error": "op observation has unresolved arguments"
+      },
+      "envelope": null,
+      "elapsed_s": 0.0
+    },
+    "op_digest": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "note.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.list",
+            "arguments": {
+              "kind": "notes"
+            }
+          }
+        },
+        "response": [],
+        "domain_response": [],
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "[]"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.02
+      }
+    ],
+    "at_utc": "2026-10-01T04:27:36.785030+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:49399",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "note.read",
+      "args": {
+        "note_id": "note_13bc68abe641"
+      }
+    },
+    "op": {
+      "name": "note.read",
+      "args": {
+        "note_id": "note_13bc68abe641"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "notes",
+            "id": "note_13bc68abe641"
+          }
+        }
+      },
+      "response": {
+        "body_markdown": "one sentence",
+        "created_at": "2026-10-01T04:27:36Z",
+        "deleted": false,
+        "id": "note_13bc68abe641",
+        "last_modified": "2026-10-01T04:27:36Z",
+        "tags": [
+          "dictation"
+        ],
+        "title": "First dictation",
+        "updated_at": "2026-10-01T04:27:36Z"
+      },
+      "domain_response": {
+        "body_markdown": "one sentence",
+        "created_at": "2026-10-01T04:27:36Z",
+        "deleted": false,
+        "id": "note_13bc68abe641",
+        "last_modified": "2026-10-01T04:27:36Z",
+        "tags": [
+          "dictation"
+        ],
+        "title": "First dictation",
+        "updated_at": "2026-10-01T04:27:36Z"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"body_markdown\": \"one sentence\", \"created_at\": \"2026-10-01T04:27:36Z\", \"deleted\": false, \"id\": \"note_13bc68abe641\", \"last_modified\": \"2026-10-01T04:27:36Z\", \"tags\": [\"dictation\"], \"title\": \"First dictation\", \"updated_at\": \"2026-10-01T04:27:36Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "8c21c99ac2fa4430a2a24aaefa9a8bceff1a5ef7da8a8a0a6387f5f1c49078d7",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "note.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.list",
+            "arguments": {
+              "kind": "notes"
+            }
+          }
+        },
+        "response": [
+          {
+            "body_markdown": "one sentence",
+            "created_at": "2026-10-01T04:27:36Z",
+            "deleted": false,
+            "id": "note_13bc68abe641",
+            "last_modified": "2026-10-01T04:27:36Z",
+            "tags": [
+              "dictation"
+            ],
+            "title": "First dictation",
+            "updated_at": "2026-10-01T04:27:36Z"
+          }
+        ],
+        "domain_response": [
+          {
+            "body_markdown": "one sentence",
+            "created_at": "2026-10-01T04:27:36Z",
+            "deleted": false,
+            "id": "note_13bc68abe641",
+            "last_modified": "2026-10-01T04:27:36Z",
+            "tags": [
+              "dictation"
+            ],
+            "title": "First dictation",
+            "updated_at": "2026-10-01T04:27:36Z"
+          }
+        ],
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "[{\"body_markdown\": \"one sentence\", \"created_at\": \"2026-10-01T04:27:36Z\", \"deleted\": false, \"id\": \"note_13bc68abe641\", \"last_modified\": \"2026-10-01T04:27:36Z\", \"tags\": [\"dictation\"], \"title\": \"First dictation\", \"updated_at\": \"2026-10-01T04:27:36Z\"}]"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "at_utc": "2026-10-01T04:27:37.709995+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "note.create",
+      "body_sha256": "723113504765e041afdb467fe1f539046b3f47b9ab73900aa048dd96a7d2af5b",
+      "body": {
+        "body_markdown": "one sentence",
+        "created_at": "2026-10-01T04:27:36Z",
+        "deleted": false,
+        "id": "note_13bc68abe641",
+        "last_modified": "2026-10-01T04:27:36Z",
+        "tags": [
+          "dictation"
+        ],
+        "title": "First dictation",
+        "updated_at": "2026-10-01T04:27:36Z"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"body_markdown\": \"one sentence\", \"created_at\": \"2026-10-01T04:27:36Z\", \"deleted\": false, \"id\": \"note_13bc68abe641\", \"last_modified\": \"2026-10-01T04:27:36Z\", \"tags\": [\"dictation\"], \"title\": \"First dictation\", \"updated_at\": \"2026-10-01T04:27:36Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "note.create",
+      "args": {
+        "title": "First dictation",
+        "body_markdown": "one sentence",
+        "tags": [
+          "dictation"
+        ]
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "notes",
+            "data": {
+              "title": "First dictation",
+              "body_markdown": "one sentence",
+              "tags": [
+                "dictation"
+              ]
+            }
+          }
+        }
+      },
+      "response": {
+        "body_markdown": "one sentence",
+        "created_at": "2026-10-01T04:27:36Z",
+        "deleted": false,
+        "id": "note_13bc68abe641",
+        "last_modified": "2026-10-01T04:27:36Z",
+        "tags": [
+          "dictation"
+        ],
+        "title": "First dictation",
+        "updated_at": "2026-10-01T04:27:36Z"
+      },
+      "domain_response": {
+        "body_markdown": "one sentence",
+        "created_at": "2026-10-01T04:27:36Z",
+        "deleted": false,
+        "id": "note_13bc68abe641",
+        "last_modified": "2026-10-01T04:27:36Z",
+        "tags": [
+          "dictation"
+        ],
+        "title": "First dictation",
+        "updated_at": "2026-10-01T04:27:36Z"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"body_markdown\": \"one sentence\", \"created_at\": \"2026-10-01T04:27:36Z\", \"deleted\": false, \"id\": \"note_13bc68abe641\", \"last_modified\": \"2026-10-01T04:27:36Z\", \"tags\": [\"dictation\"], \"title\": \"First dictation\", \"updated_at\": \"2026-10-01T04:27:36Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.01,
+      "captured": {
+        "name": "note_id",
+        "path": "id",
+        "value": "note_13bc68abe641"
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:49399",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "note.read",
+      "args": {
+        "note_id": "note_13bc68abe641"
+      }
+    },
+    "op": {
+      "name": "note.read",
+      "args": {
+        "note_id": "note_13bc68abe641"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "notes",
+            "id": "note_13bc68abe641"
+          }
+        }
+      },
+      "response": {
+        "body_markdown": "one sentence",
+        "created_at": "2026-10-01T04:27:36Z",
+        "deleted": false,
+        "id": "note_13bc68abe641",
+        "last_modified": "2026-10-01T04:27:36Z",
+        "tags": [
+          "dictation"
+        ],
+        "title": "First dictation",
+        "updated_at": "2026-10-01T04:27:36Z"
+      },
+      "domain_response": {
+        "body_markdown": "one sentence",
+        "created_at": "2026-10-01T04:27:36Z",
+        "deleted": false,
+        "id": "note_13bc68abe641",
+        "last_modified": "2026-10-01T04:27:36Z",
+        "tags": [
+          "dictation"
+        ],
+        "title": "First dictation",
+        "updated_at": "2026-10-01T04:27:36Z"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"body_markdown\": \"one sentence\", \"created_at\": \"2026-10-01T04:27:36Z\", \"deleted\": false, \"id\": \"note_13bc68abe641\", \"last_modified\": \"2026-10-01T04:27:36Z\", \"tags\": [\"dictation\"], \"title\": \"First dictation\", \"updated_at\": \"2026-10-01T04:27:36Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    "op_digest": "8c21c99ac2fa4430a2a24aaefa9a8bceff1a5ef7da8a8a0a6387f5f1c49078d7",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "note.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 4,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.list",
+            "arguments": {
+              "kind": "notes"
+            }
+          }
+        },
+        "response": [
+          {
+            "body_markdown": "one sentence",
+            "created_at": "2026-10-01T04:27:36Z",
+            "deleted": false,
+            "id": "note_13bc68abe641",
+            "last_modified": "2026-10-01T04:27:36Z",
+            "tags": [
+              "dictation"
+            ],
+            "title": "First dictation",
+            "updated_at": "2026-10-01T04:27:36Z"
+          }
+        ],
+        "domain_response": [
+          {
+            "body_markdown": "one sentence",
+            "created_at": "2026-10-01T04:27:36Z",
+            "deleted": false,
+            "id": "note_13bc68abe641",
+            "last_modified": "2026-10-01T04:27:36Z",
+            "tags": [
+              "dictation"
+            ],
+            "title": "First dictation",
+            "updated_at": "2026-10-01T04:27:36Z"
+          }
+        ],
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 4,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "[{\"body_markdown\": \"one sentence\", \"created_at\": \"2026-10-01T04:27:36Z\", \"deleted\": false, \"id\": \"note_13bc68abe641\", \"last_modified\": \"2026-10-01T04:27:36Z\", \"tags\": [\"dictation\"], \"title\": \"First dictation\", \"updated_at\": \"2026-10-01T04:27:36Z\"}]"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "at_utc": "2026-10-01T04:27:37.706236+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "note.create",
+      "body_sha256": "723113504765e041afdb467fe1f539046b3f47b9ab73900aa048dd96a7d2af5b",
+      "body": {
+        "body_markdown": "one sentence",
+        "created_at": "2026-10-01T04:27:36Z",
+        "deleted": false,
+        "id": "note_13bc68abe641",
+        "last_modified": "2026-10-01T04:27:36Z",
+        "tags": [
+          "dictation"
+        ],
+        "title": "First dictation",
+        "updated_at": "2026-10-01T04:27:36Z"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"body_markdown\": \"one sentence\", \"created_at\": \"2026-10-01T04:27:36Z\", \"deleted\": false, \"id\": \"note_13bc68abe641\", \"last_modified\": \"2026-10-01T04:27:36Z\", \"tags\": [\"dictation\"], \"title\": \"First dictation\", \"updated_at\": \"2026-10-01T04:27:36Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "note.create",
+      "args": {
+        "title": "First dictation",
+        "body_markdown": "one sentence",
+        "tags": [
+          "dictation"
+        ]
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "notes",
+            "data": {
+              "title": "First dictation",
+              "body_markdown": "one sentence",
+              "tags": [
+                "dictation"
+              ]
+            }
+          }
+        }
+      },
+      "response": {
+        "body_markdown": "one sentence",
+        "created_at": "2026-10-01T04:27:36Z",
+        "deleted": false,
+        "id": "note_13bc68abe641",
+        "last_modified": "2026-10-01T04:27:36Z",
+        "tags": [
+          "dictation"
+        ],
+        "title": "First dictation",
+        "updated_at": "2026-10-01T04:27:36Z"
+      },
+      "domain_response": {
+        "body_markdown": "one sentence",
+        "created_at": "2026-10-01T04:27:36Z",
+        "deleted": false,
+        "id": "note_13bc68abe641",
+        "last_modified": "2026-10-01T04:27:36Z",
+        "tags": [
+          "dictation"
+        ],
+        "title": "First dictation",
+        "updated_at": "2026-10-01T04:27:36Z"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"body_markdown\": \"one sentence\", \"created_at\": \"2026-10-01T04:27:36Z\", \"deleted\": false, \"id\": \"note_13bc68abe641\", \"last_modified\": \"2026-10-01T04:27:36Z\", \"tags\": [\"dictation\"], \"title\": \"First dictation\", \"updated_at\": \"2026-10-01T04:27:36Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.01,
+      "captured": {
+        "name": "note_id",
+        "path": "id",
+        "value": "note_13bc68abe641"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "all 5 facts hold: observe_at id holds; observe_at body_markdown holds; observe_at title holds; op read #0 (note.list) <root> holds; the trigger operation_id is absent",
+    "elapsed_s": 0.921
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all 5 facts hold: observe_at id holds; observe_at body_markdown holds; observe_at title holds; op read #0 (note.list) <root> holds; the trigger operation_id is absent",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 0.924,
+    "first_satisfied_at_s": 0.921,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['note_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: all 5 facts hold: observe_at id holds; observe_at body_markdown holds; observe_at title holds; op read #0 (note.list) <root> holds; the trigger operation_id is absent"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "note_id"
+  ],
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nin8la9j/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nin8la9j/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:49399"
+  ],
+  "duration_s": 3.001
+}

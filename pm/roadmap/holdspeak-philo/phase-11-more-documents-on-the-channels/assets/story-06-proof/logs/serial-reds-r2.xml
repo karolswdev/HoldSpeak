@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="4" time="14.829" timestamp="2026-09-30T09:35:21.961808-06:00" hostname="Karols-MacBook-Pro.local"><testcase classname="tests.unit.test_evidence_scratch_guard" name="test_no_test_writes_into_tracked_evidence" time="0.657"><failure message="AssertionError: EVIDENCE-WRITE: 1 test file(s) build a pm/roadmap path and write files; use tests._evidence.evidence_dir(&quot;&lt;rel&gt;&quot;) for the write dir:&#10;    tests/unit/test_philo11_walk_harness.py:20&#10;assert not ['tests/unit/test_philo11_walk_harness.py:20']">def test_no_test_writes_into_tracked_evidence() -&gt; None:
+        offenders = []
+        for path in sorted(TESTS.rglob("*.py")):
+            rel = path.relative_to(REPO).as_posix()
+            if rel in ALLOWLIST:
+                continue
+            source = path.read_text(encoding="utf-8")
+            if "pm/roadmap" not in source or not WRITE_RE.search(source):
+                continue
+            lines = _anchored_lines(ast.parse(source, filename=rel))
+            if lines:
+                offenders.append(f"{rel}:{lines[0]}")
+&gt;       assert not offenders, (
+            f"EVIDENCE-WRITE: {len(offenders)} test file(s) build a pm/roadmap path and write files; "
+            "use tests._evidence.evidence_dir(\"&lt;rel&gt;\") for the write dir:\n  " + "\n  ".join(offenders)
+        )
+E       AssertionError: EVIDENCE-WRITE: 1 test file(s) build a pm/roadmap path and write files; use tests._evidence.evidence_dir("&lt;rel&gt;") for the write dir:
+E           tests/unit/test_philo11_walk_harness.py:20
+E       assert not ['tests/unit/test_philo11_walk_harness.py:20']
+
+tests/unit/test_evidence_scratch_guard.py:76: AssertionError</failure></testcase><testcase classname="tests.e2e.test_hs176_loop_glass" name="test_speak_loop_1440" time="7.244" /><testcase classname="tests.e2e.test_hs176_loop_glass" name="test_speak_loop_393" time="6.744" /><testcase classname="tests.unit.test_philo10_face_words" name="test_every_emitted_code_has_a_face_word" time="0.067"><failure message="AssertionError: assert [('unknown', ...:slack'), ...] == []&#10;  &#10;  Left contains 20 more items, first extra item: ('unknown', 'ack_missing')&#10;  Use -v to get more diff">def test_every_emitted_code_has_a_face_word() -&gt; None:
+&gt;       assert codes.missing() == []
+E       AssertionError: assert [('unknown', ...:slack'), ...] == []
+E         
+E         Left contains 20 more items, first extra item: ('unknown', 'ack_missing')
+E         Use -v to get more diff
+
+tests/unit/test_philo10_face_words.py:25: AssertionError</failure></testcase></testsuite></testsuites>

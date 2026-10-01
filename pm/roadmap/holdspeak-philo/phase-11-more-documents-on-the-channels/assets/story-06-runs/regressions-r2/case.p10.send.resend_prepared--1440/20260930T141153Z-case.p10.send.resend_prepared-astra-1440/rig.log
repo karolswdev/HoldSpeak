@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
+RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:50511 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jf_5bnpt/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p10
+VERDICT: pass terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.resend_prepared--1440/20260930T141153Z-case.p10.send.resend_prepared-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.resend_prepared--1440/20260930T141153Z-case.p10.send.resend_prepared-astra-1440/after.png']
+NOTE: predicate: all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 821f09af9d08); response body contains the declared admission facts | readable_text: 'ACCEPTED BY RESEND' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 71, 'y': 269, 'w': 366, 'h': 18} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_ef5e8be39b8d4ba3b230be91b2d47071 answered 200 with 1 row(s) {'id': 'chs_a28260c4f27d6995329c9c62', 'state': 'sent', 'proof.provider': 'resend'} | cli_calls: 1 call(s) starting ['https', 'POST', 'api.resend.com', '/emails'] at the recording runner (pids [11703]; 1 call(s) in all), wanted 1
