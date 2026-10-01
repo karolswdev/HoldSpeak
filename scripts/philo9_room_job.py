@@ -149,12 +149,13 @@ def fixture_before_run_findings(run_dir: Path, source: Path = FIXTURE_PATH) -> l
 # ── the three-session isolation (fresh roots, distinct ids, no resume) ───
 
 
-def session_isolation_findings(run_dir: Path) -> list[str]:
+def session_isolation_findings(run_dir: Path, sessions: Iterable[str] = SESSIONS) -> list[str]:
     """Every session: its own work root, HOME and CODEX_HOME, a lawful launch,
-    a distinct session id, never resumed."""
+    a distinct session id, never resumed. (PHILO-10-06 reuses it with its own
+    session names.)"""
     findings: list[str] = []
     seen: dict[str, dict[str, str]] = {"session_id": {}, "work": {}, "home": {}, "codex_home": {}}
-    for stage in SESSIONS:
+    for stage in sessions:
         stage_dir = run_dir / "codex" / stage
         setup_path = run_dir / stage / "launch-setup.json"
         if not stage_dir.exists() or not setup_path.exists():

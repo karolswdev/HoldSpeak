@@ -1,0 +1,1250 @@
+{
+  "auth_file_changed": false,
+  "chosen_tools": [
+    "channel.destinations",
+    "decision_record.search",
+    "monday_brief.get",
+    "decision_record.get",
+    "channel.check_destination",
+    "channel.preview",
+    "channel.preview",
+    "channel.prepare",
+    "channel.prepare",
+    "channel.send"
+  ],
+  "exchange_end": 19,
+  "initial_context_findings": [],
+  "leg": "agent",
+  "mcp_other_methods": [],
+  "mcp_statuses": [
+    {
+      "method": "initialize",
+      "status": 200
+    },
+    {
+      "method": "notifications/initialized",
+      "status": 204
+    },
+    {
+      "method": "tools/list",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    }
+  ],
+  "non_mcp_http_writes": [],
+  "reconciliation": {
+    "codex_calls": 10,
+    "matches": [
+      {
+        "arguments": {},
+        "exchange": {
+          "duration_ms": 3.836,
+          "finished_at": "2026-10-01T11:59:20.648510+00:00",
+          "method": "POST",
+          "path": "/api/mcp",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-7f5e2435-62f7-4324-b2c7-76c740cbff4b",
+                "itemId": "ctc_0880cb38960dba1b016abe4b16ee7887d09e47c96ef1d51d87",
+                "progressToken": 1,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {},
+              "name": "channel.destinations"
+            }
+          },
+          "request_body": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-7f5e2435-62f7-4324-b2c7-76c740cbff4b",
+                "itemId": "ctc_0880cb38960dba1b016abe4b16ee7887d09e47c96ef1d51d87",
+                "progressToken": 1,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {},
+              "name": "channel.destinations"
+            }
+          },
+          "response": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"destinations\": [{\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"connection\": null, \"created_at\": \"2026-10-01T11:59:09+00:00\", \"id\": \"chd_889dffc12ae51316484cc9a6\", \"name\": \"HoldSpeak folder\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/outbox\"}, \"target_digest\": \"56ce3f627e73ee125f647179b7e801c1051502d3a3d9af2e5f9576c9c4ce6311\"}]}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "response_body": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"destinations\": [{\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"connection\": null, \"created_at\": \"2026-10-01T11:59:09+00:00\", \"id\": \"chd_889dffc12ae51316484cc9a6\", \"name\": \"HoldSpeak folder\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/outbox\"}, \"target_digest\": \"56ce3f627e73ee125f647179b7e801c1051502d3a3d9af2e5f9576c9c4ce6311\"}]}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "started_at": "2026-10-01T11:59:20.644724+00:00",
+          "status": 200
+        },
+        "exchange_index": 9,
+        "kind": "tools/call",
+        "result_sha256": "ed2dc981a8a4d7e9e38380f24deda27aacf4791ef6be5d5e0f15c970eeb2086d",
+        "tool": "channel.destinations"
+      },
+      {
+        "arguments": {
+          "limit": 20,
+          "query": "queue"
+        },
+        "exchange": {
+          "duration_ms": 3.517,
+          "finished_at": "2026-10-01T11:59:20.659288+00:00",
+          "method": "POST",
+          "path": "/api/mcp",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-15cbb697-287f-4a10-a20d-d69c87522ef9",
+                "itemId": "ctc_0880cb38960dba1b016abe4b16ee7887d09e47c96ef1d51d87",
+                "progressToken": 2,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "limit": 20,
+                "query": "queue"
+              },
+              "name": "decision_record.search"
+            }
+          },
+          "request_body": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-15cbb697-287f-4a10-a20d-d69c87522ef9",
+                "itemId": "ctc_0880cb38960dba1b016abe4b16ee7887d09e47c96ef1d51d87",
+                "progressToken": 2,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "limit": 20,
+                "query": "queue"
+              },
+              "name": "decision_record.search"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"alternatives\": null, \"created_at\": \"2026-10-01T11:59:07.521273+00:00\", \"decision_text\": \"Move the queue in two steps (PHILO-11-07 test)\", \"deleted\": 0, \"id\": \"record-76e5a7d019b44a68a9105e3fe6e58029\", \"lifecycle\": \"active\", \"owner\": \"Avery\", \"rationale\": \"One step at a time keeps the rollback short.\", \"relevance\": 4, \"review_date\": \"2026-10-15\", \"source_id\": \"dec-712ef9fe655ad09e4a35\", \"source_type\": \"meeting\", \"updated_at\": \"2026-10-01T11:59:07.521522+00:00\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "response_body": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"alternatives\": null, \"created_at\": \"2026-10-01T11:59:07.521273+00:00\", \"decision_text\": \"Move the queue in two steps (PHILO-11-07 test)\", \"deleted\": 0, \"id\": \"record-76e5a7d019b44a68a9105e3fe6e58029\", \"lifecycle\": \"active\", \"owner\": \"Avery\", \"rationale\": \"One step at a time keeps the rollback short.\", \"relevance\": 4, \"review_date\": \"2026-10-15\", \"source_id\": \"dec-712ef9fe655ad09e4a35\", \"source_type\": \"meeting\", \"updated_at\": \"2026-10-01T11:59:07.521522+00:00\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "started_at": "2026-10-01T11:59:20.655804+00:00",
+          "status": 200
+        },
+        "exchange_index": 10,
+        "kind": "tools/call",
+        "result_sha256": "5b7e3ea2f719618aa90df37108a868531df49e0401faf813049ca28a574863f1",
+        "tool": "decision_record.search"
+      },
+      {
+        "arguments": {},
+        "exchange": {
+          "duration_ms": 5.568,
+          "finished_at": "2026-10-01T11:59:27.037255+00:00",
+          "method": "POST",
+          "path": "/api/mcp",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-a7b57f59-2fac-4ca8-ad3a-e27f368bde3b",
+                "itemId": "ctc_0880cb38960dba1b016abe4b1c049887d09593ba1f10b3d21f",
+                "progressToken": 3,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {},
+              "name": "monday_brief.get"
+            }
+          },
+          "request_body": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-a7b57f59-2fac-4ca8-ad3a-e27f368bde3b",
+                "itemId": "ctc_0880cb38960dba1b016abe4b1c049887d09593ba1f10b3d21f",
+                "progressToken": 3,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {},
+              "name": "monday_brief.get"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"generated_at\": \"2026-10-01T05:59:06.994025\", \"headline\": \"1 new decision, 1 thing changed, 1 thing waiting, 2 decisions waiting.\", \"id\": \"brief-90ba3df8117d487181a79a6c4684d2e6\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-10-01T05:59:06.994025\", \"period_start\": \"2026-09-30T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [{\"created_at\": null, \"detail\": \"40 min \\u00b7 1 action item\", \"id\": \"brief-item-334e4eb8ff33448b930624e9c988367f\", \"priority\": 50, \"section\": \"changed\", \"source_ref\": \"meeting:philo11-07-meeting\", \"text\": \"Meeting recorded: Lantern migration review (PHILO-11-07 test)\"}], \"decisions\": [{\"created_at\": \"2026-10-01T05:59:07.520866\", \"detail\": null, \"id\": \"brief-item-49c8d5c779c24cad9488111ab3b2fa1b\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:dec-712ef9fe655ad09e4a35\", \"text\": \"Review decision: Move the queue in two steps (PHILO-11-07 test)\"}, {\"created_at\": \"2026-10-01T11:59:07Z\", \"detail\": null, \"id\": \"brief-item-4771a6cf32c34bf491614ad5237514ae\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:philo11-07-proposed\", \"text\": \"Review decision: Move the scheduler after the queue (PHILO-11-07 test)\"}], \"this_week\": [{\"created_at\": null, \"detail\": null, \"id\": \"brief-mtgwatch-decisions-96b79199dec64036a03fbf3f3621855b\", \"priority\": 52, \"section\": \"this_week\", \"source_ref\": \"meeting_watch:decisions\", \"text\": \"1 new decision from meetings\"}], \"waiting\": [{\"created_at\": null, \"detail\": \"Needs an owner\", \"id\": \"brief-item-7937c0b2755745e5b4c9e3e2fe4a7995\", \"priority\": 200, \"section\": \"waiting\", \"source_ref\": \"action_item:philo11-07-action\", \"text\": \"Unassigned: Write the rollback checklist (PHILO-11-07 test)\"}]}, \"shelf\": {}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "response_body": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"generated_at\": \"2026-10-01T05:59:06.994025\", \"headline\": \"1 new decision, 1 thing changed, 1 thing waiting, 2 decisions waiting.\", \"id\": \"brief-90ba3df8117d487181a79a6c4684d2e6\", \"is_empty\": false, \"ledger\": {\"operations\": 0, \"since\": null}, \"period_end\": \"2026-10-01T05:59:06.994025\", \"period_start\": \"2026-09-30T17:00:00\", \"person_sections_state\": \"unavailable\", \"sections\": {\"broke\": [], \"changed\": [{\"created_at\": null, \"detail\": \"40 min \\u00b7 1 action item\", \"id\": \"brief-item-334e4eb8ff33448b930624e9c988367f\", \"priority\": 50, \"section\": \"changed\", \"source_ref\": \"meeting:philo11-07-meeting\", \"text\": \"Meeting recorded: Lantern migration review (PHILO-11-07 test)\"}], \"decisions\": [{\"created_at\": \"2026-10-01T05:59:07.520866\", \"detail\": null, \"id\": \"brief-item-49c8d5c779c24cad9488111ab3b2fa1b\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:dec-712ef9fe655ad09e4a35\", \"text\": \"Review decision: Move the queue in two steps (PHILO-11-07 test)\"}, {\"created_at\": \"2026-10-01T11:59:07Z\", \"detail\": null, \"id\": \"brief-item-4771a6cf32c34bf491614ad5237514ae\", \"priority\": 200, \"section\": \"decisions\", \"source_ref\": \"decision:philo11-07-proposed\", \"text\": \"Review decision: Move the scheduler after the queue (PHILO-11-07 test)\"}], \"this_week\": [{\"created_at\": null, \"detail\": null, \"id\": \"brief-mtgwatch-decisions-96b79199dec64036a03fbf3f3621855b\", \"priority\": 52, \"section\": \"this_week\", \"source_ref\": \"meeting_watch:decisions\", \"text\": \"1 new decision from meetings\"}], \"waiting\": [{\"created_at\": null, \"detail\": \"Needs an owner\", \"id\": \"brief-item-7937c0b2755745e5b4c9e3e2fe4a7995\", \"priority\": 200, \"section\": \"waiting\", \"source_ref\": \"action_item:philo11-07-action\", \"text\": \"Unassigned: Write the rollback checklist (PHILO-11-07 test)\"}]}, \"shelf\": {}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "started_at": "2026-10-01T11:59:27.031792+00:00",
+          "status": 200
+        },
+        "exchange_index": 11,
+        "kind": "tools/call",
+        "result_sha256": "f9d8682d3854e9bd6cc4a61a27aac0ee6744ba588e0e2676810273723f0434ca",
+        "tool": "monday_brief.get"
+      },
+      {
+        "arguments": {
+          "record_id": "record-76e5a7d019b44a68a9105e3fe6e58029"
+        },
+        "exchange": {
+          "duration_ms": 1.881,
+          "finished_at": "2026-10-01T11:59:27.043206+00:00",
+          "method": "POST",
+          "path": "/api/mcp",
+          "request": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-93a5bddb-17b7-4ab3-a531-61b5523de292",
+                "itemId": "ctc_0880cb38960dba1b016abe4b1c049887d09593ba1f10b3d21f",
+                "progressToken": 4,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "record_id": "record-76e5a7d019b44a68a9105e3fe6e58029"
+              },
+              "name": "decision_record.get"
+            }
+          },
+          "request_body": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-93a5bddb-17b7-4ab3-a531-61b5523de292",
+                "itemId": "ctc_0880cb38960dba1b016abe4b1c049887d09593ba1f10b3d21f",
+                "progressToken": 4,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "record_id": "record-76e5a7d019b44a68a9105e3fe6e58029"
+              },
+              "name": "decision_record.get"
+            }
+          },
+          "response": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"alternatives\": null, \"created_at\": \"2026-10-01T11:59:07.521273+00:00\", \"decision_text\": \"Move the queue in two steps (PHILO-11-07 test)\", \"deleted\": 0, \"dispute_reason\": null, \"id\": \"record-76e5a7d019b44a68a9105e3fe6e58029\", \"lifecycle\": \"active\", \"owner\": \"Avery\", \"predecessor_id\": null, \"rationale\": \"One step at a time keeps the rollback short.\", \"review_date\": \"2026-10-15\", \"revisions\": [{\"created_at\": \"2026-10-01T11:59:07.521522+00:00\", \"field_name\": \"review_date\", \"id\": \"record-revision-64385d19b08849fd8c62b66d4909936a\", \"new_value\": \"2026-10-15\", \"old_value\": null, \"record_id\": \"record-76e5a7d019b44a68a9105e3fe6e58029\"}, {\"created_at\": \"2026-10-01T11:59:07.521522+00:00\", \"field_name\": \"owner\", \"id\": \"record-revision-c7d31da57a434fb68cb77ebeed330d4c\", \"new_value\": \"Avery\", \"old_value\": null, \"record_id\": \"record-76e5a7d019b44a68a9105e3fe6e58029\"}], \"source_id\": \"dec-712ef9fe655ad09e4a35\", \"source_type\": \"meeting\", \"sources\": [{\"artifact_type\": \"decisions\", \"created_at\": \"2026-10-01T11:59:07.521403+00:00\", \"details\": {\"artifact_type\": \"decisions\"}, \"id\": \"record-source-8465017f3a4a410886c39ae738805f51\", \"record_id\": \"record-76e5a7d019b44a68a9105e3fe6e58029\", \"source_ref\": \"philo11-07-decisions\", \"source_type\": \"artifact\"}, {\"created_at\": \"2026-10-01T11:59:07.521403+00:00\", \"date\": \"2026-10-01T02:59:06\", \"details\": {\"date\": \"2026-10-01T02:59:06\", \"title\": \"Lantern migration review (PHILO-11-07 test)\"}, \"id\": \"record-source-fa123eeb2bbb4f9e9da8eb63b2e0726f\", \"record_id\": \"record-76e5a7d019b44a68a9105e3fe6e58029\", \"source_ref\": \"philo11-07-meeting\", \"source_type\": \"meeting\", \"title\": \"Lantern migration review (PHILO-11-07 test)\"}], \"successor_id\": null, \"supersession_reason\": null, \"updated_at\": \"2026-10-01T11:59:07.521522+00:00\", \"work\": []}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "response_body": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"alternatives\": null, \"created_at\": \"2026-10-01T11:59:07.521273+00:00\", \"decision_text\": \"Move the queue in two steps (PHILO-11-07 test)\", \"deleted\": 0, \"dispute_reason\": null, \"id\": \"record-76e5a7d019b44a68a9105e3fe6e58029\", \"lifecycle\": \"active\", \"owner\": \"Avery\", \"predecessor_id\": null, \"rationale\": \"One step at a time keeps the rollback short.\", \"review_date\": \"2026-10-15\", \"revisions\": [{\"created_at\": \"2026-10-01T11:59:07.521522+00:00\", \"field_name\": \"review_date\", \"id\": \"record-revision-64385d19b08849fd8c62b66d4909936a\", \"new_value\": \"2026-10-15\", \"old_value\": null, \"record_id\": \"record-76e5a7d019b44a68a9105e3fe6e58029\"}, {\"created_at\": \"2026-10-01T11:59:07.521522+00:00\", \"field_name\": \"owner\", \"id\": \"record-revision-c7d31da57a434fb68cb77ebeed330d4c\", \"new_value\": \"Avery\", \"old_value\": null, \"record_id\": \"record-76e5a7d019b44a68a9105e3fe6e58029\"}], \"source_id\": \"dec-712ef9fe655ad09e4a35\", \"source_type\": \"meeting\", \"sources\": [{\"artifact_type\": \"decisions\", \"created_at\": \"2026-10-01T11:59:07.521403+00:00\", \"details\": {\"artifact_type\": \"decisions\"}, \"id\": \"record-source-8465017f3a4a410886c39ae738805f51\", \"record_id\": \"record-76e5a7d019b44a68a9105e3fe6e58029\", \"source_ref\": \"philo11-07-decisions\", \"source_type\": \"artifact\"}, {\"created_at\": \"2026-10-01T11:59:07.521403+00:00\", \"date\": \"2026-10-01T02:59:06\", \"details\": {\"date\": \"2026-10-01T02:59:06\", \"title\": \"Lantern migration review (PHILO-11-07 test)\"}, \"id\": \"record-source-fa123eeb2bbb4f9e9da8eb63b2e0726f\", \"record_id\": \"record-76e5a7d019b44a68a9105e3fe6e58029\", \"source_ref\": \"philo11-07-meeting\", \"source_type\": \"meeting\", \"title\": \"Lantern migration review (PHILO-11-07 test)\"}], \"successor_id\": null, \"supersession_reason\": null, \"updated_at\": \"2026-10-01T11:59:07.521522+00:00\", \"work\": []}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "started_at": "2026-10-01T11:59:27.041349+00:00",
+          "status": 200
+        },
+        "exchange_index": 12,
+        "kind": "tools/call",
+        "result_sha256": "f21626f234b67fd481f145533e218f7f9250ba952e7f890a1976504252659cf2",
+        "tool": "decision_record.get"
+      },
+      {
+        "arguments": {
+          "destination_id": "chd_889dffc12ae51316484cc9a6"
+        },
+        "exchange": {
+          "duration_ms": 1.046,
+          "finished_at": "2026-10-01T11:59:27.046307+00:00",
+          "method": "POST",
+          "path": "/api/mcp",
+          "request": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-51df2702-a17f-40e6-8760-fe0a19925fa0",
+                "itemId": "ctc_0880cb38960dba1b016abe4b1c049887d09593ba1f10b3d21f",
+                "progressToken": 5,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "destination_id": "chd_889dffc12ae51316484cc9a6"
+              },
+              "name": "channel.check_destination"
+            }
+          },
+          "request_body": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-51df2702-a17f-40e6-8760-fe0a19925fa0",
+                "itemId": "ctc_0880cb38960dba1b016abe4b1c049887d09593ba1f10b3d21f",
+                "progressToken": 5,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "destination_id": "chd_889dffc12ae51316484cc9a6"
+              },
+              "name": "channel.check_destination"
+            }
+          },
+          "response": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"check\": {\"resolved\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/outbox\", \"state\": \"ready\"}, \"destination\": {\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"connection\": null, \"created_at\": \"2026-10-01T11:59:09+00:00\", \"id\": \"chd_889dffc12ae51316484cc9a6\", \"name\": \"HoldSpeak folder\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/outbox\"}, \"target_digest\": \"56ce3f627e73ee125f647179b7e801c1051502d3a3d9af2e5f9576c9c4ce6311\"}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "response_body": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"check\": {\"resolved\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/outbox\", \"state\": \"ready\"}, \"destination\": {\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"connection\": null, \"created_at\": \"2026-10-01T11:59:09+00:00\", \"id\": \"chd_889dffc12ae51316484cc9a6\", \"name\": \"HoldSpeak folder\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/outbox\"}, \"target_digest\": \"56ce3f627e73ee125f647179b7e801c1051502d3a3d9af2e5f9576c9c4ce6311\"}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "started_at": "2026-10-01T11:59:27.045280+00:00",
+          "status": 200
+        },
+        "exchange_index": 13,
+        "kind": "tools/call",
+        "result_sha256": "95cda07b8d46c5c9a6fba25e0f1852bf5118f51996d2bbb701ba43cb45a60259",
+        "tool": "channel.check_destination"
+      },
+      {
+        "arguments": {
+          "destination_id": "chd_889dffc12ae51316484cc9a6",
+          "document_ref": "decision_record:record-76e5a7d019b44a68a9105e3fe6e58029"
+        },
+        "exchange": {
+          "duration_ms": 4.609,
+          "finished_at": "2026-10-01T11:59:32.173365+00:00",
+          "method": "POST",
+          "path": "/api/mcp",
+          "request": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-c21f27ae-793d-4cfb-baf5-9be18c3148c8",
+                "itemId": "ctc_0880cb38960dba1b016abe4b20ab1887d096955b8927245354",
+                "progressToken": 6,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "destination_id": "chd_889dffc12ae51316484cc9a6",
+                "document_ref": "decision_record:record-76e5a7d019b44a68a9105e3fe6e58029"
+              },
+              "name": "channel.preview"
+            }
+          },
+          "request_body": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-c21f27ae-793d-4cfb-baf5-9be18c3148c8",
+                "itemId": "ctc_0880cb38960dba1b016abe4b20ab1887d096955b8927245354",
+                "progressToken": 6,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "destination_id": "chd_889dffc12ae51316484cc9a6",
+                "document_ref": "decision_record:record-76e5a7d019b44a68a9105e3fe6e58029"
+              },
+              "name": "channel.preview"
+            }
+          },
+          "response": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"badge\": \"local\", \"channel\": \"file\", \"destination_id\": \"chd_889dffc12ae51316484cc9a6\", \"document_ref\": \"decision_record:record-76e5a7d019b44a68a9105e3fe6e58029\", \"payload_digest\": \"46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73\", \"preview\": {\"text\": \"# Move the queue in two steps (PHILO-11-07 test)\\nLifecycle: active\\n\\n## Rationale\\nOne step at a time keeps the rollback short.\\n\\n## Owner\\nAvery\\n\\n## Review date\\n2026-10-15\\n\\n## Sources\\n- Lantern migration review (PHILO-11-07 test), 1 Oct 2026\\n\"}, \"size\": 239, \"title\": \"Move the queue in two steps (PHILO-11-07 test)\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "response_body": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"badge\": \"local\", \"channel\": \"file\", \"destination_id\": \"chd_889dffc12ae51316484cc9a6\", \"document_ref\": \"decision_record:record-76e5a7d019b44a68a9105e3fe6e58029\", \"payload_digest\": \"46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73\", \"preview\": {\"text\": \"# Move the queue in two steps (PHILO-11-07 test)\\nLifecycle: active\\n\\n## Rationale\\nOne step at a time keeps the rollback short.\\n\\n## Owner\\nAvery\\n\\n## Review date\\n2026-10-15\\n\\n## Sources\\n- Lantern migration review (PHILO-11-07 test), 1 Oct 2026\\n\"}, \"size\": 239, \"title\": \"Move the queue in two steps (PHILO-11-07 test)\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "started_at": "2026-10-01T11:59:32.168840+00:00",
+          "status": 200
+        },
+        "exchange_index": 14,
+        "kind": "tools/call",
+        "result_sha256": "cfbd7a27a63af0cefd869785f709a2a9fd7b8cb921e7443540afb20a3896dcc3",
+        "tool": "channel.preview"
+      },
+      {
+        "arguments": {
+          "destination_id": "chd_889dffc12ae51316484cc9a6",
+          "document_ref": "monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6"
+        },
+        "exchange": {
+          "duration_ms": 6.241,
+          "finished_at": "2026-10-01T11:59:32.183399+00:00",
+          "method": "POST",
+          "path": "/api/mcp",
+          "request": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-e29a0c42-473c-47d6-8f23-73a4c6142222",
+                "itemId": "ctc_0880cb38960dba1b016abe4b20ab1887d096955b8927245354",
+                "progressToken": 7,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "destination_id": "chd_889dffc12ae51316484cc9a6",
+                "document_ref": "monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6"
+              },
+              "name": "channel.preview"
+            }
+          },
+          "request_body": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-e29a0c42-473c-47d6-8f23-73a4c6142222",
+                "itemId": "ctc_0880cb38960dba1b016abe4b20ab1887d096955b8927245354",
+                "progressToken": 7,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "destination_id": "chd_889dffc12ae51316484cc9a6",
+                "document_ref": "monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6"
+              },
+              "name": "channel.preview"
+            }
+          },
+          "response": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"badge\": \"local\", \"channel\": \"file\", \"destination_id\": \"chd_889dffc12ae51316484cc9a6\", \"document_ref\": \"monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6\", \"payload_digest\": \"119e6ca6c18fd2844a2d345b21dc7ccf97b3d9a5eadb96e77ee4bd9fd6190c06\", \"preview\": {\"text\": \"# Monday Brief\\nPeriod: 2026-09-30 \\u2013 2026-10-01\\nGenerated: 1 Oct 2026, 05:59\\n\\n1 new decision, 1 thing changed, 1 thing waiting, 2 decisions waiting.\\n\\n## This week\\n- 1 new decision from meetings\\n\\n## Changed\\n- Meeting recorded: Lantern migration review (PHILO-11-07 test)\\n  40 min \\u00b7 1 action item\\n\\n## Waiting\\n- Unassigned: Write the rollback checklist (PHILO-11-07 test)\\n  Needs an owner\\n\\n## Decisions\\n- Review decision: Move the queue in two steps (PHILO-11-07 test)\\n- Review decision: Move the scheduler after the queue (PHILO-11-07 test)\\n\\n## People\\n\\n### Avery\\n- You owe: 1\\n\"}, \"size\": 576, \"title\": \"Monday Brief \\u2014 2026-10-01\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "response_body": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"badge\": \"local\", \"channel\": \"file\", \"destination_id\": \"chd_889dffc12ae51316484cc9a6\", \"document_ref\": \"monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6\", \"payload_digest\": \"119e6ca6c18fd2844a2d345b21dc7ccf97b3d9a5eadb96e77ee4bd9fd6190c06\", \"preview\": {\"text\": \"# Monday Brief\\nPeriod: 2026-09-30 \\u2013 2026-10-01\\nGenerated: 1 Oct 2026, 05:59\\n\\n1 new decision, 1 thing changed, 1 thing waiting, 2 decisions waiting.\\n\\n## This week\\n- 1 new decision from meetings\\n\\n## Changed\\n- Meeting recorded: Lantern migration review (PHILO-11-07 test)\\n  40 min \\u00b7 1 action item\\n\\n## Waiting\\n- Unassigned: Write the rollback checklist (PHILO-11-07 test)\\n  Needs an owner\\n\\n## Decisions\\n- Review decision: Move the queue in two steps (PHILO-11-07 test)\\n- Review decision: Move the scheduler after the queue (PHILO-11-07 test)\\n\\n## People\\n\\n### Avery\\n- You owe: 1\\n\"}, \"size\": 576, \"title\": \"Monday Brief \\u2014 2026-10-01\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "started_at": "2026-10-01T11:59:32.177180+00:00",
+          "status": 200
+        },
+        "exchange_index": 15,
+        "kind": "tools/call",
+        "result_sha256": "b486d13ee9b4def23ef531852af661ea40a3e08f63a1ce130d9f0e24ff286373",
+        "tool": "channel.preview"
+      },
+      {
+        "arguments": {
+          "destination_id": "chd_889dffc12ae51316484cc9a6",
+          "document_ref": "monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6"
+        },
+        "exchange": {
+          "duration_ms": 17.176,
+          "finished_at": "2026-10-01T11:59:35.077846+00:00",
+          "method": "POST",
+          "path": "/api/mcp",
+          "request": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-10cbbc88-caab-44d4-a99e-b01d155bb1e8",
+                "itemId": "ctc_0880cb38960dba1b016abe4b259c2887d0b8ccda61ad790667",
+                "progressToken": 8,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "destination_id": "chd_889dffc12ae51316484cc9a6",
+                "document_ref": "monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6"
+              },
+              "name": "channel.prepare"
+            }
+          },
+          "request_body": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-10cbbc88-caab-44d4-a99e-b01d155bb1e8",
+                "itemId": "ctc_0880cb38960dba1b016abe4b259c2887d0b8ccda61ad790667",
+                "progressToken": 8,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "destination_id": "chd_889dffc12ae51316484cc9a6",
+                "document_ref": "monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6"
+              },
+              "name": "channel.prepare"
+            }
+          },
+          "response": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"operation_id\": \"op_d83518247198413abb81996f38c315c6\", \"outcome\": \"prepared\", \"receipt\": {\"actor_identity\": \"codex-send-agent\", \"actor_kind\": \"agent\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790855975.076938, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_d83518247198413abb81996f38c315c6\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_a043d083444b4ede9d2d81f854ccb294\", \"result_ref\": \"channel_send:chs_f2686bef5315954cd208b667\", \"state\": \"succeeded\", \"target_ref\": \"document:monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6\"}, \"send\": {\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"created_at\": \"2026-10-01T11:59:35+00:00\", \"destination_id\": \"chd_889dffc12ae51316484cc9a6\", \"destination_name\": \"HoldSpeak folder\", \"dispatch_seq\": null, \"dispatch_started_at\": null, \"document_json\": {\"label\": \"BRIEF 2026-10-01\", \"slug\": \"brief-2026-10-01\", \"title\": \"Monday Brief \\u2014 2026-10-01\"}, \"document_ref\": \"monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6\", \"file_path\": null, \"id\": \"chs_f2686bef5315954cd208b667\", \"payload_digest\": \"119e6ca6c18fd2844a2d345b21dc7ccf97b3d9a5eadb96e77ee4bd9fd6190c06\", \"prepare_operation_id\": \"op_d83518247198413abb81996f38c315c6\", \"prepared_by\": {\"identity\": \"codex-send-agent\", \"kind\": \"agent\"}, \"preview\": {\"text\": \"# Monday Brief\\nPeriod: 2026-09-30 \\u2013 2026-10-01\\nGenerated: 1 Oct 2026, 05:59\\n\\n1 new decision, 1 thing changed, 1 thing waiting, 2 decisions waiting.\\n\\n## This week\\n- 1 new decision from meetings\\n\\n## Changed\\n- Meeting recorded: Lantern migration review (PHILO-11-07 test)\\n  40 min \\u00b7 1 action item\\n\\n## Waiting\\n- Unassigned: Write the rollback checklist (PHILO-11-07 test)\\n  Needs an owner\\n\\n## Decisions\\n- Review decision: Move the queue in two steps (PHILO-11-07 test)\\n- Review decision: Move the scheduler after the queue (PHILO-11-07 test)\\n\\n## People\\n\\n### Avery\\n- You owe: 1\\n\"}, \"proof\": null, \"reason\": null, \"send_operation_id\": null, \"settled_at\": null, \"size\": 576, \"state\": \"prepared\", \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/outbox\"}, \"target_digest\": \"56ce3f627e73ee125f647179b7e801c1051502d3a3d9af2e5f9576c9c4ce6311\"}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "response_body": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"operation_id\": \"op_d83518247198413abb81996f38c315c6\", \"outcome\": \"prepared\", \"receipt\": {\"actor_identity\": \"codex-send-agent\", \"actor_kind\": \"agent\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790855975.076938, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_d83518247198413abb81996f38c315c6\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_a043d083444b4ede9d2d81f854ccb294\", \"result_ref\": \"channel_send:chs_f2686bef5315954cd208b667\", \"state\": \"succeeded\", \"target_ref\": \"document:monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6\"}, \"send\": {\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"created_at\": \"2026-10-01T11:59:35+00:00\", \"destination_id\": \"chd_889dffc12ae51316484cc9a6\", \"destination_name\": \"HoldSpeak folder\", \"dispatch_seq\": null, \"dispatch_started_at\": null, \"document_json\": {\"label\": \"BRIEF 2026-10-01\", \"slug\": \"brief-2026-10-01\", \"title\": \"Monday Brief \\u2014 2026-10-01\"}, \"document_ref\": \"monday_brief:brief-90ba3df8117d487181a79a6c4684d2e6\", \"file_path\": null, \"id\": \"chs_f2686bef5315954cd208b667\", \"payload_digest\": \"119e6ca6c18fd2844a2d345b21dc7ccf97b3d9a5eadb96e77ee4bd9fd6190c06\", \"prepare_operation_id\": \"op_d83518247198413abb81996f38c315c6\", \"prepared_by\": {\"identity\": \"codex-send-agent\", \"kind\": \"agent\"}, \"preview\": {\"text\": \"# Monday Brief\\nPeriod: 2026-09-30 \\u2013 2026-10-01\\nGenerated: 1 Oct 2026, 05:59\\n\\n1 new decision, 1 thing changed, 1 thing waiting, 2 decisions waiting.\\n\\n## This week\\n- 1 new decision from meetings\\n\\n## Changed\\n- Meeting recorded: Lantern migration review (PHILO-11-07 test)\\n  40 min \\u00b7 1 action item\\n\\n## Waiting\\n- Unassigned: Write the rollback checklist (PHILO-11-07 test)\\n  Needs an owner\\n\\n## Decisions\\n- Review decision: Move the queue in two steps (PHILO-11-07 test)\\n- Review decision: Move the scheduler after the queue (PHILO-11-07 test)\\n\\n## People\\n\\n### Avery\\n- You owe: 1\\n\"}, \"proof\": null, \"reason\": null, \"send_operation_id\": null, \"settled_at\": null, \"size\": 576, \"state\": \"prepared\", \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/outbox\"}, \"target_digest\": \"56ce3f627e73ee125f647179b7e801c1051502d3a3d9af2e5f9576c9c4ce6311\"}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "started_at": "2026-10-01T11:59:35.060688+00:00",
+          "status": 200
+        },
+        "exchange_index": 16,
+        "kind": "tools/call",
+        "result_sha256": "e00337d52425a0c51f925d8f3e118ba07824a0aff681d8650b4bf7196cbbffe7",
+        "tool": "channel.prepare"
+      },
+      {
+        "arguments": {
+          "destination_id": "chd_889dffc12ae51316484cc9a6",
+          "document_ref": "decision_record:record-76e5a7d019b44a68a9105e3fe6e58029"
+        },
+        "exchange": {
+          "duration_ms": 3.005,
+          "finished_at": "2026-10-01T11:59:35.083596+00:00",
+          "method": "POST",
+          "path": "/api/mcp",
+          "request": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-e2af5f3f-1061-4bec-8afd-aed193c463ff",
+                "itemId": "ctc_0880cb38960dba1b016abe4b259c2887d0b8ccda61ad790667",
+                "progressToken": 9,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "destination_id": "chd_889dffc12ae51316484cc9a6",
+                "document_ref": "decision_record:record-76e5a7d019b44a68a9105e3fe6e58029"
+              },
+              "name": "channel.prepare"
+            }
+          },
+          "request_body": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-e2af5f3f-1061-4bec-8afd-aed193c463ff",
+                "itemId": "ctc_0880cb38960dba1b016abe4b259c2887d0b8ccda61ad790667",
+                "progressToken": 9,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "destination_id": "chd_889dffc12ae51316484cc9a6",
+                "document_ref": "decision_record:record-76e5a7d019b44a68a9105e3fe6e58029"
+              },
+              "name": "channel.prepare"
+            }
+          },
+          "response": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"operation_id\": \"op_6e7588cac56040edbcb5c424c69a7bbd\", \"outcome\": \"prepared\", \"receipt\": {\"actor_identity\": \"codex-send-agent\", \"actor_kind\": \"agent\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790855975.083102, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_6e7588cac56040edbcb5c424c69a7bbd\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_ab8e73a24ea64cf0943cc221bf064efc\", \"result_ref\": \"channel_send:chs_045d562db358980853b97e38\", \"state\": \"succeeded\", \"target_ref\": \"document:decision_record:record-76e5a7d019b44a68a9105e3fe6e58029\"}, \"send\": {\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"created_at\": \"2026-10-01T11:59:35+00:00\", \"destination_id\": \"chd_889dffc12ae51316484cc9a6\", \"destination_name\": \"HoldSpeak folder\", \"dispatch_seq\": null, \"dispatch_started_at\": null, \"document_json\": {\"label\": \"DECISION\", \"slug\": \"move-the-queue-in-two-steps-philo-11-07-test\", \"title\": \"Move the queue in two steps (PHILO-11-07 test)\"}, \"document_ref\": \"decision_record:record-76e5a7d019b44a68a9105e3fe6e58029\", \"file_path\": null, \"id\": \"chs_045d562db358980853b97e38\", \"payload_digest\": \"46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73\", \"prepare_operation_id\": \"op_6e7588cac56040edbcb5c424c69a7bbd\", \"prepared_by\": {\"identity\": \"codex-send-agent\", \"kind\": \"agent\"}, \"preview\": {\"text\": \"# Move the queue in two steps (PHILO-11-07 test)\\nLifecycle: active\\n\\n## Rationale\\nOne step at a time keeps the rollback short.\\n\\n## Owner\\nAvery\\n\\n## Review date\\n2026-10-15\\n\\n## Sources\\n- Lantern migration review (PHILO-11-07 test), 1 Oct 2026\\n\"}, \"proof\": null, \"reason\": null, \"send_operation_id\": null, \"settled_at\": null, \"size\": 239, \"state\": \"prepared\", \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/outbox\"}, \"target_digest\": \"56ce3f627e73ee125f647179b7e801c1051502d3a3d9af2e5f9576c9c4ce6311\"}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "response_body": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"operation_id\": \"op_6e7588cac56040edbcb5c424c69a7bbd\", \"outcome\": \"prepared\", \"receipt\": {\"actor_identity\": \"codex-send-agent\", \"actor_kind\": \"agent\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790855975.083102, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_6e7588cac56040edbcb5c424c69a7bbd\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_ab8e73a24ea64cf0943cc221bf064efc\", \"result_ref\": \"channel_send:chs_045d562db358980853b97e38\", \"state\": \"succeeded\", \"target_ref\": \"document:decision_record:record-76e5a7d019b44a68a9105e3fe6e58029\"}, \"send\": {\"account\": {}, \"badge\": \"local\", \"channel\": \"file\", \"created_at\": \"2026-10-01T11:59:35+00:00\", \"destination_id\": \"chd_889dffc12ae51316484cc9a6\", \"destination_name\": \"HoldSpeak folder\", \"dispatch_seq\": null, \"dispatch_started_at\": null, \"document_json\": {\"label\": \"DECISION\", \"slug\": \"move-the-queue-in-two-steps-philo-11-07-test\", \"title\": \"Move the queue in two steps (PHILO-11-07 test)\"}, \"document_ref\": \"decision_record:record-76e5a7d019b44a68a9105e3fe6e58029\", \"file_path\": null, \"id\": \"chs_045d562db358980853b97e38\", \"payload_digest\": \"46b46fe148a2febb86cc5e0587e80951b3bcae53848813256bdd258f25ed4b73\", \"prepare_operation_id\": \"op_6e7588cac56040edbcb5c424c69a7bbd\", \"prepared_by\": {\"identity\": \"codex-send-agent\", \"kind\": \"agent\"}, \"preview\": {\"text\": \"# Move the queue in two steps (PHILO-11-07 test)\\nLifecycle: active\\n\\n## Rationale\\nOne step at a time keeps the rollback short.\\n\\n## Owner\\nAvery\\n\\n## Review date\\n2026-10-15\\n\\n## Sources\\n- Lantern migration review (PHILO-11-07 test), 1 Oct 2026\\n\"}, \"proof\": null, \"reason\": null, \"send_operation_id\": null, \"settled_at\": null, \"size\": 239, \"state\": \"prepared\", \"target\": {\"folder\": \"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/outbox\"}, \"target_digest\": \"56ce3f627e73ee125f647179b7e801c1051502d3a3d9af2e5f9576c9c4ce6311\"}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "started_at": "2026-10-01T11:59:35.080615+00:00",
+          "status": 200
+        },
+        "exchange_index": 17,
+        "kind": "tools/call",
+        "result_sha256": "1aa577a9c1a9b6895147e4f5a6bfaa082c046fdd48a837786700a82cc88be3d9",
+        "tool": "channel.prepare"
+      },
+      {
+        "arguments": {
+          "send_id": "chs_f2686bef5315954cd208b667"
+        },
+        "exchange": {
+          "duration_ms": 4.845,
+          "finished_at": "2026-10-01T11:59:39.227825+00:00",
+          "method": "POST",
+          "path": "/api/mcp",
+          "request": {
+            "id": 11,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-13e03d32-c198-41fe-b2f6-573943455740",
+                "itemId": "ctc_0880cb38960dba1b016abe4b2a3fec87d0a2aa7153eeac07da",
+                "progressToken": 10,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "send_id": "chs_f2686bef5315954cd208b667"
+              },
+              "name": "channel.send"
+            }
+          },
+          "request_body": {
+            "id": 11,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "_meta": {
+                "callId": "exec-13e03d32-c198-41fe-b2f6-573943455740",
+                "itemId": "ctc_0880cb38960dba1b016abe4b2a3fec87d0a2aa7153eeac07da",
+                "progressToken": 10,
+                "sessionId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "threadId": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                "windowId": "01a0f755-2cea-76c0-b124-2ffe209f1d89:0",
+                "x-codex-turn-metadata": {
+                  "auto_review_enabled": false,
+                  "codex_version": "0.159.0",
+                  "model": "gpt-6-astra",
+                  "node_repl_auto_review_required": true,
+                  "node_repl_disabled": false,
+                  "reasoning_effort": "medium",
+                  "sandbox": "none",
+                  "sandbox_mode": "danger-full-access",
+                  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+                  "thread_source": "user",
+                  "turn_id": "01a0f755-2f8b-7263-8bec-c7fa7ab116a3",
+                  "turn_started_at_unix_ms": 1790855950220,
+                  "turn_trigger": "exec"
+                }
+              },
+              "arguments": {
+                "send_id": "chs_f2686bef5315954cd208b667"
+              },
+              "name": "channel.send"
+            }
+          },
+          "response": {
+            "id": 11,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"code\": \"owner_principal_required\", \"error\": \"The kernel refused channel.send: owner_principal_required\", \"operation_id\": \"op_5f3add4678134ced82d8747950dd95bc\", \"receipt\": {\"actor_identity\": \"codex-send-agent\", \"actor_kind\": \"agent\", \"authority_basis\": \"refused_at_admission\", \"created_at\": 1790855979.22617, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_5f3add4678134ced82d8747950dd95bc\", \"outcome\": \"owner_principal_required\", \"receipt_id\": \"rcpt_5d1a07362b26434bb580d16582270e64\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"channel_send:chs_f2686bef5315954cd208b667\"}, \"status\": 403}",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          },
+          "response_body": {
+            "id": 11,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"code\": \"owner_principal_required\", \"error\": \"The kernel refused channel.send: owner_principal_required\", \"operation_id\": \"op_5f3add4678134ced82d8747950dd95bc\", \"receipt\": {\"actor_identity\": \"codex-send-agent\", \"actor_kind\": \"agent\", \"authority_basis\": \"refused_at_admission\", \"created_at\": 1790855979.22617, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_5f3add4678134ced82d8747950dd95bc\", \"outcome\": \"owner_principal_required\", \"receipt_id\": \"rcpt_5d1a07362b26434bb580d16582270e64\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"channel_send:chs_f2686bef5315954cd208b667\"}, \"status\": 403}",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          },
+          "started_at": "2026-10-01T11:59:39.223006+00:00",
+          "status": 200
+        },
+        "exchange_index": 18,
+        "kind": "tools/call",
+        "result_sha256": "28f0fd255f4cc40efe39bf0d49ff743cbeb4afa61316ff980fb5ad2b496b0c98",
+        "tool": "channel.send"
+      }
+    ],
+    "turn_exchange_start": 6,
+    "turn_exchanges": 13,
+    "unmatched_turn_exchanges": [
+      {
+        "method": "POST",
+        "path": "/api/mcp",
+        "rpc_method": "initialize",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/mcp",
+        "rpc_method": "notifications/initialized",
+        "status": 204
+      },
+      {
+        "method": "POST",
+        "path": "/api/mcp",
+        "rpc_method": "tools/list",
+        "status": 200
+      }
+    ]
+  },
+  "reconciliation_error": null,
+  "resumed": false,
+  "rollout": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo11-07-rh-r0tvc2sd/cold-agent_prepare/home/.codex/sessions/2026/10/01/rollout-2026-10-01T05-59-10-01a0f755-2cea-76c0-b124-2ffe209f1d89.jsonl",
+  "session_id": "01a0f755-2cea-76c0-b124-2ffe209f1d89",
+  "stage": "agent_prepare",
+  "timing": {
+    "elapsed_s": 35.563,
+    "exit_code": 0,
+    "finished_at": "2026-10-01T11:59:45.047854+00:00",
+    "outcome": "process_completed",
+    "started_at": "2026-10-01T11:59:09.484617+00:00"
+  },
+  "tools_listed": 246,
+  "unlisted_tools": [],
+  "usage_limit": null,
+  "zero_read_findings": []
+}
