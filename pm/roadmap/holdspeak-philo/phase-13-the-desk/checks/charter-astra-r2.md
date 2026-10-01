@@ -1,0 +1,27 @@
+# Check — Astra (Codex `gpt-6-astra`, xhigh), 2026-10-01: the charter r2
+
+**Session:** `01a0f928-dd63-7192-ac64-58ba872e33ae` (resumed). **Verdict:** DO-NOT-RATIFY (three conditions). Paid in r3 by Muad'Dib (`current-phase-status.md` §"Round three"). No dissent.
+
+## The report, verbatim
+
+VERDICT: DO-NOT-RATIFY
+
+FINDINGS:
+
+1. The five r1 fixes are substantially present: the path map assigns owners and names handoffs; B2 lists window families and draft fields; A2 defines R1–R3 with expected refs and count 6; the Parked artboard and merge-record gates are named; C4 now describes the `People` query accurately. [status:65](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/current-phase-status.md:65>), [status:208](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/current-phase-status.md:208>), [A2:61](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/story-03-a2-one-meaning-of-needs-you.md:61>), [C1:50](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/story-11-c1-the-workbench-look.md:50>), [C4:30](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/story-14-c4-a-palette-that-knows-his-week.md:30>).
+
+2. B2 still promises place retention after close without an acceptance or atlas path that tests close → reopen → same object and place. Its atlas plan says open → reload; the close criterion only checks that closing one window closes only that one. [B2:31](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/story-07-b2-the-desk-remembers.md:31>), [B2:79](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/story-07-b2-the-desk-remembers.md:79>), [B2:83](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/story-07-b2-the-desk-remembers.md:83>), [B2:90](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/story-07-b2-the-desk-remembers.md:90>).
+
+3. The chooser, picker, shade and overlays have clear transient reasons for exemption. Trust is a real `DeskWindowFrame` with an `open` state, though: exempting it conflicts with “every open window” and the owner’s “Everything” ruling. Include its open state or get a ruling that narrows that promise. [B2:57](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/story-07-b2-the-desk-remembers.md:57>), [TrustWindow.tsx:75](</Users/karol/dev/tools/wt-philo-13-charter/web/src/desk/components/TrustWindow.tsx:75>), [TrustWindow.tsx:81](</Users/karol/dev/tools/wt-philo-13-charter/web/src/desk/components/TrustWindow.tsx:81>).
+
+4. H-B0b’s split can work, but its reference is off by one: the count assertion is line 492; line 493 builds `sibling_ids`. The shared atlas test also checks durable reads, predicates, triggers and captured read arguments, while the new lane tests are described as count fences. State that H-B0b filters only the count and that the shared semantic checks still cover both new atlas files. [status:209](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/current-phase-status.md:209>), [test_philo_graph_atlas.py:27](</Users/karol/dev/tools/wt-philo-13-charter/tests/unit/test_philo_graph_atlas.py:27>), [test_philo_graph_atlas.py:492](</Users/karol/dev/tools/wt-philo-13-charter/tests/unit/test_philo_graph_atlas.py:492>), [test_philo_graph_atlas.py:469](</Users/karol/dev/tools/wt-philo-13-charter/tests/unit/test_philo_graph_atlas.py:469>), [test_philo_graph_atlas.py:551](</Users/karol/dev/tools/HoldSpeak/tests/unit/test_philo_graph_atlas.py:551>).
+
+5. The Phase 12 fold remains honest: 01 is done, 02–06 stay blocked and parked, and the Floor work stays parked. C5 also explicitly requires real producers, receipts across rendered transition branches, and far-side readback. [status:104](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/current-phase-status.md:104>), [status:111](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/current-phase-status.md:111>), [C5:45](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/story-15-c5-send-to-from-any-document-window.md:45>), [C5:46](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/story-15-c5-send-to-from-any-document-window.md:46>).
+
+CONDITIONS: Add a real close→reopen place test to B2 at both widths, and resolve the Trust-window exception against “Everything.” Correct H-B0b’s line reference and specify that its count split preserves the shared semantic checks across both atlas files.
+
+MISSED: 1. B2’s close/reopen place promise is not tested. 2. Trust’s open state is carved out despite the “Everything” ruling. 3. The `.op` handoff names a count but not the full shared contract it must preserve.
+
+TUESDAY: Not yet; closing and reopening a moved window can still lose its place, and the open Trust view can disappear after reload.
+
+UNKNOWN: No atlas cases or DB rows were run for this charter check. The A2 expected refs and count are specified, but the Door classes are not yet observed; the story correctly says to record the real class while keeping membership fixed by ref ([A2:62](</Users/karol/dev/tools/wt-philo-13-charter/pm/roadmap/holdspeak-philo/phase-13-the-desk/story-03-a2-one-meaning-of-needs-you.md:62>)).

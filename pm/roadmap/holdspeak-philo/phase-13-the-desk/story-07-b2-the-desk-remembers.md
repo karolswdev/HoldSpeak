@@ -54,7 +54,7 @@ From the Desk's mounts (`web/src/desk/DeskApp.tsx:249-305`; `web/src/desk/gl/Wor
 | Ask panel | `DeskApp.tsx:249` | `askOpen`, `types.ts:188` | **returns**, with its prompt draft |
 | Inline editor | `DeskApp.tsx:250-257` | `editingId`, `types.ts:150` | **returns**, with its unsaved text |
 | New Workbench chooser | `DeskApp.tsx:290` | `newWorkbenchChooser`, `types.ts:176` | **exempt**: it holds no typed text and no record; it exists only before a record does, and one pick makes the record (`NewWorkbenchChooser.tsx:1-8`). Reopening is the same one gesture. |
-| Trust window | `DeskApp.tsx:301` | `useTrustWindow.open`, `TrustWindow.tsx:47-52` | **exempt**: a read-only boundary read-out with no input and no place (`TrustWindow.tsx:4`, `:60`), opened from the egress chip in one press |
+| Trust window | `DeskApp.tsx:301` | `useTrustWindow.open`, `TrustWindow.tsx:47-52` | **returns** (Astra charter r2 F3, the owner's "Everything"): its open state and rect return on reload; it holds no draft |
 | Pane picker | `DeskApp.tsx:292` (a popover, defined in `SessionPullout.tsx`) | local | **exempt**: a popover, not a window (`grounding/faces-surfaces.md:145`) |
 | Attention drawer / shade (the bell) | `DeskApp.tsx:294` | `AttentionDrawer.tsx:37`, `:68` | **exempt**: a transient shade over the Desk, closed by Escape; not a window |
 | Exposé, Switcher, SnapGhost, the palette | `DeskApp.tsx:303-305`; `chromeState.ts:13` | transient | **exempt**: transient overlays (`grounding/structure.md:137`) |
@@ -81,6 +81,7 @@ From the Desk's mounts (`web/src/desk/DeskApp.tsx:249-305`; `web/src/desk/gl/Wor
 - [ ] 0 lost drafts: **each** named draft field above, typed and not saved, survives a reload and a close; each clears after its save; none is saved or sent by restore. Red on main for the People note, the Room draft, the Thought body and the meeting form and pick.
 - [ ] A minimized window comes back minimized; a moved window comes back where it was. Red on main (`grounding/faces-surfaces.md:81`).
 - [ ] Closing one window closes only that one (`grounding/structure.md:300`).
+- [ ] **Close → reopen keeps the place** (Astra charter r2 F2): for each returning family with a place (meeting pullout's selected form and pick, People's person + tab, the Room's project + update, Workbench, Repo, Roadmap, Delivery dossier/terminal, Trust's rect): move and resize it, set its place, close it, reopen the **same object** by its normal opener → the same rect and the same place. An actual atlas case per family in `atlas-phase13-muaddib.json` (open → move → set place → close → reopen → assert), at 1440 and with touch at 393; red on main where main loses it.
 
 ## Test plan
 

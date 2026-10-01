@@ -62,7 +62,7 @@ Astra's check r1 of this charter (Codex `gpt-6-astra`; run `.tmp/two-brains/2026
 
 | Astra r1 | Paid by |
 |---|---|
-| 1 the lane map shares `atlas.json`, the Room headline and `PeopleCore.tsx`; serial merges do not make files disjoint | "File ownership": one owner per path. Two atlas files, `atlas-phase13-astra.json` and `atlas-phase13-muaddib.json` (`scripts/graph_walk.py:6507` takes `--atlas` per run; `run_case(atlas_path, …)` `:6314`; `tests/unit/test_philo_graph_atlas.py:27` globs `atlas*.json`). The Room and `PeopleCore.tsx` are Muad'Dib's; A2 and B4 deliver pure modules (`needsYou.ts`, `people/prepData.ts`) and the faces lane wires them. "Merged serially" is removed; every crossing is a named handoff ("Named handoffs"). The shared `.op` count at `test_philo_graph_atlas.py:493` has one owner (H-B0b). |
+| 1 the lane map shares `atlas.json`, the Room headline and `PeopleCore.tsx`; serial merges do not make files disjoint | "File ownership": one owner per path. Two atlas files, `atlas-phase13-astra.json` and `atlas-phase13-muaddib.json` (`scripts/graph_walk.py:6507` takes `--atlas` per run; `run_case(atlas_path, …)` `:6314`; `tests/unit/test_philo_graph_atlas.py:27` globs `atlas*.json`). The Room and `PeopleCore.tsx` are Muad'Dib's; A2 and B4 deliver pure modules (`needsYou.ts`, `people/prepData.ts`) and the faces lane wires them. "Merged serially" is removed; every crossing is a named handoff ("Named handoffs"). The shared `.op` count at `test_philo_graph_atlas.py:492` has one owner (H-B0b). |
 | 2 B2's "Everything" leaves out Delivery Dossier and Terminal and the meeting form draft | story 07: every mounted window family listed with its disposition (returns, or exempt with a reason from the source), Dossier (`web/src/desk/DeskApp.tsx:267`; `web/src/desk/deliveryDossier.ts:182`) and Terminal (`DeskApp.tsx:268`; `web/src/desk/deliveryTerminal.ts:221`) return; every named draft field listed in the acceptance, the meeting SEND well's form and pick included. |
 | 3 A2 has no membership rule or expected result | story 03: "needs you" = the Chair's existing membership (`web/src/desk/chair/ChairHome.tsx:795-812`, `:825-840`) stated as a rule; a real-producer week with expected row ids and count, one mutation with its expected change; a wrong projection fails. |
 | 4 the gates are reviewer holds; A1's Parked face has no canvas | "The gates": each gate is a line the merge record must cite (B0's commit and evidence path for B2; the owner's ratification path + quote for every C face, B1, B3 and A1-F). A1's Parked and Restore face is a named artboard in C1's canvas set (story 11); A1's backend may merge first. |
@@ -206,7 +206,7 @@ PROPOSAL §4's map, made disjoint by Astra's check r1 and Muad'Dib's rulings (r2
 | ID | Delivered by (owner, story) | What | Consumed by |
 |---|---|---|---|
 | H-B0a | Astra, B0 (01) | `atlas-phase13-astra.json` created (valid against `atlas.schema.json`); the faces lane creates its own `atlas-phase13-muaddib.json` with its first case; `test_philo_graph_atlas.py:27` globs `atlas*.json`, so neither needs registering | every Astra story's atlas cases |
-| H-B0b | Astra, B0 (01) | `tests/unit/test_philo_graph_atlas.py:493` counts `.op` siblings outside the `atlas-phase13-*` files only; each lane's own test file asserts its own count | every story that adds an `.op` sibling |
+| H-B0b | Astra, B0 (01) | `tests/unit/test_philo_graph_atlas.py:492` counts `.op` siblings outside the `atlas-phase13-*` files only; each lane's own test file asserts its own count; **the shared semantic checks (`:469`, `:551`, via the `:27` glob) still cover both Phase 13 files** | every story that adds an `.op` sibling |
 | H-A1 | Astra, A1 (02) | park, Parked read and restore routes + the `web/src/desk/api.ts` client functions | A1-F |
 | A1-F | Muad'Dib, a named wiring step in A1's acceptance, on `feat/philo-13-muaddib` | the Parked filter, Restore and the `PARKED` receipt on Meetings (`HistoryCore.tsx`) and the Workbench window (`WorkbenchWindow.tsx`), built to the C1 artboard "Parked and Restore" | A1's done call |
 | H-A2 | Astra, A2 (03) | `web/src/desk/needsYou.ts`: the membership rule as a pure function + one hook; the Dock badge reads it | A2-W, C3 |
@@ -281,3 +281,13 @@ None.
 - The look itself (material, gadget art, the screen title bar, the Chair as windows): the C1 canvas, ratified by the owner.
 - The B1, B3, C5 and C7 faces: their canvases, ratified by the owner.
 - Each consolidation move: the story whose face receives it, after B0 walks the path.
+
+## Round three — Astra check r2 (DO-NOT-RATIFY) paid
+
+Astra r2 (`checks/charter-astra-r2.md`): r1's five fixes present; three conditions left, all paid by Muad'Dib directly.
+
+| Astra r2 | Paid |
+|---|---|
+| F2 close → reopen place untested | story 07: a close → reopen acceptance per returning family, actual atlas cases at 1440 and touch at 393 |
+| F3 Trust exempt against "Everything" | story 07: Trust **returns** (open state + rect) |
+| F4 H-B0b line ref and the shared contract | `:492` (the count); H-B0b filters the count only; the shared semantic checks cover both Phase 13 atlas files, shown red on a broken case (story 01) |
