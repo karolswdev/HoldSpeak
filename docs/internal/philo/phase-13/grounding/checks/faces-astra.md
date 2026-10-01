@@ -1,0 +1,31 @@
+# Check — Astra (Codex `gpt-6-astra`, xhigh), 2026-10-01: the faces half (PR #723)
+
+**Session:** `01a0f928-dd63-7192-ac64-58ba872e33ae` (resumed; run dir `.tmp/two-brains/20261001-152753-check-p13-ground-faces/`). **Verdict:** RATIFY-WITH-CONDITIONS. Muad'Dib's response: all five conditions accepted and paid in `faces.md` §"Astra check r1"; no dissent.
+
+## The report, verbatim
+
+VERDICT: RATIFY-WITH-CONDITIONS
+
+FINDINGS:
+
+1. **The closed-window finding and its cause are well supported.** After Close, the probe records opacity `0`, `pointer-events: auto`, and a hit test returning `pullout:desk`; the 393 shot shows Retry blocked. The code stores the qualified ID in `web/src/desk/store/compositorSlice.ts:147`, passes bare `o.id` to close in `web/src/desk/components/Pullout.tsx:68`, and removes by exact equality in `web/src/desk/store/compositorSlice.ts:189`. The cause is a strong source-backed explanation, though it still needs a regression fence. Tenet 3. `docs/internal/philo/phase-13/grounding/probes/faces-jobs-ghost-393.out.txt:3` · `docs/internal/philo/phase-13/grounding/shots/jobs/J1-10-retry-swallowed-393.png`
+
+2. **The recording failure is confirmed end to end.** The probe records `POST /api/meeting/start` → 501 while the face shows `is-recording` and a timer. The route returns 501 for this refusal (`holdspeak/web/routes/meetings/live.py:100`); the client awaits the response and marks recording without checking its status (`web/src/desk/store/recordingSlice.ts:54`). Tenet 3; Article VI. `docs/internal/philo/phase-13/grounding/probes/faces-jobs-record-start.out.txt:9` · `docs/internal/philo/phase-13/grounding/shots/jobs/J2-01-start-refused-1440.png`
+
+3. **The “five different numbers” claim overstates what the evidence proves.** The Chair shows `8 need you` beside `NEEDS YOU 5 OF 7` in one shot; the Meetings and Trust shots are from separate captures. The code also counts different things: Chair combines ranked action rows and blockers (`web/src/desk/chair/ChairHome.tsx:800`, `web/src/desk/chair/ChairHome.tsx:839`); Meetings says “Nothing needs you” unless a meeting needs a summary or has failed (`web/src/pages/cores/history/helpers.ts:218`). That broad wording is confusing, but these are not proven to be five readings of one simultaneous total. Tenets 3/4. `docs/internal/philo/phase-13/grounding/shots/surfaces/01-chair-pop-1440.png` · `docs/internal/philo/phase-13/grounding/shots/surfaces/13-meetings-pop-1440.png`
+
+4. **The Trust “None” item is not established as a contradiction.** The seeded destination is a FILE folder inside the isolated HOME (`docs/internal/philo/phase-13/grounding/probes/faces-surfaces-seed_api.py.txt:21`). The Trust inventory counts configured external destinations; setup status describes the count as external destinations (`holdspeak/setup_status.py:208`). “None” can therefore be correct for this local destination. Do not retain it as a defect without evidence of an enabled external destination.
+
+5. **The unwalked surfaces leave specific job paths unverified.** Calendar Snapshot is an import step for J1/J3; Roadmap, Repo, Dossier and Terminal are contextual J4 work. The structure census identifies those roles, but no face walk verifies them (`docs/internal/philo/phase-13/grounding/structure.md:74`, `docs/internal/philo/phase-13/grounding/structure.md:257`, from #722). W1’s `serve` observations are direct Playwright evidence, not `graph_walk.py run` observations (`docs/internal/philo/phase-13/grounding/faces-surfaces.md:15`). W2 did run real atlas cases, but they cover arrival/brief, thought open and a blocked recording case—not the cross-window failures W2 says appear in the jobs (`docs/internal/philo/phase-13/grounding/faces-jobs.md:36`). Tenets 2/3.
+
+6. **The ambition moves pass the four-part test, with one scope conflict to resolve.** Each move names a job, observable outcome, smallest change and cost (`docs/internal/philo/phase-13/grounding/faces-jobs.md:152`). They use existing Workbench ideas and keep saved screens optional, which leans into Tenet 6 without requiring a new framework. Several align with structure moves: remembering windows, contextual opens, live Dock state and in-window Send. But the palette move proposes “Send `<front document>` to Team folder” while Phase 12 left palette Send parked (`docs/internal/philo/phase-13/grounding/structure.md:214`). Tenet 1 does not override Article V: make clear the palette opens a preview and the owner presses Send.
+
+7. **I agree about the sampled Chair’s look.** The 1440 shot is a broad list and chip surface on a black field, with a thin menu bar and Dock; it reads more like a web dashboard than an object-centered Workbench. The 393 shot reinforces that impression: the capture controls float over content, with chrome taking substantial space. This supports a Tenet 6 design opportunity, not a measured verdict on every Desk surface. `docs/internal/philo/phase-13/grounding/shots/surfaces/01-chair-pop-1440.png` · `docs/internal/philo/phase-13/grounding/shots/surfaces/01-chair-pop-393.png`
+
+CONDITIONS: Correct or qualify the two overbroad contradiction claims; keep the acknowledged Calendar and J4 paths out of observed-based merge/park decisions until checked; label W1’s `serve` results as direct observations and reserve atlas claims for actual runs; merge duplicate ambition moves across halves; state that palette selection only opens a preview and leaves Send to the owner.
+
+MISSED: Ranked by owner cost: (1) the 501 false-recording state undermines trust in a consequential job; (2) J4’s repo/delivery path and J1/J3’s calendar import remain unseen; (3) the Trust example uses a local FILE target and does not prove an external-egress contradiction.
+
+TUESDAY: No—the observed J3 walk takes 37 gestures, 9 typed inputs and a reload, and the note is lost and retyped; J1 recovery can also be swallowed by the closed window (`docs/internal/philo/phase-13/grounding/faces-jobs.md:23`, `docs/internal/philo/phase-13/grounding/faces-jobs.md:51`).
+
+UNKNOWN: No owner-device walk or physical phone was available; engine-on behavior is out of scope for these observations. I left the tree unchanged, as instructed; this check is not recorded beside the artifacts.
