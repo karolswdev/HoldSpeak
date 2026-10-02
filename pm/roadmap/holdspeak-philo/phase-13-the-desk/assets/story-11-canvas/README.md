@@ -1,6 +1,6 @@
 # PHILO-13-11 (C1) canvas: the Workbench look
 
-**Status: DRAFT, round 3e (Astra canvas r4: a valid sticky mutant, and every mutant measured against the broad and the narrowed fence; harness only, the boards unchanged), for Astra's re-check and the owner's ratification** (UX-CANON §A.2: the canvas before the build). Round three pays Astra's check r1 DO-NOT-RATIFY on `1467d9173` (`/Users/karol/dev/tools/HoldSpeak/.tmp/two-brains/20261001-203130-check-p13-canvas-r1/last.md`) with Muad'Dib's rulings R1–R8. Nothing here is built in product code. Every change lives under `harness/`. The review page is `index.html` in this folder: every board at 1440 × 900 (left) and 393 × 852 (right). The settled design for the build is `../../design/workbench-look.md`.
+**Status:** RATIFIED by the owner 2026-10-02 ("Ratify, build it"; Steel; Park one press; Capture as a window) — see `../../story-11-c1-the-workbench-look.md` §RATIFIED. Story 11 stays in-progress until the frame and the Chair are built to these boards.
 
 Sources: the story (`../../story-11-c1-the-workbench-look.md`), the charter (`../../current-phase-status.md`, fork 1 "All the way"), the grounding (`docs/internal/philo/phase-13/grounding/faces-jobs.md` §3; before-shots `grounding/shots/surfaces/01-chair-pop-1440.png`, `01-chair-pop-393.png`, `64-room-pop-1440.png`), A1 (`../../story-02-a1-park-never-delete.md`), A2 (`../../story-03-a2-one-meaning-of-needs-you.md`), C3 (`../../story-13-c3-a-live-dock.md`), C7 (`../../story-17-c7-the-phone-desk.md`), `docs/internal/UX-CANON.md`.
 
