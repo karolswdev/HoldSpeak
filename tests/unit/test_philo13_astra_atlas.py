@@ -19,7 +19,7 @@ from tests.unit import test_philo_graph_atlas as general
 
 REPO = Path(__file__).resolve().parents[2]
 ATLAS = REPO / "docs/internal/philo/graph/atlas-phase13-astra.json"
-PRE_FIX_ATLAS_COMMIT = "c7073f9cac59e898e53f425f4a437966a10aaa0b"
+PRE_FIX_ATLAS_COMMIT = "e2e92c582"
 EXPECTED_CASES = {
     "case.p13.directory.zone_window.op",
     "case.p13.calendar.snapshot_window",
