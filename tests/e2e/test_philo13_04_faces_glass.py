@@ -30,6 +30,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .chair_windows import open_chair_window
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the faces glass needs Playwright")
@@ -143,6 +144,9 @@ class TestFacesDoNotLie:
                 starts: list[int] = []
                 page.on("response", lambda r: starts.append(r.status)
                         if r.url.endswith("/api/meeting/start") else None)
+                # PHILO-13-11 (slice two, R2): at 393 Capture opens from the Speak AppIcon.
+                if width <= 720:
+                    open_chair_window(page, "Capture")
                 self._press(page, page.get_by_test_id("arrival-record-meeting"), width)
                 receipt = page.locator(".write-receipt").filter(has_text="NOT RECORDING")
                 receipt.wait_for()
@@ -169,6 +173,9 @@ class TestFacesDoNotLie:
                 # The Chair: the AVAILABLE fact, and a STORED summary per meeting.
                 chair = page.locator(".chair")
                 assert "No engine for summaries" in chair.inner_text()
+                # PHILO-13-11 (slice two, R2): at 393 the meetings are in The week.
+                if width <= 720:
+                    open_chair_window(page, "The week")
                 badges = page.get_by_test_id("arrival-meeting-badge").all_inner_texts()
                 assert "SUMMARY STORED" in badges and "OFF" in badges, badges
                 self._shot(page, "chair-facts", width)
@@ -406,6 +413,8 @@ class TestFacesDoNotLie:
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width, seed=False, fake_media=True)
             try:
+                if width <= 720:   # PHILO-13-11 (slice two, R2): Capture from Speak
+                    open_chair_window(page, "Capture")
                 self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
                 thought = page.locator(".desk-window[aria-label='Thought']")
                 mic = thought.locator("[aria-label='Speak the note']")
@@ -701,3 +710,80 @@ class TestMeetingsRailNamesStored:
                 assert not errors, errors
             finally:
                 browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_a_running_rerun_is_named_over_its_outcomes(self, width: int) -> None:
+        """Astra's counsel r2 on #730: RUNNING beside a real nonzero
+        needs_you_count, through the real rail producer. The stored summary and
+        its 5 proposals came from the real plugins and bridge (setup), and setup
+        left its re-run queued. Here the REAL executor claims that re-run on
+        the hub's own database and broker; the one double, the provider,
+        BLOCKS until the browser has read the rail. Red with the
+        PROCESS_LEADS skip removed (the rail said `5 NEED YOU`)."""
+        import threading
+
+        from playwright.sync_api import sync_playwright
+
+        from holdspeak.db import get_database
+        from holdspeak.intel_queue import process_next_intel_job
+        from tests.unit.test_meeting_deferred_admission import _Route
+        from tests.unit.test_phase200_meeting_outcomes import ACT, DEC, ScriptedIntel
+
+        db = get_database()  # the hub's database
+        engine = ScriptedIntel()
+        entered, release = threading.Event(), threading.Event()
+        real_analyze = engine.analyze
+
+        def held_analyze(transcript: str, **kwargs: Any) -> Any:
+            entered.set()
+            release.wait(120.0)  # the provider answers only when released
+            return real_analyze(transcript, **kwargs)
+
+        engine.analyze = held_analyze  # type: ignore[method-assign]
+        outcome: dict[str, Any] = {}
+        with pytest.MonkeyPatch.context() as mp, sync_playwright() as pw:
+            mp.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
+            mp.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
+            mp.setattr("holdspeak.plugins.router.preview_route_from_transcript",
+                       lambda **kwargs: _Route((DEC, ACT)))
+            worker = threading.Thread(
+                target=lambda: outcome.setdefault("ran", process_next_intel_job()), daemon=True)
+            worker.start()
+            browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                      device_scale_factor=1, has_touch=width < 720)
+            page = ctx.new_page()
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                assert entered.wait(60.0), "the executor never reached the provider"
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                rows = {r["id"]: r for r in _api(page, "GET", "/api/meetings?limit=20", token=TOKEN)["meetings"]}
+                assert rows[A3W_QUEUED]["intel_status"] == "running", rows[A3W_QUEUED]
+                assert rows[A3W_QUEUED]["needs_you_count"] > 0
+                assert rows[A3W_QUEUED]["has_summary"] is True
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(1500)
+                _settle(page)
+                TestFacesDoNotLie._press(
+                    page, page.locator(".desk-dock-launch[aria-label^='Meetings']"), width)
+                meetings = page.locator(".desk-window[aria-label='Meetings']")
+                row = meetings.get_by_test_id(f"meeting-row-{A3W_QUEUED}")
+                row.wait_for()
+                row.scroll_into_view_if_needed()
+                assert entered.is_set() and not release.is_set()
+                TestFacesDoNotLie._shot(page, "meetings-rail-running", width)
+                assert row.get_by_test_id("state-token").inner_text() == "RUNNING"
+                assert not row.get_by_text("NEED YOU").count()
+                assert not errors, errors
+            finally:
+                release.set()
+                worker.join(120.0)
+                browser.close()
+        assert not worker.is_alive() and outcome.get("ran") is True, outcome
+        after = db.meetings.get_meeting(A3W_QUEUED)
+        assert after.intel_status == "ready", after.intel_status
+
