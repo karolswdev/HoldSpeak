@@ -43,11 +43,11 @@ The canvas criteria, each checkable on the shot (PROPOSAL C1):
 
 And:
 
-- [ ] Astra's check of the canvas recorded; the owner's ratification recorded verbatim before the first C1 face commit.
+- [x] Astra's check of the canvas recorded; the owner's ratification recorded verbatim before the first C1 face commit. (r1–r5, r5 RATIFY; owner 2026-10-02, see "RATIFIED" below)
 - [ ] The build matches the ratified canvas, board beside shot, at both widths (touch at 393).
 - [ ] The Dock fits 1440 with a long window title (red on main, `grounding/shots/surfaces/64-room-pop-1440.png`).
 - [ ] Every verb the library Button; no modal; no prose; no counter of zero; the web baseline has zero branch-new failures.
-- [ ] The "Parked and Restore" artboard is drawn at both widths and ratified with the rest of the set (or on its own, if A1-F is ready first).
+- [x] The "Parked and Restore" artboard is drawn at both widths and ratified with the rest of the set (or on its own, if A1-F is ready first).
 - [ ] **Gate (review evidence):** this story's PR merge record cites the owner's ratification record of its canvas (path + his quote); without it the checker refuses the merge.
 
 ## Test plan
@@ -72,3 +72,13 @@ Grounding size: not sized (new in PROPOSAL r2). PROVISIONAL; the long pole of th
 
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+## RATIFIED by the owner — 2026-10-02
+
+On the ratification page (https://claude.ai/artifact/Sdx4gWvAPcXPhWF6Cz6tVZ, the 20 boards of round 3e at `assets/story-11-canvas/`), the owner answered, verbatim:
+- The look: **"Ratify, build it"**
+- Direction: **"Steel (Recommended)"**
+- Park: **"One press (Recommended)"** — no confirm; Restore undoes it
+- Capture: **"Yes (Recommended)"** — a fourth Chair window on desktop; on demand from the Speak AppIcon on the phone
+
+Astra's canvas checks r1–r4 DO-NOT-RATIFY, all paid; **r5 RATIFY** (`checks/canvas-astra-r1..r5.md`). Both brains agree; no open dissent. The settled design for build is `design/workbench-look.md`; every C-story face (and A1-F, B1, B3, C5, C7) cites this ratification in its merge record (the gate).
