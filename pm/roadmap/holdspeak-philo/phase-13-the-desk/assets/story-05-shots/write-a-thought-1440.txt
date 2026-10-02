@@ -1,0 +1,1 @@
+{'window': 'pullout:note:note_c99ef89c1eb3', 'centre': [1020, 384], 'hit': {'tag': 'header', 'cls': 'surface-section-head', 'testid': 'arrival-brief', 'window': None, 'desk': True}, 'left_in_dom': []}

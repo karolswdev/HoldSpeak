@@ -1,0 +1,1 @@
+{'window': 'pullout:decision:decision_c89e260a4181', 'centre': [1222, 219], 'hit': {'tag': 'div', 'cls': 'desk-next', 'testid': None, 'window': None, 'desk': True}, 'left_in_dom': []}

@@ -131,28 +131,28 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 
 ## Story status
 
-| ID | Proposal | Story | Status | Story file | Evidence |
-|---|---|---|---|---|---|
-| PHILO-13-01 | B0 | Walk what was not walked | backlog | [story-01-b0-walk-what-was-not-walked](./story-01-b0-walk-what-was-not-walked.md) | — |
-| PHILO-13-02 | A1 | Park, never delete | backlog | [story-02-a1-park-never-delete](./story-02-a1-park-never-delete.md) | — |
-| PHILO-13-03 | A2 | One meaning of "needs you" | backlog | [story-03-a2-one-meaning-of-needs-you](./story-03-a2-one-meaning-of-needs-you.md) | — |
-| PHILO-13-04 | A3 | Faces that do not lie | backlog | [story-04-a3-faces-that-do-not-lie](./story-04-a3-faces-that-do-not-lie.md) | — |
-| PHILO-13-05 | A4 | Close means gone | backlog | [story-05-a4-close-means-gone](./story-05-a4-close-means-gone.md) | — |
-| PHILO-13-06 | B1 | One open grammar | backlog | [story-06-b1-one-open-grammar](./story-06-b1-one-open-grammar.md) | — |
-| PHILO-13-07 | B2 | The Desk remembers | backlog | [story-07-b2-the-desk-remembers](./story-07-b2-the-desk-remembers.md) | — |
-| PHILO-13-08 | B3 | Decide where the meeting is | backlog | [story-08-b3-decide-where-the-meeting-is](./story-08-b3-decide-where-the-meeting-is.md) | — |
-| PHILO-13-09 | B4 | The 1:1 finds its person | backlog | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | — |
-| PHILO-13-10 | B5 | The update writes the week | backlog | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | — |
-| PHILO-13-11 | C1 | The Workbench look (the canvases; the face gate) | backlog | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
-| PHILO-13-12 | C2 | The gadgets that are missing | backlog | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | — |
-| PHILO-13-13 | C3 | A live Dock (AppIcons) | backlog | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
-| PHILO-13-14 | C4 | A palette that knows his week and does verbs | backlog | [story-14-c4-a-palette-that-knows-his-week](./story-14-c4-a-palette-that-knows-his-week.md) | — |
-| PHILO-13-15 | C5 | Send to from any document window (the Phase 12 fold) | backlog | [story-15-c5-send-to-from-any-document-window](./story-15-c5-send-to-from-any-document-window.md) | — |
-| PHILO-13-16 | C6 | Capture from anywhere | backlog | [story-16-c6-capture-from-anywhere](./story-16-c6-capture-from-anywhere.md) | — |
-| PHILO-13-17 | C7 | The phone desk | backlog | [story-17-c7-the-phone-desk](./story-17-c7-the-phone-desk.md) | — |
-| PHILO-13-18 | C8 | The 12 px floor | backlog | [story-18-c8-the-12-px-floor](./story-18-c8-the-12-px-floor.md) | — |
+| ID | Story | Status | Story file | Evidence |
+|---|---|---|---|---|
+| PHILO-13-01 | B0 — Walk what was not walked | backlog | [story-01-b0-walk-what-was-not-walked](./story-01-b0-walk-what-was-not-walked.md) | — |
+| PHILO-13-02 | A1 — Park, never delete | backlog | [story-02-a1-park-never-delete](./story-02-a1-park-never-delete.md) | — |
+| PHILO-13-03 | A2 — One meaning of "needs you" | backlog | [story-03-a2-one-meaning-of-needs-you](./story-03-a2-one-meaning-of-needs-you.md) | — |
+| PHILO-13-04 | A3 — Faces that do not lie | in-progress | [story-04-a3-faces-that-do-not-lie](./story-04-a3-faces-that-do-not-lie.md) | — |
+| PHILO-13-05 | A4 — Close means gone | done | [story-05-a4-close-means-gone](./story-05-a4-close-means-gone.md) | [evidence-story-05](./evidence-story-05.md) |
+| PHILO-13-06 | B1 — One open grammar | backlog | [story-06-b1-one-open-grammar](./story-06-b1-one-open-grammar.md) | — |
+| PHILO-13-07 | B2 — The Desk remembers | backlog | [story-07-b2-the-desk-remembers](./story-07-b2-the-desk-remembers.md) | — |
+| PHILO-13-08 | B3 — Decide where the meeting is | backlog | [story-08-b3-decide-where-the-meeting-is](./story-08-b3-decide-where-the-meeting-is.md) | — |
+| PHILO-13-09 | B4 — The 1:1 finds its person | backlog | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | — |
+| PHILO-13-10 | B5 — The update writes the week | backlog | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | — |
+| PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | backlog | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
+| PHILO-13-12 | C2 — The gadgets that are missing | backlog | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | — |
+| PHILO-13-13 | C3 — A live Dock (AppIcons) | backlog | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
+| PHILO-13-14 | C4 — A palette that knows his week and does verbs | backlog | [story-14-c4-a-palette-that-knows-his-week](./story-14-c4-a-palette-that-knows-his-week.md) | — |
+| PHILO-13-15 | C5 — Send to from any document window (the Phase 12 fold) | backlog | [story-15-c5-send-to-from-any-document-window](./story-15-c5-send-to-from-any-document-window.md) | — |
+| PHILO-13-16 | C6 — Capture from anywhere | backlog | [story-16-c6-capture-from-anywhere](./story-16-c6-capture-from-anywhere.md) | — |
+| PHILO-13-17 | C7 — The phone desk | backlog | [story-17-c7-the-phone-desk](./story-17-c7-the-phone-desk.md) | — |
+| PHILO-13-18 | C8 — The 12 px floor | backlog | [story-18-c8-the-12-px-floor](./story-18-c8-the-12-px-floor.md) | — |
 
-Numbers follow the build order the brief set (B0 first: it gates B2). The Proposal column carries PROPOSAL r2's IDs; story titles carry them too.
+Numbers follow the build order the brief set (B0 first: it gates B2). The Story labels carry PROPOSAL r2's IDs; story titles carry them too.
 
 ## Lanes
 
@@ -243,6 +243,8 @@ The canvas set, in order: C1's canvas first (the frame, the chrome, the Chair, t
 D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
+
+2026-10-01: **PHILO-13-05 (A4) done** in `wt-philo-13-muaddib` (Fedaykin; Muad'Dib verified): the closed-window ghost fixed at its seam (the card now closes by the id the store keeps); red on main → green in unit (5), glass (4) and the atlas at 1440 and 393; `elementFromPoint` hits the Desk after Close for six openers. PHILO-13-04 (A3) built, shipping next. UNCHECKED — awaiting Astra's counsel on built.
 
 2026-10-01, round two: Astra's check r1 DO-NOT-RATIFY paid on Muad'Dib's rulings (table under "Round two"). Next: Astra's check of r2; then the owner's ratification.
 

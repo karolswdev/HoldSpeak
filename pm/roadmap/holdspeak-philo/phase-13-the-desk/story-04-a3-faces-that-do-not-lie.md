@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** the owner's ratification of this charter
 - **Unblocks:** PHILO-13-13 (C3 shows REC only when the hub confirms)
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks

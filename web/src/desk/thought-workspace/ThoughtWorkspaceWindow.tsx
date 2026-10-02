@@ -504,11 +504,14 @@ function WorkspaceReady({
 
 export function ThoughtWorkspaceWindow({
   object,
+  pulloutId,
   thought,
   origin,
   onClose,
 }: {
   object: WorldObject;
+  /** PHILO-13-05 — the id the store keeps for this card; defaults to `object.id`. */
+  pulloutId?: string;
   thought: Thought;
   origin?: { x: number; y: number } | null;
   onClose: () => void;
@@ -524,7 +527,7 @@ export function ThoughtWorkspaceWindow({
     if (useDesk.getState().editingId === thought.working_note.id) useDesk.getState().closeEditor();
   }, [thought.working_note.id]);
   return <DeskWindowFrame
-    id={`pullout:${object.id}`}
+    id={`pullout:${pulloutId ?? object.id}`}
     glyph="▤"
     label="Thought"
     icon={<img src={spriteUrl("note", object.id)} alt="" width={24} height={24} />}

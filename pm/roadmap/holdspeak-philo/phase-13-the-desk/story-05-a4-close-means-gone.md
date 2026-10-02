@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** the owner's ratification of this charter
 - **Unblocks:** PHILO-13-07 (B2 builds on a lifecycle that closes)
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks

@@ -258,7 +258,7 @@ function DeskFaces() {
       {/* Floor and List own their pullout mounts. The normal Chair needs the
           same card seam for the first-value note staged before reveal. */}
       {!arrivalRequired && !showFloor && chairOpenCards.map((pullout) => (
-        <Pullout key={pullout.id} o={pullout.object!} origin={pullout.origin} />
+        <Pullout key={pullout.id} o={pullout.object!} pulloutId={pullout.id} origin={pullout.origin} />
       ))}
       {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}
       {!arrivalRequired && <DeskToolInspector />}

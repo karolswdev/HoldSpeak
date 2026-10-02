@@ -592,7 +592,9 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
     get().clearPosition(id);
     set({
       editingId: get().editingId === id ? null : get().editingId,
-      pullouts: get().pullouts.filter((pullout) => pullout.id !== id),
+      pullouts: get().pullouts.filter(
+        (pullout) => pullout.id !== id && pullout.id !== qualifiedRef(kind, id),
+      ),
       infoWindows: get().infoWindows.filter(
         (window) => window.ref !== qualifiedRef(kind, id) && window.ref !== id,
       ),
