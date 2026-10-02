@@ -129,4 +129,14 @@ describe("PHILO-13-05 close means gone", () => {
     expect(useDesk.getState().pullouts).toEqual([]);
     expect(screen.queryByRole("button", { name: "Close Q3 kickoff" })).toBeNull();
   });
+
+  // Round three (Tenet 5, UX-CANON A.1): every verb on the coder card is the
+  // library Button; a raw <button> is a bounce.
+  it("static fence: CoderPullout has no raw <button>", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    const src = readFileSync(resolve(__dirname, "../pullouts/CoderPullout.tsx"), "utf8");
+    expect(src.match(/<button\b/g) ?? []).toEqual([]);
+  });
 });
+

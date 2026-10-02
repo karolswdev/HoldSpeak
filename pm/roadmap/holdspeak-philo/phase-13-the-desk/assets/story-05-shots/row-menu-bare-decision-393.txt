@@ -1,1 +1,1 @@
-{'window': 'pullout:decision_2513c5b4e49c', 'centre': [196, 485], 'hit': {'tag': 'th', 'cls': '', 'testid': None, 'window': None, 'desk': True}, 'left_in_dom': []}
+{'window': 'pullout:decision_fb3a2b428854', 'centre': [196, 485], 'hit': {'tag': 'th', 'cls': '', 'testid': None, 'window': None, 'desk': True}, 'left_in_dom': []}

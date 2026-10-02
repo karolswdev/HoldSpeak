@@ -210,3 +210,69 @@ class TestCloseMeansGone:
                 assert not [e for e in errors if "injected" not in e], errors
             finally:
                 browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_a_meeting_resolved_as_deleted_closes_its_card(self, width: int) -> None:
+        """Round three (Astra counsel r2): the meeting card's own close caller,
+        through the REAL producer. A tombstone conflict is recorded through the
+        meeting repository (as tests/integration/test_meeting_conflict_recovery.py
+        does); the card opens as `meeting:<id>`; the real MeetingConflictRecovery
+        resolves with Use incoming; the real route answers deleted:true; the card
+        leaves the DOM and its old centre hits the Desk."""
+        from playwright.sync_api import sync_playwright
+        from datetime import datetime, timedelta
+
+        from holdspeak.db import get_database
+        from holdspeak.meeting_session import MeetingState, TranscriptSegment
+
+        db = get_database()
+        started = datetime.now() - timedelta(hours=2)
+        title = "Tombstone sync review"
+        local = MeetingState(
+            id="p13-tombstone", started_at=started, ended_at=started + timedelta(minutes=12),
+            title=title, tags=["delivery"],
+            segments=[TranscriptSegment(text="Retained until the owner decides.", speaker="Karol",
+                                        start_time=4.0, end_time=9.0)],
+        )
+        db.meetings.save_meeting(local)
+        db.meetings.record_sync_conflict(local.id, local_value=local.to_dict(),
+                                         incoming_value={"deleted": True})
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
+                page.locator("[aria-controls=desk-palette-listbox]").fill("Tombstone")
+                option = page.locator("[id='desk-palette-option-meeting:p13-tombstone']")
+                option.wait_for()
+                self._press(page, option, width)
+                card = page.locator(f".desk-pullout[aria-label='{title}']")
+                card.wait_for()
+                incoming = card.get_by_role("button", name="Use incoming")
+                incoming.wait_for()
+                page.wait_for_timeout(600)
+                _settle(page)
+                box = card.bounding_box()
+                assert box
+                cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+                win_id = card.get_attribute("id")
+                page.screenshot(path=str(SHOTS / f"meeting-tombstone-before-{width}.png"))
+                answers: list[dict] = []
+                page.on("response", lambda r: answers.append({"status": r.status, "url": r.url})
+                        if "/sync-conflicts/" in r.url and r.url.endswith("/resolve") else None)
+                self._press(page, incoming, width)
+                page.wait_for_timeout(1500)
+                _settle(page)
+                hit = page.evaluate(HIT_JS, [cx, cy])
+                left = [o for o in self._open(page) if o["id"] == win_id]
+                page.screenshot(path=str(SHOTS / f"meeting-tombstone-after-{width}.png"))
+                proof = {"window": win_id, "centre": [round(cx), round(cy)], "resolve": answers,
+                         "hit": hit, "left_in_dom": left}
+                (SHOTS / f"meeting-tombstone-{width}.txt").write_text(f"{proof}\n")
+                assert answers and answers[0]["status"] == 200, answers
+                assert db.meetings.get_meeting(local.id) is None
+                assert not left, f"the closed card stays in the DOM: {left}"
+                assert hit is not None and hit["window"] is None and hit["desk"], f"the old centre hits {hit}"
+                assert not errors, errors
+            finally:
+                browser.close()
