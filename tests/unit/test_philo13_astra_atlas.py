@@ -1,4 +1,4 @@
-"""PHILO-13 B0: Astra's preparatory atlas contract.
+"""PHILO-13 B0: Astra's nine face paths and shared semantic contract.
 
 The phase file owns its own case and operation-sibling count.  The shared
 atlas contract still reads this file through ``ATLAS_FILES``; the mutant tests
@@ -20,6 +20,15 @@ REPO = Path(__file__).resolve().parents[2]
 ATLAS = REPO / "docs/internal/philo/graph/atlas-phase13-astra.json"
 EXPECTED_CASES = {
     "case.p13.directory.zone_window.op",
+    "case.p13.calendar.snapshot_window",
+    "case.p13.roadmap.window",
+    "case.p13.repository.window",
+    "case.p13.delivery.dossier_window",
+    "case.p13.delivery.terminal_window",
+    "case.p13.chain.pullout",
+    "case.p13.coder.pullout",
+    "case.p13.directory.zone",
+    "case.p13.info.window",
 }
 
 
@@ -73,6 +82,16 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
     assert set(cases) == EXPECTED_CASES
     assert cases["case.p13.directory.zone_window.op"]["viewports"] == []
     assert sum(case["id"].endswith(".op") for case in cases.values()) == 1
+    faces = [case for case in cases.values() if not case["id"].endswith(".op")]
+    assert len(faces) == 9
+    for case in faces:
+        assert case["viewports"] == [1440, 393]
+        # A DOM-only text match passed an off-screen Repository in the real walk.
+        assert case["expected"]["predicate"]["kind"] == "readable_text", case["id"]
+        setup = case["setup"]
+        close_index = next(i for i, step in enumerate(setup) if 'Close ' in step.get("selector", ""))
+        assert setup[close_index + 1]["state"] == "hidden", case["id"]
+        assert setup[close_index + 2]["action"] == "reload", case["id"]
 
 
 def test_phase13_shared_semantic_guards_show_red_then_green(tmp_path, monkeypatch) -> None:

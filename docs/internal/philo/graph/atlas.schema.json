@@ -396,6 +396,7 @@
                 "click_role",
                 "fill",
                 "select_option",
+                "set_input_files",
                 "press",
                 "wait_for",
                 "focus",
@@ -425,6 +426,13 @@
             },
             "value": {
               "type": "string"
+            },
+            "capture_shot": {
+              "type": "boolean"
+            },
+            "file_chooser": {
+              "type": "boolean",
+              "description": "For set_input_files, click the named native chooser control and set its file through Playwright's file chooser event."
             },
             "role": {
               "type": "string",
@@ -547,6 +555,7 @@
                       "click",
                       "fill",
                       "select_option",
+                      "set_input_files",
                       "wait_for",
                       "focus",
                       "scroll_into_view"
@@ -584,7 +593,10 @@
               "if": {
                 "properties": {
                   "action": {
-                    "const": "select_option"
+                    "enum": [
+                      "select_option",
+                      "set_input_files"
+                    ]
                   }
                 },
                 "required": [
@@ -930,13 +942,15 @@
             "action": {
               "enum": [
                 "restart_hub",
-                "queue_meeting_intelligence"
+                "queue_meeting_intelligence",
+                "create_repository_fixture",
+                "ingest_coder_fixture"
               ]
             },
             "capture_as": {
               "type": "string",
               "pattern": "^[a-z][a-z0-9_]*$",
-              "description": "Bind a value captured from the pre-restart meeting detail."
+              "description": "Bind values from a real producer step, such as the repository fixture or coder transcript input."
             },
             "trigger_route": {
               "type": "object",

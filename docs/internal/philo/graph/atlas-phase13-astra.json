@@ -74,6 +74,1529 @@
       },
       "completion_bound_s": 30,
       "viewports": []
+    },
+    {
+      "id": "case.p13.calendar.snapshot_window",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.calendar_snapshot_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME; Settings exposes the real native Calendar snapshot upload and the resulting Review window.",
+        "Every mouse/touch press uses ui-by-viewport. The first opening and its hidden close are recorded in setup; the trigger opens again after reload."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Settings"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".prefs-hub .surface-ledger-row:has-text(\"Meetings\") button"
+        },
+        {
+          "kind": "ui",
+          "action": "set_input_files",
+          "adapter": "ui-by-viewport",
+          "selector": "[data-testid=\"calendar-snapshot-btn\"]",
+          "file_chooser": true,
+          "value": "tests/fixtures/philo13/calendar-input.png"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": "[aria-label=\"Week of\"]",
+          "state": "visible",
+          "timeout_s": 10,
+          "capture_shot": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[role=\"region\"][aria-label=\"Calendar snapshot\"] button[aria-label^=\"Close \"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": "[role=\"region\"][aria-label=\"Calendar snapshot\"]",
+          "state": "hidden",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Settings",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".prefs-hub .surface-ledger-row:has-text(\"Meetings\") button"
+          },
+          {
+            "kind": "ui",
+            "action": "set_input_files",
+            "adapter": "ui-by-viewport",
+            "selector": "[data-testid=\"calendar-snapshot-btn\"]",
+            "file_chooser": true,
+            "value": "tests/fixtures/philo13/calendar-input.png"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "CONFIRM"
+        },
+        "observe_at": "[role=region][aria-label^=Calendar]",
+        "words": "The same produced object opens, presents 'CONFIRM', closes before reload, and opens again through its ordinary door."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.roadmap.window",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.roadmap_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "The real isolated repository fixture feeds the Roadmap API; the ordinary Desk palette opens its Roadmap object.",
+        "Every mouse/touch press uses ui-by-viewport. The first opening and its hidden close are recorded in setup; the trigger opens again after reload."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "cli",
+          "action": "create_repository_fixture",
+          "capture_as": "repo",
+          "adapter": "repository-fixture-producer",
+          "why": "A real Git repository and DW roadmap, wholly below this run HOME; no product rows or responses are substituted."
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Atlas Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-roadmap:roadmap:atlas-desk\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-roadmap-phase-row",
+          "state": "visible",
+          "timeout_s": 10,
+          "capture_shot": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-roadmap-window button[aria-label^=\"Close \"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-roadmap-window",
+          "state": "hidden",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-tools-launch",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "Atlas Desk"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id=\"desk-palette-option-roadmap:roadmap:atlas-desk\"]"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Atlas repository"
+        },
+        "observe_at": ".desk-roadmap-window",
+        "words": "The same produced object opens, presents 'Atlas repository', closes before reload, and opens again through its ordinary door."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.repository.window",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.repository_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "The repository is registered through its real route from the isolated fixture.",
+        "Every mouse/touch press uses ui-by-viewport. The first opening and its hidden close are recorded in setup; the trigger opens again after reload."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "cli",
+          "action": "create_repository_fixture",
+          "capture_as": "repo",
+          "adapter": "repository-fixture-producer",
+          "why": "A real Git repository and DW roadmap, wholly below this run HOME; no product rows or responses are substituted."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/repositories",
+          "adapter": "http-route",
+          "body": {
+            "path": "{repo_path}",
+            "label": "{repo_label}"
+          },
+          "capture_as": "repository_id",
+          "capture_path": "repository.id",
+          "expect_status": 200
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Atlas Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-repository:{repository_id}\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-repo-files .desk-sortable-table-row:has-text(\"atlas_repository.py\")",
+          "state": "visible",
+          "timeout_s": 10,
+          "capture_shot": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-repo-window button[aria-label^=\"Close \"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-repo-window",
+          "state": "hidden",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-tools-launch",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "Atlas Desk"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id=\"desk-palette-option-repository:{repository_id}\"]"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "atlas_repository.py"
+        },
+        "observe_at": ".desk-repo-files",
+        "words": "The real repository file table is readable in the viewport after Close, reload, and reopening the same registered repository."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.delivery.dossier_window",
+      "job": "j4",
+      "edge_ids": [
+        "edge.face.delivery_dossier_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "The real Delivery source exposes the fixture story ATLAS-1-01.",
+        "Every mouse/touch press uses ui-by-viewport. The first opening and its hidden close are recorded in setup; the trigger opens again after reload."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "cli",
+          "action": "create_repository_fixture",
+          "capture_as": "repo",
+          "adapter": "repository-fixture-producer",
+          "why": "A real Git repository and DW roadmap, wholly below this run HOME; no product rows or responses are substituted."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/delivery/sources",
+          "adapter": "http-route",
+          "body": {
+            "path": "{repo_path}",
+            "label": "{repo_label}"
+          }
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Delivery"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-dlv-board",
+          "state": "visible",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-dlv-board .desk-mc-story-pick:has-text(\"ATLAS-1-01\")"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-dlv-dossier .desk-dlv-facts-line",
+          "state": "visible",
+          "timeout_s": 10,
+          "capture_shot": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-dlv-dossier button[aria-label^=\"Close \"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-dlv-dossier",
+          "state": "hidden",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Delivery",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-board",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-dlv-board .desk-mc-story-pick:has-text(\"ATLAS-1-01\")"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "ATLAS-1-01"
+        },
+        "observe_at": ".desk-dlv-dossier",
+        "words": "The same produced object opens, presents 'ATLAS-1-01', closes before reload, and opens again through its ordinary door."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.delivery.terminal_window",
+      "job": "j4",
+      "edge_ids": [
+        "edge.face.delivery_terminal_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "Only an authentic isolated tmux target may produce the terminal row; no target is fabricated.",
+        "Every mouse/touch press uses ui-by-viewport. The first opening and its hidden close are recorded in setup; the trigger opens again after reload."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "cli",
+          "action": "create_repository_fixture",
+          "capture_as": "repo",
+          "adapter": "repository-fixture-producer",
+          "why": "A real Git repository and DW roadmap, wholly below this run HOME; no product rows or responses are substituted."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/delivery/sources",
+          "adapter": "http-route",
+          "body": {
+            "path": "{repo_path}",
+            "label": "{repo_label}"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/coders/factory/spawn",
+          "adapter": "http-route",
+          "body": {
+            "name": "atlas_terminal",
+            "command": "printf 'Atlas terminal\\n'; sleep 120"
+          },
+          "expect_status": 200
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Delivery"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-dlv-board",
+          "state": "visible",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-dlv-sessions .surface-ledger-line:has-text(\"atlas_terminal\")"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-dlv-terminal :text(\"Atlas terminal\")",
+          "state": "visible",
+          "timeout_s": 10,
+          "capture_shot": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-dlv-terminal button[aria-label^=\"Close \"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-dlv-terminal",
+          "state": "hidden",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Delivery",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-board",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-dlv-sessions .surface-ledger-line:has-text(\"atlas_terminal\")"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Atlas terminal"
+        },
+        "observe_at": ".desk-dlv-terminal",
+        "words": "The same produced object opens, presents 'Atlas terminal', closes before reload, and opens again through its ordinary door."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.chain.pullout",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.chain_pullout"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "POST /api/chains creates the actual empty Sequence.",
+        "Every mouse/touch press uses ui-by-viewport. The first opening and its hidden close are recorded in setup; the trigger opens again after reload."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/chains",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas B0 Sequence",
+            "steps": []
+          },
+          "expect_status": 201,
+          "capture_as": "chain_id",
+          "capture_path": "chain.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Atlas B0 Sequence"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-chain:{chain_id}\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-pullout[aria-label=\"Atlas B0 Sequence\"] :text(\"No steps\")",
+          "state": "visible",
+          "timeout_s": 10,
+          "capture_shot": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-pullout[aria-label=\"Atlas B0 Sequence\"] button[aria-label^=\"Close \"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-pullout[aria-label=\"Atlas B0 Sequence\"]",
+          "state": "hidden",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-tools-launch",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "Atlas B0 Sequence"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id=\"desk-palette-option-chain:{chain_id}\"]"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "No steps"
+        },
+        "observe_at": ".desk-pullout.is-card",
+        "words": "The same produced object opens, presents 'No steps', closes before reload, and opens again through its ordinary door."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.coder.pullout",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.coder_pullout"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "The normal agent-hook producer ingests the retained Codex question and emits an awaiting-response session.",
+        "Every mouse/touch press uses ui-by-viewport. The first opening and its hidden close are recorded in setup; the trigger opens again after reload."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "cli",
+          "action": "create_repository_fixture",
+          "capture_as": "repo",
+          "adapter": "repository-fixture-producer",
+          "why": "A real Git repository and DW roadmap, wholly below this run HOME; no product rows or responses are substituted."
+        },
+        {
+          "kind": "cli",
+          "action": "ingest_coder_fixture",
+          "capture_as": "coder",
+          "adapter": "agent-hook-cli",
+          "why": "The existing transcript INPUT fixture passes through the real CLI and normal registry. This proves ingestion and the Coder face, not a live coding engine or a tmux pane."
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Atlas"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-coder:{coder_session_id}\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-pullout.is-card :text(\"Should I run the full suite now?\")",
+          "state": "visible",
+          "timeout_s": 10,
+          "capture_shot": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-pullout.is-card:has-text(\"Should I run the full suite now?\") button[aria-label^=\"Close \"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-pullout.is-card:has-text(\"Should I run the full suite now?\")",
+          "state": "hidden",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-tools-launch",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "Atlas"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id=\"desk-palette-option-coder:{coder_session_id}\"]"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Should I run the full suite now?"
+        },
+        "observe_at": ".desk-pullout.is-card",
+        "words": "The same produced object opens, presents 'Should I run the full suite now?', closes before reload, and opens again through its ordinary door."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.directory.zone",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.directory_zone_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "The Zone producer is real; desktop opens the intended ZoneWindow by hidden data-zone-id keyboard target, while 393 native touch cannot tap that hidden target.",
+        "Every mouse/touch press uses ui-by-viewport. The first opening and its hidden close are recorded in setup; the trigger opens again after reload."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/directories",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas Phase 13 Zone"
+          },
+          "expect_status": 201,
+          "capture_as": "zone_id",
+          "capture_path": "directory.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-desk.toggle-view\"]",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-input",
+          "selector": "[data-zone-id=\"{zone_id}\"]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-input",
+          "selector": "[data-zone-id=\"{zone_id}\"]",
+          "key": "Enter",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[data-zone-id=\"{zone_id}\"]",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-zone-window .zone-grid",
+          "state": "visible",
+          "timeout_s": 10,
+          "capture_shot": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-zone-window button[aria-label^=\"Close \"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-zone-window",
+          "state": "hidden",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "focus",
+        "adapter": "ui-input",
+        "selector": "[data-zone-id=\"{zone_id}\"]",
+        "at_width": 1440,
+        "then": [
+          {
+            "kind": "ui",
+            "action": "press",
+            "adapter": "ui-input",
+            "selector": "[data-zone-id=\"{zone_id}\"]",
+            "key": "Enter",
+            "at_width": 1440
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[data-zone-id=\"{zone_id}\"]",
+            "at_width": 393
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Atlas Phase 13 Zone"
+        },
+        "observe_at": ".desk-zone-window",
+        "words": "The same produced object opens, presents 'Atlas Phase 13 Zone', closes before reload, and opens again through its ordinary door."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.info.window",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.info_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "A real Sequence row supplies the ordinary list ContextMenu and Get Info verb; 393 right-button delivery is an explicit rig limitation.",
+        "Every mouse/touch press uses ui-by-viewport. The first opening and its hidden close are recorded in setup; the trigger opens again after reload."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/chains",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas B0 Info Sequence",
+            "steps": []
+          },
+          "expect_status": 201,
+          "capture_as": "info_chain_id",
+          "capture_path": "chain.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-desk.toggle-view\"]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-list-name-cell[aria-label=\"Atlas B0 Info Sequence\"]",
+          "button": "right"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "menuitem",
+          "name": "Get Info"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-info-window .desk-info-body",
+          "state": "visible",
+          "timeout_s": 10,
+          "capture_shot": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-info-window button[aria-label^=\"Close \"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-info-window",
+          "state": "hidden",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-list-name-cell[aria-label=\"Atlas B0 Info Sequence\"]",
+        "button": "right",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "menuitem",
+            "name": "Get Info"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Identity"
+        },
+        "observe_at": ".desk-info-window",
+        "words": "The same produced object opens, presents 'Identity', closes before reload, and opens again through its ordinary door."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
     }
   ],
   "states": [
@@ -143,7 +1666,15 @@
       ],
       "reachable_by": [
         "case.p13.directory.zone_window.op",
-        "unexercised: The nine B0 face paths are pending. This preparatory handoff proves the atlas contract and the real Zone operation only."
+        "case.p13.calendar.snapshot_window",
+        "case.p13.roadmap.window",
+        "case.p13.repository.window",
+        "case.p13.delivery.dossier_window",
+        "case.p13.delivery.terminal_window",
+        "case.p13.chain.pullout",
+        "case.p13.coder.pullout",
+        "case.p13.directory.zone",
+        "case.p13.info.window"
       ]
     }
   ],

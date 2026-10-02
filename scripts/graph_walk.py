@@ -2488,7 +2488,7 @@ class Hub:
         self.producer_clock = None
         self.wiring = {}
         env = dict(os.environ)
-        env["HOME"] = str(self.home)
+        env = _isolated_hub_env(self.home, getattr(self, "repo_root", None), env)
         env["PYTHONUNBUFFERED"] = "1"
         env.pop("HOLDSPEAK_DB_PATH", None)
         command = [sys.executable, str(Path(__file__).resolve()), "serve",
@@ -3088,11 +3088,11 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
     — the microphone and native keystrokes are forbidden to this rig — so
     `on_start` (start a live recording) refuses by name instead.
     """
-    guard_home(os.environ.get("HOME", "/nonexistent"))
+    roadmap_root = _serve_repo_root()
     from holdspeak.db import get_database
     from holdspeak.runtime_lock import claim_database, refusal_message
     from holdspeak.services.errors import ValidationError
-    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+    MeetingWebServer, WebRuntimeCallbacks = _serve_web_components(roadmap_root)
 
     database = get_database()
     print(f"DB_PATH {database.db_path}", flush=True)
@@ -3113,7 +3113,7 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
     config.save()
     print(f"CONFIG_PATH {config_path}", flush=True)
 
-    has: list[str] = ["MeetingWebServer routes"]
+    has: list[str] = ["MeetingWebServer routes", "isolated tmux socket directory"]
     lacks: list[str] = [
         "AudioRecorder (the microphone is forbidden to this rig)",
         "HotkeyListener (no native keystrokes)",
@@ -4266,7 +4266,7 @@ def unresolved(value: Any) -> list[str]:
 #: The rig's CLOSED ui vocabulary. A step naming anything else is blocked
 #: before it fires, so a typo cannot silently become a no-op that "passed".
 UI_ACTIONS = frozenset({
-    "goto", "reload", "click", "click_role", "fill", "select_option", "press", "wait_for",
+    "goto", "reload", "click", "click_role", "fill", "select_option", "set_input_files", "press", "wait_for",
     # PHILO-7-03: keyboard travel to a control (the owner's Tab), e.g. the
     # Floor's world chip, which only surfaces when focused (desk.css:171).
     "focus",
@@ -4415,13 +4415,13 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         raise Blocked(
             f"ui action {action!r} is not in the rig's vocabulary "
             f"{sorted(UI_ACTIONS)}; nothing was fired")
-    if action == "select_option":
+    if action in ("select_option", "set_input_files"):
         selector = step.get("selector")
         value = step.get("value")
         if (not isinstance(selector, str) or not selector.strip()
                 or not isinstance(value, str) or not value.strip()):
             raise Blocked(
-                "ui action 'select_option' needs a nonempty selector and value; "
+                f"ui action {action!r} needs a nonempty selector and value; "
                 f"got selector={selector!r} value={value!r}; nothing was fired")
     if action == "scroll_into_view" and (not step.get("selector")
                                          or step.get("block", "center") not in ("start", "center", "end")):
@@ -4430,9 +4430,9 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
                       f"got selector={step.get('selector')!r} block={step.get('block')!r}; nothing was fired")
     if page is None:
         raise Blocked("headless mode refuses UI/face steps: no Page is opened")
-    optional = bool(step.get("optional"))
+    optional, input_path = _ui_input_options(action, step, hub, action == "set_input_files")
     adapter, record = _ui_adapter_record(page, step, action)
-    if action == "select_option":
+    if action in ("select_option", "set_input_files"):
         record["selector"] = step["selector"]
         record["value"] = step["value"]
     # PHILO-7-03: a step the face needs at ONE width only (at 393 the Floor
@@ -4491,8 +4491,8 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
             record["name"] = step["name"]
         elif action == "fill":
             page.locator(step["selector"]).first.fill(step["value"], timeout=timeout)
-        elif action == "select_option":
-            page.locator(step["selector"]).first.select_option(step["value"], timeout=timeout)
+        elif action == "select_option" or action == "set_input_files":
+            _dispatch_input(page, step, action, input_path, timeout, adapter)
         elif action == "press":
             # PHILO-11-06: if the case names a control, deliver the key to
             # that control. A global keyboard press can land after focus has
@@ -4830,14 +4830,341 @@ def _op_step(step: dict[str, Any], hub: Any, provenance: dict[str, Any],
     return record
 
 
+def _serve_repo_root() -> str | None:
+    guard_home(os.environ.get("HOME", "/nonexistent"))
+    return os.environ.get("GRAPH_WALK_REPO_ROOT") or None
+
+
+def _serve_web_components(repo_root: str | None) -> tuple[Any, Any]:
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    _install_repository_router(repo_root)
+    return MeetingWebServer, WebRuntimeCallbacks
+
+
+def _isolated_hub_env(
+    home: str | Path, repo_root: str | Path | None = None,
+    inherited: dict[str, str] | None = None,
+) -> dict[str, str]:
+    """Make the child environment safe for both repository and tmux reads."""
+    isolated_home = guard_home(home)
+    env = dict(os.environ if inherited is None else inherited)
+    env.update({
+        "HOME": str(isolated_home),
+        "GRAPH_WALK_REPO_ROOT": str(repo_root or ""),
+        "TMUX_TMPDIR": str(isolated_home),
+    })
+    env.pop("TMUX", None)
+    env.pop("TMUX_PANE", None)
+    return env
+
+
+def _teardown_hub_tmux(home: str | Path) -> dict[str, Any]:
+    """Stop only the tmux server whose socket directory belongs to this run."""
+    isolated_home = guard_home(home)
+    tmux_tmpdir = isolated_home
+    if not _under(tmux_tmpdir, isolated_home):
+        raise Refused(f"tmux teardown directory {tmux_tmpdir} is outside {isolated_home}")
+    env = _isolated_hub_env(isolated_home)
+    try:
+        result = subprocess.run(
+            ["tmux", "kill-server"], cwd=str(REPO), env=env,
+            stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False,
+        )
+    except FileNotFoundError:
+        return {
+            "attempted": False,
+            "available": False,
+            "returncode": None,
+            "stderr": "tmux executable not found",
+            "no_server": False,
+            "server_stopped": False,
+            "tmpdir": str(tmux_tmpdir),
+        }
+    stderr = str(result.stderr or "").strip()[:500]
+    lowered_stderr = stderr.lower()
+    no_server = (
+        "no server running" in lowered_stderr
+        or (
+            "error connecting to" in lowered_stderr
+            and (
+                "no such file or directory" in lowered_stderr
+                or "socket not found" in lowered_stderr
+            )
+        )
+    )
+    return {
+        "attempted": True,
+        "available": True,
+        "returncode": result.returncode,
+        "stderr": stderr,
+        "no_server": no_server,
+        "server_stopped": result.returncode == 0,
+        "tmpdir": str(tmux_tmpdir),
+    }
+
+
+def _ui_input_options(
+    action: str, step: dict[str, Any], hub: Any, is_file: bool,
+) -> tuple[bool, Path | None]:
+    return bool(step.get("optional")), _input_file_path(step["value"], hub) if is_file else None
+
+
+def _dispatch_input(
+    page: Any, step: dict[str, Any], action: str, input_path: Path | None,
+    timeout: float, adapter: str,
+) -> None:
+    locator = page.locator(step["selector"]).first
+    if action == "set_input_files":
+        assert input_path is not None
+        if step.get("file_chooser"):
+            with page.expect_file_chooser(timeout=timeout) as chooser_info:
+                _native_ui_click(locator, adapter, timeout, "left")
+            chooser_info.value.set_files(str(input_path))
+            return
+        locator.set_input_files(str(input_path), timeout=timeout)
+        return
+    locator.select_option(step["value"], timeout=timeout)
+
+
+def _install_repository_router(repo_root: str | Path | None) -> str | None:
+    """Point the isolated hub's real Roadmap reader at a case-owned repo.
+
+    ``MeetingWebServer`` imports the route builders while it assembles its app.
+    The rig patches that import in the hub child, before construction, so the
+    production ``build_roadmaps_router(ctx, repo_root=...)`` seam reads the
+    repository made by the case.  No route or API response is fabricated.
+    """
+    if not repo_root:
+        return None
+    home = guard_home(os.environ.get("HOME", "/nonexistent"))
+    candidate = guard_path(repo_root, "repository fixture")
+    if not candidate.is_dir():
+        raise Refused(f"repository fixture {candidate} is not a directory")
+    if not _under(candidate, home):
+        raise Refused(
+            f"repository fixture {candidate} is outside the isolated hub HOME {home}"
+        )
+    from holdspeak.web import routes as web_routes
+
+    builder = web_routes.build_roadmaps_router
+
+    def build_fixture_router(ctx: Any, *args: Any, **kwargs: Any) -> Any:
+        if "repo_root" in kwargs:
+            raise Refused("repository fixture router received a second repo_root")
+        return builder(ctx, *args, repo_root=candidate, **kwargs)
+
+    web_routes.build_roadmaps_router = build_fixture_router
+    print(f"REPO_ROOT {candidate}", flush=True)
+    return str(candidate)
+
+
+def _input_file_path(value: Any, hub: Any) -> Path:
+    """Resolve a native browser file input inside the repo or run HOME."""
+    if not isinstance(value, str) or not value.strip():
+        raise Blocked("set_input_files needs a nonempty value path")
+    candidate = Path(value)
+    if not candidate.is_absolute():
+        candidate = REPO / candidate
+    resolved = guard_path(candidate, "native input file")
+    allowed = [(REPO / "tests" / "fixtures").resolve()]
+    home = getattr(hub, "home", None)
+    if home is not None:
+        allowed.append(guard_home(home))
+    if not any(_under(resolved, root) for root in allowed):
+        raise Blocked(
+            f"native input file {resolved} is outside tests/fixtures and the "
+            "isolated hub HOME"
+        )
+    if not resolved.is_file():
+        raise Blocked(f"native input file {resolved} does not exist")
+    return resolved
+
+
+def _input_file_record(value: str, path: Path, hub: Any) -> dict[str, Any]:
+    home = getattr(hub, "home", None)
+    home_path = guard_home(home) if home is not None else None
+    scope = "hub_home" if home_path is not None and _under(path, home_path) else "repository_fixture"
+    return {"path": value, "resolved_path": str(path), "sha256": _sha256(path),
+            "scope": scope}
+
+
+def _create_repository_fixture_step(
+    step: dict[str, Any], page: Any, hub: Any, provenance: dict[str, Any],
+    variables: dict[str, Any],
+) -> dict[str, Any]:
+    """Create and expose one real repository input, then rebuild the hub app."""
+    if hub is None or not hasattr(hub, "home") or not hasattr(hub, "restart"):
+        raise Blocked("create_repository_fixture needs the rig's own hub process")
+    from scripts.philo13_walk_fixture import create_repository_fixture
+
+    try:
+        result = create_repository_fixture(guard_home(hub.home))
+    except Refused:
+        raise
+    except Exception as exc:  # noqa: BLE001 — retain the case as blocked
+        raise Blocked(
+            f"repository fixture producer failed: {type(exc).__name__}: {exc}"
+        ) from exc
+    fields = ("path", "label", "project_slug", "story_id", "git_head")
+    if set(result) != set(fields) or any(not isinstance(result[field], str) or not result[field] for field in fields):
+        raise Blocked("repository fixture producer returned an invalid scalar record")
+    repo_path = guard_path(result["path"], "repository fixture")
+    home = guard_home(hub.home)
+    if not _under(repo_path, home) or not repo_path.is_dir():
+        raise Refused(
+            f"repository fixture producer returned {repo_path}, outside isolated HOME {home}"
+        )
+    prefix = step.get("capture_as") or "repo"
+    if not isinstance(prefix, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", prefix):
+        raise Blocked(f"create_repository_fixture capture_as {prefix!r} is not a variable stem")
+    for field in fields:
+        variables[f"{prefix}_{field}"] = result[field]
+    hub.repo_root = repo_path
+    restart = hub.restart()
+    if isinstance(provenance.get("hub"), dict):
+        provenance["hub"].update({
+            "pid": hub.proc.pid if hub.proc else None,
+            "home": str(home),
+            "repo_root": str(repo_path),
+        })
+        provenance["product_wiring"] = hub.wiring
+        provenance["db_path"] = hub.db_path
+    provenance["repository_fixture"] = {
+        **result, "capture_as": prefix,
+        "variables": {f"{prefix}_{field}": result[field] for field in fields},
+    }
+    provenance.setdefault("restarts", []).append({
+        **restart, "reason": "repository fixture router rebuild",
+        "repo_root": str(repo_path),
+    })
+    record: dict[str, Any] = {
+        "kind": "cli", "action": "create_repository_fixture",
+        "adapter": step.get("adapter", "repository-fixture-producer"),
+        "fixture": result, "repo_root": str(repo_path), "captured": {
+            "prefix": prefix,
+            "values": {f"{prefix}_{field}": result[field] for field in fields},
+        },
+        "restart": restart,
+    }
+    if page is not None:
+        page.reload(wait_until=step.get("wait_until", "load"))
+        record["page_reloaded"] = True
+    return record
+
+
+def _ingest_coder_fixture_step(
+    step: dict[str, Any], hub: Any, provenance: dict[str, Any],
+    variables: dict[str, Any],
+) -> dict[str, Any]:
+    """Run the real agent-hook CLI against one copied transcript input."""
+    if hub is None or not hasattr(hub, "home"):
+        raise Blocked("ingest_coder_fixture needs the rig's own hub process")
+    home = guard_home(hub.home)
+    source = guard_path(
+        REPO / "tests" / "fixtures" / "agent_transcripts" / "codex_question.jsonl",
+        "coder transcript fixture",
+    )
+    if not source.is_file():
+        raise Blocked(f"coder transcript fixture {source} does not exist")
+    transcript = home / "codex_question.jsonl"
+    if transcript.exists() or transcript.is_symlink():
+        raise Blocked(f"coder transcript destination already exists: {transcript}")
+    shutil.copyfile(source, transcript)
+    repo_root = getattr(hub, "repo_root", None)
+    cwd = guard_path(repo_root, "coder fixture cwd") if repo_root else home
+    if not cwd.is_dir() or not _under(cwd, home):
+        raise Refused(f"coder fixture cwd {cwd} is outside isolated HOME {home}")
+    payload = {
+        "session_id": "phase13-coder-input",
+        "cwd": str(cwd),
+        "hook_event_name": "Stop",
+        "transcript_path": str(transcript),
+    }
+    command = [
+        sys.executable, "-m", "holdspeak.main", "agent-hook", "ingest",
+        "--agent", "codex", "--capture-messages", "--print-summary",
+    ]
+    env = _isolated_hub_env(home, repo_root)
+    env["PYTHONPATH"] = str(REPO) + os.pathsep + env.get("PYTHONPATH", "")
+    completed = subprocess.run(
+        command, cwd=str(cwd), env=env, input=json.dumps(payload),
+        capture_output=True, text=True, check=False,
+    )
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout or "no CLI output").strip()
+        raise Blocked(
+            f"agent-hook ingest returned {completed.returncode}: {detail[:400]}"
+        )
+    try:
+        session = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise Blocked(
+            f"agent-hook ingest returned non-JSON stdout: {completed.stdout[:400]!r}"
+        ) from exc
+    if not isinstance(session, dict):
+        raise Blocked("agent-hook ingest returned a non-object session")
+    if (
+        session.get("agent") != "codex"
+        or session.get("session_id") != payload["session_id"]
+        or session.get("hook_event_name") != "Stop"
+        or not session.get("awaiting_response")
+        or not session.get("last_assistant_text")
+    ):
+        raise Blocked(f"agent-hook ingest returned no awaiting coder question: {session}")
+    prefix = step.get("capture_as") or "coder"
+    if not isinstance(prefix, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", prefix):
+        raise Blocked(f"ingest_coder_fixture capture_as {prefix!r} is not a variable stem")
+    variables[f"{prefix}_session_id"] = session["session_id"]
+    variables[f"{prefix}_agent"] = session["agent"]
+    source_hash = _sha256(source)
+    transcript_hash = _sha256(transcript)
+    fixture = {
+        "source_path": str(source),
+        "source_sha256": source_hash,
+        "transcript_path": str(transcript),
+        "sha256": transcript_hash,
+        "cwd": str(cwd),
+        "payload": payload,
+    }
+    provenance.setdefault("fixture_hashes", {})[str(source)] = source_hash
+    provenance["coder_fixture"] = {
+        **fixture,
+        "command": command,
+        "stdout_sha256": hashlib.sha256(completed.stdout.encode()).hexdigest(),
+        "session": session,
+        "capture_as": prefix,
+    }
+    return {
+        "kind": "cli",
+        "action": "ingest_coder_fixture",
+        "adapter": step.get("adapter", "agent-hook-cli"),
+        "fixture": fixture,
+        "session": session,
+        "captured": {
+            "prefix": prefix,
+            "values": {
+                f"{prefix}_session_id": session["session_id"],
+                f"{prefix}_agent": session["agent"],
+            },
+        },
+        "stdout_sha256": hashlib.sha256(completed.stdout.encode()).hexdigest(),
+    }
+
+
 def _ui_viewport_adapter(page: Any, step: dict[str, Any]) -> tuple[str, bool]:
     """Resolve the opt-in viewport adapter to the delivery it really uses."""
     requested = step.get("adapter", "ui-pointer")
     if requested != "ui-by-viewport":
         return str(requested), False
-    if step.get("action") not in ("click", "click_role"):
+    if step.get("action") not in ("click", "click_role", "set_input_files"):
         raise Blocked(
-            "ui-by-viewport is only implemented for click and click_role steps; "
+            "ui-by-viewport is only implemented for click, click_role and "
+            "file-chooser steps; "
+            "nothing was fired")
+    if step.get("action") == "set_input_files" and not step.get("file_chooser"):
+        raise Blocked(
+            "ui-by-viewport set_input_files needs file_chooser: true; "
             "nothing was fired")
     size = getattr(page, "viewport_size", None) or {}
     width = size.get("width") if isinstance(size, dict) else None
@@ -4936,7 +5263,14 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         return record
 
     if kind == "ui":
-        return _ui_step(page, step, hub)
+        result = _ui_step(page, step, hub)
+        if step.get("action") == "set_input_files":
+            source = _input_file_path(step.get("value"), hub)
+            input_record = _input_file_record(step["value"], source, hub)
+            provenance.setdefault("input_files", []).append(input_record)
+            provenance.setdefault("fixture_hashes", {})[step["value"]] = input_record["sha256"]
+            result["input_file"] = input_record
+        return result
     if kind == "op":
         return _op_step(step, hub, provenance, variables=variables)
     if kind == "api":
@@ -5032,6 +5366,10 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         return record
     if kind == "cli":
         action = step.get("action")
+        if action == "create_repository_fixture":
+            return _create_repository_fixture_step(step, page, hub, provenance, variables)
+        if action == "ingest_coder_fixture":
+            return _ingest_coder_fixture_step(step, hub, provenance, variables)
         if action == "queue_meeting_intelligence":
             if hub is None or not hasattr(hub, "home") or not hasattr(hub, "db_path"):
                 raise Blocked(
@@ -5119,8 +5457,9 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
             raise Blocked(
                 f"cli command {(step.get('command') or action)!r} is not "
                 "implemented in this rig; the case is blocked, not claimed. The "
-                "implemented commands are actions 'restart_hub' and "
-                "'queue_meeting_intelligence'.")
+                "implemented commands are actions 'restart_hub', "
+                "'queue_meeting_intelligence', 'create_repository_fixture' and "
+                "'ingest_coder_fixture'.")
         if hub is None or not hasattr(hub, "restart"):
             raise Blocked("a restart_hub step needs the rig's own hub process")
         resolved_case = substitute(case or {}, variables)
@@ -5741,6 +6080,12 @@ def exercise(
         try:
             step_record = run_step(step, page, hub, provenance, case,
                                    variables=variables)
+            # Keep the first useful face even if the next lifecycle step
+            # blocks (for example, Close leaves a minimized window alive).
+            if step.get("capture_shot") and page is not None:
+                checkpoint = shots / f"setup-{len(steps):02d}.png"
+                page.screenshot(path=str(checkpoint))
+                step_record["shot"] = str(checkpoint)
             steps.append(step_record)
             recorder.set(setup=steps, provenance=provenance,
                          variables=dict(variables))
@@ -6480,6 +6825,13 @@ def run_case(
         # brief §7: say what product wiring this hub HAS and LACKS, so no
         # observation is read as if it came from the whole product.
         provenance["product_wiring"] = hub.wiring
+        provenance["tmux_isolation"] = {
+            "tmpdir": str(home),
+            "home": str(home),
+            "inherited_socket": False,
+            "inherited_pane": False,
+            "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+        }
         provenance["engine_replay_sha256"] = hub.engine_replay
         provenance["engine_provider_url"] = hub.engine_provider_url
         provenance["cli_runner_sha256"] = hub.cli_runner
@@ -6548,6 +6900,9 @@ def run_case(
                 recorder.set(provenance=provenance)
             recorder.set(hub_log=hub.lines[-40:])
             hub.stop()
+            provenance.setdefault("tmux_isolation", {"tmpdir": str(home)})
+            provenance["tmux_isolation"]["teardown_result"] = _teardown_hub_tmux(home)
+            recorder.set(provenance=provenance)
         if profile is not None:
             shutil.rmtree(profile, ignore_errors=True)
         shutil.rmtree(home, ignore_errors=True)

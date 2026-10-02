@@ -44,10 +44,10 @@ Nine paths are unwalked (`grounding/faces-surfaces.md:59`, `:219`; `grounding/fa
 ## Acceptance criteria
 
 - [ ] H-B0a and H-B0b merged first: `atlas-phase13-astra.json` and its count fence exist; the shared count excludes `atlas-phase13-*`; `test_philo_graph_atlas.py` passes.
-- [ ] Each of the nine paths has an atlas case in `docs/internal/philo/graph/atlas-phase13-astra.json` that validates against `docs/internal/philo/graph/atlas.schema.json` (`HOME=$(mktemp -d) uv run --extra dev pytest -q tests/unit/test_philo_graph_atlas.py`).
-- [ ] Each case ran through `scripts/graph_walk.py run`, one case per invocation, at 1440 and at 393, each in a fresh HOME; `provenance.db_path` is under that HOME.
+- [x] Each of the nine paths has an atlas case in `docs/internal/philo/graph/atlas-phase13-astra.json` that validates against `docs/internal/philo/graph/atlas.schema.json` (`HOME=$(mktemp -d) uv run --extra dev pytest -q tests/unit/test_philo_graph_atlas.py`).
+- [x] Each case ran through `scripts/graph_walk.py run`, one case per invocation, at 1440 and at 393, each in a fresh HOME; `provenance.db_path` is under that HOME.
 - [ ] Each case passes on main, or, where it finds a defect, it is red on main with the defect named and a home (story or BACKLOG) recorded. Red-before-green where the defect is in this phase's scope.
-- [ ] The 393 runs drive touch, not the mouse adapter (`grounding/structure.md:37` names the mouse adapter as not touch proof); if the rig has no touch adapter for a step, that is a named limit, not a pass.
+- [x] The 393 runs drive touch, not the mouse adapter (`grounding/structure.md:37` names the mouse adapter as not touch proof); if the rig has no touch adapter for a step, that is a named limit, not a pass.
 - [ ] Cases exist and pass on main **before** PHILO-13-07 merges. The gate is review evidence: this story's evidence file names each run directory, and B2's merge record cites this story's merged commit and `evidence-story-01.md`.
 
 ## Test plan
@@ -71,3 +71,5 @@ Grounding size: not sized there; nine cases at two widths. PROVISIONAL.
 
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+- 2026-10-01 — Astra baseline: [lane record](lane-01-astra.md), [18 runs](walks-01-astra.md), [findings](findings-01-astra.md). Main/merge and missing useful-face proofs remain open; story stays in-progress.

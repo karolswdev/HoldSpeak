@@ -1,0 +1,502 @@
+[
+  {
+    "source": ".tmp/graph-walk/philo-13-01/calendar-1440-r1/20261002T024040Z-case.p13.calendar.snapshot_window-astra-1440/blocked.png",
+    "archive": "assets/story-01-walks/calibration/calendar-1440-r1/20261002T024040Z-case.p13.calendar.snapshot_window-astra-1440/blocked.png",
+    "sha256": "a2fd512d1749b9e73ed691bd65bf295c479021bf61f2563daaf788c8f93b9141"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/calendar-1440-r1/20261002T024040Z-case.p13.calendar.snapshot_window-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/calibration/calendar-1440-r1/20261002T024040Z-case.p13.calendar.snapshot_window-astra-1440/observation.json",
+    "sha256": "bc47a906f0b609f0228384b97d8be3d723db9dd46f37f6629af2660c8c1af0e3"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/calendar-1440-r1/command.log",
+    "archive": "assets/story-01-walks/calibration/calendar-1440-r1/command.log",
+    "sha256": "eeb4e4aa022746261da8917c1defd7520338c1464af294652f8f92c3a64e5964"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/calendar-1440-r2/20261002T024211Z-case.p13.calendar.snapshot_window-astra-1440/blocked.png",
+    "archive": "assets/story-01-walks/final/calendar-1440-r2/20261002T024211Z-case.p13.calendar.snapshot_window-astra-1440/blocked.png",
+    "sha256": "fc7d7a452773d8870f74f8c9a03da12977e8873831fac5785c86d6057b303cfb"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/calendar-1440-r2/20261002T024211Z-case.p13.calendar.snapshot_window-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/final/calendar-1440-r2/20261002T024211Z-case.p13.calendar.snapshot_window-astra-1440/observation.json",
+    "sha256": "cd27e60d07df07fc57e734c8db25210b148669db7f549b44c0633cc6266d0ca2"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/calendar-1440-r2/command.log",
+    "archive": "assets/story-01-walks/final/calendar-1440-r2/command.log",
+    "sha256": "653f425e9f94384d844b54842e807225b36a8445216e2daefdf9a10910dfba63"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/calendar-393-r1/20261002T024248Z-case.p13.calendar.snapshot_window-astra-393/blocked.png",
+    "archive": "assets/story-01-walks/final/calendar-393-r1/20261002T024248Z-case.p13.calendar.snapshot_window-astra-393/blocked.png",
+    "sha256": "d3b2b189af6c927f7b8dd88ed979192275e572762a3f9715ae05584c596f3361"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/calendar-393-r1/20261002T024248Z-case.p13.calendar.snapshot_window-astra-393/observation.json",
+    "archive": "assets/story-01-walks/final/calendar-393-r1/20261002T024248Z-case.p13.calendar.snapshot_window-astra-393/observation.json",
+    "sha256": "59bc000e09ba59a99c92300665e00df9a19f41fd724bab7e1ecbd691682d0601"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/calendar-393-r1/command.log",
+    "archive": "assets/story-01-walks/final/calendar-393-r1/command.log",
+    "sha256": "23d1302401dd6741c0278141d7b83c3f26c900e17ad53ebd6aafab9bf195ed7a"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r1/20261002T022207Z-case.p13.chain.pullout-astra-1440/blocked.png",
+    "archive": "assets/story-01-walks/calibration/chain-1440-r1/20261002T022207Z-case.p13.chain.pullout-astra-1440/blocked.png",
+    "sha256": "7b310b47c123ec96e2879354e78b0c0d8d576e56e2564d4b7de5b008137264bf"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r1/20261002T022207Z-case.p13.chain.pullout-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/calibration/chain-1440-r1/20261002T022207Z-case.p13.chain.pullout-astra-1440/observation.json",
+    "sha256": "b65299dc64380cb9492d7c3862f44fb73650e1c7d6b562f7ed6850023ba4d986"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r1/command.log",
+    "archive": "assets/story-01-walks/calibration/chain-1440-r1/command.log",
+    "sha256": "62bcc5c07091098fda1d564080d460a574acd9b922e860dacc7662ccf71d69ec"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r2/20261002T022246Z-case.p13.chain.pullout-astra-1440/blocked.png",
+    "archive": "assets/story-01-walks/calibration/chain-1440-r2/20261002T022246Z-case.p13.chain.pullout-astra-1440/blocked.png",
+    "sha256": "c01f2491b378a829d1506b2c61dc97cabfa78ad70096aca8d546b8a1a4c2440a"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r2/20261002T022246Z-case.p13.chain.pullout-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/calibration/chain-1440-r2/20261002T022246Z-case.p13.chain.pullout-astra-1440/observation.json",
+    "sha256": "67231b0d9e191c11f62fcf323d195336b091d583d7120990697545257b2cfc12"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r2/command.log",
+    "archive": "assets/story-01-walks/calibration/chain-1440-r2/command.log",
+    "sha256": "d4c31402ec797b46440c2e9bb4f95f275b0dc11c04a589d18ef14c43c01b57ca"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r3/20261002T022349Z-case.p13.chain.pullout-astra-1440/blocked.png",
+    "archive": "assets/story-01-walks/calibration/chain-1440-r3/20261002T022349Z-case.p13.chain.pullout-astra-1440/blocked.png",
+    "sha256": "03ac1033c9571637dee013cf95587ae89a7986030e1fe6cdabe4b214e9c788b5"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r3/20261002T022349Z-case.p13.chain.pullout-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/calibration/chain-1440-r3/20261002T022349Z-case.p13.chain.pullout-astra-1440/observation.json",
+    "sha256": "ce43f3ecc31f05e405c1e59e533c57ba53adc68a8a25c6946e158a977fdcf7fa"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r3/command.log",
+    "archive": "assets/story-01-walks/calibration/chain-1440-r3/command.log",
+    "sha256": "a888c1a61995931055880ccc9eeaf29213dc562b0a1411cbbf54668987d3f3e1"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r4/20261002T022602Z-case.p13.chain.pullout-astra-1440/blocked.png",
+    "archive": "assets/story-01-walks/final/chain-1440-r4/20261002T022602Z-case.p13.chain.pullout-astra-1440/blocked.png",
+    "sha256": "f8d2d5e502c12d2464213dc162067adc4e6705f93d383911d3c50769aeee7960"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r4/20261002T022602Z-case.p13.chain.pullout-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/final/chain-1440-r4/20261002T022602Z-case.p13.chain.pullout-astra-1440/observation.json",
+    "sha256": "a6e976cb974ca08d090ed72537690f093cc6e4ce1828538e2dc57fc37d6c879c"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r4/20261002T022602Z-case.p13.chain.pullout-astra-1440/setup-10.png",
+    "archive": "assets/story-01-walks/final/chain-1440-r4/20261002T022602Z-case.p13.chain.pullout-astra-1440/setup-10.png",
+    "sha256": "0908f2c196f033f27a85140cd72449fad879b40c60722dee65452ebf209b5115"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-1440-r4/command.log",
+    "archive": "assets/story-01-walks/final/chain-1440-r4/command.log",
+    "sha256": "0810fb7cc227648ebf5c73cc175bd48e1cc8f616cec95bda9c042b56bda57a47"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-393-r1/20261002T022435Z-case.p13.chain.pullout-astra-393/blocked.png",
+    "archive": "assets/story-01-walks/calibration/chain-393-r1/20261002T022435Z-case.p13.chain.pullout-astra-393/blocked.png",
+    "sha256": "aac2c306798beef43763b171859fb6454604c15c71a429889328c9872d9cd087"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-393-r1/20261002T022435Z-case.p13.chain.pullout-astra-393/observation.json",
+    "archive": "assets/story-01-walks/calibration/chain-393-r1/20261002T022435Z-case.p13.chain.pullout-astra-393/observation.json",
+    "sha256": "c4dc4282580b9c0173455470366278336263823e5232f2f1c067483a42881d2b"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-393-r1/command.log",
+    "archive": "assets/story-01-walks/calibration/chain-393-r1/command.log",
+    "sha256": "dd3f5e1c84dfaaad74460ede00b23ca656cf69f52940ff19761db38a1d3210cb"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-393-r2/20261002T022651Z-case.p13.chain.pullout-astra-393/blocked.png",
+    "archive": "assets/story-01-walks/final/chain-393-r2/20261002T022651Z-case.p13.chain.pullout-astra-393/blocked.png",
+    "sha256": "20005eb92a4ed95c2e1147538bb8fdb91928330976b362daf0aa25f4c50e222e"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-393-r2/20261002T022651Z-case.p13.chain.pullout-astra-393/observation.json",
+    "archive": "assets/story-01-walks/final/chain-393-r2/20261002T022651Z-case.p13.chain.pullout-astra-393/observation.json",
+    "sha256": "f10eced277b4aa740536b1654766c2598a8c2856abe1d01a7a9b0f6dfa88e8d3"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-393-r2/20261002T022651Z-case.p13.chain.pullout-astra-393/setup-10.png",
+    "archive": "assets/story-01-walks/final/chain-393-r2/20261002T022651Z-case.p13.chain.pullout-astra-393/setup-10.png",
+    "sha256": "238a0e4db8afd10709dac1e8b30a05bbf3fb35c44f2f78aadc2c9bd9d889219b"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/chain-393-r2/command.log",
+    "archive": "assets/story-01-walks/final/chain-393-r2/command.log",
+    "sha256": "71097bf243a64ec5c99481d18d570545afa339d478e1383f23f5b112208ad1a6"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/coder-1440-r1/20261002T023915Z-case.p13.coder.pullout-astra-1440/blocked.png",
+    "archive": "assets/story-01-walks/final/coder-1440-r1/20261002T023915Z-case.p13.coder.pullout-astra-1440/blocked.png",
+    "sha256": "2bfe29c4255de07d39623fb17e07ee5f47151f50c7353fb440118125c823eed6"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/coder-1440-r1/20261002T023915Z-case.p13.coder.pullout-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/final/coder-1440-r1/20261002T023915Z-case.p13.coder.pullout-astra-1440/observation.json",
+    "sha256": "1b62dd390b756fbf8f085e801909fab4444b2fec38c7204377bd8a4dc48cb99e"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/coder-1440-r1/20261002T023915Z-case.p13.coder.pullout-astra-1440/setup-11.png",
+    "archive": "assets/story-01-walks/final/coder-1440-r1/20261002T023915Z-case.p13.coder.pullout-astra-1440/setup-11.png",
+    "sha256": "5bc6f1bb61c523f5c5bf245b6126be827fee6634dede46ceb2835ac5fbad332f"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/coder-1440-r1/command.log",
+    "archive": "assets/story-01-walks/final/coder-1440-r1/command.log",
+    "sha256": "4ebcb97b5dc28a1475bbfd4baa8bdb1cd037ae0b937692a9c49f62a83fc914cb"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/coder-393-r1/20261002T024004Z-case.p13.coder.pullout-astra-393/blocked.png",
+    "archive": "assets/story-01-walks/final/coder-393-r1/20261002T024004Z-case.p13.coder.pullout-astra-393/blocked.png",
+    "sha256": "7b043aaa08e42091c31c1aa438d3da64a61294d161e3ea02aeb85d3c00e8169b"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/coder-393-r1/20261002T024004Z-case.p13.coder.pullout-astra-393/observation.json",
+    "archive": "assets/story-01-walks/final/coder-393-r1/20261002T024004Z-case.p13.coder.pullout-astra-393/observation.json",
+    "sha256": "2f04ce71d53565bdf6483a928e9c0259dc8c888661d21961bcfaf8f12654048c"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/coder-393-r1/20261002T024004Z-case.p13.coder.pullout-astra-393/setup-11.png",
+    "archive": "assets/story-01-walks/final/coder-393-r1/20261002T024004Z-case.p13.coder.pullout-astra-393/setup-11.png",
+    "sha256": "cddd92570914e022b5e04fa0261b2c0d354b075f4e55e99aea2efe8b3fa3536a"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/coder-393-r1/command.log",
+    "archive": "assets/story-01-walks/final/coder-393-r1/command.log",
+    "sha256": "dbdc59f62cb1e33f2818a9b224caf82bf26d9a2b1c1327485b84f7e1ee7faed6"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/dossier-1440-r1/20261002T023709Z-case.p13.delivery.dossier_window-astra-1440/after.png",
+    "archive": "assets/story-01-walks/final/dossier-1440-r1/20261002T023709Z-case.p13.delivery.dossier_window-astra-1440/after.png",
+    "sha256": "8af58c11243f7308d954243d8284aee37d265a5e1e2efe63063855bdee24f731"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/dossier-1440-r1/20261002T023709Z-case.p13.delivery.dossier_window-astra-1440/before.png",
+    "archive": "assets/story-01-walks/final/dossier-1440-r1/20261002T023709Z-case.p13.delivery.dossier_window-astra-1440/before.png",
+    "sha256": "5b543d4e640997e02c308f449ff2dc796cefa9121ba711db97b554aba4cf9705"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/dossier-1440-r1/20261002T023709Z-case.p13.delivery.dossier_window-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/final/dossier-1440-r1/20261002T023709Z-case.p13.delivery.dossier_window-astra-1440/observation.json",
+    "sha256": "4df2849b78183dc01a6052cd5a1b8c8e280f873cd2090d84c1cb897606c14b9d"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/dossier-1440-r1/20261002T023709Z-case.p13.delivery.dossier_window-astra-1440/setup-09.png",
+    "archive": "assets/story-01-walks/final/dossier-1440-r1/20261002T023709Z-case.p13.delivery.dossier_window-astra-1440/setup-09.png",
+    "sha256": "dfb0a88c33cdb6363115d88e90731121adf693e6bf4a94521c3baa63e5d2c133"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/dossier-1440-r1/command.log",
+    "archive": "assets/story-01-walks/final/dossier-1440-r1/command.log",
+    "sha256": "1cb5a2763b2a4d8f756510914152399b98d1ca2e789fcfa44093765c7e966096"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/dossier-393-r1/20261002T023743Z-case.p13.delivery.dossier_window-astra-393/after.png",
+    "archive": "assets/story-01-walks/final/dossier-393-r1/20261002T023743Z-case.p13.delivery.dossier_window-astra-393/after.png",
+    "sha256": "3f0930b8a6d87b2e6a948cbcf7d269a5786a4c0d5e476554b067d149555c62df"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/dossier-393-r1/20261002T023743Z-case.p13.delivery.dossier_window-astra-393/before.png",
+    "archive": "assets/story-01-walks/final/dossier-393-r1/20261002T023743Z-case.p13.delivery.dossier_window-astra-393/before.png",
+    "sha256": "6f948e3908eb95d50a5295b2f91c3c4d9322be2bc0b40a505fd741a7fa353001"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/dossier-393-r1/20261002T023743Z-case.p13.delivery.dossier_window-astra-393/observation.json",
+    "archive": "assets/story-01-walks/final/dossier-393-r1/20261002T023743Z-case.p13.delivery.dossier_window-astra-393/observation.json",
+    "sha256": "38d9b6874661b9c91ad1af87b89644eee032616a1a05693579e33479cb4990db"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/dossier-393-r1/20261002T023743Z-case.p13.delivery.dossier_window-astra-393/setup-09.png",
+    "archive": "assets/story-01-walks/final/dossier-393-r1/20261002T023743Z-case.p13.delivery.dossier_window-astra-393/setup-09.png",
+    "sha256": "1c30ca4bd87a72907ec1aa8e76bb70116ded2208138de8bb81339303f14d94f4"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/dossier-393-r1/command.log",
+    "archive": "assets/story-01-walks/final/dossier-393-r1/command.log",
+    "sha256": "61e7507e87588de83f94157969c0c6f5c691fd781276a812165862c9fd8f9cd0"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/info-1440-r1/20261002T025101Z-case.p13.info.window-astra-1440/blocked.png",
+    "archive": "assets/story-01-walks/final/info-1440-r1/20261002T025101Z-case.p13.info.window-astra-1440/blocked.png",
+    "sha256": "46a616fa8664e05fad3aca9316bddf5f7f9c1fc7e054b89fbc2f42efd18ba3e8"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/info-1440-r1/20261002T025101Z-case.p13.info.window-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/final/info-1440-r1/20261002T025101Z-case.p13.info.window-astra-1440/observation.json",
+    "sha256": "ddf32422f6d13a1bd890ef64a3c53be377087422e268b5c6a562b59be2ccebde"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/info-1440-r1/command.log",
+    "archive": "assets/story-01-walks/final/info-1440-r1/command.log",
+    "sha256": "c5423ddd37d1e2deb93d3ad102e1eb5eeace0f634e5f2409474444dec2812501"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/info-393-r1/20261002T025156Z-case.p13.info.window-astra-393/blocked.png",
+    "archive": "assets/story-01-walks/final/info-393-r1/20261002T025156Z-case.p13.info.window-astra-393/blocked.png",
+    "sha256": "c5ef356393791070d5c7a83e491126329c6d0ce286fa8bfbccb9cbdb5a11cac7"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/info-393-r1/20261002T025156Z-case.p13.info.window-astra-393/observation.json",
+    "archive": "assets/story-01-walks/final/info-393-r1/20261002T025156Z-case.p13.info.window-astra-393/observation.json",
+    "sha256": "fa4e48d007e30ee465b645885f4b886c6c210dbe5fb8acfba26e271cfdbb1969"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/info-393-r1/command.log",
+    "archive": "assets/story-01-walks/final/info-393-r1/command.log",
+    "sha256": "08a1a71b848429531ce5762594d62a197e98fe33cc6ab5d19cbe6709782db636"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r1/20261002T023138Z-case.p13.repository.window-astra-1440/after.png",
+    "archive": "assets/story-01-walks/calibration/repository-1440-r1/20261002T023138Z-case.p13.repository.window-astra-1440/after.png",
+    "sha256": "b8ffad27c4cf8910f65eae6b8f7844f9affd8f0b67a9ae61c99008a161fdae80"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r1/20261002T023138Z-case.p13.repository.window-astra-1440/before.png",
+    "archive": "assets/story-01-walks/calibration/repository-1440-r1/20261002T023138Z-case.p13.repository.window-astra-1440/before.png",
+    "sha256": "3e373f2cac874fbd2eb532e916d53b8911b5da676e40fa000fbab2bc11928dc2"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r1/20261002T023138Z-case.p13.repository.window-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/calibration/repository-1440-r1/20261002T023138Z-case.p13.repository.window-astra-1440/observation.json",
+    "sha256": "9205cd558d0e9d1a3ea29166731ce6e2c85b9001e1b74870444a3dd42db1a785"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r1/20261002T023138Z-case.p13.repository.window-astra-1440/setup-11.png",
+    "archive": "assets/story-01-walks/calibration/repository-1440-r1/20261002T023138Z-case.p13.repository.window-astra-1440/setup-11.png",
+    "sha256": "feb3349293574b77c7cad7a1931c8b216de11e47a3ab586956343d8a6b400429"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r1/command.log",
+    "archive": "assets/story-01-walks/calibration/repository-1440-r1/command.log",
+    "sha256": "c56b59ea30da807144e18dead87d00412167fa77f2d1d3c693d6c0864f2be3fe"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r2/20261002T023257Z-case.p13.repository.window-astra-1440/after.png",
+    "archive": "assets/story-01-walks/calibration/repository-1440-r2/20261002T023257Z-case.p13.repository.window-astra-1440/after.png",
+    "sha256": "e19c6cb6bdee00a331af9e606b5101f85d81dcf7ec3f194526bb0363ef9384ac"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r2/20261002T023257Z-case.p13.repository.window-astra-1440/before.png",
+    "archive": "assets/story-01-walks/calibration/repository-1440-r2/20261002T023257Z-case.p13.repository.window-astra-1440/before.png",
+    "sha256": "5ca8e44f8db9712be8053c697df2c3ac5c32025f56422950213233e7a01c57e4"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r2/20261002T023257Z-case.p13.repository.window-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/calibration/repository-1440-r2/20261002T023257Z-case.p13.repository.window-astra-1440/observation.json",
+    "sha256": "0873afa7f7f69b1037875e523b07fa7d6ae1e45d7b6d2a731c36133bb0ba29f6"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r2/20261002T023257Z-case.p13.repository.window-astra-1440/setup-11.png",
+    "archive": "assets/story-01-walks/calibration/repository-1440-r2/20261002T023257Z-case.p13.repository.window-astra-1440/setup-11.png",
+    "sha256": "927d8d15ba7347e6ad4f7e3238e76fb9c9f3fc1c0c89f4e848f21c2c542d0f4f"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r2/command.log",
+    "archive": "assets/story-01-walks/calibration/repository-1440-r2/command.log",
+    "sha256": "8b9766eb37241cef72685aab5bc65741f98f3f2b403e9fff1242ae66674f538d"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r3/20261002T023553Z-case.p13.repository.window-astra-1440/after.png",
+    "archive": "assets/story-01-walks/final/repository-1440-r3/20261002T023553Z-case.p13.repository.window-astra-1440/after.png",
+    "sha256": "20f03271eb018a048a1db72dbc91baaa78275c90644931c8bbf167d964134216"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r3/20261002T023553Z-case.p13.repository.window-astra-1440/before.png",
+    "archive": "assets/story-01-walks/final/repository-1440-r3/20261002T023553Z-case.p13.repository.window-astra-1440/before.png",
+    "sha256": "fe909ea386ea5b77dd7693145c7d93def8bb4e1f4aca505450c0742a155fd2f7"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r3/20261002T023553Z-case.p13.repository.window-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/final/repository-1440-r3/20261002T023553Z-case.p13.repository.window-astra-1440/observation.json",
+    "sha256": "a760baa16cd2ee29658ecd919d74622ddddd0e31073614a6bdf7b71d67e80707"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r3/20261002T023553Z-case.p13.repository.window-astra-1440/setup-11.png",
+    "archive": "assets/story-01-walks/final/repository-1440-r3/20261002T023553Z-case.p13.repository.window-astra-1440/setup-11.png",
+    "sha256": "2d7d295dceb45f8d16a3f0471c60c04a168b0fdf75e319fdf0b57c26ca1a2dfc"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-1440-r3/command.log",
+    "archive": "assets/story-01-walks/final/repository-1440-r3/command.log",
+    "sha256": "a67e61a14ab60fbfb8e0fc0d3705e25c4effd0d7a1908f8414a1e93c03f6e8ef"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-393-r1/20261002T023406Z-case.p13.repository.window-astra-393/after.png",
+    "archive": "assets/story-01-walks/calibration/repository-393-r1/20261002T023406Z-case.p13.repository.window-astra-393/after.png",
+    "sha256": "f10bb9c2afb0899b46b8c29523f31de2a7ea73ea94785e58e7d2fa9d04d370db"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-393-r1/20261002T023406Z-case.p13.repository.window-astra-393/before.png",
+    "archive": "assets/story-01-walks/calibration/repository-393-r1/20261002T023406Z-case.p13.repository.window-astra-393/before.png",
+    "sha256": "323a0449b48a04aec88101279efabd230d11d006cce947d829ef21cbd60152f6"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-393-r1/20261002T023406Z-case.p13.repository.window-astra-393/observation.json",
+    "archive": "assets/story-01-walks/calibration/repository-393-r1/20261002T023406Z-case.p13.repository.window-astra-393/observation.json",
+    "sha256": "d6d8276dc537b81df21a830ee3d8ab8b945796043bd503edaa65dab883a1abab"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-393-r1/20261002T023406Z-case.p13.repository.window-astra-393/setup-11.png",
+    "archive": "assets/story-01-walks/calibration/repository-393-r1/20261002T023406Z-case.p13.repository.window-astra-393/setup-11.png",
+    "sha256": "f10bb9c2afb0899b46b8c29523f31de2a7ea73ea94785e58e7d2fa9d04d370db"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-393-r1/command.log",
+    "archive": "assets/story-01-walks/calibration/repository-393-r1/command.log",
+    "sha256": "5dd6086065c216ed1b44467e41205333a9b576e1cd383d760fb06b3c63f0331c"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-393-r2/20261002T023517Z-case.p13.repository.window-astra-393/after.png",
+    "archive": "assets/story-01-walks/final/repository-393-r2/20261002T023517Z-case.p13.repository.window-astra-393/after.png",
+    "sha256": "cb8620ff657b68d1939f72d8697066c3495357616f6f62fdef9e0b9bbf1a3a72"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-393-r2/20261002T023517Z-case.p13.repository.window-astra-393/before.png",
+    "archive": "assets/story-01-walks/final/repository-393-r2/20261002T023517Z-case.p13.repository.window-astra-393/before.png",
+    "sha256": "4c0fb7e7653962087402d2243fad885bf62177266582db419226a7bf0e2f4c9b"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-393-r2/20261002T023517Z-case.p13.repository.window-astra-393/observation.json",
+    "archive": "assets/story-01-walks/final/repository-393-r2/20261002T023517Z-case.p13.repository.window-astra-393/observation.json",
+    "sha256": "ec19a5e08e6953779beb17331cc69c157aec2b145c7a956014f83a724b6d55ac"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-393-r2/20261002T023517Z-case.p13.repository.window-astra-393/setup-11.png",
+    "archive": "assets/story-01-walks/final/repository-393-r2/20261002T023517Z-case.p13.repository.window-astra-393/setup-11.png",
+    "sha256": "cb8620ff657b68d1939f72d8697066c3495357616f6f62fdef9e0b9bbf1a3a72"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/repository-393-r2/command.log",
+    "archive": "assets/story-01-walks/final/repository-393-r2/command.log",
+    "sha256": "f5f97f4c8eaef09371899b8e8e2e45b65fb7a0ae28b8abb7ade0c9d67860f992"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/roadmap-1440-r1/20261002T023023Z-case.p13.roadmap.window-astra-1440/blocked.png",
+    "archive": "assets/story-01-walks/final/roadmap-1440-r1/20261002T023023Z-case.p13.roadmap.window-astra-1440/blocked.png",
+    "sha256": "07aaf252a049768752cc95278eec65bbd7218ff91b5c656aef583766d226852e"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/roadmap-1440-r1/20261002T023023Z-case.p13.roadmap.window-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/final/roadmap-1440-r1/20261002T023023Z-case.p13.roadmap.window-astra-1440/observation.json",
+    "sha256": "7fdd944c3314725e285cbbddbe427a422a202303061bebb7403ffdf3c4c462aa"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/roadmap-1440-r1/command.log",
+    "archive": "assets/story-01-walks/final/roadmap-1440-r1/command.log",
+    "sha256": "079f2cfb5655f827410e509633430fd8f0e92d1768766c10d6824e862d637a26"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/roadmap-393-r1/20261002T023104Z-case.p13.roadmap.window-astra-393/blocked.png",
+    "archive": "assets/story-01-walks/final/roadmap-393-r1/20261002T023104Z-case.p13.roadmap.window-astra-393/blocked.png",
+    "sha256": "897a6cb236532cb879aa3af01e19261fd47088b60d10cfaecd58b64621c6cdd1"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/roadmap-393-r1/20261002T023104Z-case.p13.roadmap.window-astra-393/observation.json",
+    "archive": "assets/story-01-walks/final/roadmap-393-r1/20261002T023104Z-case.p13.roadmap.window-astra-393/observation.json",
+    "sha256": "9070237ac4dad535033dbb6903ef1546341602d6d2d60463ac5877e8edf8ca6e"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/roadmap-393-r1/command.log",
+    "archive": "assets/story-01-walks/final/roadmap-393-r1/command.log",
+    "sha256": "b956c069a4624ec3dd2c1dac841b44b6dfad3803941155ef2ea82f5a8c6fcbe8"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/terminal-1440-r1/20261002T024329Z-case.p13.delivery.terminal_window-astra-1440/after.png",
+    "archive": "assets/story-01-walks/final/terminal-1440-r1/20261002T024329Z-case.p13.delivery.terminal_window-astra-1440/after.png",
+    "sha256": "93f78f5dc4df4548097f16d22e45966568b45ae518ecc17cd6323d35c2124863"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/terminal-1440-r1/20261002T024329Z-case.p13.delivery.terminal_window-astra-1440/before.png",
+    "archive": "assets/story-01-walks/final/terminal-1440-r1/20261002T024329Z-case.p13.delivery.terminal_window-astra-1440/before.png",
+    "sha256": "ceaadfd8ab42054b1819fa4c654374c9432fa09b5b0657e68d5af3483d4ea551"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/terminal-1440-r1/20261002T024329Z-case.p13.delivery.terminal_window-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/final/terminal-1440-r1/20261002T024329Z-case.p13.delivery.terminal_window-astra-1440/observation.json",
+    "sha256": "6a5623085bf01f31bee11a848c906d80ee7734b92741ac5ae70dae8239508fae"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/terminal-1440-r1/20261002T024329Z-case.p13.delivery.terminal_window-astra-1440/setup-10.png",
+    "archive": "assets/story-01-walks/final/terminal-1440-r1/20261002T024329Z-case.p13.delivery.terminal_window-astra-1440/setup-10.png",
+    "sha256": "85545c026f83334a697602d06378bcdf02f16e2b189028eabcceda47d6442fa9"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/terminal-1440-r1/command.log",
+    "archive": "assets/story-01-walks/final/terminal-1440-r1/command.log",
+    "sha256": "96ca0979a809f39f754ad1cc5a89c6dac8621f5662ea113e12b59fa5a02b056b"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/terminal-393-r1/20261002T024412Z-case.p13.delivery.terminal_window-astra-393/after.png",
+    "archive": "assets/story-01-walks/final/terminal-393-r1/20261002T024412Z-case.p13.delivery.terminal_window-astra-393/after.png",
+    "sha256": "440418efb6756d6cb5dc4b1dbbedb4d8d5d4dba94740cae592a732fc0032a1c5"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/terminal-393-r1/20261002T024412Z-case.p13.delivery.terminal_window-astra-393/before.png",
+    "archive": "assets/story-01-walks/final/terminal-393-r1/20261002T024412Z-case.p13.delivery.terminal_window-astra-393/before.png",
+    "sha256": "87fc5be464a1bdb4a2c407e2e48e359926ab14da0ae5e169becf5331747db948"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/terminal-393-r1/20261002T024412Z-case.p13.delivery.terminal_window-astra-393/observation.json",
+    "archive": "assets/story-01-walks/final/terminal-393-r1/20261002T024412Z-case.p13.delivery.terminal_window-astra-393/observation.json",
+    "sha256": "2f033844030c26e091ab8ba68418a67b978b440e93c476b01f04ff47e1882b58"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/terminal-393-r1/20261002T024412Z-case.p13.delivery.terminal_window-astra-393/setup-10.png",
+    "archive": "assets/story-01-walks/final/terminal-393-r1/20261002T024412Z-case.p13.delivery.terminal_window-astra-393/setup-10.png",
+    "sha256": "7604da65d8ff57b3f121e87c02073cc4e7be0128ab48e7c69540db8f5b69d04d"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/terminal-393-r1/command.log",
+    "archive": "assets/story-01-walks/final/terminal-393-r1/command.log",
+    "sha256": "a3793a89962cbe3bb908b8d84efebc482948332d13e16274a936028c97f8e734"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/zone-1440-r1/20261002T024858Z-case.p13.directory.zone-astra-1440/blocked.png",
+    "archive": "assets/story-01-walks/final/zone-1440-r1/20261002T024858Z-case.p13.directory.zone-astra-1440/blocked.png",
+    "sha256": "d4f942bfe9e480e6e9bc4ef65026a4dab31d04a9148e7ab3a297420b7835a36c"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/zone-1440-r1/20261002T024858Z-case.p13.directory.zone-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/final/zone-1440-r1/20261002T024858Z-case.p13.directory.zone-astra-1440/observation.json",
+    "sha256": "3190052eadd652aa639fd5b39d4d730fe0a486aae82197da157e3bcdbe390e8c"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/zone-1440-r1/command.log",
+    "archive": "assets/story-01-walks/final/zone-1440-r1/command.log",
+    "sha256": "ca8455541fc4c97bda4581063b321c22e016ff53ae8c147a636b7957cc3cd997"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/zone-393-r1/20261002T025027Z-case.p13.directory.zone-astra-393/blocked.png",
+    "archive": "assets/story-01-walks/final/zone-393-r1/20261002T025027Z-case.p13.directory.zone-astra-393/blocked.png",
+    "sha256": "b56ccfc6f0a2a1baab48327aa3c6eadd159b127b77ed14ec85382aa47a72e447"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/zone-393-r1/20261002T025027Z-case.p13.directory.zone-astra-393/observation.json",
+    "archive": "assets/story-01-walks/final/zone-393-r1/20261002T025027Z-case.p13.directory.zone-astra-393/observation.json",
+    "sha256": "4eddc201b87ce5184dc0c445230279f1994b0ff545142145f246771ac5985720"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-01/zone-393-r1/command.log",
+    "archive": "assets/story-01-walks/final/zone-393-r1/command.log",
+    "sha256": "8866d899aa733c67e6933db6ba2e7b6488d96ff81532300bfeca713ce184805a"
+  }
+]

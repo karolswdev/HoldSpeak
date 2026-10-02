@@ -246,6 +246,7 @@ D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
 
+<<<<<<< HEAD
 2026-10-02: **The Workbench look RATIFIED by the owner** ("Ratify, build it"; Steel; Park one press; Capture as a fourth Chair window) after Astra's canvas checks r1–r5 (r5 RATIFY). Wave C faces may now be built to `design/workbench-look.md`; each merge record cites the ratification (story 11).
 
 2026-10-01: **PHILO-13-11 (C1) canvases drawn, round two** (`assets/story-11-canvas/`, `design/workbench-look.md`): 29 boards at 1440 and 393 on the real product with a harness shim; direction **Workbench Steel** recommended over Honest 2.0; the fixed Desk drawn (one needs-you number, narrower counts named). In-progress: Astra's check, then the owner's ratification.
@@ -255,6 +256,9 @@ D1 runs only on a later word from the owner (fork 4: "Later").
 2026-10-02: #727, #728 and #726 counsel conditions are paid on their r2 draft branches and recorded in the ownership/handoff map above. Astra's H-A3 backend handoff is in progress on `feat/philo-13-a3h-astra`: `/api/meetings` list/search `has_summary` comes from the same latest persisted summary as detail and the face rail remains A3-W's. The five-column status index keeps Stories 01–04 in-progress. H-A3 stays in-progress until A3-W also merges.
 
 2026-10-01: Astra started PHILO-13-01 in `wt-philo-13-astra` from `27b915538`. H-B0a/b are implemented and verified: 136 focused tests, the shared semantic mutant red/green, and an actual Zone operation case pass. The nine face walks remain pending. Work is DRAFT — UNCHECKED — awaiting Muad'Dib. The dispatch limits this lane to focused tests and actual cases; no full-suite run. The six-column story table was normalized to the gate's five-column format, with proposal IDs retained in the Story labels. No acceptance or ownership changed.
+=======
+2026-10-01: Astra's B0 baseline is DRAFT — UNCHECKED — awaiting Muad'Dib. H-B0a/b are in preparatory commit `b870df2d`. All nine actual atlas cases ran at 1440 and 393: 3 pass, 3 fail, 12 blocked; 151 focused tests pass. [Lane record](lane-01-astra.md), [run index](walks-01-astra.md), [findings and homes](findings-01-astra.md). Useful-face/input limits and verification on main remain outstanding. Story 01 remains in-progress; B2 is held. Canonical closing evidence is pending the honest done flip and Muad'Dib's check; raw DW captures and byte-identical run records ship under assets. No product face was changed, no full suite ran, and no criterion was amended.
+>>>>>>> c7073f9ca (test(philo-13): record nine-path B0 baseline and unresolved face findings)
 
 2026-10-01, round two: Astra's check r1 DO-NOT-RATIFY paid on Muad'Dib's rulings (table under "Round two"). Next: Astra's check of r2; then the owner's ratification.
 
