@@ -352,6 +352,24 @@ def _assert_clean(page: Any, errors: list[str]) -> None:
     )
 
 
+# ── pick_wing: choose a window face, strip or strip menu ──
+
+def pick_wing(page: Any, label: str) -> None:
+    """Pick a window face by its label.
+
+    PHILO-13-11 (C1, §3a; owner-ratified 2026-10-02): at 393 a wing strip
+    that does not fit the head's one 44 px row folds into ONE strip menu
+    Button (``.surface-strip-menu``, the current face + ▾); the face is then
+    a checked row of its menu. A strip that fits stays tabs.
+    """
+    strip = page.locator(".desk-wings .surface-strip-menu")
+    if strip.count():
+        strip.first.click()
+        page.get_by_role("menuitemcheckbox", name=label).click()
+    else:
+        page.get_by_role("tab", name=label).click()
+
+
 # ── _normal_chair: cross the First Sentence gate ──
 
 def _normal_chair(page: Any) -> None:

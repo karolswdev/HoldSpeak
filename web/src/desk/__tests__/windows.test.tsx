@@ -36,15 +36,15 @@ function Host({ open = true, onClose = () => {} }) {
 }
 
 describe("DeskWindowFrame (the one chrome)", () => {
-  it("hosts arbitrary children under one head with the three verbs", () => {
+  it("hosts arbitrary children under one head with the Workbench gadget set (PHILO-13-11)", () => {
     render(<Host />);
     expect(screen.getByText("window content")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Test window" })).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Minimize Test window" }),
+      screen.getByRole("button", { name: "Iconify Test window" }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Maximize Test window" }),
+      screen.getByRole("button", { name: "Zoom Test window" }),
     ).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Close Test window" }),
@@ -66,7 +66,7 @@ describe("DeskWindowFrame (the one chrome)", () => {
       </>,
     );
     fireEvent.click(
-      screen.getByRole("button", { name: "Minimize Test window" }),
+      screen.getByRole("button", { name: "Iconify Test window" }),
     );
     expect(useDesk.getState().panelMin).toEqual(["t1"]);
     // display:none removes it from the a11y tree; the mount itself parks.
@@ -95,19 +95,22 @@ describe("DeskWindowFrame (the one chrome)", () => {
         <p>heavy content</p>
       </DeskWindowFrame>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Minimize Heavy" }));
+    fireEvent.click(screen.getByRole("button", { name: "Iconify Heavy" }));
     expect(screen.queryByText("heavy content")).toBeNull();
   });
 
   it("maximize toggles the full-stage form and restore returns the rect", () => {
     render(<Host />);
     fireEvent.click(
-      screen.getByRole("button", { name: "Maximize Test window" }),
+      screen.getByRole("button", { name: "Zoom Test window" }),
     );
     expect(useDesk.getState().panelMax).toEqual(["t1"]);
     const shell = screen.getByRole("region", { name: "Test window" });
     expect(shell.className).toContain("is-max");
-    fireEvent.click(screen.getByRole("button", { name: "Restore Test window" }));
+    // PHILO-13-11: zoom is one gadget that toggles; it reads pressed while zoomed.
+    const zoom = screen.getByRole("button", { name: "Zoom Test window" });
+    expect(zoom.getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(zoom);
     expect(useDesk.getState().panelMax).toEqual([]);
     expect(shell.className).not.toContain("is-max");
   });

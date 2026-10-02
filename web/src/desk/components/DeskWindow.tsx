@@ -40,16 +40,17 @@ import {
 import {
   chipEls,
   shellEls,
-  windowRegistry,
   registrySnapshot,
   announceWindow,
   retractWindow,
   useOpenWindows,
+  useFrontWindowId,
   openWindowCount,
   closeFrontWindow,
   minimizeFrontWindow,
   focusOrRestoreApp,
 } from "./window/windowRegistry";
+import { GadgetGlyph } from "./window/GadgetGlyph";
 import {
   type DockLauncher,
   announceLauncher,
@@ -66,7 +67,6 @@ import {
   maximizeFrontWindow,
   snapFrontWindow,
 } from "./window/windowCommands";
-import { VerbGlyph } from "./window/VerbGlyph";
 import { Dock } from "./window/Dock";
 import { Button } from "../../components/signal/Signal";
 
@@ -486,8 +486,12 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       ...dragBind(),
       style: { touchAction: "none" } as React.CSSProperties,
     },
+    // PHILO-13-11 (C1) — the sizing gadget: two nested corners on the
+    // frame, bottom right. It is the resize grip (a drag, not a verb).
     grip: (
-      <span className="desk-window-grip" {...resizeBind()} aria-hidden="true" />
+      <span className="desk-window-grip desk-gadget-size" {...resizeBind()} aria-hidden="true">
+        <GadgetGlyph kind="size" />
+      </span>
     ),
     edges,
   };
@@ -567,15 +571,9 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const maximized = useDesk((s) => s.panelMax.includes(id));
   // HS-97-04 — the front window is the last id in the stacking order
   // that is open (announced) and not minimized; it alone wears depth.
-  const isFront = useDesk((s) => {
-    for (let i = s.panelOrder.length - 1; i >= 0; i--) {
-      const oid = s.panelOrder[i];
-      if (s.panelMin.includes(oid)) continue;
-      if (!windowRegistry.has(oid)) continue;
-      return oid === id;
-    }
-    return false;
-  });
+  // PHILO-13-11 (C1, R4): derived by the ONE hook that subscribes to the
+  // order AND the registry, so exactly one frame is front (blue).
+  const isFront = useFrontWindowId() === id;
   const compact = useCompactViewport();
   const reducedMotion = useReducedMotion();
   const win = useDeskWindow(id, {
@@ -820,35 +818,21 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           setHeadMenu({ x: e.clientX, y: e.clientY });
         }}
       >
-        <span className="desk-traffic">
+        {/* PHILO-13-11 (C1) — the Workbench gadget set: close flush left;
+            iconify and zoom flush right (393: close only; a window fills
+            the work area there). Depth (to back) is withheld until story
+            12 (C2) builds send-to-back: a gadget that does nothing is not
+            drawn (UX-CANON). TODO(PHILO-13-12): the depth gadget. */}
+        <span className="desk-gadgets desk-gadgets-left">
           <Button
             variant="chrome"
-            className="desk-light desk-light-close"
+            className="desk-gadget desk-gadget-close"
             aria-label={`Close ${name}`}
+            title={`Close ${name}`}
             onClick={requestClose}
           >
-            <VerbGlyph kind="light-close" />
+            <GadgetGlyph kind="close" />
           </Button>
-          <Button
-            variant="chrome"
-            className="desk-light desk-light-min"
-            aria-label={`Minimize ${name}`}
-            onClick={requestMinimize}
-          >
-            <VerbGlyph kind="light-min" />
-          </Button>
-          {!compact ? (
-            <Button
-              variant="chrome"
-              className="desk-light desk-light-max"
-              aria-label={maximized ? `Restore ${name}` : `Maximize ${name}`}
-              onClick={() => useDesk.getState().toggleMaximizePanel(id)}
-            >
-              <VerbGlyph kind={maximized ? "light-restore" : "light-max"} />
-            </Button>
-          ) : (
-            <span aria-hidden="true" />
-          )}
         </span>
         {leading}
         {icon}
@@ -857,6 +841,29 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         <span className="desk-pullout-title desk-window-title">{title}</span>
         {wings}
         {actions ? <span className="desk-window-actions">{actions}</span> : null}
+        {!compact ? (
+          <span className="desk-gadgets desk-gadgets-right">
+            <Button
+              variant="chrome"
+              className="desk-gadget desk-gadget-iconify"
+              aria-label={`Iconify ${name}`}
+              title={`Iconify ${name}`}
+              onClick={requestMinimize}
+            >
+              <GadgetGlyph kind="iconify" />
+            </Button>
+            <Button
+              variant="chrome"
+              className="desk-gadget desk-gadget-zoom"
+              aria-label={`Zoom ${name}`}
+              title={`Zoom ${name}`}
+              aria-pressed={maximized}
+              onClick={() => useDesk.getState().toggleMaximizePanel(id)}
+            >
+              <GadgetGlyph kind="zoom" />
+            </Button>
+          </span>
+        ) : null}
       </header>
       {headMenu ? (
         <WorkMenu

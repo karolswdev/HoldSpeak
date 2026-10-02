@@ -57,17 +57,40 @@ export function useOpenWindows() {
   );
 }
 
+/** PHILO-13-11 (C1, R4) — ONE front window, from the ONE stacking order:
+ * the last non-minimized id in `order` that is actually open. Pure, so the
+ * frame, the screen title bar and the Cmd+W/Cmd+M target cannot disagree. */
+export function frontOf(
+  order: readonly string[],
+  minimized: readonly string[],
+  open: readonly { id: string }[],
+): string | null {
+  for (let i = order.length - 1; i >= 0; i--) {
+    const id = order[i];
+    if (minimized.includes(id)) continue;
+    if (open.some((w) => w.id === id)) return id;
+  }
+  const shown = open.filter((w) => !minimized.includes(w.id));
+  return shown.length ? shown[shown.length - 1].id : null;
+}
+
 /** HS-101 B8 — the front window: the last non-minimized id in the
  * stacking order that is actually open (the Cmd+W/Cmd+M target). */
 export function frontWindowId(): string | null {
   const s = useDesk.getState();
-  for (let i = s.panelOrder.length - 1; i >= 0; i--) {
-    const id = s.panelOrder[i];
-    if (s.panelMin.includes(id)) continue;
-    if (registrySnapshot.some((w) => w.id === id)) return id;
-  }
-  const open = registrySnapshot.filter((w) => !s.panelMin.includes(w.id));
-  return open.length ? open[open.length - 1].id : null;
+  return frontOf(s.panelOrder, s.panelMin, registrySnapshot);
+}
+
+/** PHILO-13-11 (C1, R4) — the front window as a hook. It subscribes to the
+ * stacking order AND to the window registry: the old per-frame selector read
+ * the registry without subscribing to it, so a window that re-rendered after
+ * it announced itself could compute "front" while the previous front window
+ * kept a stale `is-front` (two blue title bars at once). */
+export function useFrontWindowId(): string | null {
+  const open = useOpenWindows();
+  const order = useDesk((s) => s.panelOrder);
+  const minimized = useDesk((s) => s.panelMin);
+  return frontOf(order, minimized, open);
 }
 
 /** How many windows are open right now (ghost-reason source). */

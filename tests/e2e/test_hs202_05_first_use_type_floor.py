@@ -244,6 +244,13 @@ _MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + """
     const text = ownText(el);
     const size = parseFloat(cs.fontSize);
 
+    // PHILO-13-11 (C1, §4 393; owner-ratified 2026-10-02): the phone's
+    // screen bar draws the mark, the egress chip and Search as pictures;
+    // their words are FOLDED into the control's accessible name (computed
+    // size 0: no glyph is painted, the name still reads them). A folded
+    // word is not text on the glass, and it is exempt ONLY when its control
+    // still carries an accessible name; any painted size under 12 still fails.
+    if (size === 0 && named(el)) continue;
     if (size < 12) {
       const glyph = GLYPH.test(text);
       const alt = glyph ? named(el) : null;

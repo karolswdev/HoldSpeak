@@ -1,0 +1,356 @@
+{
+  "chair": {
+    "width": 393,
+    "windows": 0,
+    "blue": [],
+    "front": [],
+    "screen": null,
+    "layout": [],
+    "ownership": [],
+    "clipped": [],
+    "ellipsis": [],
+    "sideways": [],
+    "content": null,
+    "small_targets": [
+      {
+        "control": "HoldSpeak",
+        "w": 106,
+        "h": 22
+      },
+      {
+        "control": "Go",
+        "w": 31,
+        "h": 26
+      },
+      {
+        "control": "Privacy and trust: \u2302 This device",
+        "w": 133,
+        "h": 24
+      },
+      {
+        "control": "Desk memory",
+        "w": 34,
+        "h": 22
+      },
+      {
+        "control": "Search \u2318K",
+        "w": 88,
+        "h": 24
+      }
+    ],
+    "small_text": [],
+    "low_contrast": []
+  },
+  "meetings": {
+    "width": 393,
+    "windows": 1,
+    "blue": [],
+    "front": [
+      "Meetings"
+    ],
+    "screen": null,
+    "layout": [],
+    "ownership": [],
+    "clipped": [],
+    "ellipsis": [],
+    "sideways": [],
+    "content": 547,
+    "small_targets": [
+      {
+        "control": "HoldSpeak",
+        "w": 106,
+        "h": 22
+      },
+      {
+        "control": "Go",
+        "w": 31,
+        "h": 26
+      },
+      {
+        "control": "Privacy and trust: \u2302 This device",
+        "w": 133,
+        "h": 24
+      },
+      {
+        "control": "Desk memory",
+        "w": 34,
+        "h": 22
+      },
+      {
+        "control": "Search \u2318K",
+        "w": 88,
+        "h": 24
+      },
+      {
+        "control": "Close Meetings",
+        "w": 16,
+        "h": 14
+      },
+      {
+        "control": "Minimize Meetings",
+        "w": 16,
+        "h": 14
+      },
+      {
+        "control": "Meeting plumbing",
+        "w": 27,
+        "h": 44
+      }
+    ],
+    "small_text": [
+      {
+        "text": "\u2699\ufe0e",
+        "size": 11
+      }
+    ],
+    "low_contrast": []
+  },
+  "people": {
+    "width": 393,
+    "windows": 2,
+    "blue": [],
+    "front": [
+      "People"
+    ],
+    "screen": null,
+    "layout": [],
+    "ownership": [],
+    "clipped": [],
+    "ellipsis": [],
+    "sideways": [],
+    "content": 459,
+    "small_targets": [
+      {
+        "control": "HoldSpeak",
+        "w": 106,
+        "h": 22
+      },
+      {
+        "control": "Go",
+        "w": 31,
+        "h": 26
+      },
+      {
+        "control": "Privacy and trust: \u2302 This device",
+        "w": 133,
+        "h": 24
+      },
+      {
+        "control": "Desk memory",
+        "w": 34,
+        "h": 22
+      },
+      {
+        "control": "Search \u2318K",
+        "w": 88,
+        "h": 24
+      },
+      {
+        "control": "Close Meetings",
+        "w": 16,
+        "h": 14
+      },
+      {
+        "control": "Minimize Meetings",
+        "w": 16,
+        "h": 14
+      },
+      {
+        "control": "Meeting plumbing",
+        "w": 27,
+        "h": 44
+      },
+      {
+        "control": "Close People",
+        "w": 16,
+        "h": 14
+      },
+      {
+        "control": "Minimize People",
+        "w": 16,
+        "h": 14
+      }
+    ],
+    "small_text": [
+      {
+        "text": "\u2699\ufe0e",
+        "size": 11
+      }
+    ],
+    "low_contrast": []
+  },
+  "errors": [],
+  "failures": {
+    "chair": {
+      "F4 393 content and targets": {
+        "content": null,
+        "small": [
+          {
+            "control": "HoldSpeak",
+            "w": 106,
+            "h": 22
+          },
+          {
+            "control": "Go",
+            "w": 31,
+            "h": 26
+          },
+          {
+            "control": "Privacy and trust: \u2302 This device",
+            "w": 133,
+            "h": 24
+          },
+          {
+            "control": "Desk memory",
+            "w": 34,
+            "h": 22
+          },
+          {
+            "control": "Search \u2318K",
+            "w": 88,
+            "h": 24
+          }
+        ]
+      }
+    },
+    "meetings": {
+      "F1 one blue front window": {
+        "blue": [],
+        "front": [
+          "Meetings"
+        ],
+        "screen": null
+      },
+      "F4 393 content and targets": {
+        "content": 547,
+        "small": [
+          {
+            "control": "HoldSpeak",
+            "w": 106,
+            "h": 22
+          },
+          {
+            "control": "Go",
+            "w": 31,
+            "h": 26
+          },
+          {
+            "control": "Privacy and trust: \u2302 This device",
+            "w": 133,
+            "h": 24
+          },
+          {
+            "control": "Desk memory",
+            "w": 34,
+            "h": 22
+          },
+          {
+            "control": "Search \u2318K",
+            "w": 88,
+            "h": 24
+          },
+          {
+            "control": "Close Meetings",
+            "w": 16,
+            "h": 14
+          },
+          {
+            "control": "Minimize Meetings",
+            "w": 16,
+            "h": 14
+          },
+          {
+            "control": "Meeting plumbing",
+            "w": 27,
+            "h": 44
+          }
+        ]
+      },
+      "F5 frame text in place": {
+        "small": [
+          {
+            "text": "\u2699\ufe0e",
+            "size": 11
+          }
+        ],
+        "low": []
+      },
+      "F3 the wings fold into the strip menu": {
+        "strip_menus": 0
+      }
+    },
+    "people": {
+      "F1 one blue front window": {
+        "blue": [],
+        "front": [
+          "People"
+        ],
+        "screen": null
+      },
+      "F4 393 content and targets": {
+        "content": 459,
+        "small": [
+          {
+            "control": "HoldSpeak",
+            "w": 106,
+            "h": 22
+          },
+          {
+            "control": "Go",
+            "w": 31,
+            "h": 26
+          },
+          {
+            "control": "Privacy and trust: \u2302 This device",
+            "w": 133,
+            "h": 24
+          },
+          {
+            "control": "Desk memory",
+            "w": 34,
+            "h": 22
+          },
+          {
+            "control": "Search \u2318K",
+            "w": 88,
+            "h": 24
+          },
+          {
+            "control": "Close Meetings",
+            "w": 16,
+            "h": 14
+          },
+          {
+            "control": "Minimize Meetings",
+            "w": 16,
+            "h": 14
+          },
+          {
+            "control": "Meeting plumbing",
+            "w": 27,
+            "h": 44
+          },
+          {
+            "control": "Close People",
+            "w": 16,
+            "h": 14
+          },
+          {
+            "control": "Minimize People",
+            "w": 16,
+            "h": 14
+          }
+        ]
+      },
+      "F5 frame text in place": {
+        "small": [
+          {
+            "text": "\u2699\ufe0e",
+            "size": 11
+          }
+        ],
+        "low": []
+      }
+    }
+  }
+}

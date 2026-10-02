@@ -56,69 +56,9 @@
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
-/* Materials spike — traffic lights (macos-web values): 12.8px discs
-   with darker rings; grey on an unfocused window; glyphs reveal and
-   the cluster swells on hover. */
-/* ── HS-110-02: Workbench window gadgets — rectangular, beveled, always visible ── */
-.desk-next .desk-traffic {
-  display: grid;
-  grid-template-columns: repeat(3, 16px);
-  gap: 4px;
-  align-items: center;
-  flex: none;
-}
-.desk-next .desk-light {
-  width: 16px;
-  height: 14px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 0;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  background: var(--gadget-fill);
-  box-shadow: var(--desk-window-bevel);
-  transition: background var(--duration-short, 120ms) ease;
-}
-.desk-next .desk-light svg {
-  width: 8px;
-  height: 8px;
-  opacity: 0.6;
-  color: var(--text-muted);
-  transition: opacity var(--duration-short, 120ms) ease;
-}
-.desk-next .desk-light:hover {
-  background: var(--gadget-fill-hover);
-}
-.desk-next .desk-light:hover svg {
-  opacity: 1;
-  color: var(--text);
-}
-/* The traffic cluster is the depth signal: colored on the front plane,
-   neutral in the background. */
-.desk-next .desk-window-shell:not(.is-front) .desk-light {
-  background: var(--surface-2);
-  border-color: var(--border);
-}
-.desk-next .desk-window-shell.is-front .desk-light-close {
-  background: var(--danger-signal);
-}
-.desk-next .desk-window-shell.is-front .desk-light-min {
-  background: var(--warn-signal);
-}
-.desk-next .desk-window-shell.is-front .desk-light-max {
-  background: var(--ok);
-}
-.desk-next .desk-window-shell.is-front .desk-light svg {
-  color: color-mix(in srgb, var(--bg) 78%, transparent);
-  opacity: 0.82;
-}
-.desk-next .is-front .desk-light-close:hover {
-  background: var(--gadget-close-fill);
-}
-.desk-next .is-front .desk-light-close:hover svg {
-  color: var(--danger-signal);
-}
+/* PHILO-13-11 (C1) — the traffic lights (HS-110-02's .desk-traffic and
+   .desk-light) are removed: the Workbench gadget set replaced them. Its
+   rules live with the frame in window-chrome.css. */
 /* HS-110-06: mono window titles, left-aligned */
 .desk-next .desk-window-title {
   text-align: left;
@@ -301,33 +241,11 @@
 .desk-next .desk-wings-tabs {
   display: contents;
 }
-/* HS-200-12 (counsel P2-ii, the 393 ruling): the window's subject is said
-   ONCE, in the title bar.  At the phone width a four-wing strip beside the
-   lights left the title zero pixels, so the strip drops to its own row
-   beneath the title: the title keeps the full width (ellipsized, leading
-   words visible) and every wing stays reachable without horizontal scroll.
-   Viewport seam, not container: floating cards are not inside `surface`. */
-@media (max-width: 480px) {
-  .desk-next .desk-pullout-head.has-wings {
-    flex-wrap: wrap;
-    height: auto;
-    min-height: 40px;
-    padding-top: 6px;
-    padding-bottom: 6px;
-    row-gap: 6px;
-  }
-  .desk-next .desk-pullout-head.has-wings .desk-pullout-title {
-    flex: 1 1 auto;
-    min-width: 40%;
-  }
-  .desk-next .desk-pullout-head.has-wings .desk-wings {
-    flex: 1 1 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    margin-inline: 0;
-    row-gap: 4px;
-  }
-}
+/* HS-200-12 (the 393 ruling) stands: nothing clips, nothing scrolls
+   sideways. PHILO-13-11 (C1, §3a) pays it a new way: the head at 393 is ONE
+   44 px row, and a wing strip that does not fit becomes ONE strip menu
+   Button (wings.tsx, useStripFit). The old 480 px rule that wrapped the
+   strip to a second head row is replaced (window-chrome.css). */
 .desk-next .desk-wing-door {
   margin-left: 4px;
 }
@@ -819,4 +737,73 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   .desk-next .desk-pullout.is-card .thought-more { display: inline-flex; }
   .desk-next .desk-pullout.is-card .thought-completion-verbs { width: 100%; }
   .desk-next .desk-pullout.is-card .thought-completion-primary { flex: 1; width: auto; }
+}
+
+/* ── PHILO-13-11 (C1) — the phone frame (393), a shell exception like the
+   phone sheet (containerQueryLaw allowlist). The sizes grow to 44 px;
+   one window fills the work area between the screen bar (44) and the Dock
+   (56; dock.css): 852 − 44 − 44 − 56 − 4 = 704 px of window content (C7
+   asks ≥ 700). The head is ONE 44 px row: close · the wings (or the title,
+   for a window without wings) · the head verbs. The screen bar already
+   names the window. A wing strip that does not fit is ONE strip menu
+   Button (wings.tsx, §3a): nothing clips, nothing scrolls sideways. ── */
+@media (max-width: 720px) {
+  /* doubled :root so the phone sizes beat tokens.css whatever the bundle's
+     stylesheet order */
+  :root:root {
+    --wb-bar-h: 44px;
+    --wb-gadget-w: 44px;
+    --wb-screen-h: 44px;
+  }
+  .desk-next .desk-window.desk-window-shell.is-sheet {
+    border-left-width: 0;
+    border-right-width: 0;
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head {
+    margin: 0;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .desk-gadgets-left {
+    order: 0;
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > :is(.desk-wings, .desk-pullout-title) {
+    order: 1;
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .desk-window-actions {
+    order: 2;
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head.has-wings .desk-pullout-title,
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > img {
+    display: none;
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-pullout-title {
+    flex: 1 1 0;
+    max-width: none;
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wings {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wing {
+    flex: none;
+    height: 44px;
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-window-actions {
+    align-self: stretch;
+    flex: none;
+    margin-left: auto;
+    padding: 0;
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-window-actions :is(.btn, .desk-chip, button) {
+    height: 44px;
+    min-height: 44px;
+    min-width: 44px;
+  }
 }

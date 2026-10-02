@@ -142,17 +142,17 @@ class TestCloseMeansGone:
                 option = page.locator("[id^='desk-palette-option-decision:']").first
                 option.wait_for()
                 self._press(page, option, width)
-                page.locator(f".desk-light-close[aria-label='Close {DECISION}']").wait_for()
+                page.locator(f".desk-gadget-close[aria-label='Close {DECISION}']").wait_for()
                 self._close_and_prove(page, width, DECISION, "palette-decision")
 
                 # 2. the Dock: `intelligence:desk`.
                 self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
-                page.locator(".desk-light-close[aria-label='Close Intelligence']").wait_for()
+                page.locator(".desk-gadget-close[aria-label='Close Intelligence']").wait_for()
                 self._close_and_prove(page, width, "Intelligence", "dock-intelligence")
 
                 # 3. Write a thought: `note:<id>` (newThought.ts) → the Thought window.
                 self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
-                page.locator(".desk-light-close[aria-label='Close Thought']").wait_for()
+                page.locator(".desk-gadget-close[aria-label='Close Thought']").wait_for()
                 self._close_and_prove(page, width, "Thought", "write-a-thought")
 
                 self._press(page, page.get_by_test_id("chair-floor-toggle"), width)
@@ -163,12 +163,12 @@ class TestCloseMeansGone:
                     obj.wait_for(state="attached")
                     obj.focus()
                     page.keyboard.press("Enter")
-                    page.locator(f".desk-light-close[aria-label='Close {NOTE}']").wait_for()
+                    page.locator(f".desk-gadget-close[aria-label='Close {NOTE}']").wait_for()
                     self._close_and_prove(page, width, NOTE, "floor-bare-note")
                 else:
                     # 4. the list mount at 393: a row tap passes `note:<id>` (qualifiedRef).
                     self._press(page, page.locator(f".desk-list-name-cell[aria-label='{NOTE}']"), width)
-                    page.locator(f".desk-light-close[aria-label='Close {NOTE}']").wait_for()
+                    page.locator(f".desk-gadget-close[aria-label='Close {NOTE}']").wait_for()
                     self._close_and_prove(page, width, NOTE, "list-row-note")
                     # 5. a bare id at 393: the row's menu → Open (object.open → openPullout(o.id)).
                     page.locator(f".desk-list-name-cell[aria-label='{DECISION}']").focus()
@@ -176,7 +176,7 @@ class TestCloseMeansGone:
                     item = page.get_by_role("menuitem", name="Open", exact=True)
                     item.wait_for()
                     self._press(page, item, width)
-                    page.locator(f".desk-light-close[aria-label='Close {DECISION}']").wait_for()
+                    page.locator(f".desk-gadget-close[aria-label='Close {DECISION}']").wait_for()
                     self._close_and_prove(page, width, DECISION, "row-menu-bare-decision")
                 assert not errors, errors
             finally:
@@ -198,7 +198,7 @@ class TestCloseMeansGone:
                 retry = page.get_by_test_id("arrival-brief-retry")
                 retry.wait_for()
                 self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
-                page.locator(".desk-light-close[aria-label='Close Intelligence']").wait_for()
+                page.locator(".desk-gadget-close[aria-label='Close Intelligence']").wait_for()
                 page.unroute("**/api/brief/latest*")
                 proof = self._close_and_prove(page, width, "Intelligence", "j1-retry")
                 self._press(page, retry, width)

@@ -32,7 +32,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, pick_wing
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the Room face glass needs Playwright")
@@ -188,6 +188,19 @@ def _delivery_time(iso: str) -> str:
     return f"{MONTHS[d.month - 1]} {d.day} {d.hour:02d}:{d.minute:02d}"
 
 
+
+
+def _assert_room_named(page: Any, width: int, name: str) -> None:
+    """The opened Room is named. PHILO-13-11 (C1): at 393 the head is one
+    44 px row and the SCREEN title bar names the front window instead."""
+    room = page.locator(".desk-window:has([data-testid=room-body])").first
+    assert room.get_attribute("aria-label") == name, room.get_attribute("aria-label")
+    if width < 720:
+        screen = page.locator("[data-testid=desk-screen-title]").inner_text().strip()
+        assert screen == name, f"the screen title bar names {screen!r}, not the Room {name!r}"
+    else:
+        assert name in room.inner_text()
+
 class TestRoomFaceGlass:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -325,7 +338,7 @@ class TestRoomFaceGlass:
                 _api(page, "POST", f"/api/projects/{pid}/meetings/m-p903", {}, token=TOKEN)
                 self._stage(page, "review-meetings", "meeting:m-p903")
                 page.locator(".surface-split-detail .surface-display").first.wait_for(timeout=T)
-                page.get_by_role("tab", name="Review").click()
+                pick_wing(page, "Review")
                 page.locator("[data-testid='meeting-review']").wait_for(timeout=T)
                 button = page.locator("[data-testid=review-project]").first
                 button.wait_for(timeout=T)
@@ -338,7 +351,7 @@ class TestRoomFaceGlass:
                 _shot(page, "f1-meeting-opens-room", width)
                 assert facts["window"], "the meeting's project button opened no Room"
                 assert room["project"]["name"] == NAME
-                assert NAME in page.locator(".desk-window:has([data-testid=room-body])").first.inner_text()
+                _assert_room_named(page, width, NAME)
                 assert "/projects" not in page.url
                 assert not errors, errors
             finally:
@@ -362,7 +375,7 @@ class TestRoomFaceGlass:
         _record(shot, width, facts)
         _shot(page, shot, width)
         assert facts["window"], "no Room opened"
-        assert name in page.locator(".desk-window:has([data-testid=room-body])").first.inner_text()
+        _assert_room_named(page, width, name)
         return facts
 
     @pytest.mark.e2e

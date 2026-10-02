@@ -75,7 +75,7 @@ describe("the dock", () => {
     render(<TwoWindows />);
     fireEvent.click(screen.getByRole("button", { name: "Focus Alpha" }));
     expect(useDesk.getState().panelOrder.at(-1)).toBe("wa");
-    fireEvent.click(screen.getByRole("button", { name: "Minimize Alpha" }));
+    fireEvent.click(screen.getByRole("button", { name: "Iconify Alpha" }));
     expect(useDesk.getState().panelMin).toEqual(["wa"]);
     fireEvent.click(screen.getByRole("button", { name: "Restore Alpha" }));
     expect(useDesk.getState().panelMin).toEqual([]);

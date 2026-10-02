@@ -246,6 +246,8 @@ D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
 
+2026-10-02: **PHILO-13-04 done** (A3-W merged with H-A3). **PHILO-13-11 build, slice one — the frame** (Fedaykin; Muad'Dib verified): Steel tokens, the gadget layout (depth withheld until C2), one blue front window (root cause: a registry read without a subscription), the screen title bar, strips that fold into a menu Button at 393, the phone frame (704 px content). Five frame fences red on main 02ce9e8c, green after; web baseline zero branch-new; `assets/story-11-build/`. Next slice: the Chair as windows.
+
 2026-10-02: **The Workbench look RATIFIED by the owner** ("Ratify, build it"; Steel; Park one press; Capture as a fourth Chair window) after Astra's canvas checks r1–r5 (r5 RATIFY). Wave C faces may now be built to `design/workbench-look.md`; each merge record cites the ratification (story 11).
 
 2026-10-01: **PHILO-13-11 (C1) canvases drawn, round two** (`assets/story-11-canvas/`, `design/workbench-look.md`): 29 boards at 1440 and 393 on the real product with a harness shim; direction **Workbench Steel** recommended over Honest 2.0; the fixed Desk drawn (one needs-you number, narrower counts named). In-progress: Astra's check, then the owner's ratification.

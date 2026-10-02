@@ -18,6 +18,8 @@ import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
 import { DeskToolShelf } from "./DeskToolShelf";
 import { DeskMenuBar } from "./DeskMenuBar";
 import { useLaunchers } from "./DeskWindow";
+import { useFrontWindowId, useOpenWindows } from "./window/windowRegistry";
+import { useChairState } from "../chairState";
 import { useGate } from "../gate";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
@@ -80,6 +82,24 @@ function MicLamp() {
         on={phase !== "suspended"}
         tone={phase === "suspended" ? "warn" : "ok"}
       />
+    </span>
+  );
+}
+
+/** PHILO-13-11 (C1) — the screen title bar names the front window. It reads
+ * the SAME front window as the blue frame (useFrontWindowId), so the bar
+ * never disagrees with the glass. With no window open it names the screen:
+ * the Chair or the Floor. */
+function ScreenTitle() {
+  const front = useFrontWindowId();
+  const open = useOpenWindows();
+  const surface = useChairState((s) => s.surface);
+  const name =
+    (front ? open.find((w) => w.id === front)?.label : null) ??
+    (surface === "chair" ? "Chair" : "Floor");
+  return (
+    <span className="desk-screen-title" data-testid="desk-screen-title">
+      <span className="desk-screen-name" title={name}>{name}</span>
     </span>
   );
 }
@@ -228,6 +248,7 @@ export function DeskChrome({
             })()}
         </div>
         <DeskMenuBar />
+        <ScreenTitle />
         <span
           className={`desk-hub-dot is-${hubState}`}
           title={hubTitle}

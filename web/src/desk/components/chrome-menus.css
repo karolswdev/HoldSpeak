@@ -44,13 +44,16 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 2px;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: var(--surface-3);
-  box-shadow: none;
+  /* PHILO-13-11 (C1, §4): a menu is paper with ink words, a raised
+     bevel and the hard drop; the row under the pointer is the blue bar */
+  padding: 3px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised), var(--wb-drop);
   backdrop-filter: none;
   animation: none;
+  color: var(--wb-ink);
 }
 .desk-next .desk-menu-list.is-below {
   border-top-left-radius: 0;
@@ -68,7 +71,7 @@
   border: 0;
   border-radius: 0;
   background: none;
-  color: var(--text);
+  color: var(--wb-ink);
   text-decoration: none;
   text-align: left;
   font-family: var(--font-mono);
@@ -79,18 +82,18 @@
 .desk-next .desk-menu-list button:hover,
 .desk-next .desk-menu-list a:focus-visible,
 .desk-next .desk-menu-list button:focus-visible {
-  background: var(--accent);
-  color: var(--text-on-accent);
+  background: var(--wb-blue);
+  color: var(--wb-ink);
 }
 .desk-next .desk-menu-list button:hover svg,
 .desk-next .desk-menu-list button:focus-visible svg {
-  color: var(--text-on-accent);
+  color: var(--wb-ink);
 }
 .desk-next .desk-menu-list svg {
   width: 12px;
   height: 12px;
   flex: none;
-  color: var(--text-muted);
+  color: var(--wb-ink);
 }
 /* HS-111-07: species v2 — portal panel, separator, key column, submenu */
 .desk-next .desk-work-menu {
@@ -109,8 +112,8 @@
   height: 0;
   margin: 5px 0;
   border: 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--bevel-light);
+  border-top: 1px solid var(--wb-steel);
+  border-bottom: 1px solid var(--wb-hi);
 }
 /* HS-148-01: the lane — fixed 16px column for glyphs, check marks,
    and alignment spacers (the lane law: if ANY row in a panel has a
@@ -121,7 +124,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
+  color: var(--wb-ink);
 }
 .desk-next .desk-menu-glyph svg {
   width: 14px;
@@ -148,17 +151,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
+  min-width: 20px;
   height: 18px;
   padding: 0 4px;
-  border: 0;
-  border-radius: 2px;
-  background: var(--desk-window-well);
-  box-shadow:
-    inset 0 0 0 1px var(--border-subtle),
-    inset 0 -1px 0 var(--shade-1);
-  color: var(--text);
-  font: 600 10px var(--font-mono);
+  /* PHILO-13-11: the Amiga-key column — each key a raised steel cap */
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  color: var(--wb-ink);
+  font: 700 12px var(--font-mono);
   line-height: 1;
 }
 /* Legacy single-kbd keycap (DeskMenuItem callers). */
@@ -168,8 +170,8 @@
   padding-left: 14px;
   border: 0;
   background: none;
-  color: var(--text-muted);
-  font: 600 11px var(--font-mono);
+  color: var(--wb-ink);
+  font: 600 12px var(--font-mono);
   letter-spacing: 0.04em;
 }
 .desk-next .desk-menu-list button:hover kbd,
@@ -178,35 +180,31 @@
 .desk-next .desk-menu-list button:focus-visible .desk-menu-glyph,
 .desk-next .desk-menu-list button:hover .desk-menu-well,
 .desk-next .desk-menu-list button:focus-visible .desk-menu-well {
-  color: var(--text-on-accent);
-}
-/* HS-148-01: keycap wells invert cleanly on accent hover. */
-.desk-next .desk-menu-list button:hover .desk-menu-well,
-.desk-next .desk-menu-list button:focus-visible .desk-menu-well {
-  background: var(--bevel-light);
-  box-shadow: inset 0 0 0 1px var(--gleam-3);
+  color: var(--wb-ink);
 }
 .desk-next .desk-menu-submark {
   width: 12px;
   flex: none;
   margin-left: auto;
   text-align: right;
-  color: var(--text-muted);
+  color: var(--wb-ink);
 }
 .desk-next .desk-menu-list button.is-subopen {
-  background: var(--accent);
-  color: var(--text-on-accent);
+  background: var(--wb-blue);
+  color: var(--wb-ink);
 }
 .desk-next .desk-menu-list button.is-subopen .desk-menu-submark {
-  color: var(--text-on-accent);
+  color: var(--wb-ink);
 }
 /* HS-148-01: stipple ghosting — the Amiga stipple ERASED to background.
    A checkerboard overlay in the panel's own ground color (var(--surface-3))
    punches holes in the text + keycaps. Slight text mute under the stipple
    so the composite reads. The stipple covers the item box only. */
+/* PHILO-13-11: Workbench ghosting on paper — a light paper stipple over
+   the ink words, still readable */
 .desk-next .desk-menu-list .is-ghost {
   position: relative;
-  color: var(--text-muted);
+  color: var(--wb-ink);
   cursor: default;
 }
 .desk-next .desk-menu-list .is-ghost::after {
@@ -215,23 +213,24 @@
   inset: 0;
   pointer-events: none;
   background: repeating-conic-gradient(
-    var(--surface-3) 0% 25%, transparent 0% 50%
-  ) 0 0 / 4px 4px;
+    var(--wb-paper) 0% 25%, transparent 0% 100%
+  ) 0 0 / 2px 2px;
+  opacity: 0.6;
 }
 .desk-next .desk-menu-list .is-ghost:hover,
 .desk-next .desk-menu-list .is-ghost:focus-visible {
   background: none;
-  color: var(--text-muted);
+  color: var(--wb-ink);
 }
 /* HS-148-01: ghost-reason collapse footer — one quiet hint for a uniform
    panel instead of N per-row echoes. */
 .desk-next .desk-menu-ghost-hint {
   display: block;
   padding: 3px 10px 4px;
-  color: var(--text-faint);
-  font: 10px var(--font-mono);
+  color: var(--wb-ink);
+  font: 12px var(--font-mono);
   letter-spacing: 0.02em;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--wb-steel);
 }
 /* HS-148-02: root-attribute glyph gating.
    "none" hides all glyphs everywhere; "launcher" hides only in verb panels;
@@ -657,19 +656,51 @@
    the left, status and the clock on the right. Inner classes keep
    their names (walk + raise-rule canon); the bar flattens them. ── */
 /* ── HS-110-03: the menu bar — a solid, opaque Workbench system bar ── */
+/* PHILO-13-11 (C1) — the SCREEN TITLE BAR (Workbench Steel, §4): paper
+   (pen 2) with an ink rule; menu titles invert on hover; the status
+   controls are raised steel plates; the clock sits in a steel plate at the
+   right edge. 28 px (393: one 44 px row, below). */
 .desk-next .desk-menubar {
   position: fixed;
   inset: 0 0 auto 0;
-  height: 28px;
+  height: var(--wb-screen-h);
   z-index: var(--desk-z-dock-under);
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
   gap: 8px;
-  padding: 0 10px 0 12px;
-  background: var(--surface-2);
-  border-bottom: 1px solid var(--border);
-  box-shadow: inset 0 1px 0 var(--bevel-light);
+  padding: 0 0 0 8px;
+  background: var(--wb-paper);
+  border-bottom: 1px solid var(--wb-ink);
+  box-shadow: inset 0 -1px 0 var(--wb-steel);
+  color: var(--wb-ink);
+}
+.desk-next .desk-menubar .desk-chrome-tl {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.desk-next .desk-menubar .desk-chrome-tl,
+.desk-next .desk-menubar .desk-chrome-tr {
+  align-items: center;
+}
+/* the front window's name: the screen's title (DeskChrome.tsx ScreenTitle) */
+.desk-next .desk-screen-title {
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-self: stretch;
+  margin: 0 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--wb-ink);
+  overflow: hidden;
+}
+.desk-next .desk-screen-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--wb-ink);
+  font: 700 13px var(--font-display);
 }
 .desk-next .desk-menubar::before {
   display: none;
@@ -691,13 +722,16 @@
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 500;
-  color: var(--text);
+  color: var(--wb-ink);
 }
-/* HS-110-03: Workbench-style inverted highlight on menu hover */
+/* HS-110-03 / PHILO-13-11: Workbench inverted highlight on menu hover —
+   an ink plate with paper words */
 .desk-next .desk-menubar button:hover,
-.desk-next .desk-menubar button:focus-visible {
-  background: var(--accent);
-  color: var(--bg);
+.desk-next .desk-menubar button:focus-visible,
+.desk-next .desk-menubar button[aria-expanded="true"],
+.desk-next .desk-menubar .desk-verbbar-title.on {
+  background: var(--wb-ink);
+  color: var(--wb-paper);
 }
 .desk-next .desk-menubar .desk-mark {
   font-weight: 600;
@@ -705,17 +739,21 @@
 .desk-next .desk-clock {
   display: inline-flex;
   align-items: center;
+  align-self: stretch;
   gap: 8px;
-  padding: 0 4px 0 8px;
+  padding: 0 12px;
+  border-left: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--wb-ink);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .desk-next .desk-clock strong {
-  font-weight: 500;
-  color: var(--text);
+  font-weight: 700;
+  color: var(--wb-ink);
 }
 
 /* Materials round 3.1 — the bar FLATTENS everything it contains: the
@@ -748,19 +786,42 @@
 }
 .desk-next .desk-menubar .desk-start-action:hover,
 .desk-next .desk-menubar .desk-create-button:hover,
-.desk-next .desk-menubar .desk-tools-launch:hover,
-.desk-next .desk-menubar .egress-badge:hover,
 .desk-next .desk-menubar .desk-chip:hover {
   background: var(--wash-2);
 }
+/* PHILO-13-11: the status controls are raised steel plates with ink words */
+.desk-next .desk-menubar :is(.egress-badge, .desk-tools-launch, .desk-bell) {
+  height: 22px;
+  min-height: 22px;
+  margin: 0 2px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  color: var(--wb-ink);
+}
+.desk-next .desk-menubar :is(.egress-badge, .desk-tools-launch, .desk-bell):hover {
+  background: var(--wb-steel-2);
+  color: var(--wb-ink);
+}
 .desk-next .desk-menubar kbd {
-  font-size: 10px;
+  font-size: 12px;
   padding: 0 4px;
   min-height: 0;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: transparent;
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-paper);
   box-shadow: none;
+  color: var(--wb-ink);
+}
+/* the bell's count wears the ember INK plate (5.24:1), as every count on
+   the frame does */
+.desk-next .desk-menubar .desk-bell strong {
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--accent-ink);
+  color: var(--text-on-accent);
+  font-size: 12px;
 }
 
 
@@ -912,12 +973,9 @@
   .desk-verbbar-item[data-menu-id="go"] .desk-verbbar-title {
     min-height: 26px;
     padding-inline: 8px;
-    color: var(--text);
-    font-weight: 600;
+    color: var(--wb-ink);
+    font-weight: 700;
     letter-spacing: 0.03em;
-  }
-  .desk-verbbar-item[data-menu-id="go"] .desk-verbbar-title.on {
-    box-shadow: inset 0 -2px 0 var(--accent);
   }
   /* Keep the bar's two truthful clusters in the phone width. The privacy
      badge remains a labeled control (and retains its full title/aria label),
@@ -942,6 +1000,86 @@
   .desk-next .desk-menubar .desk-chrome-inbound + .egress-badge {
     max-width: 80px;
   }
+  /* PHILO-13-11 (C1, §4 393) — the phone's screen bar is ONE 44 px row of
+     44 px targets: the mark (picture only; its word stays in its accessible
+     name), Go, the front window's name, the egress chip at its scope's mark
+     (its words stay in its accessible name), the needs-you bell, Search, the
+     time. */
+
+  .desk-next .desk-menubar {
+    flex-wrap: nowrap;
+    gap: 0;
+    padding-left: 0;
+    overflow: hidden;
+  }
+  .desk-next .desk-menubar .desk-chrome {
+    flex-wrap: nowrap;
+    gap: 0;
+    align-self: stretch;
+  }
+  .desk-next .desk-menubar .desk-chrome-tr {
+    flex: none;
+  }
+  .desk-next .desk-menubar .desk-menu-wrap,
+  .desk-next .desk-menubar .desk-verbbar,
+  .desk-next .desk-menubar .desk-verbbar-item {
+    display: flex;
+    align-items: stretch;
+    align-self: stretch;
+  }
+  .desk-next .desk-menubar :is(button, .egress-badge, .desk-tools-launch, .desk-bell, .desk-verbbar-title) {
+    height: 44px;
+    min-height: 44px;
+    min-width: 44px;
+    margin: 0;
+    justify-content: center;
+  }
+  .desk-next .desk-menubar .desk-mark {
+    width: 44px;
+    padding: 0;
+    font-size: 0;
+    gap: 0;
+  }
+  .desk-next .desk-menubar .egress-badge {
+    width: 44px;
+    max-width: 44px;
+    padding: 0;
+    font-size: 0;
+    letter-spacing: 0;
+  }
+  .desk-next .desk-menubar .egress-badge::before {
+    content: "⇡";
+    font: 700 16px var(--font-mono);
+    color: var(--wb-ink);
+  }
+  .desk-next .desk-menubar .egress-badge.is-local::before {
+    content: "⌂";
+  }
+  .desk-next .desk-menubar .desk-tools-launch {
+    width: 44px;
+    max-width: 44px;
+    padding: 0;
+    font-size: 0;
+  }
+  .desk-next .desk-menubar .desk-tools-launch kbd {
+    display: none;
+  }
+  .desk-next .desk-menubar .desk-bell {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 6px;
+  }
+  .desk-next .desk-screen-title {
+    flex: 1 1 0;
+    margin: 0 4px;
+    padding-left: 8px;
+  }
+  .desk-next .desk-clock {
+    padding: 0 8px;
+  }
+  .desk-next .desk-clock > span:first-child {
+    display: none;
+  }
 }
 
 @media (max-width: 420px) {
@@ -963,4 +1101,18 @@
     gap: 0;
     padding-inline: 4px;
   }
+}
+
+/* PHILO-13-11 (C1) — a ghosted row's reason reads in ink at 12 px on paper */
+.desk-next .desk-menu-list :is(.quiet, small) {
+  color: var(--wb-ink);
+  font-size: 12px;
+}
+/* PHILO-13-11 (C1, §3a) — a check mark is state, not decoration: it shows
+   whatever the glyph preference (the strip menu's current choice) */
+.desk-next .desk-menu-list [role="menuitemcheckbox"][aria-checked="true"] .desk-menu-glyph,
+.desk-next .desk-menu-list [role="menuitemradio"][aria-checked="true"] .desk-menu-glyph {
+  display: inline-flex;
+  visibility: visible;
+  color: var(--wb-ink);
 }

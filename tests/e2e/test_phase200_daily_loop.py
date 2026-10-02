@@ -91,6 +91,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import (
+    pick_wing,
     REPO,
     _api,
     _assert_clean,
@@ -372,7 +373,7 @@ def _open_review_wing(page: Any, meeting_id: str) -> None:
     _normal_chair(page)
     page.locator(".desk-surface-window").first.wait_for(timeout=15000)
     page.locator(".surface-split-detail .surface-display").first.wait_for(timeout=15000)
-    page.get_by_role("tab", name="Review").click()
+    pick_wing(page, "Review")  # PHILO-13-11: tabs at 1440, the strip menu at 393
     page.locator("[data-testid='meeting-review']").wait_for(timeout=15000)
     _settle(page)
 

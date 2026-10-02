@@ -1,0 +1,64 @@
+{
+  "two-windows-meetings-front": {
+    "width": 1440,
+    "windows": 2,
+    "blue": [
+      "Meetings"
+    ],
+    "front": [
+      "Meetings"
+    ],
+    "screen": "Meetings",
+    "layout": [],
+    "ownership": [],
+    "clipped": [],
+    "ellipsis": [],
+    "sideways": [],
+    "content": null,
+    "small_targets": [],
+    "small_text": [],
+    "low_contrast": []
+  },
+  "two-windows-room-front": {
+    "width": 1440,
+    "windows": 2,
+    "blue": [
+      "Payments ledger cutover"
+    ],
+    "front": [
+      "Payments ledger cutover"
+    ],
+    "screen": "Payments ledger cutover",
+    "layout": [],
+    "ownership": [],
+    "clipped": [],
+    "ellipsis": [],
+    "sideways": [],
+    "content": null,
+    "small_targets": [],
+    "small_text": [],
+    "low_contrast": []
+  },
+  "window-menu-open": {
+    "width": 1440,
+    "windows": 2,
+    "blue": [
+      "Payments ledger cutover"
+    ],
+    "front": [
+      "Payments ledger cutover"
+    ],
+    "screen": "Payments ledger cutover",
+    "layout": [],
+    "ownership": [],
+    "clipped": [],
+    "ellipsis": [],
+    "sideways": [],
+    "content": null,
+    "small_targets": [],
+    "small_text": [],
+    "low_contrast": []
+  },
+  "errors": [],
+  "failures": {}
+}

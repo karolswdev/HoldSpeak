@@ -29,6 +29,8 @@
  */
 import "./filter-tokens.css";
 import { Button } from "../../components/signal/Signal";
+import { useCompactViewport } from "../useCompactViewport";
+import { StripMenuButton, useStripFit } from "./stripMenu";
 
 export type FilterTokenOption = {
   /** The value handed back to `onChange` (and usually the wire's param). */
@@ -56,8 +58,29 @@ export function FilterTokens({
   className?: string;
 }) {
   const cx = ["surface-filter-tokens", className].filter(Boolean).join(" ");
+  // PHILO-13-11 (C1, §3a): at the phone width a strip that does not fit
+  // its row is ONE menu Button (the current choice + ▾); measured, never a
+  // fixed count. The desktop strip is unchanged.
+  const compact = useCompactViewport();
+  const { ref, fits } = useStripFit<HTMLSpanElement>(
+    compact,
+    options.map((o) => o.label).join("|"),
+  );
+  if (!fits)
+    return (
+      <span ref={ref} className={`${cx} is-folded`} role="group" aria-label={label}>
+        <StripMenuButton
+          label={label}
+          choices={options}
+          value={value}
+          onChange={onChange}
+          variant="secondary"
+          className="surface-filter-menu"
+        />
+      </span>
+    );
   return (
-    <span className={cx} role="group" aria-label={label}>
+    <span ref={ref} className={cx} role="group" aria-label={label}>
       {options.map((option) => {
         const active = option.value === value;
         return (

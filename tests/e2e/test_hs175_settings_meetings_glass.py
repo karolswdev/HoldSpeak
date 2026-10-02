@@ -483,7 +483,7 @@ class TestSettingsCalendarSection:
                         && !b.closest('.check-gadget')
                         && !b.closest('.stepper-gadget')
                         && !b.closest('.scroll-hint')
-                        && !b.closest('.desk-traffic')
+                        && !b.closest('.desk-gadgets')
                         && !b.closest('.desk-wings')
                         && !b.closest('.surface-ledger-row')
                         && !b.closest('[role="tablist"]'))
