@@ -10,8 +10,9 @@ import { describe, expect, it, vi } from "vitest";
 import { CatalogRail } from "../CatalogRail";
 import { meetingRowState, meetingsHeadline, stateToken } from "../helpers";
 
-function row(id: string, intel_status: unknown, has_summary: boolean) {
+function row(id: string, intel_status: unknown, has_summary: boolean, needs_you_count = 0) {
   return {
+    needs_you_count,
     id,
     title: `Meeting ${id}`,
     started_at: "2026-10-01T10:00:00Z",
@@ -85,5 +86,31 @@ describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
   it("does not count a stored summary as one that needs a summary", () => {
     const rows = [row("stored", "disabled", true), row("none", "disabled", false)];
     expect(meetingsHeadline(rows, false).text).toBe("1 meeting needs a summary");
+  });
+
+  // Muad'Dib's ruling on Astra's #730 finding 3: capture → FAILED (Retry) →
+  // RUNNING / QUEUED → NEEDS YOU → SUMMARY STORED → the rest. The rows carry
+  // the producer's `needs_you_count` (one proposed outcome).
+  it("never lets a NEEDS YOU count cover a failed or active run", () => {
+    rail([
+      row("err", "error", true, 1),
+      row("run", "running", true, 1),
+      row("que", "queued", true, 1),
+      row("dis", "disabled", true, 1),
+      row("rdy", "ready", true, 1),
+      row("non", "ready", true, 0),
+    ]);
+    expect(token("err")).toBe("FAILED");
+    expect(token("run")).toBe("RUNNING");
+    expect(token("que")).toBe("QUEUED");
+    expect(token("dis")).toBe("1 NEEDS YOU");
+    expect(token("rdy")).toBe("1 NEEDS YOU");
+    expect(token("non")).toBe("SUMMARY STORED");
+  });
+
+  it("never lets a NEEDS YOU count cover a capture state", () => {
+    const rec = { ...row("rec", "disabled", false, 2), capture_status: "capture_failed" };
+    rail([rec]);
+    expect(token("rec")).toBe("CAPTURE FAILED");
   });
 });

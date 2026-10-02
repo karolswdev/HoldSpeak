@@ -498,7 +498,7 @@ def _mint_through_the_real_producers(tmp_path: Path) -> None:
     import sqlite3
 
     from holdspeak.intel_queue import process_next_intel_job
-    from tests.unit.test_meeting_deferred_admission import _queue_rig
+    from tests.unit.test_phase200_meeting_outcomes import _rig as _outcomes_rig
     from types import SimpleNamespace
 
     from holdspeak.meeting_import import import_meeting
@@ -520,7 +520,10 @@ def _mint_through_the_real_producers(tmp_path: Path) -> None:
     rig = tmp_path / "producer"
     rig.mkdir()
     with pytest.MonkeyPatch.context() as mp:
-        db, *_ = _queue_rig(rig, mp)
+        # The HS-200-12 rig: `_queue_rig` with the REAL plugin host and the
+        # REAL decision/action plugins put back; the one double is the
+        # provider's completion text.
+        db, engine = _outcomes_rig(rig, mp)
         source = rig / "meeting.wav"
         shutil.copyfile(SOURCE, source)
         stored = _import(db, source, A3W_STORED, "Checkout latency review",
@@ -533,6 +536,28 @@ def _mint_through_the_real_producers(tmp_path: Path) -> None:
         assert db.meetings.get_meeting(none.id).intel is None
         with db._connection() as conn:
             conn.execute("UPDATE meetings SET intel_status = 'disabled' WHERE id = ?", (stored.id,))
+
+        # Astra's #730 finding 3: a stored summary WITH proposed outcomes.
+        # Each meeting is saved and enqueued by the stop-handoff producer, and
+        # the real drainer runs the summary, the plugins and the proposal
+        # bridge. Then two get a re-run: the first fails for real (the
+        # provider errors), the second stays queued (this hub has no drainer).
+        for meeting_id, title in OUTCOME_MEETINGS.items():
+            _outcome_meeting(db, meeting_id, title)
+        drained = 0
+        while process_next_intel_job():
+            drained += 1
+        assert drained >= len(OUTCOME_MEETINGS)
+        for meeting_id in (A3W_FAILED, A3W_QUEUED):
+            db.intel.enqueue_intel_job(
+                meeting_id, transcript_hash=db.meetings.get_meeting(meeting_id).transcript_hash(),
+                reason="re-run")
+        engine.error = "provider failed"
+        assert process_next_intel_job(retry_max_attempts=1) is True
+        rows = {m.id: m for m in db.meetings.list_meetings(limit=50)}
+        assert {i: rows[i].intel_status for i in OUTCOME_MEETINGS} == {
+            A3W_OUTCOMES: "ready", A3W_FAILED: "error", A3W_QUEUED: "queued"}
+        assert all(rows[i].has_summary and rows[i].needs_you_count > 0 for i in OUTCOME_MEETINGS)
     src = sqlite3.connect(rig / "queue.db")
     dst = sqlite3.connect(tmp_path / "holdspeak.db")  # _boot's DEFAULT_DB_PATH
     src.backup(dst)
@@ -542,6 +567,34 @@ def _mint_through_the_real_producers(tmp_path: Path) -> None:
 
 A3W_STORED = "a3w-stored"
 A3W_NONE = "a3w-none"
+A3W_OUTCOMES = "a3w-outcomes"
+A3W_FAILED = "a3w-rerun-failed"
+A3W_QUEUED = "a3w-rerun-queued"
+OUTCOME_MEETINGS = {
+    A3W_OUTCOMES: "Payments cut-over review",
+    A3W_FAILED: "Payments cut-over: re-run failed",
+    A3W_QUEUED: "Payments cut-over: re-run queued",
+}
+
+
+def _outcome_meeting(db: Any, meeting_id: str, title: str) -> None:
+    """The HS-200-12 meeting (`test_phase200_meeting_outcomes._meeting`) with
+    its own title: saved, linked to a Project, enqueued at stop handoff."""
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+    from tests.unit.test_hs172_loop_wire import _link_meeting_project, _seed_project
+    from tests.unit.test_phase200_meeting_outcomes import SEGMENTS
+
+    state = MeetingState(
+        id=meeting_id, started_at=datetime.now() - timedelta(hours=2),
+        ended_at=datetime.now() - timedelta(hours=1), title=title,
+        segments=[TranscriptSegment(text=text, speaker=speaker, start_time=start, end_time=end)
+                  for start, end, speaker, text in SEGMENTS],
+    )
+    db.meetings.save_meeting(state)
+    _seed_project(db, "prj-cutover")
+    _link_meeting_project(db, meeting_id, "prj-cutover")
+    db.intel.enqueue_intel_job(meeting_id, transcript_hash=state.transcript_hash(),
+                               reason="stop handoff")
 
 
 class TestMeetingsRailNamesStored:
@@ -595,6 +648,56 @@ class TestMeetingsRailNamesStored:
                 assert not stored.get_by_text(re.compile(r"\bOFF\b")).count()
                 assert none.get_by_test_id("state-token").inner_text() == "OFF"
                 assert not none.get_by_text("STORED").count()
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_a_needs_you_count_never_covers_the_run(self, width: int) -> None:
+        """Muad'Dib's ruling on Astra's #730 finding 3: capture → FAILED (Retry)
+        → RUNNING / QUEUED → NEEDS YOU → SUMMARY STORED → the rest. Three
+        meetings store a summary AND proposed outcomes (real producers); the
+        rail names the failed and the queued re-run, and the count only where
+        no run is live. Red on a139ad13 (all three said `5 NEED YOU`)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                      device_scale_factor=1, has_touch=width < 720)
+            page = ctx.new_page()
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                rows = {r["id"]: r for r in _api(page, "GET", "/api/meetings?limit=20", token=TOKEN)["meetings"]}
+                for meeting_id in OUTCOME_MEETINGS:
+                    assert rows[meeting_id]["has_summary"] is True
+                    assert rows[meeting_id]["needs_you_count"] == 5
+                assert rows[A3W_FAILED]["intel_status"] == "error"
+                assert rows[A3W_QUEUED]["intel_status"] == "queued"
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(1500)
+                _settle(page)
+                TestFacesDoNotLie._press(
+                    page, page.locator(".desk-dock-launch[aria-label^='Meetings']"), width)
+                meetings = page.locator(".desk-window[aria-label='Meetings']")
+
+                def token(meeting_id: str) -> str:
+                    row = meetings.get_by_test_id(f"meeting-row-{meeting_id}")
+                    row.wait_for()
+                    return row.get_by_test_id("state-token").inner_text()
+
+                assert token(A3W_FAILED) == "FAILED"
+                # This hub has no drainer, so the queued run says so (HS-200-42).
+                assert token(A3W_QUEUED) in {"QUEUED", "NOT DRAINING"}
+                assert token(A3W_OUTCOMES) == "5 NEED YOU"
+                assert token(A3W_STORED) == "SUMMARY STORED"
+                meetings.get_by_test_id(f"meeting-row-{A3W_FAILED}").scroll_into_view_if_needed()
+                TestFacesDoNotLie._shot(page, "meetings-rail-precedence", width)
                 assert not errors, errors
             finally:
                 browser.close()
