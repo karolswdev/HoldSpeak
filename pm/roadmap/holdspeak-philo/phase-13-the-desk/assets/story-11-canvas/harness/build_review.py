@@ -77,13 +77,28 @@ def measurements(facts: dict) -> str:
         ("Sideways-scrolling strips / clipped texts", f"{sum(len(facts[k]['clip']['strips']) for k in b)} / {sum(len(facts[k]['clip']['clipped']) for k in b)}"),
         ("Rendered overlaps", str(sum(len(facts[k].get('overlap') or []) for k in b))),
         ("Overlap waivers used (each its exact relationship)", "; ".join(f"{w}: {n} pairs ({', '.join(sorted({x['a'] + ' / ' + x['b'] for k in b for x in facts[k].get('overlap_waived', []) if x['waiver'] == w}))})" for w, n in sorted(__import__('collections').Counter(x['waiver'] for k in b for x in facts[k].get('overlap_waived', [])).items())) or "none"),
-        ("Mutation proof (injected near misses, each must be CAUGHT)", "; ".join(f"{t} at {wd}: {'CAUGHT' if v['caught'] else 'MISSED'} ({v['caught'][0]['a']} / {v['caught'][0]['b']})" if v['caught'] else f"{t} at {wd}: MISSED" for wd in (1440, 393) for t, v in sorted(facts.get(f'_mutation_{wd}', {}).items())) or "not run"),
+        ("Mutation proof", "see the table below (`shots/mutation-proof.json`)"),
         ("Ellipsis lines (recorded, allowed by A.6)", ", ".join(f"`{t}`" for t in ell) or "none"),
         ("Needs-you numbers (head, bell, Intelligence, Desk memory)", "; ".join(f"{t} on {n} boards" for t, n in sorted(__import__('collections').Counter(str(tuple('not on the glass' if x is None else x for x in (facts[k]['needs_you']['head_n'], facts[k]['needs_you']['bell'], facts[k]['needs_you']['intel'], facts[k]['needs_you']['memory']))) for k in b).items())) + " (the Chair head is off the glass when a window fills the 393 work area)"),
         ("Active projects missing from the Dock / zero badges", f"{sum(len(facts[k]['dockfacts']['missing'] or []) for k in b)} / {sum(facts[k]['dockfacts']['zeros'] for k in b)}"),
         ("Browser errors", str(sum(len(facts.get(f'_browser_errors_{w}', [])) for w in (1440, 393)))),
     ]
     out = ["| Measure | Value |", "|---|---|"] + [f"| {a} | {v} |" for a, v in rows]
+    mp = SHOTS / "mutation-proof.json"
+    if mp.exists():
+        m = json.loads(mp.read_text())
+        what = {"a_sticky": "a Button in the Room's sticky Ask bar (computed position: absolute), over a body row NOT beneath the bar",
+                "b_mic": "a mic button over a DIFFERENT text field of the Workbench window (no shared field wrapper)",
+                "c_more": "a stray text element of the shelf under More (not an AppIcon)"}
+        out.append("\nMutation proof (`shots/mutation-proof.json`): each targeted near miss against round 3c's broad-waiver fence (kept verbatim as `OVERLAP_BROAD`) and the narrowed fence (`OVERLAP`); a miss under the narrowed fence fails the run.\n")
+        out.append("| Mutant | Width | Round 3c broad fence | Narrowed fence | Caught pair |")
+        out.append("|---|---|---|---|---|")
+        for wd in (1440, 393):
+            for t, v in sorted(m.get(f"_mutation_{wd}", {}).items()):
+                pair = f"{v['caught'][0]['a']} / {v['caught'][0]['b']}" if v.get("caught") else "—"
+                chk = f" (computed: {v['check']['position']}; nearest bar: {v['check']['nearestBar']})" if v.get("check") else ""
+                out.append(f"| {t}: {what.get(t, t)}{chk} | {wd} | {v['broad_fence']} | {v['narrowed_fence']} | {pair} |")
+        out.append(f"\nMutation proof run: {'held' if not m.get('fails') else 'FAILED: ' + '; '.join(m['fails'])}.")
     for name, label in (("red-before-r2.json", "round two"), ("red-before-r3.json", "round three"), ("red-before-r3b.json", "round 3b (`e23ce53d`)")):
         p = SHOTS / name
         if p.exists():

@@ -337,6 +337,46 @@ OVERLAP = "() => {" + JS_LIB + r"""
   return { hits, waived };
 }"""
 
+# 3e: ROUND 3c's BROAD-WAIVER FENCE, kept verbatim (from commit 1bcfb08ee) so the mutation proof can show
+# what the narrowing changed. Never used to judge a board.
+OVERLAP_BROAD = "() => {" + JS_LIB + r"""
+  const isText = (e) => [...e.childNodes].some((n) => n.nodeType === 3 && /[A-Za-z0-9]/.test(n.textContent));
+  const isCtl = (e) => e.matches('button, a[href], input, select, textarea, [role=button], [role=tab], [role^=menuitem], [role=checkbox]');
+  const scope = (e) => e.closest('[role=menu], .desk-window-shell:not(.p13-sample-win), .desk-menubar, .desk-dock, .p13-sheet-host') || document.body;
+  const els = [];
+  for (const e of document.querySelectorAll('body *')) {
+    if (!(isText(e) || isCtl(e))) continue;
+    if (!shown(e) || e.closest('[aria-hidden=true], .p13-sample-stack, svg')) continue;
+    const r = e.getBoundingClientRect(); if (r.width < 3 || r.height < 3) continue;
+    if (isText(e) && parseFloat(getComputedStyle(e).fontSize) === 0) continue;
+    // the box as the glass shows it: clipped by scrolling/clipping ancestors
+    const v = vrect(e); if (v.w < 3 || v.h < 3) continue;
+    const sc = scope(e); let k = null;
+    for (let p = e; p && p !== sc; p = p.parentElement) { const ps = getComputedStyle(p).position; if (ps === 'sticky' || ps === 'fixed') { k = p; break; } }
+    els.push({ e, v, s: sc, k });
+  }
+  const hits = [];
+  for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
+    const a = els[i], b = els[j];
+    if (a.s !== b.s || a.e.contains(b.e) || b.e.contains(a.e)) continue;
+    // content scrolling under a sticky bar of its own window (the Room's Ask composer) is scrolling, not a collision
+    if (a.k !== b.k) continue;
+    // the in-well MicButton sits inside its text field by design (UX-CANON B: the mic on every input)
+    if ((a.e.matches('input, textarea') && b.e.closest('.desk-mic, [class*=mic]')) || (b.e.matches('input, textarea') && a.e.closest('.desk-mic, [class*=mic]'))) continue;
+    // the Dock's More gadget pages the shelf: an icon scrolled under it is the next page, not a collision
+    if (a.e.closest('.p13-dock-more') || b.e.closest('.p13-dock-more')) continue;
+    const l = Math.max(a.v.l, b.v.l), r = Math.min(a.v.r, b.v.r), t = Math.max(a.v.t, b.v.t), bt = Math.min(a.v.b, b.v.b);
+    if (r - l <= 2 || bt - t <= 2) continue;
+    const h = document.elementFromPoint((l + r) / 2, (t + bt) / 2);
+    if (!h || !(a.e.contains(h) || b.e.contains(h) || h.contains(a.e) || h.contains(b.e))) continue;
+    const name = (e) => ((e.getAttribute('aria-label') || e.innerText || e.className || '') + '').replace(/\s+/g, ' ').trim().slice(0, 28);
+    hits.push({ a: name(a.e), b: name(b.e), w: Math.round(r - l), h: Math.round(bt - t) });
+    if (hits.length > 40) return hits;
+  }
+  return hits;
+}"""
+
+
 # 3d: THE MUTATION PROOF. Three injected overlaps, each the near miss of one waiver; the fence must
 # catch every one (red), and the boards without them stay green.
 PLACE = r"""const place = (el, x, y) => { el.style.position = 'fixed'; el.style.left = x + 'px'; el.style.top = y + 'px';
@@ -344,13 +384,18 @@ PLACE = r"""const place = (el, x, y) => { el.style.position = 'fixed'; el.style.
 MUTATE = {
     # (a) a button inside the Room's sticky Ask bar, moved over the window's own title (not content
     #     scrolling beneath the bar)
-    "a_sticky": "() => { " + PLACE + r""" const bar = document.querySelector('.room-ask-container'); if (!bar) return 'no bar';
-      // a button that lives IN the sticky bar, moved up over a text row of the body that is NOT beneath the bar
+    "a_sticky": r"""() => { const bar = document.querySelector('.room-ask-container'); if (!bar) return 'no bar';
+      // a button that lives IN the sticky Ask bar, positioned ABSOLUTE (computed position is not fixed, so
+      // barOf finds the real sticky bar), moved up over a body row that is NOT beneath the bar
       const br = bar.getBoundingClientRect(); const body = bar.closest('.desk-surface-body');
       const t = [...body.querySelectorAll('*')].find((e) => !bar.contains(e) && [...e.childNodes].some((n) => n.nodeType === 3 && /[A-Za-z]/.test(n.textContent)) && e.getBoundingClientRect().bottom < br.top - 20 && e.getBoundingClientRect().top > body.getBoundingClientRect().top + 10);
       if (!t) return 'no target'; const r = t.getBoundingClientRect(); const b = document.createElement('button'); b.className = 'btn p13-mutant'; b.textContent = 'MUTANT A';
-      Object.assign(b.style, { width: Math.max(80, r.width) + 'px', height: Math.max(20, r.height) + 'px', zIndex: 9999 }); bar.appendChild(b); place(b, r.left, r.top);
-      window.__p13MutantTarget = (t.innerText || '').trim().slice(0, 20); return 'ok'; }""",
+      Object.assign(b.style, { position: 'absolute', width: Math.max(80, r.width) + 'px', height: Math.max(20, r.height) + 'px', zIndex: 9999, left: '0px', top: '0px' }); bar.appendChild(b);
+      const b0 = b.getBoundingClientRect(); b.style.left = (r.left - b0.left) + 'px'; b.style.top = (r.top - b0.top) + 'px';
+      const cs = getComputedStyle(b); let bar2 = null; for (let p = b.parentElement; p; p = p.parentElement) { const ps = getComputedStyle(p).position; if (ps === 'sticky' || ps === 'fixed') { bar2 = p; break; } }
+      window.__p13MutantTarget = (t.innerText || '').trim().slice(0, 20);
+      window.__p13MutantCheck = { position: cs.position, nearestBar: bar2 === bar ? 'the sticky Ask bar' : String(bar2 && bar2.className), barPosition: getComputedStyle(bar).position };
+      return 'ok'; }""",
     # (b) a mic, not of this field, placed over a DIFFERENT field of the same window (it shares no field wrapper with it)
     "b_mic": "() => { " + PLACE + r""" const w = document.querySelector('.desk-window-shell[data-p13-front]'); if (!w) return 'no window';
       const mic = [...w.querySelectorAll('button')].find((b) => /^Speak/.test(b.getAttribute('aria-label') || ''));
@@ -550,6 +595,55 @@ def boards(page, width: int, url: str, seed: dict, facts: dict, fails: list[str]
     settle(3000)
     boot()
 
+    def mutation_proof() -> None:
+        """3d/3e: the mutation proof (no board; facts `_mutation_<width>` and shots/mutation-proof.json)."""
+        proof = {}
+        def caught(tag: str, setup) -> None:
+            setup()
+            res = ev(MUTATE[tag])
+            settle(400)
+            ov = ev(OVERLAP)
+            broad_hits = ev(OVERLAP_BROAD)
+            check = ev("() => window.__p13MutantCheck || null")
+            pair = lambda h, x, y: (x in h["a"] and y in h["b"]) or (x in h["b"] and y in h["a"])
+            target = ev("() => window.__p13MutantTarget || ''")
+            want = {"a_sticky": lambda h: "MUTANT A" in h["a"] + h["b"],   # the bar's button over a body row NOT beneath the bar
+                    "b_mic": lambda h: h["a"].startswith("Speak") != h["b"].startswith("Speak") and (target[:12] in h["a"] + h["b"] if target else True),   # the mic over ANOTHER field
+                    "c_more": lambda h: pair(h, "More AppIcons", "STRAY TEXT")}[tag]
+            hit = [h for h in ov["hits"] if want(h)]
+            broad = [h for h in broad_hits if want(h)]
+            proof[tag] = {"injected": res, "check": check, "broad_fence": "CAUGHT" if broad else "MISSED", "narrowed_fence": "CAUGHT" if hit else "MISSED", "broad_caught": broad[:3],
+                          "target": ev("() => window.__p13MutantTarget || ''"), "caught": hit[:3], "waived": [w for w in ov["waived"] if "MUTANT" in (w["a"] + w["b"]) or "STRAY" in (w["a"] + w["b"])]}
+            ev(UNMUTATE)
+            ev("() => { window.__p13MutantCheck = null; window.__p13MutantTarget = ''; }")
+            settle(300)
+            if tag == "a_sticky" and (not check or check.get("position") == "fixed" or check.get("nearestBar") != "the sticky Ask bar"):
+                fails.append(f"3e mutation a_sticky-{width}: the mutant does not exercise the sticky bar ({check})")
+            if res != "ok" or not hit:
+                fails.append(f"3d mutation {tag}-{width}: the fence did not catch the injected overlap ({res}, {proof[tag]})")
+        if not phone:
+            def room():
+                close_all(); ev("(p) => window.__p13Open.room(p)", "p-ledger"); settle(3000)
+            caught("a_sticky", room)
+            def bench():
+                close_all(); ev("(r) => window.__p13Open.open(r)", f"workbench:{seed['workbench']}"); settle(3000)
+                w = page.locator(".desk-window-shell[data-p13-front]").last
+                c = w.locator("button:has-text('Collapse')")
+                if c.count():
+                    jsclick(c)
+                jsclick(w.locator(":text('Draft rollback runbook')"))
+            caught("b_mic", bench)
+            close_all()
+        else:
+            caught("c_more", lambda: (close_all(), ev("() => window.__p13.openChair('needs')"), settle(500)))
+        facts[f"_mutation_{width}"] = proof
+        print("mutation", width, json.dumps(proof)[:600], flush=True)
+
+
+    if os.environ.get("MUTATION_ONLY"):
+        mutation_proof()
+        return
+
     # ── C1-1 the whole Desk ──
     ev("() => window.__p13.chairFront('needs')")
     shoot("C1-1-the-desk", "Needs you")
@@ -738,42 +832,8 @@ def boards(page, width: int, url: str, seed: dict, facts: dict, fails: list[str]
     shoot("C1-8c-dock-offline", "Needs you")
     live()
 
-    # ── 3d: the mutation proof (no board; the facts are `_mutation_<width>`) ──
     if not REHEARSE and not ONLY:
-        proof = {}
-        def caught(tag: str, setup) -> None:
-            setup()
-            res = ev(MUTATE[tag])
-            settle(400)
-            ov = ev(OVERLAP)
-            pair = lambda h, x, y: (x in h["a"] and y in h["b"]) or (x in h["b"] and y in h["a"])
-            target = ev("() => window.__p13MutantTarget || ''")
-            want = {"a_sticky": lambda h: "MUTANT A" in h["a"] + h["b"],   # the bar's button over a body row NOT beneath the bar
-                    "b_mic": lambda h: h["a"].startswith("Speak") != h["b"].startswith("Speak") and (target[:12] in h["a"] + h["b"] if target else True),   # the mic over ANOTHER field
-                    "c_more": lambda h: pair(h, "More AppIcons", "STRAY TEXT")}[tag]
-            hit = [h for h in ov["hits"] if want(h)]
-            proof[tag] = {"injected": res, "target": ev("() => window.__p13MutantTarget || ''"), "caught": hit[:3], "waived": [w for w in ov["waived"] if "MUTANT" in (w["a"] + w["b"]) or "STRAY" in (w["a"] + w["b"])]}
-            ev(UNMUTATE)
-            settle(300)
-            if res != "ok" or not hit:
-                fails.append(f"3d mutation {tag}-{width}: the fence did not catch the injected overlap ({res}, {proof[tag]})")
-        if not phone:
-            def room():
-                close_all(); ev("(p) => window.__p13Open.room(p)", "p-ledger"); settle(3000)
-            caught("a_sticky", room)
-            def bench():
-                close_all(); ev("(r) => window.__p13Open.open(r)", f"workbench:{seed['workbench']}"); settle(3000)
-                w = page.locator(".desk-window-shell[data-p13-front]").last
-                c = w.locator("button:has-text('Collapse')")
-                if c.count():
-                    jsclick(c)
-                jsclick(w.locator(":text('Draft rollback runbook')"))
-            caught("b_mic", bench)
-            close_all()
-        else:
-            caught("c_more", lambda: (close_all(), ev("() => window.__p13.openChair('needs')"), settle(500)))
-        facts[f"_mutation_{width}"] = proof
-        print("mutation", width, json.dumps(proof)[:600], flush=True)
+        mutation_proof()
 
     # ── C1-7 the comparison (two states) ──
     if not REHEARSE and (not ONLY or ONLY.startswith("C1-7")):
@@ -840,6 +900,14 @@ def main() -> int:
         fails, f = run(width, height, state)
         all_fails += fails
         facts.update(f)
+    if os.environ.get("MUTATION_ONLY"):
+        # 3e: the boards are unchanged; only the mutation proof runs. facts.json and the shots stay as the
+        # round-3d run left them; the proof goes to its own file.
+        proof = {"_note": "3e mutation proof: each targeted near miss against round 3c's broad-waiver fence (OVERLAP_BROAD, verbatim from 1bcfb08ee) and the narrowed fence (OVERLAP). A miss under the narrowed fence fails the run.",
+                 "fails": all_fails, **{k: v for k, v in facts.items() if k.startswith("_mutation_")}}
+        (SHOTS / "mutation-proof.json").write_text(json.dumps(proof, indent=1, ensure_ascii=False))
+        print("\nFAILS:" if all_fails else "\nMUTATION PROOF HELD", *all_fails, sep="\n  ")
+        return 2 if all_fails else 0
     if not ONLY or ONLY.startswith("C1-7"):
         compose_comparison()
     facts["_fails"] = all_fails

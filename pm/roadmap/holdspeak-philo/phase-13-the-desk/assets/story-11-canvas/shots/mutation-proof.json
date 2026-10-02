@@ -1,0 +1,63 @@
+{
+ "_note": "3e mutation proof: each targeted near miss against round 3c's broad-waiver fence (OVERLAP_BROAD, verbatim from 1bcfb08ee) and the narrowed fence (OVERLAP). A miss under the narrowed fence fails the run.",
+ "fails": [],
+ "_mutation_1440": {
+  "a_sticky": {
+   "injected": "ok",
+   "check": {
+    "position": "absolute",
+    "nearestBar": "the sticky Ask bar",
+    "barPosition": "sticky"
+   },
+   "broad_fence": "MISSED",
+   "narrowed_fence": "CAUGHT",
+   "broad_caught": [],
+   "target": "",
+   "caught": [
+    {
+     "a": "Clear here",
+     "b": "MUTANT A",
+     "w": 165,
+     "h": 28
+    }
+   ],
+   "waived": []
+  },
+  "b_mic": {
+   "injected": "ok",
+   "check": null,
+   "broad_fence": "MISSED",
+   "narrowed_fence": "CAUGHT",
+   "broad_caught": [],
+   "target": "New item instruction",
+   "caught": [
+    {
+     "a": "New item instruction",
+     "b": "Speak Item body",
+     "w": 34,
+     "h": 34
+    }
+   ],
+   "waived": []
+  }
+ },
+ "_mutation_393": {
+  "c_more": {
+   "injected": "ok",
+   "check": null,
+   "broad_fence": "MISSED",
+   "narrowed_fence": "CAUGHT",
+   "broad_caught": [],
+   "target": "",
+   "caught": [
+    {
+     "a": "More AppIcons",
+     "b": "STRAY TEXT",
+     "w": 48,
+     "h": 32
+    }
+   ],
+   "waived": []
+  }
+ }
+}

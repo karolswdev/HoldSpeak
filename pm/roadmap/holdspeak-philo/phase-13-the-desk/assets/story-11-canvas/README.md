@@ -1,6 +1,6 @@
 # PHILO-13-11 (C1) canvas: the Workbench look
 
-**Status: DRAFT, round 3d (Astra canvas r3: the overlap waivers narrowed to their exact relationships, with a mutation proof; the boards are unchanged), for Astra's re-check and the owner's ratification** (UX-CANON §A.2: the canvas before the build). Round three pays Astra's check r1 DO-NOT-RATIFY on `1467d9173` (`/Users/karol/dev/tools/HoldSpeak/.tmp/two-brains/20261001-203130-check-p13-canvas-r1/last.md`) with Muad'Dib's rulings R1–R8. Nothing here is built in product code. Every change lives under `harness/`. The review page is `index.html` in this folder: every board at 1440 × 900 (left) and 393 × 852 (right). The settled design for the build is `../../design/workbench-look.md`.
+**Status: DRAFT, round 3e (Astra canvas r4: a valid sticky mutant, and every mutant measured against the broad and the narrowed fence; harness only, the boards unchanged), for Astra's re-check and the owner's ratification** (UX-CANON §A.2: the canvas before the build). Round three pays Astra's check r1 DO-NOT-RATIFY on `1467d9173` (`/Users/karol/dev/tools/HoldSpeak/.tmp/two-brains/20261001-203130-check-p13-canvas-r1/last.md`) with Muad'Dib's rulings R1–R8. Nothing here is built in product code. Every change lives under `harness/`. The review page is `index.html` in this folder: every board at 1440 × 900 (left) and 393 × 852 (right). The settled design for the build is `../../design/workbench-look.md`.
 
 Sources: the story (`../../story-11-c1-the-workbench-look.md`), the charter (`../../current-phase-status.md`, fork 1 "All the way"), the grounding (`docs/internal/philo/phase-13/grounding/faces-jobs.md` §3; before-shots `grounding/shots/surfaces/01-chair-pop-1440.png`, `01-chair-pop-393.png`, `64-room-pop-1440.png`), A1 (`../../story-02-a1-park-never-delete.md`), A2 (`../../story-03-a2-one-meaning-of-needs-you.md`), C3 (`../../story-13-c3-a-live-dock.md`), C7 (`../../story-17-c7-the-phone-desk.md`), `docs/internal/UX-CANON.md`.
 
@@ -23,11 +23,21 @@ Sources: the story (`../../story-11-c1-the-workbench-look.md`), the charter (`..
 | Sideways-scrolling strips / clipped texts | 0 / 0 |
 | Rendered overlaps | 0 |
 | Overlap waivers used (each its exact relationship) | mic: 6 pairs (Item body / Speak Item body); more: 26 pairs (Payments ledger cutover, 3 n / More AppIcons); sticky: 3 pairs (SINCE YOU LOOKED / Ask this project) |
-| Mutation proof (injected near misses, each must be CAUGHT) | a_sticky at 1440: CAUGHT (Clear here / MUTANT A); b_mic at 1440: CAUGHT (New item instruction / Speak Item body); c_more at 393: CAUGHT (More AppIcons / STRAY TEXT) |
+| Mutation proof | see the table below (`shots/mutation-proof.json`) |
 | Ellipsis lines (recorded, allowed by A.6) | `Check reconciliation timings`, `Draft rollback runbook`, `Ledger cutover bench`, `Material · Workbench Steel`, `Payments ledger cutover`, `Rerun shard benchmark` |
 | Needs-you numbers (head, bell, Intelligence, Desk memory) | ('not on the glass', 8, 8, 8) on 5 boards; (8, 8, 8, 8) on 45 boards (the Chair head is off the glass when a window fills the 393 work area) |
 | Active projects missing from the Dock / zero badges | 0 / 0 |
 | Browser errors | 0 |
+
+Mutation proof (`shots/mutation-proof.json`): each targeted near miss against round 3c's broad-waiver fence (kept verbatim as `OVERLAP_BROAD`) and the narrowed fence (`OVERLAP`); a miss under the narrowed fence fails the run.
+
+| Mutant | Width | Round 3c broad fence | Narrowed fence | Caught pair |
+|---|---|---|---|---|
+| a_sticky: a Button in the Room's sticky Ask bar (computed position: absolute), over a body row NOT beneath the bar (computed: absolute; nearest bar: the sticky Ask bar) | 1440 | MISSED | CAUGHT | Clear here / MUTANT A |
+| b_mic: a mic button over a DIFFERENT text field of the Workbench window (no shared field wrapper) | 1440 | MISSED | CAUGHT | New item instruction / Speak Item body |
+| c_more: a stray text element of the shelf under More (not an AppIcon) | 393 | MISSED | CAUGHT | More AppIcons / STRAY TEXT |
+
+Mutation proof run: held.
 
 Red before, round two: `shots/red-before-r2.json`, 8 boards red.
 
@@ -35,6 +45,12 @@ Red before, round three: `shots/red-before-r3.json`, 28 boards red of 28 measure
 
 Red before, round 3b (`e23ce53d`): `shots/red-before-r3b.json`, 4 boards red of 50 measured.
 <!-- generated:measurements:end -->
+
+## Round 3e: Astra canvas r4 (`/Users/karol/dev/tools/HoldSpeak/.tmp/two-brains/*-p13-canvas-r4/last.md`)
+
+- **The sticky mutant is valid now.** Round 3d's mutant was `position: fixed` (the shared PLACE helper), so `barOf` found the mutant itself as the fixed element and the sticky predicate never ran. The 3e mutant is `position: absolute` inside the Room's sticky Ask bar; the proof records its computed position and its nearest sticky/fixed ancestor (the Ask bar, `position: sticky`) and fails the run if either is wrong.
+- **Each mutant against both fences.** Round 3c's broad-waiver fence is kept verbatim as `OVERLAP_BROAD` (from `1bcfb08ee`), used only by the proof. The result is the table in the generated block: the broad fence MISSES all three near misses; the narrowed fence CATCHES all three.
+- **The run was short:** the boards are unchanged, so only the proof ran (`MUTATION_ONLY=1`: each width on its own fresh hub and HOME, both removed). `shots/facts.json`, `shots/run.log` and the 50 board shots are round 3d's, unchanged. Round 3d's `_mutation_*` entries in `facts.json` are superseded by `shots/mutation-proof.json` (its sticky entry was the invalid fixed mutant).
 
 ## Round 3d: Astra canvas r3 (`/Users/karol/dev/tools/HoldSpeak/.tmp/two-brains/*-p13-canvas-r3/last.md`): the waivers, exactly
 
