@@ -365,8 +365,11 @@ def _assert_clean(page: Any, errors: list[str]) -> None:
 #      size is 0 (nothing is painted);
 #   2. it sits inside one of the screen bar's picture controls: the mark,
 #      the egress chip, Search;
-#   3. that control draws a VISIBLE replacement: a picture (img/svg with an
-#      area) or a ::before glyph;
+#   3. that control PAINTS a replacement (Astra counsel r2): a picture
+#      (img/svg) or a ::before glyph that is visible, not display:none, at
+#      opacity > 0 with every ancestor at opacity > 0, with a non-zero box
+#      inside the viewport; an img must be loaded (complete, naturalWidth >
+#      0); a ::before glyph must have content and a non-transparent colour;
 #   4. the control's EXPLICIT name (aria-label or title, never the hidden
 #      text itself) contains the hidden word.
 # Anything else at size 0 is text under the floor. Defines `foldedWord(el, text)`.
@@ -376,11 +379,25 @@ FOLDED_WORD_JS = r"""
     if (parseFloat(getComputedStyle(el).fontSize) !== 0) return false;
     const host = el.closest('.desk-menubar .desk-mark, .desk-menubar .egress-badge, .desk-menubar .desk-tools-launch');
     if (!host) return false;
+    const opaque = (node) => {  // the node and every ancestor are painted
+      for (let n = node; n && n.nodeType === 1; n = n.parentElement) {
+        const s = getComputedStyle(n);
+        if (s.display === 'none' || Number(s.opacity) <= 0) return false;
+      }
+      return getComputedStyle(node).visibility === 'visible';
+    };
+    const inView = (r) => r.width > 0 && r.height > 0 && r.right > 0 && r.bottom > 0
+      && r.left < window.innerWidth && r.top < window.innerHeight;
     const pics = [...host.querySelectorAll('img, svg')].some((p) => {
-      const r = p.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+      if (!opaque(p) || !inView(p.getBoundingClientRect())) return false;
+      return p.tagName.toLowerCase() !== 'img' || (p.complete && p.naturalWidth > 0);
+    });
     const before = getComputedStyle(host, '::before');
-    const glyph = before.content && !['none', 'normal', '""'].includes(before.content)
-      && parseFloat(before.fontSize) > 0;
+    const ink = /rgba?\(([^)]+)\)/.exec(before.color || '');
+    const inkAlpha = ink ? (ink[1].split(/[ ,/]+/).filter(Boolean).map(Number)[3] ?? 1) : 1;
+    const glyph = before.content && !['none', 'normal', '""', "''"].includes(before.content)
+      && parseFloat(before.fontSize) > 0 && inkAlpha > 0 && before.visibility === 'visible'
+      && Number(before.opacity) > 0 && opaque(host) && inView(host.getBoundingClientRect());
     if (!pics && !glyph) return false;
     const norm = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
     const word = norm(text);

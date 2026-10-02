@@ -257,13 +257,14 @@
     overflow: hidden;
   }
   /* HS-202-02 — the dock is the phone's ONLY persistent door, and the
-     Record orb rides it. It now lays out FOR the phone: it wraps inside
-     the viewport instead of running 410px past its right edge, and it
-     keeps the shell layer so a bottom sheet no longer buries all eleven
-     buttons (03-interaction-walk.md finding 1). */
-  /* PHILO-13-11 (C1, R2): the shelf is ONE 56 px row so the window above
-     keeps ≥ 700 px of content; a full shelf scrolls inside itself (the
-     Dock is the one strip allowed to; its More gadget is C3/C7). */
+     Record orb rides it. It lays out FOR the phone: pinned to both edges,
+     it never runs past the viewport (it ran 410px past its right edge),
+     and it keeps the shell layer so a sheet never buries its buttons
+     (03-interaction-walk.md finding 1).
+     PHILO-13-11 (C1, R2): it no longer wraps. The shelf is ONE 56 px row so
+     the window above keeps ≥ 700 px of content; a full shelf scrolls
+     inside itself (the Dock is the one strip allowed to; its More gadget
+     is C3/C7). */
   .desk-next .desk-dock {
     left: 0;
     right: 0;
