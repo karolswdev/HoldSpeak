@@ -1,6 +1,27 @@
-# B0 actual runs — r2, DRAFT — UNCHECKED, awaiting Muad'Dib
+# B0 actual runs — r2 baseline with r3 addendum, DRAFT — UNCHECKED, awaiting Muad'Dib
 
 Each row is one `scripts/graph_walk.py run` invocation. Astra read each observation and its screenshots before the next invocation. The selected 18 runs use Atlas SHA `4ab5c4449f6ef0f2996327719dfc574a398952110cd3340153ec8f9df9d34236`, product revision `c7073f9cac59e898e53f425f4a437966a10aaa0b` with this lane's Atlas/rig edits present, and a built frontend. Every `observation.json` records an isolated database below its run HOME. The 393 runs use native touch. These are draft-branch observations, not runs on merged `main`.
+
+## r3 condition reruns
+
+These ten additional invocations use the rebased worktree at revision `0fc58fc6d00f6b7708771c033c11390f36419a46` with the uncommitted r3 Atlas/rig edits present, isolated HOME and TMPDIR, the built frontend, and `engine=none`. The final case Atlas SHA is `82772c49e764f0cfd59ba4ed0b01c562d39900e4267953b020f8e0dd15673ba3`. Info, Zone, and Calendar ran before the later Chain/Coder-only Atlas edit, so those observations record the earlier hash; every observation records the exact hash it read. Every 393 run uses native touch. The immutable observations and the command tails are stored in their own r3 directories.
+
+| Path | Viewport | Pass | Product-red | Rig-limit |
+|---|---:|---|---|---|
+| [Chain pullout](assets/story-01-walks/r3/chain-1440-chip/20261002T220155Z-case.p13.chain.pullout-astra-1440/observation.json) | 1440 | Yes | No — Dock chip visible → hidden on Close → visible on reopen ([after](assets/story-01-walks/r3/chain-1440-chip/20261002T220155Z-case.p13.chain.pullout-astra-1440/after.png)) | No |
+| [Chain pullout](assets/story-01-walks/r3/chain-393-chip/20261002T220242Z-case.p13.chain.pullout-astra-393/observation.json) | 393 touch | Yes | No — Dock chip transition completed ([after](assets/story-01-walks/r3/chain-393-chip/20261002T220242Z-case.p13.chain.pullout-astra-393/after.png)) | No |
+| [Coder pullout](assets/story-01-walks/r3/coder-1440-chip/20261002T220319Z-case.p13.coder.pullout-astra-1440/observation.json) | 1440 | Yes | No — Dock chip transition completed ([after](assets/story-01-walks/r3/coder-1440-chip/20261002T220319Z-case.p13.coder.pullout-astra-1440/after.png)) | No |
+| [Coder pullout](assets/story-01-walks/r3/coder-393-chip/20261002T220406Z-case.p13.coder.pullout-astra-393/observation.json) | 393 touch | Yes | No — Dock chip transition completed ([after](assets/story-01-walks/r3/coder-393-chip/20261002T220406Z-case.p13.coder.pullout-astra-393/after.png)) | No |
+| [Directory → Zone](assets/story-01-walks/r3/zone-1440/20261002T214638Z-case.p13.directory.zone-astra-1440/observation.json) | 1440 | No | Yes — real Directory ID matches both world probes; Open is disabled ([menu](assets/story-01-walks/r3/zone-1440/20261002T214638Z-case.p13.directory.zone-astra-1440/blocked.png)) | No |
+| [Directory → Zone](assets/story-01-walks/r3/zone-393/20261002T214730Z-case.p13.directory.zone-astra-393/observation.json) | 393 touch | No | Yes — native long-press hits the produced Directory; Open is disabled ([menu](assets/story-01-walks/r3/zone-393/20261002T214730Z-case.p13.directory.zone-astra-393/blocked.png)) | No |
+| [Spatial → Info](assets/story-01-walks/r3/info-1440-bound75/20261002T214406Z-case.p13.info.window-astra-1440/observation.json) | 1440 | Yes | No — `IDENTITY` first satisfied at 25.966 s ([after](assets/story-01-walks/r3/info-1440-bound75/20261002T214406Z-case.p13.info.window-astra-1440/after.png)) | No |
+| [Spatial → Info](assets/story-01-walks/r3/info-393-bound75/20261002T214501Z-case.p13.info.window-astra-393/observation.json) | 393 touch | Yes | No — `IDENTITY`; all nine hit points owned ([after](assets/story-01-walks/r3/info-393-bound75/20261002T214501Z-case.p13.info.window-astra-393/after.png)) | No |
+| [Calendar refusal](assets/story-01-walks/r3/calendar-393/20261002T214849Z-case.p13.calendar.snapshot_window-astra-393/observation.json) | 393 touch | Yes | Yes — real refusal still shows `no_vision_model_assigned` ([after](assets/story-01-walks/r3/calendar-393/20261002T214849Z-case.p13.calendar.snapshot_window-astra-393/after.png)) | No — all nine hit points owned |
+| [Roadmap window](assets/story-01-walks/r3/roadmap-393/20261002T220536Z-case.p13.roadmap.window-astra-393/observation.json) | 393 touch | Yes | Yes — “Roadmap not found” remains ([after](assets/story-01-walks/r3/roadmap-393/20261002T220536Z-case.p13.roadmap.window-astra-393/after.png)) | No — all nine hit points owned |
+
+The final Chain/Coder rows include the new three-state Dock-chip fence. The Roadmap row is an extra run because the same x=391 sample also marked that phone-width observation as limited; it now passes its declared predicate, so the identity defect remains independently visible. The separate [40 s Info observation](assets/story-01-walks/r3/info-1440/20261002T214115Z-case.p13.info.window-astra-1440/observation.json) records a 52.465 s result outside the old bound; the final case uses 75 s.
+
+The r2 table below is a preserved historical baseline. Its result counts and limits do not override the r3 resolutions above.
 
 The five columns keep the case's declared predicate separate from a product defect and from a rig limit. A predicate can pass while a defect outside that predicate remains visible. “Pass” is the observation's verdict; product-red and rig-limit are independent findings.
 

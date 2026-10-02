@@ -1,6 +1,29 @@
-# B0 findings — r2, DRAFT — UNCHECKED, awaiting Muad'Dib
+# B0 findings — r3, DRAFT — UNCHECKED, awaiting Muad'Dib
 
-These findings come from the [selected actual runs](walks-01-astra.md), each linked to its unedited observation and screenshots. A `fail` or `blocked` observation says where the declared predicate stopped; it does not erase a product red visible on the face. We retain the existing hit-test guards and name homes for every product defect.
+These findings come from the [selected actual runs](walks-01-astra.md), each linked to its unedited observation and screenshots. A `fail` or `blocked` observation says where the declared predicate stopped; it does not erase a product red visible on the face. The r3 table records only changed conclusions; the r2 table remains as the historical baseline. Existing guards remain in place.
+
+## r3 reruns and resolutions
+
+| Path | Viewport | Pass | Product-red | Rig-limit |
+|---|---:|---|---|---|
+| Chain pullout | 1440 | Yes | No — the Dock chip is visible, removed by Close before reload, then restored when the ordinary door reopens | No |
+| Chain pullout | 393 touch | Yes | No — the Dock chip transition is fenced and completes | No |
+| Coder pullout | 1440 | Yes | No — the Dock chip transition is fenced and completes | No |
+| Coder pullout | 393 touch | Yes | No — the Dock chip transition is fenced and completes | No |
+| Directory → Zone | 1440 | No | Yes — the produced Directory matches both world probes; the native menu leaves Open disabled | No |
+| Directory → Zone | 393 touch | No | Yes — native long-press reaches the same produced Directory and Open remains disabled | No |
+| Spatial → Info | 1440 | Yes | No — uppercase `IDENTITY` is readable; 25.966 s first satisfaction under the 75 s bound | No |
+| Spatial → Info | 393 touch | Yes | No — uppercase `IDENTITY` is readable and all nine hit samples are owned | No |
+| Calendar refusal | 393 touch | Yes | Yes — the real refusal still displays `no_vision_model_assigned` | No — all nine samples are owned |
+| Roadmap window | 393 touch | Yes | Yes — the face still says “Roadmap not found” | No — all nine samples are owned |
+
+The Info 1440 rerun first produced `IDENTITY` at 52.465 s under a 40 s bound; that actual result is preserved in [the 40 s observation](assets/story-01-walks/r3/info-1440/20261002T214115Z-case.p13.info.window-astra-1440/observation.json). The Atlas and its bound fence now record 75 s, with the observed 52.465 s and 22.535 s headroom stated in the case. The final 1440 and 393 observations pass.
+
+The post-#725 Chain and Coder cases now check the rendered lifecycle directly: `.desk-dock-chip button` is visible after open, hidden after Close before reload, and visible after reopen. The updated case words and lifecycle fence changed together. Four actual case-width runs pass on the merged #725 base.
+
+R2's two rounded-sheet limits were not the only affected 393 target: Roadmap also sampled x=391 at the edge. The shared probes now sample fractions `[0.125, 0.5, 0.875]` on both axes and retain all nine ownership checks. Fresh 393 runs of Info, Calendar and Roadmap have no rig limit. Roadmap's product red remains separate from its now-passing predicate.
+
+## r2 baseline findings (preserved; superseded where r3 above says so)
 
 | Finding | Evidence and interpretation | Home; tenet |
 |---|---|---|
@@ -16,4 +39,4 @@ These findings come from the [selected actual runs](walks-01-astra.md), each lin
 
 Calibration is preserved under `assets/story-01-walks/calibration/`. An early Repository case falsely passed because it tested DOM text alone. Final cases use the existing `readable_text` geometry/hit-test predicate; the local Atlas fence requires it. The 393 Repo target itself is readable; the rounded decorative corner is not the content. Earlier arrival timing, the Calendar selector, and the wrong Info label were corrected in the case and its fence together; the final Info expectation is `IDENTITY`. The shared semantic tests still read Phase 13 cases and show red on broken words, bindings and semantics before accepting the final Atlas.
 
-B0 does not release B2. These runs are on a dirty draft branch, not merged `main`; #725 is still open; B0-F1 must be re-walked after #725 merges; B0's cases must run again on B2's head. The signed C5 gate in story 01 and story 07 remains binding. B2's merge record cites B0's merged commit, the eventual canonical `evidence-story-01.md`, and the B0 runs on B2's head. Story 01 remains in-progress. No guard was deleted or weakened to match a failure.
+B0 does not release B2. The r3 runs are on the rebased draft branch at `0fc58fc6`; #725 is merged into this branch, and the post-#725 Chain/Coder rerun now passes the Dock-chip transition at both widths. B0 has not yet been merged to `main`, and no B0 run has been made on B2's head. The signed gate in story 01 and story 07 remains binding: B2's merge record cites B0's merged commit, canonical `evidence-story-01.md`, and B0's runs on B2's head; B0-F2 must pass there. Story 01 stays in-progress. No guard was deleted or weakened to match a failure.

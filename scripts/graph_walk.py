@@ -457,15 +457,15 @@ _SNAPSHOT_JS = r"""([selector, pending, valueSelector]) => {
   const hitTest = (node) => {
     if (!node) return null;
     const r = node.getBoundingClientRect();
-    const insetX = Math.min(2, Math.max(0, r.width / 4));
-    const insetY = Math.min(2, Math.max(0, r.height / 4));
-    const xs = [r.left + insetX, r.left + r.width / 2, r.right - insetX];
-    const ys = [r.top + insetY, r.top + r.height / 2, r.bottom - insetY];
+    const fractions = [0.125, 0.5, 0.875];
+    const xs = fractions.map((fraction) => r.left + r.width * fraction);
+    const ys = fractions.map((fraction) => r.top + r.height * fraction);
+    // Fractional points keep rounded corners inside the painted target.
     const samples = [];
     for (const x of xs) for (const y of ys) {
       const owner = document.elementFromPoint(x, y);
       samples.push({
-        x: Math.round(x), y: Math.round(y),
+        x, y,
         owned: !!owner && (owner === node || node.contains(owner)),
         owner: owner ? path(owner) : null,
       });
@@ -555,14 +555,14 @@ _PLACEMENT_ARM_JS = r"""([cardSelector, clearSelectors, slotSelector, scrollTarg
   const hitTest = (node) => {
     if (!node) return null;
     const r = node.getBoundingClientRect();
-    const insetX = Math.min(2, Math.max(0, r.width / 4));
-    const insetY = Math.min(2, Math.max(0, r.height / 4));
-    const xs = [r.left + insetX, r.left + r.width / 2, r.right - insetX];
-    const ys = [r.top + insetY, r.top + r.height / 2, r.bottom - insetY];
+    const fractions = [0.125, 0.5, 0.875];
+    const xs = fractions.map((fraction) => r.left + r.width * fraction);
+    const ys = fractions.map((fraction) => r.top + r.height * fraction);
+    // Fractional points keep rounded corners inside the painted target.
     const samples = [];
     for (const x of xs) for (const y of ys) {
       const owner = document.elementFromPoint(x, y);
-      samples.push({owned: !!owner && (owner === node || node.contains(owner)),
+      samples.push({x, y, owned: !!owner && (owner === node || node.contains(owner)),
                     owner: owner ? path(owner) : null});
     }
     return {
@@ -6332,13 +6332,33 @@ def exercise(
                 f"{wait.get('elapsed_s')}s: {wait.get('field_matches')}"
             )
     except Blocked as exc:
-        recorder.set(trigger_error={"step": trigger, "error": str(exc)[:800]})
+        # A trigger placeholder that is unresolved before the request is
+        # prepared is still a setup/precondition refusal: nothing was sent.
+        # Once the trigger record exists, the same error belongs to its
+        # lifecycle (for example, a `then` step) and is a failure.
+        prefire_placeholder = (
+            recorder.record.get("trigger") is None
+            and "unresolved placeholder" in str(exc)
+        )
+        lifecycle = "blocked" if prefire_placeholder else "fail"
+        recorder.set(
+            trigger_error={"step": trigger, "error": str(exc)[:800],
+                           "lifecycle": lifecycle},
+            **({"verdict": "fail"} if lifecycle == "fail" else {}),
+        )
+        if lifecycle == "fail":
+            recorder.note(f"TRIGGER lifecycle failed: {exc}")
         if ui_capture is not None:
             ui_capture.close()
         raise
     except Exception as exc:
-        recorder.set(trigger_error={"step": trigger,
-                                    "error": f"{type(exc).__name__}: {exc}"[:800]})
+        recorder.set(
+            trigger_error={"step": trigger,
+                           "error": f"{type(exc).__name__}: {exc}"[:800],
+                           "lifecycle": "fail"},
+            verdict="fail",
+        )
+        recorder.note(f"TRIGGER lifecycle failed: {type(exc).__name__}: {exc}")
         if ui_capture is not None:
             ui_capture.close()
         raise
@@ -6797,8 +6817,9 @@ def calibrate(out: Path, *, brain: str = "muaddib", viewport: int = 1440,
             exercise(page, case, recorder=recorder, hub=fixture,
                      provenance=provenance, shots=shots)
         except Blocked as exc:
-            recorder.set(verdict="blocked")
-            recorder.note(f"BLOCKED: {exc}")
+            if recorder.record.get("verdict") != "fail":
+                recorder.set(verdict="blocked")
+                recorder.note(f"BLOCKED: {exc}")
         finally:
             if page is not None:
                 page.close()
@@ -7006,8 +7027,9 @@ def run_case(
                 exercise(None, case, recorder=recorder, hub=hub,
                          provenance=provenance, shots=shots)
             except Blocked as exc:
-                recorder.set(verdict="blocked")
-                recorder.note(f"BLOCKED: {exc}")
+                if recorder.record.get("verdict") != "fail":
+                    recorder.set(verdict="blocked")
+                    recorder.note(f"BLOCKED: {exc}")
         else:
             # Import Playwright only for a face walk.  Headless operation cases
             # must be runnable when the browser package or bundle is absent.
@@ -7048,8 +7070,9 @@ def run_case(
                         recorder.note(f"blocked screenshot unavailable: {shot_error}")
                     else:
                         recorder.set(shots=[str(blocked_shot)])
-                    recorder.set(verdict="blocked")
-                    recorder.note(f"BLOCKED: {exc}")
+                    if recorder.record.get("verdict") != "fail":
+                        recorder.set(verdict="blocked")
+                        recorder.note(f"BLOCKED: {exc}")
                 finally:
                     recorder.set(console_errors=errors[:20])
                     context.close()

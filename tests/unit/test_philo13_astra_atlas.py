@@ -19,6 +19,7 @@ from tests.unit import test_philo_graph_atlas as general
 
 REPO = Path(__file__).resolve().parents[2]
 ATLAS = REPO / "docs/internal/philo/graph/atlas-phase13-astra.json"
+PRE_FIX_ATLAS_COMMIT = "c7073f9cac59e898e53f425f4a437966a10aaa0b"
 EXPECTED_CASES = {
     "case.p13.directory.zone_window.op",
     "case.p13.calendar.snapshot_window",
@@ -58,11 +59,13 @@ LIFECYCLE_CASES = {
         "first_observe": '.desk-pullout[aria-label="Atlas B0 Sequence"] :text("No steps")',
         "reenter": "Floor",
         "reopen_selector": '[id="desk-palette-option-chain:{chain_id}"]',
+        "dock_chip": ".desk-dock-chip button",
     },
     "case.p13.coder.pullout": {
         "first_observe": '.desk-pullout.is-card :text("Should I run the full suite now?")',
         "reenter": "Floor",
         "reopen_selector": '[id="desk-palette-option-coder:{coder_session_id}"]',
+        "dock_chip": ".desk-dock-chip button",
     },
 }
 
@@ -175,6 +178,25 @@ def _assert_phase13_lifecycle_fence(atlas: dict) -> None:
         ]
         assert len(reopen_indices) >= 2, f"{case_id}: final opener is not in trigger.then"
         assert reopen_indices[-1] > reentry_index, case_id
+        dock_selector = contract.get("dock_chip")
+        if dock_selector:
+            assert "removes its Dock chip when closed before reload" in case["expected"]["words"]
+            dock_visible = [
+                i for i, step in enumerate(trigger_steps)
+                if step.get("action") == "wait_for"
+                and step.get("selector") == dock_selector
+                and step.get("state", "visible") == "visible"
+            ]
+            dock_hidden = [
+                i for i, step in enumerate(trigger_steps)
+                if step.get("action") == "wait_for"
+                and step.get("selector") == dock_selector
+                and step.get("state") == "hidden"
+            ]
+            assert len(dock_visible) >= 2 and len(dock_hidden) == 1, case_id
+            assert first_observations[0] < dock_visible[0] < close_index, case_id
+            assert close_index < dock_hidden[0] < reload_index, case_id
+            assert dock_visible[-1] > reopen_indices[-1], case_id
         final_observations = [
             i for i in first_observations[1:]
             if i > reopen_indices[-1]
@@ -279,7 +301,12 @@ def _assert_phase13_coder_producer_fence(atlas: dict) -> None:
         ), f"Coder object door {door_index} must be searched after opening the palette"
 
     words = case["expected"]["words"].lower()
-    for phrase in ("agent-hook", "page refreshes to read it", "coder object door", "closes before reload"):
+    for phrase in (
+        "agent-hook",
+        "page refreshes to read it",
+        "coder object door",
+        "removes its dock chip when closed before reload",
+    ):
         assert phrase in words, f"Coder case words omit {phrase!r}: {case['expected']['words']!r}"
 
 
@@ -335,10 +362,10 @@ def _assert_phase13_roadmap_case_fence(atlas: dict) -> None:
 
 
 def _committed_atlas() -> dict:
-    """Read the actual committed pre-fix Atlas for the red mutant proof."""
+    """Read the actual r2-counsel baseline, independent of the moving HEAD."""
     atlas_path = "docs/internal/philo/graph/atlas-phase13-astra.json"
     raw = subprocess.check_output(
-        ["git", "show", f"HEAD:{atlas_path}"],
+        ["git", "show", f"{PRE_FIX_ATLAS_COMMIT}:{atlas_path}"],
         cwd=REPO,
         text=True,
     )
@@ -388,6 +415,7 @@ def _assert_phase13_case_fence(atlas: dict) -> None:
         "value": "Atlas Phase 13 Zone",
     }
     assert directory["expected"]["observe_at"] == ".desk-zone-window"
+    assert "should open its real ZoneWindow" in directory["expected"]["words"]
     assert directory["trigger"]["action"] == "world_context_menu"
     zone_doors = [
         step for step in _steps(directory)
@@ -411,6 +439,8 @@ def _assert_phase13_case_fence(atlas: dict) -> None:
     assert info["applicability"] == "applicable"
     assert info["expected"]["predicate"] == {"kind": "readable_text", "value": "IDENTITY"}
     assert info["expected"]["observe_at"] == ".desk-info-window"
+    assert info["completion_bound_s"] == 75
+    assert any("52.465 s" in text and "75 s" in text for text in info["preconditions"])
     assert info["trigger"]["action"] == "world_context_menu"
     info_doors = [
         step for step in _steps(info)
@@ -472,6 +502,8 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
     cases = _cases()
     assert set(cases) == EXPECTED_CASES
     assert cases["case.p13.directory.zone_window.op"]["viewports"] == []
+    # C6 is already folded: this atlas owns one .op; the historical 69 stays
+    # only in the shared Phase 1–12 population fence.
     assert sum(case["id"].endswith(".op") for case in cases.values()) == 1
     faces = [case for case in cases.values() if not case["id"].endswith(".op")]
     assert len(faces) == 9
@@ -483,7 +515,11 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
         steps = _steps(case)
         close_index = next(i for i, step in enumerate(steps) if 'Close ' in step.get("selector", ""))
         assert steps[close_index + 1]["state"] == "hidden", case["id"]
-        assert steps[close_index + 2]["action"] == "reload", case["id"]
+        reload_indices = [
+            i for i, step in enumerate(steps[close_index + 2:], close_index + 2)
+            if step.get("action") == "reload"
+        ]
+        assert reload_indices, case["id"]
 
 
 def test_phase13_shared_semantic_guards_show_red_then_green(tmp_path, monkeypatch) -> None:

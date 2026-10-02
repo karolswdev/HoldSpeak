@@ -1,0 +1,93 @@
+$ uv run pytest -q tests/unit/test_philo_graph_atlas.py tests/unit/test_api_surface.py tests/unit/test_philo_graph_reference.py tests/unit/test_philo13_astra_atlas.py::test_phase13_lifecycle_fence_accepts_only_trigger_owned_sequences
+........................................................................ [ 57%]
+.....................................................F                   [100%]
+=================================== FAILURES ===================================
+______ test_phase13_lifecycle_fence_accepts_only_trigger_owned_sequences _______
+
+    def test_phase13_lifecycle_fence_accepts_only_trigger_owned_sequences() -> None:
+>       _assert_phase13_lifecycle_fence(_atlas())
+
+tests/unit/test_philo13_astra_atlas.py:593:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+atlas = {'atlas_version': 'phase13-astra-b0', 'cases': [{'applicability': 'applicable', 'completion_bound_s': 30, 'edge_ids': ... 'source': 'datetime.datetime.now() inside the hub process', 'status': 'available', ...}], 'council_readings': [], ...}
+
+    def _assert_phase13_lifecycle_fence(atlas: dict) -> None:
+        """Make each live first open and return leg belong to its trigger."""
+        cases = {case["id"]: case for case in atlas["cases"]}
+        for case_id, contract in LIFECYCLE_CASES.items():
+            case = cases[case_id]
+            setup_lifecycle = [
+                step for step in case.get("setup", [])
+                if step.get("action") == "reload"
+                or "Close " in step.get("selector", "")
+                or step.get("selector") == contract["first_observe"]
+                or (
+                    contract.get("refusal_observe")
+                    and step.get("selector") == contract["refusal_observe"]
+                )
+                or step.get("selector") == ".desk-tools-launch"
+                or step.get("selector") == contract["reopen_selector"]
+                or (
+                    step.get("action") == "click_role"
+                    and step.get("name") == contract["reenter"]
+                )
+            ]
+            assert not setup_lifecycle, f"{case_id}: setup owns live lifecycle {setup_lifecycle!r}"
+
+            trigger_steps = _steps({"setup": [], "trigger": case["trigger"]})
+            first_observations = [
+                i for i, step in enumerate(trigger_steps)
+                if step.get("action") == "wait_for"
+                and step.get("selector") == contract["first_observe"]
+                and step.get("state", "visible") == "visible"
+            ]
+            assert first_observations, f"{case_id}: trigger does not observe its first open"
+            close_index = next(
+                i for i, step in enumerate(trigger_steps)
+                if "Close " in step.get("selector", "")
+            )
+            assert first_observations[0] < close_index, case_id
+            assert trigger_steps[close_index + 1]["action"] == "wait_for", case_id
+            assert trigger_steps[close_index + 1]["state"] == "hidden", case_id
+
+            reload_index = next(
+                i for i, step in enumerate(trigger_steps[close_index + 1:], close_index + 1)
+                if step.get("action") == "reload"
+            )
+            assert reload_index > close_index, case_id
+            reentry_index = next(
+                i for i, step in enumerate(trigger_steps[reload_index + 1:], reload_index + 1)
+                if step.get("action") == "click_role"
+                and step.get("name") == contract["reenter"]
+            )
+            reopen_indices = [
+                i for i, step in enumerate(trigger_steps)
+                if step.get("selector") == contract["reopen_selector"]
+            ]
+            assert len(reopen_indices) >= 2, f"{case_id}: final opener is not in trigger.then"
+            assert reopen_indices[-1] > reentry_index, case_id
+            dock_selector = contract.get("dock_chip")
+            if dock_selector:
+                assert "removes its Dock chip when closed before reload" in case["expected"]["words"]
+                dock_visible = [
+                    i for i, step in enumerate(trigger_steps)
+                    if step.get("action") == "wait_for"
+                    and step.get("selector") == dock_selector
+                    and step.get("state", "visible") == "visible"
+                ]
+                dock_hidden = [
+                    i for i, step in enumerate(trigger_steps)
+                    if step.get("action") == "wait_for"
+                    and step.get("selector") == dock_selector
+                    and step.get("state") == "hidden"
+                ]
+>               assert len(dock_visible) >= 2 and len(dock_hidden) == 1, case_id
+E               AssertionError: case.p13.chain.pullout
+E               assert (1 >= 2)
+E                +  where 1 = len([14])
+
+tests/unit/test_philo13_astra_atlas.py:196: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo13_astra_atlas.py::test_phase13_lifecycle_fence_accepts_only_trigger_owned_sequences
+1 failed, 125 passed in 5.16s

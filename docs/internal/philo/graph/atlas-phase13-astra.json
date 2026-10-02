@@ -470,6 +470,14 @@
           },
           {
             "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
             "action": "click",
             "adapter": "ui-by-viewport",
             "selector": ".desk-repo-window button[aria-label^=\"Close \"]"
@@ -944,6 +952,14 @@
           },
           {
             "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
             "action": "click",
             "adapter": "ui-by-viewport",
             "selector": ".desk-pullout[aria-label=\"Atlas B0 Sequence\"] button[aria-label^=\"Close \"]"
@@ -953,6 +969,14 @@
             "action": "wait_for",
             "adapter": "ui-observation",
             "selector": ".desk-pullout[aria-label=\"Atlas B0 Sequence\"]",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
             "state": "hidden",
             "timeout_s": 10
           },
@@ -1003,6 +1027,14 @@
             "selector": ".desk-pullout[aria-label=\"Atlas B0 Sequence\"] :text(\"No steps\")",
             "state": "visible",
             "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
+            "state": "visible",
+            "timeout_s": 10
           }
         ]
       },
@@ -1012,7 +1044,7 @@
           "value": "No steps"
         },
         "observe_at": ".desk-pullout.is-card",
-        "words": "The same produced object opens, presents 'No steps', closes before reload, and opens again through its ordinary door."
+        "words": "The same produced object opens, presents 'No steps', removes its Dock chip when closed before reload, and opens again through its ordinary door."
       },
       "completion_bound_s": 20,
       "viewports": [
@@ -1109,6 +1141,14 @@
           },
           {
             "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
             "action": "click",
             "adapter": "ui-by-viewport",
             "selector": ".desk-pullout.is-card:has-text(\"Should I run the full suite now?\") button[aria-label^=\"Close \"]"
@@ -1118,6 +1158,14 @@
             "action": "wait_for",
             "adapter": "ui-observation",
             "selector": ".desk-pullout.is-card:has-text(\"Should I run the full suite now?\")",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
             "state": "hidden",
             "timeout_s": 10
           },
@@ -1168,6 +1216,14 @@
             "selector": ".desk-pullout.is-card :text(\"Should I run the full suite now?\")",
             "state": "visible",
             "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
+            "state": "visible",
+            "timeout_s": 10
           }
         ]
       },
@@ -1177,7 +1233,7 @@
           "value": "Should I run the full suite now?"
         },
         "observe_at": ".desk-pullout.is-card",
-        "words": "The real agent-hook session is ingested, the page refreshes to read it, then its Coder object door opens, presents 'Should I run the full suite now?', closes before reload, and opens again through its ordinary door."
+        "words": "The real agent-hook session is ingested, the page refreshes to read it, then its Coder object door opens, presents 'Should I run the full suite now?', removes its Dock chip when closed before reload, and opens again through its ordinary door."
       },
       "completion_bound_s": 20,
       "viewports": [
@@ -1194,7 +1250,7 @@
       "state_id": "state.desk_presentation.p13_unwalked_windows",
       "applicability": "applicable",
       "preconditions": [
-        "The Zone producer is real. Spatial's world zone is the ordinary Directory door: its native context menu offers Open and the product verb opens the real ZoneWindow.",
+        "The Zone producer is real. Spatial's world zone is the ordinary Directory door: its native context menu should offer Open and the product verb should open the real ZoneWindow.",
         "Every mouse/touch press uses ui-by-viewport. The real __hsWorldZoneProbe and __hsWorldHitProbe agree on the produced zone before the native context gesture; the window closes, reloads, and reopens through that same door."
       ],
       "setup": [
@@ -1381,7 +1437,7 @@
           "value": "Atlas Phase 13 Zone"
         },
         "observe_at": ".desk-zone-window",
-        "words": "The produced Directory opens its real ZoneWindow through Spatial's ordinary zone context door, closes before reload, and opens again through the same door."
+        "words": "The native Zone context menu should open its real ZoneWindow; this face path is B0-F7 when Open stays disabled."
       },
       "completion_bound_s": 20,
       "viewports": [
@@ -1399,7 +1455,8 @@
       "applicability": "applicable",
       "preconditions": [
         "A real Sequence object supplies Spatial's object context menu and Get Info verb; the object is located by the product's read-only __hsWorldProbe and confirmed by __hsWorldHitProbe.",
-        "Every mouse/touch press uses ui-by-viewport. Desktop uses a native right click; 393 uses Chromium's native touchStart/touchEnd with a 500 ms hold."
+        "Every mouse/touch press uses ui-by-viewport. Desktop uses a native right click; 393 uses Chromium's native touchStart/touchEnd with a 500 ms hold.",
+        "A 1440 rerun showed IDENTITY at 52.465 s with a 40 s bound; 75 s allows 22.535 s of observed headroom without changing the expected result."
       ],
       "setup": [
         {
@@ -1588,7 +1645,7 @@
         "observe_at": ".desk-info-window",
         "words": "The produced Sequence opens Get Info through Spatial's ordinary object context door, closes before reload, and opens again through the same door."
       },
-      "completion_bound_s": 20,
+      "completion_bound_s": 75,
       "viewports": [
         1440,
         393

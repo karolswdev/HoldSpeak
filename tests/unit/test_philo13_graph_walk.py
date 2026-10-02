@@ -180,6 +180,84 @@ def test_trigger_then_flushes_completed_steps_before_a_later_timeout(tmp_path, m
     ]
 
 
+def test_trigger_lifecycle_error_is_recorded_as_fail(tmp_path) -> None:
+    """A real trigger response mismatch is a lifecycle failure, not setup block."""
+    case = {
+        "id": "philo13-trigger-lifecycle-failure",
+        "applicability": "applicable",
+        "setup": [],
+        "trigger": {
+            "kind": "api",
+            "method": "POST",
+            "path": "/missing-trigger-route",
+            "body": {},
+            "expect_status": 200,
+            "adapter": "http-route",
+        },
+        "expected": {
+            "observe_at": "protocol: GET /state",
+            "predicate": {"kind": "protocol_field", "path": "counts.unseen", "value": 1},
+        },
+        "completion_bound_s": 5,
+        "viewports": [],
+    }
+
+    record = gw.calibrate(tmp_path, cases=[case], headless=True)[0]
+
+    assert record["verdict"] == "fail"
+    assert record["trigger_error"]["lifecycle"] == "fail"
+    assert record["trigger_error"]["step"]["path"] == "/missing-trigger-route"
+    assert "wanted 200" in record["trigger_error"]["error"]
+
+
+def test_hit_test_probes_use_interior_points_for_rounded_sheet() -> None:
+    """Both hit-test probes must sample the painted area of a 393px sheet."""
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as play:
+        browser = play.chromium.launch(headless=True)
+        context = browser.new_context(viewport={"width": 393, "height": 393})
+        page = context.new_page()
+        try:
+            page.set_content(
+                """
+                <style>
+                  html, body { margin: 0; width: 393px; height: 393px; }
+                  #sheet {
+                    width: 393px;
+                    height: 393px;
+                    border-radius: 32px;
+                    overflow: hidden;
+                    background: #d8e4ff;
+                  }
+                  #sheet > .surface {
+                    width: 100%;
+                    height: 100%;
+                    background: #d8e4ff;
+                  }
+                </style>
+                <div id="sheet"><div class="surface"></div></div>
+                """
+            )
+
+            snapshot = page.evaluate(gw._SNAPSHOT_JS, ["#sheet", None, None])
+            placement = page.evaluate(
+                gw._PLACEMENT_ARM_JS, ["#sheet", [], None, None]
+            )
+
+            for hit in (snapshot["hit_test"], placement["card"]["hit_test"]):
+                assert hit["all_owned"] is True
+                assert len(hit["samples"]) == 9
+                assert all(
+                    0 < sample["x"] < 393 and 0 < sample["y"] < 393
+                    for sample in hit["samples"]
+                )
+                assert all(sample["owned"] is True for sample in hit["samples"])
+        finally:
+            context.close()
+            browser.close()
+
+
 def test_ui_by_viewport_records_pointer_adapter_at_desktop_width() -> None:
     page = _TapPage()
     page.viewport_size = {"width": 1440}
