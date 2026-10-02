@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** the owner's ratification of this charter (the canvas starts in wave one, beside Wave A and B0); the build waits on the owner's ratification of the canvas
 - **Unblocks:** PHILO-13-06, -08, -15, -17 (their canvases are drawn on this material); PHILO-13-12 to -18 and C3-W (no C face is built before its canvas is ratified); A1-F (its artboard is in this set)
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
