@@ -52,10 +52,10 @@ And:
 
 ## Test plan
 
-- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` holds this lane's NEW cases (`--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`. An existing case runs from the atlas that holds it (named below).
 - **Canvas:** the harness boards through the real hub on an isolated HOME at both widths; shots under `assets/story-11-canvas/` (the Phase 10–12 pattern, `../phase-12-send-from-the-floor/assets/story-02-canvas/`).
 - **Focused:** a token fence (every `DeskWindowFrame` host wears the material tokens); web unit on the chrome; `uv run python scripts/check_web_baseline.py --run`.
-- **Atlas:** the Chair arrival case (`case.j10.arrival_generate_brief.populated`) and a window-chrome case, at 1440 and 393, one case per `scripts/graph_walk.py run` invocation.
+- **Atlas:** the Chair arrival case `case.j10.arrival_generate_brief.populated` (in `docs/internal/philo/graph/atlas.json`) and the window-chrome case `case.p13.close.intelligence_gone` (in `atlas-phase13-muaddib.json`), at 1440 and 393, one case per `scripts/graph_walk.py run` invocation.
 - **Shots:** the Chair, a body window, the frame, at 1440 and 393 (touch).
 
 ## Worker-brief scars

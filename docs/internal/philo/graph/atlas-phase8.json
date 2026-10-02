@@ -1027,10 +1027,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-headline"
+            "value": "chair-desk"
           },
-          "observe_at": "[data-testid=arrival-headline]",
-          "why": "the Chair is in front, past the first-value gate"
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the Chair is in front, past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
         }
       ],
       "setup": [
@@ -2305,10 +2305,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-headline"
+            "value": "chair-desk"
           },
-          "observe_at": "[data-testid=arrival-headline]",
-          "why": "the Chair is in front, past the first-value gate"
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the Chair is in front, past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
         }
       ],
       "setup": [
@@ -2495,10 +2495,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-headline"
+            "value": "chair-desk"
           },
-          "observe_at": "[data-testid=arrival-headline]",
-          "why": "the Chair is in front, past the first-value gate"
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the Chair is in front, past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
         }
       ],
       "setup": [

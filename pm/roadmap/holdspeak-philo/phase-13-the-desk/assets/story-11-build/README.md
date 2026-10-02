@@ -40,3 +40,21 @@ The Chair is four `DeskWindowFrame` windows (Needs you, Brief, The week, Capture
 - `red-chair-before-bbf7e9a4-1440.json`, `red-chair-before-bbf7e9a4-393.json`: the same test on bbf7e9a4 (slice one): no Chair window, no blue window, the screen says `Chair`, the Chair page scrolls; at 393 no content measure.
 - `red-screen-title-dock-list-1440.json`, `red-screen-title-dock-list-393.json`: the same test with the screen title reading the Dock-only window list (Astra, #730): the screen says `Chair` over every front Chair window.
 - `red-go-speak-opens-capture-393.json`: before Muad'Dib's ruling, Go ▸ Speak at 393 opened Capture, not the Speak window (`speak_window: 0`, screen `Capture`). Now only the Dock's Speak AppIcon opens Capture; Go ▸ Speak opens the Speak window (fence C4b).
+
+## Atlas walks (Astra counsel r3 on #730)
+
+The atlas cases whose steps reach a Chair window now open it at 393 through the real doors: Go ▸ Chair ▸ <window>, and the Dock's Speak AppIcon for Capture. These are `at_width: 393` ui steps, skipped at 1440. A reload trigger reopens the window in its `then` steps. The first-value gate check reads `[data-testid=chair-desk]`, which renders only past the gate. 76 cases changed in 7 atlas files; `case.p13.close.intelligence_gone` has the stale `.desk-light-close` replaced with `.desk-gadget-close`. Real hub, isolated HOME, one case per `scripts/graph_walk.py run` invocation, brain muaddib (observations are under `.tmp/graph-walk/philo13-11-chair/`, untracked):
+
+| Case (atlas) | 1440 | 393 | Observation (393) |
+|---|---|---|---|
+| `case.j10.arrival_generate_brief.populated` (atlas.json) | pass | pass | `.tmp/graph-walk/philo13-11-chair/j10.arrival_generate_brief.populated-393/20261002T230908Z-case.j10.arrival_generate_brief.populated-muaddib-393/observation.json` |
+| `case.j11.write_a_thought.window_open` (atlas.json) | pass | pass | `.tmp/graph-walk/philo13-11-chair/j11.write_a_thought.window_open-393/20261002T231344Z-case.j11.write_a_thought.window_open-muaddib-393/observation.json` |
+| `case.p13.record.refused_not_recording` (atlas-phase13-muaddib.json) | pass | pass | `.tmp/graph-walk/philo13-11-chair/p13.record.refused_not_recording-393/20261002T232137Z-case.p13.record.refused_not_recording-muaddib-393/observation.json` |
+| `case.p13.close.intelligence_gone` (atlas-phase13-muaddib.json) | pass | pass | `.tmp/graph-walk/philo13-11-chair/p13.close.intelligence_gone-393/20261002T232134Z-case.p13.close.intelligence_gone-muaddib-393/observation.json` |
+
+Every other changed case was walked at both widths (results: `.tmp/philo13-11-tools/results*.txt`; the engine-replay cases with `--engine replayed`). Final, 76 cases:
+- Pass at both widths: 59.
+- Blocked at both widths, same reason, not the Chair (no `engine_reply` boundary, no microphone boundary, `route_failure` or `remote_origin_call` not implemented, the Concierge add-engine step): 14.
+- Pass at 1440, fail at 393: 3, held for a rig step or a ruling.
+  - `case.closure.chain.s3_same_summary_after_restart` and its `.replayed` twin: the trigger is `cli restart_hub`, and the page comes back on Needs you. A cli trigger takes no `then` steps (atlas.schema.json), so The week cannot be reopened before the observation. B2 (story 07) persisting the open Chair window would also clear it.
+  - `case.philo603.toast.arrival` at 393: its predicate needs the card clear of `meeting-summary-text` (The week) AND `arrival-capture-bar` (Capture), with hit tests, at one moment. At 393 those are two windows, one at a time. This needs a per-width `clear_of` (rig/schema) or a ruling on where the aftercare card stands at 393.

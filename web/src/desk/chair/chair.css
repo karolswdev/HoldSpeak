@@ -103,20 +103,27 @@
     --chair-top: calc(var(--wb-screen-h, 28px) + 14px);
     --chair-bottom: calc(var(--desk-dock-h, var(--desk-work-bottom)) + 14px);
     --chair-band: calc(100dvh - var(--chair-top) - var(--chair-bottom));
+    --chair-capture-h: 100px;
+  }
+  /* The aftercare card lands in the Capture window's slot (design §5): while
+     it stands, Capture grows to hold it whole and Needs you gives up the same
+     height, so the card is read where it lands (no covered half). */
+  .desk-next .chair-desk:has(.chair-window--capture [data-aftercare-slot]:not(:empty)) :is(.chair-window, .chair-window-closed) {
+    --chair-capture-h: 300px;
   }
   .desk-next .chair-window--needs,
   .desk-next .chair-window-closed.chair-window--needs {
     left: 14px;
     top: var(--chair-top);
     width: calc(50% - 22px);
-    bottom: calc(var(--chair-bottom) + 112px);
+    bottom: calc(var(--chair-bottom) + var(--chair-capture-h) + 12px);
   }
   .desk-next .chair-window--capture,
   .desk-next .chair-window-closed.chair-window--capture {
     left: 14px;
     bottom: var(--chair-bottom);
     width: calc(50% - 22px);
-    height: 100px;
+    height: var(--chair-capture-h);
   }
   .desk-next .chair-window--brief,
   .desk-next .chair-window-closed.chair-window--brief {
@@ -798,14 +805,11 @@
    Chair window owns a 44 x 44 box (Done, Name an owner, Ack, Defer,
    Generate, the capture verbs). */
 @media (max-width: 720px) {
-  .desk-next .chair-window-body :is(button, [role="button"]) {
+  /* five classes: above a library species' own dense min-height (the
+     transcript fold), without naming library classes outside the library
+     (the HS-156-03 surface fence) */
+  .desk-next .desk-window.chair-window .chair-window-body :is(button, [role="button"]) {
     min-height: 44px;
     min-width: 44px;
-  }
-  /* the transcript fold's dense trigger sets its own min-height (disclosure.css) */
-  .desk-next .chair-window-body .surface-disclosure[data-variant] .surface-disclosure-trigger,
-  .desk-next .chair-window-body .surface-disclosure-trigger {
-    min-height: 44px;
-    height: auto;
   }
 }

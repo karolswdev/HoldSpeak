@@ -45,10 +45,10 @@ Each face names the one fact it shows, from that fact's source. A refused start 
 
 ## Test plan
 
-- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
+- **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` holds this lane's NEW cases (`--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`. An existing case runs from the atlas that holds it (named below).
 - **Focused:** web unit on `recordingSlice` (non-ok response → idle + reason); the fact labels; H-A3's `tests/unit/test_philo13_a3h_meeting_summary.py` and directly relevant summary detail tests; `uv run python scripts/check_web_baseline.py --run`.
 - **Glass:** Playwright through the real hub on an isolated HOME: the 501 start; injected 500/503 for the brief, publish and People reads (the J1/J3/J4 recovery legs of `grounding/faces-jobs.md`).
-- **Atlas:** `case.j4.record_start.capture_recording` is BLOCKED today (no `browser_audio_device`, `grounding/faces-jobs.md:36`); a refused-start case that needs no microphone, at 1440 and 393 (touch), one case per invocation.
+- **Atlas:** `case.j4.record_start.capture_recording` (in `docs/internal/philo/graph/atlas.json`) is BLOCKED today (no `browser_audio_device`, `grounding/faces-jobs.md:36`); a refused-start case that needs no microphone, `case.p13.record.refused_not_recording` (in `atlas-phase13-muaddib.json`), at 1440 and 393 (touch), one case per invocation.
 - **Shots:** 1440 and 393, touch at 393.
 
 ## Worker-brief scars

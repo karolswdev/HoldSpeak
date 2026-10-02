@@ -19,10 +19,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-headline"
+            "value": "chair-desk"
           },
-          "observe_at": "[data-testid=arrival-headline]",
-          "why": "the desk is really past the first-value gate"
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
         }
       ],
       "setup": [
@@ -194,10 +194,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-headline"
+            "value": "chair-desk"
           },
-          "observe_at": "[data-testid=arrival-headline]",
-          "why": "the desk is really past the first-value gate"
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
         }
       ],
       "setup": [
@@ -335,10 +335,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-headline"
+            "value": "chair-desk"
           },
-          "observe_at": "[data-testid=arrival-headline]",
-          "why": "the desk is really past the first-value gate"
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
         }
       ],
       "setup": [
@@ -504,10 +504,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-headline"
+            "value": "chair-desk"
           },
-          "observe_at": "[data-testid=arrival-headline]",
-          "why": "the desk is really past the first-value gate"
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
         }
       ],
       "setup": [
@@ -673,10 +673,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-headline"
+            "value": "chair-desk"
           },
-          "observe_at": "[data-testid=arrival-headline]",
-          "why": "the desk is really past the first-value gate"
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
         }
       ],
       "setup": [
@@ -798,10 +798,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-headline"
+            "value": "chair-desk"
           },
-          "observe_at": "[data-testid=arrival-headline]",
-          "why": "the desk is really past the first-value gate"
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
         }
       ],
       "setup": [
@@ -962,10 +962,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-headline"
+            "value": "chair-desk"
           },
-          "observe_at": "[data-testid=arrival-headline]",
-          "why": "the desk is really past the first-value gate"
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
         }
       ],
       "setup": [
@@ -1062,6 +1062,38 @@
         },
         {
           "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "at_width": 393,
+          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 393,
+          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
+          "at_width": 393,
+          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-brief-generate]"
@@ -1113,10 +1145,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-headline"
+            "value": "chair-desk"
           },
-          "observe_at": "[data-testid=arrival-headline]",
-          "why": "the desk is really past the first-value gate"
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
         }
       ],
       "setup": [
