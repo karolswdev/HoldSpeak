@@ -186,7 +186,12 @@ def _band_law(page, when: str, failures: list[str]) -> None:
     grow past the screen."""
     g = page.evaluate("""() => {
       const chair = document.querySelector('.chair');
-      const bar = document.querySelector('[data-testid="arrival-capture-bar"]');
+      // PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time
+      // (Needs you first; the capture bar is the Capture window, on demand
+      // from Speak): the shown Chair window is the surface that must end
+      // above the dock.
+      const bar = document.querySelector('[data-testid="arrival-capture-bar"]')
+        || document.querySelector('.desk-window.chair-window.is-sheet');
       const dock = document.querySelector('.desk-dock');
       const style = getComputedStyle(document.documentElement);
       return { chairBottom: chair.getBoundingClientRect().bottom,

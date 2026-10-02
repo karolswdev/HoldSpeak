@@ -23,10 +23,16 @@ import { useChairState } from "./chairState";
 import { deleteSeatShown } from "./deleteSeat";
 import {
   closeFrontWindow,
+  dockWindowCount,
   focusOrRestoreApp,
   minimizeFrontWindow,
   openWindowCount,
 } from "./components/window/windowRegistry";
+import {
+  CHAIR_WINDOWS,
+  isChairWindowOpen,
+  openChairWindow,
+} from "./chair/chairWindows";
 import {
   cycleWindows,
   cycleWindowsReverse,
@@ -70,6 +76,13 @@ export interface Verb {
    * zones (the Floor: spatial or list) offers it; the Chair withholds it
    * (the owner's Q2 (c), UX-CANON §A.11). */
   needsZones?: boolean;
+  /** PHILO-13-11 (C1, slice two) — the menu face lists the verb inside a
+   * submenu of this name (Window ▸ Chair). */
+  submenu?: string;
+  /** A checkable verb: true draws the check mark (an open Chair window). */
+  checked?(ctx: VerbContext): boolean;
+  /** Offered only at desktop width (Capture: at 393 Speak opens it). */
+  wide?: boolean;
   /** null = runnable; a string = ghosted WITH that reason. */
   ghost(ctx: VerbContext): string | null;
   run(ctx: VerbContext): void;
@@ -83,6 +96,7 @@ export function zonesShown(): boolean {
 /** PHILO-8-01 — false when this face withholds the verb (a zone verb on
  * the Chair). The palette and the menu bar ask this before they list it. */
 export function offeredHere(v: Verb): boolean {
+  if (v.wide && typeof window !== "undefined" && window.innerWidth <= 720) return false;
   return !v.needsZones || zonesShown();
 }
 
@@ -146,6 +160,9 @@ function currentView(): "list" | "spatial" {
  * focus/restore instead of re-opening (the HS-101 B8 behavior). */
 const needWindow = (): string | null =>
   openWindowCount() > 0 ? null : "No window open";
+/** Overview fans the windows with a Dock chip (not the Chair's). */
+const needDockWindow = (): string | null =>
+  dockWindowCount() > 0 ? null : "No window open";
 
 export const VERBS: Verb[] = [
   // ── Desk: NEW (the one create path - createPrimitive) ──────────────
@@ -306,7 +323,7 @@ export const VERBS: Verb[] = [
     group: "floor",
     key: "⌃↑",
     keywords: ["expose", "windows"],
-    ghost: needWindow,
+    ghost: needDockWindow,
     run: () => toggleExpose(),
   },
   {
@@ -697,6 +714,23 @@ export const VERBS: Verb[] = [
     ghost: needWindow,
     run: () => maximizeFrontWindow(),
   },
+  // ── Window ▸ Chair (PHILO-13-11 C1, R1): the Chair's four windows, a
+  // check on each open one; picking one opens it in front. Only on the
+  // Chair (its windows are not mounted on the Floor). ─────────────────────
+  ...CHAIR_WINDOWS.map((w): Verb => ({
+    id: `chair.window.${w.key}`,
+    label: w.title,
+    menu: "window",
+    scope: "window",
+    group: "chair",
+    submenu: "Chair",
+    wide: !w.phone,
+    palette: false,
+    keywords: ["chair", "window"],
+    checked: () => isChairWindowOpen(w.id),
+    ghost: () => (useChairState.getState().surface === "chair" ? null : "Not on the Chair"),
+    run: () => openChairWindow(w.id),
+  })),
   // ── System ──────────────────────────────────────────────────────────
   {
     id: "system.search",

@@ -18,7 +18,7 @@ import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
 import { DeskToolShelf } from "./DeskToolShelf";
 import { DeskMenuBar } from "./DeskMenuBar";
 import { useLaunchers } from "./DeskWindow";
-import { useFrontWindowId, useOpenWindows } from "./window/windowRegistry";
+import { useFrontWindowId, useAllOpenWindows } from "./window/windowRegistry";
 import { useChairState } from "../chairState";
 import { useGate } from "../gate";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
@@ -92,7 +92,7 @@ function MicLamp() {
  * the Chair or the Floor. */
 function ScreenTitle() {
   const front = useFrontWindowId();
-  const open = useOpenWindows();
+  const open = useAllOpenWindows();
   const surface = useChairState((s) => s.surface);
   const name =
     (front ? open.find((w) => w.id === front)?.label : null) ??

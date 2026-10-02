@@ -587,8 +587,12 @@ class TestSharedControlsAreSpecies:
 
             # The rail is a toolbar of real buttons: each one focuses and
             # draws a ring (the raw markup did too; nothing moved).
+            # PHILO-13-11 (slice two): the Chair's four windows carry close
+            # gadgets too and come first in the DOM; the walk starts at the
+            # editor window's own close gadget, as it always meant to.
             ring = _tab_into(
-                page, ".desk-editor-toolbar", start=".desk-gadget-close", limit=20,
+                page, ".desk-editor-toolbar",
+                start=".desk-window-shell:has(.desk-editor-toolbar) .desk-gadget-close", limit=20,
             )
             assert ring["outlineWidth"] > 0, f"no focus ring on the rail: {ring}"
             assert ring["inRail"], ring

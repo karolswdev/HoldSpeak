@@ -1,0 +1,805 @@
+{
+  "chair-windows": {
+    "frame": {
+      "width": 1440,
+      "windows": 4,
+      "blue": [
+        "Needs you"
+      ],
+      "front": [
+        "Needs you"
+      ],
+      "screen": "Chair",
+      "layout": [],
+      "ownership": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "content": null,
+      "small_targets": [],
+      "small_text": [],
+      "low_contrast": []
+    },
+    "chair": {
+      "width": 1440,
+      "windows": [
+        "Needs you",
+        "Brief",
+        "The week",
+        "Capture"
+      ],
+      "reopen": [],
+      "page_scrolls": false,
+      "bodies": {
+        "Needs you": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 651
+        },
+        "Brief": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 470
+        },
+        "The week": {
+          "overflowY": "auto",
+          "scrolls": true,
+          "h": 247
+        },
+        "Capture": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 70
+        }
+      },
+      "tiles_overlap": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "overlap": [],
+      "small_targets": [],
+      "low_contrast": [],
+      "small_text": [
+        {
+          "text": "RANKED",
+          "size": 11
+        },
+        {
+          "text": "OVERDUE",
+          "size": 11
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 11
+        },
+        {
+          "text": "NOT RUN",
+          "size": 11
+        },
+        {
+          "text": "NO DUE DATE",
+          "size": 11
+        },
+        {
+          "text": "WAITING",
+          "size": 11
+        },
+        {
+          "text": "\u25cf",
+          "size": 11
+        },
+        {
+          "text": "CHECKED JUST NOW",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "MTG",
+          "size": 10
+        },
+        {
+          "text": "NO DUE DATE \u00b7 UNASSIGNED",
+          "size": 10
+        },
+        {
+          "text": "MTG",
+          "size": 10
+        },
+        {
+          "text": "NO DUE DATE \u00b7 UNASSIGNED",
+          "size": 10
+        },
+        {
+          "text": "1 MORE",
+          "size": 11
+        },
+        {
+          "text": "\u21bb",
+          "size": 11
+        }
+      ]
+    }
+  },
+  "verbs": {
+    "needs.done": 3,
+    "needs.name_owner": 2,
+    "needs.connect_calendar": 1,
+    "needs.choose_engine": 1,
+    "brief.ack_defer": 6,
+    "brief.generate": 1,
+    "brief.send_well": 2,
+    "week.open": 3,
+    "week.stored": [
+      {
+        "run": false,
+        "open": true
+      }
+    ],
+    "capture": 3
+  },
+  "screen-title-after-press": {
+    "Needs you": "Chair",
+    "Brief": "Chair",
+    "The week": "Chair",
+    "Capture": "Chair"
+  },
+  "chair-window-closed": {
+    "frame": {
+      "width": 1440,
+      "windows": 3,
+      "blue": [
+        "Needs you"
+      ],
+      "front": [
+        "Needs you"
+      ],
+      "screen": "Chair",
+      "layout": [],
+      "ownership": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "content": null,
+      "small_targets": [],
+      "small_text": [],
+      "low_contrast": []
+    },
+    "chair": {
+      "width": 1440,
+      "windows": [
+        "Needs you",
+        "The week",
+        "Capture"
+      ],
+      "reopen": [
+        "Open Brief"
+      ],
+      "page_scrolls": false,
+      "bodies": {
+        "Needs you": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 651
+        },
+        "The week": {
+          "overflowY": "auto",
+          "scrolls": true,
+          "h": 247
+        },
+        "Capture": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 70
+        }
+      },
+      "tiles_overlap": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "overlap": [],
+      "small_targets": [],
+      "low_contrast": [],
+      "small_text": [
+        {
+          "text": "RANKED",
+          "size": 11
+        },
+        {
+          "text": "OVERDUE",
+          "size": 11
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 11
+        },
+        {
+          "text": "NOT RUN",
+          "size": 11
+        },
+        {
+          "text": "NO DUE DATE",
+          "size": 11
+        },
+        {
+          "text": "WAITING",
+          "size": 11
+        },
+        {
+          "text": "\u25cf",
+          "size": 11
+        },
+        {
+          "text": "CHECKED JUST NOW",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "MTG",
+          "size": 10
+        },
+        {
+          "text": "NO DUE DATE \u00b7 UNASSIGNED",
+          "size": 10
+        },
+        {
+          "text": "MTG",
+          "size": 10
+        },
+        {
+          "text": "NO DUE DATE \u00b7 UNASSIGNED",
+          "size": 10
+        },
+        {
+          "text": "1 MORE",
+          "size": 11
+        },
+        {
+          "text": "\u21bb",
+          "size": 11
+        }
+      ]
+    }
+  },
+  "window-menu-chair": {
+    "frame": {
+      "width": 1440,
+      "windows": 3,
+      "blue": [
+        "Needs you"
+      ],
+      "front": [
+        "Needs you"
+      ],
+      "screen": "Chair",
+      "layout": [],
+      "ownership": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "content": null,
+      "small_targets": [],
+      "small_text": [],
+      "low_contrast": []
+    },
+    "chair": {
+      "width": 1440,
+      "windows": [
+        "Needs you",
+        "The week",
+        "Capture"
+      ],
+      "reopen": [
+        "Open Brief"
+      ],
+      "page_scrolls": false,
+      "bodies": {
+        "Needs you": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 651
+        },
+        "The week": {
+          "overflowY": "auto",
+          "scrolls": true,
+          "h": 247
+        },
+        "Capture": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 70
+        }
+      },
+      "tiles_overlap": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "overlap": [],
+      "small_targets": [],
+      "low_contrast": [],
+      "small_text": [
+        {
+          "text": "RANKED",
+          "size": 11
+        },
+        {
+          "text": "OVERDUE",
+          "size": 11
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 11
+        },
+        {
+          "text": "NOT RUN",
+          "size": 11
+        },
+        {
+          "text": "NO DUE DATE",
+          "size": 11
+        },
+        {
+          "text": "WAITING",
+          "size": 11
+        },
+        {
+          "text": "\u25cf",
+          "size": 11
+        },
+        {
+          "text": "CHECKED JUST NOW",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "MTG",
+          "size": 10
+        },
+        {
+          "text": "NO DUE DATE \u00b7 UNASSIGNED",
+          "size": 10
+        },
+        {
+          "text": "MTG",
+          "size": 10
+        },
+        {
+          "text": "NO DUE DATE \u00b7 UNASSIGNED",
+          "size": 10
+        },
+        {
+          "text": "1 MORE",
+          "size": 11
+        },
+        {
+          "text": "\u21bb",
+          "size": 11
+        }
+      ]
+    }
+  },
+  "chair-window-reopened": {
+    "frame": {
+      "width": 1440,
+      "windows": 4,
+      "blue": [
+        "Brief"
+      ],
+      "front": [
+        "Brief"
+      ],
+      "screen": "Chair",
+      "layout": [],
+      "ownership": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "content": null,
+      "small_targets": [],
+      "small_text": [],
+      "low_contrast": []
+    },
+    "chair": {
+      "width": 1440,
+      "windows": [
+        "Needs you",
+        "Brief",
+        "The week",
+        "Capture"
+      ],
+      "reopen": [],
+      "page_scrolls": false,
+      "bodies": {
+        "Needs you": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 651
+        },
+        "Brief": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 470
+        },
+        "The week": {
+          "overflowY": "auto",
+          "scrolls": true,
+          "h": 247
+        },
+        "Capture": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 70
+        }
+      },
+      "tiles_overlap": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "overlap": [],
+      "small_targets": [],
+      "low_contrast": [],
+      "small_text": [
+        {
+          "text": "RANKED",
+          "size": 11
+        },
+        {
+          "text": "OVERDUE",
+          "size": 11
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 11
+        },
+        {
+          "text": "NOT RUN",
+          "size": 11
+        },
+        {
+          "text": "NO DUE DATE",
+          "size": 11
+        },
+        {
+          "text": "WAITING",
+          "size": 11
+        },
+        {
+          "text": "\u25cf",
+          "size": 11
+        },
+        {
+          "text": "CHECKED JUST NOW",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "MTG",
+          "size": 10
+        },
+        {
+          "text": "NO DUE DATE \u00b7 UNASSIGNED",
+          "size": 10
+        },
+        {
+          "text": "MTG",
+          "size": 10
+        },
+        {
+          "text": "NO DUE DATE \u00b7 UNASSIGNED",
+          "size": 10
+        },
+        {
+          "text": "1 MORE",
+          "size": 11
+        },
+        {
+          "text": "\u21bb",
+          "size": 11
+        }
+      ]
+    }
+  },
+  "needs-front": {
+    "frame": {
+      "width": 1440,
+      "windows": 4,
+      "blue": [
+        "Needs you"
+      ],
+      "front": [
+        "Needs you"
+      ],
+      "screen": "Chair",
+      "layout": [],
+      "ownership": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "content": null,
+      "small_targets": [],
+      "small_text": [],
+      "low_contrast": []
+    },
+    "chair": {
+      "width": 1440,
+      "windows": [
+        "Needs you",
+        "Brief",
+        "The week",
+        "Capture"
+      ],
+      "reopen": [],
+      "page_scrolls": false,
+      "bodies": {
+        "Needs you": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 651
+        },
+        "Brief": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 470
+        },
+        "The week": {
+          "overflowY": "auto",
+          "scrolls": true,
+          "h": 247
+        },
+        "Capture": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 70
+        }
+      },
+      "tiles_overlap": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "overlap": [],
+      "small_targets": [],
+      "low_contrast": [],
+      "small_text": [
+        {
+          "text": "RANKED",
+          "size": 11
+        },
+        {
+          "text": "OVERDUE",
+          "size": 11
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 11
+        },
+        {
+          "text": "NOT RUN",
+          "size": 11
+        },
+        {
+          "text": "NO DUE DATE",
+          "size": 11
+        },
+        {
+          "text": "WAITING",
+          "size": 11
+        },
+        {
+          "text": "\u25cf",
+          "size": 11
+        },
+        {
+          "text": "CHECKED JUST NOW",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "MTG",
+          "size": 10
+        },
+        {
+          "text": "NO DUE DATE \u00b7 UNASSIGNED",
+          "size": 10
+        },
+        {
+          "text": "MTG",
+          "size": 10
+        },
+        {
+          "text": "NO DUE DATE \u00b7 UNASSIGNED",
+          "size": 10
+        },
+        {
+          "text": "1 MORE",
+          "size": 11
+        },
+        {
+          "text": "\u21bb",
+          "size": 11
+        }
+      ]
+    }
+  },
+  "errors": [],
+  "failures": {
+    "chair-windows": {
+      "C2 one blue window, named by the screen bar": {
+        "blue": [
+          "Needs you"
+        ],
+        "front": [
+          "Needs you"
+        ],
+        "screen": "Chair"
+      },
+      "C2 the screen title names each front Chair window": {
+        "Needs you": "Chair",
+        "Brief": "Chair",
+        "The week": "Chair",
+        "Capture": "Chair"
+      }
+    },
+    "chair-window-closed": {
+      "C2 one blue window, named by the screen bar": {
+        "blue": [
+          "Needs you"
+        ],
+        "front": [
+          "Needs you"
+        ],
+        "screen": "Chair"
+      }
+    },
+    "window-menu-chair": {
+      "C2 one blue window, named by the screen bar": {
+        "blue": [
+          "Needs you"
+        ],
+        "front": [
+          "Needs you"
+        ],
+        "screen": "Chair"
+      }
+    },
+    "chair-window-reopened": {
+      "C2 one blue window, named by the screen bar": {
+        "blue": [
+          "Brief"
+        ],
+        "front": [
+          "Brief"
+        ],
+        "screen": "Chair"
+      },
+      "C3 reopened in front": {
+        "screen": "Chair",
+        "reopen": []
+      }
+    },
+    "needs-front": {
+      "C2 one blue window, named by the screen bar": {
+        "blue": [
+          "Needs you"
+        ],
+        "front": [
+          "Needs you"
+        ],
+        "screen": "Chair"
+      }
+    }
+  }
+}

@@ -20,6 +20,7 @@ import pytest
 pytest.importorskip("playwright.sync_api", reason="PHILO-4-02 clearance needs Playwright")
 
 from scripts.graph_walk import Hub, TOKEN, _SNAPSHOT_JS  # noqa: E402
+from tests.e2e.chair_windows import open_chair_window  # noqa: E402
 
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(180, method="thread")]
@@ -118,6 +119,13 @@ def _hit_snapshot(page: Any) -> dict[str, Any]:
     return snapshot
 
 
+def _edge(page: Any) -> dict[str, float]:
+    """PHILO-13-11 (slice two): the Brief window body's lower edge, as a box at
+    that edge (the place the Chair's sticky capture bar held before)."""
+    return page.evaluate("""() => { const b = document.querySelector('.chair-window--brief .chair-window-body')
+      .getBoundingClientRect(); return {x: b.left, y: b.bottom, width: b.width, height: 0}; }""")
+
+
 def test_generate_replacement_row_is_owned_above_the_real_capture_bar(
     tmp_path: Path,
 ) -> None:
@@ -172,32 +180,33 @@ def test_generate_replacement_row_is_owned_above_the_real_capture_bar(
                 continue_later.click(timeout=10_000)
             except Exception:  # returning desk: the first-use gate is absent
                 pass
-            page.get_by_test_id("arrival-capture-bar").wait_for(timeout=10_000)
+            # PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a
+            # time and the capture bar is its own window (on demand from Speak).
+            # The Brief window's lower edge is the boundary the old sticky bar
+            # was: the replacement row must still be owned inside it.
+            page.locator(".chair .desk-window-shell.chair-window").first.wait_for(timeout=10_000)
+            open_chair_window(page, "Brief")
             page.get_by_test_id("arrival-brief-row").wait_for()
             generate = page.get_by_test_id("arrival-brief-generate")
             generate.wait_for()
 
             before = _hit_snapshot(page)
-            before_bar = page.get_by_test_id("arrival-capture-bar").bounding_box()
-            assert before_bar is not None
             # Setup may leave the real Chair at a different scroll position.
             # Place the existing short row two pixels above the measured bar;
             # this is setup positioning, before Generate, never a post-click
             # scroll or a synthetic DOM row.
             page.evaluate(
                 """() => {
-                  const chair = document.querySelector('[data-testid=chair]');
+                  const chair = document.querySelector('.chair-window--brief .chair-window-body');
                   const row = document.querySelector('[data-testid=arrival-brief-row]');
-                  const bar = document.querySelector('[data-testid=arrival-capture-bar]');
-                  if (!chair || !row || !bar) throw new Error('clearance setup nodes missing');
+                  if (!chair || !row) throw new Error('clearance setup nodes missing');
                   const rowRect = row.getBoundingClientRect();
-                  const barRect = bar.getBoundingClientRect();
-                  chair.scrollTop += rowRect.bottom - barRect.top + 2;
+                  const edge = chair.getBoundingClientRect().bottom;
+                  chair.scrollTop += rowRect.bottom - edge + 2;
                 }"""
             )
             before = _hit_snapshot(page)
-            before_bar = page.get_by_test_id("arrival-capture-bar").bounding_box()
-            assert before_bar is not None
+            before_bar = _edge(page)
             before_rect = before["hit_test"]["rect"]
             assert before_rect["y"] + before_rect["h"] <= before_bar["y"] - 1, before
             generate_box = generate.bounding_box()
@@ -207,8 +216,7 @@ def test_generate_replacement_row_is_owned_above_the_real_capture_bar(
             page.get_by_text("Review decision: Keep the generated decision readable after the capture bar wraps at the owner phone width", exact=True).wait_for()
             page.wait_for_timeout(100)
             after = _hit_snapshot(page)
-            after_bar = page.get_by_test_id("arrival-capture-bar").bounding_box()
-            assert after_bar is not None
+            after_bar = _edge(page)
             assert calls["generate"] == 1
             assert after["text"] == generated["sections"]["decisions"][0]["text"] + "\nAck\nDefer"
             after_rect = after["hit_test"]["rect"]
@@ -220,10 +228,19 @@ def test_generate_replacement_row_is_owned_above_the_real_capture_bar(
             # Project the replacement's real rendered height at the old row's
             # position. It must cross the real bar; the final observed row may
             # be higher because the product's success seam clears it.
-            assert before_rect["y"] + after_rect["h"] > before_bar["y"], {
-                "before": before,
-                "after": after,
-            }
+            # PHILO-13-11 (slice two): in its own window the Brief may hold too
+            # little to scroll its row down to the window's lower edge (the old
+            # long Chair page always could). Then the projection cannot cross,
+            # and the law is read directly: the replacement row ends whole
+            # inside the Brief window, above its lower edge.
+            if before_rect["y"] + after_rect["h"] <= before_bar["y"]:
+                assert after_rect["y"] + after_rect["h"] <= after_bar["y"] + 0.5, {
+                    "before": before, "after": after, "edge": after_bar}
+            else:
+                assert before_rect["y"] + after_rect["h"] > before_bar["y"], {
+                    "before": before,
+                    "after": after,
+                }
             assert after_rect["w"] > 0 and after_rect["h"] > 0, after
             assert after["hit_test"]["in_viewport"] is True, after
             assert after["hit_test"]["all_owned"] is True, after

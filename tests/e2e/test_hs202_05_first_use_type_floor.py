@@ -40,6 +40,7 @@ from .glass_infra import (
 from .test_hs201_one_thing_glass import _quiet_concierge
 from .test_hs202_05_button_hit_ownership import OWNERSHIP_JS
 from tests._evidence import evidence_dir
+from .chair_windows import open_chair_window
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(600, method="thread")]
 
@@ -517,7 +518,7 @@ def _screens(page, base: str):
     face), so `/profiles` would measure a screen the owner cannot reach.
     """
 
-    def desk():
+    def desk(capture: bool = False):
         # localStorage is only readable once the origin is loaded, so the
         # clear always follows a navigation, never precedes the first one.
         page.goto(base + "/?token=" + TOKEN, wait_until="load")
@@ -525,11 +526,26 @@ def _screens(page, base: str):
         page.goto(base + "/?token=" + TOKEN, wait_until="load")
         _normal_chair(page)
         page.get_by_test_id("arrival-display").wait_for(state="visible", timeout=20_000)
+        # PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a
+        # time; the capture bar is the Capture window, on demand from the
+        # Speak AppIcon. A walk that needs it opens it there.
+        if width <= 720 and not capture:
+            _settle(page)
+            return
+        if width <= 720:
+            open_chair_window(page, "Capture")
         page.get_by_test_id("arrival-capture-bar").wait_for(state="visible", timeout=20_000)
         _settle(page)
 
+    width = page.viewport_size["width"]
     desk()
     yield "arrival", page.get_by_test_id("arrival-display")
+    if width <= 720:
+        # The same screen, window by window: The week and Capture are
+        # measured under the same name (the ledger keys stay "arrival"), so
+        # the meetings and the capture controls are still read at 393.
+        yield "arrival", open_chair_window(page, "The week")
+        yield "arrival", open_chair_window(page, "Capture")
 
     _stage(page, base, "review-meetings")
     page.locator(".meetings-head-verbs").wait_for(state="visible", timeout=20_000)
@@ -543,7 +559,7 @@ def _screens(page, base: str):
     _settle(page)
     yield "meetings-record", page.locator(".meetings-detail-head")
 
-    desk()
+    desk(capture=True)
     thought = page.get_by_test_id("arrival-develop-thought")
     thought.wait_for(state="visible", timeout=20_000)
     thought.click()

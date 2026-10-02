@@ -69,8 +69,24 @@ export function consumeStagedSurfaceOpen(): StagedSurfaceOpen | null {
   return null;
 }
 
+/** PHILO-13-11 (C1, slice two) — a mounted screen may answer a surface key
+ * first (the Chair at 393: the Speak AppIcon opens its Capture window, the
+ * owner's "Yes", 2026-10-02). The answer returns true when it took the open;
+ * false passes the key on to its window. Returns the unregister. */
+const firstAnswers = new Map<string, (scope?: string) => boolean>();
+export function answerSurfaceFirst(
+  key: string,
+  answer: (scope?: string) => boolean,
+): () => void {
+  firstAnswers.set(key, answer);
+  return () => {
+    if (firstAnswers.get(key) === answer) firstAnswers.delete(key);
+  };
+}
+
 /** Open a surface in-world. False = not yet registered (legacy fallback). */
 export function openSurface(key: string, scope?: string): boolean {
+  if (firstAnswers.get(key)?.(scope)) return true;
   const opener = surfaces.get(key);
   if (!opener) return false;
   opener(scope);
@@ -80,6 +96,7 @@ export function openSurface(key: string, scope?: string): boolean {
 /** Test seam. */
 export function __resetSurfaces(): void {
   surfaces.clear();
+  firstAnswers.clear();
 }
 
 /** The router's navigate, delegated once by the app shell so cores and

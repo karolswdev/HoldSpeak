@@ -32,6 +32,7 @@ from .glass_infra import (
     REPO,
 )
 from tests._evidence import evidence_dir
+from .chair_windows import open_chair_window
 
 pytest.importorskip("playwright.sync_api", reason="Arrival glass needs Playwright")
 
@@ -253,7 +254,11 @@ class TestArrivalProposals:
                 // (the row's MORE control); it is a species, not a raw button.
                 const allowed = ['btn', 'desk-mic', 'surface-ledger-line',
                     'gadget-cycle', 'gadget-stepper-btn', 'surface-disclosure-trigger'];
+                // PHILO-13-11 (slice two): the Chair is windows; a title bar's
+                // gadgets are the library chrome Button, fenced by
+                // test_philo13_11_frame_glass.py F2. The body law is unchanged.
                 return Array.from(body.querySelectorAll('button'))
+                    .filter(b => !b.closest('.desk-pullout-head'))
                     .filter(b => !allowed.some(c => b.classList.contains(c)))
                     .map(b => (b.textContent || '').trim().slice(0, 40));
             }""")
@@ -267,6 +272,9 @@ class TestArrivalProposals:
             assert "LOCAL" not in body_text, f"'LOCAL' at {width}"
 
             # MEETINGS section: RAN chip (renders as StateChip, not badge span)
+            # PHILO-13-11 (slice two, R2): at 393 the meetings are in The week.
+            if width <= 720:
+                open_chair_window(page, "The week")
             meetings_section = page.locator("[data-testid='arrival-meeting-row']")
             meetings_text = ""
             for j in range(meetings_section.count()):

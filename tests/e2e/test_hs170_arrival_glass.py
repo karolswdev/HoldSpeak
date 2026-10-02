@@ -31,6 +31,7 @@ from .glass_infra import (
     seed_meeting_engines,
 )
 from tests._evidence import evidence_dir
+from .chair_windows import open_chair_window
 
 pytest.importorskip("playwright.sync_api", reason="Arrival glass needs Playwright")
 
@@ -384,6 +385,10 @@ def _run_needs_you_rig(
             assert needs_you_section.count() == 1, "NEEDS YOU section should be present"
 
             # ── THOUGHTS section present ──
+            # PHILO-13-11 (slice two, R2): at 393 one Chair window at a time;
+            # thoughts and meetings live in The week.
+            if width <= 720:
+                open_chair_window(page, "The week")
             thoughts_section = page.get_by_test_id("arrival-thoughts")
             assert thoughts_section.count() == 1, "THOUGHTS section should be present"
 
@@ -398,6 +403,10 @@ def _run_needs_you_rig(
                 f"Expected 1 Run summary button, got {run_intel.count()}"
 
             # ── CAPTURE BAR present at the foot ──
+            # PHILO-13-11 (slice two): the bar is the Capture window (393: on
+            # demand from the Speak AppIcon).
+            if width <= 720:
+                open_chair_window(page, "Capture")
             capture_bar = page.get_by_test_id("arrival-capture-bar")
             assert capture_bar.count() == 1, "Capture bar should be present"
 
@@ -502,12 +511,17 @@ def _run_quiet_rig(
             assert page.get_by_test_id("arrival-thoughts").count() == 0, \
                 "THOUGHTS section should be absent when empty"
             # Brief: no brief exists, so the "No brief yet" + Generate row shows (M-2)
+            # PHILO-13-11 (slice two, R2): at 393 the Brief is its own window.
+            if width <= 720:
+                open_chair_window(page, "Brief")
             assert page.get_by_test_id("arrival-brief").count() == 1, \
                 "BRIEF section should show 'No brief yet' + Generate when no brief"
             assert page.get_by_test_id("arrival-brief-generate").count() == 1, \
                 "Generate button should be present when no brief"
 
             # ── CAPTURE BAR always present ──
+            if width <= 720:
+                open_chair_window(page, "Capture")
             capture_bar = page.get_by_test_id("arrival-capture-bar")
             assert capture_bar.count() == 1, "Capture bar should always be present"
 

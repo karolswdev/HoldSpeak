@@ -115,6 +115,10 @@ export interface DeskWindowOptions {
    * desk object). The window seats itself beside it and the open/close
    * motion flies out of and back into it — spatial, not a side dock. */
   origin?: { x: number; y: number } | null;
+  /** PHILO-13-11 (C1, slice two) — a tiled window (the Chair's four): it
+   * keeps its CSS home until the owner moves or sizes it; the placement
+   * engine does not seat it. */
+  tiled?: boolean;
 }
 
 let resizeClampUsers = 0;
@@ -211,6 +215,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     const vw = window.innerWidth || 1280;
     const vh = window.innerHeight || 800;
     const cur = s.panelRects[id];
+    if (!cur && opts.tiled) return;
     if (cur) {
       const kept = clampIntoBand(cur, vw, vh, minW, minH);
       if (
@@ -529,6 +534,16 @@ export interface DeskWindowFrameProps {
   fitContent?: boolean;
   /** The client point this window opened from: see DeskWindowOptions. */
   origin?: { x: number; y: number } | null;
+  /** A tiled window: see DeskWindowOptions.tiled. */
+  tiled?: boolean;
+  /** PHILO-13-11 (C1, slice two) — when the window wears a Dock chip:
+   * "always" (default), or "iconified" for a window of a screen (the
+   * Chair's four): its chip appears only while it is iconified, so it has a
+   * place to come back from. */
+  dockChip?: "always" | "iconified";
+  /** Escape inside the window closes it (default true). The Chair's windows
+   * hold typing wells; there Close is the gadget, ⌘W or Window ▸ Close. */
+  escapeCloses?: boolean;
   open: boolean;
   onClose: () => void;
   /** Heavy content may unmount while minimized (default: stays mounted). */
@@ -560,6 +575,9 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     defaultH,
     fitContent,
     origin,
+    tiled,
+    dockChip: chipMode = "always",
+    escapeCloses = true,
     open,
     onClose,
     unmountOnMinimize,
@@ -583,10 +601,12 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     defaultH,
     fitContent,
     origin,
+    tiled,
     open: open && !minimized,
   });
   const glyph = glyphProp ?? (typeof icon === "string" ? icon : "▢");
   const name = label ?? (typeof title === "string" ? title : id);
+  const dock = chipMode === "always" || minimized;
 
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -695,10 +715,10 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
 
   useEffect(() => {
     if (!open) return;
-    announceWindow(id, name, glyph, () => requestClose());
+    announceWindow(id, name, glyph, () => requestClose(), dock);
     return () => retractWindow(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, id, name, glyph]);
+  }, [open, id, name, glyph, dock]);
 
   // HS-96-05 — window focus management (the ui-styling a11y pattern,
   // WITHOUT a modal trap: windows coexest is the law). Opening moves
@@ -771,6 +791,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             setHeadMenu(null);
             return;
           }
+          if (!escapeCloses) return;
           requestClose();
         }
       }}

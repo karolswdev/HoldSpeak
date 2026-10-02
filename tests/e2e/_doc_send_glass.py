@@ -40,7 +40,8 @@ FACTS = (r"""(anchorSel) => {
   const vis = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const text = (sel) => [...win.querySelectorAll(sel)].filter(vis).map((e) => e.innerText.replace(/\s+/g, ' ').trim());
   const wellText = wells.map((w) => w.innerText).join('\n') + '\n' + text('[data-send=history]').join('\n');
-  const body = win.querySelector('.desk-surface-body') || win;
+  // PHILO-13-11 (slice two): a Chair window's scrolling body is .chair-window-body.
+  const body = win.querySelector('.desk-surface-body, .chair-window-body') || win;
   return {
     window: true,
     window_width: Math.round(win.getBoundingClientRect().width),

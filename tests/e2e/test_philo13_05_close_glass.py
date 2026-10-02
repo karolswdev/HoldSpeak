@@ -30,12 +30,21 @@ import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
+from .chair_windows import open_chair_window
 
 pytest.importorskip("playwright.sync_api", reason="the close glass needs Playwright")
 
 TOKEN = "philo13-05-close"
 SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-05-shots")
 SIZES = {1440: 900, 393: 852}
+
+
+def _on_the_desk(hit: dict[str, Any] | None) -> bool:
+    """The old centre lands on the Desk. PHILO-13-11 (slice two): the Chair
+    screen is now four windows (`chair:*`), so a hit on a Chair window is the
+    Desk under the closed window; any other window is not."""
+    return hit is not None and hit["desk"] and (
+        hit["window"] is None or str(hit["window"]).startswith("chair:"))
 DECISION = "Freeze the old ledger on Nov 5"
 NOTE = "Arch review prep"
 
@@ -124,7 +133,7 @@ class TestCloseMeansGone:
         proof = {"window": win["id"], "centre": [round(cx), round(cy)], "hit": hit, "left_in_dom": left}
         (SHOTS / f"{name}-{width}.txt").write_text(f"{proof}\n")
         assert not left, f"the closed window stays in the DOM: {left}"
-        assert hit is not None and hit["window"] is None and hit["desk"], f"the old centre hits {hit}"
+        assert _on_the_desk(hit), f"the old centre hits {hit}"
         return proof
 
     # ── the fences ───────────────────────────────────────────────────────
@@ -151,6 +160,9 @@ class TestCloseMeansGone:
                 self._close_and_prove(page, width, "Intelligence", "dock-intelligence")
 
                 # 3. Write a thought: `note:<id>` (newThought.ts) → the Thought window.
+                # PHILO-13-11 (slice two, R2): at 393 Capture opens from the Speak AppIcon.
+                if width <= 720:
+                    open_chair_window(page, "Capture")
                 self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
                 page.locator(".desk-gadget-close[aria-label='Close Thought']").wait_for()
                 self._close_and_prove(page, width, "Thought", "write-a-thought")
@@ -195,6 +207,9 @@ class TestCloseMeansGone:
                     status=500, body='{"detail":"injected"}', content_type="application/json"))
                 page.reload(wait_until="load")
                 _normal_chair(page)
+                # PHILO-13-11 (slice two, R2): at 393 the Brief is its own window.
+                if width <= 720:
+                    open_chair_window(page, "Brief")
                 retry = page.get_by_test_id("arrival-brief-retry")
                 retry.wait_for()
                 self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
@@ -272,7 +287,7 @@ class TestCloseMeansGone:
                 assert answers and answers[0]["status"] == 200, answers
                 assert db.meetings.get_meeting(local.id) is None
                 assert not left, f"the closed card stays in the DOM: {left}"
-                assert hit is not None and hit["window"] is None and hit["desk"], f"the old centre hits {hit}"
+                assert _on_the_desk(hit), f"the old centre hits {hit}"
                 assert not errors, errors
             finally:
                 browser.close()

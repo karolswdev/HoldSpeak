@@ -9020,7 +9020,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "MeetingSendWellLazy",
-          "line": 2268,
+          "line": 2281,
           "claim": "The unfolded Chair meeting row renders the well."
         },
         {
@@ -9154,7 +9154,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "brief-send",
-          "line": 1398,
+          "line": 1359,
           "claim": "The Chair keeps the same brief SEND well across the last-item branch."
         }
       ],

@@ -18,3 +18,25 @@ The product renders the ratified canvas (`../story-11-canvas/`, owner 2026-10-02
 
 - `frame-facts-1440.json`, `frame-facts-393.json`: this build. Fences F1 to F5 hold on every board.
 - `red-before-main-02ce9e8c-1440.json`, `red-before-main-02ce9e8c-393.json`: the same test on main 02ce9e8c. F1 (no blue window, no screen name), F2 (the gadget layout), F3 (the wings do not fold at 393), F4 (content 547 and 459 px; screen-bar targets 22 to 26 px high) and F5 (`⌘K` at 10 px, the gear at 11 px) are red there. Two parts were already green on main: the ownership half of F2 and the clip and sideways half of F3.
+
+# Slice two: the Chair as windows
+
+The Chair is four `DeskWindowFrame` windows (Needs you, Brief, The week, Capture; owner 2026-10-02, Capture "Yes"). Shots and facts come from `tests/e2e/test_philo13_11_chair_glass.py` (real hub, isolated HOME, the canvas week: Avery, Sam, Jordan, Priya; three meetings; two decisions; a brief; the Team updates folder destination; 1440 mouse, 393 touch).
+
+## Board beside shot
+
+| Board (canvas) | Shot (build) | Match |
+|---|---|---|
+| `C1-4a-chair-windows-1440` | `build-C1-4a-chair-windows-1440.png` | Match: four windows tiled on the dithered screen; Needs you left above Capture (100 px); Brief 64 % of the right column with SEND on the first screen; The week below. One blue window, named by the screen bar. Each window: close left; iconify and zoom right (depth withheld until C2); the sizing gadget. Needs you leads with the number, the ranking strip on its own line, the availability and calendar line below it, the actions, then SETUP. Differs: the action caption still reads `NEEDS YOU 5 OF 6` (`ACTIONS` is A2-W, story 03); the bell and Dock counts are A2/C3; the folder path shows the rig's scratch HOME (the canvas mapped it to `~`). |
+| `C1-4a-chair-windows-393` | `build-C1-4a-chair-windows-393.png` | Match: one window fills the work area (Brief, opened from Go ▸ Chair); the head one 44 px row; every target 44 px. Depth withheld. |
+| `C1-4c-chair-window-closed-1440` | `build-C1-4c-chair-window-closed-1440.png` | Match: Close closed the Brief; one compact reopen Button (`Brief`, library Button, dense) stands in its place. |
+| `C1-4c-chair-window-closed-393` | `build-C1-4c-chair-window-closed-393.png` | Match: Close closed the Brief and the next open Chair window (The week, as on the board) takes the work area. |
+| `C1-4d-window-menu-chair-1440` | `build-C1-4d-window-menu-chair-1440.png` | Match: Window ▸ Chair lists Needs you, Brief, The week, Capture with a check on each open one (Brief unchecked). Differs: the build's Window rows are live (Close window closes the front Chair window; Minimize iconifies it to a Dock chip); the board drew them ghosted. |
+| `C1-6a-phone-desk-393` | `build-C1-6a-phone-desk-393.png` | Match: Needs you alone fills the work area (704 px of content), `RANKED ▾` beside the availability chip, the actions with 44 px verbs. The Dock look is C3. |
+
+## Facts (slice two)
+
+- `chair-facts-1440.json`, `chair-facts-393.json`: this build; fences C1 to C6 hold on every board.
+- `red-chair-before-bbf7e9a4-1440.json`, `red-chair-before-bbf7e9a4-393.json`: the same test on bbf7e9a4 (slice one): no Chair window, no blue window, the screen says `Chair`, the Chair page scrolls; at 393 no content measure.
+- `red-screen-title-dock-list-1440.json`, `red-screen-title-dock-list-393.json`: the same test with the screen title reading the Dock-only window list (Astra, #730): the screen says `Chair` over every front Chair window.
+- `red-go-speak-opens-capture-393.json`: before Muad'Dib's ruling, Go ▸ Speak at 393 opened Capture, not the Speak window (`speak_window: 0`, screen `Capture`). Now only the Dock's Speak AppIcon opens Capture; Go ▸ Speak opens the Speak window (fence C4b).

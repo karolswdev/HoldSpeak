@@ -1,0 +1,267 @@
+{
+  "phone-desk": {
+    "frame": {
+      "width": 393,
+      "windows": 1,
+      "blue": [
+        "Needs you"
+      ],
+      "front": [
+        "Needs you"
+      ],
+      "screen": "Needs you",
+      "layout": [],
+      "ownership": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "content": 704,
+      "small_targets": [],
+      "small_text": [],
+      "low_contrast": []
+    },
+    "chair": {
+      "width": 393,
+      "windows": [
+        "Needs you"
+      ],
+      "reopen": [],
+      "page_scrolls": false,
+      "bodies": {
+        "Needs you": {
+          "overflowY": "auto",
+          "scrolls": true,
+          "h": 704
+        }
+      },
+      "tiles_overlap": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "overlap": [],
+      "small_targets": [],
+      "low_contrast": [],
+      "small_text": [
+        {
+          "text": "\u25cf",
+          "size": 11
+        },
+        {
+          "text": "CHECKED JUST NOW",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "DOOR",
+          "size": 10
+        },
+        {
+          "text": "DUE TODAY",
+          "size": 10
+        },
+        {
+          "text": "MTG",
+          "size": 10
+        },
+        {
+          "text": "NO DUE DATE \u00b7 UNASSIGNED",
+          "size": 10
+        }
+      ]
+    }
+  },
+  "go-chair": [
+    [
+      "Needs you",
+      "true"
+    ],
+    [
+      "Brief",
+      "true"
+    ],
+    [
+      "The week",
+      "true"
+    ]
+  ],
+  "chair-windows": {
+    "frame": {
+      "width": 393,
+      "windows": 1,
+      "blue": [
+        "Brief"
+      ],
+      "front": [
+        "Brief"
+      ],
+      "screen": "Brief",
+      "layout": [],
+      "ownership": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "content": 704,
+      "small_targets": [],
+      "small_text": [],
+      "low_contrast": []
+    },
+    "chair": {
+      "width": 393,
+      "windows": [
+        "Brief"
+      ],
+      "reopen": [],
+      "page_scrolls": false,
+      "bodies": {
+        "Brief": {
+          "overflowY": "auto",
+          "scrolls": true,
+          "h": 704
+        }
+      },
+      "tiles_overlap": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "overlap": [],
+      "small_targets": [],
+      "low_contrast": [],
+      "small_text": []
+    }
+  },
+  "chair-window-closed": {
+    "frame": {
+      "width": 393,
+      "windows": 1,
+      "blue": [
+        "The week"
+      ],
+      "front": [
+        "The week"
+      ],
+      "screen": "The week",
+      "layout": [],
+      "ownership": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "content": 704,
+      "small_targets": [],
+      "small_text": [],
+      "low_contrast": []
+    },
+    "chair": {
+      "width": 393,
+      "windows": [
+        "The week"
+      ],
+      "reopen": [],
+      "page_scrolls": false,
+      "bodies": {
+        "The week": {
+          "overflowY": "auto",
+          "scrolls": true,
+          "h": 704
+        }
+      },
+      "tiles_overlap": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "overlap": [],
+      "small_targets": [],
+      "low_contrast": [],
+      "small_text": [
+        {
+          "text": "\u21bb",
+          "size": 11
+        },
+        {
+          "text": "\u25b8",
+          "size": 11
+        },
+        {
+          "text": "TRANSCRIPT",
+          "size": 10
+        },
+        {
+          "text": "4 WORDS",
+          "size": 10
+        }
+      ]
+    }
+  },
+  "capture-from-speak": {
+    "frame": {
+      "width": 393,
+      "windows": 1,
+      "blue": [
+        "Capture"
+      ],
+      "front": [
+        "Capture"
+      ],
+      "screen": "Capture",
+      "layout": [],
+      "ownership": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "content": 704,
+      "small_targets": [],
+      "small_text": [],
+      "low_contrast": []
+    },
+    "chair": {
+      "width": 393,
+      "windows": [
+        "Capture"
+      ],
+      "reopen": [],
+      "page_scrolls": false,
+      "bodies": {
+        "Capture": {
+          "overflowY": "auto",
+          "scrolls": false,
+          "h": 704
+        }
+      },
+      "tiles_overlap": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "overlap": [],
+      "small_targets": [],
+      "low_contrast": [],
+      "small_text": []
+    }
+  },
+  "capture-verbs": 3,
+  "screen-title-per-window": {
+    "Needs you": "Needs you",
+    "Brief": "Brief",
+    "The week": "The week",
+    "Capture": "Capture"
+  },
+  "go-speak": {
+    "speak_window": 1,
+    "screen": "Speak"
+  },
+  "errors": [],
+  "failures": {}
+}

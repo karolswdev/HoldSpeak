@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chair } from "./Chair";
+import { ChairDesk } from "./ChairDesk";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openNewThought } from "../newThought";
@@ -273,6 +274,14 @@ function arrivalIntelBadge(meeting: Meeting): string {
   }
   if (job?.status === "failed") return "FAILED";
   return intelBadge(meeting.intelStatus);
+}
+
+/** PHILO-13-11 (A3-W ledger): a summary is stored for this meeting — the
+ * list row's `has_summary` (H-A3, #729) or the summary the detail read. */
+function summaryStored(...rows: Meeting[]): boolean {
+  return rows.some(
+    (row) => row.hasSummary === true || Boolean(String(row.intelSummary ?? "").trim()),
+  );
 }
 
 function hasMeetingAttention(meeting: Meeting): boolean {
@@ -688,25 +697,8 @@ function Arrival() {
 
   // ── brief generate ──
   const [generating, setGenerating] = useState(false);
-  // The capture bar wraps at the phone width. Keep its measured height on the
-  // existing Chair so the narrow scroll well can reserve the actual clearance
-  // without making the face depend on a viewport-specific constant.
-  useLayoutEffect(() => {
-    const chair = document.querySelector<HTMLElement>('[data-testid="chair"]');
-    const captureBar = chair?.querySelector<HTMLElement>('[data-testid="arrival-capture-bar"]');
-    if (!chair || !captureBar) return undefined;
-
-    const measure = () => {
-      const height = Math.ceil(captureBar.getBoundingClientRect().height);
-      if (height > 0) chair.style.setProperty("--arrival-capture-clearance", `${height}px`);
-      else chair.style.removeProperty("--arrival-capture-clearance");
-    };
-    measure();
-    if (typeof ResizeObserver === "undefined") return undefined;
-    const observer = new ResizeObserver(measure);
-    observer.observe(captureBar);
-    return () => observer.disconnect();
-  }, []);
+  // PHILO-13-11 (C1, slice two): the capture bar lives in its own Chair
+  // window now; the scroll well's clearance for a sticky bar is gone.
 
   const generateBrief = async () => {
     setGenerating(true);
@@ -1098,374 +1090,395 @@ function Arrival() {
     }
   }, []);
 
+  /* PHILO-13-11 (C1, slice two) — the Chair composed of windows (design
+     §5, boards C1-1, C1-4a–e, C1-6a): the Arrival's sections move,
+     unchanged, into four DeskWindowFrame windows. The work first (R3): the
+     Needs-you window leads with the number, the ranking strip and the
+     actions; SETUP drops below the actions. */
   return (
-    <>
-      {/* ── Headline ── */}
-      <div className="arrival-headline" data-testid="arrival-headline">
-        <h1
-          className={headlineAccent ? "arrival-display arrival-display--accent" : "arrival-display arrival-display--muted"}
-          data-testid="arrival-display"
-        >
-          {headline}
-        </h1>
-        {next ? (
-          <p className="arrival-next" data-testid="arrival-next">{next}</p>
-        ) : null}
-        {/* HS-200-15: the head token row: the ranking key stated on the
-            face (a real filter strip, one tap per class), the coverage
-            chip when coverage is complete, the calendar state. One
-            wrapping line: nothing here ever scrolls sideways. */}
-        {count > 0 || coverageChip || (!next && !calendarConfigured) ? (
-          <div className="arrival-head-tokens" data-testid="arrival-head-tokens">
-            {count > 0 ? (
-              <FilterTokens
-                className="arrival-ranking"
-                label="Ranking"
-                value={rankFilter}
-                onChange={(next) => setRankFilter(next as "" | RankClass)}
-                options={[
-                  { value: "", label: "RANKED" },
-                  ...RANK_CLASSES.map((cls) => ({ value: cls, label: RANK_LABEL[cls] })),
-                ]}
-              />
+    <ChairDesk
+      needs={
+        <>
+          {/* ── Headline ── */}
+          <div className="arrival-headline" data-testid="arrival-headline">
+            <h1
+              className={headlineAccent ? "arrival-display arrival-display--accent" : "arrival-display arrival-display--muted"}
+              data-testid="arrival-display"
+            >
+              {headline}
+            </h1>
+            {next ? (
+              <p className="arrival-next" data-testid="arrival-next">{next}</p>
             ) : null}
-            {coverageChip ? (
-              <StateChip
-                state="success"
-                icon="●"
-                label={coverageChip}
-                data-testid="arrival-coverage-complete"
-              />
+            {/* HS-200-15: the head token row: the ranking key stated on the
+                face (a real filter strip, one tap per class), the coverage
+                chip when coverage is complete, the calendar state. One
+                wrapping line: nothing here ever scrolls sideways. */}
+            {count > 0 || coverageChip || (!next && !calendarConfigured) ? (
+              <div className="arrival-head-tokens" data-testid="arrival-head-tokens">
+                {count > 0 ? (
+                  <FilterTokens
+                    className="arrival-ranking"
+                    label="Ranking"
+                    value={rankFilter}
+                    onChange={(next) => setRankFilter(next as "" | RankClass)}
+                    options={[
+                      { value: "", label: "RANKED" },
+                      ...RANK_CLASSES.map((cls) => ({ value: cls, label: RANK_LABEL[cls] })),
+                    ]}
+                  />
+                ) : null}
+                {coverageChip ? (
+                  <StateChip
+                    state="success"
+                    icon="●"
+                    label={coverageChip}
+                    data-testid="arrival-coverage-complete"
+                  />
+                ) : null}
+                {checkedToken ? (
+                  <span className="arrival-checked-token" data-testid="arrival-checked">
+                    {checkedToken}
+                  </span>
+                ) : null}
+                {!next && !calendarConfigured ? (
+                  <span className="arrival-next" data-testid="arrival-no-calendar">
+                    <span className="arrival-no-calendar-token">NO CALENDAR</span>
+                    {" "}
+                    <Button
+                      variant="ghost"
+                      dense
+                      onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}
+                      data-testid="arrival-connect-calendar"
+                    >
+                      Connect calendar
+                    </Button>
+                  </span>
+                ) : null}
+              </div>
             ) : null}
-            {checkedToken ? (
-              <span className="arrival-checked-token" data-testid="arrival-checked">
-                {checkedToken}
-              </span>
-            ) : null}
-            {!next && !calendarConfigured ? (
-              <span className="arrival-next" data-testid="arrival-no-calendar">
-                <span className="arrival-no-calendar-token">NO CALENDAR</span>
+            {isArming ? (
+              <p className="arrival-arming" data-testid="arrival-arming">
+                <span className="arrival-arming-token">ARMED</span>
+                {" "}
+                <span>{arming.title || "Scheduled recording"}</span>
+                {" "}
+                <span className="arrival-arming-countdown">IN {Math.floor(countdown! / 60)}:{String(countdown! % 60).padStart(2, "0")}</span>
                 {" "}
                 <Button
-                  variant="ghost"
+                  variant="danger"
                   dense
-                  onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}
-                  data-testid="arrival-connect-calendar"
+                  onClick={() => void useDesk.getState().cancelArmedSchedule(arming.scheduleId)}
+                  data-testid="arrival-cancel-armed"
                 >
-                  Connect calendar
+                  Cancel
                 </Button>
-              </span>
+              </p>
             ) : null}
           </div>
-        ) : null}
-        {isArming ? (
-          <p className="arrival-arming" data-testid="arrival-arming">
-            <span className="arrival-arming-token">ARMED</span>
-            {" "}
-            <span>{arming.title || "Scheduled recording"}</span>
-            {" "}
-            <span className="arrival-arming-countdown">IN {Math.floor(countdown! / 60)}:{String(countdown! % 60).padStart(2, "0")}</span>
-            {" "}
-            <Button
-              variant="danger"
-              dense
-              onClick={() => void useDesk.getState().cancelArmedSchedule(arming.scheduleId)}
-              data-testid="arrival-cancel-armed"
-            >
-              Cancel
-            </Button>
-          </p>
-        ) : null}
-      </div>
 
-      {/* ── The one thing the meeting path needs (HS-201-01) ──
-          ONE row, ONE library Button, and it is gone the moment an
-          engine is assigned to the summary capability. */}
-      {blockers.length > 0 ? (
-        <div data-testid="arrival-blocker">
-          <SurfaceSection label="SETUP">
-            <SurfaceLedger count={null} cols="room">
-              {blockers.map((blocker) => (
-                <SurfaceLedgerRow
-                  key={blocker.key}
-                  primary={blocker.label}
-                  trailing={
-                    // HS-201-01 (full-suite fallout): the SETUP verb is
-                    // the library Button, never a second FILLED primary.
-                    // The ratified face law is one filled primary on a
-                    // face with attention work and ZERO on a quiet one
-                    // (test_hs200_attention_glass.py:463, :694), and the
-                    // first attention row's Open owns it.
-                    <Button
-                      dense
-                      onClick={
-                        blocker.key === "unknown"
-                          ? () => void readAssignments()
-                          : () => openSurfaceOr("open-concierge", "/models")
-                      }
-                      data-testid={`arrival-blocker-verb-${blocker.key}`}
-                    >
-                      {blocker.verb}
-                    </Button>
-                  }
-                  expands={false}
-                  wrap
-                  data-testid="arrival-blocker-row"
+          {/* ── Coverage (HS-200-07 / C4): what was NOT observed ──
+              HS-200-15: ABOVE the answer, as the library CoverageLedger; one
+              row per unreadable source with its reason, its token, its
+              observation time and its owning verb. */}
+          {!coverage.complete ? (
+            <div data-testid="arrival-coverage">
+              <SurfaceSection label={coverage.token ?? "COVERAGE"}>
+                <CoverageLedger
+                  gaps={coverage.gaps}
+                  onRepair={repairCoverage}
+                  now={now}
+                  rowTestId="arrival-coverage-row"
                 />
-              ))}
-            </SurfaceLedger>
-          </SurfaceSection>
-        </div>
-      ) : null}
+              </SurfaceSection>
+            </div>
+          ) : null}
 
-      {/* ── Week Strip (HS-175-02) ── */}
-      {week && week.has_calendar && week.total > 0 ? (
-        <WeekStripSection week={week} />
-      ) : null}
+          {/* ── Needs You (unmuted): five in the first view, the rest behind
+              `N MORE · Show all` ── */}
+          {unmutedItems.length > 0 ? (
+            <div data-testid="arrival-needs-you">
+              <NeedsYouSection
+                items={unmutedItems}
+                filter={rankFilter}
+                multipleProjects={multipleProjects}
+                now={now}
+                onProposalConfirm={handleProposalConfirm}
+                onOpenProject={openProject}
+                onCommitmentChanged={() => void readNeedsYou(true)}
+              />
+            </div>
+          ) : null}
 
-      {/* ── Coverage (HS-200-07 / C4): what was NOT observed ──
-          HS-200-15: ABOVE the answer, as the library CoverageLedger; one
-          row per unreadable source with its reason, its token, its
-          observation time and its owning verb. */}
-      {!coverage.complete ? (
-        <div data-testid="arrival-coverage">
-          <SurfaceSection label={coverage.token ?? "COVERAGE"}>
-            <CoverageLedger
-              gaps={coverage.gaps}
-              onRepair={repairCoverage}
-              now={now}
-              rowTestId="arrival-coverage-row"
-            />
-          </SurfaceSection>
-        </div>
-      ) : null}
+          {/* ── Muted (dimmed, under a MUTED caption; A8: count pre-extracted) ── */}
+          {mutedCount > 0 ? (
+            <div data-testid="arrival-muted" className="arrival-muted-section">
+              <NeedsYouSection
+                items={mutedItems}
+                filter={rankFilter}
+                multipleProjects={multipleProjects}
+                now={now}
+                muted
+                onProposalConfirm={handleProposalConfirm}
+                onOpenProject={openProject}
+                onCommitmentChanged={() => void readNeedsYou(true)}
+              />
+            </div>
+          ) : null}
 
-      {/* ── Needs You (unmuted): five in the first view, the rest behind
-          `N MORE · Show all` ── */}
-      {unmutedItems.length > 0 ? (
-        <div data-testid="arrival-needs-you">
-          <NeedsYouSection
-            items={unmutedItems}
-            filter={rankFilter}
-            multipleProjects={multipleProjects}
-            now={now}
-            onProposalConfirm={handleProposalConfirm}
-            onOpenProject={openProject}
-            onCommitmentChanged={() => void readNeedsYou(true)}
-          />
-        </div>
-      ) : null}
+          {/* ── The one thing the meeting path needs (HS-201-01) ──
+              ONE row, ONE library Button, and it is gone the moment an
+              engine is assigned to the summary capability. */}
+          {blockers.length > 0 ? (
+            <div data-testid="arrival-blocker">
+              <SurfaceSection label="SETUP">
+                <SurfaceLedger count={null} cols="room">
+                  {blockers.map((blocker) => (
+                    <SurfaceLedgerRow
+                      key={blocker.key}
+                      primary={blocker.label}
+                      trailing={
+                        // HS-201-01 (full-suite fallout): the SETUP verb is
+                        // the library Button, never a second FILLED primary.
+                        // The ratified face law is one filled primary on a
+                        // face with attention work and ZERO on a quiet one
+                        // (test_hs200_attention_glass.py:463, :694), and the
+                        // first attention row's Open owns it.
+                        <Button
+                          dense
+                          onClick={
+                            blocker.key === "unknown"
+                              ? () => void readAssignments()
+                              : () => openSurfaceOr("open-concierge", "/models")
+                          }
+                          data-testid={`arrival-blocker-verb-${blocker.key}`}
+                        >
+                          {blocker.verb}
+                        </Button>
+                      }
+                      expands={false}
+                      wrap
+                      data-testid="arrival-blocker-row"
+                    />
+                  ))}
+                </SurfaceLedger>
+              </SurfaceSection>
+            </div>
+          ) : null}
 
-      {/* ── Muted (dimmed, under a MUTED caption; A8: count pre-extracted) ── */}
-      {mutedCount > 0 ? (
-        <div data-testid="arrival-muted" className="arrival-muted-section">
-          <NeedsYouSection
-            items={mutedItems}
-            filter={rankFilter}
-            multipleProjects={multipleProjects}
-            now={now}
-            muted
-            onProposalConfirm={handleProposalConfirm}
-            onOpenProject={openProject}
-            onCommitmentChanged={() => void readNeedsYou(true)}
-          />
-        </div>
-      ) : null}
-
-      {/* ── Calendar Meetings (HS-175-02) ── */}
-      {/* P2-14 / counsel re-read: the calendar section wears its own
-          testid; the recorded-meetings ledger below keeps `arrival-meetings`. */}
-      {calendarEvents.length > 0 ? (
-        <div data-testid="arrival-this-week">
-          <CalendarMeetingsSection
-            events={calendarEvents}
-            onCancel={cancelArmedRecording}
-            onUnlink={unlinkRoom}
-            busyUnlink={busyUnlink}
-            cancelRefusals={cancelRefusals}
-            unlinkRefusals={unlinkRefusals}
-          />
-        </div>
-      ) : null}
-
-      {/* ── Orphan Armed Recordings (HS-175-02) ── */}
-      {orphanRecordings.length > 0 ? (
-        <div data-testid="arrival-orphan-section">
-          {orphanRecordings.map((rec) => (
-            <OrphanArmedRow
-              key={rec.id}
-              recording={rec}
-              onCancel={cancelArmedRecording}
-              refusal={cancelRefusals[rec.id]}
-            />
-          ))}
-        </div>
-      ) : null}
-
-      {/* ── Thoughts ── */}
-      {thoughts.length > 0 ? (
-        <div data-testid="arrival-thoughts">
-          <ThoughtsSection thoughts={thoughts} />
-        </div>
-      ) : null}
-
-      {/* ── Brief (M-2: no-brief-yet generates; existing brief with human items shows) ──
-          PHILO-4-01 (ratified canvas): every branch carries the head verbs
-          (`briefVerbs`: the badge, then Generate) and one status slot. */}
-      {briefLoading && !brief ? (
-        /* PHILO-3-03 (ratified canvas, state 2): the read is open.
-           PHILO-4-01 board 2b: Generate is in the head, disabled. */
-        <div data-testid="arrival-brief">
-          <SurfaceSection label="BRIEF" actions={briefVerbs}>
-            <span className="surface-receipt-line" role="status" data-testid="arrival-brief-loading">
-              READING…
-            </span>
-          </SurfaceSection>
-        </div>
-      ) : briefLoadFailed && !brief ? (
-        /* PHILO-3-03 (ratified canvas, state 3): the read failed. Never
-           "No brief yet": that is a claim about the hub it did not make.
-           PHILO-4-01 boards 3b, 3c: Generate in the head; while a
-           generation is open, or after it failed, its line takes the one
-           status slot (the read failure and its Retry go). */
-        <div data-testid="arrival-brief">
-          <SurfaceSection label="BRIEF" actions={briefVerbs}>
-            {generateStatus ?? (
-              <span className="arrival-brief-failed">
+        </>
+      }
+      brief={
+        <>
+          {/* ── Brief (M-2: no-brief-yet generates; existing brief with human items shows) ──
+              PHILO-4-01 (ratified canvas): every branch carries the head verbs
+              (`briefVerbs`: the badge, then Generate) and one status slot. */}
+          {briefLoading && !brief ? (
+            /* PHILO-3-03 (ratified canvas, state 2): the read is open.
+               PHILO-4-01 board 2b: Generate is in the head, disabled. */
+            <div data-testid="arrival-brief">
+              <SurfaceSection label="BRIEF" actions={briefVerbs}>
+                <span className="surface-receipt-line" role="status" data-testid="arrival-brief-loading">
+                  READING…
+                </span>
+              </SurfaceSection>
+            </div>
+          ) : briefLoadFailed && !brief ? (
+            /* PHILO-3-03 (ratified canvas, state 3): the read failed. Never
+               "No brief yet": that is a claim about the hub it did not make.
+               PHILO-4-01 boards 3b, 3c: Generate in the head; while a
+               generation is open, or after it failed, its line takes the one
+               status slot (the read failure and its Retry go). */
+            <div data-testid="arrival-brief">
+              <SurfaceSection label="BRIEF" actions={briefVerbs}>
+                {generateStatus ?? (
+                  <span className="arrival-brief-failed">
+                    <span
+                      className="surface-receipt-line"
+                      role="status"
+                      data-tone="danger"
+                      data-testid="arrival-brief-load-failed"
+                    >
+                      {`BRIEF DID NOT LOAD · ${briefLoadFailed}`}
+                    </span>
+                    <Button variant="ghost" dense onClick={readBrief} data-testid="arrival-brief-retry">
+                      Retry
+                    </Button>
+                  </span>
+                )}
+              </SurfaceSection>
+            </div>
+          ) : !briefLoading && !brief ? (
+            /* PHILO-4-01 boards 6, 6b: GENERATING… or the failure line takes
+               the place of `No brief yet`. */
+            <div data-testid="arrival-brief">
+              <SurfaceSection label="BRIEF" actions={briefVerbs}>
+                {briefKept ? (
+                  <span
+                    className="surface-receipt-line"
+                    role="status"
+                    data-testid="arrival-brief-receipt"
+                  >
+                    {briefKept}
+                  </span>
+                ) : generateStatus ?? (
+                  <span className="arrival-brief-empty">No brief yet</span>
+                )}
+              </SurfaceSection>
+            </div>
+          ) : !briefLoading && untriagedBrief.length > 0 ? (
+            /* PHILO-4-01 boards 1, 2a, 3a, 4: Generate in the head while rows
+               are untriaged. Generate never touches their triage: the next
+               brief has new item ids; this brief's shelf stays on it. */
+            <div data-testid="arrival-brief">
+              <BriefSection
+                items={untriagedBrief}
+                busyId={busyBriefId}
+                onShelf={doBriefShelf}
+                actions={briefVerbs}
+              />
+              {brief ? <BriefDate brief={brief} /> : null}
+              {/* HS-202-02 (Astra's counsel finding 2) — the receipt lived
+                  ONLY under `!brief`, so success replaced the branch that
+                  held it and the owner saw no receipt at all. Article III
+                  wants the receipt AFTER the click, wherever the click
+                  leaves the face. */}
+              {briefKept ? (
                 <span
                   className="surface-receipt-line"
                   role="status"
-                  data-tone="danger"
-                  data-testid="arrival-brief-load-failed"
+                  data-testid="arrival-brief-receipt"
                 >
-                  {`BRIEF DID NOT LOAD · ${briefLoadFailed}`}
+                  {briefKept}
                 </span>
-                <Button variant="ghost" dense onClick={readBrief} data-testid="arrival-brief-retry">
-                  Retry
-                </Button>
-              </span>
-            )}
-          </SurfaceSection>
-        </div>
-      ) : !briefLoading && !brief ? (
-        /* PHILO-4-01 boards 6, 6b: GENERATING… or the failure line takes
-           the place of `No brief yet`. */
-        <div data-testid="arrival-brief">
-          <SurfaceSection label="BRIEF" actions={briefVerbs}>
-            {briefKept ? (
-              <span
-                className="surface-receipt-line"
-                role="status"
-                data-testid="arrival-brief-receipt"
-              >
-                {briefKept}
-              </span>
-            ) : generateStatus ?? (
-              <span className="arrival-brief-empty">No brief yet</span>
-            )}
-          </SurfaceSection>
-        </div>
-      ) : !briefLoading && untriagedBrief.length > 0 ? (
-        /* PHILO-4-01 boards 1, 2a, 3a, 4: Generate in the head while rows
-           are untriaged. Generate never touches their triage: the next
-           brief has new item ids; this brief's shelf stays on it. */
-        <div data-testid="arrival-brief">
-          <BriefSection
-            items={untriagedBrief}
-            busyId={busyBriefId}
-            onShelf={doBriefShelf}
-            actions={briefVerbs}
-          />
-          {brief ? <BriefDate brief={brief} /> : null}
-          {/* HS-202-02 (Astra's counsel finding 2) — the receipt lived
-              ONLY under `!brief`, so success replaced the branch that
-              held it and the owner saw no receipt at all. Article III
-              wants the receipt AFTER the click, wherever the click
-              leaves the face. */}
-          {briefKept ? (
-            <span
-              className="surface-receipt-line"
-              role="status"
-              data-testid="arrival-brief-receipt"
-            >
-              {briefKept}
-            </span>
+              ) : null}
+              {generateStatus}
+              {/* PHILO-11-05a (canvas A, T3): the brief's SEND well. Keyed, so the
+                  same well (its pick, its receipt) stays when the last item is
+                  triaged and the Chair changes branch below. */}
+              {brief ? <BriefSendWells key="brief-send" brief={brief} /> : null}
+            </div>
+          ) : !briefLoading && brief ? (
+            /* A brief with nothing untriaged still happened — tonight, or on a
+               day before this reload. The section survives with the brief's own
+               words (its headline: "No changes" is a result, not an absence),
+               the receipt when this gesture made it, and the verb to make
+               another. The owner's first sitting (2026-09-21) met the previous
+               shape: Generate answered, the whole row vanished, and a reload
+               showed nothing at all — "one day later, still no brief".
+               PHILO-4-01 boards 7a, 7b, 8a, 8b, 9. */
+            <div data-testid="arrival-brief">
+              <SurfaceSection label="BRIEF" actions={briefVerbs}>
+                {brief.headline ? (
+                  <span className="arrival-brief-headline" data-testid="arrival-brief-headline">
+                    {brief.headline}
+                  </span>
+                ) : null}
+                <BriefDate brief={brief} />
+                {handledBriefLine ? (
+                  <span
+                    className="surface-receipt-line"
+                    data-testid="arrival-brief-handled"
+                  >
+                    {handledBriefLine}
+                  </span>
+                ) : null}
+                {briefKept ? (
+                  <span
+                    className="surface-receipt-line"
+                    role="status"
+                    data-testid="arrival-brief-receipt"
+                  >
+                    {briefKept}
+                  </span>
+                ) : null}
+                {generateStatus}
+              </SurfaceSection>
+              <BriefSendWells key="brief-send" brief={brief} />
+            </div>
           ) : null}
-          {generateStatus}
-          {/* PHILO-11-05a (canvas A, T3): the brief's SEND well. Keyed, so the
-              same well (its pick, its receipt) stays when the last item is
-              triaged and the Chair changes branch below. */}
-          {brief ? <BriefSendWells key="brief-send" brief={brief} /> : null}
-        </div>
-      ) : !briefLoading && brief ? (
-        /* A brief with nothing untriaged still happened — tonight, or on a
-           day before this reload. The section survives with the brief's own
-           words (its headline: "No changes" is a result, not an absence),
-           the receipt when this gesture made it, and the verb to make
-           another. The owner's first sitting (2026-09-21) met the previous
-           shape: Generate answered, the whole row vanished, and a reload
-           showed nothing at all — "one day later, still no brief".
-           PHILO-4-01 boards 7a, 7b, 8a, 8b, 9. */
-        <div data-testid="arrival-brief">
-          <SurfaceSection label="BRIEF" actions={briefVerbs}>
-            {brief.headline ? (
-              <span className="arrival-brief-headline" data-testid="arrival-brief-headline">
-                {brief.headline}
-              </span>
-            ) : null}
-            <BriefDate brief={brief} />
-            {handledBriefLine ? (
-              <span
-                className="surface-receipt-line"
-                data-testid="arrival-brief-handled"
-              >
-                {handledBriefLine}
-              </span>
-            ) : null}
-            {briefKept ? (
-              <span
-                className="surface-receipt-line"
-                role="status"
-                data-testid="arrival-brief-receipt"
-              >
-                {briefKept}
-              </span>
-            ) : null}
-            {generateStatus}
-          </SurfaceSection>
-          <BriefSendWells key="brief-send" brief={brief} />
-        </div>
-      ) : null}
 
-      {/* ── Meetings ── */}
-      {meetings.length > 0 ? (
-        <div data-testid="arrival-meetings">
-          <MeetingsSection
-            meetings={meetings}
-            details={meetingDetails}
-            runningIntel={runningIntel}
-            intelReceipt={intelReceipt}
-            intelRefusal={intelRefusal}
-            drainerAbsent={drainerAbsent}
-            onRunIntel={runIntelligence}
+        </>
+      }
+      week={
+        <>
+          {/* ── Week Strip (HS-175-02) ── */}
+          {week && week.has_calendar && week.total > 0 ? (
+            <WeekStripSection week={week} />
+          ) : null}
+
+          {/* ── Calendar Meetings (HS-175-02) ── */}
+          {/* P2-14 / counsel re-read: the calendar section wears its own
+              testid; the recorded-meetings ledger below keeps `arrival-meetings`. */}
+          {calendarEvents.length > 0 ? (
+            <div data-testid="arrival-this-week">
+              <CalendarMeetingsSection
+                events={calendarEvents}
+                onCancel={cancelArmedRecording}
+                onUnlink={unlinkRoom}
+                busyUnlink={busyUnlink}
+                cancelRefusals={cancelRefusals}
+                unlinkRefusals={unlinkRefusals}
+              />
+            </div>
+          ) : null}
+
+          {/* ── Orphan Armed Recordings (HS-175-02) ── */}
+          {orphanRecordings.length > 0 ? (
+            <div data-testid="arrival-orphan-section">
+              {orphanRecordings.map((rec) => (
+                <OrphanArmedRow
+                  key={rec.id}
+                  recording={rec}
+                  onCancel={cancelArmedRecording}
+                  refusal={cancelRefusals[rec.id]}
+                />
+              ))}
+            </div>
+          ) : null}
+
+          {/* ── Meetings ── */}
+          {meetings.length > 0 ? (
+            <div data-testid="arrival-meetings">
+              <MeetingsSection
+                meetings={meetings}
+                details={meetingDetails}
+                runningIntel={runningIntel}
+                intelReceipt={intelReceipt}
+                intelRefusal={intelRefusal}
+                drainerAbsent={drainerAbsent}
+                onRunIntel={runIntelligence}
+              />
+            </div>
+          ) : null}
+
+          {/* ── Thoughts ── */}
+          {thoughts.length > 0 ? (
+            <div data-testid="arrival-thoughts">
+              <ThoughtsSection thoughts={thoughts} />
+            </div>
+          ) : null}
+
+          {/* ── Agents (M-3: only when sessions exist) ── */}
+          {agentSessions.length > 0 ? (
+            <div data-testid="arrival-agents">
+              <AgentsSection sessions={agentSessions} />
+            </div>
+          ) : null}
+
+        </>
+      }
+      capture={
+        <>
+          {/* ── Capture Bar ── */}
+          <div
+            data-testid="arrival-aftercare-slot"
+            data-aftercare-slot="before-capture"
           />
-        </div>
-      ) : null}
-
-      {/* ── Agents (M-3: only when sessions exist) ── */}
-      {agentSessions.length > 0 ? (
-        <div data-testid="arrival-agents">
-          <AgentsSection sessions={agentSessions} />
-        </div>
-      ) : null}
-
-      {/* ── Capture Bar ── */}
-      <div
-        data-testid="arrival-aftercare-slot"
-        data-aftercare-slot="before-capture"
-      />
-      <CaptureBar />
-    </>
+          <CaptureBar />
+        </>
+      }
+    />
   );
 }
 
@@ -2311,6 +2324,7 @@ function MeetingsSection({
       (m) => {
         const row = details[m.id]?.meeting ?? m;
         return arrivalIntelBadge(row) === "OFF" &&
+          !summaryStored(row, m) &&
           ((row.segments?.length ?? 0) > 0 ||
             (row.transcriptWords != null && row.transcriptWords > 0)) &&
           routeReady(row.plannedRoute ?? null);
@@ -2344,10 +2358,11 @@ function MeetingsSection({
           const isOff = badge === "OFF";
           // PHILO-13-04 (A3): OFF names the run switch. A meeting that holds
           // a summary says so, never OFF above its own summary (J2-02).
-          const shownBadge =
-            isOff && String(rowMeeting.intelSummary ?? "").trim()
-              ? "SUMMARY STORED"
-              : badge;
+          // PHILO-13-11 (A3-W ledger): the verb follows the SAME stored fact
+          // as the badge (the list row's `has_summary`, H-A3 #729, or the
+          // summary the detail read): no `Run summary` beside SUMMARY STORED.
+          const stored = isOff && summaryStored(rowMeeting, m);
+          const shownBadge = stored ? "SUMMARY STORED" : badge;
           const isComplete = badge === "RAN" || badge === "SAVED";
           // HS-201-04 (Article III): the route this row's Run WILL use,
           // read before the click; the refusal's fresh route wins.
@@ -2401,7 +2416,7 @@ function MeetingsSection({
                 </>
               }
               trailing={
-                isOff && hasTranscript ? (
+                isOff && hasTranscript && !stored ? (
                   <>
                     {/* Before the click: where this run will go. */}
                     <RouteDisclosure route={route} testId="arrival-route" />
@@ -2421,13 +2436,14 @@ function MeetingsSection({
                       </Button>
                     ) : null}
                   </>
-                ) : isComplete ? (
+                ) : isComplete || stored ? (
                   <Button
                     variant="ghost"
                     dense
                     onClick={() =>
                       openSurfaceOr("review-meetings", "/meetings", `meeting:${m.id}`)
                     }
+                    data-testid="arrival-meeting-open"
                   >
                     Open
                   </Button>

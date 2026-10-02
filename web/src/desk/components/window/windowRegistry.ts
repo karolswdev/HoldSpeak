@@ -12,23 +12,32 @@ export const chipEls = new Map<string, HTMLElement>();
 export const shellEls = new Map<string, HTMLElement>();
 
 /** Open windows announce themselves (title/icon/close) so the dock can
- * name and drive them without a parallel registry. */
+ * name and drive them without a parallel registry.
+ * PHILO-13-11 (C1, slice two): `dock: false` marks a window that is part
+ * of a screen, not a program (the Chair's four windows). It is a window
+ * for the front, the screen title, Close and the cycle; it has no Dock chip
+ * (the Chair screen holds its reopen Button). */
 export const windowRegistry = new Map<
   string,
-  { label: string; glyph: string; close: () => void }
+  { label: string; glyph: string; close: () => void; dock: boolean }
 >();
 export const registryListeners = new Set<() => void>();
-export let registrySnapshot: {
+export type RegisteredWindow = {
   id: string;
   label: string;
   glyph: string;
   close: () => void;
-}[] = [];
+  dock: boolean;
+};
+export let registrySnapshot: RegisteredWindow[] = [];
+/** The open windows the Dock and Overview show (every window with a chip). */
+export let dockSnapshot: RegisteredWindow[] = [];
 
 export function publishRegistry() {
   registrySnapshot = Array.from(windowRegistry.entries()).map(
     ([id, v]) => ({ id, ...v }),
   );
+  dockSnapshot = registrySnapshot.filter((w) => w.dock);
   for (const l of registryListeners) l();
 }
 
@@ -37,8 +46,9 @@ export function announceWindow(
   label: string,
   glyph: string,
   close: () => void,
+  dock = true,
 ) {
-  windowRegistry.set(id, { label, glyph, close });
+  windowRegistry.set(id, { label, glyph, close, dock });
   publishRegistry();
 }
 
@@ -47,14 +57,23 @@ export function retractWindow(id: string) {
   publishRegistry();
 }
 
+function subscribeRegistry(cb: () => void) {
+  registryListeners.add(cb);
+  return () => {
+    registryListeners.delete(cb);
+  };
+}
+
+/** The open windows with a Dock chip (the Dock, Overview). The Chair's
+ * windows are not here: they belong to the Chair screen. */
 export function useOpenWindows() {
-  return useSyncExternalStore(
-    (cb) => {
-      registryListeners.add(cb);
-      return () => registryListeners.delete(cb);
-    },
-    () => registrySnapshot,
-  );
+  return useSyncExternalStore(subscribeRegistry, () => dockSnapshot);
+}
+
+/** PHILO-13-11 (C1, slice two) — EVERY open window, the Chair's included:
+ * the front window and the screen title read this. */
+export function useAllOpenWindows() {
+  return useSyncExternalStore(subscribeRegistry, () => registrySnapshot);
 }
 
 /** PHILO-13-11 (C1, R4) — ONE front window, from the ONE stacking order:
@@ -87,7 +106,7 @@ export function frontWindowId(): string | null {
  * it announced itself could compute "front" while the previous front window
  * kept a stale `is-front` (two blue title bars at once). */
 export function useFrontWindowId(): string | null {
-  const open = useOpenWindows();
+  const open = useAllOpenWindows();
   const order = useDesk((s) => s.panelOrder);
   const minimized = useDesk((s) => s.panelMin);
   return frontOf(order, minimized, open);
@@ -96,6 +115,11 @@ export function useFrontWindowId(): string | null {
 /** How many windows are open right now (ghost-reason source). */
 export function openWindowCount(): number {
   return registrySnapshot.length;
+}
+
+/** How many windows with a Dock chip are open (Overview fans only these). */
+export function dockWindowCount(): number {
+  return dockSnapshot.length;
 }
 
 /* -- HS-111-07: the window verbs the registry runs (one truth; the

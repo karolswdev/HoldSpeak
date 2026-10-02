@@ -16,6 +16,7 @@ from typing import Any
 
 import pytest
 from tests._evidence import evidence_dir
+from tests.e2e.chair_windows import open_chair_window
 
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
@@ -60,12 +61,17 @@ def _assert_working_band(page: Any) -> None:
     """
     geometry = page.evaluate(
         """() => {
-          const chair = document.querySelector('.chair:not(.chair-first-value)');
+          // PHILO-13-11 (slice two): the Chair is a screen of windows; the
+          // working band is held by its windows (the .chair box is the
+          // dithered backdrop under the bar and the Dock, design §5).
+          const wins = [...document.querySelectorAll('.chair .desk-window-shell.chair-window')]
+            .filter((w) => w.getBoundingClientRect().height > 0);
           const bar = document.querySelector('[data-testid="arrival-capture-bar"]');
           const menubar = document.querySelector('.desk-menubar');
           const dock = document.querySelector('.desk-dock');
-          if (!chair || !bar || !menubar || !dock) return null;
-          const c = chair.getBoundingClientRect();
+          if (!wins.length || !bar || !menubar || !dock) return null;
+          const rects = wins.map((w) => w.getBoundingClientRect());
+          const c = {top: Math.min(...rects.map((r) => r.top)), bottom: Math.max(...rects.map((r) => r.bottom))};
           const b = bar.getBoundingClientRect();
           const m = menubar.getBoundingClientRect();
           const d = dock.getBoundingClientRect();
@@ -86,12 +92,11 @@ def _assert_working_band(page: Any) -> None:
     assert geometry is not None
     assert geometry["workTop"] == 54
     assert geometry["workBottom"] == 52
-    assert geometry["chairTop"] >= geometry["workTop"] - 0.5, geometry
-    assert geometry["barTop"] >= max(geometry["workTop"], geometry["menubarBottom"]), geometry
-    # The Chair box ends at the canonical work-band boundary. The Dock has a
-    # decorative raised edge above that token, so collision is judged on the
-    # interactive capture surface rather than the transparent Chair box.
-    assert geometry["chairBottom"] <= geometry["viewportHeight"] - geometry["workBottom"] + 0.5, geometry
+    # PHILO-13-11 (slice two): every Chair window starts below the screen
+    # title bar and ends above the Dock; the capture bar sits inside that.
+    assert geometry["chairTop"] >= geometry["menubarBottom"] - 0.5, geometry
+    assert geometry["barTop"] >= geometry["menubarBottom"], geometry
+    assert geometry["chairBottom"] <= geometry["dockTop"] + 0.5, geometry
     assert geometry["barBottom"] <= geometry["dockTop"], geometry
 
 
@@ -153,6 +158,10 @@ def test_normal_chair_stays_inside_chrome_at_all_owner_widths(
             for width, height, label in VIEWPORTS:
                 page.set_viewport_size({"width": width, "height": height})
                 page.reload(wait_until="load")
+                # PHILO-13-11 (slice two, R2): at 393 Capture opens from Speak.
+                if width <= 720:
+                    page.locator(".chair .desk-window-shell.chair-window").first.wait_for()
+                    open_chair_window(page, "Capture")
                 page.get_by_test_id("arrival-capture-bar").wait_for()
                 _assert_working_band(page)
                 # HS-170-04: the capture bar's verbs replace "More capture options".
@@ -178,7 +187,13 @@ def test_normal_chair_stays_inside_chrome_at_all_owner_widths(
             for width, height, label in VIEWPORTS:
                 page.set_viewport_size({"width": width, "height": height})
                 page.reload(wait_until="load")
-                page.get_by_test_id("arrival-capture-bar").wait_for()
+                # PHILO-13-11 (slice two, R2): at 393 the thoughts are in The
+                # week and the bar in Capture, one window at a time.
+                if width <= 720:
+                    page.locator(".chair .desk-window-shell.chair-window").first.wait_for()
+                    open_chair_window(page, "The week")
+                else:
+                    page.get_by_test_id("arrival-capture-bar").wait_for()
                 # HS-170-04: the thought shows in the THOUGHTS section.
                 thoughts = page.get_by_test_id("arrival-thoughts")
                 thoughts.wait_for(timeout=10_000)
@@ -186,6 +201,8 @@ def test_normal_chair_stays_inside_chrome_at_all_owner_widths(
                 thought_row.wait_for(timeout=10_000)
                 # The parked door board columns are absent.
                 assert page.locator(".door-board-column").count() == 0
+                if width <= 720:
+                    open_chair_window(page, "Capture")
                 _assert_working_band(page)
                 _assert_hit(page, "Write a thought")
                 _assert_hit(page, "Record meeting")
