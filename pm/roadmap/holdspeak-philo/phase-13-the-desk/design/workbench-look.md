@@ -1,6 +1,6 @@
 # The Workbench look (PHILO-13-11, C1) — the settled design for build
 
-**Status: DRAFT, round 3b (round three + Muad'Dib's ruling on strips: nothing clips, nothing scrolls sideways), for Astra's re-check and the owner's ratification.** The canvas is `../assets/story-11-canvas/` (README, `index.html`, `shots/`). Nothing is built in product code. When the owner ratifies, his word goes here verbatim, and the build matches the boards, board beside shot (UX-CANON §A.2).
+**Status: DRAFT, round 3c (Astra canvas r2 paid: the 393 footer collision and a rendered-overlap fence; every measured count now lives in the canvas README's generated block, not here), for Astra's re-check and the owner's ratification.** The canvas is `../assets/story-11-canvas/` (README, `index.html`, `shots/`). Nothing is built in product code. When the owner ratifies, his word goes here verbatim, and the build matches the boards, board beside shot (UX-CANON §A.2).
 
 The owner, 2026-10-01: "The whoe Workbench 2.0+ on steroids needs to really lean on steroids." Fork 1: "All the way".
 
@@ -122,11 +122,12 @@ The canvas draws the Desk after A2, not today's contradictions:
 
 **The phone is one window at a time** (C1-6a, every 393 board):
 
-- One window fills the work area: screen bar 44 px + window head 44 px + shelf 56 px leaves **704 px of content** on 852 (C7: ≥ 700). No stack of collapsed bars.
+- One window fills the work area: 852 − 44 (screen bar) − 44 (window head) − 56 (shelf) − 4 (frame) = 704 px of content by design (C7: ≥ 700; the measured value is in the canvas README's generated block). No stack of collapsed bars.
 - Switch windows from the Dock (the daily seats: Intelligence, Meetings, People, Speak) or `Go ▸ Chair`. Opening a Chair window from `Go` iconifies the window in front to its Dock chip; it never closes it.
 - Capture is on demand: the Speak AppIcon (a daily seat) or the pop-key (C6); no permanent strip.
 - Every target owns a 44 × 44 box at 393 (fenced by nine points): screen-bar controls, gadgets, the strip menu Buttons, shelf icons, menu rows, body controls. The first `Done` is whole on the first screen. Nothing scrolls sideways except the Dock (§3a).
-- The footer at 393: the egress chip on its own line, the receipt and the verbs below (the Meetings warning no longer overlaps `MD`/`SRT`).
+- The footer at 393 is two rows by explicit grid areas (`"egress egress" "receipt verbs"`): the egress chip, then the receipt and the verbs, so a warning never runs under `MD`/`SRT` (round 3c; fenced by the rendered-overlap fence).
+- **No rendered overlap** (round 3c): no two visible interactive or text elements of one window, bar, shelf or menu intersect; named exceptions: content scrolling under a sticky bar of its own window, the in-well MicButton, an icon scrolled under the Dock's More gadget. On the shelf, a state tag and a count never share a box: at 1440 the tag takes the icon's top-left and the count its top-right (an icon with both is at least 128 px); at 393 the tag rides the foot and reads short (`FAILED` for `SEND FAILED`).
 
 ## 6. The AppIcon shelf and live state (→ `window/Dock.tsx` logic by H-C3; `dock.css` by C3-W)
 
@@ -164,12 +165,12 @@ Boards C1-5a–j. Every outcome is a compact receipt in the footer's receipt slo
 
 | # | Criterion | Board | What to check |
 |---|---|---|---|
-| 1 | Every window carries one gadget set — close, depth, zoom — in one place | C1-2a–d, C1-4b–e, C1-6b | close at the left; iconify, zoom, depth at the right of every title bar; the sizing gadget bottom right. **At 393 the set is close + depth** (a window fills the work area, so zoom has nothing to do; the Chair windows follow the same rule). Close closes and depth sends back on every window (§5b). Fenced: 156 window observations; 1222 frame-control observations own all nine of their points |
-| 2 | A screen title bar names the front window and the time | C1-1, C1-2a, C1-2c | the name equals the ONE blue window (fenced: one blue bar per board; the intended front window recorded on 46 boards) |
+| 1 | Every window carries one gadget set — close, depth, zoom — in one place | C1-2a–d, C1-4b–e, C1-6b | close at the left; iconify, zoom, depth at the right of every title bar; the sizing gadget bottom right. **At 393 the set is close + depth** (a window fills the work area, so zoom has nothing to do; the Chair windows follow the same rule). Close closes and depth sends back on every window (§5b). Fenced: every window's set and every frame control's nine points (the counts are in the canvas README's generated block) |
+| 2 | A screen title bar names the front window and the time | C1-1, C1-2a, C1-2c | the name equals the ONE blue window (fenced: one blue bar per board; the intended front window matches the recorded one) |
 | 3 | One material as tokens, worn by every DeskWindowFrame host | C1-3, C1-2a, C1-5f, C1-6b | the frame, bar and gadgets on Meetings, the Room, People, the Workbench window, the Chair windows; the host tokens no longer re-pointed (People reads on its own well). Not shown: all 19 hosts one by one |
 | 4 | The Chair is composed of windows (brief, needs you, the week), not one scrolling page | C1-1, C1-4a–e | four windows with their own gadgets and scroll; one lifecycle; at 393 one at a time |
 | 5 | The 12 px floor and library Buttons throughout | all | fenced on the WHOLE board: 0 texts under 12 px, 0 texts under 4.5:1 (3:1 large) in place; inherited raw buttons assigned in the canvas README |
-| 6 | Both widths | every board; C1-6a, C1-6b | 393: 704 px of content; every target owns 44 × 44 (fenced) |
+| 6 | Both widths | every board; C1-6a, C1-6b | 393: ≥ 700 px of content and every target owns 44 × 44 (fenced; values in the README's generated block) |
 | 7 | Live state on the AppIcons, not in a status window | C1-1, C1-8a–c | REC, READY, SENT, SEND FAILED, UNKNOWN, OFFLINE · AS OF, 1:1, project counts (no zero, no project hidden), the one needs-you number |
 | A2 | One meaning of needs you (drawn fixed) | every board | Chair head = bell = Dock = 8; narrower counts named; fenced |
 
@@ -182,7 +183,7 @@ Boards C1-5a–j. Every outcome is a compact receipt in the footer's receipt slo
 - **C4 (14):** the palette is a menu panel of §3/§4: paper, ink, the blue bar, the key column, the readable ghost stipple.
 - **C5 (15):** `Send to ▸` joins the window menu of §3 between `Close window` and `Desk ▸`.
 - **C6 (16):** capture from anywhere opens the Capture window (1440) or Speak (393); the pop-key.
-- **C7 (17):** §5b's phone as drawn: one window fills the work area (704 px of content), 44 px screen bar, 44 px head row, 56 px shelf with the daily seats and More, every target 44 × 44, `Go ▸ Chair`; the strip menu form (§3a); the swipe between windows.
+- **C7 (17):** §5b's phone as drawn: one window fills the work area (≥ 700 px of content), 44 px screen bar, 44 px head row, 56 px shelf with the daily seats and More, every target 44 × 44, `Go ▸ Chair`; the strip menu form (§3a); the swipe between windows.
 - **C8 (18):** the 12 px floor on the classes listed in the canvas README (R5); `--accent-text` for ember text; the raw buttons assigned to C8 there.
 - **A1-F (02):** §7, all outcomes; the `Remove`/`Dismiss` raw chips on the item card.
 - **A2-W (03):** §5a.

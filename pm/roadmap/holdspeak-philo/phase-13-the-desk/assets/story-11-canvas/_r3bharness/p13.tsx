@@ -347,10 +347,7 @@ G.__p13UseNeedsYou = (): number | undefined => {
    tag and no count claims to be fresh; one OFFLINE · AS OF hh:mm tag heads the shelf. */
 type Tag = { text: string; tone?: "rec" | "ok" | "fail" | "warn" };
 function TagView({ t }: { t: Tag }) {
-  const compact = useCompactViewport();
-  // 393: a tag never runs wider than its 85 px icon ("SEND FAILED" → "FAILED"; the icon's name says Meetings)
-  const text = compact ? t.text.replace(/^SEND FAILED$/, "FAILED") : t.text;
-  return <span className="p13-appstate" data-tone={t.tone} data-p13-standin="C3">{text}</span>;
+  return <span className="p13-appstate" data-tone={t.tone} data-p13-standin="C3">{t.text}</span>;
 }
 function AppState({ windowId }: { windowId: string }) {
   useP13();

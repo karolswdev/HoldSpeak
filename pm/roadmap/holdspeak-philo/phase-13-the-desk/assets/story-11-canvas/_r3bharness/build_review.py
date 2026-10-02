@@ -51,56 +51,6 @@ BOARDS: list[tuple[str, str, str, str]] = [
 ]
 
 
-def measurements(facts: dict) -> str:
-    """Every count the README states, generated from facts.json, run.log and the red-before files."""
-    b = [k for k in facts if not k.startswith("_")]
-    w1440, w393 = [k for k in b if k.endswith("-1440")], [k for k in b if k.endswith("-393")]
-    log = (SHOTS / "run.log").read_text().splitlines() if (SHOTS / "run.log").exists() else []
-    guard = sorted({g for k in facts if k.startswith("_seat_guard_") for g in (facts[k] or [])})
-    verdict = "ALL FENCES HELD" if any("ALL FENCES HELD" in ln for ln in log) and not facts.get("_fails") else f"{len(facts.get('_fails', []))} FENCES FAILED"
-    exitc = next((ln for ln in reversed(log) if ln.startswith("EXIT")), "EXIT ?")
-    named = [k for k in b if facts[k].get("intended_front")]
-    content = sorted({facts[k].get("content_px") for k in w393 if facts[k].get("content_px") is not None})
-    ell = sorted({t for k in b for t in facts[k].get("clip", {}).get("ellipsis", [])})
-    rows = [
-        ("Verdict of this run (`shots/run.log`)", f"{verdict}; {exitc}"),
-        ("Seat guard (both widths)", "; ".join(guard)),
-        ("Boards", f"{len(b)} ({len(w1440)} at 1440, {len(w393)} at 393) + the C1-7 comparison"),
-        ("Window observations (one gadget set each)", str(sum(len(facts[k]["windows"]) for k in b))),
-        ("Frame-control observations / lost points", f"{sum(len(facts[k]['own']) for k in b)} / {sum(o['lost'] for k in b for o in facts[k]['own'])}"),
-        ("Boards with exactly one blue title bar", f"{sum(1 for k in b if len(facts[k]['front_state']['blue']) == 1)} of {len(b)}"),
-        ("Boards whose intended front window is the recorded one, on the glass", f"{sum(1 for k in named if facts[k]['front_state']['front'] == facts[k]['intended_front'] and facts[k]['front_state']['on_glass'])} of {len(named)} that name one"),
-        ("Texts under 4.5:1 (3:1 large), in place", str(sum(len(facts[k]["low_contrast"]) for k in b))),
-        ("Texts under 12 px", str(sum(len(facts[k]["small_text"]) for k in b))),
-        ("393: the front window's content (px)", ", ".join(str(c) for c in content)),
-        ("393: targets under 44 × 44", f"{sum(len(facts[k].get('targets_under_44') or []) for k in w393)} on {len(w393)} boards"),
-        ("Sideways-scrolling strips / clipped texts", f"{sum(len(facts[k]['clip']['strips']) for k in b)} / {sum(len(facts[k]['clip']['clipped']) for k in b)}"),
-        ("Rendered overlaps", str(sum(len(facts[k].get('overlap') or []) for k in b))),
-        ("Ellipsis lines (recorded, allowed by A.6)", ", ".join(f"`{t}`" for t in ell) or "none"),
-        ("Needs-you numbers (head, bell, Intelligence, Desk memory)", "; ".join(f"{t} on {n} boards" for t, n in sorted(__import__('collections').Counter(str(tuple('not on the glass' if x is None else x for x in (facts[k]['needs_you']['head_n'], facts[k]['needs_you']['bell'], facts[k]['needs_you']['intel'], facts[k]['needs_you']['memory']))) for k in b).items())) + " (the Chair head is off the glass when a window fills the 393 work area)"),
-        ("Active projects missing from the Dock / zero badges", f"{sum(len(facts[k]['dockfacts']['missing'] or []) for k in b)} / {sum(facts[k]['dockfacts']['zeros'] for k in b)}"),
-        ("Browser errors", str(sum(len(facts.get(f'_browser_errors_{w}', [])) for w in (1440, 393)))),
-    ]
-    out = ["| Measure | Value |", "|---|---|"] + [f"| {a} | {v} |" for a, v in rows]
-    for name, label in (("red-before-r2.json", "round two"), ("red-before-r3.json", "round three"), ("red-before-r3b.json", "round 3b (`e23ce53d`)")):
-        p = SHOTS / name
-        if p.exists():
-            r = json.loads(p.read_text())
-            n = r.get("boards_red", len([k for k in r if not k.startswith("_")]))
-            out.append(f"\nRed before, {label}: `shots/{name}`, {n} boards red" + (f" of {r['boards']} measured" if "boards" in r else "") + ".")
-    return "\n".join(out)
-
-
-def stamp_readme(facts: dict) -> None:
-    readme = CANVAS / "README.md"
-    text = readme.read_text()
-    a, b = "<!-- generated:measurements:begin -->", "<!-- generated:measurements:end -->"
-    if a in text and b in text:
-        head, rest = text.split(a, 1)
-        _, tail = rest.split(b, 1)
-        readme.write_text(f"{head}{a}\n{measurements(facts)}\n{b}{tail}")
-
-
 def main() -> None:
     facts = json.loads((SHOTS / "facts.json").read_text()) if (SHOTS / "facts.json").exists() else {}
     rows = []
@@ -129,7 +79,6 @@ img.w1440 {{ width: min(1000px, 70vw); }} img.w393 {{ width: min(280px, 22vw); }
 {''.join(rows)}
 </body></html>"""
     (CANVAS / "index.html").write_text(page)
-    stamp_readme(facts)
     print("wrote", CANVAS / "index.html")
 
 

@@ -33,7 +33,7 @@ sys.path.insert(0, str(HERE))
 import rig  # noqa: E402
 
 CANVAS = HERE.parent
-SHOTS = CANVAS / "shots"
+SHOTS = Path("/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/r3bshots")
 ALL_WIDTHS = [(1440, 900), (393, 852)]
 WIDTHS = [w for w in ALL_WIDTHS if not os.environ.get("ONLY_WIDTH") or str(w[0]) == os.environ["ONLY_WIDTH"]]
 ONLY = os.environ.get("ONLY", "")

@@ -1,0 +1,57 @@
+{
+ "_note": "e23ce53d's harness (round 3b as committed), unchanged except its shoot.py, which is round 3c's (identical fence code), measured with the rendered-overlap fence",
+ "boards_red": 4,
+ "boards": 50,
+ "red": {
+  "C1-8a-dock-ready-and-sent-1440": [
+   {
+    "a": "SENT 14:02",
+    "b": "8",
+    "w": 22,
+    "h": 17
+   }
+  ],
+  "C1-8b-dock-send-failed-unknown-1440": [
+   {
+    "a": "UNKNOWN",
+    "b": "8",
+    "w": 22,
+    "h": 17
+   }
+  ],
+  "C1-5a-meeting-selected-park-393": [
+   {
+    "a": "NO SUMMARY ROUTE · NO ASSIGN",
+    "b": "MD",
+    "w": 44,
+    "h": 18
+   },
+   {
+    "a": "NO SUMMARY ROUTE · NO ASSIGN",
+    "b": "SRT",
+    "w": 26,
+    "h": 18
+   }
+  ],
+  "C1-8b-dock-send-failed-unknown-393": [
+   {
+    "a": "Intelligence, 8 need you",
+    "b": "SEND FAILED",
+    "w": 2,
+    "h": 18
+   },
+   {
+    "a": "SEND FAILED",
+    "b": "People, 1:1 14:30",
+    "w": 2,
+    "h": 18
+   }
+  ]
+ },
+ "all_fails": [
+  "C1-8a-dock-ready-and-sent-1440: 3c no rendered overlap (two interactive or text elements of one window intersect)",
+  "C1-8b-dock-send-failed-unknown-1440: 3c no rendered overlap (two interactive or text elements of one window intersect)",
+  "C1-5a-meeting-selected-park-393: 3c no rendered overlap (two interactive or text elements of one window intersect)",
+  "C1-8b-dock-send-failed-unknown-393: 3c no rendered overlap (two interactive or text elements of one window intersect)"
+ ]
+}

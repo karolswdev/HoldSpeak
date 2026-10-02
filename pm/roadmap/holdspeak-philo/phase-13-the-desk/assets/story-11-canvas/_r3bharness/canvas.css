@@ -655,9 +655,8 @@
 .desk-next .gadget-chip, .desk-next .surface-footer-receipt-line, .desk-next kbd { font-size: max(12px, 1em); }
 
 /* R3 STEROIDS WHERE IT COUNTS: the work first. The Needs-you window leads with the number and
-   the actions; the ranking strip has its own line and fits whole (393: the RANKED ▾ menu Button,
-   round 3b); the availability chip and the calendar state wrap below it; SETUP drops below the
-   actions as one compact row. Nothing scrolls sideways. → chair.css */
+   the actions; the ranking strip is ONE line (it scrolls inside itself); SETUP drops below the
+   actions as one compact row. → chair.css */
 .desk-next .p13-chairwin[data-win="needs"] .p13-chairwin-body { gap: 10px; }
 .desk-next .p13-chairwin[data-win="needs"] [data-testid="arrival-headline"] { order: 1; }
 .desk-next .p13-chairwin[data-win="needs"] [data-testid="arrival-coverage"] { order: 2; }
@@ -666,12 +665,17 @@
 .desk-next .p13-chairwin[data-win="needs"] [data-testid="arrival-blocker"] { order: 5; }
 .desk-next .p13-chairwin .arrival-head-tokens {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
   align-items: center;
-  overflow: visible;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
 }
 .desk-next .p13-chairwin .arrival-head-tokens > * { flex: none; }
+.desk-next .p13-chairwin .arrival-head-tokens .filter-tokens,
+.desk-next .p13-chairwin .arrival-head-tokens [role="radiogroup"],
+.desk-next .p13-chairwin .arrival-head-tokens [role="group"] { flex-wrap: nowrap; display: flex; }
 .desk-next .p13-chairwin [data-testid="arrival-blocker"] .surface-section { gap: 4px; }
 .desk-next .p13-chairwin [data-testid="arrival-blocker"] .surface-ledger-row { min-height: 0; }
 
@@ -741,7 +745,7 @@
   .desk-next .desk-pullout-head { flex-wrap: nowrap; height: 44px; min-height: 44px; overflow: hidden; }
   .desk-next .desk-pullout-head.has-wings .desk-pullout-title { display: none; }
   .desk-next .desk-pullout-head > img { display: none; }
-  .desk-next .desk-pullout-head .desk-wings { flex: 1 1 auto; order: 1; height: 44px; border-top: 0; overflow: visible; min-width: 0; }
+  .desk-next .desk-pullout-head .desk-wings { flex: 1 1 auto; order: 1; height: 44px; border-top: 0; overflow-x: auto; scrollbar-width: none; min-width: 0; }
   .desk-next .desk-pullout-head .desk-wings button { height: 44px; min-width: 44px; flex: none; }
   .desk-next .desk-pullout-head .desk-window-actions { order: 1; flex: none; display: flex; align-items: stretch; height: 44px; margin: 0; padding: 0; border: 0; }
   .desk-next .desk-pullout-head .desk-window-actions :is(button, .desk-chip) { min-height: 44px !important; height: 44px; }
@@ -769,11 +773,10 @@
 /* a ghosted menu row's reason reads in ink at 12 px on paper (the row itself is the ghost) → chrome-menus.css */
 .desk-next .desk-menu-list :is(.quiet, small) { font-size: 12px; color: var(--wb-ink); opacity: 1; }
 @media (max-width: 720px) {
-  /* beats pullout.css's 480 px has-wings wrap: one 44 px row; wings that do not fit are the strip menu
-     Button (round 3b, HS-200-12: nothing clips, nothing scrolls sideways) */
+  /* beats pullout.css's 480 px has-wings wrap (HS-200-12): one 44 px row, the wings scroll inside it */
   .desk-next .desk-window-shell > .desk-pullout-head,
   .desk-next .desk-window-shell > .desk-pullout-head.has-wings { flex-wrap: nowrap; height: 44px; min-height: 44px; padding: 0; row-gap: 0; }
-  .desk-next .desk-window-shell > .desk-pullout-head.has-wings .desk-wings { flex: 1 1 auto; flex-wrap: nowrap; justify-content: flex-start; margin-inline: 0; overflow: visible; min-width: 0; }
+  .desk-next .desk-window-shell > .desk-pullout-head.has-wings .desk-wings { flex: 1 1 auto; flex-wrap: nowrap; justify-content: flex-start; margin-inline: 0; overflow-x: auto; min-width: 0; }
 }
 
 @media (max-width: 720px) {
@@ -864,29 +867,4 @@
   .desk-next .desk-window-shell > .desk-pullout-head > :is(.desk-wings, .desk-pullout-title) { order: 1; }
   .desk-next .desk-window-shell > .desk-pullout-head > .desk-window-actions { order: 2; }
   .desk-next .desk-window-shell > .desk-pullout-head > .p13-gadgets-right { order: 3; margin-left: 0; }
-}
-@media (max-width: 720px) {
-  /* 3c: the footer at 393 is two rows: the egress chip, then the receipt and the verbs (the
-     warning no longer runs under MD / SRT) → surface-footer.css */
-  .desk-next .surface-footer { height: auto; }
-  .desk-next .surface-footer-layout {
-    grid-template-columns: minmax(0, 1fr) max-content !important;
-    grid-template-areas: "egress egress" "receipt verbs" !important;
-    height: auto !important;
-    padding: 4px 0;
-  }
-  .desk-next .surface-footer-egress { grid-area: egress !important; grid-column: auto !important; }
-  .desk-next .surface-footer-receipt { grid-area: receipt !important; justify-content: flex-start; }
-  .desk-next .surface-footer-verbs { grid-area: verbs !important; flex-wrap: wrap; }
-}
-/* 3c: a state tag and a count never sit on each other: at 1440 the tag takes the top-left of the
-   icon and the count the top-right; an icon with both is wide enough for both → dock.css */
-@media (min-width: 721px) {
-  .desk-next .desk-dock-launch:has(.p13-appstate):has(.desk-dock-badge) { min-width: 128px; max-width: 160px; }
-  .desk-next .desk-dock-launch:has(.desk-dock-badge) .p13-appstate { left: 4px; transform: none; }
-  .desk-next .desk-dock-launch:has(.p13-appstate) .desk-dock-badge { left: auto; right: 4px; }
-}
-@media (max-width: 720px) {
-  /* 393: the tag rides the icon's foot, the count its top-right: never the same box */
-  .desk-next .desk-dock-launch .desk-dock-badge { top: 1px; left: auto; right: 4px; }
 }
