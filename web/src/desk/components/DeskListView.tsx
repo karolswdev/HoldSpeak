@@ -409,7 +409,7 @@ export function DeskListView() {
       <DeliveryListSection />
       <PrReceiptsSection />
       {editing && <InlineEditor key={editing.id} o={editing} u={{ x: 0.5, y: 0.4 }} />}
-      {openCards.map((p) => <Pullout key={p.id} o={p.obj!} origin={p.origin} />)}
+      {openCards.map((p) => <Pullout key={p.id} o={p.obj!} pulloutId={p.id} origin={p.origin} />)}
       {/* PHILO-8-02 — the Floor's foot (#665): the delete receipt sits in
           flow directly above the selection bar it acted on. */}
       <div className="desk-world-foot" ref={footRef}>

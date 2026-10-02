@@ -1,0 +1,1 @@
+{'window': 'pullout:meeting:p13-tombstone', 'centre': [1222, 378], 'resolve': [{'status': 200, 'url': 'http://127.0.0.1:62896/api/meetings/p13-tombstone/sync-conflicts/73393c0bd5ecbbc6e06c6c50/resolve'}], 'hit': {'tag': 'div', 'cls': 'desk-next', 'testid': None, 'window': None, 'desk': True}, 'left_in_dom': []}

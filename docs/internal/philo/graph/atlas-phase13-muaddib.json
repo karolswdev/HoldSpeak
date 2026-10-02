@@ -1,0 +1,331 @@
+{
+  "schema_version": 1,
+  "atlas_version": "phase13-muaddib",
+  "extends": "docs/internal/philo/graph/atlas.json",
+  "source_commit": "27b915538b792f4a80d0cf1c46a0600cb68756e3",
+  "cases": [
+    {
+      "id": "case.p13.close.intelligence_gone",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.window_close"
+      ],
+      "state_id": "state.desk_presentation.p13_close_means_gone",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P13CloseDecision",
+            "status": "proposed",
+            "decision_markdown": "P13CloseDecisionText."
+          },
+          "expect_status": 201,
+          "capture_as": "decision_id",
+          "capture_path": "decision.id",
+          "why": "a real proposed decision, so the brief has a row and the Chair shows Generate"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "capture_as": "brief_id",
+          "capture_path": "id",
+          "why": "mint the brief through the real brief producer"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the freshly minted brief in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "why": "the Chair's brief Generate verb is the control under the window's old place at both widths"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-dock-launch[aria-label^='Intelligence']",
+          "why": "open Intelligence from the Dock: openPullout('intelligence:desk'), a qualified id (intelligenceNavigation.ts)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window[aria-label='Intelligence'] .desk-light-close",
+          "why": "the Intelligence window is open over the Chair"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-window[aria-label='Intelligence'] .desk-light-close",
+        "why": "close the window by its own Close gadget"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "hit_target"
+        },
+        "observe_at": "[data-testid=arrival-brief-generate]",
+        "words": "the owner closes Intelligence (opened as intelligence:desk); the Chair's Generate verb under its old place owns all nine hit points. Red on main 27b91553: the closed card stayed at opacity 0 with pointer events and owned those points."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.record.refused_not_recording",
+      "job": "j2",
+      "edge_ids": [
+        "edge.face.arrival_record_meeting",
+        "edge.route.meeting_start"
+      ],
+      "state_id": "state.desk_presentation.p13_record_refused",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME with no recorder (no microphone needed)"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the gate"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-record-meeting]",
+          "why": "the Chair's Record verb"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=arrival-record-meeting]",
+        "why": "press Record meeting on a hub with no recorder",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/meeting/start"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/meeting/start",
+              "status": 501
+            },
+            {
+              "kind": "readable_text",
+              "value": "NOT RECORDING · NO RECORDER ON THIS HUB"
+            },
+            {
+              "kind": "selector_presence",
+              "selector": ".desk-orb.is-recording",
+              "present": false
+            },
+            {
+              "kind": "selector_presence",
+              "selector": ".desk-orb-elapsed",
+              "present": false
+            }
+          ]
+        },
+        "observe_at": ".write-receipt",
+        "words": "the owner presses Record meeting; the hub refuses with its real 501; the Desk says NOT RECORDING · NO RECORDER ON THIS HUB, the orb is not recording and no timer runs. Red on main 27b91553: the orb showed recording and a timer ran (grounding J2-01)."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.p13_close_means_gone",
+      "family": "desk_presentation",
+      "values": {
+        "window": "an object window opened through a qualified id",
+        "after_close": "gone from the DOM"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/Pullout.tsx",
+          "symbol": "id={`pullout:${pulloutId}`}",
+          "line": 63,
+          "claim": "the card's frame wears the id the store keeps"
+        },
+        {
+          "path": "web/src/desk/components/Pullout.tsx",
+          "symbol": "onClose={() => closePullout(pulloutId)}",
+          "line": 73,
+          "claim": "Close removes exactly the store's entry"
+        },
+        {
+          "path": "web/src/desk/store/compositorSlice.ts",
+          "symbol": "closePullout(id) {",
+          "line": 177,
+          "claim": "closePullout filters the open cards by equality"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.close.intelligence_gone"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_record_refused",
+      "family": "desk_presentation",
+      "values": {
+        "hub": "no recorder",
+        "face": "NOT RECORDING + the reason, no timer"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/web/routes/meetings/live.py",
+          "symbol": "status_code=501",
+          "line": 101,
+          "claim": "a hub with no recorder refuses the start with 501"
+        },
+        {
+          "path": "web/src/desk/store/recordingSlice.ts",
+          "symbol": "if (!res.ok) {",
+          "line": 86,
+          "claim": "a refused start resolves, so the slice reads res.ok"
+        },
+        {
+          "path": "web/src/desk/store/recordingSlice.ts",
+          "symbol": "if (status === 501) return",
+          "line": 19,
+          "claim": "501 is named in plain words: no recorder on this hub"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.record.refused_not_recording"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.python_wall",
+      "source": "datetime.datetime.now() inside the hub process",
+      "mechanism": "none: no Phase 13 faces-lane case moves a clock",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [
+    {
+      "id": "excluded.p13.faces_op",
+      "applicability": "not_applicable",
+      "combination": "case.p13.close.intelligence_gone and case.p13.record.refused_not_recording with an .op sibling",
+      "reason": "each proves a FACE fact: a closed window's hit points and a refused start's face. The close has no durable outcome; the refused start writes no meeting (the hub's 501 is read from the trigger's own response)."
+    },
+    {
+      "id": "excluded.p13.touch_and_injected_failures",
+      "applicability": "not_applicable",
+      "combination": "touch taps at 393, the J1 Retry leg under an injected brief 500, every other qualified opener, and the People/brief failure faces as atlas cases",
+      "reason": "the rig drives a mouse at 393 and has no route-injection step (scripts/graph_walk.py UI_ACTIONS). They are fenced as rendered at 1440 and 393 (touch) by tests/e2e/test_philo13_05_close_glass.py and tests/e2e/test_philo13_04_faces_glass.py."
+    }
+  ],
+  "council_readings": []
+}

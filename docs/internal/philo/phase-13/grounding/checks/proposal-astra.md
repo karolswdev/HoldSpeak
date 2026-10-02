@@ -4,13 +4,15 @@
 
 ## The report, verbatim
 
+(Link syntax only: three Markdown links whose targets carried a line number, which the doc-drift guard reads as dangling, were rendered as code spans on 2026-10-02; the words are unchanged.)
+
 VERDICT: RATIFY-WITH-CONDITIONS
 
 FINDINGS:
 
-1. The wave order puts destructive loss and false status before the larger interface work. A1 matches structure F1; B2’s reload and draft loss remains ahead of C, where it needs to stay ([structure.md:284–286](13e3040b:docs/internal/philo/phase-13/grounding/structure.md:284), `docs/internal/philo/phase-13/PROPOSAL.md:28`). A1 prevents future hard deletes; it cannot restore records already deleted.
+1. The wave order puts destructive loss and false status before the larger interface work. A1 matches structure F1; B2’s reload and draft loss remains ahead of C, where it needs to stay (structure.md:284–286 (`13e3040b:docs/internal/philo/phase-13/grounding/structure.md:284`), `docs/internal/philo/phase-13/PROPOSAL.md:28`). A1 prevents future hard deletes; it cannot restore records already deleted.
 
-2. I would not ratify the lane table as written. A3 has two owners, and C1/B1/B3/C5/C7 appear again in the separate Canvases row; no file ownership, worktree, or branch mapping shows these are disjoint (`docs/internal/philo/phase-13/PROPOSAL.md:73`). TWO-BRAINS requires lanes with disjoint files and one owner brain ([TWO-BRAINS.md:104–112](docs/internal/TWO-BRAINS.md:104)). The faces/data split fits the brains’ strengths; this table does not yet make it safe to execute.
+2. I would not ratify the lane table as written. A3 has two owners, and C1/B1/B3/C5/C7 appear again in the separate Canvases row; no file ownership, worktree, or branch mapping shows these are disjoint (`docs/internal/philo/phase-13/PROPOSAL.md:73`). TWO-BRAINS requires lanes with disjoint files and one owner brain (TWO-BRAINS.md:104–112 (`docs/internal/TWO-BRAINS.md:104`)). The faces/data split fits the brains’ strengths; this table does not yet make it safe to execute.
 
 3. The A3 “one source” bar needs to name the fact each face shows. The faces check withdrew “Enabled destinations None” as a defect because the saved destination was local, while retaining the summary-status mismatch (`docs/internal/philo/phase-13/grounding/faces.md:21`). “Settings, Trust and Chair agree” could conflate configuration, engine availability, and stored results (`docs/internal/philo/phase-13/PROPOSAL.md:34`).
 
@@ -18,7 +20,7 @@ FINDINGS:
 
 5. Fork 4 defaults to Screens now, against both grounded recommendations: faces says “not yet,” and structure makes saved arrangements optional after return works (`docs/internal/philo/phase-13/grounding/faces-jobs.md:191`, `structure.md:306`). D1 also expands a saved set of windows into “drag a screen down”; structure distinguishes screen depth from window depth (`structure.md:19`; `docs/internal/philo/phase-13/PROPOSAL.md:61`). I would defer that behavior until the saved-window case proves useful.
 
-6. The Phase 12 fold preserves the main split—Story 01 carries, F–J stay unratified, Floor work is parked—but C5’s short proof summary must retain the old per-document atlas, rendered transitions/receipts, and real-send evidence, not just general “face cases” (`docs/internal/philo/phase-13/PROPOSAL.md:69`, `structure.md:205–212`). Phase 12 still has Story 02 in progress and 03–06 in backlog; “closes as folded” must not silently mark them done ([current-phase-status.md:89–98](pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/current-phase-status.md:89)).
+6. The Phase 12 fold preserves the main split—Story 01 carries, F–J stay unratified, Floor work is parked—but C5’s short proof summary must retain the old per-document atlas, rendered transitions/receipts, and real-send evidence, not just general “face cases” (`docs/internal/philo/phase-13/PROPOSAL.md:69`, `structure.md:205–212`). Phase 12 still has Story 02 in progress and 03–06 in backlog; “closes as folded” must not silently mark them done (current-phase-status.md:89–98 (`pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/current-phase-status.md:89`)).
 
 CONDITIONS: Assign each story and file to one lane owner, record the required worktrees/branches, and make Canvases a gate within the face lane. Add the omitted Send-to placement fork from `faces-jobs.md:189`; default Screens to later. Give C1 observable canvas criteria, and carry Phase 12’s real-producer, actual-atlas, and rendered-receipt fences into C5. A4 should exercise the real open-and-close path and fence the rendered transition, as its source cause is still unproven (`docs/internal/philo/phase-13/grounding/faces.md:15`).
 

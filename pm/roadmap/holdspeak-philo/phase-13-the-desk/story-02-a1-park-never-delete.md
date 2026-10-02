@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** the owner's ratification of this charter (the backend half, H-A1); for the face half (A1-F): the owner's ratification of C1's artboard "Parked and Restore" (story 11)
 - **Unblocks:** A1-F (the faces lane's wiring step)
 - **Owner:** Astra (Luna, xhigh); Muad'Dib checks. Wiring step A1-F: Muad'Dib (Fedaykin, Opus 5.5) on `feat/philo-13-muaddib`; Astra checks

@@ -1,0 +1,2 @@
+{'window': 'pullout:intelligence:desk', 'centre': [196, 474], 'hit': {'tag': 'div', 'cls': 'chair', 'testid': 'chair', 'window': None, 'desk': True}, 'left_in_dom': []}
+after Retry: 'BRIEF · 1 THING WAITING\nTHIS DEVICE\nGenerate\nReview decision: Freeze the old ledger on Nov 5\nAck\nDefer\nSEP 28 – OCT 01 · GENERATED OCT 01 21:51\nBrief ready · 1 item · OCT 01 21:51'

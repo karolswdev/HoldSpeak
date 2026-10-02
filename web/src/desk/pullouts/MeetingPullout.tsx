@@ -43,7 +43,7 @@ function intelligenceState(value: string): string {
 }
 
 export function MeetingPullout({ object: o, onClose }: PulloutContentProps) {
-  const { closePullout, openPullout } = useDesk.getState();
+  const { openPullout } = useDesk.getState();
   const [detail, setDetail] = useState<MeetingDetail | null>(null);
   const [artifacts, setArtifacts] = useState<any[]>([]);
   const resourceRef = qualifiedRef(o.kind, o.id);
@@ -104,7 +104,7 @@ export function MeetingPullout({ object: o, onClose }: PulloutContentProps) {
           meetingId={o.id}
           onResolved={async (result) => {
             if (result.deleted) {
-              closePullout(o.id);
+              onClose(); // PHILO-13-05: the store's own id, never the bare `o.id`
             } else if (result.meeting) {
               setDetail(result.meeting as MeetingDetail);
             }

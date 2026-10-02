@@ -8,7 +8,8 @@
 // no clipboard state is stored).
 
 import { useCallback, useRef, useState } from "react";
-import { ApiError, readableError } from "../../../lib/api";
+import { ApiError } from "../../../lib/api";
+import { plainFailure } from "../../../desk/surface/plainFailure";
 import type { ProjectUpdate, UpdateLifecycle } from "./model";
 import * as updateApi from "./api";
 
@@ -25,6 +26,22 @@ export function useUpdateController(
   const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // PHILO-13-04 (A3): a failure is plain words (never the hub's text) and
+  // keeps the verb that failed, so the face can offer it again.
+  const [retryFailed, setRetryFailed] = useState<(() => void) | null>(null);
+  const fail = (what: string, reason: unknown, again?: () => void) => {
+    setError(plainFailure(what, reason));
+    setRetryFailed(() => again ?? null);
+  };
+  // PHILO-13-04 fix round (Astra counsel P1): Try again calls the LATEST
+  // verb through this ref, so it reads the editor as it is NOW. A captured
+  // render's `save` resent the old text and wrote it over newer words.
+  const verbs = useRef<{ save: () => Promise<void>; publish: () => Promise<void> }>({
+    save: async () => {},
+    publish: async () => {},
+  });
+  // The editor text as it is now, for a save that answers after he typed on.
+  const editBodyNow = useRef("");
 
   // ── Editor state ──
   const [current, setCurrent] = useState<ProjectUpdate | null>(null);
@@ -97,7 +114,7 @@ export function useUpdateController(
       setUpdates(list);
       setPosture("list");
     } catch (reason) {
-      setError(readableError(reason));
+      fail("UPDATES DID NOT LOAD", reason);
     } finally {
       setLoading(false);
     }
@@ -136,7 +153,7 @@ export function useUpdateController(
       const list = await updateApi.fetchUpdates(projectId);
       setUpdates(list);
     } catch (reason) {
-      setError(readableError(reason));
+      fail("UPDATES DID NOT LOAD", reason);
     } finally {
       setLoading(false);
     }
@@ -157,7 +174,7 @@ export function useUpdateController(
       // Refresh list in background
       updateApi.fetchUpdates(projectId).then(setUpdates).catch(() => {});
     } catch (reason) {
-      setError(readableError(reason));
+      fail("DRAFT NOT MADE", reason, () => void draft(generator));
     } finally {
       setDraftBusy(false);
     }
@@ -168,13 +185,17 @@ export function useUpdateController(
     if (!current || current.lifecycle !== "draft") return;
     setSaveBusy(true);
     setError("");
+    const sent = editBody;
     try {
-      const saved = await updateApi.saveUpdate(current.id, editBody);
+      const saved = await updateApi.saveUpdate(current.id, sent);
       setCurrent(saved);
-      setEditBody(saved.bodyMd);
-      setDirty(false);
+      // Words typed while the save was in flight stay, and stay unsaved.
+      if (editBodyNow.current === sent) {
+        setEditBody(saved.bodyMd);
+        setDirty(false);
+      }
     } catch (reason) {
-      setError(readableError(reason));
+      fail("NOT SAVED", reason, () => void verbs.current.save());
     } finally {
       setSaveBusy(false);
     }
@@ -191,7 +212,7 @@ export function useUpdateController(
       setEditBody(newDraft.bodyMd);
       setDirty(false);
     } catch (reason) {
-      setError(readableError(reason));
+      fail("DRAFT NOT MADE", reason, () => void regenerate(generator));
     } finally {
       setRegenerateBusy(false);
     }
@@ -207,7 +228,8 @@ export function useUpdateController(
       setCurrent(published);
       onRoomRefresh();
     } catch (reason) {
-      setError(readableError(reason));
+      // J4-07: the hub's own words (`injected failure`) never reach the face.
+      fail("NOT PUBLISHED", reason, () => void verbs.current.publish());
     } finally {
       setPublishBusy(false);
     }
@@ -226,7 +248,7 @@ export function useUpdateController(
       setTimeout(() => setCopyState("idle"), 2000);
     } catch (reason) {
       setCopyState("failed");
-      setError(readableError(reason));
+      fail("NOT COPIED", reason, () => void copyMarkdown());
     } finally {
       setCopyBusy(false);
     }
@@ -286,9 +308,12 @@ export function useUpdateController(
 
   // ── Edit body handler ──
   const handleEditBody = useCallback((value: string) => {
+    editBodyNow.current = value;
     setEditBody(value);
     setDirty(true);
   }, []);
+  verbs.current = { save, publish };
+  editBodyNow.current = editBody;
 
   // ── Derived ──
   const isDraft = current?.lifecycle === "draft";
@@ -312,6 +337,7 @@ export function useUpdateController(
     hasUpdates,
     loading,
     error,
+    retryFailed,
 
     // Editor
     current,

@@ -11,6 +11,7 @@ import { useResource } from "../pageSupport";
 import { ConfirmVerb, SurfaceSplit } from "../../desk/surface/Surface";
 import { countToken } from "../../desk/surface";
 import { EgressChip, StringGadget, CheckGadget } from "../../desk/surface/gadgets";
+import { StateChip } from "../../desk/surface/patterns/StateChip";
 import {
   postSummaryRun,
   readPlannedRoute,
@@ -384,10 +385,12 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     // says nothing; with an unresolved one it says the reason.
     if (!faceRoute) return null;
     if (!routeReady(faceRoute)) {
+      // PHILO-13-04 (A3): a missing route is the AVAILABLE fact, not a
+      // place data goes; the egress chip drew it green (A.10).
       return (
-        <EgressChip
+        <StateChip
+          state="warning"
           label={`NO SUMMARY ROUTE · ${routeReasonToken(faceRoute)}`}
-          title="No model is assigned to meeting summaries."
         />
       );
     }

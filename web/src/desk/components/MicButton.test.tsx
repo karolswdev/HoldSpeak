@@ -44,17 +44,22 @@ describe("MicButton honest states (HS-100-06)", () => {
     support.reason =
       "Mic capture needs a secure origin. Open this hub via localhost or HTTPS to speak.";
     render(<MicButton onText={vi.fn()} />);
-    const mic = screen.getByRole("button", { name: /unavailable:.*secure origin/i });
+    // PHILO-13-04 round three: the branch names the fact, never a sentence,
+    // in the accessible name and the title alike.
+    const mic = screen.getByRole("button", { name: "Speak · NEEDS LOCALHOST OR HTTPS" });
     expect(mic).toBeDisabled();
     expect(mic.className).toContain("is-unsupported");
-    expect(mic.title).toMatch(/secure origin/);
+    expect(mic.title).toBe("NEEDS LOCALHOST OR HTTPS");
+    expect(document.body.innerHTML).not.toMatch(/secure origin|Open this hub/);
   });
 
   it("renders disabled with the browser reason when capture APIs are missing", () => {
     support.reason = "This browser cannot capture microphone audio.";
     render(<MicButton onText={vi.fn()} />);
-    const mic = screen.getByRole("button", { name: /unavailable:.*browser/i });
+    const mic = screen.getByRole("button", { name: "Speak · NO MICROPHONE IN THIS BROWSER" });
     expect(mic).toBeDisabled();
+    expect(mic.title).toBe("NO MICROPHONE IN THIS BROWSER");
+    expect(document.body.innerHTML).not.toMatch(/cannot capture/);
   });
 
   it("renders the live mic when capture is supported", () => {
@@ -121,9 +126,8 @@ describe("MicButton retained audio", () => {
     const retry = await screen.findByRole("button", {
       name: "Retry retained audio",
     });
-    expect(
-      screen.getByText(/Captured audio is retained locally/),
-    ).toBeVisible();
+    // PHILO-13-04 (A3): the retention fact is a name on the face, not a sentence.
+    expect(screen.getByText(/AUDIO KEPT/)).toBeVisible();
 
     fireEvent.click(retry);
 
@@ -395,9 +399,12 @@ describe("MicButton surfaces named refusals (HS-132-05)", () => {
     );
     // the empty final behind the error must not overwrite it
     expect(onFailure).not.toHaveBeenCalledWith("no_speech");
-    expect(
-      screen.getByText(/Click the mic again to continue/),
-    ).toBeVisible();
+    // PHILO-13-04 (A3 + fix round): the face shows the server's NAME and the
+    // verb that continues (Retry); the contract sentence is nowhere on it,
+    // its tooltips included.
+    expect(screen.getByRole("status")).not.toHaveAttribute("title");
+    expect(document.body.innerHTML).not.toMatch(/Click the mic again to continue/);
+    expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
     expect(screen.getByText("SPEECH CHILD BUDGET EXHAUSTED")).toBeVisible();
   });
 
@@ -465,11 +472,7 @@ describe("MicButton surfaces named refusals (HS-132-05)", () => {
 
     await speakAndStop();
 
-    await waitFor(() =>
-      expect(
-        screen.getByText(/Captured audio is retained locally/),
-      ).toBeVisible(),
-    );
+    await waitFor(() => expect(screen.getByText(/AUDIO KEPT/)).toBeVisible());
     expect(
       screen.getByRole("button", { name: "Retry retained audio" }),
     ).toBeVisible();
@@ -493,11 +496,8 @@ describe("MicButton surfaces named refusals (HS-132-05)", () => {
 
     await speakAndStop();
 
-    await waitFor(() =>
-      expect(screen.getByText(/Retry or type below/)).toBeVisible(),
-    );
-    expect(
-      screen.queryByText(/Captured audio is retained locally/),
-    ).toBeNull();
+    await waitFor(() => expect(screen.getByText("TRANSCRIPTION FAILED")).toBeVisible());
+    expect(document.body.innerHTML).not.toMatch(/Retry or type below/);
+    expect(screen.queryByText(/AUDIO KEPT/)).toBeNull();
   });
 });

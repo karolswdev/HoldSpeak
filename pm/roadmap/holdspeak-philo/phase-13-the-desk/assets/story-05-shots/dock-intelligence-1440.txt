@@ -1,0 +1,1 @@
+{'window': 'pullout:intelligence:desk', 'centre': [1222, 310], 'hit': {'tag': 'div', 'cls': 'desk-next', 'testid': None, 'window': None, 'desk': True}, 'left_in_dom': []}

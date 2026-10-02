@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { apiFetch, readableError } from "../../../lib/api";
+import { apiFetch } from "../../../lib/api"; import { plainFailure } from "../../surface/plainFailure"; // PHILO-13-04: plain words, never the hub's `detail`
 import { useWriteReceipt } from "../../hooks/useWriteReceipt";
 import { refreshIntelligenceAttention } from "../../intelligenceAttention";
 import { openSurfaceOr } from "../../shell";
@@ -175,7 +175,7 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
       setBrief(latest);
       setShelf(latest?.shelf ?? {});
     } catch (requestError) {
-      setError(readableError(requestError));
+      setError(plainFailure("BRIEF DID NOT LOAD", requestError));
     } finally {
       setLoading(false);
     }
@@ -191,7 +191,7 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
       setBrief(generated);
       setShelf(generated?.shelf ?? {});
     } catch (requestError) {
-      setError(readableError(requestError));
+      setError(plainFailure("BRIEF NOT MADE", requestError));
     } finally {
       setGenerating(false);
     }

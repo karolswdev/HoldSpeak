@@ -1,0 +1,870 @@
+/* PHILO-13-11 (C1) — THE PROPOSED MATERIAL: "Workbench Steel".
+ *
+ * Workbench 2.0's four pens, kept as roles and modernised: pen 0 grey →
+ * --wb-steel (the frame, the bars, the gadgets), pen 1 black → --wb-ink (every
+ * line and every word on the frame), pen 2 white → --wb-paper (the screen bar,
+ * the menus, the shine), pen 3 blue → --wb-blue (the FRONT window: its frame
+ * and its title bar). The body of a window stays the dark Signal well, so the
+ * 19 DeskWindowFrame hosts read exactly as they do today, inside a Workbench
+ * frame. Ember stays the colour of a verb and of attention.
+ *
+ * Every rule below names the product file the build moves it into.
+ * Injected LAST by p13.tsx, so equal specificity wins over the product's rules.
+ */
+
+/* ═══ 1. TOKENS → web/design-tokens.json → tokens.css, COMPONENT layer ═══ */
+:root {
+  --wb-steel: #9ea4b0;        /* pen 0: the frame plate */
+  --wb-steel-2: #b3b8c2;      /* the plate under the pointer */
+  --wb-ink: #0b0c10;          /* pen 1: lines and words on the frame */
+  --wb-paper: #eef0f3;        /* pen 2: screen bar, menus, tags */
+  --wb-blue: #6688bb;         /* pen 3: the front window (Workbench 2.0's own blue) */
+  --wb-hi: rgba(255, 255, 255, 0.72);  /* the shine: top and left edges (light from the upper left) */
+  --wb-lo: rgba(0, 0, 0, 0.5);         /* the shade: bottom and right edges */
+  --wb-backdrop: #3c4454;     /* the Chair screen */
+  --wb-dither: #363e4d;       /* the backdrop pattern (Workbench's WBPattern, one step) */
+  --wb-rec: #b3261e;          /* REC on paper: 5.73:1 */
+  --wb-frame: 4px;            /* window border */
+  --wb-bar-h: 26px;           /* window title bar */
+  --wb-screen-h: 28px;        /* the screen title bar */
+  --wb-gadget-w: 26px;
+  --wb-raised: inset 1px 1px 0 var(--wb-hi), inset -1px -1px 0 var(--wb-lo);
+  --wb-sunken: inset 1px 1px 0 var(--wb-lo), inset -1px -1px 0 var(--wb-hi);
+  --wb-drop: 4px 4px 0 rgba(0, 0, 0, 0.32);  /* steroids: a hard offset, no blur */
+  --wb-stipple: repeating-linear-gradient(180deg, transparent 0 3px, rgba(0, 0, 0, 0.16) 3px 4px);
+
+  /* the existing component tokens, re-pointed (tokens.css) */
+  /* NOT re-pointed (R5): --desk-window-head-fill and --gadget-fill are also worn by body strips
+     (People's .surface-verbs read --text-muted on steel at 1.02:1). The frame names --wb-* directly. */
+  --desk-window-keyline: var(--wb-ink);
+  --desk-work-top: calc(var(--wb-screen-h) + 0px);
+  --desk-snap-top: calc(var(--wb-screen-h) + 8px);
+  --desk-snap-bottom: 84px;
+  --desk-work-bottom: 84px;
+}
+
+/* ═══ 2. THE WINDOW FRAME → window-chrome.css, pullout.css (every DeskWindowFrame host) ═══ */
+.desk-next .desk-window-shell {
+  border: var(--wb-frame) solid var(--wb-steel);
+  border-top: 0;
+  border-radius: 0;
+  box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), inset 0 0 0 1px var(--wb-ink);
+}
+.desk-next .desk-window-shell[data-p13-front] {
+  border-color: var(--wb-blue);
+  box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), inset 0 0 0 1px var(--wb-ink);
+}
+.desk-next .desk-window-shell:focus-visible { outline: 2px solid var(--wb-paper); outline-offset: 2px; }
+
+/* ONE front window on the screen (the product marks two today: grounding faces-surfaces.md:219).
+   The build: is-front from the one panelOrder; the canvas marks it data-p13-front. */
+.desk-next .desk-traffic[data-p13-today] { display: none !important; }
+
+/* the title bar = the drag bar */
+.desk-next .desk-pullout-head {
+  height: var(--wb-bar-h);
+  min-height: var(--wb-bar-h);
+  gap: 0;
+  padding: 0;
+  margin: 0 calc(-1 * var(--wb-frame));
+  background: var(--wb-stipple), var(--wb-steel);
+  border-bottom: 1px solid var(--wb-ink);
+  border-radius: 0;
+  color: var(--wb-ink);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .desk-window-shell[data-p13-front] > .desk-pullout-head {
+  background: var(--wb-stipple), var(--wb-blue);
+}
+.desk-next .desk-pullout-head .desk-pullout-title,
+.desk-next .desk-pullout-head .desk-window-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0 6px;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--wb-steel);
+  color: var(--wb-ink);
+  font: 700 12px/var(--wb-bar-h) var(--font-mono);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.desk-next .desk-window-shell[data-p13-front] > .desk-pullout-head .desk-pullout-title { background: var(--wb-blue); }
+.desk-next .desk-pullout-head > img { margin-left: 6px; background: transparent; }
+.desk-next .desk-pullout-head .desk-wings,
+.desk-next .desk-pullout-head .desk-window-actions { margin-left: auto; }
+.desk-next .desk-pullout-head .p13-gadgets-right { margin-left: auto; }
+.desk-next .desk-pullout-head .desk-wings ~ .p13-gadgets-right,
+.desk-next .desk-pullout-head .desk-window-actions ~ .p13-gadgets-right { margin-left: 0; }
+
+/* the gadget set: one row of bevelled boxes, flush to the corners, on the bar's own fill */
+.desk-next .p13-gadgets { display: flex; align-self: stretch; flex: none; }
+.desk-next .p13-gadget {
+  display: grid;
+  place-items: center;
+  width: var(--wb-gadget-w);
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: var(--wb-raised);
+  cursor: pointer;
+}
+.desk-next .p13-gadgets-left .p13-gadget { border-right: 1px solid var(--wb-ink); }
+.desk-next .p13-gadgets-right .p13-gadget { border-left: 1px solid var(--wb-ink); }
+.desk-next .p13-gadget:hover { background: rgba(255, 255, 255, 0.22); }
+.desk-next .p13-gadget:active { box-shadow: var(--wb-sunken); background: rgba(0, 0, 0, 0.12); }
+.desk-next .p13-gadget:focus-visible { outline: 2px solid var(--wb-paper); outline-offset: -3px; }
+.desk-next .p13-gadget svg { width: 14px; height: 12px; display: block; }
+
+/* the wing tabs in a title bar: raised steel; the open one sunken paper (a Workbench cycle) */
+.desk-next .desk-pullout-head .desk-wings { align-self: stretch; display: flex; gap: 0; background: transparent; padding: 0; border: 0; box-shadow: none; }
+.desk-next .desk-pullout-head .desk-wings button {
+  height: 100%;
+  min-height: 0;
+  padding: 0 12px;
+  border: 0;
+  border-left: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-steel);
+  color: var(--wb-ink);
+  box-shadow: var(--wb-raised);
+  font: 700 12px var(--font-mono);
+}
+.desk-next .desk-pullout-head .desk-wings button[aria-selected="true"],
+.desk-next .desk-pullout-head .desk-wings button[aria-pressed="true"],
+.desk-next .desk-pullout-head .desk-wings button.is-active {
+  background: var(--wb-paper);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .desk-pullout-head .desk-window-actions .btn,
+.desk-next .desk-pullout-head .desk-window-actions button {
+  color: var(--wb-ink);
+}
+
+/* the sizing gadget, bottom right, on the frame */
+.desk-next .desk-window-grip,
+.desk-next .p13-sizer {
+  position: absolute;
+  right: calc(-1 * var(--wb-frame));
+  bottom: calc(-1 * var(--wb-frame));
+  width: 18px;
+  height: 16px;
+  opacity: 1;
+  display: grid;
+  place-items: center;
+  border-left: 1px solid var(--wb-ink);
+  border-top: 1px solid var(--wb-ink);
+  background: var(--wb-steel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='12' viewBox='0 0 14 12' shape-rendering='crispEdges'%3E%3Crect x='5.5' y='4.5' width='7' height='6' fill='%23eef0f3' stroke='%230b0c10'/%3E%3Cpath d='M2.5 9.5V1.5h8' fill='none' stroke='%230b0c10'/%3E%3C/svg%3E") center / 14px 12px no-repeat;
+  box-shadow: var(--wb-raised);
+  z-index: 2;
+}
+.desk-next .p13-sizer { background-image: none; }
+.desk-next .desk-window-shell[data-p13-front] > .desk-window-grip,
+.desk-next .desk-window-shell[data-p13-front] > .p13-sizer { background-color: var(--wb-blue); }
+
+/* ═══ 3. THE SCREEN TITLE BAR → chrome-menus.css (.desk-menubar) ═══ */
+.desk-next .desk-menubar {
+  height: var(--wb-screen-h);
+  background: var(--wb-paper);
+  border-bottom: 1px solid var(--wb-ink);
+  box-shadow: inset 0 -1px 0 var(--wb-steel);
+  color: var(--wb-ink);
+  padding: 0 0 0 8px;
+}
+.desk-next .desk-menubar button,
+.desk-next .desk-menubar .desk-chip,
+.desk-next .desk-menubar .desk-clock,
+.desk-next .desk-menubar .desk-clock strong,
+.desk-next .desk-menubar .egress-badge,
+.desk-next .desk-menubar .desk-tools-launch {
+  color: var(--wb-ink);
+}
+.desk-next .desk-menubar button:hover,
+.desk-next .desk-menubar button:focus-visible,
+.desk-next .desk-menubar button[aria-expanded="true"] {
+  background: var(--wb-ink);
+  color: var(--wb-paper);
+}
+.desk-next .desk-menubar .desk-mark { font-weight: 700; }
+.desk-next .desk-menubar .egress-badge,
+.desk-next .desk-menubar .desk-tools-launch,
+.desk-next .desk-menubar .desk-bell {
+  border: 1px solid var(--wb-ink) !important;
+  background: var(--wb-steel) !important;
+  box-shadow: var(--wb-raised) !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  margin: 0 2px;
+}
+.desk-next .desk-menubar .egress-badge:hover,
+.desk-next .desk-menubar .desk-tools-launch:hover,
+.desk-next .desk-menubar .desk-bell:hover { background: var(--wb-steel-2) !important; color: var(--wb-ink) !important; }
+.desk-next .desk-menubar kbd { color: var(--wb-ink); border-color: var(--wb-ink); background: var(--wb-paper); font-size: 12px; }
+.desk-next .desk-menubar .desk-chrome-tl { flex: 1 1 auto; min-width: 0; }
+/* the front window's name, the screen's title */
+.desk-next .p13-screen-title {
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  margin: 0 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--wb-ink);
+  overflow: hidden;
+}
+.desk-next .p13-screen-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 700 13px var(--font-display);
+  color: var(--wb-ink);
+}
+/* the screen depth gadget at the right edge of the screen bar */
+.desk-next .desk-clock {
+  height: 100%;
+  padding: 0 12px;
+  border-left: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  color: var(--wb-ink);
+}
+.desk-next .desk-clock span { color: var(--wb-ink); }
+.desk-next .desk-clock strong { font-weight: 700; }
+
+/* ═══ 4. MENUS → chrome-menus.css (.desk-menu-list): paper, ink, the blue bar ═══ */
+.desk-next .desk-menu-list {
+  background: var(--wb-paper);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-raised), var(--wb-drop);
+  padding: 3px;
+}
+.desk-next .desk-menu-list a,
+.desk-next .desk-menu-list button { color: var(--wb-ink); }
+.desk-next .desk-menu-list svg,
+.desk-next .desk-menu-glyph,
+.desk-next .desk-menu-submark,
+.desk-next .desk-menu-list .quiet { color: var(--wb-ink); }
+.desk-next .desk-menu-list a:hover,
+.desk-next .desk-menu-list button:hover,
+.desk-next .desk-menu-list a:focus-visible,
+.desk-next .desk-menu-list button:focus-visible,
+.desk-next .desk-menu-list button.is-subopen {
+  background: var(--wb-blue);
+  color: var(--wb-ink);
+}
+.desk-next .desk-menu-list button:hover svg,
+.desk-next .desk-menu-list button:hover .desk-menu-glyph,
+.desk-next .desk-menu-list button:hover kbd,
+.desk-next .desk-menu-list button:focus-visible .desk-menu-glyph { color: var(--wb-ink); }
+.desk-next .desk-menu-sep { border-top-color: var(--wb-steel); border-bottom-color: #fff; }
+/* the Amiga-key column: each key a raised steel cap */
+.desk-next .desk-menu-well,
+.desk-next .desk-menu-list button:hover .desk-menu-well,
+.desk-next .desk-menu-list button:focus-visible .desk-menu-well {
+  min-width: 20px;
+  height: 18px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  color: var(--wb-ink);
+  font: 700 12px var(--font-mono);
+}
+
+/* ═══ 5. THE DOCK = the AppIcon shelf → dock.css ═══ */
+.desk-next .desk-dock {
+  left: 0;
+  right: 0;
+  transform: none;
+  width: auto;
+  max-width: none;
+  height: 76px;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 2px;
+  padding: 4px 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--wb-steel);
+  border-top: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-raised);
+  scrollbar-width: thin;
+}
+.desk-next .desk-dock-launch {
+  position: relative;
+  display: grid;
+  grid-template-rows: 36px auto;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-width: 66px;
+  max-width: 128px;
+  height: 66px;
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--wb-ink);
+  box-shadow: none;
+}
+.desk-next .desk-dock-launch:hover { background: var(--wb-steel-2); border-color: var(--wb-ink); box-shadow: var(--wb-raised); }
+.desk-next .desk-dock-launch .desk-dock-sprite { width: 32px; height: 32px; image-rendering: pixelated; filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.45)); }
+.desk-next .desk-dock-launch > span[aria-hidden="true"] { font-size: 24px; line-height: 32px; color: var(--wb-ink); }
+.desk-next .desk-dock-label,
+.desk-next .desk-dock-launch .desk-dock-label {
+  display: block;
+  max-width: 116px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 12px var(--font-mono);
+  color: var(--wb-ink);
+  background: transparent;
+  padding: 0 2px;
+}
+/* a running application: its icon is selected (Workbench: the icon inverts to its second image) */
+.desk-next .desk-dock-launch.is-run { background: var(--wb-steel); box-shadow: var(--wb-sunken); border-color: var(--wb-ink); }
+.desk-next .desk-dock-launch.is-run .desk-dock-label { background: var(--wb-ink); color: var(--wb-paper); }
+.desk-next .desk-dock-launch.is-front .desk-dock-label { background: var(--wb-blue); color: var(--wb-ink); }
+/* live state ON the icon: the count notch and the state tag */
+.desk-next .desk-dock-launch .desk-dock-badge {
+  position: absolute;
+  top: 2px;
+  left: calc(50% + 8px);
+  min-width: 22px;
+  height: 20px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--accent-ink);
+  color: var(--text-on-accent);
+  box-shadow: var(--wb-raised);
+  font: 700 12px var(--font-mono);
+}
+.desk-next .desk-dock-launch .desk-dock-badge:not([data-tone]) { background: var(--wb-paper); color: var(--wb-ink); }
+.desk-next .p13-appstate {
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 18px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+  box-shadow: var(--wb-raised);
+  font: 700 12px var(--font-mono);
+  white-space: nowrap;
+}
+.desk-next .p13-appstate[data-tone="rec"] { color: var(--wb-rec); }
+.desk-next .p13-appicon-project .desk-dock-label { max-width: 112px; }
+/* open windows: raised steel tabs that never push the shelf off the screen */
+.desk-next .desk-dock-sep { align-self: center; width: 2px; height: 48px; background: var(--wb-ink); box-shadow: 1px 0 0 var(--wb-hi); margin: 0 6px; }
+.desk-next .desk-dock-chip {
+  align-self: center;
+  display: inline-flex;
+  max-width: 200px;
+  height: 32px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .desk-dock-chip.is-front { background: var(--wb-blue); }
+.desk-next .desk-dock-chip.is-min { background: var(--wb-steel); box-shadow: var(--wb-sunken); }
+.desk-next .desk-dock-main { min-width: 0; color: var(--wb-ink); padding: 0 8px; background: transparent; }
+.desk-next .desk-dock-main .desk-dock-label { font-weight: 600; }
+.desk-next .desk-dock-x { color: var(--wb-ink); border-left: 1px solid var(--wb-ink); border-radius: 0; opacity: 1; }
+.desk-next .desk-dock-reset { align-self: center; color: var(--wb-ink); border: 1px solid var(--wb-ink); background: var(--wb-steel); box-shadow: var(--wb-raised); border-radius: 0; }
+.desk-next .desk-room-actions { align-self: center; }
+.desk-next .desk-room-actions > button { color: var(--wb-ink); border: 1px solid var(--wb-ink); background: var(--wb-steel); box-shadow: var(--wb-raised); border-radius: 0; font: 600 12px var(--font-mono); }
+.desk-next .desk-dock .desk-orb-wrap { align-self: center; }
+
+/* ═══ 6. THE CHAIR = a screen of windows → chair.css ═══ */
+.desk-next .chair:not(.chair-first-value) {
+  position: fixed;
+  inset: var(--wb-screen-h) 0 76px 0;
+  max-width: none;
+  height: auto;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--wb-backdrop);
+  background-image: conic-gradient(var(--wb-dither) 25%, transparent 0 50%, var(--wb-dither) 0 75%, transparent 0);
+  background-size: 4px 4px;
+}
+.desk-next .p13-chairdesk { position: absolute; inset: 0; }
+.desk-next .p13-chairwin {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--desk-window-fill);
+}
+.desk-next .p13-chairwin .p13-chairwin-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  white-space: normal;
+  gap: var(--space-4);
+  padding: 14px 16px 20px;
+}
+.desk-next .p13-chairwin[data-win="needs"]   { left: 14px; top: 14px; width: calc(50% - 22px); bottom: 126px; }
+.desk-next .p13-chairwin[data-win="capture"] { left: 14px; bottom: 14px; width: calc(50% - 22px); height: 100px; }
+.desk-next .p13-chairwin[data-win="brief"]   { left: calc(50% + 8px); right: 14px; top: 14px; height: calc(50% - 22px); }
+.desk-next .p13-chairwin[data-win="week"]    { left: calc(50% + 8px); right: 14px; bottom: 14px; height: calc(50% - 22px); }
+.desk-next .p13-chairwin[data-zoomed="true"] { left: 14px; top: 14px; right: 14px; bottom: 14px; width: auto; height: auto; }
+/* the capture bar lives in its window now: no floating bar over content */
+.desk-next .p13-chairwin .arrival-capture-bar {
+  position: static;
+  inset: auto;
+  transform: none;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.desk-next .p13-chairwin[data-win="capture"] .p13-chairwin-body { padding: 8px 12px; overflow: hidden; justify-content: center; }
+.desk-next .p13-chairwin .arrival-headline { padding-bottom: 4px; }
+
+/* ═══ 7. THE PARKED FACE (A1-F) → HistoryCore / WorkbenchWindow, species only ═══ */
+.desk-next .p13-parked { display: grid; gap: 6px; }
+.desk-next .p13-parked-facet { display: flex; gap: 6px; }
+.desk-next .p13-parked-chip { color: var(--text-muted); }
+.desk-next .p13-park-receipt { display: inline-flex; align-items: center; gap: 8px; }
+
+/* ═══ 8. 393: the phone desk (C7 owns its build; C1 draws the material at the width) ═══ */
+@media (max-width: 720px) {
+  :root { --wb-bar-h: 44px; --wb-gadget-w: 44px; --desk-snap-bottom: 72px; --desk-work-bottom: 72px; }
+  .desk-next .desk-dock { height: 68px; padding: 2px 4px; flex-wrap: nowrap; }
+  .desk-next .desk-dock-launch { min-width: 62px; height: 62px; }
+  .desk-next .desk-dock-launch .desk-dock-label { display: block; max-width: 60px; }
+  .desk-next .chair:not(.chair-first-value) { inset: var(--wb-screen-h) 0 68px 0; overflow-y: auto; }
+  .desk-next .p13-chairdesk { position: static; display: flex; flex-direction: column; gap: 6px; padding: 6px; min-height: 100%; box-sizing: border-box; }
+  .desk-next .p13-chairwin,
+  .desk-next .p13-chairwin[data-win] { position: relative; inset: auto; left: auto; right: auto; top: auto; bottom: auto; width: auto; height: auto; flex: none; }
+  .desk-next .p13-chairwin:not([data-phone-open]) .p13-chairwin-body { display: none; }
+  .desk-next .p13-chairwin[data-phone-open] { flex: 1 1 auto; min-height: 0; }
+  .desk-next .p13-screen-title { margin: 0 4px; padding-left: 8px; }
+  .desk-next .desk-clock span { display: none; }
+}
+
+/* ═══ THE ALTERNATIVE (C1-7 only): "Honest 2.0" — the four pens on every body too ═══ */
+:root[data-p13-theme="honest"] {
+  --wb-steel: #aaaaaa;
+  --wb-steel-2: #bbbbbb;
+  --wb-paper: #ffffff;
+  --wb-blue: #6688bb;
+  --wb-ink: #000000;
+  --wb-backdrop: #aaaaaa;
+  --wb-dither: #aaaaaa;
+  --wb-drop: 0 0 0 transparent;
+  --bg: #aaaaaa;
+  --surface-1: #aaaaaa;
+  --surface-2: #b6b6b6;
+  --surface-3: #c2c2c2;
+  --desk-window-fill: #aaaaaa;
+  --desk-panel-fill: #aaaaaa;
+  --desk-window-well: rgba(255, 255, 255, 0.35);
+  --text: #000000;
+  --text-muted: #1a1a1a;
+  --text-faint: #222222;
+  --border: #000000;
+  --border-strong: #000000;
+  --border-subtle: rgba(0, 0, 0, 0.35);
+  --accent: #6688bb;
+  --accent-ink: #6688bb;
+  --accent-ink-hover: #7a99c8;
+  --text-on-accent: #000000;
+  /* round three (R7): a COMPLETE alternative — every text tone ≥ 4.5:1 on the grey bodies, so the
+     comparison is about coherence and preference, not about an unfinished palette */
+  --accent-text: #4a2410;
+  --ok: #0d3d1a; --ok-strong: #0d3d1a; --success: #0d3d1a; --success-strong: #0d3d1a;
+  --warn: #4a3000; --warn-signal: #4a3000; --warn-strong: #4a3000;
+  --danger: #5c0a0a; --danger-signal: #5c0a0a;
+  --info: #0b3a66; --info-strong: #0b3a66; --local: #0b3a66;
+  --field-bg: #ffffff;
+  --surface-hover: rgba(255, 255, 255, 0.3);
+}
+
+/* ═══ C1-3 the material sheet (canvas only: the sheet is a drawing, not a product face) ═══ */
+.desk-next .p13-sheet-host { position: fixed; inset: var(--wb-screen-h) 0 76px 0; z-index: 60; background-color: var(--wb-backdrop); background-image: conic-gradient(var(--wb-dither) 25%, transparent 0 50%, var(--wb-dither) 0 75%, transparent 0); background-size: 4px 4px; }
+.desk-next .p13-sheet { left: 14px; top: 14px; right: 14px; bottom: 14px; }
+.desk-next .p13-sheet-body { gap: 14px; }
+.desk-next .p13-cap { font: 600 12px var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; }
+.desk-next .p13-sheet-row { display: flex; gap: 24px; flex-wrap: wrap; }
+.desk-next .p13-sheet-group { display: grid; gap: 8px; align-content: start; }
+.desk-next .p13-grow { flex: 1 1 360px; }
+.desk-next .p13-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.desk-next .p13-swatch { display: grid; gap: 2px; }
+.desk-next .p13-swatch-chip { height: 34px; border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised), 0 0 0 1px var(--wb-steel); }
+.desk-next .p13-swatch-name { font: 700 12px var(--font-mono); color: var(--text); }
+.desk-next .p13-swatch-val { font: 500 12px var(--font-mono); color: var(--text-muted); }
+.desk-next .p13-swatch-role { font: 600 12px var(--font-mono); color: var(--text-faint); letter-spacing: 0.04em; }
+.desk-next .p13-gadget-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.desk-next .p13-gadget-cell { display: grid; justify-items: center; gap: 4px; }
+.desk-next .p13-gadget-big { display: grid; place-items: center; width: 52px; height: 44px; background: var(--wb-steel); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised); }
+.desk-next .p13-gadget-big svg { width: 28px; height: 24px; }
+.desk-next .p13-bevel { width: 52px; height: 44px; display: block; background: var(--wb-steel); border: 1px solid var(--wb-ink); }
+.desk-next .p13-bevel[data-b="raised"] { box-shadow: var(--wb-raised); }
+.desk-next .p13-bevel[data-b="sunken"] { box-shadow: var(--wb-sunken); }
+.desk-next .p13-bevel[data-b="drop"] { box-shadow: var(--wb-raised), var(--wb-drop); }
+.desk-next .p13-sample-stack { position: relative; height: 150px; }
+.desk-next .p13-sample-win { position: absolute; display: flex; flex-direction: column; width: 300px; height: 104px; background: var(--desk-window-fill); }
+.desk-next .p13-sample-win:first-child { left: 0; top: 0; }
+.desk-next .p13-sample-win.is-front { left: 120px; top: 40px; width: 340px; }
+.desk-next .p13-sample-body { padding: 10px 14px; font: 600 12px var(--font-mono); color: var(--text-muted); }
+.desk-next .p13-sizes { display: grid; gap: 6px; }
+.desk-next .p13-size { display: flex; gap: 10px; justify-content: space-between; min-width: 260px; }
+.desk-next .p13-verbs { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.desk-next .p13-dock-sample { position: static; transform: none; height: 72px; width: auto; overflow: visible; }
+.desk-next .p13-type { display: grid; gap: 6px; }
+.desk-next .p13-type-primary { font: var(--desk-type-primary-weight) var(--desk-type-primary-size) var(--font-sans); color: var(--text); }
+.desk-next .p13-type-body { font-size: var(--desk-surface-body-size); color: var(--text); }
+
+/* the 12 px floor holds in every title bar, whatever a host puts in its actions slot */
+.desk-next .desk-pullout-head .desk-window-actions,
+.desk-next .desk-pullout-head .desk-window-actions * { font-size: 12px; }
+
+.desk-next .desk-dock-launch:has(.p13-appstate) { min-width: 104px; }
+.desk-next .desk-dock { gap: 6px; }
+.desk-next .desk-menu-list button:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--wb-ink); }
+.desk-next .desk-pullout-head .desk-window-actions,
+.desk-next .desk-pullout-head .desk-window-actions * { color: var(--wb-ink) !important; }
+.desk-next .desk-pullout-head .desk-pullout-title { flex-shrink: 0; max-width: 45%; }
+.desk-next .p13-park-receipt .surface-footer-receipt-line { font: 600 12px var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); }
+
+/* ═══ 393: the screen bar holds ONE line: mark, Go, the front window, egress lamp, search, time ═══ */
+@media (max-width: 720px) {
+  .desk-next .desk-menubar { flex-wrap: nowrap; overflow: hidden; gap: 0; padding-left: 4px; }
+  .desk-next .desk-menubar .desk-chrome { flex-wrap: nowrap; }
+  .desk-next .desk-menubar .desk-mark { width: 30px; min-width: 30px; overflow: hidden; padding: 0 7px; white-space: nowrap; color: transparent; }
+  .desk-next .desk-menubar .egress-badge { max-width: 26px; overflow: hidden; padding: 0 6px !important; white-space: nowrap; }
+  .desk-next .desk-menubar .desk-tools-launch { max-width: 32px; overflow: hidden; padding: 0 7px !important; white-space: nowrap; }
+  .desk-next .desk-menubar .desk-verbbar button,
+  .desk-next .desk-menubar [data-menu-id] button { color: var(--wb-ink); }
+  .desk-next .desk-chrome-tr { flex: none; flex-wrap: nowrap; }
+  .desk-next .desk-clock { display: inline-flex; flex-wrap: nowrap; white-space: nowrap; padding: 0 8px; }
+  .desk-next .p13-screen-title { flex: 1 1 0; }
+  /* a window head at 393: one line of gadgets and title; wings below, inside the bar */
+  .desk-next .desk-window-shell.is-sheet { border-radius: 0; }
+  .desk-next .desk-pullout-head { flex-wrap: wrap; height: auto; min-height: var(--wb-bar-h); align-items: stretch; }
+  .desk-next .desk-pullout-head .p13-gadgets { height: var(--wb-bar-h); order: 0; }
+  .desk-next .desk-pullout-head .p13-gadgets-right { order: 2; margin-left: auto; }
+  .desk-next .desk-pullout-head .desk-pullout-title { order: 1; flex: 1 1 0; min-width: 0; line-height: var(--wb-bar-h); }
+  .desk-next .desk-pullout-head > :not(.p13-gadgets):not(.desk-pullout-title) { order: 3; }
+  .desk-next .desk-pullout-head .desk-wings { flex: 1 0 100%; height: 36px; margin: 0; border-top: 1px solid var(--wb-ink); }
+  .desk-next .desk-pullout-head .desk-window-actions { flex: 1 0 100%; margin: 0; padding: 4px 8px; border-top: 1px solid var(--wb-ink); }
+  /* the AppIcons: the picture and its live state; the name rides the accessible name */
+  .desk-next .desk-dock-launch { grid-template-rows: 36px; min-width: 58px; height: 60px; }
+  .desk-next .desk-dock-launch .desk-dock-label { display: none; }
+  .desk-next .desk-dock-launch:has(.p13-appstate) { min-width: 96px; }
+  .desk-next .desk-dock-launch .p13-appstate { top: auto; bottom: 2px; }
+}
+/* the count on the bell wears the ember INK plate (5.24:1), as every count on the frame does → attention.css */
+.desk-next .desk-menubar .desk-bell strong { background: var(--accent-ink); color: var(--text-on-accent); border: 1px solid var(--wb-ink); }
+/* whatever a host puts in its actions slot wears the gadget plate, never a dark chip on the bar */
+.desk-next .desk-pullout-head .desk-window-actions .desk-chip,
+.desk-next .desk-pullout-head .desk-window-actions button {
+  background: var(--wb-steel) !important;
+  border: 1px solid var(--wb-ink) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--wb-raised) !important;
+}
+@media (max-width: 720px) {
+  .desk-next .desk-pullout-head > img { order: 1; align-self: center; }
+}
+/* the shelf never squeezes an icon: it scrolls inside the viewport instead (dock.css) */
+.desk-next .desk-dock > * { flex-shrink: 0; }
+
+/* ═══ 393: the shelf ends on a whole icon; the daily seats first; a More gadget at the edge ═══ */
+@media (max-width: 720px) {
+  .desk-next .desk-dock { gap: 0; padding: 2px 0 2px 4px; scroll-snap-type: x mandatory; scroll-padding-left: 4px; }
+  .desk-next .desk-dock > * { order: 10; scroll-snap-align: start; }
+  .desk-next .desk-dock .desk-dock-launch,
+  .desk-next .desk-dock .desk-dock-launch:has(.p13-appstate) { min-width: 85px; max-width: 85px; width: 85px; }
+  .desk-next .desk-dock > [aria-label^="Intelligence"] { order: 1; }
+  .desk-next .desk-dock > [aria-label^="Meetings"] { order: 2; }
+  .desk-next .desk-dock > .p13-appicon:not(.p13-appicon-project) { order: 3; }
+  .desk-next .desk-dock > .p13-appicon-project { order: 4; }
+  .desk-next .desk-dock > .p13-dock-more {
+    order: 99;
+    position: sticky;
+    right: 0;
+    flex: 0 0 48px;
+    width: 48px;
+    min-height: 0;
+    align-self: stretch;
+    display: grid;
+    place-items: center;
+    margin-left: auto;
+    border: 0;
+    border-left: 1px solid var(--wb-ink);
+    border-radius: 0;
+    background: var(--wb-steel);
+    box-shadow: var(--wb-raised), -6px 0 8px -4px rgba(0, 0, 0, 0.35);
+    color: var(--wb-ink);
+    font: 700 18px var(--font-mono);
+    z-index: 2;
+  }
+}
+
+/* ═══════════════ ROUND THREE (Astra r1 + Muad'Dib R1–R8) ═══════════════ */
+
+/* R4 ONE FRONT WINDOW. The product paints every .is-front head blue-grey (window-chrome.css:337,
+   `.desk-next .desk-window-shell.is-front .desk-pullout-head`, 4 classes). The build derives
+   is-front from the one panelOrder; until then THIS rule (5 classes + attribute) neutralises a
+   stale is-front, so exactly one bar is blue. → window-chrome.css, pullout.css */
+.desk-next .desk-window-shell.is-front:not([data-p13-front]) > .desk-pullout-head {
+  background: var(--wb-stipple), var(--wb-steel);
+}
+.desk-next .desk-window-shell.is-front:not([data-p13-front]) > .desk-pullout-head .desk-pullout-title { background: var(--wb-steel); }
+.desk-next .desk-window-shell.is-front:not([data-p13-front]) { border-color: var(--wb-steel); }
+.desk-next .desk-window-shell.is-front:not([data-p13-front]) > .desk-window-grip { background-color: var(--wb-steel); }
+
+/* R5 CONTRAST WHERE HOSTS USE IT: every word a host puts in a title bar is ink on the plate
+   (People's `.people-fact` read --text-muted on steel: 1.03:1, people.css:1). Plated verbs keep
+   their own pair. → pullout.css */
+.desk-next .desk-pullout-head,
+.desk-next .desk-pullout-head :is(span, small, strong, em, dt, dd, p, label, .people-fact, .quiet) { color: var(--wb-ink); }
+.desk-next .desk-pullout-head .btn--primary, .desk-next .desk-pullout-head .btn--primary * { color: var(--text-on-accent) !important; }
+/* the ember plate under text is --accent-ink (5.24:1) on every filled verb → surface.css / Signal */
+.desk-next .btn--primary { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--text-on-accent); }
+.desk-next .btn--primary:hover { background: var(--accent-ink-hover); }
+
+/* the 12 px floor, drawn: the inherited 10–11 px texts the fence found → C8 (chair.css,
+   filter-tokens.css, surface.css, pullout.css), listed in the README */
+.desk-next .filter-tokens button, .desk-next .filter-token, .desk-next [class*="filter-token"],
+.desk-next .arrival-checked-token, .desk-next .arrival-next, .desk-next .arrival-no-calendar-token,
+.desk-next .surface-ledger-row :is(.surface-ledger-time, .surface-ledger-cells, .surface-ledger-cell, .desk-chip, small),
+.desk-next .arrival-needs-you-row-meta, .desk-next .desk-chip, .desk-next .surface-token,
+.desk-next .gadget-chip, .desk-next .surface-footer-receipt-line, .desk-next kbd { font-size: max(12px, 1em); }
+
+/* R3 STEROIDS WHERE IT COUNTS: the work first. The Needs-you window leads with the number and
+   the actions; the ranking strip is ONE line (it scrolls inside itself); SETUP drops below the
+   actions as one compact row. → chair.css */
+.desk-next .p13-chairwin[data-win="needs"] .p13-chairwin-body { gap: 10px; }
+.desk-next .p13-chairwin[data-win="needs"] [data-testid="arrival-headline"] { order: 1; }
+.desk-next .p13-chairwin[data-win="needs"] [data-testid="arrival-coverage"] { order: 2; }
+.desk-next .p13-chairwin[data-win="needs"] [data-testid="arrival-needs-you"] { order: 3; }
+.desk-next .p13-chairwin[data-win="needs"] [data-testid="arrival-muted"] { order: 4; }
+.desk-next .p13-chairwin[data-win="needs"] [data-testid="arrival-blocker"] { order: 5; }
+.desk-next .p13-chairwin .arrival-head-tokens {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+}
+.desk-next .p13-chairwin .arrival-head-tokens > * { flex: none; }
+.desk-next .p13-chairwin .arrival-head-tokens .filter-tokens,
+.desk-next .p13-chairwin .arrival-head-tokens [role="radiogroup"],
+.desk-next .p13-chairwin .arrival-head-tokens [role="group"] { flex-wrap: nowrap; display: flex; }
+.desk-next .p13-chairwin [data-testid="arrival-blocker"] .surface-section { gap: 4px; }
+.desk-next .p13-chairwin [data-testid="arrival-blocker"] .surface-ledger-row { min-height: 0; }
+
+/* the Brief window is tall enough that SEND is on the first screen at 1440 */
+.desk-next .p13-chairwin[data-win="brief"] { height: calc(64% - 22px); }
+.desk-next .p13-chairwin[data-win="week"]  { height: calc(36% - 6px); }
+
+/* R1: a closed Chair window leaves its place on the screen with ONE compact reopen Button */
+.desk-next .p13-chair-closed { position: absolute; display: grid; place-items: center; border: 1px dashed var(--wb-dither); }
+.desk-next .p13-chair-closed[data-win="needs"]   { left: 14px; top: 14px; width: calc(50% - 22px); bottom: 126px; }
+.desk-next .p13-chair-closed[data-win="capture"] { left: 14px; bottom: 14px; width: calc(50% - 22px); height: 100px; }
+.desk-next .p13-chair-closed[data-win="brief"]   { left: calc(50% + 8px); right: 14px; top: 14px; height: calc(64% - 22px); }
+.desk-next .p13-chair-closed[data-win="week"]    { left: calc(50% + 8px); right: 14px; bottom: 14px; height: calc(36% - 6px); }
+.desk-next .p13-chair-closed .btn { display: inline-flex; gap: 6px; align-items: center; }
+.desk-next .p13-chair-closed .btn svg { width: 14px; height: 12px; }
+.desk-next .p13-chair-reopen-list { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 10px; }
+.desk-next .p13-clear-done { display: flex; justify-content: flex-end; padding: 4px 0; }
+.desk-next [data-p13-restored] { outline: 2px solid var(--wb-blue); outline-offset: -2px; }
+
+/* C3 states on the shelf */
+.desk-next .p13-appstate[data-tone="ok"] { color: #1d5c2e; }
+.desk-next .p13-appstate[data-tone="fail"] { color: var(--wb-rec); }
+.desk-next .p13-appstate[data-tone="warn"] { color: #6b4a00; }
+.desk-next .p13-offline { align-self: center; flex: none; padding: 0 8px; height: 26px; display: inline-flex; align-items: center;
+  border: 1px solid var(--wb-ink); background: var(--wb-paper); color: var(--wb-ink); box-shadow: var(--wb-raised); font: 700 12px var(--font-mono); }
+:root[data-p13-offline] .desk-next .desk-dock-badge,
+.desk-next:has(.p13-offline) .desk-dock-badge { display: none; }
+
+/* ═══ R2 THE PHONE IS ONE WINDOW AT A TIME (≥ 700 px of content on 852; every target ≥ 44) ═══ */
+@media (max-width: 720px) {
+  :root { --wb-screen-h: 44px; --desk-snap-bottom: 56px; --desk-work-bottom: 56px; }
+  /* the screen bar: one row of 44 px targets */
+  .desk-next .desk-menubar { height: var(--wb-screen-h); align-items: stretch; }
+  .desk-next .desk-menubar .desk-chrome { align-items: stretch; height: 100%; }
+  .desk-next .desk-menubar button,
+  .desk-next .desk-menubar .egress-badge,
+  .desk-next .desk-menubar .desk-tools-launch,
+  .desk-next .desk-menubar .desk-bell { height: 44px !important; min-height: 44px !important; min-width: 44px; margin: 0 !important; }
+  .desk-next .desk-menubar .desk-verbbar, .desk-next .desk-menubar .desk-verbbar-item { display: flex; align-items: stretch; height: 100%; }
+  .desk-next .desk-menubar .desk-mark { width: 44px; min-width: 44px; }
+  .desk-next .desk-menubar .egress-badge { max-width: 44px; justify-content: center; }
+  .desk-next .desk-menubar .desk-tools-launch { max-width: 44px; justify-content: center; }
+  .desk-next .desk-menubar .desk-bell { display: inline-flex; align-items: center; justify-content: center; padding: 0 6px !important; }
+  .desk-next .desk-clock { height: 44px; }
+  /* the shelf: 56 px, the daily seats (Intelligence, Meetings, People, Speak = capture on demand) */
+  .desk-next .desk-dock { height: 56px; padding: 0 0 0 4px; }
+  .desk-next .desk-dock .desk-dock-launch,
+  .desk-next .desk-dock .desk-dock-launch:has(.p13-appstate) { height: 54px; grid-template-rows: 34px; padding: 1px 2px; }
+  .desk-next .desk-dock > [aria-label^="Speak"] { order: 4; }
+  .desk-next .desk-dock > .p13-appicon-project { order: 6; }
+  .desk-next .desk-dock > .p13-dock-more { height: 56px; }
+  .desk-next .desk-dock .p13-appstate { bottom: 1px; }
+  /* the Chair: ONE window fills the work area; no stack of bars; Capture is on demand */
+  .desk-next .chair:not(.chair-first-value) { inset: var(--wb-screen-h) 0 56px 0; overflow: hidden; }
+  .desk-next .p13-chairdesk { padding: 0; gap: 0; height: 100%; }
+  .desk-next .p13-chairwin[data-phone-open] { position: absolute; inset: 0; height: auto; border-left-width: 0; border-right-width: 0; }
+  .desk-next .p13-chairwin[data-phone-open] .p13-chairwin-body { display: flex; }
+  .desk-next .p13-chair-closed { display: none; }
+  /* a desk window at 393 is the same: it fills the work area (no bottom sheet over the Chair) */
+  .desk-next .desk-window-shell.is-sheet {
+    position: fixed !important; top: var(--wb-screen-h) !important; bottom: 56px !important; left: 0 !important; right: 0 !important;
+    width: auto !important; height: auto !important; max-height: none !important; transform: none !important;
+    border-left-width: 0; border-right-width: 0;
+  }
+  /* a head at 393 is ONE 44 px row: close · wings (or the title when there are none) · depth.
+     The screen bar names the window, so a window with wings shows its wings in the title's place. */
+  .desk-next .desk-pullout-head { flex-wrap: nowrap; height: 44px; min-height: 44px; overflow: hidden; }
+  .desk-next .desk-pullout-head.has-wings .desk-pullout-title { display: none; }
+  .desk-next .desk-pullout-head > img { display: none; }
+  .desk-next .desk-pullout-head .desk-wings { flex: 1 1 auto; order: 1; height: 44px; border-top: 0; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  .desk-next .desk-pullout-head .desk-wings button { height: 44px; min-width: 44px; flex: none; }
+  .desk-next .desk-pullout-head .desk-window-actions { order: 1; flex: none; display: flex; align-items: stretch; height: 44px; margin: 0; padding: 0; border: 0; }
+  .desk-next .desk-pullout-head .desk-window-actions :is(button, .desk-chip) { min-height: 44px !important; height: 44px; }
+  .desk-next .desk-pullout-head .desk-window-actions:not(:has(button)) { display: none; }
+  /* the Meetings footer at 393: egress on its own line, receipt and verbs below (no overlap) */
+  .desk-next .surface-footer-layout { display: grid !important; grid-template-columns: 1fr auto; gap: 4px 8px; }
+  .desk-next .surface-footer-egress { grid-column: 1 / -1; }
+}
+@media (max-width: 720px) {
+  .desk-next .p13-sheet-host { inset: var(--wb-screen-h) 0 56px 0; }
+  .desk-next .p13-sheet-host .p13-sheet.p13-chairwin { position: absolute; inset: 0; border-left-width: 0; border-right-width: 0; }
+  .desk-next .p13-sheet-host .p13-sheet .p13-chairwin-body { display: flex; }
+}
+
+/* R5: the 12 px floor, every inherited 10–11 px text the board fence found → C8 */
+.desk-next :is(.arrival-source-emblem, .arrival-why-token, .surface-ledger-remainder-count, .surface-disclosure-label,
+  .surface-disclosure-token, .wb-workspace-path, .meetings-stream-fact) { font-size: 12px; }
+/* R5: ember TEXT on the dark well is --accent-text (#bc8058, 5.43:1 on --surface-1; --accent was 4.26:1).
+   --accent stays the signal colour of rails and glows. → tokens.css (new semantic token), chair.css */
+:root { --accent-text: #bc8058; }
+.desk-next :is(.arrival-why-token, .arrival-display--accent, [data-tone="warn"].arrival-why-token) { color: var(--accent-text); }
+/* the frame's resize edges sit UNDER the title bar: a gadget owns all of its points → window-chrome.css */
+.desk-next .desk-window-shell > .desk-pullout-head { position: relative; z-index: 3; }
+.desk-next :is(.meetings-stream-compact-facts, .transcript-speaker) { font-size: 12px; }
+/* a ghosted menu row's reason reads in ink at 12 px on paper (the row itself is the ghost) → chrome-menus.css */
+.desk-next .desk-menu-list :is(.quiet, small) { font-size: 12px; color: var(--wb-ink); opacity: 1; }
+@media (max-width: 720px) {
+  /* beats pullout.css's 480 px has-wings wrap (HS-200-12): one 44 px row, the wings scroll inside it */
+  .desk-next .desk-window-shell > .desk-pullout-head,
+  .desk-next .desk-window-shell > .desk-pullout-head.has-wings { flex-wrap: nowrap; height: 44px; min-height: 44px; padding: 0; row-gap: 0; }
+  .desk-next .desk-window-shell > .desk-pullout-head.has-wings .desk-wings { flex: 1 1 auto; flex-wrap: nowrap; justify-content: flex-start; margin-inline: 0; overflow-x: auto; min-width: 0; }
+}
+
+@media (max-width: 720px) {
+  /* R2: every target ≥ 44 × 44 at 393 (C7 builds it; drawn here on the inherited controls the fence found) */
+  .desk-next .desk-window-shell :is(button, input, select, textarea, [role=button], [role=tab]),
+  .desk-next .p13-chairwin :is(button, input, select, [role=button]) { min-height: 44px; }
+  .desk-next .desk-window-shell :is(button, [role=button]):not(.desk-dock-launch),
+  .desk-next .p13-chairwin :is(button, [role=button]) { min-width: 44px; }
+  .desk-next .desk-menu-list :is([role^=menuitem], button) { min-height: 44px; }
+}
+.desk-next .desk-menubar .desk-verbbar-title.on,
+.desk-next .desk-menubar button[aria-expanded="true"] { background: var(--wb-ink) !important; color: var(--wb-paper) !important; }
+.desk-next .transcript-speaker { color: var(--text-muted); }
+.desk-next :is(.arrival-source-emblem, .arrival-why-token, .surface-ledger-remainder-count, .surface-disclosure-label,
+  .surface-disclosure-token, .wb-workspace-path, .meetings-stream-fact, .meetings-stream-compact-facts, .transcript-speaker) { font-size: 12px !important; }
+.desk-next .transcript-speaker { color: var(--text-muted) !important; }
+@media (max-width: 720px) {
+  .desk-next .arrival-head-tokens button { margin: 0 2px; }
+  .desk-next .surface-disclosure-trigger { min-height: 44px !important; height: auto !important; }
+}
+@media (max-width: 720px) {
+  /* a token already 44 px high needs no halo; its halo reached the next token (two owners of one point) */
+  .desk-next .arrival-head-tokens .btn::before, .desk-next .arrival-head-tokens .btn::after { display: none; }
+}
+@media (max-width: 720px) {
+  .desk-next .arrival-head-tokens .surface-filter-token { margin: 0 3px !important; }
+}
+@media (max-width: 720px) {
+  .desk-next .arrival-head-tokens .surface-filter-token::after { content: none !important; }
+}
+/* a token never shrinks below its word (its text overflowed onto the neighbour and took its points) */
+.desk-next .arrival-head-tokens .surface-filter-token { flex: none; }
+.desk-next .desk-menu-ghost-hint { font-size: 12px !important; color: var(--wb-ink) !important; opacity: 1 !important; }
+/* a check mark is state, not decoration: it shows whatever the glyph preference (Window ▸ Chair) */
+.desk-next .desk-menu-list [role=menuitemcheckbox][aria-checked="true"] .desk-menu-glyph { display: inline-flex !important; visibility: visible !important; color: var(--wb-ink); }
+/* Workbench ghosting: a light paper stipple over ink, readable (the dark checker hid the words) → chrome-menus.css */
+.desk-next .desk-menu-list .is-ghost { color: #4a505c; }
+.desk-next .desk-menu-list .is-ghost::after { background: repeating-conic-gradient(var(--wb-paper) 0% 25%, transparent 0% 100%) 0 0 / 2px 2px; opacity: 0.85; }
+.desk-next .desk-menu-list .is-ghost .desk-menu-well { opacity: 0.6; }
+/* 1440: the shelf ends inside the screen with the daily icons tighter */
+@media (min-width: 721px) {
+  .desk-next .desk-dock { gap: 2px; }
+  .desk-next .desk-dock-launch { padding: 2px 3px; }
+  .desk-next .p13-appicon-project .desk-dock-label { max-width: 96px; }
+}
+@media (max-width: 720px) {
+  /* the phone's screen bar: mark, Go, the front window, the egress lamp, the needs-you bell, the time.
+     Search rides in Go (system.search) at 393. */
+  .desk-next .desk-menubar .desk-tools-launch { display: none !important; }
+  .desk-next .desk-menubar .egress-badge { font-size: 0 !important; width: 44px; padding: 0 !important; }
+  /* the egress chip keeps its scope's mark and drops its words (they stay in its accessible name) */
+  .desk-next .desk-menubar .egress-badge::before { content: "⇡"; font: 700 16px var(--font-mono); color: var(--wb-ink); }
+  .desk-next .desk-menubar .egress-badge.is-local::before { content: "⌂"; }
+}
+
+/* ═══ R 3b: nothing clips, nothing scrolls sideways (HS-200-12 stands) ═══ */
+/* 1440: the ranking strip has its own line and fits; the availability chip, the checked token and
+   the calendar state wrap to the next line (off the strip) → chair.css */
+.desk-next .p13-chairwin .arrival-head-tokens { flex-wrap: wrap; overflow: visible; row-gap: 6px; }
+.desk-next .p13-chairwin .arrival-head-tokens > .arrival-ranking { flex: 1 0 100%; flex-wrap: wrap; }
+/* the strip menu Button (393): 44 px, the current choice and ▾ */
+.desk-next .p13-strip-menu { display: inline-flex; align-items: stretch; flex: 0 1 auto; min-width: 0; }
+.desk-next .p13-strip-menu .p13-strip-button { min-height: 44px; height: 44px; padding: 0 14px; font: 700 12px var(--font-mono); letter-spacing: 0.06em; white-space: nowrap; }
+.desk-next .desk-pullout-head .p13-strip-wings { flex: 1 1 auto; border-left: 1px solid var(--wb-ink); }
+.desk-next .desk-pullout-head .p13-strip-wings .p13-strip-button { width: 100%; justify-content: flex-start; background: var(--wb-steel); color: var(--wb-ink); box-shadow: var(--wb-raised); border: 0; border-radius: 0; }
+@media (max-width: 720px) {
+  .desk-next .p13-chairwin .arrival-head-tokens > .arrival-ranking, .desk-next .p13-chairwin .arrival-head-tokens > .p13-strip-filter { flex: 0 0 auto; }
+  .desk-next .desk-pullout-head .desk-wings { overflow: visible; }
+  /* the mark keeps its picture; its word stays in its accessible name (no clipped text) */
+  .desk-next .desk-menubar .desk-mark { font-size: 0 !important; color: var(--wb-ink); justify-content: center; }
+}
+.desk-next .p13-strip-menu .p13-strip-button { text-transform: uppercase; }
+@media (max-width: 720px) {
+  /* side borders are 0 at 393, so the title bar's -4 px frame overlap goes too (it overflowed the window by 4 px) */
+  .desk-next .desk-window-shell > .desk-pullout-head { margin: 0; }
+}
+@media (max-width: 720px) {
+  /* the material sheet fits 393 (nothing scrolls sideways) */
+  .desk-next .p13-sample-win { width: calc(100% - 48px) !important; }
+  .desk-next .p13-sample-win.is-front { left: 40px !important; }
+  .desk-next .p13-size { min-width: 0; flex-wrap: wrap; }
+  .desk-next .p13-dock-sample { flex-wrap: wrap; height: auto !important; }
+  .desk-next .p13-sheet-row, .desk-next .p13-sheet-group, .desk-next .p13-grow { min-width: 0; max-width: 100%; flex-basis: 100%; }
+}
+@media (max-width: 720px) {
+  /* the head row's order: close · wings (or the title) · head verbs · depth */
+  .desk-next .desk-window-shell > .desk-pullout-head > .p13-gadgets-left { order: 0; }
+  .desk-next .desk-window-shell > .desk-pullout-head > :is(.desk-wings, .desk-pullout-title) { order: 1; }
+  .desk-next .desk-window-shell > .desk-pullout-head > .desk-window-actions { order: 2; }
+  .desk-next .desk-window-shell > .desk-pullout-head > .p13-gadgets-right { order: 3; margin-left: 0; }
+}

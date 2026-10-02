@@ -18,11 +18,12 @@ import {
   contextualCoderSessions,
 } from "../contextual";
 import type { PulloutContentProps } from "./types";
+import { Button } from "../../components/signal/Signal";
 
 export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
   const selectedIds = useDesk((s) => s.selectedIds);
-  const { closePullout, speakToCoder, answerCoder } = useDesk.getState();
+  const { speakToCoder, answerCoder } = useDesk.getState();
   if (o.ref.kind !== "coder") return null;
   const ir = o.ref;
   const resourceRef = qualifiedRef(o.kind, o.id);
@@ -75,9 +76,7 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                         </SurfaceCode>
                       </SurfaceWell>
                     </FoldGadget>
-                    <button
-                      type="button"
-                      className="desk-chip"
+                    <Button dense variant="ghost"
                       onClick={() => {
                         setAnswered(null);
                         void speakToCoder(
@@ -92,7 +91,7 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                         : answered === "failed"
                           ? `Retry sending ${contextualCoderAction.source.title}`
                           : contextualCoderAction.label}
-                    </button>
+                    </Button>
                   </div>
                 ) : null}
                 <div className="desk-chat-well">
@@ -114,9 +113,7 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                       rows={2}
                       onChange={(event) => setCoderDraft(event.target.value)}
                     />
-                    <button
-                      type="button"
-                      className="desk-chip"
+                    <Button dense variant="primary"
                       disabled={!coderDraft.trim()}
                       onClick={() => {
                         setAnswered(null);
@@ -132,7 +129,7 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                       }}
                     >
                       {answered === "failed" ? "Retry reply" : "Send reply"}
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 <span className="quiet desk-coder-answer-state" role="status">
@@ -144,9 +141,7 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                         ? "DRAFT RECOVERED"
                         : "REPLY"}
                 </span>
-                <button
-                  type="button"
-                  className="desk-chip quiet"
+                <Button dense variant="ghost"
                   onClick={() => {
                     void answerCoder(
                       String(ir.agent || "claude"),
@@ -157,24 +152,22 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                   {answered === "selected"
                     ? "Dictation target"
                     : "Use the hotkey"}
-                </button>
+                </Button>
               </>
             ) : null}
           </div>
         </section>
       </div>
-      <SurfaceFooter verbs={<> <button
-          type="button"
-          className="desk-chip quiet"
+      <SurfaceFooter verbs={<> <Button dense variant="ghost"
           onClick={() => openSurfaceOr("dictate", "/dictation", resourceRef)}
         >
           Dictate about this
-        </button>
-        <button
-          type="button"
-          className="desk-chip quiet"
+        </Button>
+        <Button dense variant="ghost"
           onClick={() => {
-            closePullout(o.id);
+            // PHILO-13-05: close by the store's own id (the card's onClose);
+            // the bare `o.id` left a card opened as `coder:s1` open.
+            onClose();
             useSteering
               .getState()
               .openSession(
@@ -183,7 +176,7 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
           }}
         >
           Watch live
-        </button> </>} />
+        </Button> </>} />
     </>
   );
 }

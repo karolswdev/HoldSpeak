@@ -117,10 +117,14 @@ export function TrustWindow() {
             key={destination.id}
             label={destination.name}
             actions={
+              /* PHILO-13-04 (A3): Trust's fact is whether this route
+                 sends data out. "OFF" beside "Meeting summary" read as "the
+                 summary is off" (Settings says SET ON), and its dot was
+                 green. Now the lamp is lit only when data can leave. */
               <LampGadget
-                on
-                tone={destination.enabled ? "warn" : "ok"}
-                label={destination.enabled ? "Enabled" : "Off"}
+                on={destination.enabled}
+                tone="warn"
+                label={destination.enabled ? "SENDS OUT" : "SENDS NOTHING"}
               />
             }
           >

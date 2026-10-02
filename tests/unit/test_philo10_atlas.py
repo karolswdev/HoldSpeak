@@ -122,7 +122,14 @@ def test_every_api_step_exists_in_the_generated_openapi() -> None:
 
 
 def test_the_counts_over_every_atlas_file() -> None:
-    have = {path.name: len(json.loads(path.read_text())["cases"]) for path in general.ATLAS_FILES}
+    # PHILO-13 (H-B0b principle): each ``atlas-phase13-*`` file is counted by
+    # its own lane's test file (one count, one owner), so this count leaves
+    # them out. Only the count: the general fences still read every file.
+    have = {
+        path.name: len(json.loads(path.read_text())["cases"])
+        for path in general.ATLAS_FILES
+        if not path.name.startswith("atlas-phase13-")
+    }
     assert have == COUNTS
 
 

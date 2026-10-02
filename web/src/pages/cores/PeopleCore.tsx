@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CoreProps } from "./core-types";
 import { Button } from "../../components/signal/Signal";
-import { ApiError, apiFetch, readableError } from "../../lib/api";
+import { ApiError, apiFetch } from "../../lib/api";
+import { plainFailure } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
 import { announceTaskReturn, taskFocusPending } from "../../desk/returnToTask";
 import { CycleGadget, EgressChip, PadGadget, StringGadget } from "../../desk/surface/gadgets";
@@ -92,8 +93,10 @@ function readinessFace(state: ReadinessState) {
   switch (state) {
     case "locked": return { label: "Locked", action: "Retry" };
     case "key_unavailable": return { label: "Key unavailable", action: "Recovery" };
-    case "corrupt":
-    case "unavailable": return { label: "Store unavailable", action: "Recovery" };
+    case "corrupt": return { label: "Store unavailable", action: "Recovery" };
+    // PHILO-13-04: a store that is down comes back by itself; the verb tries
+    // it again here instead of sending him to Settings (J3-07).
+    case "unavailable": return { label: "Store unavailable", action: "Try again" };
     default: return { label: "Not set up", action: "Set up" };
   }
 }
@@ -109,6 +112,19 @@ function readinessForError(cause: unknown): Readiness {
   if (code.startsWith("people_key_")) return { readiness: "key_unavailable" };
   if (cause.status === 503 || code.startsWith("people_store_")) return { readiness: "unavailable" };
   return { readiness: "corrupt" };
+}
+
+/** PHILO-13-04 (A3): the store is down (503 / `people_store_*`). The
+ * person and the unsent draft stay on the window; the failure is one row
+ * with Try again (J3-06). The owner's Tenet 1: no over-engineering for safety. */
+function isStoreOutage(cause: unknown): boolean {
+  if (!(cause instanceof ApiError)) return false;
+  const code = String(
+    cause.payload && typeof cause.payload === "object"
+      ? (cause.payload as Record<string, unknown>).detail ?? ""
+      : "",
+  ).toLowerCase();
+  return cause.status === 503 || code.startsWith("people_store_");
 }
 
 /** A protected-plane failure means the encrypted DTOs must leave memory. */
@@ -164,7 +180,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     } catch (cause) {
       clearProtected();
       setReadiness(readinessForError(cause));
-      setError(readableError(cause));
+      setError(plainFailure("PEOPLE DID NOT LOAD", cause));
     } finally { setLoading(false); }
   }, [clearProtected]);
   useEffect(() => { void load(); }, [load]);
@@ -177,20 +193,23 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const unavailable = stateOf(readiness) !== "ready";
   const openSettings = () => openSurfaceOr("configure-settings", "/settings", "people-security");
   const recover = () => {
-    if (stateOf(readiness) === "locked") { void load(); return; }
+    if (stateOf(readiness) === "locked" || stateOf(readiness) === "unavailable") { void load(); return; }
     if (stateOf(readiness) !== "unconfigured") { openSettings(); return; }
     void apiFetch("/api/people/setup", { method: "POST", json: {} })
       .then(() => load())
       .catch((cause) => protectedFailure(cause));
   };
   const select = async (id: string) => {
-    setSelectedId(id); setDetail(null); setError("");
+    // PHILO-13-04 fix round (Astra counsel P2): a standing failure leaves only
+    // when this read lands; it is never cleared before the person is back.
+    setSelectedId(id); setDetail(null);
     try {
       const [relationship, sessions] = await Promise.all([
         apiFetch<{ relationship: Relationship }>(`/api/people/relationships/${encodeURIComponent(id)}`),
         apiFetch<{ one_on_ones: Session[] }>(`/api/people/relationships/${encodeURIComponent(id)}/one-on-ones`),
       ]);
       setDetail({ ...relationship.relationship, sessions: sessions.one_on_ones });
+      setError("");
     } catch (cause) { protectedFailure(cause); }
   };
   useEffect(() => {
@@ -210,13 +229,17 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     } catch (cause) { protectedFailure(cause); } finally { setBusy(false); }
   };
   function protectedFailure(cause: unknown) {
+    if (isStoreOutage(cause) && (selectedId || relationships.length)) {
+      setError(plainFailure("PEOPLE STORE", cause));
+      return;
+    }
     if (!isProtectedFailure(cause)) {
-      setError(readableError(cause));
+      setError(plainFailure("NOT DONE", cause));
       return;
     }
     clearProtected();
     setReadiness(readinessForError(cause));
-    setError(readableError(cause));
+    setError(plainFailure("PEOPLE STORE", cause));
   }
   const selected = detail ?? relationships.find((row) => row.id === selectedId) ?? null;
   const verbs = unavailable ? null : <Button dense variant="primary" onClick={() => document.getElementById("people-new-relationship")?.focus()}>New relationship</Button>;
@@ -233,9 +256,18 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       {error ? <span className="sr-only">{error}</span> : null}
     </div>;
   }
+  // PHILO-13-04 (A3): the failure is ONE row in the window's status bar, which
+  // stays on screen while he is down in a lens; the person and any unsent
+  // draft stay under it (J3-06). Try again re-reads the person (or the
+  // roster); the row leaves only when that read lands.
+  const failureRow = error ? (
+    <span className="people-failure" role="alert" data-testid="people-failure">
+      <span className="people-failure-label">{error}</span>
+      <Button dense variant="ghost" onClick={() => void (selectedId ? select(selectedId) : load())}>Try again</Button>
+    </span>
+  ) : null;
   return <div className="people-surface">
-    {renderHeroSlot(hero, verbs, facts())}
-    {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
+    {renderHeroSlot(hero, verbs, failureRow ?? facts())}
     <SurfaceSplit
       detailOpen={Boolean(selected)}
       main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} projectFilter={projectFilter} onClearProjectFilter={() => setProjectFilter(null)} />}

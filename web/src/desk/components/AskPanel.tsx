@@ -36,6 +36,18 @@ import { GroundingSection } from "./GroundingSection";
 import { RailsPicker } from "./RailsPicker";
 import { MicButton } from "./MicButton";
 import { apiRequest } from "../../lib/api";
+
+/** PHILO-13-04 (A3): an Ask that did not answer says so in plain words; the
+ * hub's own text (a model path, a refusal sentence) never reaches the face,
+ * its title included. A failure that can be asked again names the kept ask
+ * and the next step (the product-copy failure facts). */
+export function askFailureLabel(output: string): { label: string; canAskAgain: boolean } {
+  if (/model file not found|no default model|no model|model .*not (found|available)/i.test(output))
+    return { label: "NOT ANSWERED · NO MODEL TO RUN IT", canAskAgain: false };
+  if (/unreachable|network|failed to fetch|could not be reached/i.test(output))
+    return { label: "NOT ANSWERED · HUB UNREACHABLE · ASK KEPT · CHECK THE HUB", canAskAgain: true };
+  return { label: "NOT ANSWERED · THE HUB REFUSED IT · ASK KEPT · EDIT THE ASK", canAskAgain: true };
+}
 import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
 import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
@@ -85,6 +97,7 @@ export function AskPanel() {
   } | null>(null);
   const [result, setResult] = useState<AskRunResult | null>(null);
   const [error, setError] = useState("");
+  const [canAskAgain, setCanAskAgain] = useState(false);
   const [kept, setKept] = useState(false);
   const [grounding, setGrounding] =
     useState<GroundingSelection>(emptyGrounding());
@@ -184,7 +197,9 @@ export function AskPanel() {
       grounding: buildGrounding(grounding, rails),
     });
     if (!r.ok) {
-      setError(r.output);
+      const failed = askFailureLabel(r.output);
+      setError(failed.label);
+      setCanAskAgain(failed.canAskAgain);
       setPhase("compose");
       return;
     }
@@ -210,9 +225,7 @@ export function AskPanel() {
       markNew(artifactId);
     } else {
       setKept(false);
-      setError(
-        "Save failed. Your ask is retained. Retry.",
-      );
+      setError("NOT KEPT · PRESS KEEP AGAIN");
     }
   };
 
@@ -321,8 +334,16 @@ export function AskPanel() {
             </SurfaceTrafficTurn>
           ) : null}
           {sent && error && !result ? (
-            <SurfaceTrafficTurn prefix="HUB>" error>
-              {error}
+            <SurfaceTrafficTurn
+              prefix="HUB>"
+              error
+              verbs={canAskAgain ? (
+                <Button dense variant="ghost" onClick={() => void ask()}>
+                  Ask again
+                </Button>
+              ) : undefined}
+            >
+              <span data-testid="ask-failure">{error}</span>
             </SurfaceTrafficTurn>
           ) : null}
           {phase === "printed" && result ? (

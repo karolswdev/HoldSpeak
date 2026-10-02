@@ -1,0 +1,625 @@
+/* PHILO-13-11 (C1) — THE PROPOSED MATERIAL: "Workbench Steel".
+ *
+ * Workbench 2.0's four pens, kept as roles and modernised: pen 0 grey →
+ * --wb-steel (the frame, the bars, the gadgets), pen 1 black → --wb-ink (every
+ * line and every word on the frame), pen 2 white → --wb-paper (the screen bar,
+ * the menus, the shine), pen 3 blue → --wb-blue (the FRONT window: its frame
+ * and its title bar). The body of a window stays the dark Signal well, so the
+ * 19 DeskWindowFrame hosts read exactly as they do today, inside a Workbench
+ * frame. Ember stays the colour of a verb and of attention.
+ *
+ * Every rule below names the product file the build moves it into.
+ * Injected LAST by p13.tsx, so equal specificity wins over the product's rules.
+ */
+
+/* ═══ 1. TOKENS → web/design-tokens.json → tokens.css, COMPONENT layer ═══ */
+:root {
+  --wb-steel: #9ea4b0;        /* pen 0: the frame plate */
+  --wb-steel-2: #b3b8c2;      /* the plate under the pointer */
+  --wb-ink: #0b0c10;          /* pen 1: lines and words on the frame */
+  --wb-paper: #eef0f3;        /* pen 2: screen bar, menus, tags */
+  --wb-blue: #6688bb;         /* pen 3: the front window (Workbench 2.0's own blue) */
+  --wb-hi: rgba(255, 255, 255, 0.72);  /* the shine: top and left edges (light from the upper left) */
+  --wb-lo: rgba(0, 0, 0, 0.5);         /* the shade: bottom and right edges */
+  --wb-backdrop: #3c4454;     /* the Chair screen */
+  --wb-dither: #363e4d;       /* the backdrop pattern (Workbench's WBPattern, one step) */
+  --wb-rec: #b3261e;          /* REC on paper: 5.73:1 */
+  --wb-frame: 4px;            /* window border */
+  --wb-bar-h: 26px;           /* window title bar */
+  --wb-screen-h: 28px;        /* the screen title bar */
+  --wb-gadget-w: 26px;
+  --wb-raised: inset 1px 1px 0 var(--wb-hi), inset -1px -1px 0 var(--wb-lo);
+  --wb-sunken: inset 1px 1px 0 var(--wb-lo), inset -1px -1px 0 var(--wb-hi);
+  --wb-drop: 4px 4px 0 rgba(0, 0, 0, 0.32);  /* steroids: a hard offset, no blur */
+  --wb-stipple: repeating-linear-gradient(180deg, transparent 0 3px, rgba(0, 0, 0, 0.16) 3px 4px);
+
+  /* the existing component tokens, re-pointed (tokens.css) */
+  --desk-window-head-fill: var(--wb-steel);
+  --desk-window-head-front: var(--wb-blue);
+  --desk-window-keyline: var(--wb-ink);
+  --gadget-fill: var(--wb-steel);
+  --gadget-fill-hover: var(--wb-steel-2);
+  --desk-work-top: calc(var(--wb-screen-h) + 0px);
+  --desk-snap-top: calc(var(--wb-screen-h) + 8px);
+  --desk-snap-bottom: 84px;
+  --desk-work-bottom: 84px;
+}
+
+/* ═══ 2. THE WINDOW FRAME → window-chrome.css, pullout.css (every DeskWindowFrame host) ═══ */
+.desk-next .desk-window-shell {
+  border: var(--wb-frame) solid var(--wb-steel);
+  border-top: 0;
+  border-radius: 0;
+  box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), inset 0 0 0 1px var(--wb-ink);
+}
+.desk-next .desk-window-shell[data-p13-front] {
+  border-color: var(--wb-blue);
+  box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), inset 0 0 0 1px var(--wb-ink);
+}
+.desk-next .desk-window-shell:focus-visible { outline: 2px solid var(--wb-paper); outline-offset: 2px; }
+
+/* ONE front window on the screen (the product marks two today: grounding faces-surfaces.md:219).
+   The build: is-front from the one panelOrder; the canvas marks it data-p13-front. */
+.desk-next .desk-traffic[data-p13-today] { display: none !important; }
+
+/* the title bar = the drag bar */
+.desk-next .desk-pullout-head {
+  height: var(--wb-bar-h);
+  min-height: var(--wb-bar-h);
+  gap: 0;
+  padding: 0;
+  margin: 0 calc(-1 * var(--wb-frame));
+  background: var(--wb-stipple), var(--wb-steel);
+  border-bottom: 1px solid var(--wb-ink);
+  border-radius: 0;
+  color: var(--wb-ink);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .desk-window-shell[data-p13-front] > .desk-pullout-head {
+  background: var(--wb-stipple), var(--wb-blue);
+}
+.desk-next .desk-pullout-head .desk-pullout-title,
+.desk-next .desk-pullout-head .desk-window-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0 6px;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--wb-steel);
+  color: var(--wb-ink);
+  font: 700 12px/var(--wb-bar-h) var(--font-mono);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.desk-next .desk-window-shell[data-p13-front] > .desk-pullout-head .desk-pullout-title { background: var(--wb-blue); }
+.desk-next .desk-pullout-head > img { margin-left: 6px; background: transparent; }
+.desk-next .desk-pullout-head .desk-wings,
+.desk-next .desk-pullout-head .desk-window-actions { margin-left: auto; }
+.desk-next .desk-pullout-head .p13-gadgets-right { margin-left: auto; }
+.desk-next .desk-pullout-head .desk-wings ~ .p13-gadgets-right,
+.desk-next .desk-pullout-head .desk-window-actions ~ .p13-gadgets-right { margin-left: 0; }
+
+/* the gadget set: one row of bevelled boxes, flush to the corners, on the bar's own fill */
+.desk-next .p13-gadgets { display: flex; align-self: stretch; flex: none; }
+.desk-next .p13-gadget {
+  display: grid;
+  place-items: center;
+  width: var(--wb-gadget-w);
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: var(--wb-raised);
+  cursor: pointer;
+}
+.desk-next .p13-gadgets-left .p13-gadget { border-right: 1px solid var(--wb-ink); }
+.desk-next .p13-gadgets-right .p13-gadget { border-left: 1px solid var(--wb-ink); }
+.desk-next .p13-gadget:hover { background: rgba(255, 255, 255, 0.22); }
+.desk-next .p13-gadget:active { box-shadow: var(--wb-sunken); background: rgba(0, 0, 0, 0.12); }
+.desk-next .p13-gadget:focus-visible { outline: 2px solid var(--wb-paper); outline-offset: -3px; }
+.desk-next .p13-gadget svg { width: 14px; height: 12px; display: block; }
+
+/* the wing tabs in a title bar: raised steel; the open one sunken paper (a Workbench cycle) */
+.desk-next .desk-pullout-head .desk-wings { align-self: stretch; display: flex; gap: 0; background: transparent; padding: 0; border: 0; box-shadow: none; }
+.desk-next .desk-pullout-head .desk-wings button {
+  height: 100%;
+  min-height: 0;
+  padding: 0 12px;
+  border: 0;
+  border-left: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-steel);
+  color: var(--wb-ink);
+  box-shadow: var(--wb-raised);
+  font: 700 12px var(--font-mono);
+}
+.desk-next .desk-pullout-head .desk-wings button[aria-selected="true"],
+.desk-next .desk-pullout-head .desk-wings button[aria-pressed="true"],
+.desk-next .desk-pullout-head .desk-wings button.is-active {
+  background: var(--wb-paper);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .desk-pullout-head .desk-window-actions .btn,
+.desk-next .desk-pullout-head .desk-window-actions button {
+  color: var(--wb-ink);
+}
+
+/* the sizing gadget, bottom right, on the frame */
+.desk-next .desk-window-grip,
+.desk-next .p13-sizer {
+  position: absolute;
+  right: calc(-1 * var(--wb-frame));
+  bottom: calc(-1 * var(--wb-frame));
+  width: 18px;
+  height: 16px;
+  opacity: 1;
+  display: grid;
+  place-items: center;
+  border-left: 1px solid var(--wb-ink);
+  border-top: 1px solid var(--wb-ink);
+  background: var(--wb-steel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='12' viewBox='0 0 14 12' shape-rendering='crispEdges'%3E%3Crect x='5.5' y='4.5' width='7' height='6' fill='%23eef0f3' stroke='%230b0c10'/%3E%3Cpath d='M2.5 9.5V1.5h8' fill='none' stroke='%230b0c10'/%3E%3C/svg%3E") center / 14px 12px no-repeat;
+  box-shadow: var(--wb-raised);
+  z-index: 2;
+}
+.desk-next .p13-sizer { background-image: none; }
+.desk-next .desk-window-shell[data-p13-front] > .desk-window-grip,
+.desk-next .desk-window-shell[data-p13-front] > .p13-sizer { background-color: var(--wb-blue); }
+
+/* ═══ 3. THE SCREEN TITLE BAR → chrome-menus.css (.desk-menubar) ═══ */
+.desk-next .desk-menubar {
+  height: var(--wb-screen-h);
+  background: var(--wb-paper);
+  border-bottom: 1px solid var(--wb-ink);
+  box-shadow: inset 0 -1px 0 var(--wb-steel);
+  color: var(--wb-ink);
+  padding: 0 0 0 8px;
+}
+.desk-next .desk-menubar button,
+.desk-next .desk-menubar .desk-chip,
+.desk-next .desk-menubar .desk-clock,
+.desk-next .desk-menubar .desk-clock strong,
+.desk-next .desk-menubar .egress-badge,
+.desk-next .desk-menubar .desk-tools-launch {
+  color: var(--wb-ink);
+}
+.desk-next .desk-menubar button:hover,
+.desk-next .desk-menubar button:focus-visible,
+.desk-next .desk-menubar button[aria-expanded="true"] {
+  background: var(--wb-ink);
+  color: var(--wb-paper);
+}
+.desk-next .desk-menubar .desk-mark { font-weight: 700; }
+.desk-next .desk-menubar .egress-badge,
+.desk-next .desk-menubar .desk-tools-launch,
+.desk-next .desk-menubar .desk-bell {
+  border: 1px solid var(--wb-ink) !important;
+  background: var(--wb-steel) !important;
+  box-shadow: var(--wb-raised) !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  margin: 0 2px;
+}
+.desk-next .desk-menubar .egress-badge:hover,
+.desk-next .desk-menubar .desk-tools-launch:hover,
+.desk-next .desk-menubar .desk-bell:hover { background: var(--wb-steel-2) !important; color: var(--wb-ink) !important; }
+.desk-next .desk-menubar kbd { color: var(--wb-ink); border-color: var(--wb-ink); background: var(--wb-paper); font-size: 12px; }
+.desk-next .desk-menubar .desk-chrome-tl { flex: 1 1 auto; min-width: 0; }
+/* the front window's name, the screen's title */
+.desk-next .p13-screen-title {
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  margin: 0 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--wb-ink);
+  overflow: hidden;
+}
+.desk-next .p13-screen-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 700 13px var(--font-display);
+  color: var(--wb-ink);
+}
+/* the screen depth gadget at the right edge of the screen bar */
+.desk-next .desk-clock {
+  height: 100%;
+  padding: 0 12px;
+  border-left: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  color: var(--wb-ink);
+}
+.desk-next .desk-clock span { color: var(--wb-ink); }
+.desk-next .desk-clock strong { font-weight: 700; }
+
+/* ═══ 4. MENUS → chrome-menus.css (.desk-menu-list): paper, ink, the blue bar ═══ */
+.desk-next .desk-menu-list {
+  background: var(--wb-paper);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-raised), var(--wb-drop);
+  padding: 3px;
+}
+.desk-next .desk-menu-list a,
+.desk-next .desk-menu-list button { color: var(--wb-ink); }
+.desk-next .desk-menu-list svg,
+.desk-next .desk-menu-glyph,
+.desk-next .desk-menu-submark,
+.desk-next .desk-menu-list .quiet { color: var(--wb-ink); }
+.desk-next .desk-menu-list a:hover,
+.desk-next .desk-menu-list button:hover,
+.desk-next .desk-menu-list a:focus-visible,
+.desk-next .desk-menu-list button:focus-visible,
+.desk-next .desk-menu-list button.is-subopen {
+  background: var(--wb-blue);
+  color: var(--wb-ink);
+}
+.desk-next .desk-menu-list button:hover svg,
+.desk-next .desk-menu-list button:hover .desk-menu-glyph,
+.desk-next .desk-menu-list button:hover kbd,
+.desk-next .desk-menu-list button:focus-visible .desk-menu-glyph { color: var(--wb-ink); }
+.desk-next .desk-menu-sep { border-top-color: var(--wb-steel); border-bottom-color: #fff; }
+/* the Amiga-key column: each key a raised steel cap */
+.desk-next .desk-menu-well,
+.desk-next .desk-menu-list button:hover .desk-menu-well,
+.desk-next .desk-menu-list button:focus-visible .desk-menu-well {
+  min-width: 20px;
+  height: 18px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  color: var(--wb-ink);
+  font: 700 12px var(--font-mono);
+}
+
+/* ═══ 5. THE DOCK = the AppIcon shelf → dock.css ═══ */
+.desk-next .desk-dock {
+  left: 0;
+  right: 0;
+  transform: none;
+  width: auto;
+  max-width: none;
+  height: 76px;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 2px;
+  padding: 4px 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--wb-steel);
+  border-top: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-raised);
+  scrollbar-width: thin;
+}
+.desk-next .desk-dock-launch {
+  position: relative;
+  display: grid;
+  grid-template-rows: 36px auto;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-width: 66px;
+  max-width: 128px;
+  height: 66px;
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--wb-ink);
+  box-shadow: none;
+}
+.desk-next .desk-dock-launch:hover { background: var(--wb-steel-2); border-color: var(--wb-ink); box-shadow: var(--wb-raised); }
+.desk-next .desk-dock-launch .desk-dock-sprite { width: 32px; height: 32px; image-rendering: pixelated; filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.45)); }
+.desk-next .desk-dock-launch > span[aria-hidden="true"] { font-size: 24px; line-height: 32px; color: var(--wb-ink); }
+.desk-next .desk-dock-label,
+.desk-next .desk-dock-launch .desk-dock-label {
+  display: block;
+  max-width: 116px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 12px var(--font-mono);
+  color: var(--wb-ink);
+  background: transparent;
+  padding: 0 2px;
+}
+/* a running application: its icon is selected (Workbench: the icon inverts to its second image) */
+.desk-next .desk-dock-launch.is-run { background: var(--wb-steel); box-shadow: var(--wb-sunken); border-color: var(--wb-ink); }
+.desk-next .desk-dock-launch.is-run .desk-dock-label { background: var(--wb-ink); color: var(--wb-paper); }
+.desk-next .desk-dock-launch.is-front .desk-dock-label { background: var(--wb-blue); color: var(--wb-ink); }
+/* live state ON the icon: the count notch and the state tag */
+.desk-next .desk-dock-launch .desk-dock-badge {
+  position: absolute;
+  top: 2px;
+  left: calc(50% + 8px);
+  min-width: 22px;
+  height: 20px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--accent-ink);
+  color: var(--text-on-accent);
+  box-shadow: var(--wb-raised);
+  font: 700 12px var(--font-mono);
+}
+.desk-next .desk-dock-launch .desk-dock-badge:not([data-tone]) { background: var(--wb-paper); color: var(--wb-ink); }
+.desk-next .p13-appstate {
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 18px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+  box-shadow: var(--wb-raised);
+  font: 700 12px var(--font-mono);
+  white-space: nowrap;
+}
+.desk-next .p13-appstate[data-tone="rec"] { color: var(--wb-rec); }
+.desk-next .p13-appicon-project .desk-dock-label { max-width: 112px; }
+/* open windows: raised steel tabs that never push the shelf off the screen */
+.desk-next .desk-dock-sep { align-self: center; width: 2px; height: 48px; background: var(--wb-ink); box-shadow: 1px 0 0 var(--wb-hi); margin: 0 6px; }
+.desk-next .desk-dock-chip {
+  align-self: center;
+  display: inline-flex;
+  max-width: 200px;
+  height: 32px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .desk-dock-chip.is-front { background: var(--wb-blue); }
+.desk-next .desk-dock-chip.is-min { background: var(--wb-steel); box-shadow: var(--wb-sunken); }
+.desk-next .desk-dock-main { min-width: 0; color: var(--wb-ink); padding: 0 8px; background: transparent; }
+.desk-next .desk-dock-main .desk-dock-label { font-weight: 600; }
+.desk-next .desk-dock-x { color: var(--wb-ink); border-left: 1px solid var(--wb-ink); border-radius: 0; opacity: 1; }
+.desk-next .desk-dock-reset { align-self: center; color: var(--wb-ink); border: 1px solid var(--wb-ink); background: var(--wb-steel); box-shadow: var(--wb-raised); border-radius: 0; }
+.desk-next .desk-room-actions { align-self: center; }
+.desk-next .desk-room-actions > button { color: var(--wb-ink); border: 1px solid var(--wb-ink); background: var(--wb-steel); box-shadow: var(--wb-raised); border-radius: 0; font: 600 12px var(--font-mono); }
+.desk-next .desk-dock .desk-orb-wrap { align-self: center; }
+
+/* ═══ 6. THE CHAIR = a screen of windows → chair.css ═══ */
+.desk-next .chair:not(.chair-first-value) {
+  position: fixed;
+  inset: var(--wb-screen-h) 0 76px 0;
+  max-width: none;
+  height: auto;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--wb-backdrop);
+  background-image: conic-gradient(var(--wb-dither) 25%, transparent 0 50%, var(--wb-dither) 0 75%, transparent 0);
+  background-size: 4px 4px;
+}
+.desk-next .p13-chairdesk { position: absolute; inset: 0; }
+.desk-next .p13-chairwin {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--desk-window-fill);
+}
+.desk-next .p13-chairwin .p13-chairwin-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  white-space: normal;
+  gap: var(--space-4);
+  padding: 14px 16px 20px;
+}
+.desk-next .p13-chairwin[data-win="needs"]   { left: 14px; top: 14px; width: calc(50% - 22px); bottom: 126px; }
+.desk-next .p13-chairwin[data-win="capture"] { left: 14px; bottom: 14px; width: calc(50% - 22px); height: 100px; }
+.desk-next .p13-chairwin[data-win="brief"]   { left: calc(50% + 8px); right: 14px; top: 14px; height: calc(50% - 22px); }
+.desk-next .p13-chairwin[data-win="week"]    { left: calc(50% + 8px); right: 14px; bottom: 14px; height: calc(50% - 22px); }
+.desk-next .p13-chairwin[data-zoomed="true"] { left: 14px; top: 14px; right: 14px; bottom: 14px; width: auto; height: auto; }
+/* the capture bar lives in its window now: no floating bar over content */
+.desk-next .p13-chairwin .arrival-capture-bar {
+  position: static;
+  inset: auto;
+  transform: none;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.desk-next .p13-chairwin[data-win="capture"] .p13-chairwin-body { padding: 8px 12px; overflow: hidden; justify-content: center; }
+.desk-next .p13-chairwin .arrival-headline { padding-bottom: 4px; }
+
+/* ═══ 7. THE PARKED FACE (A1-F) → HistoryCore / WorkbenchWindow, species only ═══ */
+.desk-next .p13-parked { display: grid; gap: 6px; }
+.desk-next .p13-parked-facet { display: flex; gap: 6px; }
+.desk-next .p13-parked-chip { color: var(--text-muted); }
+.desk-next .p13-park-receipt { display: inline-flex; align-items: center; gap: 8px; }
+
+/* ═══ 8. 393: the phone desk (C7 owns its build; C1 draws the material at the width) ═══ */
+@media (max-width: 720px) {
+  :root { --wb-bar-h: 44px; --wb-gadget-w: 44px; --desk-snap-bottom: 72px; --desk-work-bottom: 72px; }
+  .desk-next .desk-dock { height: 68px; padding: 2px 4px; flex-wrap: nowrap; }
+  .desk-next .desk-dock-launch { min-width: 62px; height: 62px; }
+  .desk-next .desk-dock-launch .desk-dock-label { display: block; max-width: 60px; }
+  .desk-next .chair:not(.chair-first-value) { inset: var(--wb-screen-h) 0 68px 0; overflow-y: auto; }
+  .desk-next .p13-chairdesk { position: static; display: flex; flex-direction: column; gap: 6px; padding: 6px; min-height: 100%; box-sizing: border-box; }
+  .desk-next .p13-chairwin,
+  .desk-next .p13-chairwin[data-win] { position: relative; inset: auto; left: auto; right: auto; top: auto; bottom: auto; width: auto; height: auto; flex: none; }
+  .desk-next .p13-chairwin:not([data-phone-open]) .p13-chairwin-body { display: none; }
+  .desk-next .p13-chairwin[data-phone-open] { flex: 1 1 auto; min-height: 0; }
+  .desk-next .p13-screen-title { margin: 0 4px; padding-left: 8px; }
+  .desk-next .desk-clock span { display: none; }
+}
+
+/* ═══ THE ALTERNATIVE (C1-7 only): "Honest 2.0" — the four pens on every body too ═══ */
+:root[data-p13-theme="honest"] {
+  --wb-steel: #aaaaaa;
+  --wb-steel-2: #bbbbbb;
+  --wb-paper: #ffffff;
+  --wb-blue: #6688bb;
+  --wb-ink: #000000;
+  --wb-backdrop: #aaaaaa;
+  --wb-dither: #aaaaaa;
+  --wb-drop: 0 0 0 transparent;
+  --bg: #aaaaaa;
+  --surface-1: #aaaaaa;
+  --surface-2: #b6b6b6;
+  --surface-3: #c2c2c2;
+  --desk-window-fill: #aaaaaa;
+  --desk-panel-fill: #aaaaaa;
+  --desk-window-well: rgba(255, 255, 255, 0.35);
+  --text: #000000;
+  --text-muted: #1a1a1a;
+  --text-faint: #222222;
+  --border: #000000;
+  --border-strong: #000000;
+  --border-subtle: rgba(0, 0, 0, 0.35);
+  --accent: #6688bb;
+  --accent-ink: #6688bb;
+  --accent-ink-hover: #7a99c8;
+  --text-on-accent: #000000;
+  --ok: #1e5b2e;
+  --warn: #5a3c00;
+  --warn-signal: #5a3c00;
+  --danger: #7a1010;
+  --info: #0b3a66;
+  --local: #0b3a66;
+  --field-bg: #ffffff;
+  --surface-hover: rgba(255, 255, 255, 0.3);
+}
+
+/* ═══ C1-3 the material sheet (canvas only: the sheet is a drawing, not a product face) ═══ */
+.desk-next .p13-sheet-host { position: fixed; inset: var(--wb-screen-h) 0 76px 0; z-index: 60; background-color: var(--wb-backdrop); background-image: conic-gradient(var(--wb-dither) 25%, transparent 0 50%, var(--wb-dither) 0 75%, transparent 0); background-size: 4px 4px; }
+.desk-next .p13-sheet { left: 14px; top: 14px; right: 14px; bottom: 14px; }
+.desk-next .p13-sheet-body { gap: 14px; }
+.desk-next .p13-cap { font: 600 12px var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; }
+.desk-next .p13-sheet-row { display: flex; gap: 24px; flex-wrap: wrap; }
+.desk-next .p13-sheet-group { display: grid; gap: 8px; align-content: start; }
+.desk-next .p13-grow { flex: 1 1 360px; }
+.desk-next .p13-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.desk-next .p13-swatch { display: grid; gap: 2px; }
+.desk-next .p13-swatch-chip { height: 34px; border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised), 0 0 0 1px var(--wb-steel); }
+.desk-next .p13-swatch-name { font: 700 12px var(--font-mono); color: var(--text); }
+.desk-next .p13-swatch-val { font: 500 12px var(--font-mono); color: var(--text-muted); }
+.desk-next .p13-swatch-role { font: 600 12px var(--font-mono); color: var(--text-faint); letter-spacing: 0.04em; }
+.desk-next .p13-gadget-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.desk-next .p13-gadget-cell { display: grid; justify-items: center; gap: 4px; }
+.desk-next .p13-gadget-big { display: grid; place-items: center; width: 52px; height: 44px; background: var(--wb-steel); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised); }
+.desk-next .p13-gadget-big svg { width: 28px; height: 24px; }
+.desk-next .p13-bevel { width: 52px; height: 44px; display: block; background: var(--wb-steel); border: 1px solid var(--wb-ink); }
+.desk-next .p13-bevel[data-b="raised"] { box-shadow: var(--wb-raised); }
+.desk-next .p13-bevel[data-b="sunken"] { box-shadow: var(--wb-sunken); }
+.desk-next .p13-bevel[data-b="drop"] { box-shadow: var(--wb-raised), var(--wb-drop); }
+.desk-next .p13-sample-stack { position: relative; height: 150px; }
+.desk-next .p13-sample-win { position: absolute; display: flex; flex-direction: column; width: 300px; height: 104px; background: var(--desk-window-fill); }
+.desk-next .p13-sample-win:first-child { left: 0; top: 0; }
+.desk-next .p13-sample-win.is-front { left: 120px; top: 40px; width: 340px; }
+.desk-next .p13-sample-body { padding: 10px 14px; font: 600 12px var(--font-mono); color: var(--text-muted); }
+.desk-next .p13-sizes { display: grid; gap: 6px; }
+.desk-next .p13-size { display: flex; gap: 10px; justify-content: space-between; min-width: 260px; }
+.desk-next .p13-verbs { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.desk-next .p13-dock-sample { position: static; transform: none; height: 72px; width: auto; overflow: visible; }
+.desk-next .p13-type { display: grid; gap: 6px; }
+.desk-next .p13-type-primary { font: var(--desk-type-primary-weight) var(--desk-type-primary-size) var(--font-sans); color: var(--text); }
+.desk-next .p13-type-body { font-size: var(--desk-surface-body-size); color: var(--text); }
+
+/* the 12 px floor holds in every title bar, whatever a host puts in its actions slot */
+.desk-next .desk-pullout-head .desk-window-actions,
+.desk-next .desk-pullout-head .desk-window-actions * { font-size: 12px; }
+
+.desk-next .desk-dock-launch:has(.p13-appstate) { min-width: 104px; }
+.desk-next .desk-dock { gap: 6px; }
+.desk-next .desk-menu-list button:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--wb-ink); }
+.desk-next .desk-pullout-head .desk-window-actions,
+.desk-next .desk-pullout-head .desk-window-actions * { color: var(--wb-ink) !important; }
+.desk-next .desk-pullout-head .desk-pullout-title { flex-shrink: 0; max-width: 45%; }
+.desk-next .p13-park-receipt .surface-footer-receipt-line { font: 600 12px var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); }
+
+/* ═══ 393: the screen bar holds ONE line: mark, Go, the front window, egress lamp, search, time ═══ */
+@media (max-width: 720px) {
+  .desk-next .desk-menubar { flex-wrap: nowrap; overflow: hidden; gap: 0; padding-left: 4px; }
+  .desk-next .desk-menubar .desk-chrome { flex-wrap: nowrap; }
+  .desk-next .desk-menubar .desk-mark { width: 30px; min-width: 30px; overflow: hidden; padding: 0 7px; white-space: nowrap; color: transparent; }
+  .desk-next .desk-menubar .egress-badge { max-width: 26px; overflow: hidden; padding: 0 6px !important; white-space: nowrap; }
+  .desk-next .desk-menubar .desk-tools-launch { max-width: 32px; overflow: hidden; padding: 0 7px !important; white-space: nowrap; }
+  .desk-next .desk-menubar .desk-verbbar button,
+  .desk-next .desk-menubar [data-menu-id] button { color: var(--wb-ink); }
+  .desk-next .desk-chrome-tr { flex: none; flex-wrap: nowrap; }
+  .desk-next .desk-clock { display: inline-flex; flex-wrap: nowrap; white-space: nowrap; padding: 0 8px; }
+  .desk-next .p13-screen-title { flex: 1 1 0; }
+  /* a window head at 393: one line of gadgets and title; wings below, inside the bar */
+  .desk-next .desk-window-shell.is-sheet { border-radius: 0; }
+  .desk-next .desk-pullout-head { flex-wrap: wrap; height: auto; min-height: var(--wb-bar-h); align-items: stretch; }
+  .desk-next .desk-pullout-head .p13-gadgets { height: var(--wb-bar-h); order: 0; }
+  .desk-next .desk-pullout-head .p13-gadgets-right { order: 2; margin-left: auto; }
+  .desk-next .desk-pullout-head .desk-pullout-title { order: 1; flex: 1 1 0; min-width: 0; line-height: var(--wb-bar-h); }
+  .desk-next .desk-pullout-head > :not(.p13-gadgets):not(.desk-pullout-title) { order: 3; }
+  .desk-next .desk-pullout-head .desk-wings { flex: 1 0 100%; height: 36px; margin: 0; border-top: 1px solid var(--wb-ink); }
+  .desk-next .desk-pullout-head .desk-window-actions { flex: 1 0 100%; margin: 0; padding: 4px 8px; border-top: 1px solid var(--wb-ink); }
+  /* the AppIcons: the picture and its live state; the name rides the accessible name */
+  .desk-next .desk-dock-launch { grid-template-rows: 36px; min-width: 58px; height: 60px; }
+  .desk-next .desk-dock-launch .desk-dock-label { display: none; }
+  .desk-next .desk-dock-launch:has(.p13-appstate) { min-width: 96px; }
+  .desk-next .desk-dock-launch .p13-appstate { top: auto; bottom: 2px; }
+}
+/* the count on the bell wears the ember INK plate (5.24:1), as every count on the frame does → attention.css */
+.desk-next .desk-menubar .desk-bell strong { background: var(--accent-ink); color: var(--text-on-accent); border: 1px solid var(--wb-ink); }
+/* whatever a host puts in its actions slot wears the gadget plate, never a dark chip on the bar */
+.desk-next .desk-pullout-head .desk-window-actions .desk-chip,
+.desk-next .desk-pullout-head .desk-window-actions button {
+  background: var(--wb-steel) !important;
+  border: 1px solid var(--wb-ink) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--wb-raised) !important;
+}
+@media (max-width: 720px) {
+  .desk-next .desk-pullout-head > img { order: 1; align-self: center; }
+}
+/* the shelf never squeezes an icon: it scrolls inside the viewport instead (dock.css) */
+.desk-next .desk-dock > * { flex-shrink: 0; }
+
+/* ═══ 393: the shelf ends on a whole icon; the daily seats first; a More gadget at the edge ═══ */
+@media (max-width: 720px) {
+  .desk-next .desk-dock { gap: 0; padding: 2px 0 2px 4px; scroll-snap-type: x mandatory; scroll-padding-left: 4px; }
+  .desk-next .desk-dock > * { order: 10; scroll-snap-align: start; }
+  .desk-next .desk-dock .desk-dock-launch,
+  .desk-next .desk-dock .desk-dock-launch:has(.p13-appstate) { min-width: 85px; max-width: 85px; width: 85px; }
+  .desk-next .desk-dock > [aria-label^="Intelligence"] { order: 1; }
+  .desk-next .desk-dock > [aria-label^="Meetings"] { order: 2; }
+  .desk-next .desk-dock > .p13-appicon:not(.p13-appicon-project) { order: 3; }
+  .desk-next .desk-dock > .p13-appicon-project { order: 4; }
+  .desk-next .desk-dock > .p13-dock-more {
+    order: 99;
+    position: sticky;
+    right: 0;
+    flex: 0 0 48px;
+    width: 48px;
+    min-height: 0;
+    align-self: stretch;
+    display: grid;
+    place-items: center;
+    margin-left: auto;
+    border: 0;
+    border-left: 1px solid var(--wb-ink);
+    border-radius: 0;
+    background: var(--wb-steel);
+    box-shadow: var(--wb-raised), -6px 0 8px -4px rgba(0, 0, 0, 0.35);
+    color: var(--wb-ink);
+    font: 700 18px var(--font-mono);
+    z-index: 2;
+  }
+}

@@ -1,0 +1,1 @@
+{'window': 'pullout:note:note_2dcd3c284b6c', 'centre': [196, 582], 'hit': {'tag': 'td', 'cls': '', 'testid': None, 'window': None, 'desk': True}, 'left_in_dom': []}

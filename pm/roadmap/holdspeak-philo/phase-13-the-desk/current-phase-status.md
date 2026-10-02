@@ -137,13 +137,13 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | PHILO-13-02 | A1 — Park, never delete | in-progress | [story-02-a1-park-never-delete](./story-02-a1-park-never-delete.md) | — |
 | PHILO-13-03 | A2 — One meaning of "needs you" | in-progress | [story-03-a2-one-meaning-of-needs-you](./story-03-a2-one-meaning-of-needs-you.md) | [H-A2 draft proof](lane-03-astra.md); awaiting A2-W and Muad'Dib |
 | PHILO-13-04 | A3 — Faces that do not lie | in-progress | [story-04-a3-faces-that-do-not-lie](./story-04-a3-faces-that-do-not-lie.md) | [H-A3 draft proof](lane-04-astra.md); awaiting A3-W and Muad'Dib |
-| PHILO-13-05 | A4 — Close means gone | backlog | [story-05-a4-close-means-gone](./story-05-a4-close-means-gone.md) | — |
+| PHILO-13-05 | A4 — Close means gone | done | [story-05-a4-close-means-gone](./story-05-a4-close-means-gone.md) | [evidence-story-05](./evidence-story-05.md) |
 | PHILO-13-06 | B1 — One open grammar | backlog | [story-06-b1-one-open-grammar](./story-06-b1-one-open-grammar.md) | — |
 | PHILO-13-07 | B2 — The Desk remembers | backlog | [story-07-b2-the-desk-remembers](./story-07-b2-the-desk-remembers.md) | — |
 | PHILO-13-08 | B3 — Decide where the meeting is | backlog | [story-08-b3-decide-where-the-meeting-is](./story-08-b3-decide-where-the-meeting-is.md) | — |
 | PHILO-13-09 | B4 — The 1:1 finds its person | backlog | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | — |
 | PHILO-13-10 | B5 — The update writes the week | backlog | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | — |
-| PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | backlog | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
+| PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | in-progress | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
 | PHILO-13-12 | C2 — The gadgets that are missing | backlog | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | — |
 | PHILO-13-13 | C3 — A live Dock (AppIcons) | backlog | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
 | PHILO-13-14 | C4 — A palette that knows his week and does verbs | backlog | [story-14-c4-a-palette-that-knows-his-week](./story-14-c4-a-palette-that-knows-his-week.md) | — |
@@ -245,6 +245,12 @@ The canvas set, in order: C1's canvas first (the frame, the chrome, the Chair, t
 D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
+
+2026-10-02: **The Workbench look RATIFIED by the owner** ("Ratify, build it"; Steel; Park one press; Capture as a fourth Chair window) after Astra's canvas checks r1–r5 (r5 RATIFY). Wave C faces may now be built to `design/workbench-look.md`; each merge record cites the ratification (story 11).
+
+2026-10-01: **PHILO-13-11 (C1) canvases drawn, round two** (`assets/story-11-canvas/`, `design/workbench-look.md`): 29 boards at 1440 and 393 on the real product with a harness shim; direction **Workbench Steel** recommended over Honest 2.0; the fixed Desk drawn (one needs-you number, narrower counts named). In-progress: Astra's check, then the owner's ratification.
+
+2026-10-01: **PHILO-13-05 (A4) done** in `wt-philo-13-muaddib` (Fedaykin; Muad'Dib verified): the closed-window ghost fixed at its seam (the card now closes by the id the store keeps); red on main → green in unit (5), glass (4) and the atlas at 1440 and 393; `elementFromPoint` hits the Desk after Close for six openers. PHILO-13-04 (A3) built and committed **in-progress**: acceptance 2 waits on handoff H-A3 (Astra: a stored-summary field on `/api/meetings` rows; the faces lane wires the rail). See the story's Amendment. UNCHECKED — awaiting Astra's counsel on built.
 
 2026-10-02: #727, #728 and #726 counsel conditions are paid on their r2 draft branches and recorded in the ownership/handoff map above. Astra's H-A3 backend handoff is in progress on `feat/philo-13-a3h-astra`: `/api/meetings` list/search `has_summary` comes from the same latest persisted summary as detail and the face rail remains A3-W's. The five-column status index keeps Stories 01–04 in-progress. H-A3 stays in-progress until A3-W also merges.
 

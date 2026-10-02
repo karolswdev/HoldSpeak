@@ -267,7 +267,7 @@ export function WorldStage() {
         <InlineEditor key={editingObj.id} o={editingObj} u={editorU} />
       )}
       {openCards.map((p) => (
-        <Pullout key={p.id} o={p.obj} origin={p.origin} />
+        <Pullout key={p.id} o={p.obj} pulloutId={p.id} origin={p.origin} />
       ))}
       {zoneWindows.map((w) => (
         <ZoneWindow key={w.id} zoneId={w.id} origin={w.origin} />

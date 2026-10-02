@@ -27,6 +27,7 @@ import { SYSTEM } from "../systemSprites";
 import {
   DICTATION_FAILURES,
   dictationFailure,
+  needsMicrophoneDoctor,
   refusalCode,
   streamFailure,
   type DictationFailure,
@@ -37,6 +38,27 @@ import type { VoiceGrammar, VoiceProposal } from "../voice/grammar";
 import { routeVoiceIntent } from "../voice/intentRouter";
 import { play as sfx } from "../../lib/sfx";
 import { Button } from "../../components/signal/Signal";
+import { openSurfaceOr } from "../shell";
+
+/** PHILO-13-04 (A3) — the failure's name, never a sentence (UX-CANON A.3),
+ * on the face and on its title alike; the recoveries are library Buttons
+ * (J5-02: `Open Setup` was text inside a sentence). */
+const FAILURE_LABEL: Record<DictationFailure, string> = {
+  permission_denied: "MICROPHONE BLOCKED",
+  no_microphone: "NO MICROPHONE",
+  microphone_unavailable: "MICROPHONE DID NOT START",
+  missing_model: "TRANSCRIPTION UNAVAILABLE",
+  rejected_token: "HUB REFUSED ACCESS",
+  unreachable_hub: "HUB UNREACHABLE",
+  delivery_conflict: "NOT DELIVERED",
+  transcription_failed: "TRANSCRIPTION FAILED",
+  timeout: "TIMED OUT",
+  no_speech: "NO SPEECH HEARD",
+  mic_interval_closed: "MIC SESSION CLOSED",
+  provider_failure: "SPEECH PROVIDER FAILED",
+  audio_floor_held: "MICROPHONE IN USE",
+  unknown: "DICTATION DID NOT FINISH",
+};
 
 export type MicState = "idle" | "listening" | "busy" | "failed";
 
@@ -158,9 +180,11 @@ export function MicButton({
 
   const captureSupported = speakToFillSupported() || micStreamSupported();
   if (!captureSupported && !audioRetained) {
-    const reason =
-      speakToFillUnsupportedReason() ??
-      "This browser cannot capture microphone audio.";
+    // PHILO-13-04 round three: a NAME for the fact, never the sentence, in
+    // the title and the accessible name alike (Tenet 4).
+    const unsupportedName = /secure origin/i.test(speakToFillUnsupportedReason() ?? "")
+      ? "NEEDS LOCALHOST OR HTTPS"
+      : "NO MICROPHONE IN THIS BROWSER";
     return (
       <Button
         variant="chrome"
@@ -170,8 +194,8 @@ export function MicButton({
             : "desk-mic is-unsupported"
         }
         disabled
-        title={reason}
-        aria-label={`${label} (unavailable: ${reason})`}
+        title={unsupportedName}
+        aria-label={`${label} · ${unsupportedName}`}
         onClick={(e) => e.stopPropagation()}
       >
         <MicFace transport={transport} state="idle" />
@@ -381,13 +405,7 @@ export function MicButton({
             ? `desk-mic gadget-transport-key is-${state}`
             : `desk-mic is-${state}`
         }
-        title={
-          failure
-            ? failureCode
-              ? `${failureCode} · ${DICTATION_FAILURES[failure].message}`
-              : DICTATION_FAILURES[failure].message
-            : label
-        }
+        title={failure ? (failureCode ?? FAILURE_LABEL[failure]) : label}
         aria-label={
           audioRetained
             ? "Retry retained audio"
@@ -419,12 +437,25 @@ export function MicButton({
       ) : null}
       {failure && !transport ? (
         <span className="desk-mic-failure" role="status">
-          {failureCode ? (
-            <b className="desk-mic-failure-code">{failureCode}</b>
+          <b className="desk-mic-failure-code">{failureCode ?? FAILURE_LABEL[failure]}</b>
+          {audioRetained ? " · AUDIO KEPT" : ""}
+          {DICTATION_FAILURES[failure].retry ? (
+            <Button dense variant="ghost" onClick={() => toggle()}>
+              Retry
+            </Button>
           ) : null}
-          {failureCode ? " " : ""}
-          {audioRetained ? "Captured audio is retained locally. " : ""}
-          {DICTATION_FAILURES[failure].message}
+          {DICTATION_FAILURES[failure].setup ? (
+            <Button
+              dense
+              variant="ghost"
+              // PHILO-13-04 fix round (Astra counsel P2): every setup
+              // recovery opens Setup (readiness, check by check), never New
+              // Project (that one is DoorCore).
+              onClick={() => openSurfaceOr("configure-setup", "/")}
+            >
+              {needsMicrophoneDoctor(failure) ? "Check the microphone" : "Open Setup"}
+            </Button>
+          ) : null}
         </span>
       ) : null}
       <VoiceProposalStrip

@@ -85,3 +85,15 @@
     flex: 1 1 100%;
   }
 }
+
+/* PHILO-13-04 (A3): a People failure is ONE row in the window's status bar,
+   so it stays in view while he is down in a lens; its verb sits beside it. */
+.people-failure {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--warn);
+  font: 600 12px / 1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+}

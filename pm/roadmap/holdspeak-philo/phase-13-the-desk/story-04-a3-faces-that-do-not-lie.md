@@ -66,3 +66,7 @@ Grounding size: Record `res.ok` is part of move 5 (M) (`grounding/faces-jobs.md:
 - 2026-10-02 — Astra's H-A3 r2 handoff is in progress on `feat/philo-13-a3h-astra`; the list/search boolean is data-only and stays in-progress pending Muad'Dib's A3-W rail.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+## Amendment — 2026-10-01 (Muad'Dib, visible; the owner may overrule)
+
+Built and verified in the faces lane (`evidence-story-04.md`). **Acceptance 2 is partly met:** the Meetings **list rail** still reads `OFF` beside a meeting that stores a summary, because `/api/meetings` list rows carry no summary field (a route change, Astra's file). New named handoff **H-A3:** Astra adds a stored-summary field to the `/api/meetings` list rows (real producer, route fence); the faces lane wires the rail (`HistoryCore.tsx`) to name the fact `SUMMARY STORED`. This story stays **in-progress** until both halves merge. Ledger from the build (homes): Intelligence's Acknowledge/Defer/Speak still shown on a brief failure (A.11) → B1; Room *load* failures still print raw text (`useProjectRoomController.ts`, `ProjectRoomCore.tsx:2302`) → B1; Ask's no-model case matched on hub text → C4; Settings `Voice ✓ LIVE` vs Speak `DICTATION NOT SET` → C6.

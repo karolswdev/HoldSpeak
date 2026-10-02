@@ -20,12 +20,17 @@ import { ThoughtWorkspaceWindow } from "../thought-workspace/ThoughtWorkspaceWin
 
 function PulloutFrame({
   o,
+  pulloutId,
   origin,
   noteStatus,
   onThoughtOwned,
   overrideContent,
 }: {
   o: WorldObject;
+  /** PHILO-13-05 — the id the store keeps for this card (`decision:d1` or a
+   * bare `d1`, as the opener gave it). The frame and Close use it, so Close
+   * removes exactly this card. */
+  pulloutId: string;
   /** The client point the open gesture happened at (spatial motion). */
   origin?: { x: number; y: number } | null;
   noteStatus?: NoteThoughtStatus;
@@ -55,7 +60,7 @@ function PulloutFrame({
 
   return (
     <DeskWindowFrame
-      id={`pullout:${o.id}`}
+      id={`pullout:${pulloutId}`}
       glyph="▤"
       label={o.title}
       className="desk-pullout is-card"
@@ -65,7 +70,7 @@ function PulloutFrame({
       icon={<img src={spriteUrl(o.kind, o.id)} alt="" width={30} height={30} className={spriteStateCssClass((o as { spriteState?: string }).spriteState ?? null) || undefined} data-sprite-variant={spriteVariantKey(o.kind, (o as { spriteState?: string }).spriteState ?? null)} />}
       title={o.title}
       open
-      onClose={() => closePullout(o.id)}
+      onClose={() => closePullout(pulloutId)}
       actions={
         <>
           {egress && (
@@ -99,16 +104,16 @@ function PulloutFrame({
       }
     >
       {overrideContent ?? (o.kind === "note"
-        ? <NotePullout object={o} onClose={() => closePullout(o.id)} initialStatus={noteStatus} onThoughtOwned={onThoughtOwned} />
-        : <Content object={o} onClose={() => closePullout(o.id)} />)}
+        ? <NotePullout object={o} onClose={() => closePullout(pulloutId)} initialStatus={noteStatus} onThoughtOwned={onThoughtOwned} />
+        : <Content object={o} onClose={() => closePullout(pulloutId)} />)}
     </DeskWindowFrame>
   );
 }
 
-function NoteWindowRouter({ o, origin }: { o: WorldObject; origin?: { x: number; y: number } | null }) {
+function NoteWindowRouter({ o, pulloutId, origin }: { o: WorldObject; pulloutId: string; origin?: { x: number; y: number } | null }) {
   const [status, setStatus] = useState<NoteThoughtStatus | null>(null);
   const [failed, setFailed] = useState(false);
-  const close = () => useDesk.getState().closePullout(o.id);
+  const close = () => useDesk.getState().closePullout(pulloutId);
   const load = () => {
     setFailed(false);
     void thoughtForNote(o.id).then(setStatus).catch(() => setFailed(true));
@@ -120,11 +125,23 @@ function NoteWindowRouter({ o, origin }: { o: WorldObject; origin?: { x: number;
     return () => { live = false; };
   }, [o.id]);
 
-  if (status?.ownership === "thought") return <ThoughtWorkspaceWindow object={o} thought={status.thought} origin={origin} onClose={close} />;
-  if (status?.ownership === "ordinary") return <PulloutFrame o={o} origin={origin} noteStatus={status} onThoughtOwned={(thought) => setStatus({ ownership: "thought", thought })} />;
-  return <PulloutFrame o={o} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body thought-workspace-opening" aria-busy={!failed}>{failed ? <><p>Could not check this Note on this hub.</p><Button variant="primary" onClick={load}>Try again</Button></> : <span>Opening Note…</span>}</div>} />;
+  if (status?.ownership === "thought") return <ThoughtWorkspaceWindow object={o} pulloutId={pulloutId} thought={status.thought} origin={origin} onClose={close} />;
+  if (status?.ownership === "ordinary") return <PulloutFrame o={o} pulloutId={pulloutId} origin={origin} noteStatus={status} onThoughtOwned={(thought) => setStatus({ ownership: "thought", thought })} />;
+  return <PulloutFrame o={o} pulloutId={pulloutId} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body thought-workspace-opening" aria-busy={!failed}>{failed ? <><p>Could not check this Note on this hub.</p><Button variant="primary" onClick={load}>Try again</Button></> : <span>Opening Note…</span>}</div>} />;
 }
 
-export function Pullout({ o, origin }: { o: WorldObject; origin?: { x: number; y: number } | null }) {
-  return o.kind === "note" ? <NoteWindowRouter o={o} origin={origin} /> : <PulloutFrame o={o} origin={origin} />;
+export function Pullout({
+  o,
+  pulloutId,
+  origin,
+}: {
+  o: WorldObject;
+  /** The id the store keeps (`pullouts[].id`); defaults to the bare `o.id`. */
+  pulloutId?: string;
+  origin?: { x: number; y: number } | null;
+}) {
+  const storeId = pulloutId ?? o.id;
+  return o.kind === "note"
+    ? <NoteWindowRouter o={o} pulloutId={storeId} origin={origin} />
+    : <PulloutFrame o={o} pulloutId={storeId} origin={origin} />;
 }
