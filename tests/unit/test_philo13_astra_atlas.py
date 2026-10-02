@@ -10,6 +10,7 @@ from __future__ import annotations
 import copy
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -29,6 +30,47 @@ EXPECTED_CASES = {
     "case.p13.coder.pullout",
     "case.p13.directory.zone",
     "case.p13.info.window",
+}
+
+LIFECYCLE_CASES = {
+    "case.p13.roadmap.window": {
+        "first_observe": ".desk-roadmap-window",
+        "refusal_observe": '.desk-roadmap-window:has-text("Roadmap not found")',
+        "reenter": "Floor",
+        "reopen_selector": '[id="desk-palette-option-roadmap:roadmap:atlas-desk"]',
+    },
+    "case.p13.repository.window": {
+        "first_observe": '.desk-repo-files .desk-sortable-table-row:has-text("atlas_repository.py")',
+        "reenter": "Floor",
+        "reopen_selector": '[id="desk-palette-option-repository:{repository_id}"]',
+    },
+    "case.p13.delivery.dossier_window": {
+        "first_observe": ".desk-dlv-dossier .desk-dlv-facts-line",
+        "reenter": "Delivery",
+        "reopen_selector": '.desk-dlv-board .desk-mc-story-pick:has-text("ATLAS-1-01")',
+    },
+    "case.p13.delivery.terminal_window": {
+        "first_observe": '.desk-dlv-terminal :text("Atlas terminal")',
+        "reenter": "Delivery",
+        "reopen_selector": '.desk-dlv-sessions .surface-ledger-line:has-text("atlas_terminal")',
+    },
+    "case.p13.chain.pullout": {
+        "first_observe": '.desk-pullout[aria-label="Atlas B0 Sequence"] :text("No steps")',
+        "reenter": "Floor",
+        "reopen_selector": '[id="desk-palette-option-chain:{chain_id}"]',
+    },
+    "case.p13.coder.pullout": {
+        "first_observe": '.desk-pullout.is-card :text("Should I run the full suite now?")',
+        "reenter": "Floor",
+        "reopen_selector": '[id="desk-palette-option-coder:{coder_session_id}"]',
+    },
+}
+
+REPOSITORY_CASES = {
+    "case.p13.roadmap.window",
+    "case.p13.repository.window",
+    "case.p13.delivery.dossier_window",
+    "case.p13.delivery.terminal_window",
 }
 
 
@@ -63,6 +105,355 @@ def _cases() -> dict[str, dict]:
     return {case["id"]: case for case in _atlas()["cases"]}
 
 
+def _steps(case: dict) -> list[dict]:
+    """Flatten real setup/trigger steps, including the trigger's `then` list."""
+    pending = [*case.get("setup", [])]
+    if case.get("trigger"):
+        pending.append(case["trigger"])
+    flattened: list[dict] = []
+    while pending:
+        step = pending.pop(0)
+        flattened.append(step)
+        then = step.get("then")
+        if isinstance(then, list):
+            pending[0:0] = then
+    return flattened
+
+
+def _assert_phase13_lifecycle_fence(atlas: dict) -> None:
+    """Make each live first open and return leg belong to its trigger."""
+    cases = {case["id"]: case for case in atlas["cases"]}
+    for case_id, contract in LIFECYCLE_CASES.items():
+        case = cases[case_id]
+        setup_lifecycle = [
+            step for step in case.get("setup", [])
+            if step.get("action") == "reload"
+            or "Close " in step.get("selector", "")
+            or step.get("selector") == contract["first_observe"]
+            or (
+                contract.get("refusal_observe")
+                and step.get("selector") == contract["refusal_observe"]
+            )
+            or step.get("selector") == ".desk-tools-launch"
+            or step.get("selector") == contract["reopen_selector"]
+            or (
+                step.get("action") == "click_role"
+                and step.get("name") == contract["reenter"]
+            )
+        ]
+        assert not setup_lifecycle, f"{case_id}: setup owns live lifecycle {setup_lifecycle!r}"
+
+        trigger_steps = _steps({"setup": [], "trigger": case["trigger"]})
+        first_observations = [
+            i for i, step in enumerate(trigger_steps)
+            if step.get("action") == "wait_for"
+            and step.get("selector") == contract["first_observe"]
+            and step.get("state", "visible") == "visible"
+        ]
+        assert first_observations, f"{case_id}: trigger does not observe its first open"
+        close_index = next(
+            i for i, step in enumerate(trigger_steps)
+            if "Close " in step.get("selector", "")
+        )
+        assert first_observations[0] < close_index, case_id
+        assert trigger_steps[close_index + 1]["action"] == "wait_for", case_id
+        assert trigger_steps[close_index + 1]["state"] == "hidden", case_id
+
+        reload_index = next(
+            i for i, step in enumerate(trigger_steps[close_index + 1:], close_index + 1)
+            if step.get("action") == "reload"
+        )
+        assert reload_index > close_index, case_id
+        reentry_index = next(
+            i for i, step in enumerate(trigger_steps[reload_index + 1:], reload_index + 1)
+            if step.get("action") == "click_role"
+            and step.get("name") == contract["reenter"]
+        )
+        reopen_indices = [
+            i for i, step in enumerate(trigger_steps)
+            if step.get("selector") == contract["reopen_selector"]
+        ]
+        assert len(reopen_indices) >= 2, f"{case_id}: final opener is not in trigger.then"
+        assert reopen_indices[-1] > reentry_index, case_id
+        final_observations = [
+            i for i in first_observations[1:]
+            if i > reopen_indices[-1]
+        ]
+        assert final_observations, f"{case_id}: trigger does not observe its reopened face"
+
+        refusal_selector = contract.get("refusal_observe")
+        if refusal_selector:
+            refusal_observations = [
+                i for i, step in enumerate(trigger_steps)
+                if step.get("action") == "wait_for"
+                and step.get("selector") == refusal_selector
+                and step.get("state", "visible") == "visible"
+            ]
+            assert len(refusal_observations) >= 2, (
+                f"{case_id}: trigger must observe the first and final refusal"
+            )
+            assert first_observations[0] < refusal_observations[0] < close_index, case_id
+            assert first_observations[-1] < refusal_observations[-1], case_id
+            assert refusal_observations[-1] > reopen_indices[-1], case_id
+
+
+def _assert_phase13_spatial_reload_fence(atlas: dict) -> None:
+    """Require Floor and the real canvas before Spatial's second context door."""
+    cases = {case["id"]: case for case in atlas["cases"]}
+    for case_id in ("case.p13.directory.zone", "case.p13.info.window"):
+        trigger_steps = _steps({"setup": [], "trigger": cases[case_id]["trigger"]})
+        doors = [
+            i for i, step in enumerate(trigger_steps)
+            if step.get("action") == "world_context_menu"
+        ]
+        assert len(doors) == 2, f"{case_id}: expected first and post-reload context doors"
+        reload_index = next(
+            i for i, step in enumerate(trigger_steps)
+            if step.get("action") == "reload"
+        )
+        floor_wait = next(
+            i for i, step in enumerate(trigger_steps[reload_index + 1:], reload_index + 1)
+            if step.get("action") == "wait_for"
+            and step.get("selector") == '[data-testid="chair-floor-toggle"]'
+            and step.get("state") == "visible"
+        )
+        floor_click = next(
+            i for i, step in enumerate(trigger_steps[floor_wait + 1:], floor_wait + 1)
+            if step.get("action") == "click_role" and step.get("name") == "Floor"
+        )
+        canvas_wait = next(
+            i for i, step in enumerate(trigger_steps[floor_click + 1:], floor_click + 1)
+            if step.get("action") == "wait_for"
+            and step.get("selector") == ".desk-world-canvas"
+            and step.get("state") == "visible"
+        )
+        assert reload_index < floor_wait < floor_click < canvas_wait < doors[1], case_id
+
+
+def _assert_phase13_repository_seam_fence(atlas: dict) -> None:
+    """Every repository-backed case discloses the real router seam patch."""
+    cases = {case["id"]: case for case in atlas["cases"]}
+    missing = []
+    for case_id in REPOSITORY_CASES:
+        case = cases[case_id]
+        prose = json.dumps({
+            "preconditions": case.get("preconditions", []),
+            "setup": case.get("setup", []),
+        })
+        if "build_roadmaps_router" not in prose:
+            missing.append(case_id)
+    assert not missing, f"repository cases omit the real build_roadmaps_router seam: {sorted(missing)}"
+
+
+def _assert_phase13_coder_producer_fence(atlas: dict) -> None:
+    """Refresh Coder status after its real producer writes the row."""
+    case = next(case for case in atlas["cases"] if case["id"] == "case.p13.coder.pullout")
+    setup = case["setup"]
+    assert [step.get("action") for step in setup[:2]] == [
+        "goto",
+        "click_role",
+    ], "Coder still crosses the real arrival gate before producer work"
+    assert setup[1].get("name") == "Continue later" and setup[1].get("optional") is True
+    assert [step.get("action") for step in setup[-2:]] == [
+        "create_repository_fixture",
+        "ingest_coder_fixture",
+    ], "Coder setup must mint the real repository and session before the refresh"
+
+    trigger_steps = _steps({"setup": [], "trigger": case["trigger"]})
+    assert trigger_steps[0].get("action") == "reload", (
+        "Coder status must be refreshed after agent-hook ingestion"
+    )
+    assert trigger_steps[0].get("adapter") == "ui-navigation"
+
+    coder_door = '[id="desk-palette-option-coder:{coder_session_id}"]'
+    door_indices = [
+        i for i, step in enumerate(trigger_steps)
+        if step.get("action") == "click" and step.get("selector") == coder_door
+    ]
+    assert len(door_indices) == 2, "the same real Coder object door must open twice"
+    for door_index in door_indices:
+        assert any(
+            step.get("action") == "fill"
+            and step.get("value") == "Atlas"
+            for step in trigger_steps[max(0, door_index - 2):door_index]
+        ), f"Coder object door {door_index} must be searched after opening the palette"
+
+    words = case["expected"]["words"].lower()
+    for phrase in ("agent-hook", "page refreshes to read it", "coder object door", "closes before reload"):
+        assert phrase in words, f"Coder case words omit {phrase!r}: {case['expected']['words']!r}"
+
+
+def _assert_phase13_roadmap_case_fence(atlas: dict) -> None:
+    """Fence the observed Roadmap refusal as Product-red, never as success."""
+    case = next(case for case in atlas["cases"] if case["id"] == "case.p13.roadmap.window")
+    expected = case["expected"]
+    assert expected["predicate"] == {
+        "kind": "readable_text",
+        "value": "Roadmap not found",
+    }
+    assert expected["observe_at"] == ".desk-roadmap-window"
+    words = expected["words"].lower()
+    for phrase in (
+        "repository-fixture-producer",
+        "roadmap",
+        "refuses",
+        "not found",
+        "refusal",
+        "reopen",
+    ):
+        assert phrase in words, f"Roadmap expected words omit {phrase!r}: {expected['words']!r}"
+
+    for step in _steps(case):
+        if step.get("kind") == "ui" and step.get("action") in {"click", "click_role"}:
+            assert step.get("adapter") == "ui-by-viewport", step
+
+    trigger_steps = _steps({"setup": [], "trigger": case["trigger"]})
+    window_selector = LIFECYCLE_CASES[case["id"]]["first_observe"]
+    window_observations = [
+        i for i, step in enumerate(trigger_steps)
+        if step.get("action") == "wait_for"
+        and step.get("selector") == window_selector
+        and step.get("state", "visible") == "visible"
+        and step.get("adapter") == "ui-observation"
+    ]
+    assert len(window_observations) >= 2, (
+        "case.p13.roadmap.window: window must be observed on first open and reopen"
+    )
+    refusal_selector = LIFECYCLE_CASES[case["id"]]["refusal_observe"]
+    refusal_observations = [
+        i for i, step in enumerate(trigger_steps)
+        if step.get("action") == "wait_for"
+        and step.get("selector") == refusal_selector
+        and step.get("state", "visible") == "visible"
+        and step.get("adapter") == "ui-observation"
+    ]
+    assert len(refusal_observations) >= 2, (
+        "case.p13.roadmap.window: refusal must be observed on first open and reopen"
+    )
+    assert window_observations[0] < refusal_observations[0]
+    assert window_observations[-1] < refusal_observations[-1]
+
+
+def _committed_atlas() -> dict:
+    """Read the actual committed pre-fix Atlas for the red mutant proof."""
+    atlas_path = "docs/internal/philo/graph/atlas-phase13-astra.json"
+    raw = subprocess.check_output(
+        ["git", "show", f"HEAD:{atlas_path}"],
+        cwd=REPO,
+        text=True,
+    )
+    return json.loads(raw)
+
+
+def _assert_phase13_case_fence(atlas: dict) -> None:
+    """Keep each corrected door live and reject the three old case paths."""
+    cases = {case["id"]: case for case in atlas["cases"]}
+    calendar = cases["case.p13.calendar.snapshot_window"]
+    assert calendar["applicability"] == "applicable"
+    expected = calendar["expected"]
+    assert expected["predicate"] == {
+        "kind": "readable_text",
+        "value": "no_vision_model_assigned",
+    }
+    assert expected["observe_at"] == "[role=region][aria-label^=Calendar]"
+
+    press_actions = {"click", "click_role", "focus", "press", "scroll_into_view", "set_input_files"}
+    for step in _steps(calendar):
+        if step.get("kind") == "ui" and step.get("action") in press_actions:
+            assert step.get("adapter") == "ui-by-viewport", step
+
+    trigger_steps = _steps({"setup": [], "trigger": calendar["trigger"]})
+    close_index = next(
+        i for i, step in enumerate(trigger_steps)
+        if step.get("action") == "click"
+        and '[role="region"][aria-label="Calendar snapshot"] button[aria-label^="Close "]' in step.get("selector", "")
+    )
+    assert trigger_steps[close_index + 1]["action"] == "wait_for"
+    assert trigger_steps[close_index + 1]["state"] == "hidden"
+    reload_index = next(
+        i for i, step in enumerate(trigger_steps[close_index + 1:], close_index + 1)
+        if step.get("action") == "reload"
+    )
+    assert reload_index > close_index
+    assert any(
+        step.get("action") == "wait_for"
+        and step.get("selector") == '[role="region"][aria-label="Calendar snapshot"]'
+        for step in trigger_steps[reload_index + 1:]
+    )
+
+    directory = cases["case.p13.directory.zone"]
+    assert directory["applicability"] == "applicable"
+    assert directory["expected"]["predicate"] == {
+        "kind": "readable_text",
+        "value": "Atlas Phase 13 Zone",
+    }
+    assert directory["expected"]["observe_at"] == ".desk-zone-window"
+    assert directory["trigger"]["action"] == "world_context_menu"
+    zone_doors = [
+        step for step in _steps(directory)
+        if step.get("action") == "world_context_menu"
+    ]
+    assert len(zone_doors) == 2, directory["id"]
+    assert all(
+        step.get("selector") == ".desk-world-canvas"
+        and step.get("world_target") == "zone"
+        and step.get("world_ref") == "{zone_id}"
+        and step.get("adapter") == "ui-by-viewport"
+        for step in zone_doors
+    ), directory["id"]
+    assert all(
+        step.get("action") == "click_role" and step.get("name") == "Open"
+        for door in zone_doors for step in door.get("then", [])[:1]
+    ), directory["id"]
+    assert "[data-zone-id=" not in json.dumps(directory), f"{directory['id']}: hidden zone selector is forbidden"
+
+    info = cases["case.p13.info.window"]
+    assert info["applicability"] == "applicable"
+    assert info["expected"]["predicate"] == {"kind": "readable_text", "value": "IDENTITY"}
+    assert info["expected"]["observe_at"] == ".desk-info-window"
+    assert info["trigger"]["action"] == "world_context_menu"
+    info_doors = [
+        step for step in _steps(info)
+        if step.get("action") == "world_context_menu"
+    ]
+    assert len(info_doors) == 2, info["id"]
+    assert all(
+        step.get("selector") == ".desk-world-canvas"
+        and step.get("world_target") == "object"
+        and step.get("world_ref") == "sequence:{info_chain_id}"
+        and step.get("adapter") == "ui-by-viewport"
+        for step in info_doors
+    ), info["id"]
+    assert all(
+        step.get("action") == "click_role" and step.get("name") == "Get Info"
+        for door in info_doors for step in door.get("then", [])[:1]
+    ), info["id"]
+    assert "desk-list-name-cell" not in json.dumps(info), f"{info['id']}: List is not the Spatial door"
+
+    # At 1440 the Floor's unset view is already Spatial; a palette action
+    # named "Spatial view" would toggle it back to List.  The compact phone
+    # path alone needs the real palette toggle from its dense List default.
+    for case in (directory, info):
+        mode_steps = [
+            step for step in case["setup"]
+            if step.get("at_width") in (1440, 393)
+            and (
+                step.get("selector") == ".desk-tools-launch"
+                or step.get("selector") == 'input[placeholder="Search tools and Desk items"]'
+                or step.get("selector") == '[id="desk-palette-option-desk.toggle-view"]'
+            )
+        ]
+        assert not [step for step in mode_steps if step.get("at_width") == 1440], case["id"]
+        assert [
+            (step.get("action"), step.get("selector"), step.get("value"))
+            for step in mode_steps if step.get("at_width") == 393
+        ] == [
+            ("click", ".desk-tools-launch", None),
+            ("fill", 'input[placeholder="Search tools and Desk items"]', "Spatial view"),
+            ("click", '[id="desk-palette-option-desk.toggle-view"]', None),
+        ], case["id"]
+
+
 @pytest.mark.parametrize("fence", GENERAL, ids=lambda fence: fence.__name__)
 def test_phase13_atlas_keeps_the_shared_graph_fences(fence) -> None:
     fence(_atlas())
@@ -86,12 +477,13 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
     assert len(faces) == 9
     for case in faces:
         assert case["viewports"] == [1440, 393]
+        assert case["applicability"] == "applicable", case["id"]
         # A DOM-only text match passed an off-screen Repository in the real walk.
         assert case["expected"]["predicate"]["kind"] == "readable_text", case["id"]
-        setup = case["setup"]
-        close_index = next(i for i, step in enumerate(setup) if 'Close ' in step.get("selector", ""))
-        assert setup[close_index + 1]["state"] == "hidden", case["id"]
-        assert setup[close_index + 2]["action"] == "reload", case["id"]
+        steps = _steps(case)
+        close_index = next(i for i, step in enumerate(steps) if 'Close ' in step.get("selector", ""))
+        assert steps[close_index + 1]["state"] == "hidden", case["id"]
+        assert steps[close_index + 2]["action"] == "reload", case["id"]
 
 
 def test_phase13_shared_semantic_guards_show_red_then_green(tmp_path, monkeypatch) -> None:
@@ -131,12 +523,79 @@ def test_phase13_shared_semantic_guards_show_red_then_green(tmp_path, monkeypatc
     general.test_operation_siblings_use_headless_reads_and_canonical_steps()
 
 
-def test_phase13_shared_operation_count_excludes_only_phase13_files() -> None:
-    siblings = [
-        case
-        for path in general.ATLAS_FILES
-        if not path.name.startswith("atlas-phase13-")
-        for case in json.loads(path.read_text())["cases"]
-        if case["id"].endswith(".op") or case["id"].endswith(".op.replayed")
-    ]
-    assert len(siblings) == 69
+def test_phase13_case_fence_rejects_old_doors_then_accepts_current_atlas() -> None:
+    proper = _atlas()
+    _assert_phase13_case_fence(proper)
+
+    old_calendar = copy.deepcopy(proper)
+    calendar = next(case for case in old_calendar["cases"] if case["id"] == "case.p13.calendar.snapshot_window")
+    calendar["expected"]["predicate"]["value"] = "CONFIRM"
+    with pytest.raises(AssertionError):
+        _assert_phase13_case_fence(old_calendar)
+
+    old_directory = copy.deepcopy(proper)
+    directory = next(case for case in old_directory["cases"] if case["id"] == "case.p13.directory.zone")
+    directory["trigger"] = {
+        "kind": "ui",
+        "action": "focus",
+        "adapter": "ui-input",
+        "selector": '[data-zone-id="{zone_id}"]',
+    }
+    with pytest.raises(AssertionError, match="world_context_menu"):
+        _assert_phase13_case_fence(old_directory)
+
+    old_info = copy.deepcopy(proper)
+    info = next(case for case in old_info["cases"] if case["id"] == "case.p13.info.window")
+    info["setup"] = [{
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": '.desk-list-name-cell[aria-label="Atlas B0 Info Sequence"]',
+        "button": "right",
+    }]
+    with pytest.raises(AssertionError, match="world_context_menu"):
+        _assert_phase13_case_fence(old_info)
+
+
+def test_phase13_lifecycle_fence_accepts_only_trigger_owned_sequences() -> None:
+    _assert_phase13_lifecycle_fence(_atlas())
+
+
+def test_phase13_coder_fence_rejects_stale_page_then_accepts_produced_door() -> None:
+    """The real committed case omits a post-ingestion refresh; the fixed case owns it."""
+    with pytest.raises(AssertionError):
+        _assert_phase13_coder_producer_fence(_committed_atlas())
+    _assert_phase13_coder_producer_fence(_atlas())
+
+
+def test_phase13_roadmap_fence_rejects_committed_pre_fix_atlas_then_accepts_current() -> None:
+    """The real pre-fix Atlas is red; the observed refusal is green after the fix."""
+    pre_fix = _committed_atlas()
+    with pytest.raises(AssertionError):
+        _assert_phase13_lifecycle_fence(pre_fix)
+    with pytest.raises(AssertionError):
+        _assert_phase13_roadmap_case_fence(pre_fix)
+
+    current = _atlas()
+    _assert_phase13_lifecycle_fence(current)
+    _assert_phase13_roadmap_case_fence(current)
+
+    wrong_words = copy.deepcopy(current)
+    roadmap = next(case for case in wrong_words["cases"] if case["id"] == "case.p13.roadmap.window")
+    roadmap["expected"]["words"] = "The Roadmap opens successfully and is ready to use."
+    with pytest.raises(AssertionError):
+        _assert_phase13_roadmap_case_fence(wrong_words)
+
+    wrong_selector = copy.deepcopy(current)
+    roadmap = next(case for case in wrong_selector["cases"] if case["id"] == "case.p13.roadmap.window")
+    roadmap["expected"]["observe_at"] = ".desk-roadmap-phase-row"
+    with pytest.raises(AssertionError):
+        _assert_phase13_roadmap_case_fence(wrong_selector)
+
+
+def test_phase13_spatial_reload_fence_accepts_only_floor_reentry() -> None:
+    _assert_phase13_spatial_reload_fence(_atlas())
+
+
+def test_phase13_repository_cases_name_the_real_router_seam() -> None:
+    _assert_phase13_repository_seam_fence(_atlas())

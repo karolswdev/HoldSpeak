@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: c7073f9cac59e898e53f425f4a437966a10aaa0b dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase13-astra.json
+RUNTIME: build=['index-ChQW1Esz.js'] hub=http://127.0.0.1:51731 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z_649enh/.local/share/holdspeak/holdspeak.db engine=none
+JOB: j4
+VERDICT: pass terminal=settled
+EVIDENCE: ['.tmp/graph-walk/philo-13-b0-r2-final-delivery/delivery-terminal-1440/20261002T123833Z-case.p13.delivery.terminal_window-astra-1440/before.png', '.tmp/graph-walk/philo-13-b0-r2-final-delivery/delivery-terminal-1440/20261002T123833Z-case.p13.delivery.terminal_window-astra-1440/after.png']
+NOTE: predicate: 'Atlas terminal' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 234, 'y': 54, 'w': 620, 'h': 794}

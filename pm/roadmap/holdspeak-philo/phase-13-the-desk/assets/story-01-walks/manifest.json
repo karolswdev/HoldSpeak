@@ -498,5 +498,320 @@
     "source": ".tmp/graph-walk/philo-13-01/zone-393-r1/command.log",
     "archive": "assets/story-01-walks/final/zone-393-r1/command.log",
     "sha256": "8866d899aa733c67e6933db6ba2e7b6488d96ff81532300bfeca713ce184805a"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed/calendar-1440/after.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed/calendar-1440/after.png",
+    "sha256": "6acb206aaa8eb816a432acbc9a74773138a0996b32d7ee538a15a77da45d6e32"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed/calendar-1440/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed/calendar-1440/before.png",
+    "sha256": "1872914057972fa12f59d3ca2c009907f8a39897c6218e30191f25bd39f3195c"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed/calendar-1440/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed/calendar-1440/observation.json",
+    "sha256": "9d9f77a46042d8b3917589c690f5cb22903bbbbc607621277ef33e01ab9008bb"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed/calendar-393/after.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed/calendar-393/after.png",
+    "sha256": "b3ac3490efc8a76680f7e78e3f5a7306c6cb6933e06573544c1c11398c3000c7"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed/calendar-393/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed/calendar-393/before.png",
+    "sha256": "c31ae4419a0ada730f6f4a6817e7da2d5e3ed66e4daad5bd1d3920911ca55c21"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed/calendar-393/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed/calendar-393/observation.json",
+    "sha256": "d88a41fe82396368e6f2d461d3bdc5c6fa54b40b3017cfe4c4e6c18dc2b44c2b"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-1440/after.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-1440/after.png",
+    "sha256": "44d40cc091f57ee4db3e087e6b0ba1bf22f81495bc4be056897f6be60e846a99"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-1440/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-1440/before.png",
+    "sha256": "e5e7f7f66d778a76d0eb9c8987a34885d53697df3638f2423538308fce3344bb"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-1440/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-1440/observation.json",
+    "sha256": "073d59c1a1cb2f775117db7ee11b31719dd9effed0209acb8bd699329a80a6ef"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-1440/run.log",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-1440/run.log",
+    "sha256": "754684f781be5649521119062498f0938c55d4ea6ed201f356c3598c02bba4fc"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-393/after.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-393/after.png",
+    "sha256": "df0fb79710c803cc40d9281ce30574127547eeb6704b06c6dc45ad4b07a9a5f7"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-393/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-393/before.png",
+    "sha256": "6e216864624db9edc22a17b6eb4b4e4c346b14a2181bfbdba576b3214e49c065"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-393/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-393/observation.json",
+    "sha256": "b8a79d6a493298a540b5a9941ec71318df2802c6e120487d991af4077ca46e12"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-393/run.log",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-dossier-393/run.log",
+    "sha256": "fef3f6eab9ce54e57c1aec3e02528878686657ade3ff6a7a417f8239f24561ca"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-1440/after.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-1440/after.png",
+    "sha256": "68bf8829e56c65e7596d2cded5a596733f1b49fdd7c83c591e05b0f3578c0006"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-1440/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-1440/before.png",
+    "sha256": "faeae63e673df725b16126a5abf90d68457bb6f584124994e6269d6e0a54b624"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-1440/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-1440/observation.json",
+    "sha256": "63c99869f697f30cd238d8f2d28ea65054c20874676716c64bddfc1683d38fc8"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-1440/run.log",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-1440/run.log",
+    "sha256": "59f6e7b6697f3a451aeafc5799ab1b2118073d39c8b9d2a7e6c2fad4946fbaeb"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-393/after.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-393/after.png",
+    "sha256": "b1265fd1fbfab6ceb8d355523f136e88d0e15df4151e548f1ad88da3ce351e15"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-393/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-393/before.png",
+    "sha256": "8497bc1fb39bb0b46cc5e4ef439b1590d5c58e7880d7e2d166c05e803acc8fb5"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-393/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-393/observation.json",
+    "sha256": "fd0c025e0ef6c2304ab16b1bc17490d7c00850cd86ee1a01318fb0207e74f134"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-393/run.log",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-delivery/delivery-terminal-393/run.log",
+    "sha256": "d795ebefb45a6d8b0cf3922cf884fd0075321d025f32498c07a39ac3bf6c4777"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-1440/20261002T122116Z-case.p13.repository.window-astra-1440/after.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-1440/20261002T122116Z-case.p13.repository.window-astra-1440/after.png",
+    "sha256": "9e0871fe37f591011454a6c4ad19a82b252e67056e7ade25738a5bd93d0bc464"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-1440/20261002T122116Z-case.p13.repository.window-astra-1440/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-1440/20261002T122116Z-case.p13.repository.window-astra-1440/before.png",
+    "sha256": "b6246fd3c1941d5600d270a85ad9e95c7217e9c6b859f01740eb0d56853e57fc"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-1440/20261002T122116Z-case.p13.repository.window-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-1440/20261002T122116Z-case.p13.repository.window-astra-1440/observation.json",
+    "sha256": "7687b9eb0e2bded3086cd648de43d0fc26cf69ad243443d98080ceb44f3f0c34"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-1440/run.log",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-1440/run.log",
+    "sha256": "ea143c96254cc75c1dd6fd30044a681a6c6e36a636d853c2664c0e1e8267bc92"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-393/20261002T122216Z-case.p13.repository.window-astra-393/after.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-393/20261002T122216Z-case.p13.repository.window-astra-393/after.png",
+    "sha256": "bc313a6e778ba449e9016d6d90ca536cea11d03b05f354aca91709f9cd5fca9d"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-393/20261002T122216Z-case.p13.repository.window-astra-393/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-393/20261002T122216Z-case.p13.repository.window-astra-393/before.png",
+    "sha256": "614222736e939a65dc699b9194f9f479e754688e8f4a6957c60c20da34d49583"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-393/20261002T122216Z-case.p13.repository.window-astra-393/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-393/20261002T122216Z-case.p13.repository.window-astra-393/observation.json",
+    "sha256": "928ce602d7770f2d21d2c9937ccc3283ada02cda9fdeaa75805b5de1ec3b8132"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-393/run.log",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/repository-window-393/run.log",
+    "sha256": "cebe8bf774ea96d34ea5565e9fdbcfaa38c80644b17b675eb46c17800d5c01e2"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-1440/20261002T121913Z-case.p13.roadmap.window-astra-1440/after.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-1440/20261002T121913Z-case.p13.roadmap.window-astra-1440/after.png",
+    "sha256": "103aebddb4908014ca5a39085b439e716ab55df5793582729ea883fb5f634a11"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-1440/20261002T121913Z-case.p13.roadmap.window-astra-1440/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-1440/20261002T121913Z-case.p13.roadmap.window-astra-1440/before.png",
+    "sha256": "51a2ea0ac38cce2adf662bb04444731f1cf6201a9a4045070c976ed7070a3eaf"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-1440/20261002T121913Z-case.p13.roadmap.window-astra-1440/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-1440/20261002T121913Z-case.p13.roadmap.window-astra-1440/observation.json",
+    "sha256": "8e7ed60720c3af33f0b8dd7b739f34405c0e6f1024542dcf544187f2554bedc8"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-1440/run.log",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-1440/run.log",
+    "sha256": "833096b8cd278bdd4f25b99554ab915a56cdc3094391c81b5f1480ac41d72da5"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-393/20261002T122019Z-case.p13.roadmap.window-astra-393/after.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-393/20261002T122019Z-case.p13.roadmap.window-astra-393/after.png",
+    "sha256": "6b03613a1f4d03ff48684f16b3c0b26c4666ebcba207575e9eeb5cabdb9b770c"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-393/20261002T122019Z-case.p13.roadmap.window-astra-393/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-393/20261002T122019Z-case.p13.roadmap.window-astra-393/before.png",
+    "sha256": "907d09242b731b33d3c322562eb01e83792400056052bbb9c98fdb680cd3f6c5"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-393/20261002T122019Z-case.p13.roadmap.window-astra-393/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-393/20261002T122019Z-case.p13.roadmap.window-astra-393/observation.json",
+    "sha256": "a8738afa9c3510e84e6a28af544da888d512ed8a9c5da27759948b7186ffa5b1"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-393/run.log",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-redo/roadmap-window-393/run.log",
+    "sha256": "ad15a50406ed0284c7ed75556728de1ecfd532dfce5da75e3524de2b76cd8300"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/chain-1440/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/chain-1440/before.png",
+    "sha256": "a9c719e730a41bdb8005e0a63e0b0c2da6ebafe87f2fa498f217095f805778e2"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/chain-1440/blocked.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/chain-1440/blocked.png",
+    "sha256": "c53f048ba0d2823d367f6285618e6b6242fffbbb0ccc1f28fe1b7208cefe885e"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/chain-1440/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/chain-1440/observation.json",
+    "sha256": "535271ad14f21bcaf933074d8841bda71f4f90fcc36c1274ed4ace7ae98da2d4"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/chain-393/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/chain-393/before.png",
+    "sha256": "93fd4cb9a910e9e9e50234b2c926335de920bbda0c1c276b4900528bd715233b"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/chain-393/blocked.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/chain-393/blocked.png",
+    "sha256": "00a4808dfe9987222b7431e4284d9eae42b51a605e44ec3b9cbffba1e80ff113"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/chain-393/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/chain-393/observation.json",
+    "sha256": "00084debd108dfe1fc8b75b22bcd932e123a53638a89ce5ab1f3577ea957571c"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/coder-1440/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/coder-1440/before.png",
+    "sha256": "6121a501ed06446ebb889b700620ef6175e8a6f29ea11d784475ec2d63f6d9b2"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/coder-1440/blocked.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/coder-1440/blocked.png",
+    "sha256": "5227153875049e47496392bd03bcc5fb1d0fa598cc82789b72efa2b965f64d74"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/coder-1440/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/coder-1440/observation.json",
+    "sha256": "bab1eec851b957820c8435c44dc11c9decdcd395ceaed8142e302285b8008cba"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/coder-393/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/coder-393/before.png",
+    "sha256": "18227d2ef07951dcc2cffb1a537e671d9c76397b60c7a053440f06d9d1e4ddaa"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/coder-393/blocked.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/coder-393/blocked.png",
+    "sha256": "56e7d86b151ea25f4f9dc58ea959435d1e1e88109c9e2d5d88a0a2447e8c2e11"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/coder-393/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/coder-393/observation.json",
+    "sha256": "e26fee0c21069778bbe65c0fed1ec6d48d0474066d10f58a30b74fcc8a0d386d"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/info-1440/after.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/info-1440/after.png",
+    "sha256": "7b92540a652a7bd10fb2d007e7ef502cc4123af8d4f5f630cd6b7662a6ac022b"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/info-1440/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/info-1440/before.png",
+    "sha256": "67272b24b67a455fc23a83a0be9fcb5fe053a0bd9086970ba5e6f0f07c48487b"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/info-1440/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/info-1440/observation.json",
+    "sha256": "d0470796e10f5e2d02d666f994b8af411204157c01bd11ae6139f9ec831c8ff5"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/info-393/after.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/info-393/after.png",
+    "sha256": "5b00ea2a3b14af4d08fe309359d88099771abc2d0c72b3c387b3eaebe3676e90"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/info-393/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/info-393/before.png",
+    "sha256": "55c865146cde56c8b205b8b9033831c4c3b01171e1aaa16a90a9de992f122c39"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/info-393/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/info-393/observation.json",
+    "sha256": "63bb28d6219a680876a425260ec84f311f7be63405ba4b015ca48158443bae2c"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/zone-1440/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/zone-1440/before.png",
+    "sha256": "7c75959feec9dfc69a4406f692ae484a6e113bb85162e00392d7d7ea658f4d80"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/zone-1440/blocked.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/zone-1440/blocked.png",
+    "sha256": "781ecd7aeec5bbde4df742d29348131bc70a1ca76477579444400db75130df9b"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/zone-1440/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/zone-1440/observation.json",
+    "sha256": "f70b65bb0a43ae379d65a9707bad90bec90a0379376c1b350880f905a7965c76"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/zone-393/before.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/zone-393/before.png",
+    "sha256": "554cf0ab8c6305e60a8ba5c252d4463d5bf50d593f15e4e1feff6b8ca9cb3517"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/zone-393/blocked.png",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/zone-393/blocked.png",
+    "sha256": "68218bd46a3953f174662460797d45d3871d6fd832290e2ef9a511ac0b3ce2f5"
+  },
+  {
+    "source": "preserved r2 graph_walk artifact: assets/story-01-walks/r2-final-identity-fixed-spatial/zone-393/observation.json",
+    "archive": "assets/story-01-walks/r2-final-identity-fixed-spatial/zone-393/observation.json",
+    "sha256": "646ded9eb81b8dff4fd791986049710e78808a25c242affe18dc105a0ca2db80"
+  },
+  {
+    "source": "isolated focused pytest output: assets/story-01-walks/r2-focused-output-pass.txt",
+    "archive": "assets/story-01-walks/r2-focused-output-pass.txt",
+    "sha256": "faabaf2647be4b0c0a5cc8fef214428777ce41656d7cde65a673cf2cb21ea063"
   }
 ]

@@ -48,13 +48,13 @@ Nine paths are unwalked (`grounding/faces-surfaces.md:59`, `:219`; `grounding/fa
 - [x] Each case ran through `scripts/graph_walk.py run`, one case per invocation, at 1440 and at 393, each in a fresh HOME; `provenance.db_path` is under that HOME.
 - [ ] Each case passes on main, or, where it finds a defect, it is red on main with the defect named and a home (story or BACKLOG) recorded. Red-before-green where the defect is in this phase's scope.
 - [x] The 393 runs drive touch, not the mouse adapter (`grounding/structure.md:37` names the mouse adapter as not touch proof); if the rig has no touch adapter for a step, that is a named limit, not a pass.
-- [ ] Cases exist and pass on main **before** PHILO-13-07 merges. The gate is review evidence: this story's evidence file names each run directory, and B2's merge record cites this story's merged commit and `evidence-story-01.md`.
+- [ ] **B2 gate (Muad'Dib's signed C5 ruling):** B0's cases are re-run on B2's head. A red homed outside B2 may remain red with its home cited; B0-F2, whose home is B2, must pass on B2's head. Re-walk B0-F1 (Chain/Coder Close) after PHILO-13-05 (#725) merges. B2's merge record cites this story's merged commit on main, `evidence-story-01.md`, and the runs made on B2's head.
 
 ## Test plan
 
 - **Atlas file:** `docs/internal/philo/graph/atlas-phase13-astra.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_astra_atlas.py`.
 - **Atlas:** `HOME="$(mktemp -d)" PLAYWRIGHT_BROWSERS_PATH="$REAL_HOME/Library/Caches/ms-playwright" uv run --extra dev python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase13-astra.json --case <case id> --brain astra --viewport <1440|393> --engine none --out .tmp/graph-walk/philo-13-01/<label>` — one case per invocation (`agent/skills/holdspeak-capability-verifier/SKILL.md` "Walk a case").
-- **Focused:** `tests/unit/test_philo_graph_atlas.py` and `tests/unit/test_philo13_astra_atlas.py` only.
+- **Focused:** `tests/unit/test_philo_graph_atlas.py`, `tests/unit/test_philo13_astra_atlas.py`, and `tests/unit/test_philo13_graph_walk.py` only.
 - **Shots:** `before.png` / `after.png` per run, read by eye; 1440 and 393 (touch).
 
 ## Worker-brief scars
@@ -69,6 +69,8 @@ Grounding size: not sized there; nine cases at two widths. PROVISIONAL.
 
 ## Notes
 
+- 2026-10-02 — Muad'Dib's signed counsel on #726: C1 requires a five-column pass / product-red / rig-limit table; C2 requires Calendar's refusal-face lifecycle, Zone through the Directory door and Info through Spatial before retaining L2/L3 as limits; C3 corrects F1 to match visible state and surviving records; C4 discloses the `build_roadmaps_router` seam in every repository-backed case; C5 replaces the deadlocking B2 gate with the gate above and requires F1 re-walk after #725 merges; C6 accepts the five-column table and makes `atlas.schema.json` and `scripts/graph_walk.py` Astra-owned shared files, with face-lane additions by named handoff.
+- 2026-10-02 — r2: all 18 final Atlas-hash cases were walked and preserved; the final Spatial Info expectation is the observed uppercase `IDENTITY`, changed together with its fence. The five-column table and findings distinguish predicate pass, product-red and rig-limit. These branch observations do not satisfy the main-run criterion or the pending #725/B2 gates; Story 01 remains in-progress.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
 

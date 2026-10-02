@@ -4228,7 +4228,7 @@ _EXPECTED_READ_FIELDS = (
 
 #: The step fields a captured value may travel into.
 _SUBSTITUTED_FIELDS = ("path", "selector", "name", "value", "url", "key", "body",
-                       "args", "observe_at", "meeting_id")
+                       "args", "observe_at", "meeting_id", "world_ref")
 
 
 def substitute(value: Any, variables: dict[str, Any]) -> Any:
@@ -4266,12 +4266,10 @@ def unresolved(value: Any) -> list[str]:
 #: The rig's CLOSED ui vocabulary. A step naming anything else is blocked
 #: before it fires, so a typo cannot silently become a no-op that "passed".
 UI_ACTIONS = frozenset({
-    "goto", "reload", "click", "click_role", "fill", "select_option", "set_input_files", "press", "wait_for",
-    # PHILO-7-03: keyboard travel to a control (the owner's Tab), e.g. the
-    # Floor's world chip, which only surfaces when focused (desk.css:171).
+    "goto", "reload", "click", "click_role", "fill", "select_option", "set_input_files", "press", "wait_for", "world_context_menu",
+    # PHILO-7-03: keyboard travel to the Floor's world chip (desk.css:171).
     "focus",
-    # PHILO-10-05: the owner scrolls a control or a section into view (block
-    # start|center|end) before he presses or reads it; nothing is clicked.
+    # PHILO-10-05: scroll a control or section into view before pressing or reading; nothing is clicked.
     "scroll_into_view",
 })
 
@@ -4464,7 +4462,9 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
     # onContextMenu). Only a click takes a button; any other value blocks.
     button = step.get("button", "left")
     _validate_ui_button(action, button, step, adapter)
-    if button == "right":
+    if action == "world_context_menu":
+        return _world_context_menu(page, step, adapter, timeout, record)
+    elif button == "right":
         record["button"] = "right"
     try:
         if action == "goto":
@@ -5157,10 +5157,10 @@ def _ui_viewport_adapter(page: Any, step: dict[str, Any]) -> tuple[str, bool]:
     requested = step.get("adapter", "ui-pointer")
     if requested != "ui-by-viewport":
         return str(requested), False
-    if step.get("action") not in ("click", "click_role", "set_input_files"):
+    if step.get("action") not in ("click", "click_role", "set_input_files", "world_context_menu"):
         raise Blocked(
-            "ui-by-viewport is only implemented for click, click_role and "
-            "file-chooser steps; "
+            "ui-by-viewport is only implemented for click, click_role, "
+            "file-chooser and world_context_menu steps; "
             "nothing was fired")
     if step.get("action") == "set_input_files" and not step.get("file_chooser"):
         raise Blocked(
@@ -5207,6 +5207,137 @@ def _native_ui_click(target: Any, adapter: str, timeout: float, button: str) -> 
         target.tap(timeout=timeout)
     else:
         target.click(timeout=timeout, button=button)
+
+
+def _world_context_menu(page: Any, step: dict[str, Any], adapter: str,
+                        timeout: float, record: dict[str, Any]) -> dict[str, Any]:
+    """Drive the Spatial object's real canvas context door at a probed point.
+
+    The GL canvas owns the object and zone hit-test, so a DOM selector cannot
+    name the target itself.  The product's read-only world probes supply the
+    current client point for the captured ref; the hit probe must confirm that
+    exact target before any input is emitted.  Desktop uses a native right
+    click.  The 393 adapter uses Chromium CDP touchStart/touchEnd with a
+    bounded hold at least as long as WorldEngine's 500 ms long-press timer.
+    """
+    selector = step.get("selector")
+    world_ref = step.get("world_ref")
+    world_target = step.get("world_target", "object")
+    if not isinstance(selector, str) or not selector.strip():
+        raise Blocked("world_context_menu needs a canvas selector; nothing was fired")
+    if not isinstance(world_ref, str) or not world_ref.strip():
+        raise Blocked("world_context_menu needs world_ref; nothing was fired")
+    if world_target not in ("object", "zone"):
+        raise Blocked(
+            f"world_context_menu world_target must be object|zone, got {world_target!r}; "
+            "nothing was fired"
+        )
+    hold_ms = int(step.get("hold_ms", 650))
+    if adapter == "ui-touch" and hold_ms < 500:
+        raise Blocked(
+            f"world_context_menu touch hold_ms {hold_ms} is below the product's "
+            "500 ms long-press bound; nothing was fired"
+        )
+    locator = page.locator(selector).first
+    locator.wait_for(state="visible", timeout=timeout)
+    box = locator.bounding_box()
+    if not box or box["width"] <= 0 or box["height"] <= 0:
+        raise Blocked(f"world_context_menu canvas {selector!r} has no visible bounds")
+    point = page.evaluate(
+        """({ref, target}) => {
+          const probeName = target === 'zone' ? '__hsWorldZoneProbe' : '__hsWorldProbe';
+          const probe = window[probeName];
+          if (typeof probe !== 'function') return null;
+          const rows = probe() || [];
+          return rows.find(row => target === 'zone'
+            ? row.id === ref
+            : row.ref === ref || row.id === ref) || null;
+        }""",
+        {"ref": world_ref, "target": world_target},
+    )
+    if not isinstance(point, dict) or not isinstance(point.get("x"), (int, float)) or not isinstance(point.get("y"), (int, float)):
+        raise Blocked(
+            f"world_context_menu probe found no visible {world_target} for {world_ref!r}; "
+            "nothing was fired"
+        )
+    probe_x, probe_y = float(point["x"]), float(point["y"])
+    x, y = probe_x, probe_y
+    if world_target == "zone":
+        try:
+            zone_width = float(point.get("width", 0))
+            zone_height = float(point.get("height", 0))
+        except (TypeError, ValueError):
+            zone_width = zone_height = 0
+        if zone_width <= 0 or zone_height <= 0:
+            raise Blocked(
+                f"world_context_menu zone probe has invalid bounds for {world_ref!r}; "
+                "nothing was fired"
+            )
+        # The production probe reports a zone's top-center.  Use a point well
+        # inside its body so native coordinate rounding cannot turn the edge
+        # into a Floor miss.  Small zones keep an interior margin too.
+        y += min(6.0, zone_height / 2)
+    if not (box["x"] <= x <= box["x"] + box["width"] and box["y"] <= y <= box["y"] + box["height"]):
+        raise Blocked(
+            f"world_context_menu probe point ({x:.1f}, {y:.1f}) is outside "
+            f"canvas {selector!r}; nothing was fired"
+        )
+    hit = page.evaluate(
+        """({x, y, ref, target}) => {
+          const probe = window.__hsWorldHitProbe;
+          if (typeof probe !== 'function') return null;
+          return probe(x, y);
+        }""",
+        {"x": x, "y": y, "ref": world_ref, "target": world_target},
+    )
+    hit_ok = (
+        isinstance(hit, dict)
+        and (
+            (world_target == "object"
+             and hit.get("type") == "object"
+             and hit.get("ref") == world_ref)
+            or (world_target == "zone"
+                and hit.get("type") == "zone"
+                and hit.get("id") == world_ref)
+        )
+    )
+    if not hit_ok:
+        raise Blocked(
+            f"world_context_menu hit probe did not confirm {world_target} {world_ref!r}: "
+            f"{hit!r}; nothing was fired"
+        )
+    # Keep the exact real probe row and the confirmed delivered point before
+    # dispatch.  A nested menu-item timeout must not erase what was hit.
+    record.update(
+        world_ref=world_ref,
+        world_target=world_target,
+        world_probe=dict(point),
+        point={"x": x, "y": y},
+        world_hit_probe=hit,
+    )
+    if adapter == "ui-touch":
+        cdp = page.context.new_cdp_session(page)
+        try:
+            cdp.send("Input.dispatchTouchEvent", {
+                "type": "touchStart",
+                "touchPoints": [{"x": x, "y": y, "radiusX": 1, "radiusY": 1, "id": 1}],
+            })
+            page.wait_for_timeout(hold_ms)
+            cdp.send("Input.dispatchTouchEvent", {
+                "type": "touchEnd",
+                "touchPoints": [],
+            })
+        finally:
+            cdp.detach()
+        record["gesture"] = "touch-long-press"
+        record["hold_ms"] = hold_ms
+    elif adapter == "ui-pointer":
+        page.mouse.click(x, y, button="right")
+        record["gesture"] = "mouse-right-click"
+    else:
+        raise Blocked(f"world_context_menu has no delivery for adapter {adapter!r}")
+    record.update(selector=selector, done=True)
+    return record
 
 
 def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
@@ -6178,19 +6309,20 @@ def exercise(
     arm_first_paint(page, pre_case)
     fired_at = time.monotonic()
     try:
-        trigger_record = run_step({k: v for k, v in trigger.items() if k != "then"},
-                                  page, hub, provenance, pre_case,
-                                  allow_error=True, variables=variables)
         # PHILO-8-03: `then` — the rest of ONE owner gesture, fired right after
         # the trigger and before any observation (delete, then leave the face
         # inside the 8 s undo window). The rig's before-capture between setup
         # and trigger can outlast that window under load; these steps cannot.
-        # UI steps only; each one is recorded; a failed one blocks.
-        then = trigger_then(trigger)
-        if then:
-            trigger_record["then"] = [
-                run_step(step, page, hub, provenance, pre_case, variables=variables)
-                for step in then]
+        # UI steps only; each completed one is flushed before the next starts.
+        trigger_record = _run_trigger_sequence(
+            trigger,
+            page=page,
+            hub=hub,
+            provenance=provenance,
+            case=pre_case,
+            variables=variables,
+            recorder=recorder,
+        )
         wait = trigger_record.get("completion_wait")
         if wait and not wait.get("matched"):
             recorder.set(trigger=trigger_record, provenance=provenance,
@@ -6730,6 +6862,36 @@ def find_case(atlas: dict[str, Any], case_id: str) -> dict[str, Any]:
             return case
     raise SystemExit(f"no case {case_id!r} in the atlas "
                      f"(have: {[c['id'] for c in atlas.get('cases', [])]})")
+
+
+def _run_trigger_sequence(
+    trigger: dict[str, Any], *, page: Any, hub: Hub | None,
+    provenance: dict[str, Any], case: dict[str, Any],
+    variables: dict[str, Any], recorder: Recorder,
+) -> dict[str, Any]:
+    """Record a trigger and each completed `then` step as they happen.
+
+    If a later step blocks, the observation still preserves the successful
+    trigger and every follow-up action already proved.
+    """
+    trigger_record = run_step(
+        {k: v for k, v in trigger.items() if k != "then"},
+        page, hub, provenance, case, allow_error=True, variables=variables,
+    )
+    recorder.set(trigger=trigger_record, provenance=provenance,
+                 variables=dict(variables))
+    then = trigger_then(trigger)
+    if then:
+        trigger_record["then"] = []
+        recorder.set(trigger=trigger_record, provenance=provenance,
+                     variables=dict(variables))
+        for step in then:
+            trigger_record["then"].append(
+                run_step(step, page, hub, provenance, case, variables=variables)
+            )
+            recorder.set(trigger=trigger_record, provenance=provenance,
+                         variables=dict(variables))
+    return trigger_record
 
 
 def run_case(

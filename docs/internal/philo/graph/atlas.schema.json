@@ -400,7 +400,8 @@
                 "press",
                 "wait_for",
                 "focus",
-                "scroll_into_view"
+                "scroll_into_view",
+                "world_context_menu"
               ],
               "description": "One of the actions scripts/graph_walk.py::_ui_step implements."
             },
@@ -464,6 +465,24 @@
             },
             "exact": {
               "type": "boolean"
+            },
+            "world_ref": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Qualified object ref, or produced Directory id, resolved by the product's read-only Spatial probe before the native context gesture."
+            },
+            "world_target": {
+              "type": "string",
+              "enum": [
+                "object",
+                "zone"
+              ],
+              "description": "The Spatial probe family and hit type to confirm before the native context gesture."
+            },
+            "hold_ms": {
+              "type": "integer",
+              "minimum": 500,
+              "description": "world_context_menu touch hold duration; WorldEngine's real long-press boundary is 500 ms."
             },
             "trigger_route": {
               "type": "object",
@@ -558,7 +577,8 @@
                       "set_input_files",
                       "wait_for",
                       "focus",
-                      "scroll_into_view"
+                      "scroll_into_view",
+                      "world_context_menu"
                     ]
                   }
                 },
@@ -586,6 +606,25 @@
               "then": {
                 "required": [
                   "value"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "action": {
+                    "const": "world_context_menu"
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              },
+              "then": {
+                "required": [
+                  "selector",
+                  "world_ref",
+                  "world_target"
                 ]
               }
             },

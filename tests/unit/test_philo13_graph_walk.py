@@ -61,6 +61,125 @@ class _TapPage:
         return self.locator(f"role={_role}:{name}:{exact}")
 
 
+class _ZoneProbePage:
+    viewport_size = {"width": 1440}
+
+    def __init__(self, record: dict) -> None:
+        self.record = record
+        self.probe = {
+            "id": "zone-1",
+            "x": 120,
+            "y": 200,
+            "width": 260,
+            "height": 96,
+        }
+        self.hit_args: list[dict] = []
+        self.dispatch_snapshot: dict | None = None
+        self.calls: list[tuple[float, float, str]] = []
+
+        page = self
+
+        class Mouse:
+            def click(self, x: float, y: float, *, button: str) -> None:
+                # The native event is the last operation. The evidence fields
+                # must already be present if dispatch or a later step fails.
+                page.dispatch_snapshot = dict(page.record)
+                page.calls.append((x, y, button))
+
+        self.mouse = Mouse()
+
+    def locator(self, _selector: str):
+        class Locator:
+            first = None
+
+            def wait_for(self, *, state: str, timeout: float) -> None:
+                assert state == "visible"
+
+            def bounding_box(self) -> dict[str, float]:
+                return {"x": 0, "y": 0, "width": 400, "height": 300}
+
+        locator = Locator()
+        locator.first = locator
+        return locator
+
+    def evaluate(self, script: str, argument: dict) -> dict:
+        if "__hsWorldZoneProbe" in script:
+            return dict(self.probe)
+        assert "__hsWorldHitProbe" in script
+        self.hit_args.append(dict(argument))
+        if argument["y"] == self.probe["y"] + 6:
+            return {"type": "zone", "id": self.probe["id"]}
+        return {"type": "background"}
+
+
+def test_zone_context_menu_records_body_point_and_hit_before_native_dispatch() -> None:
+    record: dict = {}
+    page = _ZoneProbePage(record)
+
+    result = gw._world_context_menu(
+        page,
+        {
+            "kind": "ui",
+            "action": "world_context_menu",
+            "selector": ".desk-world-canvas",
+            "world_ref": "zone-1",
+            "world_target": "zone",
+        },
+        "ui-pointer",
+        10_000.0,
+        record,
+    )
+
+    assert page.hit_args == [{"x": 120.0, "y": 206.0, "ref": "zone-1", "target": "zone"}]
+    assert page.calls == [(120.0, 206.0, "right")]
+    assert page.dispatch_snapshot == {
+        "world_ref": "zone-1",
+        "world_target": "zone",
+        "world_probe": page.probe,
+        "point": {"x": 120.0, "y": 206.0},
+        "world_hit_probe": {"type": "zone", "id": "zone-1"},
+    }
+    assert result["done"] is True
+
+
+def test_trigger_then_flushes_completed_steps_before_a_later_timeout(tmp_path, monkeypatch) -> None:
+    recorder = gw.Recorder(tmp_path / "observation.json", {})
+    trigger = {
+        "kind": "ui",
+        "action": "click",
+        "selector": "#trigger",
+        "then": [
+            {"kind": "ui", "action": "wait_for", "selector": "#open"},
+            {"kind": "ui", "action": "wait_for", "selector": "#never"},
+        ],
+    }
+    seen: list[str] = []
+
+    def fake_run_step(step, page, hub, provenance, case=None, *, variables=None, **_kwargs):
+        seen.append(step["selector"])
+        if step["selector"] == "#never":
+            raise gw.Blocked("later step timed out")
+        return {"kind": "ui", "selector": step["selector"], "done": True}
+
+    monkeypatch.setattr(gw, "run_step", fake_run_step)
+    with pytest.raises(gw.Blocked, match="later step timed out"):
+        gw._run_trigger_sequence(
+            trigger,
+            page=object(),
+            hub=None,
+            provenance={},
+            case={},
+            variables={},
+            recorder=recorder,
+        )
+
+    assert seen == ["#trigger", "#open", "#never"]
+    assert recorder.record["trigger"]["selector"] == "#trigger"
+    assert recorder.record["trigger"]["then"] == [
+        {"kind": "ui", "selector": "#open", "done": True},
+    ]
+
+
 def test_ui_by_viewport_records_pointer_adapter_at_desktop_width() -> None:
     page = _TapPage()
     page.viewport_size = {"width": 1440}
@@ -108,6 +227,111 @@ def test_ui_by_viewport_guarded_touch_blocks_before_synthetic_delivery() -> None
         })
 
     assert page.calls == []
+
+
+def test_world_context_menu_rejects_a_hold_shorter_than_product_long_press() -> None:
+    page = _TapPage()
+
+    with pytest.raises(gw.Blocked, match="500 ms long-press bound"):
+        gw._ui_step(page, {
+            "kind": "ui",
+            "action": "world_context_menu",
+            "selector": ".desk-world-canvas",
+            "world_ref": "chain:c1",
+            "adapter": "ui-by-viewport",
+            "hold_ms": 499,
+        })
+
+
+def test_world_context_menu_uses_the_real_probe_and_native_touch_long_press() -> None:
+    """The spatial door is a canvas gesture, so prove CDP touch events reach it."""
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as play:
+        browser = play.chromium.launch(headless=True)
+        context = browser.new_context(
+            viewport={"width": 393, "height": 852},
+            has_touch=True,
+        )
+        page = context.new_page()
+        page.set_content(
+            """
+            <canvas id="world" class="desk-world-canvas" width="393" height="852"
+                    style="display:block;width:393px;height:852px"></canvas>
+            <script>
+                  window.events = [];
+                  window.__hsWorldProbe = () => [{ref: 'chain:c1', x: 120, y: 220}];
+                  window.__hsWorldHitProbe = (x, y) => ({type: 'object', ref: 'chain:c1'});
+                  const canvas = document.querySelector('#world');
+              canvas.addEventListener('pointerdown', event => {
+                window.events.push({name: 'down', pointerType: event.pointerType});
+                setTimeout(() => { canvas.dataset.menu = 'open'; }, 500);
+              });
+              canvas.addEventListener('pointerup', event =>
+                window.events.push({name: 'up', pointerType: event.pointerType}));
+            </script>
+            """
+        )
+
+        record = gw._ui_step(page, {
+            "kind": "ui",
+            "action": "world_context_menu",
+            "selector": ".desk-world-canvas",
+            "world_ref": "chain:c1",
+            "adapter": "ui-by-viewport",
+            "hold_ms": 550,
+        })
+
+        assert record["adapter"] == "ui-touch"
+        assert record["gesture"] == "touch-long-press"
+        assert record["world_ref"] == "chain:c1"
+        assert record["point"] == {"x": 120.0, "y": 220.0}
+        assert page.locator("#world").get_attribute("data-menu") == "open"
+        events = page.evaluate("window.events")
+        assert {event["name"] for event in events} == {"down", "up"}
+        assert all(event["pointerType"] == "touch" for event in events)
+        context.close()
+        browser.close()
+
+
+def test_world_context_menu_uses_the_real_probe_and_native_mouse_context_menu() -> None:
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as play:
+        browser = play.chromium.launch(headless=True)
+        context = browser.new_context(
+            viewport={"width": 1440, "height": 900},
+            has_touch=False,
+        )
+        page = context.new_page()
+        page.set_content(
+            """
+            <canvas id="world" class="desk-world-canvas" width="1440" height="900"
+                    style="display:block;width:1440px;height:900px"></canvas>
+            <script>
+              window.__hsWorldProbe = () => [{ref: 'chain:c1', x: 820, y: 240}];
+              window.__hsWorldHitProbe = (x, y) => ({type: 'object', ref: 'chain:c1'});
+              document.querySelector('#world').addEventListener('contextmenu', event => {
+                event.preventDefault();
+                document.querySelector('#world').dataset.menu = 'open';
+              });
+            </script>
+            """
+        )
+
+        record = gw._ui_step(page, {
+            "kind": "ui",
+            "action": "world_context_menu",
+            "selector": ".desk-world-canvas",
+            "world_ref": "chain:c1",
+            "adapter": "ui-by-viewport",
+        })
+
+        assert record["adapter"] == "ui-pointer"
+        assert record["gesture"] == "mouse-right-click"
+        assert page.locator("#world").get_attribute("data-menu") == "open"
+        context.close()
+        browser.close()
 
 
 def test_ui_by_viewport_real_playwright_tap_emits_touch_pointer_events() -> None:
