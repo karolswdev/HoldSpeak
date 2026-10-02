@@ -39,13 +39,14 @@ import { apiRequest } from "../../lib/api";
 
 /** PHILO-13-04 (A3): an Ask that did not answer says so in plain words; the
  * hub's own text (a model path, a refusal sentence) never reaches the face,
- * its title included. */
+ * its title included. A failure that can be asked again names the kept ask
+ * and the next step (the product-copy failure facts). */
 export function askFailureLabel(output: string): { label: string; canAskAgain: boolean } {
   if (/model file not found|no default model|no model|model .*not (found|available)/i.test(output))
     return { label: "NOT ANSWERED · NO MODEL TO RUN IT", canAskAgain: false };
   if (/unreachable|network|failed to fetch|could not be reached/i.test(output))
-    return { label: "NOT ANSWERED · HUB UNREACHABLE", canAskAgain: true };
-  return { label: "NOT ANSWERED · THE HUB REFUSED IT", canAskAgain: true };
+    return { label: "NOT ANSWERED · HUB UNREACHABLE · ASK KEPT · CHECK THE HUB", canAskAgain: true };
+  return { label: "NOT ANSWERED · THE HUB REFUSED IT · ASK KEPT · EDIT THE ASK", canAskAgain: true };
 }
 import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
