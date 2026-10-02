@@ -401,7 +401,8 @@ class ProjectRepository(BaseRepository):
                 SELECT ai.status, COUNT(*) as cnt
                 FROM action_items ai
                 JOIN meeting_projects mp ON mp.meeting_id = ai.meeting_id
-                WHERE mp.project_id = ?
+                JOIN meetings m ON m.id = ai.meeting_id
+                WHERE mp.project_id = ? AND m.parked = 0
                 GROUP BY ai.status
                 """,
                 (clean_id,),
@@ -411,7 +412,8 @@ class ProjectRepository(BaseRepository):
                 SELECT COUNT(*) as cnt
                 FROM artifacts a
                 JOIN meeting_projects mp ON mp.meeting_id = a.meeting_id
-                WHERE mp.project_id = ?
+                JOIN meetings m ON m.id = a.meeting_id
+                WHERE mp.project_id = ? AND m.parked = 0
                 """,
                 (clean_id,),
             ).fetchone()

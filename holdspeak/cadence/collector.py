@@ -130,11 +130,12 @@ class LoopCollector:
                 """
                 SELECT dc.decision_id, dc.owner, dc.due_at, d.text,
                        d.project_key, d.source_meeting_id, m.title AS meeting_title
-                  FROM decision_commitments AS dc
+                 FROM decision_commitments AS dc
                   JOIN decisions AS d ON d.id = dc.decision_id
              LEFT JOIN meetings AS m ON m.id = d.source_meeting_id
                  WHERE dc.status = 'open'
                    AND d.deleted = 0
+                   AND (m.id IS NULL OR m.parked = 0)
                    AND d.lifecycle = 'accepted'
                 """
             ).fetchall()

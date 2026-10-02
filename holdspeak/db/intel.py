@@ -1337,7 +1337,8 @@ class IntelRepository(BaseRepository):
             params: tuple[Any, ...] = () if include_scheduled else (now,)
             row = conn.execute(
                 """SELECT j.* FROM intel_jobs j JOIN meetings m ON m.id=j.meeting_id
-                   WHERE j.status='queued' AND m.capture_status IN ('finalized','recovered')
+                   WHERE j.status='queued' AND m.parked=0
+                     AND m.capture_status IN ('finalized','recovered')
                      AND m.route_fence_pending=0""" + due + """
                      AND NOT EXISTS (SELECT 1 FROM intel_jobs owner
                          WHERE owner.meeting_id=j.meeting_id
@@ -1553,7 +1554,7 @@ class IntelRepository(BaseRepository):
                 conn.execute("BEGIN IMMEDIATE")
                 row = conn.execute(
                     """SELECT j.* FROM intel_jobs j JOIN meetings m ON m.id=j.meeting_id
-                       WHERE j.job_id=? AND j.status='queued'
+                       WHERE j.job_id=? AND j.status='queued' AND m.parked=0
                          AND m.capture_status IN ('finalized','recovered')
                          AND m.route_fence_pending=0
                          AND NOT EXISTS (SELECT 1 FROM intel_jobs owner
@@ -2663,7 +2664,7 @@ class IntelRepository(BaseRepository):
                     SELECT j.*,m.title AS meeting_title,m.started_at AS meeting_started_at,
                         m.intel_status_detail AS intel_status_detail
                     FROM intel_jobs j JOIN meetings m ON m.id=j.meeting_id
-                    WHERE j.status=?
+                    WHERE j.status=? AND m.parked=0
                 """
                 params: list[Any] = [status]
             else:
@@ -2672,6 +2673,7 @@ class IntelRepository(BaseRepository):
                         m.intel_status_detail AS intel_status_detail
                     FROM current_jobs j JOIN meetings m ON m.id=j.meeting_id
                     WHERE j.current_rank=1
+                      AND m.parked=0
                       AND j.status IN ('reserved','queued','claimed','running','failed')
                 """
                 params = []

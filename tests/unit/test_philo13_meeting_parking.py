@@ -11,6 +11,7 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 from holdspeak.db import Database
+from holdspeak.cadence.collector import LoopCollector
 from holdspeak.db.calendar_events import CalendarEvent
 from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
 from holdspeak.mcp import tools as mcp_tools
@@ -22,6 +23,11 @@ from holdspeak.services.people_service import PeopleService
 from holdspeak.services.project_service import ProjectService
 from holdspeak.services.projection_service import ProjectionService
 from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+from holdspeak.services.decision_record_service import DecisionRecordService
+from holdspeak.services.follow_through_service import FollowThroughService
+from holdspeak.services.recall_service import RecallService
+from holdspeak.services.room_people_service import _read_room_commitments
+from holdspeak.services.watch_sources import MeetingWatchSource
 from holdspeak.services.workbench_service import WorkbenchService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.meeting_import import build_meeting_import_router
@@ -89,6 +95,62 @@ def _proposal_client(db: Database) -> TestClient:
     ctx.proposal_bridge_service = ProposalBridgeService(db)
     app.include_router(build_proposal_router(ctx))
     return TestClient(app)
+
+
+class _RecordingBoundBinder:
+    """A real queue binder that records the producer's claimed Meeting id."""
+
+    def __init__(self, db: Database, *, park_in_prepare: bool = False) -> None:
+        self.db = db
+        self.park_in_prepare = park_in_prepare
+        self.prepared: list[str] = []
+        self.bound: list[tuple[str, dict[str, str]]] = []
+        self.discarded: list[str] = []
+
+    def prepare(self, job, command_ids) -> None:
+        self.prepared.append(str(job.meeting_id))
+        if self.park_in_prepare:
+            assert self.db.meetings.delete_meeting(str(job.meeting_id)) is True
+
+    def discard(self, job_id: str) -> None:
+        self.discarded.append(str(job_id))
+
+    def __call__(self, _conn, job, command_ids):
+        self.bound.append((str(job.meeting_id), dict(command_ids)))
+        return {
+            "parent_operation_id": "parent:recording-fence",
+            "bundle_id": "bundle:recording-fence",
+            "bundle_sha256": "sha256:recording-fence",
+        }
+
+
+def _decision_commitment_chain(db: Database, meeting_id: str) -> tuple[str, str, str]:
+    """Mint a decisions artifact, accepted decision, promoted record and commitment."""
+    db.plugins.record_artifact(
+        artifact_id=f"decisions-{meeting_id}",
+        meeting_id=meeting_id,
+        artifact_type="decisions",
+        title="Decision extraction",
+        structured_json={
+            "decisions": [{
+                "decision": "Parked meeting dependency must disappear",
+                "rationale": "A parked source is not active work.",
+                "source_timestamp": 1.0,
+            }],
+        },
+        confidence=1.0,
+        status="accepted",
+        plugin_id="decision_capture",
+        plugin_version="test",
+    )
+    decision = db.decisions.list(meeting_id=meeting_id)[0]
+    db.decisions.accept(decision.id, actor=OWNER.identity)
+    record = DecisionRecordService(db).create_from_meeting(OWNER, decision.id)
+    db.decisions.promote(decision.id, "note", actor=OWNER.identity)
+    commitment = FollowThroughService(db).commit_decision(
+        OWNER, decision.id, owner="Me", due_at="2099-01-01"
+    )
+    return decision.id, str(record["id"]), str(commitment["id"])
 
 
 def _related_rows(db: Database, meeting_id: str) -> dict[str, list[tuple]]:
@@ -393,12 +455,11 @@ def test_parked_meeting_is_absent_from_its_real_read_family(
             state.id,
             transcript_hash=state.transcript_hash(),
             reason="producer fence",
-            legacy_displaced_work=True,
         )
         assert job_id
-        read = db.intel.claim_next_intel_job
+        binder = _RecordingBoundBinder(db)
+        read = lambda: db.intel.claim_next_intel_job_bound(binder)
         expected_after_park = None
-        expected_after_restore = job_id
 
     assert db.meetings.delete_meeting(state.id) is True
     parked_value = read()
@@ -413,7 +474,8 @@ def test_parked_meeting_is_absent_from_its_real_read_family(
     elif read_family == "proposal":
         assert [row.id for row in restored_value] == [expected_after_restore]
     elif read_family == "intel_claim":
-        assert restored_value is not None and restored_value.job_id == expected_after_restore
+        assert restored_value is not None and restored_value.meeting_id == state.id
+        assert binder.bound and binder.bound[-1][0] == state.id
     else:
         assert restored_value == expected_after_restore
 
@@ -618,3 +680,270 @@ def test_parked_meeting_actions_and_speakers_disappear_from_all_owner_reads(tmp_
     assert db.meetings.get_speaker_segments("speaker-fence")
     assert db.meetings.get_speaker_stats("speaker-fence")["total_segments"] == 1
     assert people.one_on_one_brief(OWNER, relationship["id"], db=db)["linked_meetings"]
+
+
+def test_bound_intel_claim_initial_fence_reads_real_parked_meeting(tmp_path: Path) -> None:
+    db = Database(tmp_path / "bound-intel-initial.db")
+    state = _meeting("bound-intel-initial")
+    db.meetings.save_meeting(state)
+    job_id = db.intel.enqueue_intel_job(
+        state.id, transcript_hash=state.transcript_hash(), reason="bound fence"
+    )
+    assert db.meetings.delete_meeting(state.id) is True
+
+    binder = _RecordingBoundBinder(db)
+    assert db.intel.claim_next_intel_job_bound(binder) is None
+    assert binder.bound == []
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT status FROM intel_jobs WHERE job_id = ?", (job_id,)
+        ).fetchone()
+    assert row["status"] == "queued"
+
+    assert db.meetings.restore_meeting(state.id) is True
+    claimed = db.intel.claim_next_intel_job_bound(binder)
+    assert claimed is not None
+    assert binder.bound and binder.bound[-1][0] == state.id
+
+
+def test_bound_intel_claim_recheck_fence_rejects_meeting_parked_during_prepare(
+    tmp_path: Path,
+) -> None:
+    db = Database(tmp_path / "bound-intel-recheck.db")
+    state = _meeting("bound-intel-recheck")
+    db.meetings.save_meeting(state)
+    db.intel.enqueue_intel_job(
+        state.id, transcript_hash=state.transcript_hash(), reason="bound recheck fence"
+    )
+
+    binder = _RecordingBoundBinder(db, park_in_prepare=True)
+    assert db.intel.claim_next_intel_job_bound(binder) is None
+    assert binder.prepared == [state.id]
+    assert binder.bound == []
+    # The bound path may replace the legacy queue leaf before prepare freezes
+    # it; the binder must discard that exact prepared leaf after the recheck.
+    assert len(binder.discarded) == 1
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT status FROM intel_jobs WHERE job_id = ?", (binder.discarded[0],)
+        ).fetchone()
+    assert row["status"] == "queued"
+
+
+def test_follow_through_action_read_hides_parked_meeting_and_restores_it(
+    tmp_path: Path,
+) -> None:
+    db = Database(tmp_path / "follow-through-parked.db")
+    state = _meeting("follow-through-parked")
+    db.meetings.save_meeting(state)
+    service = FollowThroughService(db)
+
+    def card_ids() -> set[str]:
+        board = service.board(OWNER)
+        return {card.id for lane in (board.now, board.waiting, board.unassigned, board.overdue) for card in lane}
+
+    assert "a1-action" in card_ids()
+    assert db.meetings.delete_meeting(state.id) is True
+    assert "a1-action" not in card_ids()
+    assert db.meetings.restore_meeting(state.id) is True
+    assert "a1-action" in card_ids()
+
+
+def test_follow_through_decision_commitment_hides_parked_source_and_restores_it(
+    tmp_path: Path,
+) -> None:
+    db = Database(tmp_path / "follow-through-decision-parked.db")
+    state = _meeting("follow-through-decision-parked")
+    db.meetings.save_meeting(state)
+    decision_id, _, _ = _decision_commitment_chain(db, state.id)
+    with db._connection() as conn:
+        action_item_id = str(conn.execute(
+            "SELECT action_item_id FROM decision_commitments WHERE decision_id = ?",
+            (decision_id,),
+        ).fetchone()[0])
+    # The real collector produces the meeting-decision and source-meeting
+    # action cadence cards. The board must hide both loops and the open
+    # commitment when the source meeting is parked, without a refresh.
+    loops = LoopCollector(db).collect()
+    decision_loop = next(
+        loop for loop in loops
+        if loop.source_type == "meeting_decision" and loop.source_id == decision_id
+    )
+    decision_loop_id = str(decision_loop.id)
+    with db._connection() as conn:
+        action_rows = conn.execute(
+            "SELECT id FROM action_items WHERE meeting_id = ?", (state.id,)
+        ).fetchall()
+        action_item_ids = {str(row["id"]) for row in action_rows}
+        action_loop_rows = conn.execute(
+            """SELECT c.id, c.source_id
+               FROM cadence_loops c
+               JOIN action_items a ON a.id = c.source_id
+               WHERE c.source_type = 'meeting_action' AND a.meeting_id = ?""",
+            (state.id,),
+        ).fetchall()
+    action_loop_ids = {str(row["id"]) for row in action_loop_rows}
+    assert action_loop_ids
+    assert action_item_id in action_item_ids
+    assert {str(row["source_id"]) for row in action_loop_rows} <= action_item_ids
+    service = FollowThroughService(db)
+
+    def decision_cards() -> list[object]:
+        board = service.board(OWNER)
+        return [
+            card
+            for lane in (board.now, board.waiting, board.unassigned, board.overdue)
+            for card in lane
+            if card.decision_id == decision_id
+            or card.id in action_item_ids | action_loop_ids | {decision_loop_id}
+        ]
+
+    before = decision_cards()
+    before_ids = {card.id for card in before}
+    assert action_item_ids <= before_ids
+    assert decision_loop_id in before_ids
+    assert db.meetings.delete_meeting(state.id) is True
+    parked_ids = {card.id for card in decision_cards()}
+    assert parked_ids.isdisjoint(action_item_ids | action_loop_ids | {decision_loop_id})
+    assert db.meetings.restore_meeting(state.id) is True
+    restored_ids = {card.id for card in decision_cards()}
+    assert action_item_ids | {decision_loop_id} <= restored_ids
+    with db._connection() as conn:
+        restored_loop_ids = {
+            str(row["id"])
+            for row in conn.execute(
+                "SELECT id FROM cadence_loops WHERE id IN ({})".format(
+                    ",".join("?" for _ in action_loop_ids)
+                ),
+                tuple(action_loop_ids),
+            ).fetchall()
+        }
+    assert restored_loop_ids == action_loop_ids
+
+
+def test_project_stats_hide_parked_meeting_actions_and_artifacts(tmp_path: Path) -> None:
+    db = Database(tmp_path / "project-stats-parked.db")
+    state = _meeting("project-stats-parked")
+    db.meetings.save_meeting(state)
+    db.projects.create_project(project_id="project-stats", name="Project stats")
+    db.projects.associate_meeting_project(
+        meeting_id=state.id, project_id="project-stats", source="test", confidence=1.0
+    )
+    db.plugins.record_artifact(
+        artifact_id="project-stats-artifact", meeting_id=state.id,
+        artifact_type="handoff", title="Stats artifact", body_markdown="retained",
+    )
+    service = ProjectService(db)
+    assert service.summary(OWNER, "project-stats") == {
+        "meeting_count": 1,
+        "first_meeting": "2026-10-01T10:00:00",
+        "last_meeting": "2026-10-01T10:00:00",
+        "action_items_by_status": {"pending": 1},
+        "artifact_count": 1,
+    }
+
+    assert db.meetings.delete_meeting(state.id) is True
+    assert service.summary(OWNER, "project-stats") == {
+        "meeting_count": 0,
+        "first_meeting": None,
+        "last_meeting": None,
+        "action_items_by_status": {},
+        "artifact_count": 0,
+    }
+    assert db.meetings.restore_meeting(state.id) is True
+    assert service.summary(OWNER, "project-stats")["artifact_count"] == 1
+    assert service.summary(OWNER, "project-stats")["action_items_by_status"] == {"pending": 1}
+
+
+def test_meeting_watch_source_hides_parked_meeting_and_restores_it(tmp_path: Path) -> None:
+    db = Database(tmp_path / "meeting-watch-parked.db")
+    state = _meeting("meeting-watch-parked")
+    db.meetings.save_meeting(state)
+    db.projects.create_project(project_id="watch-project", name="Watch project")
+    db.projects.associate_meeting_project(
+        meeting_id=state.id, project_id="watch-project", source="test", confidence=1.0
+    )
+    source = MeetingWatchSource(db=db)
+    query = {"project_id": "watch-project"}
+    assert [row["id"] for row in source.snapshot(OWNER, query_kind="meetings", query=query)] == [state.id]
+
+    assert db.meetings.delete_meeting(state.id) is True
+    assert source.snapshot(OWNER, query_kind="meetings", query=query) == []
+    assert db.meetings.restore_meeting(state.id) is True
+    assert [row["id"] for row in source.snapshot(OWNER, query_kind="meetings", query=query)] == [state.id]
+
+
+def test_intel_job_list_hides_parked_meeting_and_restores_it(tmp_path: Path) -> None:
+    db = Database(tmp_path / "intel-list-parked.db")
+    state = _meeting("intel-list-parked")
+    db.meetings.save_meeting(state)
+    job_id = db.intel.enqueue_intel_job(
+        state.id, transcript_hash=state.transcript_hash(), reason="list fence"
+    )
+    assert [job.job_id for job in db.intel.list_intel_jobs()] == [job_id]
+
+    assert db.meetings.delete_meeting(state.id) is True
+    assert db.intel.list_intel_jobs() == []
+    assert db.meetings.restore_meeting(state.id) is True
+    assert [job.job_id for job in db.intel.list_intel_jobs()] == [job_id]
+
+
+def test_loop_collector_hides_parked_meeting_decision_and_restores_it(tmp_path: Path) -> None:
+    db = Database(tmp_path / "collector-parked.db")
+    state = _meeting("collector-parked")
+    db.meetings.save_meeting(state)
+    decision_id, _, _ = _decision_commitment_chain(db, state.id)
+    collector = LoopCollector(db)
+
+    assert any(loop.source_id == decision_id for loop in collector.collect())
+    assert db.meetings.delete_meeting(state.id) is True
+    assert collector._collect_meeting_decisions(datetime.now()) == []
+    parked_loop = db.cadence.get_loop_by_source("meeting_decision", decision_id)
+    assert parked_loop is not None and parked_loop.status == "closed"
+    assert db.meetings.restore_meeting(state.id) is True
+    assert any(loop.source_id == decision_id for loop in collector.collect())
+
+
+def test_room_commitment_read_hides_parked_source_and_restores_it(tmp_path: Path) -> None:
+    db = Database(tmp_path / "room-commitment-parked.db")
+    state = _meeting("room-commitment-parked")
+    db.meetings.save_meeting(state)
+    db.projects.create_project(project_id="room-project", name="Room project")
+    db.projects.associate_meeting_project(
+        meeting_id=state.id, project_id="room-project", source="test", confidence=1.0
+    )
+    _, _, commitment_id = _decision_commitment_chain(db, state.id)
+    project_service = ProjectService(db)
+    assert [row["id"] for row in _read_room_commitments(project_service, "room-project")] == [commitment_id]
+
+    assert db.meetings.delete_meeting(state.id) is True
+    assert _read_room_commitments(project_service, "room-project") == []
+    assert db.meetings.restore_meeting(state.id) is True
+    assert [row["id"] for row in _read_room_commitments(project_service, "room-project")] == [commitment_id]
+
+
+def test_recall_hides_parked_commitment_but_keeps_promoted_decision_record(
+    tmp_path: Path,
+) -> None:
+    db = Database(tmp_path / "recall-parked.db")
+    state = _meeting("recall-parked")
+    db.meetings.save_meeting(state)
+    _, record_id, commitment_id = _decision_commitment_chain(db, state.id)
+    service = RecallService(db)
+
+    before_decisions = service.recall(OWNER, "Parked meeting dependency", filter="decisions")
+    before_commitments = service.recall(OWNER, "Parked meeting dependency", filter="commitments")
+    assert [card["id"] for card in before_decisions["current"]] == [record_id]
+    assert [row["id"] for row in before_commitments["owed"]] == [commitment_id]
+    assert before_decisions["current"][0]["source"]["meeting_id"] == state.id
+
+    assert db.meetings.delete_meeting(state.id) is True
+    parked_decisions = service.recall(OWNER, "Parked meeting dependency", filter="decisions")
+    parked_commitments = service.recall(OWNER, "Parked meeting dependency", filter="commitments")
+    assert [card["id"] for card in parked_decisions["current"]] == [record_id]
+    assert parked_decisions["current"][0]["source"] is None
+    assert parked_commitments["owed"] == []
+
+    assert db.meetings.restore_meeting(state.id) is True
+    restored = service.recall(OWNER, "Parked meeting dependency", filter="commitments")
+    assert [row["id"] for row in restored["owed"]] == [commitment_id]

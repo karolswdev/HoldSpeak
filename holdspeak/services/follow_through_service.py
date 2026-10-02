@@ -634,8 +634,12 @@ class FollowThroughService:
 
     @staticmethod
     def _action_rows(conn: Any, *, project_id: str | None, owner: str | None) -> list[Any]:
-        query = "SELECT a.*, dc.decision_id FROM action_items a LEFT JOIN decision_commitments dc ON dc.action_item_id = a.id"
-        clauses: list[str] = []
+        query = (
+            "SELECT a.*, dc.decision_id FROM action_items a "
+            "LEFT JOIN decision_commitments dc ON dc.action_item_id = a.id "
+            "LEFT JOIN meetings m ON m.id = a.meeting_id"
+        )
+        clauses: list[str] = ["(a.meeting_id IS NULL OR m.parked = 0)"]
         params: list[str] = []
         if project_id:
             query += " JOIN meeting_projects mp ON mp.meeting_id = a.meeting_id"
@@ -650,28 +654,41 @@ class FollowThroughService:
 
     @staticmethod
     def _loop_rows(conn: Any, *, project_id: str | None, owner: str | None) -> list[Any]:
-        query = "SELECT * FROM cadence_loops"
-        clauses: list[str] = []
+        query = (
+            "SELECT c.* FROM cadence_loops c "
+            "LEFT JOIN decisions d ON c.source_type = 'meeting_decision' "
+            "AND d.id = c.source_id "
+            "LEFT JOIN action_items a ON c.source_type = 'meeting_action' "
+            "AND a.id = c.source_id "
+            "LEFT JOIN meetings m ON m.id = COALESCE(d.source_meeting_id, a.meeting_id)"
+        )
+        clauses: list[str] = [
+            "(c.source_type NOT IN ('meeting_decision', 'meeting_action') "
+            "OR m.id IS NULL OR m.parked = 0)"
+        ]
         params: list[str] = []
         if project_id:
             # Project association for meeting actions is determined by the
             # canonical meeting_projects relation, not cadence's display label.
             clauses.append(
-                "(source_type = 'meeting_action' AND source_id IN "
+                "(c.source_type = 'meeting_action' AND c.source_id IN "
                 "(SELECT a.id FROM action_items a JOIN meeting_projects mp "
                 "ON mp.meeting_id = a.meeting_id WHERE mp.project_id = ?))"
             )
             params.append(project_id)
         if owner:
-            clauses.append("owner = ?")
+            clauses.append("c.owner = ?")
             params.append(owner)
-        if clauses:
-            query += " WHERE " + " AND ".join(clauses)
+        query += " WHERE " + " AND ".join(clauses)
         return list(conn.execute(query, params))
 
     @staticmethod
     def _decision_rows(conn: Any, *, project_id: str | None) -> dict[str, Any]:
-        query = "SELECT id, source_meeting_id FROM decisions WHERE deleted = 0"
+        query = (
+            "SELECT d.id, d.source_meeting_id FROM decisions d "
+            "LEFT JOIN meetings m ON m.id = d.source_meeting_id "
+            "WHERE d.deleted = 0 AND (m.id IS NULL OR m.parked = 0)"
+        )
         params: list[str] = []
         if project_id:
             query += " AND (project_key = ? OR source_meeting_id IN " \
