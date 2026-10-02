@@ -1213,11 +1213,6 @@
         "doc": "HS-110-01: solid border replaces the frosted-glass rim"
       },
       {
-        "name": "--gadget-close-fill",
-        "value": "#3a1c1c",
-        "doc": "HS-110-01: close gadget hover on front window — dim red, not traffic light"
-      },
-      {
         "name": "--gadget-fill",
         "value": "var(--surface-2)",
         "doc": "HS-110-01: gadget rest fill"

@@ -316,7 +316,6 @@
   --ease-expo: cubic-bezier(0.87, 0, 0.13, 1); /* HS-99: the emphatic easing for large moves */
   --ease-back: cubic-bezier(0.68, -0.4, 0.32, 1.4); /* HS-99: the playful overshoot (small elements only) */
   --desk-glass-edge: inset 0 0 0 1px var(--border); /* HS-110-01: solid border replaces the frosted-glass rim */
-  --gadget-close-fill: #3a1c1c; /* HS-110-01: close gadget hover on front window — dim red, not traffic light */
   --gadget-fill: var(--surface-2); /* HS-110-01: gadget rest fill */
   --gadget-fill-hover: var(--surface-3); /* HS-110-01: gadget hover fill */
   --shade-1: rgba(0, 0, 0, 0.3); /* the inner dark hairline / shade wash (glass-edge family) */

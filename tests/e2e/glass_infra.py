@@ -352,6 +352,44 @@ def _assert_clean(page: Any, errors: list[str]) -> None:
     )
 
 
+# ── FOLDED_WORD_JS: the ONE exception to the 12 px floor for a hidden word ──
+#
+# PHILO-13-11 (C1, §4 393; owner-ratified 2026-10-02): the phone's screen bar
+# draws three controls as pictures and folds their words into the control's
+# name. Astra's counsel on #730 found the first reader far too broad (any
+# zero-size text under any named ancestor passed: a blank zero-size "Save"
+# button, "SEND FAILED" hidden inside a control named "Open"). The exception
+# is now exactly the intended picture controls. A text leaf is a folded word
+# ONLY when ALL hold:
+#   1. the viewport is the phone width (<= 720 px) and the leaf's computed
+#      size is 0 (nothing is painted);
+#   2. it sits inside one of the screen bar's picture controls: the mark,
+#      the egress chip, Search;
+#   3. that control draws a VISIBLE replacement: a picture (img/svg with an
+#      area) or a ::before glyph;
+#   4. the control's EXPLICIT name (aria-label or title, never the hidden
+#      text itself) contains the hidden word.
+# Anything else at size 0 is text under the floor. Defines `foldedWord(el, text)`.
+FOLDED_WORD_JS = r"""
+  const foldedWord = (el, text) => {
+    if (window.innerWidth > 720) return false;
+    if (parseFloat(getComputedStyle(el).fontSize) !== 0) return false;
+    const host = el.closest('.desk-menubar .desk-mark, .desk-menubar .egress-badge, .desk-menubar .desk-tools-launch');
+    if (!host) return false;
+    const pics = [...host.querySelectorAll('img, svg')].some((p) => {
+      const r = p.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+    const before = getComputedStyle(host, '::before');
+    const glyph = before.content && !['none', 'normal', '""'].includes(before.content)
+      && parseFloat(before.fontSize) > 0;
+    if (!pics && !glyph) return false;
+    const norm = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+    const word = norm(text);
+    const name = norm(host.getAttribute('aria-label')) + '|' + norm(host.getAttribute('title'));
+    return word.length > 0 && name.includes(word);
+  };
+"""
+
+
 # ── pick_wing: choose a window face, strip or strip menu ──
 
 def pick_wing(page: Any, label: str) -> None:

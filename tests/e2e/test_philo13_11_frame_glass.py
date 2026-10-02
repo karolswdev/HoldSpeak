@@ -38,7 +38,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import FOLDED_WORD_JS, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the frame glass needs Playwright")
@@ -96,7 +96,7 @@ def _seed() -> None:
 
 # ── the measures (run in the page) ──────────────────────────────────────
 
-FRAME_JS = r"""(width) => {
+FRAME_JS = r"""(width) => {""" + FOLDED_WORD_JS + r"""
   const rgb = (s) => { const m = String(s).match(/rgba?\(([^)]+)\)/); if (!m) return null;
     const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return {r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1}; };
   const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
@@ -184,7 +184,10 @@ FRAME_JS = r"""(width) => {
     if (front) { const head = front.querySelector(':scope > .desk-pullout-head');
       const fr = front.getBoundingClientRect(); const hr = head.getBoundingClientRect();
       out.content = Math.round(fr.bottom - parseFloat(getComputedStyle(front).borderBottomWidth) - hr.bottom); }
-    const targets = [...(bar ? bar.querySelectorAll('button') : []), ...heads.flatMap((h) => [...h.querySelectorAll('button')])].filter(visible);
+    // every frame target: the screen bar, the title bars AND every choice of
+    // an open menu (menuitem, menuitemcheckbox, menuitemradio)
+    const targets = [...(bar ? bar.querySelectorAll('button') : []), ...heads.flatMap((h) => [...h.querySelectorAll('button')]),
+      ...menus.flatMap((m) => [...m.querySelectorAll('[role^="menuitem"]')])].filter(visible);
     for (const t of targets) { const r = t.getBoundingClientRect();
       if (r.width < 44 - 0.5 || r.height < 44 - 0.5) out.small_targets.push({control: label(t), w: Math.round(r.width), h: Math.round(r.height)}); }
   }
@@ -194,9 +197,14 @@ FRAME_JS = r"""(width) => {
     const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
       const el = n.parentElement; const text = n.textContent.trim();
-      if (!text || !visible(el)) continue;
       const cs = getComputedStyle(el); const size = parseFloat(cs.fontSize);
-      if (size < 1) continue;  // a word folded into an accessible name (font-size 0)
+      // a zero-size word has no box: read it when its parent is visible
+      const zero = size === 0 && cs.display !== 'none' && cs.visibility !== 'hidden'
+        && el.parentElement && visible(el.parentElement);
+      if (!text || !(visible(el) || zero)) continue;
+      // the ONE exception: a word folded into a screen-bar picture control
+      // (glass_infra.FOLDED_WORD_JS); any other size under 12 px fails
+      if (foldedWord(el, text)) continue;
       if (size < 12 - 0.01) out.small_text.push({text: text.slice(0, 30), size});
       if (el.closest('.is-ghost')) continue;  // a ghosted row is the stipple's job (recorded by the canvas)
       const fg = rgb(cs.color); if (!fg) continue;

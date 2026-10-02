@@ -412,6 +412,12 @@ class TestSharedControlsAreSpecies:
                 page.locator(".desk-menu-list").first.wait_for(timeout=5_000)
                 checked = page.locator(".desk-menu-list [aria-checked=true]").all_inner_texts()
                 assert len(checked) == 1, f"the strip menu must check ONE current face: {checked}"
+                # the CHOICES own the target, not only the trigger (Astra counsel
+                # on #730): every row of the open menu, checkable rows included
+                choices = page.locator(".desk-menu-list [role^=menuitem]")
+                assert choices.count() >= 5, f"the strip menu drew {choices.count()} choices"
+                assert page.locator(".desk-menu-list [role=menuitemcheckbox]").count() >= 4
+                _strip_targets(page, ".desk-menu-list [role^=menuitem]", subject="the strip menu's choices")
                 # a keyboard open puts focus on a row (DeskMenu autoFocus)
                 page.wait_for_function(
                     "() => Boolean(document.activeElement?.closest('.desk-menu-list'))",

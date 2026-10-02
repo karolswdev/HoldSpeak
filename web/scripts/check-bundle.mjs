@@ -28,7 +28,14 @@ const limits = {
   // Disclosure variant, the recall, prepare and People postures. Measured
   // Desk CSS on the full stack (13 over 14 over 11 over 12 over 15):
   // 318_681 B. Nothing dead was found to delete first. Down-only from here.
-  css: 325_000,
+  //
+  // RATCHET — PHILO-13-11 (C1), 2026-10-02. Raised 325_000 -> 335_000 for the
+  // owner-ratified Workbench look ("Ratify, build it"; "Steel", story-11
+  // §RATIFIED): the frame, the gadget set, the screen title bar, the paper
+  // menus, the strip menu and the phone frame. Dead CSS the slice made was
+  // deleted first (the traffic-light chrome, the old blue-head rule, the
+  // 480 px wing wrap, --gadget-close-fill). Measured Desk CSS: 331_128 B.
+  css: 335_000,
 };
 
 const bytes = (names) =>

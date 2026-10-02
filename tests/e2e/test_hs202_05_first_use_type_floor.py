@@ -29,6 +29,7 @@ from pathlib import Path
 import pytest
 
 from .glass_infra import (
+    FOLDED_WORD_JS,
     _api,
     _assert_clean,
     _boot,
@@ -157,7 +158,7 @@ _FAINT_JS = "getComputedStyle(document.documentElement).getPropertyValue('--text
 
 # The M7/M8 reader. Kept deliberately close to the census's own code so a
 # number here means the same thing a number in census.json means.
-_MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + """
+_MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + FOLDED_WORD_JS + """
   const parse = (s) => {
     const m = /rgba?\\(([^)]+)\\)/.exec(s || "");
     if (!m) return null;
@@ -211,8 +212,16 @@ _MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + """
            s.display !== 'none' && Number(s.opacity) > 0;
   };
 
+  // PHILO-13-11 (Astra counsel #730): a zero-size word has no box of its
+  // own, so `visible` alone never read it; it is a leaf when its parent is
+  // visible and it is not hidden (it then meets foldedWord or the floor).
+  const zeroWord = (el) => {
+    const s = getComputedStyle(el);
+    return parseFloat(s.fontSize) === 0 && s.display !== 'none' && s.visibility !== 'hidden'
+      && el.parentElement && visible(el.parentElement);
+  };
   const leaves = [...document.querySelectorAll('body *')]
-    .filter((el) => ownText(el) && visible(el));
+    .filter((el) => ownText(el) && (visible(el) || zeroWord(el)));
 
   // A nontext glyph is exempt from the floor, and only when a readable
   // word or an accessible name says the same thing. A word or a number
@@ -244,13 +253,10 @@ _MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + """
     const text = ownText(el);
     const size = parseFloat(cs.fontSize);
 
-    // PHILO-13-11 (C1, §4 393; owner-ratified 2026-10-02): the phone's
-    // screen bar draws the mark, the egress chip and Search as pictures;
-    // their words are FOLDED into the control's accessible name (computed
-    // size 0: no glyph is painted, the name still reads them). A folded
-    // word is not text on the glass, and it is exempt ONLY when its control
-    // still carries an accessible name; any painted size under 12 still fails.
-    if (size === 0 && named(el)) continue;
+    // PHILO-13-11 (C1, §4 393): a word folded into one of the screen bar's
+    // picture controls (glass_infra.FOLDED_WORD_JS, narrowed after Astra's
+    // counsel on #730). Any other text under 12 px still fails.
+    if (foldedWord(el, text)) continue;
     if (size < 12) {
       const glyph = GLYPH.test(text);
       const alt = glyph ? named(el) : null;

@@ -594,6 +594,9 @@ export function DeskToolShelf() {
         variant="chrome"
         ref={launchRef}
         className="desk-chip desk-tools-launch"
+        // PHILO-13-11 (C1, §4 393): at the phone width the word folds away
+        // and the picture stays; the title names the control explicitly.
+        title="Search ⌘K"
         aria-expanded={open}
         aria-controls="desk-tool-shelf"
         aria-keyshortcuts="Control+K Meta+K"

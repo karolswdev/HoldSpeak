@@ -1088,7 +1088,9 @@
      portals outside every `surface` container, so this is a viewport block.
      The keep-in-view rule (DeskMenu.tsx) measures the panel after these
      rows are laid out. */
-  .desk-next .desk-work-menu [role="menuitem"] {
+  /* PHILO-13-11 (Astra counsel, PR 730): every CHOICE, the checkable rows of
+     a strip menu included, owns the 44 px — not only plain items. */
+  .desk-next .desk-work-menu :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]) {
     min-height: var(--desk-button-hit-size);
   }
   /* The clock's date is redundant on the narrowest bar; its accessible name
