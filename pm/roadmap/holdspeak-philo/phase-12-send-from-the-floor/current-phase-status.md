@@ -1,6 +1,8 @@
 # Phase 12 - Send from the Floor
 
-**Last updated:** 2026-09-30 (Muad'Dib's PHILO-12-01 built counsel r1 recorded; C1 and C2 paid; full-suite run assigned to Muad'Dib on the merged head.) Earlier: 2026-09-30 (RATIFIED by the owner, "Ratify, build it". Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid, `checks/charter-astra-r1.md`.) Earlier: 2026-09-30 (DRAFTED by the Fedaykin docs lane for Muad'Dib; unchecked.)
+> **2026-10-01 — FOLDED into PHILO Phase 13 (owner, 2026-10-01: "Fold it into the Desk work").** Story 01 stays done. Stories 02–06 are parked — folded into PHILO-13 C5, never done. `parked` is not a status the gate accepts (`.githooks/dw_pmo/model.py:18`), so each reads `blocked — parked, folded into PHILO-13 C5 (owner 2026-10-01)`. The window-side intent (the in-window `Send to ▸`, the push seam, the artifact SEND well, the reads, the Room link, the exact brief id, the tie rule) and its proof (old 05, old 06 by `Send to ▸`) carry into [PHILO-13-15](../phase-13-the-desk/story-15-c5-send-to-from-any-document-window.md). The Floor work (destination icons, the drop and its tag, the brief icon on the Floor, the sprites, J2, the drag leg) is parked with its records here. Canvases F–J stay as unratified artifacts. Map: [Phase 13, "The Phase 12 fold"](../phase-13-the-desk/current-phase-status.md).
+
+**Last updated:** 2026-10-01 (FOLDED into PHILO Phase 13 on the owner's word; stories 02–06 parked — folded into PHILO-13 C5.) Earlier: 2026-09-30 (Muad'Dib's PHILO-12-01 built counsel r1 recorded; C1 and C2 paid; full-suite run assigned to Muad'Dib on the merged head.) Earlier: 2026-09-30 (RATIFIED by the owner, "Ratify, build it". Earlier: round two: Astra r1 RATIFY-WITH-CONDITIONS paid, `checks/charter-astra-r1.md`.) Earlier: 2026-09-30 (DRAFTED by the Fedaykin docs lane for Muad'Dib; unchecked.)
 
 **Status:** RATIFIED by the owner 2026-09-30 ("Ratify, build it", all eleven defaults) after Astra's check r1 (RATIFY-WITH-CONDITIONS, paid).
 
@@ -91,11 +93,11 @@ The proof is new capability through the real hub on an isolated HOME, never a te
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | PHILO-12-01 | The artifact source and the Floor binding | done | [story-01-the-artifact-source-and-the-floor-binding](./story-01-the-artifact-source-and-the-floor-binding.md) | [evidence-story-01](./evidence-story-01.md) |
-| PHILO-12-02 | The canvases F–J | in-progress | [story-02-the-canvases](./story-02-the-canvases.md) | — |
-| PHILO-12-03 | Send to, the artifact window and the decision sprite | backlog | [story-03-send-to-the-artifact-window-and-the-decision-sprite](./story-03-send-to-the-artifact-window-and-the-decision-sprite.md) | — |
-| PHILO-12-04 | Destinations on the Floor and the drop | backlog | [story-04-destinations-on-the-floor-and-the-drop](./story-04-destinations-on-the-floor-and-the-drop.md) | — |
-| PHILO-12-05 | The atlas cases | backlog | [story-05-the-atlas-cases](./story-05-the-atlas-cases.md) | — |
-| PHILO-12-06 | The closing use | backlog | [story-06-the-closing-use](./story-06-the-closing-use.md) | — |
+| PHILO-12-02 | The canvases F–J | blocked — parked, folded into PHILO-13 C5 (owner 2026-10-01) | [story-02-the-canvases](./story-02-the-canvases.md) | — |
+| PHILO-12-03 | Send to, the artifact window and the decision sprite | blocked — parked, folded into PHILO-13 C5 (owner 2026-10-01) | [story-03-send-to-the-artifact-window-and-the-decision-sprite](./story-03-send-to-the-artifact-window-and-the-decision-sprite.md) | — |
+| PHILO-12-04 | Destinations on the Floor and the drop | blocked — parked, folded into PHILO-13 C5 (owner 2026-10-01) | [story-04-destinations-on-the-floor-and-the-drop](./story-04-destinations-on-the-floor-and-the-drop.md) | — |
+| PHILO-12-05 | The atlas cases | blocked — parked, folded into PHILO-13 C5 (owner 2026-10-01) | [story-05-the-atlas-cases](./story-05-the-atlas-cases.md) | — |
+| PHILO-12-06 | The closing use | blocked — parked, folded into PHILO-13 C5 (owner 2026-10-01) | [story-06-the-closing-use](./story-06-the-closing-use.md) | — |
 
 **Two changes from the brief's five-story proposal, with reasons:**
 
@@ -117,6 +119,8 @@ The proof is new capability through the real hub on an isolated HOME, never a te
 - A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call. CI does not gate a merge (the owner, 2026-09-28).
 
 ## Where we are
+
+2026-10-01: FOLDED into PHILO Phase 13 (the owner: "Fold it into the Desk work"). Story 01 stays done. Stories 02–06 are `blocked`: parked — folded into PHILO-13 C5 (`../phase-13-the-desk/story-15-c5-send-to-from-any-document-window.md`). Phase 12 closes as "folded into Phase 13" once the Phase 13 charter is ratified. No final summary is written until then.
 
 2026-10-01: story 02 round two DRAWN, paying Astra canvas r1 RATIFY-WITH-CONDITIONS (`checks/canvas-astra-r1.md`): the arrival without a rig scroll, the phone's Back row and touch path, the real column wrap (F6), whole-element probes, stand-in receipts labelled, and a seat guard that fails the server. The "latest published update" tie is ruled (greatest `published_at`, then greatest rowid) and carried into story 03. Next: the owner's word.
 

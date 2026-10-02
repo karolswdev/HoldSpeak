@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 12
-- **Status:** backlog
+- **Status:** blocked — parked, folded into PHILO-13 C5 (owner 2026-10-01)
 - **Depends on:** PHILO-12-02 ratified (canvases H, J1, F4, G7–G9); PHILO-12-01 merged
 - **Unblocks:** PHILO-12-04, PHILO-12-05
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Astra checks
@@ -48,6 +48,7 @@ PROVISIONAL: 2.5–3.5 engineering days.
 
 ## Notes
 
+- 2026-10-01 — parked — folded into PHILO-13 C5 (owner, 2026-10-01: "Fold it into the Desk work"). Never done. What carries and what stays parked: `../phase-13-the-desk/current-phase-status.md`, "The Phase 12 fold".
 - 2026-09-30 — carried from the canvases (story 02, `assets/story-02-canvas/README.md` N1–N3, settled by Astra canvas r1 finding 6, `checks/canvas-astra-r1.md`, and Muad'Dib's ruling):
   - **Menu entries:** `WorkMenuEntry` gains an optional `detail` (a quiet suffix, the ghost-reason look) for the channel word on a destination row. **Labels stay strings**: a submenu's label also names its panel for a screen reader (`web/src/desk/components/DeskMenu.tsx:638`); markup there named it `[object Object] submenu` on glass.
   - **An open menu re-renders when a read lands**, every transition: loading → known present (`Send to · CHECKING` becomes `Send to`), loading → **confirmed absence** (`Send to ▸` leaves the open menu; withheld, UX-CANON A.11), loading → failed (`Send to · CAN'T CHECK`, the rows stay pickable). Fence each transition on a menu that stays open.

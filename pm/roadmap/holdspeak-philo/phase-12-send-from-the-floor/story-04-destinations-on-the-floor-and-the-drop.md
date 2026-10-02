@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 12
-- **Status:** backlog
+- **Status:** blocked — parked, folded into PHILO-13 C5 (owner 2026-10-01)
 - **Depends on:** PHILO-12-02 ratified (canvases F, G1–G6, I, J2); PHILO-12-01 and PHILO-12-03 merged
 - **Unblocks:** PHILO-12-05, PHILO-12-06
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Astra checks
@@ -40,5 +40,6 @@ PROVISIONAL: 1.5–2 engineering days.
 
 ## Notes
 
+- 2026-10-01 — parked — folded into PHILO-13 C5 (owner, 2026-10-01: "Fold it into the Desk work"). Never done. What carries and what stays parked: `../phase-13-the-desk/current-phase-status.md`, "The Phase 12 fold".
 - 2026-09-30 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`): the Room link moved to 03; the Settings row focus and J2 added here.
 - 2026-09-30 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

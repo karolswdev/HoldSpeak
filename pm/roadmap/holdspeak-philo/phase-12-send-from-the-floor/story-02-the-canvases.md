@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 12
-- **Status:** in-progress
+- **Status:** blocked — parked, folded into PHILO-13 C5 (owner 2026-10-01)
 - **Depends on:** the owner's ratification; design `floor-send.md` (the wire the harness shim serves). May start before Phase 11 closes.
 - **Unblocks:** PHILO-12-03, PHILO-12-04
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Astra checks
@@ -36,6 +36,7 @@ PROVISIONAL: about 1 engineering day.
 
 ## Notes
 
+- 2026-10-01 — parked — folded into PHILO-13 C5 (owner, 2026-10-01: "Fold it into the Desk work"). Never done. What carries and what stays parked: `../phase-13-the-desk/current-phase-status.md`, "The Phase 12 fold".
 - 2026-10-01 — round two drawn on Astra canvas r1 RATIFY-WITH-CONDITIONS (`checks/canvas-astra-r1.md`, verbatim); paid in `assets/story-02-canvas/README.md` ("Round two").
 - 2026-09-30 — round one drawn: `assets/story-02-canvas/` (README, `index.html`, `harness/`, `shots/`). For Astra's check and the owner's ratification.
 - 2026-09-30 — round two: amended on Astra r1 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r1.md`).
