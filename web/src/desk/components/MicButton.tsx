@@ -180,9 +180,11 @@ export function MicButton({
 
   const captureSupported = speakToFillSupported() || micStreamSupported();
   if (!captureSupported && !audioRetained) {
-    const reason =
-      speakToFillUnsupportedReason() ??
-      "This browser cannot capture microphone audio.";
+    // PHILO-13-04 round three: a NAME for the fact, never the sentence, in
+    // the title and the accessible name alike (Tenet 4).
+    const unsupportedName = /secure origin/i.test(speakToFillUnsupportedReason() ?? "")
+      ? "NEEDS LOCALHOST OR HTTPS"
+      : "NO MICROPHONE IN THIS BROWSER";
     return (
       <Button
         variant="chrome"
@@ -192,8 +194,8 @@ export function MicButton({
             : "desk-mic is-unsupported"
         }
         disabled
-        title={reason}
-        aria-label={`${label} (unavailable: ${reason})`}
+        title={unsupportedName}
+        aria-label={`${label} · ${unsupportedName}`}
         onClick={(e) => e.stopPropagation()}
       >
         <MicFace transport={transport} state="idle" />

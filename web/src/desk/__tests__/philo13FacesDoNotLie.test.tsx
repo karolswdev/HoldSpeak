@@ -79,6 +79,12 @@ describe("plain failure words (A.3, A.10, Tenet 4)", () => {
     ]) {
       expect(read(file), file).not.toMatch(RAW_TITLE);
     }
+    // Round three: the unsupported-browser branch names the fact too; its
+    // sentence never rides the title or the accessible name.
+    const mic = read("desk/components/MicButton.tsx");
+    expect(mic).not.toMatch(/title=\{reason\}/);
+    expect(mic).not.toMatch(/unavailable: \$\{reason\}/);
+    expect(mic).not.toMatch(/This browser cannot capture/);
     // The contract sentences never reach the mic's face, by any attribute.
     expect(read("desk/components/MicButton.tsx")).not.toMatch(/DICTATION_FAILURES\[failure\]\.message/);
     // Ask keeps no copy of the hub's refusal text for the face at all.

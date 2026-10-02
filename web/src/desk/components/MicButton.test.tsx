@@ -44,17 +44,22 @@ describe("MicButton honest states (HS-100-06)", () => {
     support.reason =
       "Mic capture needs a secure origin. Open this hub via localhost or HTTPS to speak.";
     render(<MicButton onText={vi.fn()} />);
-    const mic = screen.getByRole("button", { name: /unavailable:.*secure origin/i });
+    // PHILO-13-04 round three: the branch names the fact, never a sentence,
+    // in the accessible name and the title alike.
+    const mic = screen.getByRole("button", { name: "Speak · NEEDS LOCALHOST OR HTTPS" });
     expect(mic).toBeDisabled();
     expect(mic.className).toContain("is-unsupported");
-    expect(mic.title).toMatch(/secure origin/);
+    expect(mic.title).toBe("NEEDS LOCALHOST OR HTTPS");
+    expect(document.body.innerHTML).not.toMatch(/secure origin|Open this hub/);
   });
 
   it("renders disabled with the browser reason when capture APIs are missing", () => {
     support.reason = "This browser cannot capture microphone audio.";
     render(<MicButton onText={vi.fn()} />);
-    const mic = screen.getByRole("button", { name: /unavailable:.*browser/i });
+    const mic = screen.getByRole("button", { name: "Speak · NO MICROPHONE IN THIS BROWSER" });
     expect(mic).toBeDisabled();
+    expect(mic.title).toBe("NO MICROPHONE IN THIS BROWSER");
+    expect(document.body.innerHTML).not.toMatch(/cannot capture/);
   });
 
   it("renders the live mic when capture is supported", () => {
