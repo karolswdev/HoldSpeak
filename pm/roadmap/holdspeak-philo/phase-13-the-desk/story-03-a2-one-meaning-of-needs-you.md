@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** the owner's ratification of this charter
 - **Unblocks:** A2-W (the faces lane's wiring step), PHILO-13-13 (C3's counts)
 - **Owner:** Astra (Luna, xhigh); Muad'Dib checks. Wiring step A2-W: Muad'Dib (Fedaykin, Opus 5.5) on `feat/philo-13-muaddib`; Astra checks
