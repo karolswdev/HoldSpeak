@@ -1162,6 +1162,13 @@ class ProjectService:
             rows = conn.execute(
                 "SELECT * FROM project_items WHERE project_id = ? AND item_type = 'milestone' "
                 "AND lifecycle = 'planned' AND due_at IS NOT NULL AND due_at != '' "
+                "AND NOT EXISTS ("
+                "SELECT 1 FROM meeting_projects mp "
+                "JOIN action_items ai ON ai.meeting_id = mp.meeting_id "
+                "WHERE mp.project_id = project_items.project_id "
+                "AND lower(trim(ai.task)) = lower(trim(project_items.title)) "
+                "AND ai.status IN ('done', 'dismissed')"
+                ") "
                 "ORDER BY due_at ASC, created_at ASC, id ASC",
                 (project_id,),
             ).fetchall()

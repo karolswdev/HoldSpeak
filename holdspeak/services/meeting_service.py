@@ -29,6 +29,7 @@ from ..meeting_import import (
 from ..meeting_session import MeetingState
 from ..principals import Principal
 from holdspeak.services.errors import ConflictError, NotFound, ServiceError, ValidationError
+from .needs_you_aggregate import mark_needs_you_dirty
 
 _LOG = logging.getLogger(__name__)
 
@@ -679,6 +680,7 @@ class MeetingService:
             return {"success": True, "action_item": live}
         if not self._db.meetings.update_action_item_status(item_id, status):
             raise self._unserved_action_item(item_id, self._on_live_update_action_item)
+        mark_needs_you_dirty(self._db)
         return self._updated_action_item(item_id)
 
     def review_action_item(self, principal: Principal, item_id: str, patch: dict[str, Any]) -> dict[str, Any]:
