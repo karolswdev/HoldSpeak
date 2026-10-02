@@ -1,8 +1,8 @@
 # Phase 13 - The Desk
 
-**Last updated:** 2026-10-01 (r3: Astra r2 paid (close→reopen place, Trust returns, H-B0b contract); Astra r3 RATIFY-WITH-CONDITIONS paid (anchor `:492`, this status). Earlier r2: Astra's check r1 DO-NOT-RATIFY paid — disjoint files with named handoffs, B2 covers every window family and named draft, A2's membership oracle, the Parked artboard, the gates as merge-record evidence, C4's query collision; unchecked r2.) Earlier: 2026-10-01 (DRAFTED by the Fedaykin docs lane for Muad'Dib from PROPOSAL r2 and the five forks the owner ruled; unchecked.)
+**Last updated:** 2026-10-01 (RATIFIED by the owner, "Ratify, build it". Earlier: r3: Astra r2 paid (close→reopen place, Trust returns, H-B0b contract); Astra r3 RATIFY-WITH-CONDITIONS paid (anchor `:492`, this status). Earlier r2: Astra's check r1 DO-NOT-RATIFY paid — disjoint files with named handoffs, B2 covers every window family and named draft, A2's membership oracle, the Parked artboard, the gates as merge-record evidence, C4's query collision; unchecked r2.) Earlier: 2026-10-01 (DRAFTED by the Fedaykin docs lane for Muad'Dib from PROPOSAL r2 and the five forks the owner ruled; unchecked.)
 
-**Status:** r3, 2026-10-01 — CHECKED by Astra (r1 DO-NOT-RATIFY, r2 DO-NOT-RATIFY, r3 RATIFY-WITH-CONDITIONS; all paid, `checks/`). Awaiting the owner's ratification.
+**Status:** RATIFIED by the owner 2026-10-01 ("Ratify, build it") after Astra's checks r1–r3 (all paid, `checks/`).
 
 ## Goal
 
