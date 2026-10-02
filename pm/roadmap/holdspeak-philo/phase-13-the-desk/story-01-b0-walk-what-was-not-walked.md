@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** the owner's ratification of this charter
 - **Unblocks:** PHILO-13-07 (B2's merge record must cite this story's merged commit and `evidence-story-01.md`); every story's atlas cases (H-B0a, H-B0b); every consolidation move that reaches an unwalked path
 - **Owner:** Astra (Luna, xhigh); Muad'Dib checks
