@@ -133,6 +133,29 @@ const SEATS = [
     ["    case \"file\": return String(t.folder ?? \"\").replace(/^\\/Users\\/[^/]+/, \"~\");",
       "    case \"file\": return String(t.folder ?? \"\").replace(/^\\/Users\\/[^/]+/, \"~\").replace(/^\\/(private\\/)?tmp\\/p13c1-[^/]+/, \"~\");"],
   ]],
+  // R1: Window ▸ Chair lists the four Chair windows (a check on the open ones); at 393 inside Go.
+  ["src/desk/components/DeskMenuBar.tsx", null, [
+    ["    const out: WorkMenuEntry[] = [];\n    menuEntries(id, out);\n",
+      `    const out: WorkMenuEntry[] = [];\n    menuEntries(id, out);\n    if (id === "window" || (compact && id === "go")) ${G}.__p13ChairMenu?.(out, compact);\n`],
+  ]],
+  // R6: bulk park ("Clear done") parks every done item at once.
+  ["src/desk/components/WorkbenchWindow.tsx#bulk", null, [
+    ["        if (!doneItems.length) break;\n",
+      `        if (!doneItems.length) break;\n        if (${G}.__p13ParkMany?.("workbench", doneItems)) break;\n`],
+    ["            {/* ── voice proposal strip ───────────────────────────────── */}",
+      `            {${G}.__p13ClearDone ? ${G}.__p13ClearDone(items, () => void handleVoiceProposal({ intentId: "clear-done", params: {}, transcript: "Clear done" } as any)) : null}\n            {/* ── voice proposal strip ───────────────────────────────── */}`],
+  ]],
+  // R 3b (HS-200-12 stands): at 393 a strip of choices that does not fit becomes ONE library menu
+  // Button showing the current choice ("RANKED ▾", "OUTCOMES ▾"); its DeskMenu has every choice,
+  // a check on the current one. Nothing clips; nothing scrolls sideways.
+  ["src/desk/surface/FilterTokens.tsx", null, [
+    ["  const cx = [\"surface-filter-tokens\", className].filter(Boolean).join(\" \");\n",
+      `  const cx = ["surface-filter-tokens", className].filter(Boolean).join(" ");\n  const __p13M = ${G}.__p13StripMenu?.({ label, value, options, onChange, kind: "filter", className: cx });\n  if (__p13M) return __p13M;\n`],
+  ]],
+  ["src/desk/surface/wings.tsx", null, [
+    ["  const hasActive = wings.some((w) => w.id === active);\n",
+      `  const hasActive = wings.some((w) => w.id === active);\n  const __p13M = ${G}.__p13StripMenu?.({ label: "Window faces", value: active, options: wings.map((w) => ({ value: w.id, label: w.label })), onChange, kind: "wings", door, doorOpen, onDoor });\n  if (__p13M) return __p13M;\n`],
+  ]],
 ];
 
 const met = new Set();
