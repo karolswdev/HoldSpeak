@@ -83,5 +83,6 @@ Grounding size: not sized as a move. PROVISIONAL.
 
 ## Notes
 
+- 2026-10-01 — H-A2 built in Astra's lane; [handoff](handoff-a2-astra.md), [proof](lane-03-astra.md), [actual walks](walks-03-astra.md). DRAFT — UNCHECKED — awaiting Muad'Dib. Story remains in-progress until H-A2 and A2-W both merge; acceptance boxes remain open for that closing verification.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two". The membership rule is Muad'Dib's ruling (the Chair's existing membership). `history/helpers.ts` and the Room headline are Muad'Dib's (A2-W), not this lane's.
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

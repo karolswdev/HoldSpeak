@@ -2172,6 +2172,110 @@
         "words": "Single and bulk park/restore retain the real item IDs and contents across hub restart and browser reload; restored rows leave Parked."
       },
       "completion_bound_s": 30
+    },
+    {
+      "id": "case.p13.dock.needs_you_week",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.dock_needs_you"
+      ],
+      "state_id": "state.desk_presentation.p13_needs_you",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "H-A2 Dock only. The real stored-state, project and heartbeat producers mint the oracle in the isolated hub DB. No engine or real send runs. A2-W owns Chair, bell and Room wiring."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "cli",
+          "action": "seed_needs_you_week",
+          "capture_as": "item",
+          "adapter": "stored-state-and-route-producers",
+          "why": "Mint the fixed oracle refs through production producers, then restart the hub on the same DB."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-dock",
+          "state": "visible",
+          "timeout_s": 30,
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "check",
+          "observe_at": ".desk-dock-app[aria-label^=\"Intelligence\"] .desk-dock-badge",
+          "predicate": {
+            "kind": "readable_text",
+            "value": "6"
+          },
+          "timeout_s": 30,
+          "capture_shot": true,
+          "why": "The initial oracle has four ranked attention refs, one engines blocker and F1. Read six on the Dock before the real mutation."
+        },
+        {
+          "kind": "api",
+          "method": "PATCH",
+          "path": "/api/all-action-items/{item_id}",
+          "body": {
+            "status": "done"
+          },
+          "expect_status": 200,
+          "adapter": "http-route"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": ".desk-dock",
+            "state": "visible",
+            "timeout_s": 30,
+            "adapter": "ui-navigation"
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": ".desk-dock-app[aria-label^=\"Intelligence\"] .desk-dock-badge",
+        "predicate": {
+          "kind": "readable_text",
+          "value": "5"
+        },
+        "words": "The Dock shows six for the real oracle, then five after A1 is marked done through its real route and the browser reloads."
+      },
+      "completion_bound_s": 30
     }
   ],
   "states": [
@@ -2288,6 +2392,25 @@
       ],
       "reachable_by": [
         "case.p13.workbench.park_restore"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_needs_you",
+      "family": "desk_presentation",
+      "values": {
+        "membership": "R1 ranked unmuted rows + R2 blockers + R3 failed/retrying meetings"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/needsYou.ts",
+          "line": 218,
+          "symbol": "export function computeNeedsYou",
+          "claim": "The Dock reads the one R1\u2013R3 membership rule."
+        }
+      ],
+      "reachable_by": [
+        "case.p13.dock.needs_you_week"
       ]
     }
   ],
