@@ -84,10 +84,16 @@ class TestFacesDoNotLie:
              {"topic": "Growth", "body": "Wants to lead the EU shard work."}, token=TOKEN)
         _api(page, "POST", "/api/brief/generate", {}, token=TOKEN)
 
-    def _page(self, pw: Any, width: int, *, seed: bool = True) -> tuple[Any, Any, list[str]]:
-        browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+    def _page(self, pw: Any, width: int, *, seed: bool = True,
+              fake_media: bool = False) -> tuple[Any, Any, list[str]]:
+        args = ["--disable-smooth-scrolling"]
+        if fake_media:
+            # Chromium's synthetic tone device: never a real microphone.
+            args += ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"]
+        browser = pw.chromium.launch(headless=True, args=args)
         ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
-                                  device_scale_factor=1, has_touch=width < 720)
+                                  device_scale_factor=1, has_touch=width < 720,
+                                  permissions=["microphone"] if fake_media else [])
         page = ctx.new_page()
         page.set_default_timeout(30_000)
         errors: list[str] = []
@@ -256,6 +262,216 @@ class TestFacesDoNotLie:
                 self._press(page, people.get_by_role("button", name="Add note"), width)
                 people.get_by_text(NOTE).first.wait_for()
                 self._shot(page, "people-note-kept-and-saved", width)
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    # ── PHILO-13-04 fix round: the recovery walks (Astra counsel 1-4, 6) ──
+
+    @staticmethod
+    def _palette(page: Any, query: str, option: str, width: int) -> None:
+        TestFacesDoNotLie._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
+        page.locator("[aria-controls=desk-palette-listbox]").fill(query)
+        opt = page.locator(f"[id='desk-palette-option-{option}']")
+        try:
+            opt.wait_for(timeout=8_000)
+        except Exception:
+            ids = page.evaluate("() => [...document.querySelectorAll('[id^=desk-palette-option-]')].map(o => o.id)")
+            raise AssertionError(f"no palette option {option!r}; options: {ids}")
+        TestFacesDoNotLie._press(page, opt, width)
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_room_retry_sends_the_newer_words(self, width: int) -> None:
+        """Save fails, he types more, Try again: the request carries the newer
+        text and the editor keeps it. Then Publish fails and Try again
+        publishes. Red on HEAD 07aa76e3 (the retry resent the old text)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width, seed=False)
+            try:
+                pid = _api(page, "POST", "/api/projects", {"name": "Ledger cutover"}, token=TOKEN)["project"]["id"]
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(1200)
+                self._palette(page, "Ledger", f"project.open.{pid}", width)
+                room = page.locator("#surface-project-memory")
+                self._press(page, room.get_by_test_id("updates-verb"), width)
+                self._press(page, room.get_by_test_id("update-verb-draft-deterministic"), width)
+                editor = room.locator("[contenteditable=true]").first
+                editor.wait_for()
+                puts: list[str] = []
+                saves = re.compile(r".*/api/updates/[^/]+$")
+                fail_next = {"on": True}
+
+                def handle(route: Any) -> None:
+                    if route.request.method != "PUT":
+                        route.continue_()
+                        return
+                    puts.append(route.request.post_data or "")
+                    if fail_next["on"]:
+                        route.fulfill(status=500, body='{"detail":"injected failure"}',
+                                      content_type="application/json")
+                    else:
+                        route.continue_()
+
+                page.route(saves, handle)
+                self._press(page, editor, width)
+                page.keyboard.press("Control+End")
+                page.keyboard.type(" first edit")
+                self._press(page, room.get_by_test_id("update-verb-save"), width)
+                room.get_by_text("NOT SAVED · HUB FAILED").wait_for()
+                self._press(page, editor, width)
+                page.keyboard.press("Control+End")
+                page.keyboard.type(" and newer words")
+                self._shot(page, "room-save-failed-then-typed", width)
+                fail_next["on"] = False
+                self._press(page, room.get_by_role("button", name="Try again"), width)
+                room.get_by_text("NOT SAVED · HUB FAILED").wait_for(state="detached")
+                assert len(puts) == 2, puts
+                # The failed save carried only the first words; the retry
+                # carries the newer ones too, and the editor still holds them.
+                # (At 393 a tap seats the caret where it lands, so the two
+                # fragments are checked, not their order.)
+                assert "first edit" in puts[0] and "newer words" not in puts[0], puts[0]
+                assert "first edit" in puts[1] and "and newer words" in puts[1], puts[1]
+                text = editor.inner_text()
+                assert "first edit" in text and "and newer words" in text, text
+                self._shot(page, "room-retry-kept-newer-words", width)
+                page.unroute(saves)
+
+                # Publish fails, then Try again publishes (the publish recovery walk).
+                pubs = re.compile(r".*/api/updates/[^/]+/publish$")
+                page.route(pubs, lambda r: r.fulfill(status=500, body='{"detail":"injected failure"}',
+                                                     content_type="application/json"))
+                self._press(page, room.get_by_test_id("update-verb-publish"), width)
+                room.get_by_text("NOT PUBLISHED · HUB FAILED").wait_for()
+                assert "injected failure" not in room.inner_text()
+                self._shot(page, "room-publish-failed", width)
+                page.unroute(pubs)
+                self._press(page, room.get_by_role("button", name="Try again"), width)
+                room.get_by_text("NOT PUBLISHED · HUB FAILED").wait_for(state="detached")
+                updates = _api(page, "GET", f"/api/projects/{pid}/updates", token=TOKEN)
+                assert any(u.get("lifecycle") == "published" for u in updates.get("updates", [])), updates
+                self._shot(page, "room-publish-recovered", width)
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_ask_with_no_model_names_the_fact(self, width: int) -> None:
+        """The real hub with no engine: Ask says NOT ANSWERED in plain words,
+        no hub text on the face or in any title; its verb is Choose default."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width, seed=False)
+            try:
+                answers: list[str] = []
+                page.on("response", lambda r: answers.append(r.text()) if r.url.endswith("/api/ask") else None)
+                self._palette(page, "Ask", "go.ask", width)
+                ask = page.locator(".desk-ask")
+                ask.locator("textarea").first.fill("Summarize the week.")
+                self._press(page, ask.get_by_role("button", name="ASK", exact=True), width)
+                failure = ask.get_by_test_id("ask-failure")
+                failure.wait_for()
+                assert failure.inner_text().startswith("NOT ANSWERED · "), failure.inner_text()
+                self._shot(page, "ask-not-answered", width)
+                titles = page.evaluate("() => [...document.querySelectorAll('.desk-ask [title]')].map(e => e.title)")
+                html = ask.inner_html()
+                for raw in answers:
+                    for word in re.findall(r'"error"\s*:\s*"([^"]+)"', raw):
+                        assert word not in html, word
+                        assert all(word not in t for t in titles), (word, titles)
+                verb = ask.get_by_role("button", name="Choose default")
+                if failure.inner_text().endswith("NO MODEL TO RUN IT"):
+                    assert ask.get_by_role("button", name="Ask again").count() == 0
+                    assert verb.count() == 1
+                    self._press(page, verb, width)
+                    page.wait_for_timeout(800)
+                    self._shot(page, "ask-choose-default", width)
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_voice_open_setup_opens_setup(self, width: int) -> None:
+        """The voice failure's Open Setup opens the Setup application
+        (configure-setup), never New Project. Red on HEAD (project-setup)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width, seed=False, fake_media=True)
+            try:
+                self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
+                thought = page.locator(".desk-window[aria-label='Thought']")
+                mic = thought.locator("[aria-label='Speak the note']")
+                mic.wait_for()
+                self._press(page, mic, width)
+                face = thought.locator(".desk-mic-failure")
+                face.wait_for(timeout=20_000)
+                self._shot(page, "voice-failed", width)
+                no_prose = face.get_attribute("title") is None and \
+                    "Your draft remains editable" not in thought.inner_html()
+                setup = face.get_by_role("button", name=re.compile("^(Open Setup|Check the microphone)$"))
+                self._press(page, setup, width)
+                page.wait_for_timeout(1500)
+                opened = page.evaluate(
+                    "() => [...document.querySelectorAll('[id^=surface-]')].map(e => e.id)")
+                self._shot(page, "voice-open-setup-destination", width)
+                assert "surface-setup" in opened and "surface-project-setup" not in opened, opened
+                assert no_prose, "the voice failure carries a sentence or a title"
+                assert not errors, errors
+            finally:
+                browser.close()
+
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_people_try_again_rereads_the_person(self, width: int) -> None:
+        """The person's detail read fails; Try again re-runs THAT read (counted)
+        and the row leaves only when the person is back, notes and all. Red on
+        HEAD 07aa76e3 (Try again read only /api/people/readiness)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                detail = re.compile(r".*/api/people/relationships/[^/?]+$")
+                reads: list[int] = []
+                state = {"down": True}
+
+                def handle(route: Any) -> None:
+                    if route.request.method != "GET":
+                        route.continue_()
+                        return
+                    reads.append(1)
+                    if state["down"]:
+                        route.fulfill(status=503, body='{"detail":"people_store_unavailable"}',
+                                      content_type="application/json")
+                    else:
+                        route.continue_()
+
+                page.route(detail, handle)
+                self._palette(page, "people", "desk.open-people", width)
+                people = page.locator("#surface-people")
+                person = people.locator("button").filter(has_text="Priya Nair").first
+                person.wait_for()
+                self._press(page, person, width)
+                row = people.get_by_test_id("people-failure")
+                row.wait_for()
+                assert "people_store_unavailable" not in people.inner_text()
+                before = len(reads)
+                assert before >= 1
+                self._shot(page, "people-detail-failed", width)
+
+                state["down"] = False
+                self._press(page, row.get_by_role("button", name="Try again"), width)
+                row.wait_for(state="detached")
+                assert len(reads) == before + 1, (before, len(reads))
+                self._press(page, people.get_by_role("tab", name="Context"), width)
+                people.get_by_text("Wants to lead the EU shard work.").first.wait_for()
+                self._shot(page, "people-detail-recovered", width)
+                page.unroute(detail)
                 assert not errors, errors
             finally:
                 browser.close()

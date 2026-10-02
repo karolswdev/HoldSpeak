@@ -394,12 +394,11 @@ describe("MicButton surfaces named refusals (HS-132-05)", () => {
     );
     // the empty final behind the error must not overwrite it
     expect(onFailure).not.toHaveBeenCalledWith("no_speech");
-    // PHILO-13-04 (A3): the contract's sentence rides the title; the face
-    // shows the server's NAME and the verb that continues (Retry).
-    expect(screen.getByRole("status")).toHaveAttribute(
-      "title",
-      expect.stringMatching(/Click the mic again to continue/),
-    );
+    // PHILO-13-04 (A3 + fix round): the face shows the server's NAME and the
+    // verb that continues (Retry); the contract sentence is nowhere on it,
+    // its tooltips included.
+    expect(screen.getByRole("status")).not.toHaveAttribute("title");
+    expect(document.body.innerHTML).not.toMatch(/Click the mic again to continue/);
     expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
     expect(screen.getByText("SPEECH CHILD BUDGET EXHAUSTED")).toBeVisible();
   });
@@ -492,12 +491,8 @@ describe("MicButton surfaces named refusals (HS-132-05)", () => {
 
     await speakAndStop();
 
-    await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveAttribute(
-        "title",
-        expect.stringMatching(/Retry or type below/),
-      ),
-    );
+    await waitFor(() => expect(screen.getByText("TRANSCRIPTION FAILED")).toBeVisible());
+    expect(document.body.innerHTML).not.toMatch(/Retry or type below/);
     expect(screen.queryByText(/AUDIO KEPT/)).toBeNull();
   });
 });

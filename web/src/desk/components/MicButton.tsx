@@ -40,9 +40,9 @@ import { play as sfx } from "../../lib/sfx";
 import { Button } from "../../components/signal/Signal";
 import { openSurfaceOr } from "../shell";
 
-/** PHILO-13-04 (A3) — the failure's name, never a sentence (UX-CANON A.3).
- * The full contract message stays on the mic's title; the recoveries are
- * library Buttons (J5-02: `Open Setup` was text inside a sentence). */
+/** PHILO-13-04 (A3) — the failure's name, never a sentence (UX-CANON A.3),
+ * on the face and on its title alike; the recoveries are library Buttons
+ * (J5-02: `Open Setup` was text inside a sentence). */
 const FAILURE_LABEL: Record<DictationFailure, string> = {
   permission_denied: "MICROPHONE BLOCKED",
   no_microphone: "NO MICROPHONE",
@@ -403,13 +403,7 @@ export function MicButton({
             ? `desk-mic gadget-transport-key is-${state}`
             : `desk-mic is-${state}`
         }
-        title={
-          failure
-            ? failureCode
-              ? `${failureCode} · ${DICTATION_FAILURES[failure].message}`
-              : DICTATION_FAILURES[failure].message
-            : label
-        }
+        title={failure ? (failureCode ?? FAILURE_LABEL[failure]) : label}
         aria-label={
           audioRetained
             ? "Retry retained audio"
@@ -440,11 +434,7 @@ export function MicButton({
         />
       ) : null}
       {failure && !transport ? (
-        <span
-          className="desk-mic-failure"
-          role="status"
-          title={DICTATION_FAILURES[failure].message}
-        >
+        <span className="desk-mic-failure" role="status">
           <b className="desk-mic-failure-code">{failureCode ?? FAILURE_LABEL[failure]}</b>
           {audioRetained ? " · AUDIO KEPT" : ""}
           {DICTATION_FAILURES[failure].retry ? (
@@ -456,11 +446,10 @@ export function MicButton({
             <Button
               dense
               variant="ghost"
-              onClick={() =>
-                needsMicrophoneDoctor(failure)
-                  ? openSurfaceOr("configure-setup", "/")
-                  : openSurfaceOr("project-setup", "/")
-              }
+              // PHILO-13-04 fix round (Astra counsel P2): every setup
+              // recovery opens Setup (readiness, check by check), never New
+              // Project (that one is DoorCore).
+              onClick={() => openSurfaceOr("configure-setup", "/")}
             >
               {needsMicrophoneDoctor(failure) ? "Check the microphone" : "Open Setup"}
             </Button>

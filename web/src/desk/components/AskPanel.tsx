@@ -38,7 +38,8 @@ import { MicButton } from "./MicButton";
 import { apiRequest } from "../../lib/api";
 
 /** PHILO-13-04 (A3): an Ask that did not answer says so in plain words; the
- * hub's own text (a model path, a refusal sentence) rides only the title. */
+ * hub's own text (a model path, a refusal sentence) never reaches the face,
+ * its title included. */
 export function askFailureLabel(output: string): { label: string; canAskAgain: boolean } {
   if (/model file not found|no default model|no model|model .*not (found|available)/i.test(output))
     return { label: "NOT ANSWERED · NO MODEL TO RUN IT", canAskAgain: false };
@@ -95,8 +96,6 @@ export function AskPanel() {
   } | null>(null);
   const [result, setResult] = useState<AskRunResult | null>(null);
   const [error, setError] = useState("");
-  // The hub's own words for the last refusal: the title, never the face.
-  const [errorDetail, setErrorDetail] = useState("");
   const [canAskAgain, setCanAskAgain] = useState(false);
   const [kept, setKept] = useState(false);
   const [grounding, setGrounding] =
@@ -199,7 +198,6 @@ export function AskPanel() {
     if (!r.ok) {
       const failed = askFailureLabel(r.output);
       setError(failed.label);
-      setErrorDetail(r.output);
       setCanAskAgain(failed.canAskAgain);
       setPhase("compose");
       return;
@@ -226,7 +224,6 @@ export function AskPanel() {
       markNew(artifactId);
     } else {
       setKept(false);
-      setErrorDetail("");
       setError("NOT KEPT · PRESS KEEP AGAIN");
     }
   };
@@ -345,7 +342,7 @@ export function AskPanel() {
                 </Button>
               ) : undefined}
             >
-              <span title={errorDetail || undefined} data-testid="ask-failure">{error}</span>
+              <span data-testid="ask-failure">{error}</span>
             </SurfaceTrafficTurn>
           ) : null}
           {phase === "printed" && result ? (

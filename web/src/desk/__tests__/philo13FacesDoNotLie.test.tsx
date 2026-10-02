@@ -62,9 +62,33 @@ describe("plain failure words (A.3, A.10, Tenet 4)", () => {
     // The voice failure is a name + library Buttons, never the sentence.
     const mic = read("desk/components/MicButton.tsx");
     const face = mic.slice(mic.indexOf('className="desk-mic-failure"'));
-    // The message may ride the title attribute; it is never a child line.
-    expect(face.slice(0, face.indexOf("</span>"))).not.toMatch(/^\s*\{DICTATION_FAILURES\[failure\]\.message\}\s*$/m);
     expect(face).toMatch(/Open Setup/);
+  });
+
+  // PHILO-13-04 fix round (Astra counsel P2): a tooltip is product UI. No
+  // title= on these faces may carry the hub's words (r.output, a `detail`,
+  // an error string) or a contract sentence (DICTATION_FAILURES ... .message).
+  it("static fence: no title= carries server text or a sentence", () => {
+    const RAW_TITLE = /title=\{[^}]*(errorDetail|r\.output|\.message\b|\.detail\b|readableError)/s;
+    for (const file of [
+      "desk/components/AskPanel.tsx",
+      "desk/components/MicButton.tsx",
+      "desk/pullouts/views/BriefView.tsx",
+      "features/project-room/update/UpdatePosture.tsx",
+      "pages/cores/PeopleCore.tsx",
+    ]) {
+      expect(read(file), file).not.toMatch(RAW_TITLE);
+    }
+    // The contract sentences never reach the mic's face, by any attribute.
+    expect(read("desk/components/MicButton.tsx")).not.toMatch(/DICTATION_FAILURES\[failure\]\.message/);
+    // Ask keeps no copy of the hub's refusal text for the face at all.
+    expect(read("desk/components/AskPanel.tsx")).not.toMatch(/errorDetail/);
+  });
+
+  it("voice Open Setup goes to the Setup application, never New Project", () => {
+    const mic = read("desk/components/MicButton.tsx");
+    expect(mic).not.toMatch(/project-setup/);
+    expect(mic).toMatch(/openSurfaceOr\("configure-setup"/);
   });
 });
 
@@ -149,3 +173,56 @@ describe("a People store failure keeps the window and the note", () => {
     );
   });
 });
+
+// PHILO-13-04 fix round (Astra counsel P2): Try again re-runs the read that
+// failed, and the failure row leaves only when the person really loads.
+describe("People Try again re-reads the person", () => {
+  function people(detailAnswers: Array<"down" | "up">) {
+    const calls: Record<string, number> = {};
+    const routes: Record<string, () => Response> = {
+      "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
+      "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Priya Nair", relationship_kind: "direct_report" }] }),
+      "/api/people/relationships/r1": () => {
+        const next = detailAnswers.shift() ?? "up";
+        return next === "down"
+          ? json({ detail: "people_store_unavailable" }, 503)
+          : json({ relationship: { id: "r1", display_name: "Priya Nair", relationship_kind: "direct_report", notes: [{ id: "n1", topic: "Growth", body: "Wants to lead the EU shard work.", visibility: "leader_private" }] } });
+      },
+      "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      "/api/projects": () => json({ projects: [] }),
+      "/api/door": () => json({ upcoming: [] }),
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const key = String(input);
+      calls[key] = (calls[key] ?? 0) + 1;
+      const handler = routes[key];
+      if (!handler) throw new Error(`Unexpected request: ${key}`);
+      return handler();
+    }));
+    return calls;
+  }
+
+  it("a failed detail read: Try again fetches the person again, then the row leaves", async () => {
+    const calls = people(["down", "up"]);
+    render(<PeopleCore scope="people:r1" />);
+    expect(await screen.findByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeTruthy();
+    expect(calls["/api/people/relationships/r1"]).toBe(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(calls["/api/people/relationships/r1"]).toBe(2));
+    await waitFor(() => expect(screen.queryByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeNull());
+    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    expect(await screen.findByText("Wants to lead the EU shard work.")).toBeTruthy();
+  });
+
+  it("the row stays while the person read still fails", async () => {
+    const calls = people(["down", "down", "up"]);
+    render(<PeopleCore scope="people:r1" />);
+    expect(await screen.findByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(calls["/api/people/relationships/r1"]).toBe(2));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.getByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeTruthy();
+  });
+});
+

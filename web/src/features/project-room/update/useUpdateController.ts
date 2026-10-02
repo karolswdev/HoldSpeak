@@ -33,6 +33,15 @@ export function useUpdateController(
     setError(plainFailure(what, reason));
     setRetryFailed(() => again ?? null);
   };
+  // PHILO-13-04 fix round (Astra counsel P1): Try again calls the LATEST
+  // verb through this ref, so it reads the editor as it is NOW. A captured
+  // render's `save` resent the old text and wrote it over newer words.
+  const verbs = useRef<{ save: () => Promise<void>; publish: () => Promise<void> }>({
+    save: async () => {},
+    publish: async () => {},
+  });
+  // The editor text as it is now, for a save that answers after he typed on.
+  const editBodyNow = useRef("");
 
   // ── Editor state ──
   const [current, setCurrent] = useState<ProjectUpdate | null>(null);
@@ -176,13 +185,17 @@ export function useUpdateController(
     if (!current || current.lifecycle !== "draft") return;
     setSaveBusy(true);
     setError("");
+    const sent = editBody;
     try {
-      const saved = await updateApi.saveUpdate(current.id, editBody);
+      const saved = await updateApi.saveUpdate(current.id, sent);
       setCurrent(saved);
-      setEditBody(saved.bodyMd);
-      setDirty(false);
+      // Words typed while the save was in flight stay, and stay unsaved.
+      if (editBodyNow.current === sent) {
+        setEditBody(saved.bodyMd);
+        setDirty(false);
+      }
     } catch (reason) {
-      fail("NOT SAVED", reason, () => void save());
+      fail("NOT SAVED", reason, () => void verbs.current.save());
     } finally {
       setSaveBusy(false);
     }
@@ -216,7 +229,7 @@ export function useUpdateController(
       onRoomRefresh();
     } catch (reason) {
       // J4-07: the hub's own words (`injected failure`) never reach the face.
-      fail("NOT PUBLISHED", reason, () => void publish());
+      fail("NOT PUBLISHED", reason, () => void verbs.current.publish());
     } finally {
       setPublishBusy(false);
     }
@@ -295,9 +308,12 @@ export function useUpdateController(
 
   // ── Edit body handler ──
   const handleEditBody = useCallback((value: string) => {
+    editBodyNow.current = value;
     setEditBody(value);
     setDirty(true);
   }, []);
+  verbs.current = { save, publish };
+  editBodyNow.current = editBody;
 
   // ── Derived ──
   const isDraft = current?.lifecycle === "draft";

@@ -200,13 +200,16 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       .catch((cause) => protectedFailure(cause));
   };
   const select = async (id: string) => {
-    setSelectedId(id); setDetail(null); setError("");
+    // PHILO-13-04 fix round (Astra counsel P2): a standing failure leaves only
+    // when this read lands; it is never cleared before the person is back.
+    setSelectedId(id); setDetail(null);
     try {
       const [relationship, sessions] = await Promise.all([
         apiFetch<{ relationship: Relationship }>(`/api/people/relationships/${encodeURIComponent(id)}`),
         apiFetch<{ one_on_ones: Session[] }>(`/api/people/relationships/${encodeURIComponent(id)}/one-on-ones`),
       ]);
       setDetail({ ...relationship.relationship, sessions: sessions.one_on_ones });
+      setError("");
     } catch (cause) { protectedFailure(cause); }
   };
   useEffect(() => {
@@ -238,17 +241,6 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     setReadiness(readinessForError(cause));
     setError(plainFailure("PEOPLE STORE", cause));
   }
-  /** Try the store again without leaving the window: the person and any
-   * unsent draft stay where they are. */
-  const recheck = async () => {
-    try {
-      const next = await apiFetch<Readiness>("/api/people/readiness");
-      if (stateOf(next) === "ready") setError("");
-      else setError(plainFailure("PEOPLE STORE", { status: 503 }));
-    } catch (cause) {
-      setError(plainFailure("PEOPLE STORE", cause));
-    }
-  };
   const selected = detail ?? relationships.find((row) => row.id === selectedId) ?? null;
   const verbs = unavailable ? null : <Button dense variant="primary" onClick={() => document.getElementById("people-new-relationship")?.focus()}>New relationship</Button>;
 
@@ -266,11 +258,12 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   }
   // PHILO-13-04 (A3): the failure is ONE row in the window's status bar, which
   // stays on screen while he is down in a lens; the person and any unsent
-  // draft stay under it (J3-06).
+  // draft stay under it (J3-06). Try again re-reads the person (or the
+  // roster); the row leaves only when that read lands.
   const failureRow = error ? (
     <span className="people-failure" role="alert" data-testid="people-failure">
       <span className="people-failure-label">{error}</span>
-      <Button dense variant="ghost" onClick={() => void (selectedId ? recheck() : load())}>Try again</Button>
+      <Button dense variant="ghost" onClick={() => void (selectedId ? select(selectedId) : load())}>Try again</Button>
     </span>
   ) : null;
   return <div className="people-surface">
