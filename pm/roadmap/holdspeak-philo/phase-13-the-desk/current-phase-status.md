@@ -254,6 +254,8 @@ D1 runs only on a later word from the owner (fork 4: "Later").
 
 2026-10-02: #727, #728 and #726 counsel conditions are paid on their r2 draft branches and recorded in the ownership/handoff map above. Astra's H-A3 backend handoff is in progress on `feat/philo-13-a3h-astra`: `/api/meetings` list/search `has_summary` comes from the same latest persisted summary as detail and the face rail remains A3-W's. The five-column status index keeps Stories 01–04 in-progress. H-A3 stays in-progress until A3-W also merges.
 
+2026-10-01: Astra started PHILO-13-01 in `wt-philo-13-astra` from `27b915538`. H-B0a/b are implemented and verified: 136 focused tests, the shared semantic mutant red/green, and an actual Zone operation case pass. The nine face walks remain pending. Work is DRAFT — UNCHECKED — awaiting Muad'Dib. The dispatch limits this lane to focused tests and actual cases; no full-suite run. The six-column story table was normalized to the gate's five-column format, with proposal IDs retained in the Story labels. No acceptance or ownership changed.
+
 2026-10-01, round two: Astra's check r1 DO-NOT-RATIFY paid on Muad'Dib's rulings (table under "Round two"). Next: Astra's check of r2; then the owner's ratification.
 
 2026-10-01: DRAFTED (branch `docs/philo-13-charter`) from PROPOSAL r2 and the five forks he ruled. Eighteen stories, all `backlog`. Phase 12 folded (stories 02–06 `blocked`, parked — folded into PHILO-13 C5). D1 parked in BACKLOG. Next: Astra's check of this charter; then the owner's ratification. On ratification, 01 (B0) and 11 (C1, its canvas) flip to `ready`: each lane's long pole.

@@ -4379,7 +4379,7 @@ def _guarded_delivery(page: Any, step: dict[str, Any], record: dict[str, Any],
     action = step.get("action")
     if action not in ("click", "click_role", "press"):
         raise Blocked(f"requires on a {action!r} step: only click, click_role and press are guarded")
-    _check_guard_shape(guard)
+    _check_guard_shape_with_touch(step, record, guard)
     record["requires"] = guard
     handle = None
     if action != "press":
@@ -4431,7 +4431,7 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
     if page is None:
         raise Blocked("headless mode refuses UI/face steps: no Page is opened")
     optional = bool(step.get("optional"))
-    record = {"kind": "ui", "action": action, "adapter": step.get("adapter", "ui-pointer")}
+    adapter, record = _ui_adapter_record(page, step, action)
     if action == "select_option":
         record["selector"] = step["selector"]
         record["value"] = step["value"]
@@ -4463,8 +4463,7 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
     # PHILO-8-03: a right-click opens the list's row menu (DeskListView.tsx
     # onContextMenu). Only a click takes a button; any other value blocks.
     button = step.get("button", "left")
-    if button not in ("left", "right") or ("button" in step and action not in ("click", "click_role")):
-        raise Blocked(f"ui step {action}: button {button!r} is not left|right on a click")
+    _validate_ui_button(action, button, step, adapter)
     if button == "right":
         record["button"] = "right"
     try:
@@ -4481,13 +4480,14 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         elif action == "reload":
             page.reload(wait_until=step.get("wait_until", "load"))
         elif action == "click":
-            page.locator(step["selector"]).first.click(timeout=timeout, button=button)
+            _native_ui_click(page.locator(step["selector"]).first,
+                             adapter, timeout, button)
             record["selector"] = step["selector"]
         elif action == "click_role":
-            page.get_by_role(
-                step.get("role", "button"), name=step["name"],
-                exact=bool(step.get("exact", True)),
-            ).first.click(timeout=timeout, button=button)
+            _native_ui_click(
+                page.get_by_role(step.get("role", "button"), name=step["name"],
+                                 exact=bool(step.get("exact", True))).first,
+                adapter, timeout, button)
             record["name"] = step["name"]
         elif action == "fill":
             page.locator(step["selector"]).first.fill(step["value"], timeout=timeout)
@@ -4828,6 +4828,58 @@ def _op_step(step: dict[str, Any], hub: Any, provenance: dict[str, Any],
             record.setdefault("captured_more", []).append(
                 {"name": extra["as"], "path": extra["path"], "value": value})
     return record
+
+
+def _ui_viewport_adapter(page: Any, step: dict[str, Any]) -> tuple[str, bool]:
+    """Resolve the opt-in viewport adapter to the delivery it really uses."""
+    requested = step.get("adapter", "ui-pointer")
+    if requested != "ui-by-viewport":
+        return str(requested), False
+    if step.get("action") not in ("click", "click_role"):
+        raise Blocked(
+            "ui-by-viewport is only implemented for click and click_role steps; "
+            "nothing was fired")
+    size = getattr(page, "viewport_size", None) or {}
+    width = size.get("width") if isinstance(size, dict) else None
+    if width == 393:
+        return "ui-touch", True
+    if width == 1440:
+        return "ui-pointer", True
+    raise Blocked(
+        f"ui-by-viewport needs viewport width 1440 or 393; got {width!r}; "
+        "nothing was fired")
+
+
+def _ui_adapter_record(page: Any, step: dict[str, Any], action: str) -> tuple[str, dict[str, Any]]:
+    adapter, requested = _ui_viewport_adapter(page, step)
+    record = {"kind": "ui", "action": action, "adapter": adapter}
+    if requested:
+        record["adapter_requested"] = "ui-by-viewport"
+    return adapter, record
+
+
+def _check_guard_shape_with_touch(step: dict[str, Any], record: dict[str, Any], guard: Any) -> None:
+    if step.get("adapter") == "ui-by-viewport" and record.get("adapter") == "ui-touch":
+        raise Blocked(
+            "ui-by-viewport touch guarded synthetic delivery cannot claim touch; "
+            "the guard and a native tap are not one atomic Playwright operation")
+    _check_guard_shape(guard)
+
+
+def _validate_ui_button(action: str, button: str, step: dict[str, Any], adapter: str) -> None:
+    if button not in ("left", "right") or ("button" in step and action not in ("click", "click_role")):
+        raise Blocked(f"ui step {action}: button {button!r} is not left|right on a click")
+    if adapter == "ui-touch" and button != "left":
+        raise Blocked(
+            f"ui step {action}: native touch has no right-button delivery; "
+            "nothing was fired")
+
+
+def _native_ui_click(target: Any, adapter: str, timeout: float, button: str) -> None:
+    if adapter == "ui-touch":
+        target.tap(timeout=timeout)
+    else:
+        target.click(timeout=timeout, button=button)
 
 
 def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
@@ -5414,6 +5466,30 @@ def case_steps(case: dict[str, Any]) -> list[dict[str, Any]]:
     if isinstance(case.get("trigger"), dict):
         steps.append(case["trigger"])
     return steps
+
+
+def _iter_case_steps(case: dict[str, Any]) -> Any:
+    """Yield case steps, including the trigger's nested follow-up gesture."""
+    roots = [s for s in (case.get("setup") or []) if isinstance(s, dict)]
+    if isinstance(case.get("preconditions"), list):
+        roots.extend(s for s in case["preconditions"] if isinstance(s, dict))
+    if isinstance(case.get("trigger"), dict):
+        roots.append(case["trigger"])
+    pending = list(roots)
+    while pending:
+        step = pending.pop(0)
+        yield step
+        then = step.get("then")
+        if isinstance(then, list):
+            pending.extend(child for child in then if isinstance(child, dict))
+
+
+def case_uses_ui_by_viewport(case: dict[str, Any]) -> bool:
+    """Whether a case opts into native touch at its 393 viewport."""
+    return any(
+        step.get("kind") == "ui" and step.get("adapter") == "ui-by-viewport"
+        for step in _iter_case_steps(case)
+    )
 
 
 def case_needs_scheduler(case: dict[str, Any]) -> bool:
@@ -6328,6 +6404,20 @@ def run_case(
     provenance["atlas"] = {"path": str(atlas_path),
                            "sha256": _sha256(Path(atlas_path)),
                            "version": atlas.get("atlas_version")}
+    viewport_adapter = case_uses_ui_by_viewport(case)
+    touch_enabled = viewport_adapter and viewport == 393
+    provenance["touch_mode"] = {
+        "adapter": "ui-by-viewport" if viewport_adapter else "ui-pointer",
+        "resolved_adapter": "ui-touch" if touch_enabled else "ui-pointer",
+        "requested": viewport_adapter,
+        "viewport": viewport,
+        "has_touch": touch_enabled,
+        "mode": "native-touch" if touch_enabled else "pointer",
+    }
+    provenance["browser_context"] = {
+        "viewport": viewport,
+        "has_touch": touch_enabled,
+    }
     recorder = Recorder(
         shots / "observation.json",
         observation_skeleton(case, brain=brain, viewport=viewport, run_id=run_id,
@@ -6410,17 +6500,22 @@ def run_case(
             from playwright.sync_api import sync_playwright  # noqa: PLC0415
             assert profile is not None
             with sync_playwright() as play:
-                context = play.chromium.launch_persistent_context(
-                    user_data_dir=str(profile),
-                    viewport={"width": viewport,
-                              "height": 900 if viewport >= 1000 else 852},
-                    device_scale_factor=2,
+                context_options = {
+                    "user_data_dir": str(profile),
+                    "viewport": {"width": viewport,
+                                 "height": 900 if viewport >= 1000 else 852},
+                    "device_scale_factor": 2,
                     # An atlas case says `goto "/"`. Without a base url Chromium
                     # answers "Cannot navigate to invalid URL"; with it the case
                     # reads the same on any port. An http(s) url stays absolute.
-                    base_url=hub.url,
-                    args=["--use-fake-device-for-media-stream",
-                          "--use-fake-ui-for-media-stream"],
+                    "base_url": hub.url,
+                    "args": ["--use-fake-device-for-media-stream",
+                             "--use-fake-ui-for-media-stream"],
+                }
+                if touch_enabled:
+                    context_options["has_touch"] = True
+                context = play.chromium.launch_persistent_context(
+                    **context_options,
                 )
                 page = context.new_page()
                 if (case.get("expected", {}).get("predicate") or {}).get("first_paint_after"):

@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "atlas_version": "phase13-astra-b0",
+  "source_commit": "27b915538b792f4a80d0cf1c46a0600cb68756e3",
+  "cases": [
+    {
+      "id": "case.p13.directory.zone_window.op",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.directory_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. The operation sibling reads the same Zone producer outcome headlessly."
+      ],
+      "setup": [],
+      "trigger": {
+        "kind": "op",
+        "name": "zone.create",
+        "args": {
+          "name": "Atlas Phase 13 Zone"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "zone_id",
+        "capture_path": "id",
+        "why": "the Zone producer that the Directory face opens"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "directory.id",
+              "value": "{zone_id}"
+            },
+            {
+              "source": "observe",
+              "path": "directory.name",
+              "value": "Atlas Phase 13 Zone"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "",
+              "contains": {
+                "id": "{zone_id}",
+                "name": "Atlas Phase 13 Zone"
+              }
+            },
+            {
+              "source": "trigger",
+              "path": "operation_id",
+              "absent": true
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "zone.read",
+          "args": {
+            "directory_id": "{zone_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "zone.list",
+            "args": {}
+          }
+        ],
+        "words": "the Zone producer is durable and the headless read binds its returned id; this is the shared semantic sibling for the window case."
+      },
+      "completion_bound_s": 30,
+      "viewports": []
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.p13_unwalked_windows",
+      "family": "desk_presentation",
+      "values": {
+        "surface": "unwalked Desk windows and pullouts",
+        "lifecycle": "open, close, reload, reopen"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/applications.ts",
+          "symbol": "action: \"review-calendar-snapshot\"",
+          "line": 416,
+          "claim": "Calendar snapshot is a mounted Desk application."
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "roadmapWindows.map",
+          "line": 269,
+          "claim": "Roadmap windows mount in the Desk compositor."
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "repositoryWindows.map",
+          "line": 276,
+          "claim": "Repository windows mount in the Desk compositor."
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "DeliveryDossierWindow",
+          "line": 267,
+          "claim": "The Delivery dossier mounts in the Desk."
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "DeliveryTerminalWindow",
+          "line": 268,
+          "claim": "The Delivery terminal mounts in the Desk."
+        },
+        {
+          "path": "web/src/desk/pullouts/registry.ts",
+          "symbol": "chain: ChainPullout",
+          "line": 33,
+          "claim": "Chain objects have a registered pullout."
+        },
+        {
+          "path": "web/src/desk/pullouts/registry.ts",
+          "symbol": "coder: CoderPullout",
+          "line": 35,
+          "claim": "Coder objects have a registered pullout."
+        },
+        {
+          "path": "web/src/desk/pullouts/registry.ts",
+          "symbol": "directory: DirectoryPullout",
+          "line": 36,
+          "claim": "Directory objects have a registered pullout."
+        },
+        {
+          "path": "web/src/desk/gl/WorldStage.tsx",
+          "symbol": "InfoWindow",
+          "line": 276,
+          "claim": "Info windows mount from the Floor."
+        }
+      ],
+      "reachable_by": [
+        "case.p13.directory.zone_window.op",
+        "unexercised: The nine B0 face paths are pending. This preparatory handoff proves the atlas contract and the real Zone operation only."
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.python_wall",
+      "source": "datetime.datetime.now() inside the hub process",
+      "mechanism": "none: this case does not move time",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}
