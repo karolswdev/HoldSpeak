@@ -235,7 +235,7 @@ class ProjectionRepository(BaseRepository):
         with self._connection() as conn:
             meetings = {
                 str(row["id"]): str(row["title"] or "Untitled meeting")
-                for row in conn.execute("SELECT id,title FROM meetings").fetchall()
+                for row in conn.execute("SELECT id,title FROM meetings WHERE parked = 0").fetchall()
             }
             rows: list[DeskProjection] = []
             rows.extend(self._actuators(conn, meetings))
@@ -484,7 +484,7 @@ class ProjectionRepository(BaseRepository):
 
     def _meetings(self, conn: Any, meetings: dict[str, str]) -> list[DeskProjection]:
         result = []
-        for row in conn.execute("SELECT * FROM meetings").fetchall():
+        for row in conn.execute("SELECT * FROM meetings WHERE parked = 0").fetchall():
             status = str(row["capture_status"] or "finalized")
             needs = status in {"capture_failed", "recoverable", "recovered"}
             active = status in {"provisional", "recording"}

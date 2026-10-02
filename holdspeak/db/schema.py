@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 79  # informational; 74→75: calendar_event_link_suppressions (HS-175 counsel C5); 75→76: dictation_journal.corrections_applied (HS-176-02); 76→77: project_ask_tasks (HS-200-41); 77→78: follow_through_proposals retry identity + evidence columns (HS-200-12) and project_briefs (HS-200-11); 78→79: preparation_carries + needs_you_last_known (HS-200-13; 11 and 12 both stamped 78 in parallel lanes, so 13 takes 79)
+SCHEMA_VERSION = 80  # informational; 79→80: additive parked flags for meetings and workbench items (PHILO-13-02)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS schema_version (
 -- Meetings table (core entity)
 CREATE TABLE IF NOT EXISTS meetings (
     id TEXT PRIMARY KEY,
+    parked INTEGER NOT NULL DEFAULT 0,
     started_at TEXT NOT NULL,
     ended_at TEXT,
     title TEXT,
@@ -1723,6 +1724,7 @@ CREATE TABLE IF NOT EXISTS workbenches (
 );
 CREATE TABLE IF NOT EXISTS workbench_items (
     id TEXT PRIMARY KEY,
+    parked INTEGER NOT NULL DEFAULT 0,
     workbench_id TEXT NOT NULL,
     title TEXT NOT NULL DEFAULT '',
     body TEXT NOT NULL DEFAULT '',

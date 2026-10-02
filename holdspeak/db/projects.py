@@ -132,7 +132,8 @@ class ProjectRepository(BaseRepository):
             row = conn.execute(
                 """
                 SELECT p.*,
-                       (SELECT COUNT(*) FROM meeting_projects mp WHERE mp.project_id = p.id) as meeting_count
+                       (SELECT COUNT(*) FROM meeting_projects mp JOIN meetings m ON m.id = mp.meeting_id
+                        WHERE mp.project_id = p.id AND m.parked = 0) as meeting_count
                 FROM projects p
                 WHERE p.id = ?
                 """,
@@ -149,7 +150,8 @@ class ProjectRepository(BaseRepository):
                 rows = conn.execute(
                     """
                     SELECT p.*,
-                           (SELECT COUNT(*) FROM meeting_projects mp WHERE mp.project_id = p.id) as meeting_count
+                           (SELECT COUNT(*) FROM meeting_projects mp JOIN meetings m ON m.id = mp.meeting_id
+                            WHERE mp.project_id = p.id AND m.parked = 0) as meeting_count
                     FROM projects p
                     ORDER BY p.is_archived ASC, p.name ASC
                     """
@@ -158,7 +160,8 @@ class ProjectRepository(BaseRepository):
                 rows = conn.execute(
                     """
                     SELECT p.*,
-                           (SELECT COUNT(*) FROM meeting_projects mp WHERE mp.project_id = p.id) as meeting_count
+                           (SELECT COUNT(*) FROM meeting_projects mp JOIN meetings m ON m.id = mp.meeting_id
+                            WHERE mp.project_id = p.id AND m.parked = 0) as meeting_count
                     FROM projects p
                     WHERE p.is_archived = 0
                     ORDER BY p.name ASC
@@ -281,7 +284,7 @@ class ProjectRepository(BaseRepository):
                        m.intel_status, mp.source, mp.confidence
                 FROM meeting_projects mp
                 JOIN meetings m ON m.id = mp.meeting_id
-                WHERE mp.project_id = ?
+                WHERE mp.project_id = ? AND m.parked = 0
                 ORDER BY m.started_at DESC
                 LIMIT ? OFFSET ?
                 """,
@@ -389,7 +392,7 @@ class ProjectRepository(BaseRepository):
                        MAX(m.started_at) as last_meeting
                 FROM meeting_projects mp
                 JOIN meetings m ON m.id = mp.meeting_id
-                WHERE mp.project_id = ?
+                WHERE mp.project_id = ? AND m.parked = 0
                 """,
                 (clean_id,),
             ).fetchone()

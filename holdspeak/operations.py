@@ -359,6 +359,7 @@ MEETING_LIST = OperationDescriptor(
             "speaker": _NULLABLE_STRING,
             "tag": _NULLABLE_STRING,
             "has_open_actions": {"type": ["boolean", "null"]},
+            "parked": {"type": ["boolean", "null"], "description": "When true, list parked meetings only."},
             "limit": {"type": "integer", "description": "Clamped to 1..500; default 50."},
             "cursor": {"type": ["string", "integer", "null"], "description": "An offset or the previous page's next_cursor."},
         },
@@ -373,7 +374,6 @@ MEETING_LIST = OperationDescriptor(
     service="meeting_service",
     method="list_meetings",
 )
-
 MEETING_READ = OperationDescriptor(
     name="meeting.read",
     version=1,
@@ -383,6 +383,7 @@ MEETING_READ = OperationDescriptor(
         "properties": {
             "meeting_id": {"type": "string"},
             "include": {**_NULLABLE_STRING, "description": "Optional detail selector (MCP)."},
+            "include_parked": {"type": ["boolean", "null"], "description": "When true, read a retained parked meeting."},
         },
         "required": ["meeting_id"],
         "additionalProperties": False,
@@ -396,7 +397,6 @@ MEETING_READ = OperationDescriptor(
     service="meeting_service",
     method="get_meeting",
 )
-
 MEETING_IMPORT = OperationDescriptor(
     name="meeting.import",
     version=1,

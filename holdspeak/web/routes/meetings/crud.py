@@ -54,6 +54,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
         speaker: Optional[str] = None,
         tag: Optional[str] = None,
         has_open_actions: bool = False,
+        parked: bool = False,
     ) -> Any:
         """List meetings, with HS-55-04 server-side facets composing with search.
 
@@ -78,6 +79,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
                 "speaker": speaker,
                 "tag": tag,
                 "has_open_actions": has_open_actions,
+                "parked": parked,
             })
             # The legacy endpoint was offset-based and did not expose cursors.
             result.pop("next_cursor", None)
@@ -98,10 +100,12 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": str(e)}, status_code=500)
 
     @router.get("/api/meetings/{meeting_id}")
-    async def api_get_meeting(meeting_id: str, request: Request) -> Any:
+    async def api_get_meeting(
+        meeting_id: str, request: Request, include_parked: bool = False
+    ) -> Any:
         """Get meeting details from database."""
         try:
-            return JSONResponse(_ops(ctx).invoke(_principal(request), "meeting.read", {"meeting_id": meeting_id}))
+            return JSONResponse(_ops(ctx).invoke(_principal(request), "meeting.read", {"meeting_id": meeting_id, "include_parked": include_parked}))
         except NotFound:
             return JSONResponse({"error": "Meeting not found"}, status_code=404)
         except Exception as e:
@@ -139,10 +143,10 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
 
     @router.delete("/api/meetings/{meeting_id}")
     async def api_delete_meeting(meeting_id: str, request: Request) -> Any:
-        """Delete a meeting (HS-55-02: e.g. a failed import's honest row)."""
+        """Park a meeting while retaining its transcript and related work."""
         try:
             _service(ctx).delete_meeting(_principal(request), meeting_id)
-            return JSONResponse({"deleted": meeting_id})
+            return JSONResponse({"parked": meeting_id})
         except NotFound:
             return JSONResponse({"error": "Meeting not found"}, status_code=404)
         except Exception as e:
@@ -150,6 +154,19 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(
                 {"error": str(e)}, status_code=500
             )
+
+    @router.post("/api/meetings/{meeting_id}/restore")
+    async def api_restore_meeting(meeting_id: str, request: Request) -> Any:
+        """Restore a parked meeting with all retained work intact."""
+        try:
+            return JSONResponse(
+                _service(ctx).restore_meeting(_principal(request), meeting_id)
+            )
+        except NotFound:
+            return JSONResponse({"error": "Meeting not found"}, status_code=404)
+        except Exception as e:
+            log.error(f"Failed to restore meeting: {e}")
+            return JSONResponse({"error": str(e)}, status_code=500)
 
     @router.post("/api/meetings/{meeting_id}/capture/recover")
     async def api_recover_meeting_capture(meeting_id: str, request: Request) -> Any:

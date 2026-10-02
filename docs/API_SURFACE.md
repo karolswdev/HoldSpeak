@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 711 (plus static mounts). iOS-consumed: 89. Web-consumed: 545.
+Routes: 715 (plus static mounts). iOS-consumed: 89. Web-consumed: 549.
 
 ## device_audio_ws
 
@@ -501,6 +501,7 @@ Routes: 711 (plus static mounts). iOS-consumed: 89. Web-consumed: 545.
 | PUT | `/api/meetings/{meeting_id}` | ios, web |
 | POST | `/api/meetings/{meeting_id}/capture/recover` | server only |
 | GET | `/api/meetings/{meeting_id}/export` | web |
+| POST | `/api/meetings/{meeting_id}/restore` | web |
 | GET | `/api/meetings/{meeting_id}/sync-conflicts` | web |
 | POST | `/api/meetings/{meeting_id}/sync-conflicts/{conflict_id}/resolve` | web |
 
@@ -814,8 +815,11 @@ Routes: 711 (plus static mounts). iOS-consumed: 89. Web-consumed: 545.
 | GET | `/api/workbenches/{workbench_id}` | web |
 | PUT | `/api/workbenches/{workbench_id}` | web |
 | POST | `/api/workbenches/{workbench_id}/items` | web |
+| POST | `/api/workbenches/{workbench_id}/items/park` | web |
+| POST | `/api/workbenches/{workbench_id}/items/restore` | web |
 | DELETE | `/api/workbenches/{workbench_id}/items/{item_id}` | web |
 | PUT | `/api/workbenches/{workbench_id}/items/{item_id}` | web |
+| POST | `/api/workbenches/{workbench_id}/items/{item_id}/restore` | web |
 | POST | `/api/workbenches/{workbench_id}/items/{item_id}/retry-mint` | web |
 | DELETE | `/api/workbenches/{workbench_id}/memory` | web |
 | GET | `/api/workbenches/{workbench_id}/memory` | web |

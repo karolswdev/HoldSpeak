@@ -605,7 +605,16 @@ class ProposalBridgeService:
         # meetings, so a proposal outlives its meeting; the chain below
         # references the meeting (decisions.source_meeting_id) and raised a
         # bare IntegrityError.  Say it, before anything is written.
-        if self._db.meetings.get_meeting(proposal.meeting_id) is None:
+        meeting = self._db.meetings.get_meeting(proposal.meeting_id)
+        if meeting is None:
+            retained = self._db.meetings.get_meeting(
+                proposal.meeting_id, include_parked=True
+            )
+            if retained is not None and retained.parked:
+                return {
+                    "error": "The meeting is parked; restore it before confirming this proposal.",
+                    "code": "meeting_parked",
+                }
             return {
                 "error": "The meeting this proposal came from was deleted; nothing can be kept from it.",
                 "code": "meeting_deleted",

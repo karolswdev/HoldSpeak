@@ -69,5 +69,7 @@ Grounding size: not sized as a move (a prerequisite repair, `grounding/structure
 
 ## Notes
 
+- 2026-10-01 — H-A1 backend DRAFT — UNCHECKED — awaiting Muad'Dib. [Client handoff](handoff-a1-astra.md), [lane record](lane-02-astra.md), [actual walks](walks-02-astra.md). 335 scoped tests and four live lifecycle cases pass. A1-F remains pending its C1 artboard; this story stays in-progress until both halves are merged.
+
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

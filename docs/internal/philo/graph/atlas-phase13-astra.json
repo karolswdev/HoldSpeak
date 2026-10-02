@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "atlas_version": "phase13-astra-b0",
+  "atlas_version": "phase13-astra-wave1",
   "source_commit": "27b915538b792f4a80d0cf1c46a0600cb68756e3",
   "cases": [
     {
@@ -1650,6 +1650,528 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.p13.meeting.park_restore",
+      "job": "j6",
+      "edge_ids": [
+        "edge.route.meetings_park"
+      ],
+      "state_id": "state.meetings.p13_park_restore",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "H-A1 backend proof only. Existing face is not changed or certified. Real VTT import needs no engine. Every DB lives in the run HOME."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+          "sha256": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "adapter": "http-route",
+          "form": {
+            "title": "Atlas retained meeting"
+          },
+          "expect_status": 202,
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/segments": {
+                "min_items": 3
+              }
+            },
+            "timeout_s": 30,
+            "poll_s": 0.3
+          }
+        },
+        {
+          "kind": "api",
+          "method": "DELETE",
+          "path": "/api/meetings/{meeting_id}",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": null
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings?parked=true",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "why": "The real normal removal retains the imported meeting in Parked.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}?include_parked=true",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/parked",
+            "value": true
+          },
+          "why": "The retained detail states its parked value.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "Reopen the real DB in a fresh hub process while the row is parked."
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-dock",
+          "state": "visible",
+          "timeout_s": 30,
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}?include_parked=true",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/segments/1/text",
+            "value": "Blair: Avery will check the frozen bytes before the next review."
+          },
+          "why": "The actual imported transcript survives parking and a real process restart.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/meetings/{meeting_id}/restore",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": null
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": ".desk-dock",
+            "state": "visible",
+            "timeout_s": 30,
+            "adapter": "ui-navigation"
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/meetings",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings"
+          },
+          {
+            "method": "GET",
+            "path": "/api/meetings?parked=true"
+          },
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          }
+        ],
+        "predicate": {
+          "kind": "protocol_reads",
+          "expect": [
+            {
+              "status": 200,
+              "row": {
+                "path": "meetings",
+                "match": {
+                  "id": "{meeting_id}",
+                  "parked": false
+                }
+              }
+            },
+            {
+              "status": 200,
+              "row": {
+                "path": "meetings",
+                "match": {
+                  "id": "{meeting_id}"
+                },
+                "count": 0
+              }
+            },
+            {
+              "status": 200,
+              "row": {
+                "path": "segments",
+                "match": {
+                  "text": "Blair: Avery will check the frozen bytes before the next review."
+                }
+              }
+            }
+          ]
+        },
+        "words": "Restore returns the same imported meeting to normal reads after reload; Parked no longer contains it and its real transcript remains."
+      },
+      "completion_bound_s": 30
+    },
+    {
+      "id": "case.p13.workbench.park_restore",
+      "job": "j1",
+      "edge_ids": [
+        "edge.route.workbench_items_park"
+      ],
+      "state_id": "state.desk_presentation.p13_park_restore",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "H-A1 backend proof only; A1-F owns Parked filter, Restore Button and the 8-second face window. Real workbench/item producers, no inference engine or sends."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "body": {
+            "name": "Atlas retained work"
+          },
+          "capture_as": "workbench_id",
+          "capture_path": "workbench.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "body": {
+            "title": "Atlas first item",
+            "body": "Keep the first work body"
+          },
+          "capture_as": "item_id",
+          "capture_path": "item.id"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/workbenches/{workbench_id}/items/{item_id}",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": {
+            "status": "done",
+            "result": "Atlas retained result"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "DELETE",
+          "path": "/api/workbenches/{workbench_id}/items/{item_id}",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": null
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/workbenches/{workbench_id}?parked=true",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/workbench/items/0/id",
+            "value": "{item_id}"
+          },
+          "why": "Single removal places the produced item in Parked.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "Reopen the real DB in a fresh hub process while the row is parked."
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-dock",
+          "state": "visible",
+          "timeout_s": 30,
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/workbenches/{workbench_id}?parked=true",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/workbench/items/0/result",
+            "value": "Atlas retained result"
+          },
+          "why": "The item result survives a real process restart while parked.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items/{item_id}/restore",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": null
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/workbenches/{workbench_id}",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/workbench/items/0/id",
+            "value": "{item_id}"
+          },
+          "why": "Single Restore returns the same produced item.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "body": {
+            "title": "Atlas second item",
+            "body": "Keep the second work body"
+          },
+          "capture_as": "item_two",
+          "capture_path": "item.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items/park",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": {
+            "item_ids": [
+              "{item_id}",
+              "{item_two}"
+            ]
+          }
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "Reopen the real DB in a fresh hub process while the row is parked."
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-dock",
+          "state": "visible",
+          "timeout_s": 30,
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/workbenches/{workbench_id}",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/workbench/items",
+            "value": []
+          },
+          "why": "Bulk removal leaves normal reads empty after a real hub restart.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/workbenches/{workbench_id}?parked=true",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/workbench/items/0/parked",
+            "value": true
+          },
+          "why": "The parked-only read still holds the produced rows.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items/restore",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": {
+            "item_ids": [
+              "{item_id}",
+              "{item_two}"
+            ]
+          }
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": ".desk-dock",
+            "state": "visible",
+            "timeout_s": 30,
+            "adapter": "ui-navigation"
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/workbenches/{workbench_id}",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/workbenches/{workbench_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/workbenches/{workbench_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/workbenches/{workbench_id}?parked=true"
+          },
+          {
+            "method": "GET",
+            "path": "/api/workbenches/{workbench_id}?parked=true"
+          }
+        ],
+        "predicate": {
+          "kind": "protocol_reads",
+          "expect": [
+            {
+              "status": 200,
+              "row": {
+                "path": "workbench.items",
+                "match": {
+                  "id": "{item_id}",
+                  "parked": false,
+                  "result": "Atlas retained result"
+                }
+              }
+            },
+            {
+              "status": 200,
+              "row": {
+                "path": "workbench.items",
+                "match": {
+                  "id": "{item_two}",
+                  "parked": false,
+                  "body": "Keep the second work body"
+                }
+              }
+            },
+            {
+              "status": 200,
+              "row": {
+                "path": "workbench.items",
+                "match": {
+                  "id": "{item_id}"
+                },
+                "count": 0
+              }
+            },
+            {
+              "status": 200,
+              "row": {
+                "path": "workbench.items",
+                "match": {
+                  "id": "{item_two}"
+                },
+                "count": 0
+              }
+            }
+          ]
+        },
+        "words": "Single and bulk park/restore retain the real item IDs and contents across hub restart and browser reload; restored rows leave Parked."
+      },
+      "completion_bound_s": 30
     }
   ],
   "states": [
@@ -1728,6 +2250,44 @@
         "case.p13.coder.pullout",
         "case.p13.directory.zone",
         "case.p13.info.window"
+      ]
+    },
+    {
+      "id": "state.meetings.p13_park_restore",
+      "family": "meetings",
+      "values": {
+        "lifecycle": "producer, park, restart, read, restore, reload"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/db/meetings.py",
+          "line": 1068,
+          "symbol": "def delete_meeting",
+          "claim": "The normal removal path retains the row through park; this case reads it after restart and restore."
+        }
+      ],
+      "reachable_by": [
+        "case.p13.meeting.park_restore"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_park_restore",
+      "family": "desk_presentation",
+      "values": {
+        "lifecycle": "producer, park, restart, read, restore, reload"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/db/workbenches.py",
+          "line": 362,
+          "symbol": "def delete(self, item_id",
+          "claim": "The normal removal path retains the row through park; this case reads it after restart and restore."
+        }
+      ],
+      "reachable_by": [
+        "case.p13.workbench.park_restore"
       ]
     }
   ],

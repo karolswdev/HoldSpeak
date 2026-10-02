@@ -157,7 +157,8 @@ class ResourcefulService:
         with self._db._connection() as conn:
             item = conn.execute(
                 """SELECT 1 FROM workbench_items
-                   WHERE workbench_id=? AND status IN ('pending','claimed') LIMIT 1""",
+                   WHERE workbench_id=? AND parked=0
+                     AND status IN ('pending','claimed') LIMIT 1""",
                 (workbench_id,),
             ).fetchone()
             run = conn.execute(
@@ -204,7 +205,7 @@ class ResourcefulService:
         with self._db._connection() as conn:
             rows = conn.execute(
                 """SELECT id,title,result,last_modified FROM workbench_items
-                   WHERE status='failed' AND workbench_id != ?
+                   WHERE parked=0 AND status='failed' AND workbench_id != ?
                    ORDER BY last_modified ASC,id ASC LIMIT 100""",
                 (workbench_id,),
             ).fetchall()
