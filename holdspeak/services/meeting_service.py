@@ -356,6 +356,7 @@ class MeetingService:
         tag: str | None = None,
         has_open_actions: bool = False,
         parked: bool = False,
+        summary_attention: bool = False,
     ) -> dict[str, Any]:
         """Return archive summaries, preserving the web archive's filters."""
         bounded_limit = max(1, min(int(limit), 500))
@@ -382,9 +383,16 @@ class MeetingService:
             has_open_actions=has_open_actions,
             meeting_ids=search_ids,
             parked=parked,
+            summary_attention=summary_attention,
         )
-        filtered = bool(query or from_date or to_date or speaker or tag or has_open_actions)
-        total = len(meetings) if filtered else self._db.meetings.get_meeting_count(parked=parked)
+        filtered = bool(
+            query or from_date or to_date or speaker or tag or has_open_actions
+            or summary_attention
+        )
+        if summary_attention and not any((query, from_date, to_date, speaker, tag, has_open_actions)):
+            total = self._db.meetings.get_summary_attention_count(parked=parked)
+        else:
+            total = len(meetings) if filtered else self._db.meetings.get_meeting_count(parked=parked)
         payloads = [self._summary_payload(meeting) for meeting in meetings]
         self._enrich_calendar_origin(payloads)
         self._enrich_intel_status(payloads)

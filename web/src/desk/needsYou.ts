@@ -100,6 +100,21 @@ export interface NeedsYouResult {
   failedMeetings: Meeting[];
 }
 
+/** Pure membership dependencies. The default is the production attention
+ * deduplicator; the narrow seam also lets the real-producer oracle load a
+ * code mutant that omits deduplication and prove the six-ref contract rejects
+ * it. */
+export interface NeedsYouDependencies {
+  dedupAttention: (
+    items: readonly NeedsYouRoomItem[],
+    now: Date,
+  ) => NeedsYouRoomItem[];
+}
+
+const DEFAULT_NEEDS_YOU_DEPENDENCIES: NeedsYouDependencies = {
+  dedupAttention: (items, now) => dedupAttention(items, now),
+};
+
 /** The Room wire's coverage/freshness facts travel with the shared snapshot.
  * A consumer must not replace this with an empty Room when the aggregate says
  * that only a partial answer was observed. */
@@ -215,7 +230,10 @@ export function meetingNeedsYou(meeting: Meeting): boolean {
  * The merged rows then use the shared deduplication and ranking functions.
  * R2 and R3 are appended as members with stable refs of their own.
  */
-export function computeNeedsYou(input: NeedsYouInputs): NeedsYouResult {
+export function computeNeedsYou(
+  input: NeedsYouInputs,
+  dependencies: NeedsYouDependencies = DEFAULT_NEEDS_YOU_DEPENDENCIES,
+): NeedsYouResult {
   const room = [...(input.roomItems ?? [])];
   const covered = new Set(
     room
@@ -224,7 +242,7 @@ export function computeNeedsYou(input: NeedsYouInputs): NeedsYouResult {
   );
   const now = input.now ?? new Date();
   const combined = [...doorItems(asBoard(input), covered, now), ...room];
-  const ranked = rankAttention(dedupAttention(combined, now), now) as NeedsYouRoomItem[];
+  const ranked = rankAttention(dependencies.dedupAttention(combined, now), now) as NeedsYouRoomItem[];
   const mutedProjects = mutedSet(input);
   const mutedItems: NeedsYouRoomItem[] = [];
   const unmutedItems: NeedsYouRoomItem[] = [];
@@ -297,6 +315,7 @@ let snapshot: NeedsYouSnapshot = {
   room: null,
 };
 let inflight: Promise<void> | null = null;
+let inflightFresh = false;
 const listeners = new Set<() => void>();
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -320,7 +339,11 @@ async function readMeetings(): Promise<Meeting[]> {
   const out: Meeting[] = [];
   let offset = 0;
   for (;;) {
-    const params = new URLSearchParams({ limit: "500", offset: String(offset) });
+    const params = new URLSearchParams({
+      summary_attention: "true",
+      limit: "500",
+      offset: String(offset),
+    });
     const body = await apiFetch<unknown>(`/api/meetings?${params.toString()}`);
     const rows = bodyRows<unknown>(body, "meetings");
     out.push(...rows.map(fromWireMeeting).filter((meeting): meeting is Meeting => meeting !== null));
@@ -334,10 +357,15 @@ async function readMeetings(): Promise<Meeting[]> {
   return out;
 }
 
-async function refreshNeedsYou(): Promise<void> {
-  if (inflight) return inflight;
+async function refreshNeedsYou(fresh = true): Promise<void> {
+  if (inflight) {
+    if (!fresh || inflightFresh) return inflight;
+    await inflight;
+    return refreshNeedsYou(true);
+  }
   publish({ loading: true });
-  inflight = (async () => {
+  inflightFresh = fresh;
+  const request = (async () => {
     const reads = await Promise.allSettled([
       apiFetch<NeedsYouDoorProjection>("/api/door"),
       apiFetch<{
@@ -349,7 +377,7 @@ async function refreshNeedsYou(): Promise<void> {
         stale?: unknown;
         next?: unknown;
         sweepId?: unknown;
-      }>("/api/desk/needs-you?fresh=1"),
+      }>(fresh ? "/api/desk/needs-you?fresh=1" : "/api/desk/needs-you"),
       apiFetch<AssignmentSummary>("/api/inference/assignments"),
       readMeetings(),
       apiFetch<{ muted_projects?: unknown }>("/api/settings/heartbeat"),
@@ -420,15 +448,17 @@ async function refreshNeedsYou(): Promise<void> {
     publish({ loading: false, errors: { ...snapshot.errors, room: errorText(error) } });
   }).finally(() => {
     inflight = null;
+    inflightFresh = false;
   });
-  return inflight;
+  inflight = request;
+  return request;
 }
 
 function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   if (listeners.size === 1) {
-    void refreshNeedsYou();
-    pollTimer = setInterval(() => { void refreshNeedsYou(); }, 60_000);
+    void refreshNeedsYou(false);
+    pollTimer = setInterval(() => { void refreshNeedsYou(false); }, 60_000);
   }
   return () => {
     listeners.delete(listener);
@@ -447,8 +477,8 @@ function getSnapshot(): NeedsYouSnapshot {
  * one in-flight refresh and one approximately-minute poll. */
 export function useNeedsYou(): NeedsYouSnapshot & { refresh: () => Promise<void> } {
   const value = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  useEffect(() => { void refreshNeedsYou(); }, []);
-  return { ...value, refresh: refreshNeedsYou };
+  useEffect(() => { void refreshNeedsYou(false); }, []);
+  return { ...value, refresh: () => refreshNeedsYou(true) };
 }
 
 export { refreshNeedsYou };

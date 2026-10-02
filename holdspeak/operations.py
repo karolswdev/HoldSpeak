@@ -360,6 +360,7 @@ MEETING_LIST = OperationDescriptor(
             "tag": _NULLABLE_STRING,
             "has_open_actions": {"type": ["boolean", "null"]},
             "parked": {"type": ["boolean", "null"], "description": "When true, list parked meetings only."},
+            "summary_attention": {"type": ["boolean", "null"], "description": "When true, list only FAILED/RETRYING meetings before pagination."},
             "limit": {"type": "integer", "description": "Clamped to 1..500; default 50."},
             "cursor": {"type": ["string", "integer", "null"], "description": "An offset or the previous page's next_cursor."},
         },

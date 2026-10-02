@@ -242,6 +242,77 @@ beforeEach(() => {
 });
 
 describe("the shared needs-you read", () => {
+  it("uses the producer-backed summary filter and never reads an unfiltered meeting page", async () => {
+    const home = mkdtempSync(join(tmpdir(), "philo13-a2-c1-hook-"));
+    try {
+      const seeded = runFixture(home, "seed");
+      const wire = seeded.before as Record<string, any>;
+      const allMeetings = wire.meetingsWire.meetings as Array<Record<string, unknown>>;
+      const attentionMeetings = allMeetings.filter(
+        (row) => row.id === "philo13-a2-failed-meeting",
+      );
+      const paths: string[] = [];
+      vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+        paths.push(String(path));
+        if (path === "/api/door") return wire.door as never;
+        if (path.startsWith("/api/desk/needs-you")) return wire.needsYou as never;
+        if (path === "/api/inference/assignments") return wire.assignments as never;
+        if (path === "/api/settings/heartbeat") return wire.heartbeat as never;
+        if (path.startsWith("/api/meetings?summary_attention=true")) {
+          return { meetings: attentionMeetings, total: attentionMeetings.length } as never;
+        }
+        if (path.startsWith("/api/meetings?")) {
+          return wire.meetingsWire as never;
+        }
+        throw new Error(`unexpected needs-you read: ${path}`);
+      });
+
+      const hook = renderHook(() => useNeedsYou());
+      await waitFor(() => expect(hook.result.current.loading).toBe(false));
+      expect(hook.result.current.complete).toBe(true);
+      expect(hook.result.current.failedMeetings.map((meeting) => meeting.id)).toEqual([
+        "philo13-a2-failed-meeting",
+      ]);
+      expect(paths.filter((path) => path.startsWith("/api/meetings?"))).toEqual([
+        "/api/meetings?summary_attention=true&limit=500&offset=0",
+      ]);
+      hook.unmount();
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  it("uses the cached Room read on mount and poll, and fresh only for explicit refresh", async () => {
+    vi.useFakeTimers();
+    try {
+      const paths = installWire();
+      const hook = renderHook(() => useNeedsYou());
+      await vi.waitFor(() => expect(hook.result.current.loading).toBe(false));
+      expect(paths.filter((path) => path.startsWith("/api/desk/needs-you"))).toEqual([
+        "/api/desk/needs-you",
+      ]);
+
+      paths.length = 0;
+      await act(async () => {
+        vi.advanceTimersByTime(60_000);
+        await Promise.resolve();
+      });
+      await vi.waitFor(() => expect(hook.result.current.loading).toBe(false));
+      expect(paths.filter((path) => path.startsWith("/api/desk/needs-you"))).toEqual([
+        "/api/desk/needs-you",
+      ]);
+
+      paths.length = 0;
+      await act(async () => { await hook.result.current.refresh(); });
+      expect(paths.filter((path) => path.startsWith("/api/desk/needs-you"))).toEqual([
+        "/api/desk/needs-you?fresh=1",
+      ]);
+      hook.unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("paginates meetings by offset when the HTTP route omits next_cursor", async () => {
     const firstPage = Array.from({ length: 500 }, (_, index) => meetingWire(`M${index}`));
     const paths: string[] = [];
@@ -251,16 +322,16 @@ describe("the shared needs-you read", () => {
       if (path.startsWith("/api/desk/needs-you")) return emptyRoom() as never;
       if (path === "/api/inference/assignments") return { ...noEngines, task_overrides: [] } as never;
       if (path === "/api/settings/heartbeat") return { muted_projects: [] } as never;
-      if (path === "/api/meetings?limit=500&offset=0")
+      if (path === "/api/meetings?summary_attention=true&limit=500&offset=0")
         return { meetings: firstPage, total: 501 } as never;
-      if (path === "/api/meetings?limit=500&offset=500")
+      if (path === "/api/meetings?summary_attention=true&limit=500&offset=500")
         return { meetings: [meetingWire("F501", { status: "failed", attempts: 1, last_error: "worker failed" })], total: 501 } as never;
       throw new Error(`unexpected needs-you read: ${path}`);
     });
 
     const hook = renderHook(() => useNeedsYou());
     await waitFor(() => expect(hook.result.current.loading).toBe(false));
-    expect(paths).toContain("/api/meetings?limit=500&offset=500");
+    expect(paths).toContain("/api/meetings?summary_attention=true&limit=500&offset=500");
     expect(hook.result.current.failedMeetings.map((meeting) => meeting.id)).toEqual(["F501"]);
     hook.unmount();
   });
@@ -314,10 +385,15 @@ describe("the shared needs-you read", () => {
     let releaseRoom!: (value: unknown) => void;
     const roomPending = new Promise((resolve) => { releaseRoom = resolve; });
     const paths: string[] = [];
+    let freshRoomReads = 0;
     vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       paths.push(String(path));
       if (path === "/api/door") return { board: {} } as never;
-      if (path.startsWith("/api/desk/needs-you")) return roomPending as never;
+      if (path === "/api/desk/needs-you") return roomPending as never;
+      if (path === "/api/desk/needs-you?fresh=1") {
+        freshRoomReads += 1;
+        return emptyRoom() as never;
+      }
       if (path === "/api/inference/assignments") return { ...noEngines, task_overrides: [] } as never;
       if (path.startsWith("/api/meetings?")) return { meetings: [], total: 0 } as never;
       if (path === "/api/settings/heartbeat") return { muted_projects: [] } as never;
@@ -328,8 +404,12 @@ describe("the shared needs-you read", () => {
     expect(paths.filter((path) => path.startsWith("/api/desk/needs-you"))).toHaveLength(1);
     expect(paths.filter((path) => path === "/api/inference/assignments")).toHaveLength(1);
 
-    releaseRoom(emptyRoom());
-    await act(async () => { await first.result.current.refresh(); });
+    const refreshes = [first.result.current.refresh(), second.result.current.refresh()];
+    await act(async () => {
+      releaseRoom(emptyRoom());
+      await Promise.all(refreshes);
+    });
+    expect(freshRoomReads).toBe(1);
     expect(first.result.current.complete).toBe(true);
     expect(second.result.current.complete).toBe(true);
     first.unmount();
@@ -485,6 +565,42 @@ describe("the real producer membership oracle", () => {
         }));
         expect(rejection).toBeInstanceOf(Error);
       }
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a code mutant that skips dedupAttention on the real producer oracle", async () => {
+    const home = mkdtempSync(join(tmpdir(), "philo13-a2-c4-dedup-"));
+    try {
+      const seeded = runFixture(home, "seed");
+      const before = oracleInputs(seeded, "before");
+      const expectedRefs = ORACLE_REFS;
+      expect(seeded.expectedRefs).toEqual(expectedRefs);
+      const actualDuplicateRef = "A1 close the overdue release note";
+      const mutant = {
+        dedupAttention: (items: readonly NeedsYouRoomItem[]) => [...items],
+      };
+      const projected = computeNeedsYou(before, mutant);
+      let rejection: unknown;
+      try {
+        expect(projected.count).toBe(6);
+        expect(projected.members.map(({ ref }) => ref).sort()).toEqual([...expectedRefs].sort());
+      } catch (error) {
+        rejection = error;
+      }
+      console.log(JSON.stringify({
+        mutant: "skip dedupAttention",
+        rejection: rejection instanceof Error ? rejection.message : "NONE",
+        expectedCount: 6,
+        actualCount: projected.count,
+        expectedRefs: [...expectedRefs].sort(),
+        actualRefs: projected.members.map(({ ref }) => ref).sort(),
+        extraRef: actualDuplicateRef,
+      }));
+      expect(rejection).toBeInstanceOf(Error);
+      expect(projected.count).toBe(7);
+      expect(projected.members.map(({ ref }) => ref)).toContain(actualDuplicateRef);
     } finally {
       rmSync(home, { recursive: true, force: true });
     }

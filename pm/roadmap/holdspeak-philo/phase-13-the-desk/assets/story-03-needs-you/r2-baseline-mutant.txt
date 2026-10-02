@@ -1,0 +1,36 @@
+
+> holdspeak-web@0.0.1 test:web
+> vitest run --maxWorkers=2 src/desk/needsYou.baseline.test.ts -t rejects a code mutant that skips dedupAttention --disableConsoleIntercept
+
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-13-astra/web
+
+{"mutant":"skip dedupAttention","rejection":"NONE","expectedCount":6,"actualCount":6,"expectedRefs":["A2 confirm the room commitment","blocker:engines","philo13-a2-A1","philo13-a2-A3","philo13-a2-A4","philo13-a2-failed-meeting"],"actualRefs":["A2 confirm the room commitment","blocker:engines","philo13-a2-A1","philo13-a2-A3","philo13-a2-A4","philo13-a2-failed-meeting"],"extraRef":"A1 close the overdue release note"}
+ ❯ src/desk/needsYou.baseline.test.ts (13 tests | 1 failed | 12 skipped) 1481ms
+     × rejects a code mutant that skips dedupAttention on the real producer oracle 1480ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/needsYou.baseline.test.ts > the real producer membership oracle > rejects a code mutant that skips dedupAttention on the real producer oracle
+AssertionError: expected undefined to be an instance of Error
+ ❯ src/desk/needsYou.baseline.test.ts:600:25
+    598|         extraRef: actualDuplicateRef,
+    599|       }));
+    600|       expect(rejection).toBeInstanceOf(Error);
+       |                         ^
+    601|       expect(projected.count).toBe(7);
+    602|       expect(projected.members.map(({ ref }) => ref)).toContain(actual…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  00:41:25
+   Duration  1.91s (transform 97ms, setup 52ms, import 137ms, tests 1.48s, environment 165ms)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice

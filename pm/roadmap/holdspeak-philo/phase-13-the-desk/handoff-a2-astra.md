@@ -20,7 +20,7 @@ Door output rows retain `_doorCard`, `_isDoor`, and `_isUnassigned` for the exis
 
 `useNeedsYou()` adds `loading`, `complete`, `errors`, the Room envelope as `room`, and `refresh()` to the pure result. Consumers share one snapshot, an in-flight read and one 60-second poll while mounted. `refreshNeedsYou()` is also exported for an existing mutation's completion path and C3's later refresh wiring.
 
-The hook reads `/api/door`, `/api/desk/needs-you?fresh=1`, `/api/inference/assignments`, offset pages of `/api/meetings`, and `/api/settings/heartbeat`. The meetings HTTP route strips `next_cursor`; the hook advances by offset. Source failures keep known rows and leave `complete` false. A roster failure is shown as the R2 unknown blocker. Room completeness uses the existing `readCoverage` rule and retains the wire's coverage, freshness and next-item metadata.
+The hook reads `/api/door`, the cached `/api/desk/needs-you`, `/api/inference/assignments`, offset pages from `/api/meetings?summary_attention=true`, and `/api/settings/heartbeat`. The summary-attention filter runs before pagination and the route reports the exact total of unparked FAILED/RETRYING Meetings; the hook pages only that filtered set and never pages the whole archive. `?fresh=1` is sent only by an explicit `refresh()` call. Source failures keep known rows and leave `complete` false. A roster failure is shown as the R2 unknown blocker. Room completeness uses the existing `readCoverage` rule and retains the wire's coverage, freshness and next-item metadata.
 
 ## A2-W still required
 
@@ -35,3 +35,12 @@ The H-A2 shots expose a remaining Chair caption: the shared total is 6 (then 5),
 The real-producer oracle yields these six refs: `philo13-a2-A1`, `A2 confirm the room commitment`, `philo13-a2-A3`, `philo13-a2-A4`, `blocker:engines`, and `philo13-a2-failed-meeting`. The real A1 PATCH removes only A1, leaving five. A2's action ID is `action-0005000000000000`; the Room ref is its actual title, not an invented ID alias. M1 is muted through heartbeat settings; the real Door omits D1.
 
 Both final Dock atlas runs pass at 1440 and native touch at 393. See [walks](walks-03-astra.md) and the [lane proof](lane-03-astra.md). The shared module preserves the existing Chair guards; A2-W must rehome them with its wiring. No owner desk sitting or real send is claimed.
+
+## Counsel r2 conditions
+
+| Condition | Settled requirement |
+|---|---|
+| C1 | R3 counts every FAILED/RETRYING Meeting, including old rows, through the bounded status-filtered server read. The hook pages only that filtered result, never all Meetings. A2-W uses the same hook. |
+| C2 | The 60-second poll reads cached `/api/desk/needs-you`; only explicit `refresh()` sends `?fresh=1`. Keep the minute interval and do not refresh the Room aggregate on every poll. |
+| C3 | `scripts/graph_walk.py` and `docs/internal/philo/graph/atlas.schema.json` are Astra-owned shared paths. The faces lane requests changes by named handoff. |
+| C4 | Keep the existing ref-level Room-covers-Door mutant and add a code-level `dedupAttention`-skipped mutant. The code mutant must be rejected by the fixed six-ref oracle minted through real producers. |

@@ -68,6 +68,7 @@ An item **needs you** when it is one of:
 
 - **Atlas file:** `docs/internal/philo/graph/atlas-phase13-astra.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_astra_atlas.py`. The A2-W wiring step's face cases go in `atlas-phase13-muaddib.json` (the faces lane's file).
 - **Focused:** web unit on `needsYou.ts` over the oracle inputs and the wrong-projection variants; service tests where the backend changes; `uv run python scripts/check_web_baseline.py --run` (zero branch-new).
+- **R2 C1–C4 fences:** a status-filtered `/api/meetings?summary_attention=true` read returns only unparked FAILED/RETRYING Meetings, reports the exact match total, and pages only those matches; the Dock hook makes no all-meeting page read. Its minute read uses cached `/api/desk/needs-you`; only explicit `refresh()` asks for `fresh=1`. Preserve the ref-level Room-covers-Door mutant and prove a code mutant that skips `dedupAttention` fails against a duplicate minted by real producers and the exact six-ref oracle.
 - **Glass / atlas:** the oracle week through the real hub: one case reading the Dock (this lane); one case reading the Chair, bell and Dock in one run (A2-W, the faces file); at 1440 and 393 (touch), one case per `scripts/graph_walk.py run` invocation.
 - **Shots:** the six shots above, re-taken on the oracle week.
 
@@ -83,6 +84,7 @@ Grounding size: not sized as a move. PROVISIONAL.
 
 ## Notes
 
+- 2026-10-02 — Muad'Dib counsel on built for PR #728: RATIFY-WITH-CONDITIONS, C1–C4. R3 counts every FAILED/RETRYING Meeting via the bounded status-filtered server read; the minute poll uses the cached needs-you route and `fresh=1` is explicit only; `atlas.schema.json` and `scripts/graph_walk.py` are Astra-owned shared paths with changes requested by named handoff; retain the Room-covers-Door ref mutant and add a code mutant for skipped `dedupAttention`. See [H-A2 r2 condition contract](handoff-a2-astra.md). A2-W remains the other half; the story stays in-progress until both merge.
 - 2026-10-01 — H-A2 built in Astra's lane; [handoff](handoff-a2-astra.md), [proof](lane-03-astra.md), [actual walks](walks-03-astra.md). DRAFT — UNCHECKED — awaiting Muad'Dib. Story remains in-progress until H-A2 and A2-W both merge; acceptance boxes remain open for that closing verification.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two". The membership rule is Muad'Dib's ruling (the Chair's existing membership). `history/helpers.ts` and the Room headline are Muad'Dib's (A2-W), not this lane's.
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

@@ -315,7 +315,22 @@ def _create_projects_and_links(db: Any, *, m1_due: str) -> dict[str, str]:
         if response.status_code != 200 or not response.json().get("success"):
             raise RuntimeError(f"real project item route failed: {response.status_code} {response.text}")
         m1_id = str(response.json()["item"]["id"])
-    return {"project_id": project_id, "muted_project_id": muted_project_id, "m1_id": m1_id}
+        response = client.post(
+            f"/api/projects/{project_id}/items",
+            json={
+                "item_type": "milestone", "title": A1_TASK,
+                "lifecycle": "planned", "severity": "high", "due_at": m1_due,
+            },
+        )
+        if response.status_code != 200 or not response.json().get("success"):
+            raise RuntimeError(f"real cross-source duplicate route failed: {response.status_code} {response.text}")
+        a1_room_item_id = str(response.json()["item"]["id"])
+    return {
+        "project_id": project_id,
+        "muted_project_id": muted_project_id,
+        "m1_id": m1_id,
+        "a1_room_item_id": a1_room_item_id,
+    }
 
 
 def _seed_meetings_and_projects(db: Any, now: datetime) -> dict[str, Any]:
@@ -559,7 +574,7 @@ def seed_week(db_path: Path, *, home: Path | None = None, now: datetime | None =
             "mainMeeting": MAIN_MEETING_ID, "mutedMeeting": MUTED_MEETING_ID,
             "failedMeeting": FAILED_MEETING_ID, "storedMeeting": STORED_MEETING_ID,
             "A1": A1_ID, "A2": chain["action_item_id"], "A3": A3_ID, "A4": A4_ID,
-            "M1": dates["m1_id"], "D1": D1_ID,
+            "M1": dates["m1_id"], "A1Room": dates["a1_room_item_id"], "D1": D1_ID,
             **{key: value for key, value in chain.items() if key.endswith("_id") or key == "proposal_id"},
         }
         before = _inputs(db, clock)
@@ -641,6 +656,13 @@ def _actual_ids(db: Any) -> dict[str, str]:
     )
     if m1 is None:
         raise RuntimeError("real M1 project-item producer did not persist its item")
+    a1_room = next(
+        (item for item in db.projects.list_project_items(project_id)
+         if item.get("title") == A1_TASK),
+        None,
+    )
+    if a1_room is None:
+        raise RuntimeError("real A1 Room duplicate producer did not persist its item")
     proposals = db.proposals.list_proposals(meeting_id=MAIN_MEETING_ID, state="confirmed")
     proposal = next((row for row in proposals if row.text == A2_TASK), None)
     if proposal is None or not proposal.decision_record_id or not proposal.commitment_id:
@@ -664,6 +686,7 @@ def _actual_ids(db: Any) -> dict[str, str]:
         "A3": A3_ID,
         "A4": A4_ID,
         "M1": str(m1["id"]),
+        "A1Room": str(a1_room["id"]),
         "D1": D1_ID,
         "proposal_id": str(proposal.id),
         "decision_id": str(decision_row["source_id"]),
@@ -697,6 +720,12 @@ def _assert_oracle_inputs(inputs: dict[str, Any], ids: dict[str, str]) -> dict[s
         raise RuntimeError("Door route emitted the completed D1 action")
     if any(str(row.get("id")) == ids["D1"] for row in room_items):
         raise RuntimeError("Room route emitted the completed D1 action")
+    a1_duplicates = [
+        row for row in room_items
+        if row.get("source") == "item" and row.get("ref") == A1_TASK
+    ]
+    if len(a1_duplicates) != 1 or a1_duplicates[0].get("id") is None:
+        raise RuntimeError("Room route did not emit the real A1 cross-source duplicate")
     muted_rows = [row for row in room_items if row.get("ref") == M1_TASK]
     if len(muted_rows) != 1 or muted_rows[0].get("muted") is not True:
         raise RuntimeError("Room route did not mark the muted M1 row")
@@ -715,13 +744,15 @@ def _assert_oracle_inputs(inputs: dict[str, Any], ids: dict[str, str]) -> dict[s
     }
 
 
-def _done_route(db: Any) -> dict[str, Any]:
+def _done_route(db: Any, *, project_id: str, project_item_id: str) -> dict[str, Any]:
     from fastapi import FastAPI, Request
     from fastapi.testclient import TestClient
     from holdspeak.principals import Principal, PrincipalKind
     from holdspeak.services.meeting_service import MeetingService
+    from holdspeak.services.project_service import ProjectService
     from holdspeak.web.context import WebContext
     from holdspeak.web.routes.meetings.action_items import build_action_items_router
+    from holdspeak.web.routes.projects import build_projects_router
 
     owner = Principal(PrincipalKind.OWNER, OWNER_IDENTITY)
     app = FastAPI()
@@ -731,18 +762,41 @@ def _done_route(db: Any) -> dict[str, Any]:
         request.state.principal = owner
         return await call_next(request)
 
-    app.include_router(build_action_items_router(WebContext(
+    ctx = WebContext(
         get_state=lambda: {}, meeting_service=MeetingService(db),
-    )))
+        project_service=ProjectService(db),
+    )
+    app.include_router(build_action_items_router(ctx))
+    app.include_router(build_projects_router(ctx))
     path = f"/api/all-action-items/{A1_ID}"
     body = {"status": "done"}
     with TestClient(app) as client:
         response = client.patch(path, json=body)
         payload = response.json()
         status = response.status_code
+        if status == 200 and payload.get("success"):
+            room_response = client.post(
+                f"/api/projects/{project_id}/items/{project_item_id}/transition",
+                json={"verb": "reached"},
+            )
+            room_payload = room_response.json()
     if status != 200 or not payload.get("success"):
         raise RuntimeError(f"real A1 done route failed ({status}): {payload}")
-    return {"method": "PATCH", "path": path, "body": body, "status": status, "response": payload}
+    if room_response.status_code != 200 or not room_payload.get("success"):
+        raise RuntimeError(
+            f"real A1 Room duplicate transition failed ({room_response.status_code}): {room_payload}"
+        )
+    return {
+        "method": "PATCH", "path": path, "body": body, "status": status,
+        "response": payload,
+        "relatedProducerMutation": {
+            "method": "POST",
+            "path": f"/api/projects/{project_id}/items/{project_item_id}/transition",
+            "body": {"verb": "reached"},
+            "status": room_response.status_code,
+            "response": room_payload,
+        },
+    }
 
 
 def export_week(db_path: Path, *, home: Path | None = None, now: datetime | None = None) -> dict[str, Any]:
@@ -758,7 +812,11 @@ def export_week(db_path: Path, *, home: Path | None = None, now: datetime | None
         before = _inputs(db, clock)
         ids = _actual_ids(db)
         _assert_oracle_inputs(before, ids)
-        mutation = _done_route(db)
+        mutation = _done_route(
+            db,
+            project_id=ids["project"],
+            project_item_id=ids["A1Room"],
+        )
         after = _inputs(db, clock)
         return {
             "schema": ORACLE_SCHEMA, "mode": "export", "db": str(path), "home": str(isolated_home),
