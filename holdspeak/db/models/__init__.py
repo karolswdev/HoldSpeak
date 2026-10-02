@@ -54,6 +54,10 @@ class MeetingSummary:
     intel_requested_at: Optional[datetime] = None
     intel_completed_at: Optional[datetime] = None
     intel_model_host: Optional[str] = None
+    # PHILO-13 H-A3: whether the latest persisted intel snapshot has a
+    # stored summary. This is separate from intel status or the configured
+    # route.
+    has_summary: bool = False
 
 
 @dataclass

@@ -28,6 +28,7 @@ Each face names the one fact it shows, from that fact's source. A refused start 
 - **In:**
   - `startRecording` reads `res.ok`; a refused or failed start shows `Not recording` + the reason, with a verb where one exists; no timer.
   - Each status face names the one fact it shows: **configured** (summary on in Settings), **available** (an engine can run now), **stored** (summaries exist). Settings, Trust, the Chair and Meetings each say which; dot colour matches the fact (no green on OFF, A.10).
+  - **H-A3 (Astra's data handoff):** `/api/meetings` list and search rows carry `has_summary`, derived from the latest persisted summary read by detail, independent of configuration and run status. The rows disclose the boolean, never the summary text. **A3-W (Muad'Dib's face handoff):** wire the stored-summary rail to this field after H-A3 merges. The story stays in-progress until both halves merge.
   - Failure faces in plain words with a verb (A.3, A.10, Tenet 4): Intelligence BRIEF, the Room publish, People (the window keeps the person and the draft; the failure is a row, not the window), Ask with no model (withhold ASK or name the fact, A.11), the voice failure (`Open Setup` as a library Button).
   - Files (all the faces lane's): `recordingSlice.ts`, `settingsPrefs.tsx`, `TrustWindow.tsx`, the pullout views, `PeopleCore.tsx` (the People failure face), the Room face (the publish failure), `AskPanel.tsx`. No other lane's file.
 - **Out:** making the engine work; Meetings' needs-you wording (A2); the People store itself.
@@ -39,11 +40,13 @@ Each face names the one fact it shows, from that fact's source. A refused start 
 - [ ] No raw server text (`detail` strings, error codes, model paths) on Intelligence BRIEF, the Room publish failure, People or Ask; each failure has a verb. A static fence over these faces' failure branches.
 - [ ] A People store failure keeps Priya's window and the unsent note; the failure is a row with a verb.
 - [ ] Every verb the library Button; no prose (A.3 one-line empty-state exception only).
+- [ ] **H-A3:** real import/admission/summary producers persist one summary and leave one meeting unsummarized; `/api/meetings` list and search report true only for the persisted summary, matching the detail read after both config and run status are disabled; neither route leaks the generated summary string.
+- [ ] **A3-W:** the stored-summary rail reads `has_summary`; this story closes only after H-A3 and A3-W both merge.
 
 ## Test plan
 
 - **Atlas file:** `docs/internal/philo/graph/atlas-phase13-muaddib.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_muaddib_atlas.py`.
-- **Focused:** web unit on `recordingSlice` (non-ok response → idle + reason); the fact labels; `uv run python scripts/check_web_baseline.py --run`.
+- **Focused:** web unit on `recordingSlice` (non-ok response → idle + reason); the fact labels; H-A3's `tests/unit/test_philo13_a3h_meeting_summary.py` and directly relevant summary detail tests; `uv run python scripts/check_web_baseline.py --run`.
 - **Glass:** Playwright through the real hub on an isolated HOME: the 501 start; injected 500/503 for the brief, publish and People reads (the J1/J3/J4 recovery legs of `grounding/faces-jobs.md`).
 - **Atlas:** `case.j4.record_start.capture_recording` is BLOCKED today (no `browser_audio_device`, `grounding/faces-jobs.md:36`); a refused-start case that needs no microphone, at 1440 and 393 (touch), one case per invocation.
 - **Shots:** 1440 and 393, touch at 393.
@@ -60,6 +63,7 @@ Grounding size: Record `res.ok` is part of move 5 (M) (`grounding/faces-jobs.md:
 
 ## Notes
 
+- 2026-10-02 — Astra's H-A3 r2 handoff is in progress on `feat/philo-13-a3h-astra`; the list/search boolean is data-only and stays in-progress pending Muad'Dib's A3-W rail.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
 
