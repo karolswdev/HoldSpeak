@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** the owner's ratification of this charter
 - **Unblocks:** PHILO-13-13 (C3 shows REC only when the hub confirms)
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
@@ -70,3 +70,7 @@ Grounding size: Record `res.ok` is part of move 5 (M) (`grounding/faces-jobs.md:
 ## Amendment — 2026-10-01 (Muad'Dib, visible; the owner may overrule)
 
 Built and verified in the faces lane (`evidence-story-04.md`). **Acceptance 2 is partly met:** the Meetings **list rail** still reads `OFF` beside a meeting that stores a summary, because `/api/meetings` list rows carry no summary field (a route change, Astra's file). New named handoff **H-A3:** Astra adds a stored-summary field to the `/api/meetings` list rows (real producer, route fence); the faces lane wires the rail (`HistoryCore.tsx`) to name the fact `SUMMARY STORED`. This story stays **in-progress** until both halves merge. Ledger from the build (homes): Intelligence's Acknowledge/Defer/Speak still shown on a brief failure (A.11) → B1; Room *load* failures still print raw text (`useProjectRoomController.ts`, `ProjectRoomCore.tsx:2302`) → B1; Ask's no-model case matched on hub text → C4; Settings `Voice ✓ LIVE` vs Speak `DICTATION NOT SET` → C6.
+
+## Closed — 2026-10-02
+
+Acceptance 2's open half is paid: H-A3 merged in #729 (Astra; `has_summary` on `/api/meetings` list and search rows), A3-W wired in the faces lane — the Meetings list rail says `SUMMARY STORED` beside a meeting that stores a summary, independent of configuration and run status; an ACTIVE run (RUNNING / QUEUED / FAILED with Retry) shows first (Muad'Dib's ruling: the live fact leads). Fenced in vitest (`railSummaryStored.philo13.test.tsx`, red on main and on the pre-ruling order) and in glass through the real producer (`TestMeetingsRailNamesStored`, 1440 + touch 393; `assets/story-04-shots/meetings-rail-stored-*`). All story-04 shots re-captured on the finished frame. Counsel: Astra r1 DNR → r2 DNR → r3 RATIFY-WITH-CONDITIONS, paid (`checks/faces-w1-counsel-astra-r1..r3.md`). Final capture: `evidence-story-04.md` 2026-10-02T20:07Z (vitest 94, tsc clean, pytest 52).

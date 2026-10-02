@@ -125,7 +125,7 @@ class TestFacesDoNotLie:
 
     def _close_windows(self, page: Any, width: int) -> None:
         for _ in range(6):
-            gadgets = page.locator(".desk-window .desk-light-close:visible")
+            gadgets = page.locator(".desk-window .desk-gadget-close:visible")
             if not gadgets.count():
                 return
             self._press(page, gadgets.last, width)
@@ -197,8 +197,11 @@ class TestFacesDoNotLie:
                 row = meetings.get_by_text("Checkout latency review").first
                 row.wait_for()
                 self._press(page, row, width)
-                meetings.get_by_text("SUMMARY STORED").first.wait_for()
-                assert not meetings.locator(".meetings-detail-head").get_by_text("SUMMARY OFF").count()
+                # A3-W: the rail now says SUMMARY STORED too (its hidden compact
+                # line at 393), so the record's own head is the locator.
+                head = meetings.locator(".meetings-detail-head")
+                head.get_by_text("SUMMARY STORED").first.wait_for()
+                assert not head.get_by_text("SUMMARY OFF").count()
                 self._shot(page, "meetings-stored", width)
                 assert not errors, errors
             finally:
@@ -472,6 +475,126 @@ class TestFacesDoNotLie:
                 people.get_by_text("Wants to lead the EU shard work.").first.wait_for()
                 self._shot(page, "people-detail-recovered", width)
                 page.unroute(detail)
+                assert not errors, errors
+            finally:
+                browser.close()
+
+
+# ── PHILO-13-04 A3-W: the Meetings list rail names the STORED fact ────────
+
+
+def _mint_through_the_real_producers(tmp_path: Path) -> None:
+    """One summarized and one unsummarized meeting, as H-A3's fences mint them.
+
+    ``import_meeting`` -> ``_admit`` -> ``process_next_intel_job`` over the
+    deferred-queue rig (only the engine and plugin host are doubles), into a
+    database of its own; the hub boots on a copy of it. The patches live in a
+    private ``MonkeyPatch`` context and leave before the hub boots. Then the
+    stored meeting's run status is set to ``disabled``, as the H-A3 fence does
+    (``tests/unit/test_philo13_a3h_meeting_summary.py``): the case that drew
+    ``OFF`` beside a stored summary.
+    """
+    import shutil
+    import sqlite3
+
+    from holdspeak.intel_queue import process_next_intel_job
+    from tests.unit.test_meeting_deferred_admission import _queue_rig
+    from types import SimpleNamespace
+
+    from holdspeak.meeting_import import import_meeting
+    from tests.unit.test_philo13_a3h_meeting_summary import PRODUCED_SUMMARY, SOURCE
+    from tests.unit.test_philo3_summary_detail import _admit
+
+    def _import(db: Any, source: Path, meeting_id: str, title: str, transcript: str) -> Any:
+        class _Transcriber:  # the one double: the words the import hears
+            def transcribe(self, _audio: Any, **_kwargs: Any) -> str:
+                return transcript
+
+        return import_meeting(
+            source, db=db, transcriber=_Transcriber(),
+            config=SimpleNamespace(meeting=SimpleNamespace(
+                intel_enabled=True, intel_deferred_enabled=True)),
+            title=title, meeting_id=meeting_id,
+        ).state
+
+    rig = tmp_path / "producer"
+    rig.mkdir()
+    with pytest.MonkeyPatch.context() as mp:
+        db, *_ = _queue_rig(rig, mp)
+        source = rig / "meeting.wav"
+        shutil.copyfile(SOURCE, source)
+        stored = _import(db, source, A3W_STORED, "Checkout latency review",
+                         "Latency came from a cold cache after deploy.")
+        none = _import(db, source, A3W_NONE, "Vendor call: card network",
+                       "We discussed the card network SLA.")
+        _admit(db, stored.id)
+        assert process_next_intel_job() is True
+        assert db.meetings.get_meeting(stored.id).intel.summary == PRODUCED_SUMMARY
+        assert db.meetings.get_meeting(none.id).intel is None
+        with db._connection() as conn:
+            conn.execute("UPDATE meetings SET intel_status = 'disabled' WHERE id = ?", (stored.id,))
+    src = sqlite3.connect(rig / "queue.db")
+    dst = sqlite3.connect(tmp_path / "holdspeak.db")  # _boot's DEFAULT_DB_PATH
+    src.backup(dst)
+    src.close()
+    dst.close()
+
+
+A3W_STORED = "a3w-stored"
+A3W_NONE = "a3w-none"
+
+
+class TestMeetingsRailNamesStored:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        _ensure_build()
+        _mint_through_the_real_producers(tmp_path)
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        self.base = base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_the_rail_says_summary_stored(self, width: int) -> None:
+        """The list rail says SUMMARY STORED beside the stored summary, and
+        OFF only beside the meeting that stores none. Red on main 02ce9e8c
+        (the rail said OFF for both)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                      device_scale_factor=1, has_touch=width < 720)
+            page = ctx.new_page()
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                rows = {r["id"]: r for r in _api(page, "GET", "/api/meetings?limit=20", token=TOKEN)["meetings"]}
+                assert rows[A3W_STORED]["has_summary"] is True
+                assert rows[A3W_STORED]["intel_status"] == "disabled"
+                assert rows[A3W_NONE]["has_summary"] is False
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(1500)
+                _settle(page)
+                TestFacesDoNotLie._press(
+                    page, page.locator(".desk-dock-launch[aria-label^='Meetings']"), width)
+                meetings = page.locator(".desk-window[aria-label='Meetings']")
+                stored = meetings.get_by_test_id(f"meeting-row-{A3W_STORED}")
+                none = meetings.get_by_test_id(f"meeting-row-{A3W_NONE}")
+                stored.wait_for()
+                none.wait_for()
+                stored.scroll_into_view_if_needed()  # at 393 the rail scrolls
+                TestFacesDoNotLie._shot(page, "meetings-rail-stored", width)
+                assert stored.get_by_test_id("state-token").inner_text() == "SUMMARY STORED"
+                assert not stored.get_by_text(re.compile(r"\bOFF\b")).count()
+                assert none.get_by_test_id("state-token").inner_text() == "OFF"
+                assert not none.get_by_text("STORED").count()
                 assert not errors, errors
             finally:
                 browser.close()
