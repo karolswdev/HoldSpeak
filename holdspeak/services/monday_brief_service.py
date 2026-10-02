@@ -797,7 +797,8 @@ class MondayBriefService:
                           (SELECT COUNT(*) FROM action_items a
                             WHERE a.meeting_id = m.id) AS action_count
                    FROM meetings AS m
-                   WHERE COALESCE(m.ended_at, m.started_at) BETWEEN ? AND ?
+                   WHERE m.parked = 0
+                     AND COALESCE(m.ended_at, m.started_at) BETWEEN ? AND ?
                      AND m.capture_status NOT IN ('recording', 'provisional')
                    ORDER BY COALESCE(m.ended_at, m.started_at) ASC, m.id ASC""",
                 (window_start, window_end),
@@ -1391,7 +1392,8 @@ class MondayBriefService:
             rows = conn.execute(
                 """SELECT DISTINCT m.calendar_event_id AS event_id
                    FROM meetings AS m
-                   WHERE m.calendar_event_id IS NOT NULL
+                   WHERE m.parked = 0
+                     AND m.calendar_event_id IS NOT NULL
                      AND m.calendar_event_id != ''
                      AND COALESCE(m.ended_at, m.started_at) BETWEEN ? AND ?
                      AND m.capture_status NOT IN ('recording', 'provisional')""",

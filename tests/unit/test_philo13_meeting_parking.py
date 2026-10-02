@@ -6,20 +6,27 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 from holdspeak.db import Database
+from holdspeak.db.calendar_events import CalendarEvent
 from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
 from holdspeak.mcp import tools as mcp_tools
+from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.runtime import composition
 from holdspeak.services.meeting_service import MeetingService
+from holdspeak.services.people_service import PeopleService
+from holdspeak.services.project_service import ProjectService
+from holdspeak.services.projection_service import ProjectionService
 from holdspeak.services.proposal_bridge_service import ProposalBridgeService
 from holdspeak.services.workbench_service import WorkbenchService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.meeting_import import build_meeting_import_router
 from holdspeak.web.routes.meetings.crud import build_crud_router
+from holdspeak.web.routes.projections import build_projections_router
 from holdspeak.web.routes.proposals import _status, build_proposal_router
 
 
@@ -335,3 +342,279 @@ def test_schema_reconciles_parked_columns_additively(tmp_path: Path) -> None:
         workbench_columns = {row[1] for row in conn.execute("PRAGMA table_info(workbench_items)")}
     assert "parked" in meeting_columns
     assert "parked" in workbench_columns
+
+
+@pytest.mark.parametrize(
+    "read_family",
+    ["brief", "calendar", "recall", "proposal", "intel_claim"],
+)
+def test_parked_meeting_is_absent_from_its_real_read_family(
+    tmp_path: Path, read_family: str,
+) -> None:
+    db = Database(tmp_path / f"meeting-parking-{read_family}.db")
+    state = _meeting(f"read-family-{read_family}")
+    if read_family in {"brief", "calendar"}:
+        state.calendar_event_id = f"calendar-{read_family}"
+    db.meetings.save_meeting(state)
+
+    if read_family in {"brief", "calendar"}:
+        from holdspeak.services.monday_brief_service import MondayBriefService
+
+        brief = MondayBriefService(db)
+        window_start = "2026-10-01T00:00:00"
+        window_end = "2026-10-02T00:00:00"
+        read = (
+            (lambda: brief._collect_meetings(window_start, window_end))
+            if read_family == "brief"
+            else (lambda: brief._recorded_calendar_event_ids(window_start, window_end))
+        )
+        expected_after_park = [] if read_family == "brief" else set()
+        expected_after_restore = (
+            {f"calendar-{read_family}"} if read_family == "calendar" else None
+        )
+    elif read_family == "recall":
+        read = lambda: db.memory.search("retained transcript", kinds=["meeting"]).hits
+        expected_after_park = []
+        expected_after_restore = f"meeting:{state.id}"
+    elif read_family == "proposal":
+        proposal = db.proposals.create_proposal(
+            meeting_id=state.id,
+            project_id=None,
+            kind="action",
+            text="Keep the producer fence",
+            source_plugin="test",
+        )
+        assert proposal is not None
+        read = lambda: db.proposals.list_proposals(meeting_id=state.id)
+        expected_after_park = []
+        expected_after_restore = proposal.id
+    else:
+        job_id = db.intel.enqueue_intel_job(
+            state.id,
+            transcript_hash=state.transcript_hash(),
+            reason="producer fence",
+            legacy_displaced_work=True,
+        )
+        assert job_id
+        read = db.intel.claim_next_intel_job
+        expected_after_park = None
+        expected_after_restore = job_id
+
+    assert db.meetings.delete_meeting(state.id) is True
+    parked_value = read()
+    assert parked_value == expected_after_park
+
+    assert db.meetings.restore_meeting(state.id) is True
+    restored_value = read()
+    if read_family == "brief":
+        assert restored_value
+    elif read_family == "recall":
+        assert [hit.source_ref for hit in restored_value] == [expected_after_restore]
+    elif read_family == "proposal":
+        assert [row.id for row in restored_value] == [expected_after_restore]
+    elif read_family == "intel_claim":
+        assert restored_value is not None and restored_value.job_id == expected_after_restore
+    else:
+        assert restored_value == expected_after_restore
+
+
+def test_projection_route_hides_meeting_actuator_job_and_conflict_rows(tmp_path: Path) -> None:
+    db = Database(tmp_path / "meeting-parking-projections.db")
+    state = _meeting("projection-fences")
+    db.meetings.save_meeting(state)
+    db.actuators.record_proposal(
+        meeting_id=state.id,
+        window_id="projection-window",
+        plugin_id="projection-test",
+        plugin_version="1",
+        idempotency_key="projection-fence-actuator",
+        target="webhook",
+        action="post",
+        preview="projection fence",
+    )
+    db.plugins.record_artifact(
+        artifact_id="projection-fence-artifact",
+        meeting_id=state.id,
+        artifact_type="handoff",
+        title="Projection fence artifact",
+        body_markdown="Hidden with its parked Meeting",
+    )
+    db.intel.enqueue_intel_job(
+        state.id,
+        transcript_hash=state.transcript_hash(),
+        reason="projection fence",
+        legacy_displaced_work=True,
+    )
+    conflict_id = db.meetings.record_sync_conflict(
+        state.id,
+        local_value=state.to_dict(),
+        incoming_value={**state.to_dict(), "title": "incoming"},
+    )
+    assert conflict_id
+
+    app = FastAPI()
+    app.include_router(build_projections_router(WebContext(
+        get_state=lambda: {},
+        projection_service=ProjectionService(db),
+    )))
+    client = TestClient(app)
+
+    before_response = client.get("/api/desk/projections", params={"limit": 200}).json()
+    before = before_response["projections"]
+    meeting_ref = f"meeting:{state.id}"
+    related_rows = [
+        row for row in before
+        if row["subject_ref"] == meeting_ref or row["correlation_id"] == meeting_ref
+    ]
+    assert {row["source_kind"] for row in related_rows} >= {
+        "actuator_proposal", "artifact", "intel_job", "meeting_sync_conflict"
+    }
+
+    db.meetings.delete_meeting(state.id)
+    parked_response = client.get("/api/desk/projections", params={"limit": 200}).json()
+    parked = parked_response["projections"]
+    assert all(
+        row["subject_ref"] != meeting_ref and row["correlation_id"] != meeting_ref
+        for row in parked
+    )
+    assert parked_response["page"]["total"] == before_response["page"]["total"] - len(related_rows)
+
+    db.meetings.restore_meeting(state.id)
+    restored_response = client.get("/api/desk/projections", params={"limit": 200}).json()
+    restored = restored_response["projections"]
+    restored_related = [
+        row for row in restored
+        if row["subject_ref"] == meeting_ref or row["correlation_id"] == meeting_ref
+    ]
+    assert {row["source_kind"] for row in restored_related} >= {
+        "actuator_proposal", "artifact", "intel_job", "meeting_sync_conflict"
+    }
+    assert restored_response["page"]["total"] == before_response["page"]["total"]
+
+
+def test_sync_conflict_tombstone_parks_and_restores_retained_children(tmp_path: Path) -> None:
+    db = Database(tmp_path / "meeting-parking-conflict.db")
+    state = _meeting("conflict-tombstone")
+    db.meetings.save_meeting(state)
+    db.plugins.record_artifact(
+        artifact_id="conflict-artifact",
+        meeting_id=state.id,
+        artifact_type="handoff",
+        title="Conflict artifact",
+        body_markdown="Retained while parked",
+    )
+    before = _related_rows(db, state.id)
+    conflict_id = db.meetings.record_sync_conflict(
+        state.id,
+        local_value=state.to_dict(),
+        incoming_value={"id": state.id, "deleted": True},
+    )
+
+    assert db.meetings.resolve_sync_conflict(
+        state.id, conflict_id, resolution="use_incoming"
+    ) == "deleted"
+    assert db.meetings.get_meeting(state.id) is None
+    retained = db.meetings.get_meeting(state.id, include_parked=True)
+    assert retained is not None and retained.parked is True
+    assert _related_rows(db, state.id) == before
+    assert db.meetings.list_sync_conflicts(state.id) == []
+
+    assert db.meetings.restore_meeting(state.id) is True
+    assert db.meetings.get_meeting(state.id) is not None
+    assert _related_rows(db, state.id) == before
+
+
+def test_parked_meeting_actions_and_speakers_disappear_from_all_owner_reads(tmp_path: Path) -> None:
+    db = Database(tmp_path / "meeting-parking-owner-reads.db")
+    state = _meeting("owner-read-fences")
+    state.segments[0].speaker_id = "speaker-fence"
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO speakers (id, name, embedding) VALUES (?, ?, ?)",
+            ("speaker-fence", "Fence speaker", b"speaker-embedding"),
+        )
+        conn.commit()
+    db.meetings.save_meeting(state)
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO action_items (id, meeting_id, task, owner, status) "
+            "VALUES (?, NULL, ?, ?, 'pending')",
+            ("standalone-owner-read", "Standalone action", "Me"),
+        )
+        conn.commit()
+    db.projects.create_project(project_id="owner-read-project", name="Owner read project")
+    db.projects.associate_meeting_project(
+        meeting_id=state.id, project_id="owner-read-project", source="test", confidence=1.0
+    )
+
+    assert [item.id for item in db.meetings.list_action_items()] == [
+        "standalone-owner-read", "a1-action"
+    ]
+    project_service = ProjectService(db)
+    assert [item["id"] for item in project_service.list_action_items(OWNER, "owner-read-project")] == [
+        "a1-action"
+    ]
+
+    before_segments = db.meetings.get_speaker_segments("speaker-fence")
+    assert len(before_segments) == 1 and len(before_segments[0]["segments"]) == 1
+    assert db.meetings.get_speaker_stats("speaker-fence")["total_segments"] == 1
+
+    people_store = EncryptedPeopleStore(tmp_path / "people.sqlite3", MemoryKeyStore())
+    people_store.initialize()
+    people = PeopleService(people_store)
+    relationship = people.create_relationship(OWNER, {"display_name": "Owner read person"})
+    people.link_calendar_series(
+        OWNER, relationship["id"], "uid-owner-read", "source-owner-read", "Owner read"
+    )
+    db.calendar_events.replace_projection(
+        "owner-read-revision",
+        [CalendarEvent(
+            id="event-owner-read", uid="uid-owner-read", title="Owner read",
+            starts_at="2026-10-01T10:00:00", ends_at="2026-10-01T11:00:00",
+            location=None, meeting_url=None, last_seen_at=1.0,
+            subscription_revision="owner-read-revision", source_id="source-owner-read",
+        )],
+        seen_at=1.0,
+        source_id="source-owner-read",
+    )
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE meetings SET calendar_event_id=? WHERE id=?",
+            ("event-owner-read", state.id),
+        )
+        conn.commit()
+    assert people.one_on_one_brief(OWNER, relationship["id"], db=db)["linked_meetings"]
+
+    db.meetings.delete_meeting(state.id)
+    after_park = {
+        "global_actions": [item.id for item in db.meetings.list_action_items()],
+        "project_actions": [
+            item["id"] for item in project_service.list_action_items(OWNER, "owner-read-project")
+        ],
+        "speaker_meetings": [
+            group["meeting_id"] for group in db.meetings.get_speaker_segments("speaker-fence")
+        ],
+        "speaker_total_segments": db.meetings.get_speaker_stats("speaker-fence")["total_segments"],
+        "people_meetings": [
+            row["meeting_id"]
+            for row in people.one_on_one_brief(OWNER, relationship["id"], db=db)["linked_meetings"]
+        ],
+    }
+    assert after_park == {
+        "global_actions": ["standalone-owner-read"],
+        "project_actions": [],
+        "speaker_meetings": [],
+        "speaker_total_segments": 0,
+        "people_meetings": [],
+    }
+
+    db.meetings.restore_meeting(state.id)
+    assert [item.id for item in db.meetings.list_action_items()] == [
+        "standalone-owner-read", "a1-action"
+    ]
+    assert [item["id"] for item in project_service.list_action_items(OWNER, "owner-read-project")] == [
+        "a1-action"
+    ]
+    assert db.meetings.get_speaker_segments("speaker-fence")
+    assert db.meetings.get_speaker_stats("speaker-fence")["total_segments"] == 1
+    assert people.one_on_one_brief(OWNER, relationship["id"], db=db)["linked_meetings"]

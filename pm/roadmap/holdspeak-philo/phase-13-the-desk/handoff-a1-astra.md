@@ -23,10 +23,20 @@ All functions are exported from `web/src/desk/api.ts`.
 
 Single and bulk Workbench transitions validate the Workbench and item IDs. A claimed item refuses parking with 409. Bulk validation and the update share one transaction; a refused request changes no items. Repeating park or restore succeeds. Unknown IDs return 404. Empty or malformed bulk lists return 400.
 
-An item parked before the runner claims it is skipped; a parked pending item does not enter a later run. Parking a meeting keeps independent action items and artifacts actionable. Confirming a proposal whose meeting is parked gives `meeting_parked` (409) and directs the owner to restore it. A genuinely missing historical parent still gives `meeting_deleted`.
+An item parked before the runner claims it is skipped; a parked pending item does not enter a later run. **Muad'Dib's r2 ruling for H-A1:** parking hides the whole meeting while parked, including its action items and derivatives. Restore makes them visible through the same owner reads again. This includes the Monday Brief/calendar coverage, Recall, needs-you projections, proposals, intel claims, global and Project action lists, People, and speaker history/statistics. A project action item not attached to a meeting and a standalone action item remain visible. Resolving a sync tombstone parks the row too; only a genuinely missing meeting remains absent.
 
 ## A1-F work still required
 
 Build the Parked filter, Restore Buttons and PARKED receipt on the ratified artboard. Use these clients in both single and bulk paths. Show the receipt in every branch reached by park and restore, including refusal. Verify the 8-second removal window and reload through the face at 1440 and 393 with native touch. This backend handoff does not certify those face transitions.
 
 The lane report and captured observations will carry the backend verification. No story closing evidence or done call is claimed here.
+
+## Counsel r2 conditions
+
+| Condition | Settled requirement |
+|---|---|
+| C1 | Each named Brief, Recall, needs-you, proposal, and intel claim read filters parked meetings. A producer-backed park → read absent → restore → present fence covers each read family. |
+| C2 | The sync tombstone branch in `resolve_sync_conflict` parks rather than deleting the Meeting. A real conflict fence verifies retention and restored visibility. |
+| C3 | The whole meeting leaves owner-facing reads while parked, including linked action items in global, Project and People views and speaker history/statistics. Restore returns them. Standalone action items remain. |
+
+The full condition list and proof will be in the r2 lane record. No face file changes in this backend PR. A1-F remains a separate named handoff and needs the ratified C1 artboard.

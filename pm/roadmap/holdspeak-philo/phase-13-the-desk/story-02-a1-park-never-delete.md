@@ -69,6 +69,7 @@ Grounding size: not sized as a move (a prerequisite repair, `grounding/structure
 
 ## Notes
 
+- 2026-10-02 — Muad'Dib counsel on built for PR #727: RATIFY-WITH-CONDITIONS, C1–C3. Parking hides the whole meeting and linked action items across owner reads while parked; restoring brings them back. The sync tombstone path parks. See [H-A1 r2 condition contract](handoff-a1-astra.md). H-A1 remains in-progress pending these conditions and A1-F.
 - 2026-10-01 — H-A1 backend DRAFT — UNCHECKED — awaiting Muad'Dib. [Client handoff](handoff-a1-astra.md), [lane record](lane-02-astra.md), [actual walks](walks-02-astra.md). 335 scoped tests and four live lifecycle cases pass. A1-F remains pending its C1 artboard; this story stays in-progress until both halves are merged.
 
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".

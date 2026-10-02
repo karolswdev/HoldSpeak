@@ -1212,7 +1212,8 @@ class IntelRepository(BaseRepository):
                     """
                     SELECT j.* FROM intel_jobs j
                     JOIN meetings m ON m.id=j.meeting_id
-                    WHERE j.status = 'queued'
+                    WHERE m.parked = 0
+                      AND j.status = 'queued'
                       AND m.capture_status IN ('finalized', 'recovered')
                       AND m.route_fence_pending = 0
                       AND NOT EXISTS (
@@ -1238,7 +1239,8 @@ class IntelRepository(BaseRepository):
                     """
                     SELECT j.* FROM intel_jobs j
                     JOIN meetings m ON m.id=j.meeting_id
-                    WHERE j.status = 'queued'
+                    WHERE m.parked = 0
+                      AND j.status = 'queued'
                       AND j.requested_at <= ?
                       AND m.capture_status IN ('finalized', 'recovered')
                       AND m.route_fence_pending = 0

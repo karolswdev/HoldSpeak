@@ -726,7 +726,7 @@ class MemoryRepository(BaseRepository):
                     FROM segments_fts
                     JOIN segments s ON s.id=segments_fts.rowid
                     JOIN meetings m ON m.id=s.meeting_id
-                    WHERE {" AND ".join(clauses)}
+                    WHERE m.parked = 0 AND {" AND ".join(clauses)}
                 ),
                 ranked AS (
                     SELECT *,ROW_NUMBER() OVER (

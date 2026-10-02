@@ -137,7 +137,9 @@ class MeetingRepository(BaseRepository):
         SQLite transaction. The stored losing value remains untouched until this
         method commits successfully.
 
-        Returns ``resolved``, ``deleted``, ``missing``, or ``already_resolved``.
+        Returns ``resolved``, ``deleted`` (the incoming wire tombstone was
+        selected; the canonical row is parked), ``missing``, or
+        ``already_resolved``.
         """
         if resolution not in {"keep_current", "use_incoming"}:
             raise ValueError("resolution must be keep_current or use_incoming")
@@ -170,8 +172,20 @@ class MeetingRepository(BaseRepository):
             if resolution == "use_incoming":
                 incoming = json.loads(row["incoming_json"])
                 if bool(incoming.get("deleted")):
-                    # The conflict row is removed by the Meeting FK cascade.
-                    conn.execute("DELETE FROM meetings WHERE id = ?", (meeting_id,))
+                    # A tombstone parks the canonical row so its transcript,
+                    # children, and conflict history remain recoverable.
+                    conn.execute(
+                        """UPDATE meetings
+                           SET parked = 1, sync_modified_at = ?, updated_at = datetime('now')
+                           WHERE id = ?""",
+                        (resolution_clock.isoformat(), meeting_id),
+                    )
+                    conn.execute(
+                        """UPDATE meeting_sync_conflicts
+                           SET winner = 'incoming', resolved_at = ?
+                           WHERE id = ? AND meeting_id = ? AND resolved_at IS NULL""",
+                        (datetime.now().isoformat(), conflict_id, meeting_id),
+                    )
                     return "deleted"
                 if incoming_state is None or incoming_state.id != meeting_id:
                     raise ValueError("incoming Meeting does not match the conflict")
@@ -876,7 +890,7 @@ class MeetingRepository(BaseRepository):
                 SELECT a.*, m.title as meeting_title, m.started_at as meeting_date
                 FROM action_items a
                 LEFT JOIN meetings m ON a.meeting_id = m.id
-                WHERE 1=1
+                WHERE (a.meeting_id IS NULL OR m.parked = 0)
             """
             params: list[Any] = []
 
@@ -1296,7 +1310,7 @@ class MeetingRepository(BaseRepository):
                     m.duration_seconds as meeting_duration
                 FROM segments s
                 JOIN meetings m ON s.meeting_id = m.id
-                WHERE s.speaker_id = ?
+                WHERE s.speaker_id = ? AND m.parked = 0
                 ORDER BY m.started_at DESC, s.start_time ASC
                 LIMIT ?
             """, (speaker_id, limit)).fetchall()
@@ -1355,7 +1369,7 @@ class MeetingRepository(BaseRepository):
                     MAX(m.started_at) as last_seen
                 FROM segments s
                 JOIN meetings m ON s.meeting_id = m.id
-                WHERE s.speaker_id = ?
+                WHERE s.speaker_id = ? AND m.parked = 0
             """, (speaker_id,)).fetchone()
 
             first_seen = None

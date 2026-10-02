@@ -315,7 +315,7 @@ class ProjectRepository(BaseRepository):
                 FROM action_items ai
                 JOIN meeting_projects mp ON mp.meeting_id = ai.meeting_id
                 JOIN meetings m ON m.id = ai.meeting_id
-                WHERE mp.project_id = ?
+                WHERE mp.project_id = ? AND m.parked = 0
                 ORDER BY ai.created_at DESC
                 """,
                 (str(project_id).strip(),),
