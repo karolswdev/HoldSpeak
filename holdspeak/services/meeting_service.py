@@ -888,5 +888,8 @@ class MeetingService:
             # the detail computes it from the loaded segments.
             "transcriptWords": getattr(meeting, "transcript_words", None),
             "needs_you_count": getattr(meeting, "needs_you_count", 0),
+            # PHILO-13 H-A3: disclose only the durable summary fact.  Route
+            # availability and intel job state are separate projections.
+            "has_summary": bool(getattr(meeting, "has_summary", False)),
             "planned_route": None,
         }

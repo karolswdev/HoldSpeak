@@ -1,6 +1,6 @@
 # Phase 13 - The Desk
 
-**Last updated:** 2026-10-01 (RATIFIED by the owner, "Ratify, build it". Earlier: r3: Astra r2 paid (close→reopen place, Trust returns, H-B0b contract); Astra r3 RATIFY-WITH-CONDITIONS paid (anchor `:492`, this status). Earlier r2: Astra's check r1 DO-NOT-RATIFY paid — disjoint files with named handoffs, B2 covers every window family and named draft, A2's membership oracle, the Parked artboard, the gates as merge-record evidence, C4's query collision; unchecked r2.) Earlier: 2026-10-01 (DRAFTED by the Fedaykin docs lane for Muad'Dib from PROPOSAL r2 and the five forks the owner ruled; unchecked.)
+**Last updated:** 2026-10-02 (RATIFIED by the owner, "Ratify, build it". Earlier: r3: Astra r2 paid (close→reopen place, Trust returns, H-B0b contract); Astra r3 RATIFY-WITH-CONDITIONS paid (anchor `:492`, this status). Earlier r2: Astra's check r1 DO-NOT-RATIFY paid — disjoint files with named handoffs, B2 covers every window family and named draft, A2's membership oracle, the Parked artboard, the gates as merge-record evidence, C4's query collision; unchecked r2.) Earlier: 2026-10-01 (DRAFTED by the Fedaykin docs lane for Muad'Dib from PROPOSAL r2 and the five forks the owner ruled; unchecked.)
 
 **Status:** RATIFIED by the owner 2026-10-01 ("Ratify, build it") after Astra's checks r1–r3 (all paid, `checks/`).
 
@@ -131,36 +131,34 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 
 ## Story status
 
-| ID | Proposal | Story | Status | Story file | Evidence |
-|---|---|---|---|---|---|
-| PHILO-13-01 | B0 | Walk what was not walked | backlog | [story-01-b0-walk-what-was-not-walked](./story-01-b0-walk-what-was-not-walked.md) | — |
-| PHILO-13-02 | A1 | Park, never delete | backlog | [story-02-a1-park-never-delete](./story-02-a1-park-never-delete.md) | — |
-| PHILO-13-03 | A2 | One meaning of "needs you" | backlog | [story-03-a2-one-meaning-of-needs-you](./story-03-a2-one-meaning-of-needs-you.md) | — |
-| PHILO-13-04 | A3 | Faces that do not lie | backlog | [story-04-a3-faces-that-do-not-lie](./story-04-a3-faces-that-do-not-lie.md) | — |
-| PHILO-13-05 | A4 | Close means gone | backlog | [story-05-a4-close-means-gone](./story-05-a4-close-means-gone.md) | — |
-| PHILO-13-06 | B1 | One open grammar | backlog | [story-06-b1-one-open-grammar](./story-06-b1-one-open-grammar.md) | — |
-| PHILO-13-07 | B2 | The Desk remembers | backlog | [story-07-b2-the-desk-remembers](./story-07-b2-the-desk-remembers.md) | — |
-| PHILO-13-08 | B3 | Decide where the meeting is | backlog | [story-08-b3-decide-where-the-meeting-is](./story-08-b3-decide-where-the-meeting-is.md) | — |
-| PHILO-13-09 | B4 | The 1:1 finds its person | backlog | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | — |
-| PHILO-13-10 | B5 | The update writes the week | backlog | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | — |
-| PHILO-13-11 | C1 | The Workbench look (the canvases; the face gate) | backlog | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
-| PHILO-13-12 | C2 | The gadgets that are missing | backlog | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | — |
-| PHILO-13-13 | C3 | A live Dock (AppIcons) | backlog | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
-| PHILO-13-14 | C4 | A palette that knows his week and does verbs | backlog | [story-14-c4-a-palette-that-knows-his-week](./story-14-c4-a-palette-that-knows-his-week.md) | — |
-| PHILO-13-15 | C5 | Send to from any document window (the Phase 12 fold) | backlog | [story-15-c5-send-to-from-any-document-window](./story-15-c5-send-to-from-any-document-window.md) | — |
-| PHILO-13-16 | C6 | Capture from anywhere | backlog | [story-16-c6-capture-from-anywhere](./story-16-c6-capture-from-anywhere.md) | — |
-| PHILO-13-17 | C7 | The phone desk | backlog | [story-17-c7-the-phone-desk](./story-17-c7-the-phone-desk.md) | — |
-| PHILO-13-18 | C8 | The 12 px floor | backlog | [story-18-c8-the-12-px-floor](./story-18-c8-the-12-px-floor.md) | — |
-
-Numbers follow the build order the brief set (B0 first: it gates B2). The Proposal column carries PROPOSAL r2's IDs; story titles carry them too.
-
+| ID | Story | Status | Story file | Evidence |
+| --- | --- | --- | --- | --- |
+| PHILO-13-01 | B0 — Walk what was not walked | in-progress | [story-01-b0-walk-what-was-not-walked](./story-01-b0-walk-what-was-not-walked.md) | — |
+| PHILO-13-02 | A1 — Park, never delete | in-progress | [story-02-a1-park-never-delete](./story-02-a1-park-never-delete.md) | — |
+| PHILO-13-03 | A2 — One meaning of "needs you" | in-progress | [story-03-a2-one-meaning-of-needs-you](./story-03-a2-one-meaning-of-needs-you.md) | [H-A2 draft proof](lane-03-astra.md); awaiting A2-W and Muad'Dib |
+| PHILO-13-04 | A3 — Faces that do not lie | in-progress | [story-04-a3-faces-that-do-not-lie](./story-04-a3-faces-that-do-not-lie.md) | [H-A3 draft proof](lane-04-astra.md); awaiting A3-W and Muad'Dib |
+| PHILO-13-05 | A4 — Close means gone | backlog | [story-05-a4-close-means-gone](./story-05-a4-close-means-gone.md) | — |
+| PHILO-13-06 | B1 — One open grammar | backlog | [story-06-b1-one-open-grammar](./story-06-b1-one-open-grammar.md) | — |
+| PHILO-13-07 | B2 — The Desk remembers | backlog | [story-07-b2-the-desk-remembers](./story-07-b2-the-desk-remembers.md) | — |
+| PHILO-13-08 | B3 — Decide where the meeting is | backlog | [story-08-b3-decide-where-the-meeting-is](./story-08-b3-decide-where-the-meeting-is.md) | — |
+| PHILO-13-09 | B4 — The 1:1 finds its person | backlog | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | — |
+| PHILO-13-10 | B5 — The update writes the week | backlog | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | — |
+| PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | backlog | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
+| PHILO-13-12 | C2 — The gadgets that are missing | backlog | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | — |
+| PHILO-13-13 | C3 — A live Dock (AppIcons) | backlog | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
+| PHILO-13-14 | C4 — A palette that knows his week and does verbs | backlog | [story-14-c4-a-palette-that-knows-his-week](./story-14-c4-a-palette-that-knows-his-week.md) | — |
+| PHILO-13-15 | C5 — Send to from any document window (the Phase 12 fold) | backlog | [story-15-c5-send-to-from-any-document-window](./story-15-c5-send-to-from-any-document-window.md) | — |
+| PHILO-13-16 | C6 — Capture from anywhere | backlog | [story-16-c6-capture-from-anywhere](./story-16-c6-capture-from-anywhere.md) | — |
+| PHILO-13-17 | C7 — The phone desk | backlog | [story-17-c7-the-phone-desk](./story-17-c7-the-phone-desk.md) | — |
+| PHILO-13-18 | C8 — The 12 px floor | backlog | [story-18-c8-the-12-px-floor](./story-18-c8-the-12-px-floor.md) | — |
+Numbers follow the build order in PROPOSAL r2 (B0 first: it gates B2); the five-column story index follows Delivery Workbench.
 ## Lanes
 
 Per TWO-BRAINS §4 (`docs/internal/TWO-BRAINS.md:104-128`): a lane is a set of stories with **disjoint files** and one owner brain. Every path below has exactly one owner. Where a story needs a file the other lane owns, the owner of the file does that change as a **named handoff** (what is delivered, by which story, consumed by which story). This is the Phase 12 pattern: a pure module in one lane, the wiring in the other (`../phase-12-send-from-the-floor/current-phase-status.md:105`).
 
 | Lane | Stories | Owner | Checker | Worktree | Branch |
 |---|---|---|---|---|---|
-| Data + truth | 01 B0, 02 A1, 03 A2, 09 B4, 10 B5, 13 C3 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-13-astra | feat/philo-13-astra |
+| Data + truth | 01 B0, 02 A1, 03 A2, 04 A3 (H-A3 only), 09 B4, 10 B5, 13 C3 | Astra (Luna, xhigh) | Muad'Dib | ../wt-philo-13-astra | feat/philo-13-astra |
 | Faces + frame | 04 A3, 05 A4, 06 B1, 07 B2, 08 B3, 11 C1, 12 C2, 14 C4, 15 C5, 16 C6, 17 C7, 18 C8; and the named wiring steps A1-F, A2-W, B4-W, C3-W | Muad'Dib (Fedaykin, Opus 5.5) | Astra | ../wt-philo-13-muaddib | feat/philo-13-muaddib |
 
 - **Why this split** (TWO-BRAINS §4): Astra takes the backend, the projections, pure data modules, the live layer and the verification harness (B0's atlas); Muad'Dib takes every face, the frame, the canvases, the store and the owner-facing close. D1 would have been the faces lane's; it is out (fork 4).
@@ -173,15 +171,18 @@ PROPOSAL §4's map, made disjoint by Astra's check r1 and Muad'Dib's rulings (r2
 
 | Path | Owner | Stories that change it |
 |---|---|---|
-| `holdspeak/db/**`, `holdspeak/services/**`, `holdspeak/web/routes/**` | Astra | A1, A2, B4, B5, C3; any backend handoff (H-B3, H-C5) |
+| `holdspeak/db/**`, `holdspeak/services/**`, `holdspeak/web/routes/**` | Astra | A1, A2, A3 (H-A3 only), B4, B5, C3; any backend handoff (H-B3, H-C5) |
 | `web/src/desk/projections.ts`, `web/src/desk/attention.ts` (dedup and rank, pure); **new** `web/src/desk/needsYou.ts` (the pure needs-you module and its hook; it imports `web/src/desk/chair/meetingPathBlocker.ts` read-only) | Astra | A2 |
 | **new** `web/src/desk/people/prepData.ts` (the pure Prep client module) | Astra | B4 |
 | `web/src/desk/api.ts` (the park and restore client functions only) | Astra | A1 |
 | `web/src/desk/components/window/Dock.tsx` (badge logic) | Astra | A2 (the badge reads `needsYou.ts`), C3 |
 | `web/src/runtime/**`, `web/src/desk/useDeskChangedRefresh.ts` | Astra | C3 |
 | `docs/internal/philo/graph/atlas-phase13-astra.json` (**new**) | Astra | B0, A1, A2, B4, B5, C3 |
+| `docs/internal/philo/graph/atlas.schema.json` (shared atlas contract) | Astra; faces-lane additions by named handoff | B0 and every atlas change |
+| `scripts/graph_walk.py` (shared graph rig) | Astra; faces-lane additions by named handoff | B0 and every graph-rig change |
 | `tests/unit/test_philo_graph_atlas.py` (the shared `.op` sibling count, `:492`) | Astra | B0 (handoff H-B0b) |
 | `tests/unit/test_philo13_astra_atlas.py` (**new**) | Astra | B0 and every Astra story's cases |
+| `tests/unit/test_philo13_a3h_meeting_summary.py` and `tests/fixtures/philo3_summary_wire.json` | Astra | A3 (H-A3 data handoff) |
 | `docs/internal/philo/graph/atlas-phase13-muaddib.json` (**new**) | Muad'Dib | every faces-lane story and wiring step |
 | `tests/unit/test_philo13_muaddib_atlas.py` (**new**) | Muad'Dib | every faces-lane story's cases |
 | `web/src/desk/chair/**` | Muad'Dib | A2-W, B1, C1, C7 |
@@ -205,11 +206,12 @@ PROPOSAL §4's map, made disjoint by Astra's check r1 and Muad'Dib's rulings (r2
 
 | ID | Delivered by (owner, story) | What | Consumed by |
 |---|---|---|---|
-| H-B0a | Astra, B0 (01) | `atlas-phase13-astra.json` created (valid against `atlas.schema.json`); the faces lane creates its own `atlas-phase13-muaddib.json` with its first case; `test_philo_graph_atlas.py:27` globs `atlas*.json`, so neither needs registering | every Astra story's atlas cases |
+| H-B0a | Astra, B0 (01) | `atlas-phase13-astra.json` created and validated against Astra-owned shared `atlas.schema.json`; `scripts/graph_walk.py` is the Astra-owned shared rig. The faces lane creates its own `atlas-phase13-muaddib.json` and requests schema/rig additions by named handoff; `test_philo_graph_atlas.py:27` globs `atlas*.json`, so neither needs registering | every Phase 13 atlas case |
 | H-B0b | Astra, B0 (01) | `tests/unit/test_philo_graph_atlas.py:492` counts `.op` siblings outside the `atlas-phase13-*` files only; each lane's own test file asserts its own count; **the shared semantic checks (`:469`, `:551`, via the `:27` glob) still cover both Phase 13 files** | every story that adds an `.op` sibling |
-| H-A1 | Astra, A1 (02) | park, Parked read and restore routes + the `web/src/desk/api.ts` client functions | A1-F |
+| H-A1 | Astra, A1 (02) | park, Parked read and restore routes + `web/src/desk/api.ts`; r2 also hides a whole parked Meeting and its linked action items from owner reads (Brief/calendar, Recall, projections, proposals, intel claims, global/Project/People action lists, speaker reads); tombstones park | A1-F |
 | A1-F | Muad'Dib, a named wiring step in A1's acceptance, on `feat/philo-13-muaddib` | the Parked filter, Restore and the `PARKED` receipt on Meetings (`HistoryCore.tsx`) and the Workbench window (`WorkbenchWindow.tsx`), built to the C1 artboard "Parked and Restore" | A1's done call |
-| H-A2 | Astra, A2 (03) | `web/src/desk/needsYou.ts`: the membership rule as a pure function + one hook; the Dock badge reads it | A2-W, C3 |
+| H-A2 | Astra, A2 (03) | `web/src/desk/needsYou.ts`: R1–R3 membership, bounded server read for all FAILED/RETRYING meetings, cached Room poll and explicit `fresh=1`; successful meeting action status writes invalidate that cache; Room overdue projection omits a same-project, same-title planned milestone after its linked meeting action is done/dismissed while retaining the stored row; pure function + hook; Dock badge reads it | A2-W, C3 |
+| H-A3 | Astra, A3 (04) | stored-summary boolean on `/api/meetings` list and search rows, derived from the same persisted summary as detail; independent of configuration and run status; fenced through real producers and list-route reads | A3-W |
 | A2-W | Muad'Dib, a named wiring step in A2's acceptance, on `feat/philo-13-muaddib` | the Chair (its local `doorCardsToItems`/`hasMeetingAttention` membership code, `ChairHome.tsx:278`, `:309`, `:795-840`, replaced by `needsYou.ts`), the bell/shade and the Room headline read `needsYou.ts`; Meetings and the Room relabel narrower counts | A2's done call |
 | H-B4 | Astra, B4 (09) | the calendar link suggestion and the Prep data in the People service/routes + `web/src/desk/people/prepData.ts` | B4-W |
 | B4-W | Muad'Dib, a named wiring step in B4's acceptance, on `feat/philo-13-muaddib` | `PeopleCore.tsx` shows `NEXT 1:1` and Prep from `prepData.ts` | B4's done call |
@@ -226,7 +228,7 @@ CI does not gate a merge (the owner, 2026-09-28). So each gate is a **line the m
 
 | Gate | What the merge record must cite |
 |---|---|
-| **B0 → B2** | B2's PR merge record cites B0's merged commit on main and its atlas evidence path (`pm/roadmap/holdspeak-philo/phase-13-the-desk/evidence-story-01.md` and the run directories it names). |
+| **B0 → B2** | B2's PR merge record cites B0's merged commit on main and atlas evidence (`evidence-story-01.md` and its run directories), plus the B0 rerun on B2's head; outside-home reds may remain with their home cited, but B0-F2 must pass in B2. Re-walk B0-F1 after #725 merges. |
 | **Canvas → every C face** (C1, C2, C3-W, C4, C5, C6, C7, C8) and B1, B3 | the PR merge record cites the owner's ratification record of that face's canvas: its path and his quote. |
 | **A1's face (A1-F)** | the merge record cites the owner's ratification record of C1's artboard "Parked and Restore" (path + quote). A1's backend half (H-A1) may merge before it. |
 
@@ -243,6 +245,8 @@ The canvas set, in order: C1's canvas first (the frame, the chrome, the Chair, t
 D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
+
+2026-10-02: #727, #728 and #726 counsel conditions are paid on their r2 draft branches and recorded in the ownership/handoff map above. Astra's H-A3 backend handoff is in progress on `feat/philo-13-a3h-astra`: `/api/meetings` list/search `has_summary` comes from the same latest persisted summary as detail and the face rail remains A3-W's. The five-column status index keeps Stories 01–04 in-progress. H-A3 stays in-progress until A3-W also merges.
 
 2026-10-01, round two: Astra's check r1 DO-NOT-RATIFY paid on Muad'Dib's rulings (table under "Round two"). Next: Astra's check of r2; then the owner's ratification.
 

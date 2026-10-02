@@ -632,7 +632,14 @@ class MeetingRepository(BaseRepository):
                     (SELECT COALESCE(SUM(LENGTH(TRIM(text)) - LENGTH(REPLACE(TRIM(text), ' ', '')) + 1), 0)
                      FROM segments WHERE meeting_id = m.id AND TRIM(text) != '') as transcript_words,
                     (SELECT COUNT(*) FROM follow_through_proposals
-                     WHERE meeting_id = m.id AND state = 'proposed') as needs_you_count
+                     WHERE meeting_id = m.id AND state = 'proposed') as needs_you_count,
+                    COALESCE((
+                        SELECT TRIM(COALESCE(summary, '')) != ''
+                        FROM intel_snapshots
+                        WHERE meeting_id = m.id
+                        ORDER BY timestamp DESC
+                        LIMIT 1
+                    ), 0) as has_summary
                 FROM meetings m
                 WHERE 1=1
             """
@@ -691,6 +698,7 @@ class MeetingRepository(BaseRepository):
                     needs_you_count=int(r["needs_you_count"]) if r["needs_you_count"] else 0,
                     intel_requested_at=datetime.fromisoformat(r["intel_requested_at"]) if r["intel_requested_at"] else None,
                     intel_completed_at=datetime.fromisoformat(r["intel_completed_at"]) if r["intel_completed_at"] else None,
+                    has_summary=bool(r["has_summary"]),
                 )
                 for r in conn.execute(query, params)
             ]
