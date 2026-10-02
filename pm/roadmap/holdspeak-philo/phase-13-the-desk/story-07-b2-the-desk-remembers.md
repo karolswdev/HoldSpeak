@@ -75,7 +75,7 @@ From the Desk's mounts (`web/src/desk/DeskApp.tsx:249-305`; `web/src/desk/gl/Wor
 
 ## Acceptance criteria
 
-- [ ] **Gate (review evidence):** PHILO-13-01 (B0) is merged on main and its cases pass there before this story merges; they pass again on this story's head. **This story's PR merge record cites B0's merged commit and its atlas evidence path (`evidence-story-01.md` and the run directories it names)**; without it the checker refuses the merge.
+- [ ] **Gate (Muad'Dib's ruling on B0 counsel C5):** B0's cases are re-run on B2's head. A red homed outside B2 may remain red with its home cited; B0-F2, whose home is B2, must pass on B2's head. Re-walk B0-F1 (Chain/Coder Close) after PHILO-13-05 (#725) merges. **This story's PR merge record cites B0's merged commit on main, its canonical atlas evidence path (`evidence-story-01.md`) and the B0 runs on this B2 head**; without that evidence the checker refuses the merge.
 - [ ] Every family marked **returns** above comes back after a reload with its object and place, at 1440 and 393 (touch); one fence per family. Every family marked **exempt** keeps its reason in the source comment or the fence.
 - [ ] Reload mid-job, for J1–J5 on the grounding week: 0 re-navigation gestures (from 2 in J2, 2 + retype in J3, 3 in J5).
 - [ ] 0 lost drafts: **each** named draft field above, typed and not saved, survives a reload and a close; each clears after its save; none is saved or sent by restore. Red on main for the People note, the Room draft, the Thought body and the meeting form and pick.
@@ -103,6 +103,7 @@ Grounding size: M (`grounding/faces-jobs.md:153`; `grounding/structure.md:300`).
 
 ## Notes
 
+- 2026-10-02 — Muad'Dib's signed counsel on B0 PR #726 C5 rules the B2 gate above: rerun B0 on B2's head; outside-home reds may remain with their home cited; the B2-homed F2 must pass; re-walk F1 after #725 merges.
 - 2026-10-01 — every file this story changes is the faces lane's (`web/src/desk/store/**`, `deliveryDossier.ts`, `deliveryTerminal.ts`, `PeopleCore.tsx`, the Room face, `AskPanel.tsx`, `ScheduleCreateWindow.tsx`, the pullouts).
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

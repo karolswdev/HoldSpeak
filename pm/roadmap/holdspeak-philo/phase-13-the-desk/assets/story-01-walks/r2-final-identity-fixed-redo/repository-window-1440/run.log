@@ -1,0 +1,10 @@
+PASS: live
+BRAIN: astra
+SOURCE: c7073f9cac59e898e53f425f4a437966a10aaa0b dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase13-astra.json
+RUNTIME: build=['index-ChQW1Esz.js'] hub=http://127.0.0.1:50743 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-w217dst3/.local/share/holdspeak/holdspeak.db engine=none
+JOB: j1
+VERDICT: fail terminal=settled
+EVIDENCE: ['.tmp/graph-walk/philo-13-b0-r2-final-redo/repository-window-1440/20261002T122116Z-case.p13.repository.window-astra-1440/before.png', '.tmp/graph-walk/philo-13-b0-r2-final-redo/repository-window-1440/20261002T122116Z-case.p13.repository.window-astra-1440/after.png']
+NOTE: predicate: the text scope is outside the viewport: {'width': 1440, 'height': 900}
+NOTE: a nonzero diff with the wrong result is a finding, not a pass (changed: ['attrs', 'document_text_len', 'document_text_sha256', 'focus', 'focus_label', 'rect', 'target_present', 'text', 'values', 'visible', 'windows']).

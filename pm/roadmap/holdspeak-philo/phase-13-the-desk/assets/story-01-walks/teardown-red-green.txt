@@ -1,0 +1,79 @@
+PHILO-13 B0 teardown proof
+
+The first collection command used `python` and the shell reported:
+
+zsh:1: command not found: python
+
+The same collection command was then run with `python3`, using a Python
+TemporaryDirectory for HOME:
+
+tests/unit/test_philo13_fixture_rig.py::test_hub_environment_and_teardown_never_use_inherited_tmux_socket
+tests/unit/test_philo13_fixture_rig.py::test_hub_tmux_teardown_does_not_mislabel_permission_error_as_no_server
+tests/unit/test_philo13_fixture_rig.py::test_hub_tmux_teardown_records_success_and_bounded_stderr
+
+3/13 tests collected (10 deselected) in 0.07s
+
+Red run (after adding the permission and success guards, before the
+implementation fix), with `python3`, an isolated TemporaryDirectory HOME,
+and `uv run pytest -q tests/unit/test_philo13_fixture_rig.py -k teardown`:
+
+.FF                                                                      [100%]
+=================================== FAILURES ===================================
+____ test_hub_tmux_teardown_does_not_mislabel_permission_error_as_no_server ____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-85/test_hub_tmux_teardown_does_no0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x109976520>
+
+    def test_hub_tmux_teardown_does_not_mislabel_permission_error_as_no_server(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        rig = _rig()
+
+        def fake_run(command, **kwargs):
+            return subprocess.CompletedProcess(
+                command, 1, stdout="", stderr="error connecting to /run/tmux: Permission denied",
+            )
+
+        monkeypatch.setattr(rig.subprocess, "run", fake_run)
+
+        teardown = rig._teardown_hub_tmux(tmp_path)
+
+        assert teardown["returncode"] == 1
+>       assert teardown["no_server"] is False
+E       assert True is False
+
+tests/unit/test_philo13_fixture_rig.py:334: AssertionError
+__________ test_hub_tmux_teardown_records_success_and_bounded_stderr __________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-85/test_hub_tmux_teardown_records0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1096127b0>
+
+    def test_hub_tmux_teardown_records_success_and_bounded_stderr(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        rig = _rig()
+
+        def fake_run(command, **kwargs):
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="clean\n")
+
+        monkeypatch.setattr(rig.subprocess, "run", fake_run)
+
+        teardown = rig._teardown_hub_tmux(tmp_path)
+
+        assert teardown["returncode"] == 0
+        assert teardown["no_server"] is False
+>       assert teardown["server_stopped"] is True
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'server_stopped'
+
+tests/unit/test_philo13_fixture_rig.py:353: KeyError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo13_fixture_rig.py::test_hub_tmux_teardown_does_not_mislabel_permission_error_as_no_server
+FAILED tests/unit/test_philo13_fixture_rig.py::test_hub_tmux_teardown_records_success_and_bounded_stderr
+2 failed, 1 passed, 10 deselected in 0.36s
+
+Green run, with `python3`, an isolated TemporaryDirectory HOME, and the same
+focused command:
+
+...                                                                      [100%]
+3 passed, 10 deselected in 0.36s

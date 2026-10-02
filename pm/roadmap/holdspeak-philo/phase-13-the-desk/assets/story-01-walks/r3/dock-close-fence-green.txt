@@ -1,0 +1,4 @@
+$ uv run pytest -q tests/unit/test_philo_graph_atlas.py tests/unit/test_api_surface.py tests/unit/test_philo_graph_reference.py tests/unit/test_philo13_astra_atlas.py::test_phase13_lifecycle_fence_accepts_only_trigger_owned_sequences
+........................................................................ [ 57%]
+......................................................                   [100%]
+126 passed in 4.98s

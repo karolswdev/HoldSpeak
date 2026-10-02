@@ -457,15 +457,15 @@ _SNAPSHOT_JS = r"""([selector, pending, valueSelector]) => {
   const hitTest = (node) => {
     if (!node) return null;
     const r = node.getBoundingClientRect();
-    const insetX = Math.min(2, Math.max(0, r.width / 4));
-    const insetY = Math.min(2, Math.max(0, r.height / 4));
-    const xs = [r.left + insetX, r.left + r.width / 2, r.right - insetX];
-    const ys = [r.top + insetY, r.top + r.height / 2, r.bottom - insetY];
+    const fractions = [0.125, 0.5, 0.875];
+    const xs = fractions.map((fraction) => r.left + r.width * fraction);
+    const ys = fractions.map((fraction) => r.top + r.height * fraction);
+    // Fractional points keep rounded corners inside the painted target.
     const samples = [];
     for (const x of xs) for (const y of ys) {
       const owner = document.elementFromPoint(x, y);
       samples.push({
-        x: Math.round(x), y: Math.round(y),
+        x, y,
         owned: !!owner && (owner === node || node.contains(owner)),
         owner: owner ? path(owner) : null,
       });
@@ -555,14 +555,14 @@ _PLACEMENT_ARM_JS = r"""([cardSelector, clearSelectors, slotSelector, scrollTarg
   const hitTest = (node) => {
     if (!node) return null;
     const r = node.getBoundingClientRect();
-    const insetX = Math.min(2, Math.max(0, r.width / 4));
-    const insetY = Math.min(2, Math.max(0, r.height / 4));
-    const xs = [r.left + insetX, r.left + r.width / 2, r.right - insetX];
-    const ys = [r.top + insetY, r.top + r.height / 2, r.bottom - insetY];
+    const fractions = [0.125, 0.5, 0.875];
+    const xs = fractions.map((fraction) => r.left + r.width * fraction);
+    const ys = fractions.map((fraction) => r.top + r.height * fraction);
+    // Fractional points keep rounded corners inside the painted target.
     const samples = [];
     for (const x of xs) for (const y of ys) {
       const owner = document.elementFromPoint(x, y);
-      samples.push({owned: !!owner && (owner === node || node.contains(owner)),
+      samples.push({x, y, owned: !!owner && (owner === node || node.contains(owner)),
                     owner: owner ? path(owner) : null});
     }
     return {
@@ -2488,7 +2488,7 @@ class Hub:
         self.producer_clock = None
         self.wiring = {}
         env = dict(os.environ)
-        env["HOME"] = str(self.home)
+        env = _isolated_hub_env(self.home, getattr(self, "repo_root", None), env)
         env["PYTHONUNBUFFERED"] = "1"
         env.pop("HOLDSPEAK_DB_PATH", None)
         command = [sys.executable, str(Path(__file__).resolve()), "serve",
@@ -3088,11 +3088,11 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
     — the microphone and native keystrokes are forbidden to this rig — so
     `on_start` (start a live recording) refuses by name instead.
     """
-    guard_home(os.environ.get("HOME", "/nonexistent"))
+    roadmap_root = _serve_repo_root()
     from holdspeak.db import get_database
     from holdspeak.runtime_lock import claim_database, refusal_message
     from holdspeak.services.errors import ValidationError
-    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+    MeetingWebServer, WebRuntimeCallbacks = _serve_web_components(roadmap_root)
 
     database = get_database()
     print(f"DB_PATH {database.db_path}", flush=True)
@@ -3113,7 +3113,7 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
     config.save()
     print(f"CONFIG_PATH {config_path}", flush=True)
 
-    has: list[str] = ["MeetingWebServer routes"]
+    has: list[str] = ["MeetingWebServer routes", "isolated tmux socket directory"]
     lacks: list[str] = [
         "AudioRecorder (the microphone is forbidden to this rig)",
         "HotkeyListener (no native keystrokes)",
@@ -4228,7 +4228,7 @@ _EXPECTED_READ_FIELDS = (
 
 #: The step fields a captured value may travel into.
 _SUBSTITUTED_FIELDS = ("path", "selector", "name", "value", "url", "key", "body",
-                       "args", "observe_at", "meeting_id")
+                       "args", "observe_at", "meeting_id", "world_ref")
 
 
 def substitute(value: Any, variables: dict[str, Any]) -> Any:
@@ -4266,12 +4266,10 @@ def unresolved(value: Any) -> list[str]:
 #: The rig's CLOSED ui vocabulary. A step naming anything else is blocked
 #: before it fires, so a typo cannot silently become a no-op that "passed".
 UI_ACTIONS = frozenset({
-    "goto", "reload", "click", "click_role", "fill", "select_option", "press", "wait_for",
-    # PHILO-7-03: keyboard travel to a control (the owner's Tab), e.g. the
-    # Floor's world chip, which only surfaces when focused (desk.css:171).
+    "goto", "reload", "click", "click_role", "fill", "select_option", "set_input_files", "press", "wait_for", "world_context_menu",
+    # PHILO-7-03: keyboard travel to the Floor's world chip (desk.css:171).
     "focus",
-    # PHILO-10-05: the owner scrolls a control or a section into view (block
-    # start|center|end) before he presses or reads it; nothing is clicked.
+    # PHILO-10-05: scroll a control or section into view before pressing or reading; nothing is clicked.
     "scroll_into_view",
 })
 
@@ -4379,7 +4377,7 @@ def _guarded_delivery(page: Any, step: dict[str, Any], record: dict[str, Any],
     action = step.get("action")
     if action not in ("click", "click_role", "press"):
         raise Blocked(f"requires on a {action!r} step: only click, click_role and press are guarded")
-    _check_guard_shape(guard)
+    _check_guard_shape_with_touch(step, record, guard)
     record["requires"] = guard
     handle = None
     if action != "press":
@@ -4415,13 +4413,13 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         raise Blocked(
             f"ui action {action!r} is not in the rig's vocabulary "
             f"{sorted(UI_ACTIONS)}; nothing was fired")
-    if action == "select_option":
+    if action in ("select_option", "set_input_files"):
         selector = step.get("selector")
         value = step.get("value")
         if (not isinstance(selector, str) or not selector.strip()
                 or not isinstance(value, str) or not value.strip()):
             raise Blocked(
-                "ui action 'select_option' needs a nonempty selector and value; "
+                f"ui action {action!r} needs a nonempty selector and value; "
                 f"got selector={selector!r} value={value!r}; nothing was fired")
     if action == "scroll_into_view" and (not step.get("selector")
                                          or step.get("block", "center") not in ("start", "center", "end")):
@@ -4430,9 +4428,9 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
                       f"got selector={step.get('selector')!r} block={step.get('block')!r}; nothing was fired")
     if page is None:
         raise Blocked("headless mode refuses UI/face steps: no Page is opened")
-    optional = bool(step.get("optional"))
-    record = {"kind": "ui", "action": action, "adapter": step.get("adapter", "ui-pointer")}
-    if action == "select_option":
+    optional, input_path = _ui_input_options(action, step, hub, action == "set_input_files")
+    adapter, record = _ui_adapter_record(page, step, action)
+    if action in ("select_option", "set_input_files"):
         record["selector"] = step["selector"]
         record["value"] = step["value"]
     # PHILO-7-03: a step the face needs at ONE width only (at 393 the Floor
@@ -4463,9 +4461,10 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
     # PHILO-8-03: a right-click opens the list's row menu (DeskListView.tsx
     # onContextMenu). Only a click takes a button; any other value blocks.
     button = step.get("button", "left")
-    if button not in ("left", "right") or ("button" in step and action not in ("click", "click_role")):
-        raise Blocked(f"ui step {action}: button {button!r} is not left|right on a click")
-    if button == "right":
+    _validate_ui_button(action, button, step, adapter)
+    if action == "world_context_menu":
+        return _world_context_menu(page, step, adapter, timeout, record)
+    elif button == "right":
         record["button"] = "right"
     try:
         if action == "goto":
@@ -4481,18 +4480,19 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         elif action == "reload":
             page.reload(wait_until=step.get("wait_until", "load"))
         elif action == "click":
-            page.locator(step["selector"]).first.click(timeout=timeout, button=button)
+            _native_ui_click(page.locator(step["selector"]).first,
+                             adapter, timeout, button)
             record["selector"] = step["selector"]
         elif action == "click_role":
-            page.get_by_role(
-                step.get("role", "button"), name=step["name"],
-                exact=bool(step.get("exact", True)),
-            ).first.click(timeout=timeout, button=button)
+            _native_ui_click(
+                page.get_by_role(step.get("role", "button"), name=step["name"],
+                                 exact=bool(step.get("exact", True))).first,
+                adapter, timeout, button)
             record["name"] = step["name"]
         elif action == "fill":
             page.locator(step["selector"]).first.fill(step["value"], timeout=timeout)
-        elif action == "select_option":
-            page.locator(step["selector"]).first.select_option(step["value"], timeout=timeout)
+        elif action == "select_option" or action == "set_input_files":
+            _dispatch_input(page, step, action, input_path, timeout, adapter)
         elif action == "press":
             # PHILO-11-06: if the case names a control, deliver the key to
             # that control. A global keyboard press can land after focus has
@@ -4830,6 +4830,516 @@ def _op_step(step: dict[str, Any], hub: Any, provenance: dict[str, Any],
     return record
 
 
+def _serve_repo_root() -> str | None:
+    guard_home(os.environ.get("HOME", "/nonexistent"))
+    return os.environ.get("GRAPH_WALK_REPO_ROOT") or None
+
+
+def _serve_web_components(repo_root: str | None) -> tuple[Any, Any]:
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    _install_repository_router(repo_root)
+    return MeetingWebServer, WebRuntimeCallbacks
+
+
+def _isolated_hub_env(
+    home: str | Path, repo_root: str | Path | None = None,
+    inherited: dict[str, str] | None = None,
+) -> dict[str, str]:
+    """Make the child environment safe for both repository and tmux reads."""
+    isolated_home = guard_home(home)
+    env = dict(os.environ if inherited is None else inherited)
+    env.update({
+        "HOME": str(isolated_home),
+        "GRAPH_WALK_REPO_ROOT": str(repo_root or ""),
+        "TMUX_TMPDIR": str(isolated_home),
+    })
+    env.pop("TMUX", None)
+    env.pop("TMUX_PANE", None)
+    return env
+
+
+def _teardown_hub_tmux(home: str | Path) -> dict[str, Any]:
+    """Stop only the tmux server whose socket directory belongs to this run."""
+    isolated_home = guard_home(home)
+    tmux_tmpdir = isolated_home
+    if not _under(tmux_tmpdir, isolated_home):
+        raise Refused(f"tmux teardown directory {tmux_tmpdir} is outside {isolated_home}")
+    env = _isolated_hub_env(isolated_home)
+    try:
+        result = subprocess.run(
+            ["tmux", "kill-server"], cwd=str(REPO), env=env,
+            stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False,
+        )
+    except FileNotFoundError:
+        return {
+            "attempted": False,
+            "available": False,
+            "returncode": None,
+            "stderr": "tmux executable not found",
+            "no_server": False,
+            "server_stopped": False,
+            "tmpdir": str(tmux_tmpdir),
+        }
+    stderr = str(result.stderr or "").strip()[:500]
+    lowered_stderr = stderr.lower()
+    no_server = (
+        "no server running" in lowered_stderr
+        or (
+            "error connecting to" in lowered_stderr
+            and (
+                "no such file or directory" in lowered_stderr
+                or "socket not found" in lowered_stderr
+            )
+        )
+    )
+    return {
+        "attempted": True,
+        "available": True,
+        "returncode": result.returncode,
+        "stderr": stderr,
+        "no_server": no_server,
+        "server_stopped": result.returncode == 0,
+        "tmpdir": str(tmux_tmpdir),
+    }
+
+
+def _ui_input_options(
+    action: str, step: dict[str, Any], hub: Any, is_file: bool,
+) -> tuple[bool, Path | None]:
+    return bool(step.get("optional")), _input_file_path(step["value"], hub) if is_file else None
+
+
+def _dispatch_input(
+    page: Any, step: dict[str, Any], action: str, input_path: Path | None,
+    timeout: float, adapter: str,
+) -> None:
+    locator = page.locator(step["selector"]).first
+    if action == "set_input_files":
+        assert input_path is not None
+        if step.get("file_chooser"):
+            with page.expect_file_chooser(timeout=timeout) as chooser_info:
+                _native_ui_click(locator, adapter, timeout, "left")
+            chooser_info.value.set_files(str(input_path))
+            return
+        locator.set_input_files(str(input_path), timeout=timeout)
+        return
+    locator.select_option(step["value"], timeout=timeout)
+
+
+def _install_repository_router(repo_root: str | Path | None) -> str | None:
+    """Point the isolated hub's real Roadmap reader at a case-owned repo.
+
+    ``MeetingWebServer`` imports the route builders while it assembles its app.
+    The rig patches that import in the hub child, before construction, so the
+    production ``build_roadmaps_router(ctx, repo_root=...)`` seam reads the
+    repository made by the case.  No route or API response is fabricated.
+    """
+    if not repo_root:
+        return None
+    home = guard_home(os.environ.get("HOME", "/nonexistent"))
+    candidate = guard_path(repo_root, "repository fixture")
+    if not candidate.is_dir():
+        raise Refused(f"repository fixture {candidate} is not a directory")
+    if not _under(candidate, home):
+        raise Refused(
+            f"repository fixture {candidate} is outside the isolated hub HOME {home}"
+        )
+    from holdspeak.web import routes as web_routes
+
+    builder = web_routes.build_roadmaps_router
+
+    def build_fixture_router(ctx: Any, *args: Any, **kwargs: Any) -> Any:
+        if "repo_root" in kwargs:
+            raise Refused("repository fixture router received a second repo_root")
+        return builder(ctx, *args, repo_root=candidate, **kwargs)
+
+    web_routes.build_roadmaps_router = build_fixture_router
+    print(f"REPO_ROOT {candidate}", flush=True)
+    return str(candidate)
+
+
+def _input_file_path(value: Any, hub: Any) -> Path:
+    """Resolve a native browser file input inside the repo or run HOME."""
+    if not isinstance(value, str) or not value.strip():
+        raise Blocked("set_input_files needs a nonempty value path")
+    candidate = Path(value)
+    if not candidate.is_absolute():
+        candidate = REPO / candidate
+    resolved = guard_path(candidate, "native input file")
+    allowed = [(REPO / "tests" / "fixtures").resolve()]
+    home = getattr(hub, "home", None)
+    if home is not None:
+        allowed.append(guard_home(home))
+    if not any(_under(resolved, root) for root in allowed):
+        raise Blocked(
+            f"native input file {resolved} is outside tests/fixtures and the "
+            "isolated hub HOME"
+        )
+    if not resolved.is_file():
+        raise Blocked(f"native input file {resolved} does not exist")
+    return resolved
+
+
+def _input_file_record(value: str, path: Path, hub: Any) -> dict[str, Any]:
+    home = getattr(hub, "home", None)
+    home_path = guard_home(home) if home is not None else None
+    scope = "hub_home" if home_path is not None and _under(path, home_path) else "repository_fixture"
+    return {"path": value, "resolved_path": str(path), "sha256": _sha256(path),
+            "scope": scope}
+
+
+def _create_repository_fixture_step(
+    step: dict[str, Any], page: Any, hub: Any, provenance: dict[str, Any],
+    variables: dict[str, Any],
+) -> dict[str, Any]:
+    """Create and expose one real repository input, then rebuild the hub app."""
+    if hub is None or not hasattr(hub, "home") or not hasattr(hub, "restart"):
+        raise Blocked("create_repository_fixture needs the rig's own hub process")
+    from scripts.philo13_walk_fixture import create_repository_fixture
+
+    try:
+        result = create_repository_fixture(guard_home(hub.home))
+    except Refused:
+        raise
+    except Exception as exc:  # noqa: BLE001 — retain the case as blocked
+        raise Blocked(
+            f"repository fixture producer failed: {type(exc).__name__}: {exc}"
+        ) from exc
+    fields = ("path", "label", "project_slug", "story_id", "git_head")
+    if set(result) != set(fields) or any(not isinstance(result[field], str) or not result[field] for field in fields):
+        raise Blocked("repository fixture producer returned an invalid scalar record")
+    repo_path = guard_path(result["path"], "repository fixture")
+    home = guard_home(hub.home)
+    if not _under(repo_path, home) or not repo_path.is_dir():
+        raise Refused(
+            f"repository fixture producer returned {repo_path}, outside isolated HOME {home}"
+        )
+    prefix = step.get("capture_as") or "repo"
+    if not isinstance(prefix, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", prefix):
+        raise Blocked(f"create_repository_fixture capture_as {prefix!r} is not a variable stem")
+    for field in fields:
+        variables[f"{prefix}_{field}"] = result[field]
+    hub.repo_root = repo_path
+    restart = hub.restart()
+    if isinstance(provenance.get("hub"), dict):
+        provenance["hub"].update({
+            "pid": hub.proc.pid if hub.proc else None,
+            "home": str(home),
+            "repo_root": str(repo_path),
+        })
+        provenance["product_wiring"] = hub.wiring
+        provenance["db_path"] = hub.db_path
+    provenance["repository_fixture"] = {
+        **result, "capture_as": prefix,
+        "variables": {f"{prefix}_{field}": result[field] for field in fields},
+    }
+    provenance.setdefault("restarts", []).append({
+        **restart, "reason": "repository fixture router rebuild",
+        "repo_root": str(repo_path),
+    })
+    record: dict[str, Any] = {
+        "kind": "cli", "action": "create_repository_fixture",
+        "adapter": step.get("adapter", "repository-fixture-producer"),
+        "fixture": result, "repo_root": str(repo_path), "captured": {
+            "prefix": prefix,
+            "values": {f"{prefix}_{field}": result[field] for field in fields},
+        },
+        "restart": restart,
+    }
+    if page is not None:
+        page.reload(wait_until=step.get("wait_until", "load"))
+        record["page_reloaded"] = True
+    return record
+
+
+def _ingest_coder_fixture_step(
+    step: dict[str, Any], hub: Any, provenance: dict[str, Any],
+    variables: dict[str, Any],
+) -> dict[str, Any]:
+    """Run the real agent-hook CLI against one copied transcript input."""
+    if hub is None or not hasattr(hub, "home"):
+        raise Blocked("ingest_coder_fixture needs the rig's own hub process")
+    home = guard_home(hub.home)
+    source = guard_path(
+        REPO / "tests" / "fixtures" / "agent_transcripts" / "codex_question.jsonl",
+        "coder transcript fixture",
+    )
+    if not source.is_file():
+        raise Blocked(f"coder transcript fixture {source} does not exist")
+    transcript = home / "codex_question.jsonl"
+    if transcript.exists() or transcript.is_symlink():
+        raise Blocked(f"coder transcript destination already exists: {transcript}")
+    shutil.copyfile(source, transcript)
+    repo_root = getattr(hub, "repo_root", None)
+    cwd = guard_path(repo_root, "coder fixture cwd") if repo_root else home
+    if not cwd.is_dir() or not _under(cwd, home):
+        raise Refused(f"coder fixture cwd {cwd} is outside isolated HOME {home}")
+    payload = {
+        "session_id": "phase13-coder-input",
+        "cwd": str(cwd),
+        "hook_event_name": "Stop",
+        "transcript_path": str(transcript),
+    }
+    command = [
+        sys.executable, "-m", "holdspeak.main", "agent-hook", "ingest",
+        "--agent", "codex", "--capture-messages", "--print-summary",
+    ]
+    env = _isolated_hub_env(home, repo_root)
+    env["PYTHONPATH"] = str(REPO) + os.pathsep + env.get("PYTHONPATH", "")
+    completed = subprocess.run(
+        command, cwd=str(cwd), env=env, input=json.dumps(payload),
+        capture_output=True, text=True, check=False,
+    )
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout or "no CLI output").strip()
+        raise Blocked(
+            f"agent-hook ingest returned {completed.returncode}: {detail[:400]}"
+        )
+    try:
+        session = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise Blocked(
+            f"agent-hook ingest returned non-JSON stdout: {completed.stdout[:400]!r}"
+        ) from exc
+    if not isinstance(session, dict):
+        raise Blocked("agent-hook ingest returned a non-object session")
+    if (
+        session.get("agent") != "codex"
+        or session.get("session_id") != payload["session_id"]
+        or session.get("hook_event_name") != "Stop"
+        or not session.get("awaiting_response")
+        or not session.get("last_assistant_text")
+    ):
+        raise Blocked(f"agent-hook ingest returned no awaiting coder question: {session}")
+    prefix = step.get("capture_as") or "coder"
+    if not isinstance(prefix, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", prefix):
+        raise Blocked(f"ingest_coder_fixture capture_as {prefix!r} is not a variable stem")
+    variables[f"{prefix}_session_id"] = session["session_id"]
+    variables[f"{prefix}_agent"] = session["agent"]
+    source_hash = _sha256(source)
+    transcript_hash = _sha256(transcript)
+    fixture = {
+        "source_path": str(source),
+        "source_sha256": source_hash,
+        "transcript_path": str(transcript),
+        "sha256": transcript_hash,
+        "cwd": str(cwd),
+        "payload": payload,
+    }
+    provenance.setdefault("fixture_hashes", {})[str(source)] = source_hash
+    provenance["coder_fixture"] = {
+        **fixture,
+        "command": command,
+        "stdout_sha256": hashlib.sha256(completed.stdout.encode()).hexdigest(),
+        "session": session,
+        "capture_as": prefix,
+    }
+    return {
+        "kind": "cli",
+        "action": "ingest_coder_fixture",
+        "adapter": step.get("adapter", "agent-hook-cli"),
+        "fixture": fixture,
+        "session": session,
+        "captured": {
+            "prefix": prefix,
+            "values": {
+                f"{prefix}_session_id": session["session_id"],
+                f"{prefix}_agent": session["agent"],
+            },
+        },
+        "stdout_sha256": hashlib.sha256(completed.stdout.encode()).hexdigest(),
+    }
+
+
+def _ui_viewport_adapter(page: Any, step: dict[str, Any]) -> tuple[str, bool]:
+    """Resolve the opt-in viewport adapter to the delivery it really uses."""
+    requested = step.get("adapter", "ui-pointer")
+    if requested != "ui-by-viewport":
+        return str(requested), False
+    if step.get("action") not in ("click", "click_role", "set_input_files", "world_context_menu"):
+        raise Blocked(
+            "ui-by-viewport is only implemented for click, click_role, "
+            "file-chooser and world_context_menu steps; "
+            "nothing was fired")
+    if step.get("action") == "set_input_files" and not step.get("file_chooser"):
+        raise Blocked(
+            "ui-by-viewport set_input_files needs file_chooser: true; "
+            "nothing was fired")
+    size = getattr(page, "viewport_size", None) or {}
+    width = size.get("width") if isinstance(size, dict) else None
+    if width == 393:
+        return "ui-touch", True
+    if width == 1440:
+        return "ui-pointer", True
+    raise Blocked(
+        f"ui-by-viewport needs viewport width 1440 or 393; got {width!r}; "
+        "nothing was fired")
+
+
+def _ui_adapter_record(page: Any, step: dict[str, Any], action: str) -> tuple[str, dict[str, Any]]:
+    adapter, requested = _ui_viewport_adapter(page, step)
+    record = {"kind": "ui", "action": action, "adapter": adapter}
+    if requested:
+        record["adapter_requested"] = "ui-by-viewport"
+    return adapter, record
+
+
+def _check_guard_shape_with_touch(step: dict[str, Any], record: dict[str, Any], guard: Any) -> None:
+    if step.get("adapter") == "ui-by-viewport" and record.get("adapter") == "ui-touch":
+        raise Blocked(
+            "ui-by-viewport touch guarded synthetic delivery cannot claim touch; "
+            "the guard and a native tap are not one atomic Playwright operation")
+    _check_guard_shape(guard)
+
+
+def _validate_ui_button(action: str, button: str, step: dict[str, Any], adapter: str) -> None:
+    if button not in ("left", "right") or ("button" in step and action not in ("click", "click_role")):
+        raise Blocked(f"ui step {action}: button {button!r} is not left|right on a click")
+    if adapter == "ui-touch" and button != "left":
+        raise Blocked(
+            f"ui step {action}: native touch has no right-button delivery; "
+            "nothing was fired")
+
+
+def _native_ui_click(target: Any, adapter: str, timeout: float, button: str) -> None:
+    if adapter == "ui-touch":
+        target.tap(timeout=timeout)
+    else:
+        target.click(timeout=timeout, button=button)
+
+
+def _world_context_menu(page: Any, step: dict[str, Any], adapter: str,
+                        timeout: float, record: dict[str, Any]) -> dict[str, Any]:
+    """Drive the Spatial object's real canvas context door at a probed point.
+
+    The GL canvas owns the object and zone hit-test, so a DOM selector cannot
+    name the target itself.  The product's read-only world probes supply the
+    current client point for the captured ref; the hit probe must confirm that
+    exact target before any input is emitted.  Desktop uses a native right
+    click.  The 393 adapter uses Chromium CDP touchStart/touchEnd with a
+    bounded hold at least as long as WorldEngine's 500 ms long-press timer.
+    """
+    selector = step.get("selector")
+    world_ref = step.get("world_ref")
+    world_target = step.get("world_target", "object")
+    if not isinstance(selector, str) or not selector.strip():
+        raise Blocked("world_context_menu needs a canvas selector; nothing was fired")
+    if not isinstance(world_ref, str) or not world_ref.strip():
+        raise Blocked("world_context_menu needs world_ref; nothing was fired")
+    if world_target not in ("object", "zone"):
+        raise Blocked(
+            f"world_context_menu world_target must be object|zone, got {world_target!r}; "
+            "nothing was fired"
+        )
+    hold_ms = int(step.get("hold_ms", 650))
+    if adapter == "ui-touch" and hold_ms < 500:
+        raise Blocked(
+            f"world_context_menu touch hold_ms {hold_ms} is below the product's "
+            "500 ms long-press bound; nothing was fired"
+        )
+    locator = page.locator(selector).first
+    locator.wait_for(state="visible", timeout=timeout)
+    box = locator.bounding_box()
+    if not box or box["width"] <= 0 or box["height"] <= 0:
+        raise Blocked(f"world_context_menu canvas {selector!r} has no visible bounds")
+    point = page.evaluate(
+        """({ref, target}) => {
+          const probeName = target === 'zone' ? '__hsWorldZoneProbe' : '__hsWorldProbe';
+          const probe = window[probeName];
+          if (typeof probe !== 'function') return null;
+          const rows = probe() || [];
+          return rows.find(row => target === 'zone'
+            ? row.id === ref
+            : row.ref === ref || row.id === ref) || null;
+        }""",
+        {"ref": world_ref, "target": world_target},
+    )
+    if not isinstance(point, dict) or not isinstance(point.get("x"), (int, float)) or not isinstance(point.get("y"), (int, float)):
+        raise Blocked(
+            f"world_context_menu probe found no visible {world_target} for {world_ref!r}; "
+            "nothing was fired"
+        )
+    probe_x, probe_y = float(point["x"]), float(point["y"])
+    x, y = probe_x, probe_y
+    if world_target == "zone":
+        try:
+            zone_width = float(point.get("width", 0))
+            zone_height = float(point.get("height", 0))
+        except (TypeError, ValueError):
+            zone_width = zone_height = 0
+        if zone_width <= 0 or zone_height <= 0:
+            raise Blocked(
+                f"world_context_menu zone probe has invalid bounds for {world_ref!r}; "
+                "nothing was fired"
+            )
+        # The production probe reports a zone's top-center.  Use a point well
+        # inside its body so native coordinate rounding cannot turn the edge
+        # into a Floor miss.  Small zones keep an interior margin too.
+        y += min(6.0, zone_height / 2)
+    if not (box["x"] <= x <= box["x"] + box["width"] and box["y"] <= y <= box["y"] + box["height"]):
+        raise Blocked(
+            f"world_context_menu probe point ({x:.1f}, {y:.1f}) is outside "
+            f"canvas {selector!r}; nothing was fired"
+        )
+    hit = page.evaluate(
+        """({x, y, ref, target}) => {
+          const probe = window.__hsWorldHitProbe;
+          if (typeof probe !== 'function') return null;
+          return probe(x, y);
+        }""",
+        {"x": x, "y": y, "ref": world_ref, "target": world_target},
+    )
+    hit_ok = (
+        isinstance(hit, dict)
+        and (
+            (world_target == "object"
+             and hit.get("type") == "object"
+             and hit.get("ref") == world_ref)
+            or (world_target == "zone"
+                and hit.get("type") == "zone"
+                and hit.get("id") == world_ref)
+        )
+    )
+    if not hit_ok:
+        raise Blocked(
+            f"world_context_menu hit probe did not confirm {world_target} {world_ref!r}: "
+            f"{hit!r}; nothing was fired"
+        )
+    # Keep the exact real probe row and the confirmed delivered point before
+    # dispatch.  A nested menu-item timeout must not erase what was hit.
+    record.update(
+        world_ref=world_ref,
+        world_target=world_target,
+        world_probe=dict(point),
+        point={"x": x, "y": y},
+        world_hit_probe=hit,
+    )
+    if adapter == "ui-touch":
+        cdp = page.context.new_cdp_session(page)
+        try:
+            cdp.send("Input.dispatchTouchEvent", {
+                "type": "touchStart",
+                "touchPoints": [{"x": x, "y": y, "radiusX": 1, "radiusY": 1, "id": 1}],
+            })
+            page.wait_for_timeout(hold_ms)
+            cdp.send("Input.dispatchTouchEvent", {
+                "type": "touchEnd",
+                "touchPoints": [],
+            })
+        finally:
+            cdp.detach()
+        record["gesture"] = "touch-long-press"
+        record["hold_ms"] = hold_ms
+    elif adapter == "ui-pointer":
+        page.mouse.click(x, y, button="right")
+        record["gesture"] = "mouse-right-click"
+    else:
+        raise Blocked(f"world_context_menu has no delivery for adapter {adapter!r}")
+    record.update(selector=selector, done=True)
+    return record
+
+
 def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
              provenance: dict[str, Any], case: dict[str, Any] | None = None,
              *, allow_error: bool = False,
@@ -4884,7 +5394,14 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         return record
 
     if kind == "ui":
-        return _ui_step(page, step, hub)
+        result = _ui_step(page, step, hub)
+        if step.get("action") == "set_input_files":
+            source = _input_file_path(step.get("value"), hub)
+            input_record = _input_file_record(step["value"], source, hub)
+            provenance.setdefault("input_files", []).append(input_record)
+            provenance.setdefault("fixture_hashes", {})[step["value"]] = input_record["sha256"]
+            result["input_file"] = input_record
+        return result
     if kind == "op":
         return _op_step(step, hub, provenance, variables=variables)
     if kind == "api":
@@ -4980,6 +5497,10 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         return record
     if kind == "cli":
         action = step.get("action")
+        if action == "create_repository_fixture":
+            return _create_repository_fixture_step(step, page, hub, provenance, variables)
+        if action == "ingest_coder_fixture":
+            return _ingest_coder_fixture_step(step, hub, provenance, variables)
         if action == "queue_meeting_intelligence":
             if hub is None or not hasattr(hub, "home") or not hasattr(hub, "db_path"):
                 raise Blocked(
@@ -5067,8 +5588,9 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
             raise Blocked(
                 f"cli command {(step.get('command') or action)!r} is not "
                 "implemented in this rig; the case is blocked, not claimed. The "
-                "implemented commands are actions 'restart_hub' and "
-                "'queue_meeting_intelligence'.")
+                "implemented commands are actions 'restart_hub', "
+                "'queue_meeting_intelligence', 'create_repository_fixture' and "
+                "'ingest_coder_fixture'.")
         if hub is None or not hasattr(hub, "restart"):
             raise Blocked("a restart_hub step needs the rig's own hub process")
         resolved_case = substitute(case or {}, variables)
@@ -5416,6 +5938,30 @@ def case_steps(case: dict[str, Any]) -> list[dict[str, Any]]:
     return steps
 
 
+def _iter_case_steps(case: dict[str, Any]) -> Any:
+    """Yield case steps, including the trigger's nested follow-up gesture."""
+    roots = [s for s in (case.get("setup") or []) if isinstance(s, dict)]
+    if isinstance(case.get("preconditions"), list):
+        roots.extend(s for s in case["preconditions"] if isinstance(s, dict))
+    if isinstance(case.get("trigger"), dict):
+        roots.append(case["trigger"])
+    pending = list(roots)
+    while pending:
+        step = pending.pop(0)
+        yield step
+        then = step.get("then")
+        if isinstance(then, list):
+            pending.extend(child for child in then if isinstance(child, dict))
+
+
+def case_uses_ui_by_viewport(case: dict[str, Any]) -> bool:
+    """Whether a case opts into native touch at its 393 viewport."""
+    return any(
+        step.get("kind") == "ui" and step.get("adapter") == "ui-by-viewport"
+        for step in _iter_case_steps(case)
+    )
+
+
 def case_needs_scheduler(case: dict[str, Any]) -> bool:
     """True when a step drives the real conductor loop (`scheduler-wait`)."""
     return any(
@@ -5665,6 +6211,12 @@ def exercise(
         try:
             step_record = run_step(step, page, hub, provenance, case,
                                    variables=variables)
+            # Keep the first useful face even if the next lifecycle step
+            # blocks (for example, Close leaves a minimized window alive).
+            if step.get("capture_shot") and page is not None:
+                checkpoint = shots / f"setup-{len(steps):02d}.png"
+                page.screenshot(path=str(checkpoint))
+                step_record["shot"] = str(checkpoint)
             steps.append(step_record)
             recorder.set(setup=steps, provenance=provenance,
                          variables=dict(variables))
@@ -5757,19 +6309,20 @@ def exercise(
     arm_first_paint(page, pre_case)
     fired_at = time.monotonic()
     try:
-        trigger_record = run_step({k: v for k, v in trigger.items() if k != "then"},
-                                  page, hub, provenance, pre_case,
-                                  allow_error=True, variables=variables)
         # PHILO-8-03: `then` — the rest of ONE owner gesture, fired right after
         # the trigger and before any observation (delete, then leave the face
         # inside the 8 s undo window). The rig's before-capture between setup
         # and trigger can outlast that window under load; these steps cannot.
-        # UI steps only; each one is recorded; a failed one blocks.
-        then = trigger_then(trigger)
-        if then:
-            trigger_record["then"] = [
-                run_step(step, page, hub, provenance, pre_case, variables=variables)
-                for step in then]
+        # UI steps only; each completed one is flushed before the next starts.
+        trigger_record = _run_trigger_sequence(
+            trigger,
+            page=page,
+            hub=hub,
+            provenance=provenance,
+            case=pre_case,
+            variables=variables,
+            recorder=recorder,
+        )
         wait = trigger_record.get("completion_wait")
         if wait and not wait.get("matched"):
             recorder.set(trigger=trigger_record, provenance=provenance,
@@ -5779,13 +6332,33 @@ def exercise(
                 f"{wait.get('elapsed_s')}s: {wait.get('field_matches')}"
             )
     except Blocked as exc:
-        recorder.set(trigger_error={"step": trigger, "error": str(exc)[:800]})
+        # A trigger placeholder that is unresolved before the request is
+        # prepared is still a setup/precondition refusal: nothing was sent.
+        # Once the trigger record exists, the same error belongs to its
+        # lifecycle (for example, a `then` step) and is a failure.
+        prefire_placeholder = (
+            recorder.record.get("trigger") is None
+            and "unresolved placeholder" in str(exc)
+        )
+        lifecycle = "blocked" if prefire_placeholder else "fail"
+        recorder.set(
+            trigger_error={"step": trigger, "error": str(exc)[:800],
+                           "lifecycle": lifecycle},
+            **({"verdict": "fail"} if lifecycle == "fail" else {}),
+        )
+        if lifecycle == "fail":
+            recorder.note(f"TRIGGER lifecycle failed: {exc}")
         if ui_capture is not None:
             ui_capture.close()
         raise
     except Exception as exc:
-        recorder.set(trigger_error={"step": trigger,
-                                    "error": f"{type(exc).__name__}: {exc}"[:800]})
+        recorder.set(
+            trigger_error={"step": trigger,
+                           "error": f"{type(exc).__name__}: {exc}"[:800],
+                           "lifecycle": "fail"},
+            verdict="fail",
+        )
+        recorder.note(f"TRIGGER lifecycle failed: {type(exc).__name__}: {exc}")
         if ui_capture is not None:
             ui_capture.close()
         raise
@@ -6244,8 +6817,9 @@ def calibrate(out: Path, *, brain: str = "muaddib", viewport: int = 1440,
             exercise(page, case, recorder=recorder, hub=fixture,
                      provenance=provenance, shots=shots)
         except Blocked as exc:
-            recorder.set(verdict="blocked")
-            recorder.note(f"BLOCKED: {exc}")
+            if recorder.record.get("verdict") != "fail":
+                recorder.set(verdict="blocked")
+                recorder.note(f"BLOCKED: {exc}")
         finally:
             if page is not None:
                 page.close()
@@ -6311,6 +6885,36 @@ def find_case(atlas: dict[str, Any], case_id: str) -> dict[str, Any]:
                      f"(have: {[c['id'] for c in atlas.get('cases', [])]})")
 
 
+def _run_trigger_sequence(
+    trigger: dict[str, Any], *, page: Any, hub: Hub | None,
+    provenance: dict[str, Any], case: dict[str, Any],
+    variables: dict[str, Any], recorder: Recorder,
+) -> dict[str, Any]:
+    """Record a trigger and each completed `then` step as they happen.
+
+    If a later step blocks, the observation still preserves the successful
+    trigger and every follow-up action already proved.
+    """
+    trigger_record = run_step(
+        {k: v for k, v in trigger.items() if k != "then"},
+        page, hub, provenance, case, allow_error=True, variables=variables,
+    )
+    recorder.set(trigger=trigger_record, provenance=provenance,
+                 variables=dict(variables))
+    then = trigger_then(trigger)
+    if then:
+        trigger_record["then"] = []
+        recorder.set(trigger=trigger_record, provenance=provenance,
+                     variables=dict(variables))
+        for step in then:
+            trigger_record["then"].append(
+                run_step(step, page, hub, provenance, case, variables=variables)
+            )
+            recorder.set(trigger=trigger_record, provenance=provenance,
+                         variables=dict(variables))
+    return trigger_record
+
+
 def run_case(
     atlas_path: Path, case_id: str, *, brain: str, viewport: int,
     out: Path, engine: str = "none", token: str = TOKEN,
@@ -6328,6 +6932,20 @@ def run_case(
     provenance["atlas"] = {"path": str(atlas_path),
                            "sha256": _sha256(Path(atlas_path)),
                            "version": atlas.get("atlas_version")}
+    viewport_adapter = case_uses_ui_by_viewport(case)
+    touch_enabled = viewport_adapter and viewport == 393
+    provenance["touch_mode"] = {
+        "adapter": "ui-by-viewport" if viewport_adapter else "ui-pointer",
+        "resolved_adapter": "ui-touch" if touch_enabled else "ui-pointer",
+        "requested": viewport_adapter,
+        "viewport": viewport,
+        "has_touch": touch_enabled,
+        "mode": "native-touch" if touch_enabled else "pointer",
+    }
+    provenance["browser_context"] = {
+        "viewport": viewport,
+        "has_touch": touch_enabled,
+    }
     recorder = Recorder(
         shots / "observation.json",
         observation_skeleton(case, brain=brain, viewport=viewport, run_id=run_id,
@@ -6390,6 +7008,13 @@ def run_case(
         # brief §7: say what product wiring this hub HAS and LACKS, so no
         # observation is read as if it came from the whole product.
         provenance["product_wiring"] = hub.wiring
+        provenance["tmux_isolation"] = {
+            "tmpdir": str(home),
+            "home": str(home),
+            "inherited_socket": False,
+            "inherited_pane": False,
+            "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+        }
         provenance["engine_replay_sha256"] = hub.engine_replay
         provenance["engine_provider_url"] = hub.engine_provider_url
         provenance["cli_runner_sha256"] = hub.cli_runner
@@ -6402,25 +7027,31 @@ def run_case(
                 exercise(None, case, recorder=recorder, hub=hub,
                          provenance=provenance, shots=shots)
             except Blocked as exc:
-                recorder.set(verdict="blocked")
-                recorder.note(f"BLOCKED: {exc}")
+                if recorder.record.get("verdict") != "fail":
+                    recorder.set(verdict="blocked")
+                    recorder.note(f"BLOCKED: {exc}")
         else:
             # Import Playwright only for a face walk.  Headless operation cases
             # must be runnable when the browser package or bundle is absent.
             from playwright.sync_api import sync_playwright  # noqa: PLC0415
             assert profile is not None
             with sync_playwright() as play:
-                context = play.chromium.launch_persistent_context(
-                    user_data_dir=str(profile),
-                    viewport={"width": viewport,
-                              "height": 900 if viewport >= 1000 else 852},
-                    device_scale_factor=2,
+                context_options = {
+                    "user_data_dir": str(profile),
+                    "viewport": {"width": viewport,
+                                 "height": 900 if viewport >= 1000 else 852},
+                    "device_scale_factor": 2,
                     # An atlas case says `goto "/"`. Without a base url Chromium
                     # answers "Cannot navigate to invalid URL"; with it the case
                     # reads the same on any port. An http(s) url stays absolute.
-                    base_url=hub.url,
-                    args=["--use-fake-device-for-media-stream",
-                          "--use-fake-ui-for-media-stream"],
+                    "base_url": hub.url,
+                    "args": ["--use-fake-device-for-media-stream",
+                             "--use-fake-ui-for-media-stream"],
+                }
+                if touch_enabled:
+                    context_options["has_touch"] = True
+                context = play.chromium.launch_persistent_context(
+                    **context_options,
                 )
                 page = context.new_page()
                 if (case.get("expected", {}).get("predicate") or {}).get("first_paint_after"):
@@ -6439,8 +7070,9 @@ def run_case(
                         recorder.note(f"blocked screenshot unavailable: {shot_error}")
                     else:
                         recorder.set(shots=[str(blocked_shot)])
-                    recorder.set(verdict="blocked")
-                    recorder.note(f"BLOCKED: {exc}")
+                    if recorder.record.get("verdict") != "fail":
+                        recorder.set(verdict="blocked")
+                        recorder.note(f"BLOCKED: {exc}")
                 finally:
                     recorder.set(console_errors=errors[:20])
                     context.close()
@@ -6453,6 +7085,9 @@ def run_case(
                 recorder.set(provenance=provenance)
             recorder.set(hub_log=hub.lines[-40:])
             hub.stop()
+            provenance.setdefault("tmux_isolation", {"tmpdir": str(home)})
+            provenance["tmux_isolation"]["teardown_result"] = _teardown_hub_tmux(home)
+            recorder.set(provenance=provenance)
         if profile is not None:
             shutil.rmtree(profile, ignore_errors=True)
         shutil.rmtree(home, ignore_errors=True)

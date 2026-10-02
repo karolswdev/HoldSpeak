@@ -1,0 +1,13 @@
+$ uv run --extra dev python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase13-astra.json --case case.p13.directory.zone --brain astra --viewport 393 --engine none --no-build --out pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-walks/r3/zone-393
+PASS: live
+BRAIN: astra
+SOURCE: 0fc58fc6d00f6b7708771c033c11390f36419a46 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase13-astra.json
+RUNTIME: build=['index-DfIFMe16.js'] hub=http://127.0.0.1:51311 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo13-zone-393-s5cqd3vl/tmp/graph-walk-home-wj9saal1/.local/share/holdspeak/holdspeak.db engine=none
+JOB: j3
+VERDICT: fail terminal=None
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-walks/r3/zone-393/20261002T214730Z-case.p13.directory.zone-astra-393/blocked.png']
+NOTE: TRIGGER lifecycle failed: ui step click_role on 'Open' failed: TimeoutError: Locator.tap: Timeout 10000ms exceeded.
+Call log:
+  - waiting for get_by_role("menuitem", name="Open", exact=True).first
+    - locator resolved to <button type="button" role="menuitem" aria-disabled="t
