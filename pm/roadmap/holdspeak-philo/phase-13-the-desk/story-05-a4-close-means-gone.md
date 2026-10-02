@@ -58,3 +58,7 @@ Grounding size: not sized as a move. PROVISIONAL.
 - 2026-10-01 — `web/src/desk/components/Pullout.tsx` is not named in PROPOSAL §4's map; assigned to this lane (status file, "File ownership").
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+## Coverage note and follow-up — 2026-10-01 (Astra counsel r1 on built)
+
+Precise coverage (not literally "every opener"): the three render mounts (Chair/`DeskApp`, `DeskListView`, `gl/WorldStage`) and the two window frames (`PulloutFrame`, `ThoughtWorkspaceWindow`) are fenced; rendered openers fenced: palette → `decision:<id>` (1440, 393); Dock Intelligence → `intelligence:desk` (1440, 393) plus the J1 Retry after close; Write a thought → `note:<id>` (1440, 393); list row → `note:<id>` (393); Floor object → bare id by keyboard (1440); list row menu → Open → bare id (393). Of ~30 `openPullout` call sites, all end in those mounts. **Follow-up (Astra MISSED):** two card bodies closed by the bare id — Coder "Watch live" (`CoderPullout.tsx:177`) and the meeting's resolved-as-deleted (`MeetingPullout.tsx:107`) — now call the card's `onClose`; fenced in jsdom through the real list view and card frame (red on 82353f48: `[ { id: 'coder:s1' } ]`, `[ { id: 'meeting:m1' } ]`; green after). Ledger (a): no glass for these two (no route seeds a live coder session or a meeting conflict in a glass hub); `CoderPullout.tsx` keeps 5 raw `<button>`s → C8.

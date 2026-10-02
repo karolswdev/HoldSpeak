@@ -17,6 +17,14 @@ import { usePalette } from "../chromeState";
 import { useProjections } from "../projections";
 import { DeskListView } from "../components/DeskListView";
 
+// PHILO-13-05 fix round: the meeting's conflict recovery is the sibling that
+// reports `deleted`; this stand-in presses its real onResolved callback.
+vi.mock("../../meetings/MeetingConflictRecovery", () => ({
+  MeetingConflictRecovery: ({ onResolved }: { onResolved: (r: { deleted: boolean }) => void }) => (
+    <button type="button" onClick={() => onResolved({ deleted: true })}>Resolve as deleted</button>
+  ),
+}));
+
 vi.mock("../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({
     state: "connected",
@@ -98,5 +106,27 @@ describe("PHILO-13-05 close means gone", () => {
     expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual(["note:n1"]);
     await useDesk.getState().deletePrimitive("n1", "note");
     expect(useDesk.getState().pullouts).toEqual([]);
+  });
+
+  // PHILO-13-05 fix round (Astra counsel, MISSED): two inherited close
+  // callers inside the card bodies closed by the bare `o.id`.
+  it("Watch live closes a coder card opened as coder:s1", () => {
+    useDesk.setState({
+      items: { ...items, coder: [{ kind: "coder", id: "s1", title: "Refactor run", agent: "claude", sessionId: "s1", state: "running" } as never] },
+    });
+    renderList();
+    act(() => useDesk.getState().openPullout("coder:s1"));
+    expect(screen.getByRole("button", { name: "Close Refactor run" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Watch live" }));
+    expect(useDesk.getState().pullouts).toEqual([]);
+    expect(screen.queryByRole("button", { name: "Close Refactor run" })).toBeNull();
+  });
+
+  it("a meeting resolved as deleted closes its card opened as meeting:m1", () => {
+    renderList();
+    act(() => useDesk.getState().openPullout("meeting:m1"));
+    fireEvent.click(screen.getByRole("button", { name: "Resolve as deleted" }));
+    expect(useDesk.getState().pullouts).toEqual([]);
+    expect(screen.queryByRole("button", { name: "Close Q3 kickoff" })).toBeNull();
   });
 });

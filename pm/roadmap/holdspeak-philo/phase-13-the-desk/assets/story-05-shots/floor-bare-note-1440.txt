@@ -1,1 +1,1 @@
-{'window': 'pullout:note_349db148b996', 'centre': [1222, 126], 'hit': {'tag': 'canvas', 'cls': 'desk-world-canvas', 'testid': None, 'window': None, 'desk': True}, 'left_in_dom': []}
+{'window': 'pullout:note_8dd3ad31de8b', 'centre': [1222, 126], 'hit': {'tag': 'canvas', 'cls': 'desk-world-canvas', 'testid': None, 'window': None, 'desk': True}, 'left_in_dom': []}

@@ -22,7 +22,7 @@ import type { PulloutContentProps } from "./types";
 export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
   const selectedIds = useDesk((s) => s.selectedIds);
-  const { closePullout, speakToCoder, answerCoder } = useDesk.getState();
+  const { speakToCoder, answerCoder } = useDesk.getState();
   if (o.ref.kind !== "coder") return null;
   const ir = o.ref;
   const resourceRef = qualifiedRef(o.kind, o.id);
@@ -174,7 +174,9 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
           type="button"
           className="desk-chip quiet"
           onClick={() => {
-            closePullout(o.id);
+            // PHILO-13-05: close by the store's own id (the card's onClose);
+            // the bare `o.id` left a card opened as `coder:s1` open.
+            onClose();
             useSteering
               .getState()
               .openSession(
