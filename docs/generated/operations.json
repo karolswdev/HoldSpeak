@@ -272,6 +272,13 @@
             ],
             "description": "When true, list parked meetings only."
           },
+          "summary_attention": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "When true, list only FAILED/RETRYING meetings before pagination."
+          },
           "limit": {
             "type": "integer",
             "description": "Clamped to 1..500; default 50."

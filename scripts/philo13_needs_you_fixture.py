@@ -53,6 +53,7 @@ A1_TASK = "A1 close the overdue release note"
 A2_TASK = "A2 confirm the room commitment"
 A3_TASK = "A3 wait for Priya's review"
 A4_TASK = "A4 assign the owner"
+A1_ROOM_TASK = "A1 room release milestone"
 M1_TASK = "M1 muted project attention"
 D1_TASK = "D1 completed action"
 
@@ -289,7 +290,7 @@ def _fixed_project_entropy() -> Iterator[None]:
         project_service.uuid = old_service_uuid  # type: ignore[assignment]
 
 
-def _create_projects_and_links(db: Any, *, m1_due: str) -> dict[str, str]:
+def _create_projects_and_links(db: Any, *, m1_due: str, a1_room_due: str) -> dict[str, str]:
     """Use the actual project create/link/item routes for fixture producers."""
     with _fixed_project_entropy(), _route_client(db) as client:
         created = []
@@ -318,12 +319,12 @@ def _create_projects_and_links(db: Any, *, m1_due: str) -> dict[str, str]:
         response = client.post(
             f"/api/projects/{project_id}/items",
             json={
-                "item_type": "milestone", "title": A1_TASK,
-                "lifecycle": "planned", "severity": "high", "due_at": m1_due,
+                "item_type": "milestone", "title": A1_ROOM_TASK,
+                "lifecycle": "planned", "severity": "high", "due_at": a1_room_due,
             },
         )
         if response.status_code != 200 or not response.json().get("success"):
-            raise RuntimeError(f"real cross-source duplicate route failed: {response.status_code} {response.text}")
+            raise RuntimeError(f"real Room milestone producer failed: {response.status_code} {response.text}")
         a1_room_item_id = str(response.json()["item"]["id"])
     return {
         "project_id": project_id,
@@ -362,7 +363,11 @@ def _seed_meetings_and_projects(db: Any, now: datetime) -> dict[str, Any]:
         intel_status="completed", summary="Muted project summary",
         action_items=[], segments=[],
     ))
-    project_ids = _create_projects_and_links(db, m1_due=yesterday.isoformat())
+    project_ids = _create_projects_and_links(
+        db,
+        m1_due=yesterday.isoformat(),
+        a1_room_due=(today + timedelta(days=1)).isoformat(),
+    )
 
     db.meetings.save_meeting(_meeting(
         FAILED_MEETING_ID, "F1 failed summary", now - timedelta(hours=2),
@@ -658,11 +663,11 @@ def _actual_ids(db: Any) -> dict[str, str]:
         raise RuntimeError("real M1 project-item producer did not persist its item")
     a1_room = next(
         (item for item in db.projects.list_project_items(project_id)
-         if item.get("title") == A1_TASK),
+         if item.get("title") == A1_ROOM_TASK),
         None,
     )
     if a1_room is None:
-        raise RuntimeError("real A1 Room duplicate producer did not persist its item")
+        raise RuntimeError("real A1 Room milestone producer did not persist its item")
     proposals = db.proposals.list_proposals(meeting_id=MAIN_MEETING_ID, state="confirmed")
     proposal = next((row for row in proposals if row.text == A2_TASK), None)
     if proposal is None or not proposal.decision_record_id or not proposal.commitment_id:
@@ -720,12 +725,8 @@ def _assert_oracle_inputs(inputs: dict[str, Any], ids: dict[str, str]) -> dict[s
         raise RuntimeError("Door route emitted the completed D1 action")
     if any(str(row.get("id")) == ids["D1"] for row in room_items):
         raise RuntimeError("Room route emitted the completed D1 action")
-    a1_duplicates = [
-        row for row in room_items
-        if row.get("source") == "item" and row.get("ref") == A1_TASK
-    ]
-    if len(a1_duplicates) != 1 or a1_duplicates[0].get("id") is None:
-        raise RuntimeError("Room route did not emit the real A1 cross-source duplicate")
+    if any(row.get("source") == "item" and row.get("ref") == A1_TASK for row in room_items):
+        raise RuntimeError("Room route emitted a title-colliding A1 milestone")
     muted_rows = [row for row in room_items if row.get("ref") == M1_TASK]
     if len(muted_rows) != 1 or muted_rows[0].get("muted") is not True:
         raise RuntimeError("Room route did not mark the muted M1 row")

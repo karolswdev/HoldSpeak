@@ -2366,7 +2366,7 @@
       "sources": [
         {
           "path": "holdspeak/db/meetings.py",
-          "line": 1090,
+          "line": 1150,
           "symbol": "def delete_meeting",
           "claim": "The normal removal path retains the row through park; this case reads it after restart and restore."
         }
@@ -2404,7 +2404,7 @@
       "sources": [
         {
           "path": "web/src/desk/needsYou.ts",
-          "line": 218,
+          "line": 233,
           "symbol": "export function computeNeedsYou",
           "claim": "The Dock reads the one R1\u2013R3 membership rule."
         }

@@ -12,6 +12,8 @@ import pytest
 from holdspeak.db import Database
 from scripts.philo13_needs_you_fixture import (
     A1_ID,
+    A1_ROOM_TASK,
+    A1_TASK,
     A2_TASK,
     A3_ID,
     A4_ID,
@@ -72,6 +74,12 @@ def test_seed_accepts_existing_empty_hub_and_refuses_oracle_reseed(
     try:
         assert reopened.meetings.get_meeting("philo13-a2-meeting") is not None
         assert reopened.meetings.get_meeting("philo13-a2-failed-meeting") is not None
+        room_item = reopened.projects.get_project_item(seeded["ids"]["A1Room"])
+        assert room_item is not None
+        assert room_item["title"] == A1_ROOM_TASK
+        assert room_item["title"] != A1_TASK
+        assert room_item["lifecycle"] == "planned"
+        assert room_item["due_at"] > seeded["now"][:10]
     finally:
         reopened.close()
 
@@ -99,6 +107,8 @@ def test_export_reads_same_real_ids_and_mutates_a1_through_http_route(
     a2_room = [row for row in exported["before"]["roomItems"] if row.get("ref") == A2_TASK]
     assert len(a2_room) == 1
     assert a2_room[0]["actionItemId"] == seeded["ids"]["A2"]
+    assert A1_ROOM_TASK != A1_TASK
+    assert not any(row.get("ref") == A1_ID for row in exported["before"]["roomItems"])
     assert any(str(row["id"]) == seeded["ids"]["A2"] for row in before_rows)
     assert not any(str(row["id"]) == D1_ID for row in before_rows)
     assert exported["before"]["needsYou"]["items"]

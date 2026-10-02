@@ -30,3 +30,18 @@ The first r2 1440 run was red: the real A1 PATCH returned 200, but the Dock stay
 | 393, final, native touch | pass | [record](assets/story-03-needs-you/r2-live/dock-393-final-r2/20261002T084433Z-case.p13.dock.needs_you_week-astra-393/observation.json) | [6](assets/story-03-needs-you/r2-live/dock-393-final-r2/20261002T084433Z-case.p13.dock.needs_you_week-astra-393/before.png) | [5](assets/story-03-needs-you/r2-live/dock-393-final-r2/20261002T084433Z-case.p13.dock.needs_you_week-astra-393/after.png) | 2.371 s |
 
 The two final invocations each used a fresh isolated HOME/DB, one actual atlas case per run, engine `none`, and the shared hub rig. I inspected the before and after screenshots for both viewports before starting the next invocation. The 393 run used the native `ui-touch` adapter. The complete `setup-05.png`, before/after images, observations and logs are retained under `assets/story-03-needs-you/r2-live/`.
+
+## R3 ruling on the Room milestone
+
+The r2 observations above remain historical records of the then-current title-match projection. Muad'Dib's r3 condition rules that a meeting-action title does not identify a project milestone. The suppression has been removed. The main oracle fixture keeps a distinct, future-dated Room milestone; a separate real-producer regression proves a same-title overdue milestone remains counted by project health at 1→1 after the meeting action is completed. The current code and tests supersede the r2 projection conclusion while preserving its captured observations.
+
+## R3 actual Dock walk
+
+After removing the title-match suppression and keeping the seeded Room milestone distinct, I reran the actual `case.p13.dock.needs_you_week` once at each width with `scripts/graph_walk.py`. Both runs used engine `none`, a fresh isolated HOME and DB, revision `4725aaee` with the r3 worktree dirty, and the current built frontend. The case setup mints the real week and marks the real A1 action done; the reload then settles at five.
+
+| Viewport | Result | Observation | Before | After | Touch mode | Elapsed |
+|---|---|---|---|---|---|---|
+| 1440 | pass | [record](assets/story-03-needs-you/r3/dock-1440/20261002T203914Z-case.p13.dock.needs_you_week-astra-1440/observation.json) | [6](assets/story-03-needs-you/r3/dock-1440/20261002T203914Z-case.p13.dock.needs_you_week-astra-1440/before.png) | [5](assets/story-03-needs-you/r3/dock-1440/20261002T203914Z-case.p13.dock.needs_you_week-astra-1440/after.png) | pointer | 3.875 s |
+| 393 | pass | [record](assets/story-03-needs-you/r3/dock-393/20261002T204111Z-case.p13.dock.needs_you_week-astra-393/observation.json) | [6](assets/story-03-needs-you/r3/dock-393/20261002T204111Z-case.p13.dock.needs_you_week-astra-393/before.png) | [5](assets/story-03-needs-you/r3/dock-393/20261002T204111Z-case.p13.dock.needs_you_week-astra-393/after.png) | native `ui-touch` | 2.853 s |
+
+For both observations, the hub and SQLite path were under the run's temporary HOME; the recorded source revision is dirty as expected. I read the initial feedback and settled result separately and viewed both before/after shots. The trigger is the reload after the setup's real A1 status change; it fires no extra non-GET request. Command logs are [1440](assets/story-03-needs-you/r3/dock-1440-command.txt) and [393](assets/story-03-needs-you/r3/dock-393-command.txt). The isolated walk scratch under `.tmp/graph-walk/phase13-astra-r3/` was removed after each result was copied to the story assets.
