@@ -15,19 +15,19 @@
    "m-hiring"
   ],
   "people": [
-   "3a461bc3-cd73-43f7-870d-f9518013a1ea",
-   "e7e9e3c8-3174-405a-b72c-f79f8e0d5a3c",
-   "5bca181c-a46b-4d37-906a-85759d072747",
-   "c14f1851-64cd-491a-b6f1-857d9215a711"
+   "9fc25fb2-13f2-45de-95ba-cb9a0ea08982",
+   "bb68d92c-a7f1-4e01-959d-ed2155d798bf",
+   "bc42edf8-3db3-4f11-b96a-4a594348b71a",
+   "0a2e2fcb-db24-4485-a46d-aa4069fb9695"
   ],
-  "brief": "brief-b6b33ca764214c00bbd767705f213a1b",
-  "workbench": "workbench_d65dffb8e884",
+  "brief": "brief-02ac108871c74c25a73b4534683e628c",
+  "workbench": "workbench_4bc43d3c7e40",
   "items": [
-   "wbi_823c31840886",
-   "wbi_53297682343f",
-   "wbi_1f9cededc1d5",
-   "wbi_8e111ce57dd8",
-   "wbi_c5929c2e6e4b"
+   "wbi_2810cbee8652",
+   "wbi_755de9b64232",
+   "wbi_682f5c36a6db",
+   "wbi_12900244970d",
+   "wbi_d42f85adf712"
   ],
   "done": [
    200,
@@ -37,7 +37,7 @@
  },
  "C1-1-the-desk-1440": {
   "screen_title": "Needs you",
-  "clock": "Thu, Oct 1\n10:26 PM",
+  "clock": "Thu, Oct 1\n11:09 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -413,11 +413,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Needs you"
  },
  "C1-2a-window-gadgets-1440": {
   "screen_title": "Payments ledger cutover",
-  "clock": "Thu, Oct 1\n10:26 PM",
+  "clock": "Thu, Oct 1\n11:09 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -932,11 +933,20 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "SINCE YOU LOOKED",
+    "b": "Ask this project",
+    "w": 114,
+    "h": 5,
+    "waiver": "sticky"
+   }
+  ],
   "intended_front": "Payments ledger cutover"
  },
  "C1-2b-window-menu-amiga-keys-1440": {
   "screen_title": "Payments ledger cutover",
-  "clock": "Thu, Oct 1\n10:26 PM",
+  "clock": "Thu, Oct 1\n11:09 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -1476,11 +1486,20 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "SINCE YOU LOOKED",
+    "b": "Ask this project",
+    "w": 114,
+    "h": 5,
+    "waiver": "sticky"
+   }
+  ],
   "intended_front": "Payments ledger cutover"
  },
  "C1-2c-depth-to-back-1440": {
   "screen_title": "Meetings",
-  "clock": "Thu, Oct 1\n10:26 PM",
+  "clock": "Thu, Oct 1\n11:09 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -1995,11 +2014,20 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "SINCE YOU LOOKED",
+    "b": "Ask this project",
+    "w": 114,
+    "h": 5,
+    "waiver": "sticky"
+   }
+  ],
   "intended_front": "Meetings"
  },
  "C1-2d-zoom-1440": {
   "screen_title": "Meetings",
-  "clock": "Thu, Oct 1\n10:26 PM",
+  "clock": "Thu, Oct 1\n11:09 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -2514,11 +2542,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Meetings"
  },
  "C1-3-material-tokens-1440": {
   "screen_title": "Material",
-  "clock": "Thu, Oct 1\n10:26 PM",
+  "clock": "Thu, Oct 1\n11:09 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -2931,11 +2960,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Material"
  },
  "C1-4a-chair-windows-1440": {
   "screen_title": "The week",
-  "clock": "Thu, Oct 1\n10:26 PM",
+  "clock": "Thu, Oct 1\n11:09 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -3310,11 +3340,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "The week"
  },
  "C1-4b-chair-window-zoomed-1440": {
   "screen_title": "Brief",
-  "clock": "Thu, Oct 1\n10:26 PM",
+  "clock": "Thu, Oct 1\n11:09 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -3689,11 +3720,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Brief"
  },
  "C1-4c-chair-window-closed-1440": {
   "screen_title": "The week",
-  "clock": "Thu, Oct 1\n10:26 PM",
+  "clock": "Thu, Oct 1\n11:09 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -4042,11 +4074,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": null
  },
  "C1-4d-window-menu-chair-1440": {
   "screen_title": "The week",
-  "clock": "Thu, Oct 1\n10:26 PM",
+  "clock": "Thu, Oct 1\n11:09 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -4424,11 +4457,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": null
  },
  "C1-4e-chair-window-reopened-1440": {
   "screen_title": "Brief",
-  "clock": "Thu, Oct 1\n10:26 PM",
+  "clock": "Thu, Oct 1\n11:09 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -4803,11 +4837,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Brief"
  },
  "C1-5a-meeting-selected-park-1440": {
   "screen_title": "Meetings",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -5272,11 +5307,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Meetings"
  },
  "C1-5b-meeting-parked-receipt-1440": {
   "screen_title": "Meetings",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -5741,11 +5777,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Meetings"
  },
  "C1-5c-meetings-parked-filter-1440": {
   "screen_title": "Meetings",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -6210,11 +6247,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Meetings"
  },
  "C1-5d-meeting-restored-1440": {
   "screen_title": "Meetings",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -6679,11 +6717,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Meetings"
  },
  "C1-5e-meeting-restore-failed-1440": {
   "screen_title": "Meetings",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -7148,11 +7187,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Meetings"
  },
  "C1-5f-workbench-item-parked-1440": {
   "screen_title": "Ledger cutover bench",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -7643,11 +7683,12 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Ledger cutover bench"
  },
  "C1-5g-workbench-parked-filter-1440": {
   "screen_title": "Ledger cutover bench",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -8118,11 +8159,12 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Ledger cutover bench"
  },
  "C1-5h-workbench-item-restored-1440": {
   "screen_title": "Ledger cutover bench",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -8628,11 +8670,20 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Item body",
+    "b": "Speak Item body",
+    "w": 20,
+    "h": 20,
+    "waiver": "mic"
+   }
+  ],
   "intended_front": "Ledger cutover bench"
  },
  "C1-5i-workbench-claimed-refused-1440": {
   "screen_title": "Ledger cutover bench",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -9138,11 +9189,20 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Item body",
+    "b": "Speak Item body",
+    "w": 20,
+    "h": 20,
+    "waiver": "mic"
+   }
+  ],
   "intended_front": "Ledger cutover bench"
  },
  "C1-5j-workbench-clear-done-parked-1440": {
   "screen_title": "Ledger cutover bench",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -9638,11 +9698,20 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Item body",
+    "b": "Speak Item body",
+    "w": 20,
+    "h": 20,
+    "waiver": "mic"
+   }
+  ],
   "intended_front": "Ledger cutover bench"
  },
  "C1-8a-dock-ready-and-sent-1440": {
   "screen_title": "Needs you",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -10019,11 +10088,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Needs you"
  },
  "C1-8b-dock-send-failed-unknown-1440": {
   "screen_title": "Needs you",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -10400,11 +10470,12 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Needs you"
  },
  "C1-8c-dock-offline-1440": {
   "screen_title": "Needs you",
-  "clock": "Thu, Oct 1\n10:27 PM",
+  "clock": "Thu, Oct 1\n11:10 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -10765,7 +10836,36 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [],
   "intended_front": "Needs you"
+ },
+ "_mutation_1440": {
+  "a_sticky": {
+   "injected": "ok",
+   "target": "",
+   "caught": [
+    {
+     "a": "Clear here",
+     "b": "MUTANT A",
+     "w": 165,
+     "h": 28
+    }
+   ],
+   "waived": []
+  },
+  "b_mic": {
+   "injected": "ok",
+   "target": "New item instruction",
+   "caught": [
+    {
+     "a": "New item instruction",
+     "b": "Speak Item body",
+     "w": 34,
+     "h": 34
+    }
+   ],
+   "waived": []
+  }
  },
  "_cmp_steel_chair_1440": {
   "low_contrast": []
@@ -10802,19 +10902,19 @@
    "m-hiring"
   ],
   "people": [
-   "865c6dee-6b47-4f36-9fcb-113f53dc3f2c",
-   "5f61aef9-784c-4dbb-b635-2ac3de5f03b6",
-   "43588f4f-d7ab-446a-b018-4b95c8104515",
-   "9397e3ed-ca0e-4269-8cd1-60f7be806a23"
+   "4a0e0321-bfa3-40bf-9932-fc532f6e9cce",
+   "24d300ed-4efc-4cda-930a-b02549fb3a6f",
+   "f4176da5-81ba-4f33-8ac0-0ac28dbe1dd3",
+   "c83e9a9d-4442-4e85-a4a7-338649798c0c"
   ],
-  "brief": "brief-b3ffe04e59894de39d996b55b001d573",
-  "workbench": "workbench_fcae6c417a99",
+  "brief": "brief-e7a21978db694936913acb4589572edf",
+  "workbench": "workbench_714a17d1f2c6",
   "items": [
-   "wbi_8ac5c4f1b600",
-   "wbi_df77ad20543e",
-   "wbi_0b40bd15a7a5",
-   "wbi_33b9f015ce52",
-   "wbi_7e2114bfc44e"
+   "wbi_d778fcd9b44c",
+   "wbi_e9b8d3853a83",
+   "wbi_ed246a3cc7e8",
+   "wbi_a7ac1fc2cbd4",
+   "wbi_b4a8b0579625"
   ],
   "done": [
    200,
@@ -10824,7 +10924,7 @@
  },
  "C1-1-the-desk-393": {
   "screen_title": "Needs you",
-  "clock": "10:29 PM",
+  "clock": "11:12 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -10994,6 +11094,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -11012,7 +11121,7 @@
  },
  "C1-2a-window-gadgets-393": {
   "screen_title": "Payments ledger cutover",
-  "clock": "10:29 PM",
+  "clock": "11:12 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -11259,6 +11368,15 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -11277,7 +11395,7 @@
  },
  "C1-2b-window-menu-amiga-keys-393": {
   "screen_title": "Payments ledger cutover",
-  "clock": "10:29 PM",
+  "clock": "11:12 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -11535,6 +11653,15 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -11553,7 +11680,7 @@
  },
  "C1-2c-depth-to-back-393": {
   "screen_title": "Meetings",
-  "clock": "10:29 PM",
+  "clock": "11:12 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -11798,6 +11925,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -11816,7 +11952,7 @@
  },
  "C1-2e-strip-menu-open-393": {
   "screen_title": "Meetings",
-  "clock": "10:29 PM",
+  "clock": "11:12 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -12072,6 +12208,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -12090,7 +12235,7 @@
  },
  "C1-3-material-tokens-393": {
   "screen_title": "Material",
-  "clock": "10:29 PM",
+  "clock": "11:12 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -12298,6 +12443,15 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -12316,7 +12470,7 @@
  },
  "C1-4a-chair-windows-393": {
   "screen_title": "Brief",
-  "clock": "10:29 PM",
+  "clock": "11:12 PM",
   "windows": [
    {
     "name": "Brief",
@@ -12482,6 +12636,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -12500,7 +12663,7 @@
  },
  "C1-4b-chair-week-open-393": {
   "screen_title": "The week",
-  "clock": "10:29 PM",
+  "clock": "11:12 PM",
   "windows": [
    {
     "name": "The week",
@@ -12666,6 +12829,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -12684,7 +12856,7 @@
  },
  "C1-4c-chair-window-closed-393": {
   "screen_title": "The week",
-  "clock": "10:29 PM",
+  "clock": "11:12 PM",
   "windows": [
    {
     "name": "The week",
@@ -12850,6 +13022,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -12868,7 +13049,7 @@
  },
  "C1-4d-window-menu-chair-393": {
   "screen_title": "The week",
-  "clock": "10:29 PM",
+  "clock": "11:12 PM",
   "windows": [
    {
     "name": "The week",
@@ -13046,6 +13227,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -13064,7 +13254,7 @@
  },
  "C1-4e-chair-window-reopened-393": {
   "screen_title": "Brief",
-  "clock": "10:29 PM",
+  "clock": "11:12 PM",
   "windows": [
    {
     "name": "Brief",
@@ -13230,6 +13420,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -13248,7 +13447,7 @@
  },
  "C1-5a-meeting-selected-park-393": {
   "screen_title": "Meetings",
-  "clock": "10:29 PM",
+  "clock": "11:12 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -13451,6 +13650,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -13469,7 +13677,7 @@
  },
  "C1-5b-meeting-parked-receipt-393": {
   "screen_title": "Meetings",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -13672,6 +13880,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -13690,7 +13907,7 @@
  },
  "C1-5c-meetings-parked-filter-393": {
   "screen_title": "Meetings",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -13893,6 +14110,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -13911,7 +14137,7 @@
  },
  "C1-5d-meeting-restored-393": {
   "screen_title": "Meetings",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -14114,6 +14340,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -14132,7 +14367,7 @@
  },
  "C1-5e-meeting-restore-failed-393": {
   "screen_title": "Meetings",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -14335,6 +14570,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -14353,7 +14597,7 @@
  },
  "C1-5f-workbench-item-parked-393": {
   "screen_title": "Ledger cutover bench",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -14609,6 +14853,15 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -14627,7 +14880,7 @@
  },
  "C1-5g-workbench-parked-filter-393": {
   "screen_title": "Ledger cutover bench",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -14860,6 +15113,15 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -14878,7 +15140,7 @@
  },
  "C1-5h-workbench-item-restored-393": {
   "screen_title": "Ledger cutover bench",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -15149,6 +15411,22 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Item body",
+    "b": "Speak Item body",
+    "w": 44,
+    "h": 44,
+    "waiver": "mic"
+   },
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -15167,7 +15445,7 @@
  },
  "C1-5i-workbench-claimed-refused-393": {
   "screen_title": "Ledger cutover bench",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -15438,6 +15716,22 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Item body",
+    "b": "Speak Item body",
+    "w": 44,
+    "h": 44,
+    "waiver": "mic"
+   },
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -15456,7 +15750,7 @@
  },
  "C1-5j-workbench-clear-done-parked-393": {
   "screen_title": "Ledger cutover bench",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -15716,6 +16010,22 @@
    ]
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Item body",
+    "b": "Speak Item body",
+    "w": 44,
+    "h": 44,
+    "waiver": "mic"
+   },
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -15734,7 +16044,7 @@
  },
  "C1-6a-phone-desk-393": {
   "screen_title": "Needs you",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -15904,6 +16214,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -15926,7 +16245,7 @@
  },
  "C1-6b-phone-window-sheet-393": {
   "screen_title": "People",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -16121,6 +16440,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -16139,7 +16467,7 @@
  },
  "C1-8a-dock-ready-and-sent-393": {
   "screen_title": "Needs you",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -16310,6 +16638,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -16328,7 +16665,7 @@
  },
  "C1-8b-dock-send-failed-unknown-393": {
   "screen_title": "Needs you",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -16499,6 +16836,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -16517,7 +16863,7 @@
  },
  "C1-8c-dock-offline-393": {
   "screen_title": "Needs you",
-  "clock": "10:29 PM",
+  "clock": "11:13 PM",
   "windows": [
    {
     "name": "Needs you",
@@ -16680,6 +17026,15 @@
    "ellipsis": []
   },
   "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover, 3 n",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
   "shelf": {
    "cut": [],
    "whole": [
@@ -16695,6 +17050,21 @@
   "targets_under_44": [],
   "content_px": 704,
   "intended_front": "Needs you"
+ },
+ "_mutation_393": {
+  "c_more": {
+   "injected": "ok",
+   "target": "",
+   "caught": [
+    {
+     "a": "More AppIcons",
+     "b": "STRAY TEXT",
+     "w": 48,
+     "h": 32
+    }
+   ],
+   "waived": []
+  }
  },
  "_cmp_steel_chair_393": {
   "low_contrast": []

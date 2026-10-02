@@ -1,6 +1,6 @@
 # PHILO-13-11 (C1) canvas: the Workbench look
 
-**Status: DRAFT, round 3c (Astra canvas r2's two conditions paid on top of round 3b), for Astra's re-check and the owner's ratification** (UX-CANON §A.2: the canvas before the build). Round three pays Astra's check r1 DO-NOT-RATIFY on `1467d9173` (`/Users/karol/dev/tools/HoldSpeak/.tmp/two-brains/20261001-203130-check-p13-canvas-r1/last.md`) with Muad'Dib's rulings R1–R8. Nothing here is built in product code. Every change lives under `harness/`. The review page is `index.html` in this folder: every board at 1440 × 900 (left) and 393 × 852 (right). The settled design for the build is `../../design/workbench-look.md`.
+**Status: DRAFT, round 3d (Astra canvas r3: the overlap waivers narrowed to their exact relationships, with a mutation proof; the boards are unchanged), for Astra's re-check and the owner's ratification** (UX-CANON §A.2: the canvas before the build). Round three pays Astra's check r1 DO-NOT-RATIFY on `1467d9173` (`/Users/karol/dev/tools/HoldSpeak/.tmp/two-brains/20261001-203130-check-p13-canvas-r1/last.md`) with Muad'Dib's rulings R1–R8. Nothing here is built in product code. Every change lives under `harness/`. The review page is `index.html` in this folder: every board at 1440 × 900 (left) and 393 × 852 (right). The settled design for the build is `../../design/workbench-look.md`.
 
 Sources: the story (`../../story-11-c1-the-workbench-look.md`), the charter (`../../current-phase-status.md`, fork 1 "All the way"), the grounding (`docs/internal/philo/phase-13/grounding/faces-jobs.md` §3; before-shots `grounding/shots/surfaces/01-chair-pop-1440.png`, `01-chair-pop-393.png`, `64-room-pop-1440.png`), A1 (`../../story-02-a1-park-never-delete.md`), A2 (`../../story-03-a2-one-meaning-of-needs-you.md`), C3 (`../../story-13-c3-a-live-dock.md`), C7 (`../../story-17-c7-the-phone-desk.md`), `docs/internal/UX-CANON.md`.
 
@@ -22,6 +22,8 @@ Sources: the story (`../../story-11-c1-the-workbench-look.md`), the charter (`..
 | 393: targets under 44 × 44 | 0 on 26 boards |
 | Sideways-scrolling strips / clipped texts | 0 / 0 |
 | Rendered overlaps | 0 |
+| Overlap waivers used (each its exact relationship) | mic: 6 pairs (Item body / Speak Item body); more: 26 pairs (Payments ledger cutover, 3 n / More AppIcons); sticky: 3 pairs (SINCE YOU LOOKED / Ask this project) |
+| Mutation proof (injected near misses, each must be CAUGHT) | a_sticky at 1440: CAUGHT (Clear here / MUTANT A); b_mic at 1440: CAUGHT (New item instruction / Speak Item body); c_more at 393: CAUGHT (More AppIcons / STRAY TEXT) |
 | Ellipsis lines (recorded, allowed by A.6) | `Check reconciliation timings`, `Draft rollback runbook`, `Ledger cutover bench`, `Material · Workbench Steel`, `Payments ledger cutover`, `Rerun shard benchmark` |
 | Needs-you numbers (head, bell, Intelligence, Desk memory) | ('not on the glass', 8, 8, 8) on 5 boards; (8, 8, 8, 8) on 45 boards (the Chair head is off the glass when a window fills the 393 work area) |
 | Active projects missing from the Dock / zero badges | 0 / 0 |
@@ -34,11 +36,21 @@ Red before, round three: `shots/red-before-r3.json`, 28 boards red of 28 measure
 Red before, round 3b (`e23ce53d`): `shots/red-before-r3b.json`, 4 boards red of 50 measured.
 <!-- generated:measurements:end -->
 
+## Round 3d: Astra canvas r3 (`/Users/karol/dev/tools/HoldSpeak/.tmp/two-brains/*-p13-canvas-r3/last.md`): the waivers, exactly
+
+The rendered-overlap fence (`harness/shoot.py`, `OVERLAP`) waives a pair ONLY by one of three relationships, each a named function, each waived pair recorded (`overlap_waived` in `shots/facts.json`; summary in the generated block):
+
+- **(a) sticky** (`waiveSticky`): one element is in a sticky or fixed bar of its window; the other is that window's scrolling content passing beneath it. Fixed bar: the other element's scroll container is its ancestor and NOT the bar's. Sticky bar: CSS makes a sticky bar stick INSIDE its scroll container, so the rule is that the bar sticks to the other element's scroll container, the other element is not in the bar, and the overlap lies inside the bar's box.
+- **(b) mic** (`waiveMic`): an input or textarea and a mic button whose nearest common ancestor is that field's wrapper (its parent or grandparent), the wrapper holds no other text field, and the mic's box is inside the input's box.
+- **(c) More** (`waiveMore`): the Dock's More gadget and an AppIcon of the same shelf that begins left of More and runs on under it.
+
+**The mutation proof** (`MUTATE`; facts `_mutation_1440`, `_mutation_393`; the boards are shot before it runs and it removes what it injected): three near misses, one per waiver, each must be CAUGHT. (a) a Button that lives in the Room's sticky Ask bar, moved over a body row that is NOT beneath the bar; (b) a mic button placed over a DIFFERENT text field of the Workbench window (no shared field wrapper); (c) a stray text element of the shelf placed under More (not an AppIcon). The result is in the generated block. Red before for the boards stays `shots/red-before-r3b.json`.
+
 ## Round 3c: Astra canvas r2 (`/Users/karol/dev/tools/HoldSpeak/.tmp/two-brains/*-p13-canvas-r2/last.md`)
 
 | Astra r2 | The canvas now |
 |---|---|
-| 1 C1-5a-393: the `NO SUMMARY ROUTE · NO ASSIGNMENT` warning ran under `MD` / `SRT` | The footer at 393 is two rows by explicit grid areas: the egress chip, then the receipt and the verbs (round three's rule set columns but kept the inherited one-row areas, so it never took). **New fence: rendered overlap** — no two visible interactive or text elements of one window (or bar, shelf, menu) intersect by more than 2 × 2 px where the glass at the centre shows one of them, a parent and its descendant excepted. Named exceptions: content scrolling under a sticky or fixed bar of its own window (the Room's Ask composer), the in-well MicButton inside its field, an icon scrolled under the Dock's More gadget. The fence also found the Dock's state tag sitting on its count (`SENT 14:02` over `8`, 1440) and `SEND FAILED` running into the next icon (393): at 1440 the tag takes the icon's top-left and the count its top-right; at 393 the Meetings tag reads `FAILED` (the icon's name says Meetings). Red before: `shots/red-before-r3b.json` (`e23ce53d`'s harness, fence code identical). |
+| 1 C1-5a-393: the `NO SUMMARY ROUTE · NO ASSIGNMENT` warning ran under `MD` / `SRT` | The footer at 393 is two rows by explicit grid areas: the egress chip, then the receipt and the verbs (round three's rule set columns but kept the inherited one-row areas, so it never took). **New fence: rendered overlap** — no two visible interactive or text elements of one window (or bar, shelf, menu) intersect by more than 2 × 2 px where the glass at the centre shows one of them, a parent and its descendant excepted. Three waivers, narrowed to their exact relationships in round 3d (above). The fence also found the Dock's state tag sitting on its count (`SENT 14:02` over `8`, 1440) and `SEND FAILED` running into the next icon (393): at 1440 the tag takes the icon's top-left and the count its top-right; at 393 the Meetings tag reads `FAILED` (the icon's name says Meetings). Red before: `shots/red-before-r3b.json` (`e23ce53d`'s harness, fence code identical). |
 | 2 Stale proof text | Every count is generated (the block above). The ranking-strip and wings rules in `harness/canvas.css` no longer scroll and their comments say so; the stale R3 line is corrected below; the design doc carries no totals and points here. |
 
 ## Round 3b: nothing clips, nothing scrolls sideways (Muad'Dib's ruling; HS-200-12 stands)

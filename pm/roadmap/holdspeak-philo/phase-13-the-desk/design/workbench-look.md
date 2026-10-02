@@ -1,6 +1,6 @@
 # The Workbench look (PHILO-13-11, C1) — the settled design for build
 
-**Status: DRAFT, round 3c (Astra canvas r2 paid: the 393 footer collision and a rendered-overlap fence; every measured count now lives in the canvas README's generated block, not here), for Astra's re-check and the owner's ratification.** The canvas is `../assets/story-11-canvas/` (README, `index.html`, `shots/`). Nothing is built in product code. When the owner ratifies, his word goes here verbatim, and the build matches the boards, board beside shot (UX-CANON §A.2).
+**Status: DRAFT, round 3d (the overlap fence's waivers narrowed, with a mutation proof; harness only). Round 3c (Astra canvas r2 paid: the 393 footer collision and a rendered-overlap fence; every measured count now lives in the canvas README's generated block, not here), for Astra's re-check and the owner's ratification.** The canvas is `../assets/story-11-canvas/` (README, `index.html`, `shots/`). Nothing is built in product code. When the owner ratifies, his word goes here verbatim, and the build matches the boards, board beside shot (UX-CANON §A.2).
 
 The owner, 2026-10-01: "The whoe Workbench 2.0+ on steroids needs to really lean on steroids." Fork 1: "All the way".
 
@@ -127,7 +127,7 @@ The canvas draws the Desk after A2, not today's contradictions:
 - Capture is on demand: the Speak AppIcon (a daily seat) or the pop-key (C6); no permanent strip.
 - Every target owns a 44 × 44 box at 393 (fenced by nine points): screen-bar controls, gadgets, the strip menu Buttons, shelf icons, menu rows, body controls. The first `Done` is whole on the first screen. Nothing scrolls sideways except the Dock (§3a).
 - The footer at 393 is two rows by explicit grid areas (`"egress egress" "receipt verbs"`): the egress chip, then the receipt and the verbs, so a warning never runs under `MD`/`SRT` (round 3c; fenced by the rendered-overlap fence).
-- **No rendered overlap** (round 3c): no two visible interactive or text elements of one window, bar, shelf or menu intersect; named exceptions: content scrolling under a sticky bar of its own window, the in-well MicButton, an icon scrolled under the Dock's More gadget. On the shelf, a state tag and a count never share a box: at 1440 the tag takes the icon's top-left and the count its top-right (an icon with both is at least 128 px); at 393 the tag rides the foot and reads short (`FAILED` for `SEND FAILED`).
+- **No rendered overlap** (round 3c): no two visible interactive or text elements of one window, bar, shelf or menu intersect; three waivers, each exactly its relationship (round 3d): content scrolling beneath a sticky or fixed bar of its own window; the in-well MicButton inside ITS field; a Dock AppIcon partly scrolled under More. A mutation proof injects one near miss per waiver and must catch each (canvas README, round 3d). On the shelf, a state tag and a count never share a box: at 1440 the tag takes the icon's top-left and the count its top-right (an icon with both is at least 128 px); at 393 the tag rides the foot and reads short (`FAILED` for `SEND FAILED`).
 
 ## 6. The AppIcon shelf and live state (→ `window/Dock.tsx` logic by H-C3; `dock.css` by C3-W)
 

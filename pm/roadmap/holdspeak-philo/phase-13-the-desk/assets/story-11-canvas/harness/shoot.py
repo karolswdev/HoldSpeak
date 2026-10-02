@@ -262,44 +262,108 @@ CLIP = "() => {" + JS_LIB + r"""
 # shelf, menu) intersect, a parent and its own descendant excepted. Text elements are the elements
 # that hold a text node of their own. An intersection counts when it is more than 2 × 2 px and the
 # glass at its centre shows one of the two (a third element over both is occlusion, not a collision).
-# Named exceptions: content scrolling under a sticky or fixed bar of its own window; the in-well
-# MicButton inside its field; an icon scrolled under the Dock's More gadget.
+# Three waivers, each exactly its relationship (round 3d; see the functions): (a) content scrolling
+# beneath a sticky/fixed bar of its own window; (b) the in-well MicButton inside ITS field; (c) a Dock
+# AppIcon partly scrolled past the shelf's edge under More. Every waived pair is recorded.
 OVERLAP = "() => {" + JS_LIB + r"""
   const isText = (e) => [...e.childNodes].some((n) => n.nodeType === 3 && /[A-Za-z0-9]/.test(n.textContent));
   const isCtl = (e) => e.matches('button, a[href], input, select, textarea, [role=button], [role=tab], [role^=menuitem], [role=checkbox]');
   const scope = (e) => e.closest('[role=menu], .desk-window-shell:not(.p13-sample-win), .desk-menubar, .desk-dock, .p13-sheet-host') || document.body;
+  const R = (e) => e.getBoundingClientRect();
+  const inside = (r, o, tol = 1) => r.left >= o.left - tol && r.right <= o.right + tol && r.top >= o.top - tol && r.bottom <= o.bottom + tol;
+  // the nearest sticky or fixed bar of e, strictly inside its window (the window shell itself is not a bar)
+  const barOf = (e, sc) => { for (let p = e; p && p !== sc; p = p.parentElement) { const ps = getComputedStyle(p).position; if (ps === 'sticky' || ps === 'fixed') return p; } return null; };
+  // the nearest vertical scroll container of e, strictly inside its window
+  const scrollerOf = (e, sc) => { for (let p = e.parentElement; p && p !== sc; p = p.parentElement) { const oy = getComputedStyle(p).overflowY; if (oy === 'auto' || oy === 'scroll') return p; } return null; };
+
+  // WAIVER (a): x sits in a sticky/fixed bar of its window; y is that window's scrolling content passing
+  // beneath the bar. Fixed bar: y's scroll container is an ancestor of y and NOT of the bar. Sticky bar: a
+  // sticky bar sticks INSIDE its scroll container (CSS), so: the bar sticks to y's scroll container, y is not
+  // in the bar, and the overlap lies within the bar's box.
+  const waiveSticky = (x, y, sc, ov) => {
+    const bar = barOf(x.e, sc); if (!bar || bar.contains(y.e) || barOf(y.e, sc) === bar) return false;
+    const S = scrollerOf(y.e, sc); if (!S || !S.contains(y.e)) return false;
+    const ps = getComputedStyle(bar).position;
+    const fixedOk = ps === 'fixed' && !S.contains(bar);
+    const stickyOk = ps === 'sticky' && scrollerOf(bar, sc) === S;
+    return (fixedOk || stickyOk) && inside(ov, R(bar));
+  };
+  // WAIVER (b): the in-well MicButton and ITS field: x is an input/textarea, y is a mic button; their nearest
+  // common ancestor is x's field wrapper (x's parent or grandparent) holding no other text field; the mic's box
+  // is inside the input's box.
+  const waiveMic = (x, y) => {
+    if (!x.e.matches('input, textarea')) return false;
+    const mic = y.e.closest('button.desk-mic, button[class*=mic], .desk-mic button, [class*=mic] > button, button[aria-label^=Speak]');
+    if (!mic) return false;
+    let c = x.e.parentElement; while (c && !c.contains(mic)) c = c.parentElement;
+    if (!c || !(c === x.e.parentElement || c === x.e.parentElement?.parentElement)) return false;
+    if ([...c.querySelectorAll('input, textarea')].filter((f) => f !== x.e).length) return false;
+    return inside(R(mic), R(x.e));
+  };
+  // WAIVER (c): the Dock's More gadget over an AppIcon of the same shelf that is partly scrolled past the
+  // shelf's visible edge (the icon begins left of More and runs on under it).
+  const waiveMore = (x, y) => {
+    const more = x.e.closest('.p13-dock-more'); if (!more) return false;
+    const icon = y.e.closest('.desk-dock-launch'); if (!icon || icon.parentElement !== more.parentElement) return false;
+    const ir = R(icon), mr = R(more);
+    return ir.left < mr.left && ir.right > mr.left + 1;
+  };
+
   const els = [];
   for (const e of document.querySelectorAll('body *')) {
     if (!(isText(e) || isCtl(e))) continue;
     if (!shown(e) || e.closest('[aria-hidden=true], .p13-sample-stack, svg')) continue;
     const r = e.getBoundingClientRect(); if (r.width < 3 || r.height < 3) continue;
     if (isText(e) && parseFloat(getComputedStyle(e).fontSize) === 0) continue;
-    // the box as the glass shows it: clipped by scrolling/clipping ancestors
-    const v = vrect(e); if (v.w < 3 || v.h < 3) continue;
-    const sc = scope(e); let k = null;
-    for (let p = e; p && p !== sc; p = p.parentElement) { const ps = getComputedStyle(p).position; if (ps === 'sticky' || ps === 'fixed') { k = p; break; } }
-    els.push({ e, v, s: sc, k });
+    const v = vrect(e); if (v.w < 3 || v.h < 3) continue;   // the box as the glass shows it
+    els.push({ e, v, s: scope(e) });
   }
-  const hits = [];
+  const hits = [], waived = [];
+  const name = (e) => ((e.getAttribute('aria-label') || e.innerText || e.className || '') + '').replace(/\s+/g, ' ').trim().slice(0, 28);
   for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
     const a = els[i], b = els[j];
     if (a.s !== b.s || a.e.contains(b.e) || b.e.contains(a.e)) continue;
-    // content scrolling under a sticky bar of its own window (the Room's Ask composer) is scrolling, not a collision
-    if (a.k !== b.k) continue;
-    // the in-well MicButton sits inside its text field by design (UX-CANON B: the mic on every input)
-    if ((a.e.matches('input, textarea') && b.e.closest('.desk-mic, [class*=mic]')) || (b.e.matches('input, textarea') && a.e.closest('.desk-mic, [class*=mic]'))) continue;
-    // the Dock's More gadget pages the shelf: an icon scrolled under it is the next page, not a collision
-    if (a.e.closest('.p13-dock-more') || b.e.closest('.p13-dock-more')) continue;
     const l = Math.max(a.v.l, b.v.l), r = Math.min(a.v.r, b.v.r), t = Math.max(a.v.t, b.v.t), bt = Math.min(a.v.b, b.v.b);
     if (r - l <= 2 || bt - t <= 2) continue;
     const h = document.elementFromPoint((l + r) / 2, (t + bt) / 2);
     if (!h || !(a.e.contains(h) || b.e.contains(h) || h.contains(a.e) || h.contains(b.e))) continue;
-    const name = (e) => ((e.getAttribute('aria-label') || e.innerText || e.className || '') + '').replace(/\s+/g, ' ').trim().slice(0, 28);
-    hits.push({ a: name(a.e), b: name(b.e), w: Math.round(r - l), h: Math.round(bt - t) });
-    if (hits.length > 40) return hits;
+    const ov = { left: l, right: r, top: t, bottom: bt };
+    const why = (waiveSticky(a, b, a.s, ov) || waiveSticky(b, a, a.s, ov)) ? 'sticky' : (waiveMic(a, b) || waiveMic(b, a)) ? 'mic' : (waiveMore(a, b) || waiveMore(b, a)) ? 'more' : null;
+    const rec = { a: name(a.e), b: name(b.e), w: Math.round(r - l), h: Math.round(bt - t) };
+    if (why) { waived.push({ ...rec, waiver: why }); continue; }
+    hits.push(rec);
+    if (hits.length > 40) break;
   }
-  return hits;
+  return { hits, waived };
 }"""
+
+# 3d: THE MUTATION PROOF. Three injected overlaps, each the near miss of one waiver; the fence must
+# catch every one (red), and the boards without them stay green.
+PLACE = r"""const place = (el, x, y) => { el.style.position = 'fixed'; el.style.left = x + 'px'; el.style.top = y + 'px';
+      const r = el.getBoundingClientRect(); el.style.left = (x + (x - r.left)) + 'px'; el.style.top = (y + (y - r.top)) + 'px'; };"""
+MUTATE = {
+    # (a) a button inside the Room's sticky Ask bar, moved over the window's own title (not content
+    #     scrolling beneath the bar)
+    "a_sticky": "() => { " + PLACE + r""" const bar = document.querySelector('.room-ask-container'); if (!bar) return 'no bar';
+      // a button that lives IN the sticky bar, moved up over a text row of the body that is NOT beneath the bar
+      const br = bar.getBoundingClientRect(); const body = bar.closest('.desk-surface-body');
+      const t = [...body.querySelectorAll('*')].find((e) => !bar.contains(e) && [...e.childNodes].some((n) => n.nodeType === 3 && /[A-Za-z]/.test(n.textContent)) && e.getBoundingClientRect().bottom < br.top - 20 && e.getBoundingClientRect().top > body.getBoundingClientRect().top + 10);
+      if (!t) return 'no target'; const r = t.getBoundingClientRect(); const b = document.createElement('button'); b.className = 'btn p13-mutant'; b.textContent = 'MUTANT A';
+      Object.assign(b.style, { width: Math.max(80, r.width) + 'px', height: Math.max(20, r.height) + 'px', zIndex: 9999 }); bar.appendChild(b); place(b, r.left, r.top);
+      window.__p13MutantTarget = (t.innerText || '').trim().slice(0, 20); return 'ok'; }""",
+    # (b) a mic, not of this field, placed over a DIFFERENT field of the same window (it shares no field wrapper with it)
+    "b_mic": "() => { " + PLACE + r""" const w = document.querySelector('.desk-window-shell[data-p13-front]'); if (!w) return 'no window';
+      const mic = [...w.querySelectorAll('button')].find((b) => /^Speak/.test(b.getAttribute('aria-label') || ''));
+      const body = w.querySelector('.desk-surface-body') || w;
+      const fields = [...body.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]), textarea')].filter((f) => f.getBoundingClientRect().width > 60 && f.getBoundingClientRect().height > 20);
+      const other = fields.find((f) => { let c = f.parentElement; for (let i = 0; i < 2 && c; i++, c = c.parentElement) if (c.contains(mic)) return false; return true; });
+      if (!mic || !other) return 'no target'; const r = other.getBoundingClientRect(); const m = mic.cloneNode(true); m.classList.add('p13-mutant');
+      m.style.zIndex = 9999; body.appendChild(m); place(m, r.left + 30, r.top + 2); window.__p13MutantTarget = other.getAttribute('aria-label') || other.getAttribute('placeholder') || ''; return 'ok'; }""",
+    "c_more": "() => { " + PLACE + r""" const more = document.querySelector('.p13-dock-more'); if (!more) return 'no target'; const r = more.getBoundingClientRect();
+      const s = document.createElement('span'); s.className = 'p13-mutant'; s.textContent = 'STRAY TEXT'; Object.assign(s.style, { font: '700 14px monospace', zIndex: 1 });
+      more.parentElement.appendChild(s); place(s, r.left - 30, r.top + 10); return 'ok'; }""",
+}
+UNMUTATE = "() => document.querySelectorAll('.p13-mutant').forEach((e) => e.remove())"
 
 
 def run(width: int, height: int, state: dict | None) -> tuple[list[str], dict]:
@@ -423,7 +487,8 @@ def boards(page, width: int, url: str, seed: dict, facts: dict, fails: list[str]
         f["low_contrast"] = ev(CONTRAST_ALL)
         f["dockfacts"] = ev(DOCKFACTS)
         f["clip"] = ev(CLIP)
-        f["overlap"] = ev(OVERLAP)
+        ov = ev(OVERLAP)
+        f["overlap"], f["overlap_waived"] = ov["hits"], ov["waived"]
         if phone:
             f["shelf"] = ev(SHELF)
             f["targets_under_44"] = ev(TARGETS44)
@@ -672,6 +737,43 @@ def boards(page, width: int, url: str, seed: dict, facts: dict, fails: list[str]
     live(offline="20:24")
     shoot("C1-8c-dock-offline", "Needs you")
     live()
+
+    # ── 3d: the mutation proof (no board; the facts are `_mutation_<width>`) ──
+    if not REHEARSE and not ONLY:
+        proof = {}
+        def caught(tag: str, setup) -> None:
+            setup()
+            res = ev(MUTATE[tag])
+            settle(400)
+            ov = ev(OVERLAP)
+            pair = lambda h, x, y: (x in h["a"] and y in h["b"]) or (x in h["b"] and y in h["a"])
+            target = ev("() => window.__p13MutantTarget || ''")
+            want = {"a_sticky": lambda h: "MUTANT A" in h["a"] + h["b"],   # the bar's button over a body row NOT beneath the bar
+                    "b_mic": lambda h: h["a"].startswith("Speak") != h["b"].startswith("Speak") and (target[:12] in h["a"] + h["b"] if target else True),   # the mic over ANOTHER field
+                    "c_more": lambda h: pair(h, "More AppIcons", "STRAY TEXT")}[tag]
+            hit = [h for h in ov["hits"] if want(h)]
+            proof[tag] = {"injected": res, "target": ev("() => window.__p13MutantTarget || ''"), "caught": hit[:3], "waived": [w for w in ov["waived"] if "MUTANT" in (w["a"] + w["b"]) or "STRAY" in (w["a"] + w["b"])]}
+            ev(UNMUTATE)
+            settle(300)
+            if res != "ok" or not hit:
+                fails.append(f"3d mutation {tag}-{width}: the fence did not catch the injected overlap ({res}, {proof[tag]})")
+        if not phone:
+            def room():
+                close_all(); ev("(p) => window.__p13Open.room(p)", "p-ledger"); settle(3000)
+            caught("a_sticky", room)
+            def bench():
+                close_all(); ev("(r) => window.__p13Open.open(r)", f"workbench:{seed['workbench']}"); settle(3000)
+                w = page.locator(".desk-window-shell[data-p13-front]").last
+                c = w.locator("button:has-text('Collapse')")
+                if c.count():
+                    jsclick(c)
+                jsclick(w.locator(":text('Draft rollback runbook')"))
+            caught("b_mic", bench)
+            close_all()
+        else:
+            caught("c_more", lambda: (close_all(), ev("() => window.__p13.openChair('needs')"), settle(500)))
+        facts[f"_mutation_{width}"] = proof
+        print("mutation", width, json.dumps(proof)[:600], flush=True)
 
     # ── C1-7 the comparison (two states) ──
     if not REHEARSE and (not ONLY or ONLY.startswith("C1-7")):

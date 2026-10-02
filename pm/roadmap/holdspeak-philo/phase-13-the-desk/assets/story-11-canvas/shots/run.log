@@ -22,6 +22,7 @@ C1-5j-workbench-clear-done-parked-1440 front Ledger cutover bench blue ['Ledger 
 C1-8a-dock-ready-and-sent-1440 front Needs you blue ['Needs you'] lowc [] own-lost [] t44 [] content None small []
 C1-8b-dock-send-failed-unknown-1440 front Needs you blue ['Needs you'] lowc [] own-lost [] t44 [] content None small []
 C1-8c-dock-offline-1440 front Needs you blue ['Needs you'] lowc [] own-lost [] t44 [] content None small []
+mutation 1440 {"a_sticky": {"injected": "ok", "target": "", "caught": [{"a": "Clear here", "b": "MUTANT A", "w": 165, "h": 28}], "waived": []}, "b_mic": {"injected": "ok", "target": "New item instruction", "caught": [{"a": "New item instruction", "b": "Speak Item body", "w": 34, "h": 34}], "waived": []}}
 C1-1-the-desk-393 front Needs you blue ['Needs you'] lowc [] own-lost [] t44 [] content 704 small []
 C1-2a-window-gadgets-393 front Payments ledger cutover blue ['Payments ledger cutover'] lowc [] own-lost [] t44 [] content 704 small []
 C1-2b-window-menu-amiga-keys-393 front Payments ledger cutover blue ['Payments ledger cutover'] lowc [] own-lost [] t44 [] content 704 small []
@@ -48,6 +49,7 @@ C1-6b-phone-window-sheet-393 front People blue ['People'] lowc [] own-lost [] t4
 C1-8a-dock-ready-and-sent-393 front Needs you blue ['Needs you'] lowc [] own-lost [] t44 [] content 704 small []
 C1-8b-dock-send-failed-unknown-393 front Needs you blue ['Needs you'] lowc [] own-lost [] t44 [] content 704 small []
 C1-8c-dock-offline-393 front Needs you blue ['Needs you'] lowc [] own-lost [] t44 [] content 704 small []
+mutation 393 {"c_more": {"injected": "ok", "target": "", "caught": [{"a": "More AppIcons", "b": "STRAY TEXT", "w": 48, "h": 32}], "waived": []}}
 
 ALL FENCES HELD
 EXIT 0
