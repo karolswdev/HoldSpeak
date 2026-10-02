@@ -2342,6 +2342,12 @@ function MeetingsSection({
             (rowMeeting.segments?.length ?? 0) > 0 ||
             (rowMeeting.transcriptWords != null && rowMeeting.transcriptWords > 0);
           const isOff = badge === "OFF";
+          // PHILO-13-04 (A3): OFF names the run switch. A meeting that holds
+          // a summary says so, never OFF above its own summary (J2-02).
+          const shownBadge =
+            isOff && String(rowMeeting.intelSummary ?? "").trim()
+              ? "SUMMARY STORED"
+              : badge;
           const isComplete = badge === "RAN" || badge === "SAVED";
           // HS-201-04 (Article III): the route this row's Run WILL use,
           // read before the click; the refusal's fresh route wins.
@@ -2371,10 +2377,10 @@ function MeetingsSection({
                   ) : (
                     <span
                       className="arrival-meeting-badge"
-                      data-badge={badge.toLowerCase().replace(/\s+/g, "-")}
+                      data-badge={shownBadge.toLowerCase().replace(/\s+/g, "-")}
                       data-testid="arrival-meeting-badge"
                     >
-                      {badge}
+                      {shownBadge}
                     </span>
                   )}
                   {/* After the run: the destinations actually contacted. */}

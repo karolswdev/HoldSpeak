@@ -35,6 +35,9 @@ export interface WriteFailure {
   /** What the failed write was about (e.g. "decision:abc"), so a later
    *  landed write clears only its own failure. */
   subject?: string;
+  /** PHILO-13-04 — the face's own state when "<VERB> FAILED" is not the
+   *  truth to show (a refused start is "NOT RECORDING · <why>"). */
+  label?: string;
 }
 
 export type WriteResult<T> =
@@ -76,7 +79,7 @@ export function writeFailureDetail(cause: unknown): string | undefined {
 
 /** The one label every write refusal wears. */
 export function writeFailureLabel(failure: WriteFailure): string {
-  return `${failure.verb} FAILED · ${failure.reason}`;
+  return failure.label ?? `${failure.verb} FAILED · ${failure.reason}`;
 }
 
 /** A resolved Response that the hub refused is a failure too (no throw). */
@@ -223,6 +226,7 @@ export function reportWriteFailure(
   cause: unknown,
   retry?: () => void,
   subject?: string,
+  label?: string,
 ): WriteFailure {
   const failure: WriteFailure = {
     verb: verb.toUpperCase(),
@@ -230,6 +234,7 @@ export function reportWriteFailure(
     retry: retry ?? null,
     detail: writeFailureDetail(cause),
     subject,
+    ...(label ? { label } : {}),
   };
   publish(failure);
   return failure;

@@ -8,6 +8,7 @@ import { ledgerDate, durationToken, stateToken, intelDurationToken } from "./hel
 import { EgressChip } from "../../../desk/surface/gadgets";
 import { egressFor } from "../../../desk/surface/egress";
 import type { MeetingData } from "./useMeetingData";
+import { readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
 
 export function MeetingHeader({
   meeting,
@@ -23,7 +24,14 @@ export function MeetingHeader({
 }) {
   const { detail, startedAt, durationS } = data;
   const source = detail ?? meeting;
-  const token = stateToken(source);
+  const runToken = stateToken(source);
+  // PHILO-13-04 (A3): a meeting that holds a summary says STORED, never
+  // "SUMMARY OFF" above its own summary (J2-02). OFF names the run switch;
+  // the record's fact is what it stores.
+  const stored = Boolean(String(readMeetingIntel(source)?.summary ?? "").trim());
+  const token = runToken.label === "OFF" && stored
+    ? { ...runToken, label: "STORED" }
+    : runToken;
   const title = String(detail?.title ?? meeting.title ?? "Meeting");
   const dateStr = ledgerDate(startedAt);
   // HS-201-10: `|| "1 MIN"` was the floor this header put under the token,

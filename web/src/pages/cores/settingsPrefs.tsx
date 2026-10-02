@@ -512,9 +512,13 @@ export function PrefsFace({
           onToggle={() => onOpen("meetings")}
           trailing={openVerb("meetings")}
           cells={<>
+            {/* PHILO-13-04 (A3): this row reads the CONFIGURED switch, so it
+                says SET; whether an engine can run now is the Chair's fact
+                ("No engine for summaries"), and a stored summary is the
+                record's. No green: a setting is not a result (A.10). */}
             {hub.meetings.intelligence
-              ? <StateChip state="success" label={`SUMMARY ON${hub.meetings.auto && hub.meetings.auto !== "off" ? ` · ${autoLabel(hub.meetings.auto)}` : ""}`} />
-              : <StateChip state="warning" label="SUMMARY OFF" />}
+              ? <StateChip state="idle" label={`SUMMARY SET ON${hub.meetings.auto && hub.meetings.auto !== "off" ? ` · ${autoLabel(hub.meetings.auto)}` : ""}`} />
+              : <StateChip state="warning" label="SUMMARY SET OFF" />}
           </>}
         />
         {/* Rhythm: EVERY N MIN · NEXT HH:MM when sweep runs; NO LOOPS only at zero + no sweep */}

@@ -27,6 +27,7 @@ import { SYSTEM } from "../systemSprites";
 import {
   DICTATION_FAILURES,
   dictationFailure,
+  needsMicrophoneDoctor,
   refusalCode,
   streamFailure,
   type DictationFailure,
@@ -37,6 +38,27 @@ import type { VoiceGrammar, VoiceProposal } from "../voice/grammar";
 import { routeVoiceIntent } from "../voice/intentRouter";
 import { play as sfx } from "../../lib/sfx";
 import { Button } from "../../components/signal/Signal";
+import { openSurfaceOr } from "../shell";
+
+/** PHILO-13-04 (A3) — the failure's name, never a sentence (UX-CANON A.3).
+ * The full contract message stays on the mic's title; the recoveries are
+ * library Buttons (J5-02: `Open Setup` was text inside a sentence). */
+const FAILURE_LABEL: Record<DictationFailure, string> = {
+  permission_denied: "MICROPHONE BLOCKED",
+  no_microphone: "NO MICROPHONE",
+  microphone_unavailable: "MICROPHONE DID NOT START",
+  missing_model: "TRANSCRIPTION UNAVAILABLE",
+  rejected_token: "HUB REFUSED ACCESS",
+  unreachable_hub: "HUB UNREACHABLE",
+  delivery_conflict: "NOT DELIVERED",
+  transcription_failed: "TRANSCRIPTION FAILED",
+  timeout: "TIMED OUT",
+  no_speech: "NO SPEECH HEARD",
+  mic_interval_closed: "MIC SESSION CLOSED",
+  provider_failure: "SPEECH PROVIDER FAILED",
+  audio_floor_held: "MICROPHONE IN USE",
+  unknown: "DICTATION DID NOT FINISH",
+};
 
 export type MicState = "idle" | "listening" | "busy" | "failed";
 
@@ -418,13 +440,31 @@ export function MicButton({
         />
       ) : null}
       {failure && !transport ? (
-        <span className="desk-mic-failure" role="status">
-          {failureCode ? (
-            <b className="desk-mic-failure-code">{failureCode}</b>
+        <span
+          className="desk-mic-failure"
+          role="status"
+          title={DICTATION_FAILURES[failure].message}
+        >
+          <b className="desk-mic-failure-code">{failureCode ?? FAILURE_LABEL[failure]}</b>
+          {audioRetained ? " · AUDIO KEPT" : ""}
+          {DICTATION_FAILURES[failure].retry ? (
+            <Button dense variant="ghost" onClick={() => toggle()}>
+              Retry
+            </Button>
           ) : null}
-          {failureCode ? " " : ""}
-          {audioRetained ? "Captured audio is retained locally. " : ""}
-          {DICTATION_FAILURES[failure].message}
+          {DICTATION_FAILURES[failure].setup ? (
+            <Button
+              dense
+              variant="ghost"
+              onClick={() =>
+                needsMicrophoneDoctor(failure)
+                  ? openSurfaceOr("configure-setup", "/")
+                  : openSurfaceOr("project-setup", "/")
+              }
+            >
+              {needsMicrophoneDoctor(failure) ? "Check the microphone" : "Open Setup"}
+            </Button>
+          ) : null}
         </span>
       ) : null}
       <VoiceProposalStrip

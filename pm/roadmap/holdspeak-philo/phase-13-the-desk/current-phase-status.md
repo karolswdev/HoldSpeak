@@ -244,7 +244,7 @@ D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
 
-2026-10-01: **PHILO-13-05 (A4) done** in `wt-philo-13-muaddib` (Fedaykin; Muad'Dib verified): the closed-window ghost fixed at its seam (the card now closes by the id the store keeps); red on main → green in unit (5), glass (4) and the atlas at 1440 and 393; `elementFromPoint` hits the Desk after Close for six openers. PHILO-13-04 (A3) built, shipping next. UNCHECKED — awaiting Astra's counsel on built.
+2026-10-01: **PHILO-13-05 (A4) done** in `wt-philo-13-muaddib` (Fedaykin; Muad'Dib verified): the closed-window ghost fixed at its seam (the card now closes by the id the store keeps); red on main → green in unit (5), glass (4) and the atlas at 1440 and 393; `elementFromPoint` hits the Desk after Close for six openers. PHILO-13-04 (A3) built and committed **in-progress**: acceptance 2 waits on handoff H-A3 (Astra: a stored-summary field on `/api/meetings` rows; the faces lane wires the rail). See the story's Amendment. UNCHECKED — awaiting Astra's counsel on built.
 
 2026-10-01, round two: Astra's check r1 DO-NOT-RATIFY paid on Muad'Dib's rulings (table under "Round two"). Next: Astra's check of r2; then the owner's ratification.
 

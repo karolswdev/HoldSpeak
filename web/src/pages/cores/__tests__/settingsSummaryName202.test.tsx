@@ -41,17 +41,18 @@ function face(intelligence: boolean) {
 }
 
 describe("the Settings hub's Meetings row (F06)", () => {
-  it("says SUMMARY ON, never INTELLIGENCE ON", () => {
+  // PHILO-13-04 (A3): the row names the fact it reads, the configured switch.
+  it("says SUMMARY SET ON, never INTELLIGENCE ON", () => {
     face(true);
     expect(
-      screen.getByText("SUMMARY ON · AFTER ROOM MEETINGS"),
+      screen.getByText("SUMMARY SET ON · AFTER ROOM MEETINGS"),
     ).toBeInTheDocument();
     expect(document.body.textContent ?? "").not.toMatch(/INTELLIGENCE/);
   });
 
-  it("says SUMMARY OFF, never INTELLIGENCE OFF", () => {
+  it("says SUMMARY SET OFF, never INTELLIGENCE OFF", () => {
     face(false);
-    expect(screen.getByText("SUMMARY OFF")).toBeInTheDocument();
+    expect(screen.getByText("SUMMARY SET OFF")).toBeInTheDocument();
     expect(document.body.textContent ?? "").not.toMatch(/INTELLIGENCE/);
   });
 });

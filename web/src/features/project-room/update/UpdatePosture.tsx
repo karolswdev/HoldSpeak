@@ -535,7 +535,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
     return (
       <div className="update-posture" data-testid="update-posture" data-phase="editor">
         {ctrl.error ? (
-          <SurfaceState error={ctrl.error} />
+          <SurfaceState error={ctrl.error} onRetry={ctrl.retryFailed ?? undefined} />
         ) : null}
 
         <UpdateEditor ctrl={ctrl} onOpenRef={onOpenRef} />

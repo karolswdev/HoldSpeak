@@ -121,9 +121,8 @@ describe("MicButton retained audio", () => {
     const retry = await screen.findByRole("button", {
       name: "Retry retained audio",
     });
-    expect(
-      screen.getByText(/Captured audio is retained locally/),
-    ).toBeVisible();
+    // PHILO-13-04 (A3): the retention fact is a name on the face, not a sentence.
+    expect(screen.getByText(/AUDIO KEPT/)).toBeVisible();
 
     fireEvent.click(retry);
 
@@ -395,9 +394,13 @@ describe("MicButton surfaces named refusals (HS-132-05)", () => {
     );
     // the empty final behind the error must not overwrite it
     expect(onFailure).not.toHaveBeenCalledWith("no_speech");
-    expect(
-      screen.getByText(/Click the mic again to continue/),
-    ).toBeVisible();
+    // PHILO-13-04 (A3): the contract's sentence rides the title; the face
+    // shows the server's NAME and the verb that continues (Retry).
+    expect(screen.getByRole("status")).toHaveAttribute(
+      "title",
+      expect.stringMatching(/Click the mic again to continue/),
+    );
+    expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
     expect(screen.getByText("SPEECH CHILD BUDGET EXHAUSTED")).toBeVisible();
   });
 
@@ -465,11 +468,7 @@ describe("MicButton surfaces named refusals (HS-132-05)", () => {
 
     await speakAndStop();
 
-    await waitFor(() =>
-      expect(
-        screen.getByText(/Captured audio is retained locally/),
-      ).toBeVisible(),
-    );
+    await waitFor(() => expect(screen.getByText(/AUDIO KEPT/)).toBeVisible());
     expect(
       screen.getByRole("button", { name: "Retry retained audio" }),
     ).toBeVisible();
@@ -494,10 +493,11 @@ describe("MicButton surfaces named refusals (HS-132-05)", () => {
     await speakAndStop();
 
     await waitFor(() =>
-      expect(screen.getByText(/Retry or type below/)).toBeVisible(),
+      expect(screen.getByRole("status")).toHaveAttribute(
+        "title",
+        expect.stringMatching(/Retry or type below/),
+      ),
     );
-    expect(
-      screen.queryByText(/Captured audio is retained locally/),
-    ).toBeNull();
+    expect(screen.queryByText(/AUDIO KEPT/)).toBeNull();
   });
 });
