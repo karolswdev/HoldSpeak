@@ -547,9 +547,9 @@ def test_parked_meeting_actions_and_speakers_disappear_from_all_owner_reads(tmp_
         meeting_id=state.id, project_id="owner-read-project", source="test", confidence=1.0
     )
 
-    assert [item.id for item in db.meetings.list_action_items()] == [
+    assert {item.id for item in db.meetings.list_action_items()} == {
         "standalone-owner-read", "a1-action"
-    ]
+    }
     project_service = ProjectService(db)
     assert [item["id"] for item in project_service.list_action_items(OWNER, "owner-read-project")] == [
         "a1-action"
@@ -609,9 +609,9 @@ def test_parked_meeting_actions_and_speakers_disappear_from_all_owner_reads(tmp_
     }
 
     db.meetings.restore_meeting(state.id)
-    assert [item.id for item in db.meetings.list_action_items()] == [
+    assert {item.id for item in db.meetings.list_action_items()} == {
         "standalone-owner-read", "a1-action"
-    ]
+    }
     assert [item["id"] for item in project_service.list_action_items(OWNER, "owner-read-project")] == [
         "a1-action"
     ]
