@@ -1,0 +1,8063 @@
+{
+ "_onboarding_put": 200,
+ "TB-control-1-desk-1440": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "Needs you",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Brief",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "Brief",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "The week",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "The week",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Capture",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "Capture",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 26,
+     "bar_ground": "#6688bb",
+     "bar_image": true,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 106,
+    "h": 22
+   },
+   {
+    "name": "Desk",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 47,
+    "h": 22
+   },
+   {
+    "name": "Object",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 32,
+    "h": 22
+   },
+   {
+    "name": "Window",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 135,
+    "h": 22
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 59,
+    "h": 22
+   },
+   {
+    "name": "Search\n\u2318K",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 121,
+    "h": 22
+   },
+   {
+    "name": "Close Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close The week",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Capture",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 98,
+    "h": 66
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Agents",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Settings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Payments ledger cutover",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Platform observability",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Staff hiring loop",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Floor",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Desk memory, 8 need attention",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 91,
+    "h": 66
+   },
+   {
+    "name": "Delivery",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Panes",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Overview",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   },
+   {
+    "name": "Reset layout",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [],
+  "overlap": [],
+  "overlap_waived": [],
+  "h_overflow": false
+ },
+ "TB-control-2-closeup-1440": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "Needs you",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Brief",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "Brief",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "The week",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "The week",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Capture",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "Capture",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 26,
+     "bar_ground": "#6688bb",
+     "bar_image": true,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 106,
+    "h": 22
+   },
+   {
+    "name": "Desk",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 47,
+    "h": 22
+   },
+   {
+    "name": "Object",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 32,
+    "h": 22
+   },
+   {
+    "name": "Window",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 135,
+    "h": 22
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 59,
+    "h": 22
+   },
+   {
+    "name": "Search\n\u2318K",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 121,
+    "h": 22
+   },
+   {
+    "name": "Close Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close The week",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Capture",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 98,
+    "h": 66
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Agents",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Settings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Payments ledger cutover",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Platform observability",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Staff hiring loop",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Floor",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Desk memory, 8 need attention",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 91,
+    "h": 66
+   },
+   {
+    "name": "Delivery",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Panes",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Overview",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   },
+   {
+    "name": "Reset layout",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [],
+  "overlap": [],
+  "overlap_waived": [],
+  "h_overflow": false
+ },
+ "TB-control-4-window-menu-1440": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "Needs you",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Brief",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "Brief",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "The week",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "The week",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Capture",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "Capture",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 26,
+     "bar_ground": "#6688bb",
+     "bar_image": true,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 106,
+    "h": 22
+   },
+   {
+    "name": "Desk",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 47,
+    "h": 22
+   },
+   {
+    "name": "Object",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 32,
+    "h": 22
+   },
+   {
+    "name": "Window",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 135,
+    "h": 22
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 59,
+    "h": 22
+   },
+   {
+    "name": "Search\n\u2318K",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 121,
+    "h": 22
+   },
+   {
+    "name": "Close Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close The week",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Capture",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 98,
+    "h": 66
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Agents",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Settings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Payments ledger cutover",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Platform observability",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Staff hiring loop",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Floor",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Desk memory, 8 need attention",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 91,
+    "h": 66
+   },
+   {
+    "name": "Delivery",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Panes",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Overview",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   },
+   {
+    "name": "Reset layout",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [
+   {
+    "label": "People window menu",
+    "l": 442,
+    "t": 163,
+    "r": 620,
+    "b": 363,
+    "inside": true,
+    "rows": [
+     "Iconify \u2318 M",
+     "Zoom \u2303 M",
+     "To back \u2303 B",
+     "Close window \u2318 W",
+     "Desk \u00bb",
+     "Go \u00bb"
+    ]
+   }
+  ],
+  "overlap": [],
+  "overlap_waived": [],
+  "h_overflow": false
+ },
+ "_errors_control_1440": [],
+ "TB-control-3-phone-393": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 44,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "Needs you",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 44,
+     "bar_ground": "#6688bb",
+     "bar_image": true,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Windows: People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 76,
+    "h": 43
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 53,
+    "h": 44
+   },
+   {
+    "name": "Search",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "More AppIcons",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 48,
+    "h": 55
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [],
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
+  "targets_under_44": [],
+  "content_px": 704,
+  "h_overflow": false
+ },
+ "TB-control-5-window-menu-393": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 44,
+     "bar_ground": "#9ea4b0",
+     "bar_image": true,
+     "title": "Needs you",
+     "ink": "#0b0c10",
+     "ground": "#9ea4b0",
+     "contrast": 7.81,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 44,
+     "bar_ground": "#6688bb",
+     "bar_image": true,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Windows: People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 76,
+    "h": 43
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 53,
+    "h": 44
+   },
+   {
+    "name": "Search",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Close People",
+    "own": 5,
+    "occ": 4,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "To back People",
+    "own": 5,
+    "occ": 4,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "More AppIcons",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 48,
+    "h": 55
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [
+   {
+    "label": "People window menu",
+    "l": 8,
+    "t": 66,
+    "r": 385,
+    "b": 362,
+    "inside": true,
+    "rows": [
+     "Iconify \u2318 M",
+     "Zoom \u00b7 Fills the screen \u2303 M",
+     "To back \u2303 B",
+     "Close window \u2318 W",
+     "Desk \u00bb",
+     "Go \u00bb"
+    ]
+   }
+  ],
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
+  "targets_under_44": [],
+  "content_px": 704,
+  "h_overflow": false
+ },
+ "_errors_control_393": [],
+ "TB-A-1-desk-1440": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Brief",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Brief",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "The week",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "The week",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Capture",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Capture",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 26,
+     "bar_ground": "#6688bb",
+     "bar_image": false,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 106,
+    "h": 22
+   },
+   {
+    "name": "Desk",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 47,
+    "h": 22
+   },
+   {
+    "name": "Object",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 32,
+    "h": 22
+   },
+   {
+    "name": "Window",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 135,
+    "h": 22
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 59,
+    "h": 22
+   },
+   {
+    "name": "Search\n\u2318K",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 121,
+    "h": 22
+   },
+   {
+    "name": "Close Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Close Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Close The week",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Close Capture",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 98,
+    "h": 66
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Agents",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Settings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Payments ledger cutover",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Platform observability",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Staff hiring loop",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Floor",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Desk memory, 8 need attention",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 91,
+    "h": 66
+   },
+   {
+    "name": "Delivery",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Panes",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Overview",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   },
+   {
+    "name": "Reset layout",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [],
+  "overlap": [],
+  "overlap_waived": [],
+  "h_overflow": false
+ },
+ "TB-A-2-closeup-1440": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Brief",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Brief",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "The week",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "The week",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Capture",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Capture",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 26,
+     "bar_ground": "#6688bb",
+     "bar_image": false,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 106,
+    "h": 22
+   },
+   {
+    "name": "Desk",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 47,
+    "h": 22
+   },
+   {
+    "name": "Object",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 32,
+    "h": 22
+   },
+   {
+    "name": "Window",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 135,
+    "h": 22
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 59,
+    "h": 22
+   },
+   {
+    "name": "Search\n\u2318K",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 121,
+    "h": 22
+   },
+   {
+    "name": "Close Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Close Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Close The week",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Close Capture",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 98,
+    "h": 66
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Agents",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Settings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Payments ledger cutover",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Platform observability",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Staff hiring loop",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Floor",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Desk memory, 8 need attention",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 91,
+    "h": 66
+   },
+   {
+    "name": "Delivery",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Panes",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Overview",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   },
+   {
+    "name": "Reset layout",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [],
+  "overlap": [],
+  "overlap_waived": [],
+  "h_overflow": false
+ },
+ "TB-A-4-window-menu-1440": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Brief",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Brief",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "The week",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "The week",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Capture",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Capture",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 26,
+     "bar_ground": "#6688bb",
+     "bar_image": false,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ],
+      [
+       20,
+       20
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 106,
+    "h": 22
+   },
+   {
+    "name": "Desk",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 47,
+    "h": 22
+   },
+   {
+    "name": "Object",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 32,
+    "h": 22
+   },
+   {
+    "name": "Window",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 135,
+    "h": 22
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 59,
+    "h": 22
+   },
+   {
+    "name": "Search\n\u2318K",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 121,
+    "h": 22
+   },
+   {
+    "name": "Close Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Close Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Close The week",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Close Capture",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Iconify People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Zoom People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 20,
+    "h": 20
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 98,
+    "h": 66
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Agents",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Settings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Payments ledger cutover",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Platform observability",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Staff hiring loop",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Floor",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Desk memory, 8 need attention",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 91,
+    "h": 66
+   },
+   {
+    "name": "Delivery",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Panes",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Overview",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   },
+   {
+    "name": "Reset layout",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [
+   {
+    "label": "People window menu",
+    "l": 674,
+    "t": 163,
+    "r": 852,
+    "b": 363,
+    "inside": true,
+    "rows": [
+     "Iconify \u2318 M",
+     "Zoom \u2303 M",
+     "To back \u2303 B",
+     "Close window \u2318 W",
+     "Desk \u00bb",
+     "Go \u00bb"
+    ]
+   }
+  ],
+  "overlap": [],
+  "overlap_waived": [],
+  "h_overflow": false
+ },
+ "_errors_A_1440": [],
+ "TB-A-3-phone-393": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 44,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 44,
+     "bar_ground": "#6688bb",
+     "bar_image": false,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Windows: People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 76,
+    "h": 43
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 53,
+    "h": 44
+   },
+   {
+    "name": "Search",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "More AppIcons",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 48,
+    "h": 55
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [],
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
+  "targets_under_44": [],
+  "content_px": 704,
+  "h_overflow": false
+ },
+ "TB-A-5-window-menu-393": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 44,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 44,
+     "bar_ground": "#6688bb",
+     "bar_image": false,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Windows: People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 76,
+    "h": 43
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 53,
+    "h": 44
+   },
+   {
+    "name": "Search",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Close People",
+    "own": 5,
+    "occ": 4,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "To back People",
+    "own": 5,
+    "occ": 4,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "More AppIcons",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 48,
+    "h": 55
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [
+   {
+    "label": "People window menu",
+    "l": 8,
+    "t": 66,
+    "r": 385,
+    "b": 362,
+    "inside": true,
+    "rows": [
+     "Iconify \u2318 M",
+     "Zoom \u00b7 Fills the screen \u2303 M",
+     "To back \u2303 B",
+     "Close window \u2318 W",
+     "Desk \u00bb",
+     "Go \u00bb"
+    ]
+   }
+  ],
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
+  "targets_under_44": [],
+  "content_px": 704,
+  "h_overflow": false
+ },
+ "_errors_A_393": [],
+ "TB-B-1-desk-1440": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Brief",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Brief",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "The week",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "The week",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Capture",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Capture",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 26,
+     "bar_ground": "#6688bb",
+     "bar_image": true,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 106,
+    "h": 22
+   },
+   {
+    "name": "Desk",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 47,
+    "h": 22
+   },
+   {
+    "name": "Object",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 32,
+    "h": 22
+   },
+   {
+    "name": "Window",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 135,
+    "h": 22
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 59,
+    "h": 22
+   },
+   {
+    "name": "Search\n\u2318K",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 121,
+    "h": 22
+   },
+   {
+    "name": "Close Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close The week",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Capture",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 98,
+    "h": 66
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Agents",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Settings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Payments ledger cutover",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Platform observability",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Staff hiring loop",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Floor",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Desk memory, 8 need attention",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 91,
+    "h": 66
+   },
+   {
+    "name": "Delivery",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Panes",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Overview",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   },
+   {
+    "name": "Reset layout",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [],
+  "overlap": [],
+  "overlap_waived": [],
+  "h_overflow": false
+ },
+ "TB-B-2-closeup-1440": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Brief",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Brief",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "The week",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "The week",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Capture",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Capture",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 26,
+     "bar_ground": "#6688bb",
+     "bar_image": true,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 106,
+    "h": 22
+   },
+   {
+    "name": "Desk",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 47,
+    "h": 22
+   },
+   {
+    "name": "Object",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 32,
+    "h": 22
+   },
+   {
+    "name": "Window",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 135,
+    "h": 22
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 59,
+    "h": 22
+   },
+   {
+    "name": "Search\n\u2318K",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 121,
+    "h": 22
+   },
+   {
+    "name": "Close Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close The week",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Capture",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 98,
+    "h": 66
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Agents",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Settings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Payments ledger cutover",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Platform observability",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Staff hiring loop",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Floor",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Desk memory, 8 need attention",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 91,
+    "h": 66
+   },
+   {
+    "name": "Delivery",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Panes",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Overview",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   },
+   {
+    "name": "Reset layout",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [],
+  "overlap": [],
+  "overlap_waived": [],
+  "h_overflow": false
+ },
+ "TB-B-4-window-menu-1440": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Brief",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Brief",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "The week",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "The week",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Capture",
+     "front": false,
+     "bar_h": 26,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Capture",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 26,
+     "bar_ground": "#6688bb",
+     "bar_image": true,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 106,
+    "h": 22
+   },
+   {
+    "name": "Desk",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 47,
+    "h": 22
+   },
+   {
+    "name": "Object",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 32,
+    "h": 22
+   },
+   {
+    "name": "Window",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 135,
+    "h": 22
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 59,
+    "h": 22
+   },
+   {
+    "name": "Search\n\u2318K",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 121,
+    "h": 22
+   },
+   {
+    "name": "Close Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close The week",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Capture",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 98,
+    "h": 66
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Agents",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Settings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Payments ledger cutover",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Platform observability",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Staff hiring loop",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Floor",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Desk memory, 8 need attention",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 91,
+    "h": 66
+   },
+   {
+    "name": "Delivery",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Panes",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Overview",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   },
+   {
+    "name": "Reset layout",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [
+   {
+    "label": "People window menu",
+    "l": 440,
+    "t": 162,
+    "r": 618,
+    "b": 362,
+    "inside": true,
+    "rows": [
+     "Iconify \u2318 M",
+     "Zoom \u2303 M",
+     "To back \u2303 B",
+     "Close window \u2318 W",
+     "Desk \u00bb",
+     "Go \u00bb"
+    ]
+   }
+  ],
+  "overlap": [],
+  "overlap_waived": [],
+  "h_overflow": false
+ },
+ "_errors_B_1440": [],
+ "TB-B-3-phone-393": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 44,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 44,
+     "bar_ground": "#6688bb",
+     "bar_image": true,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Windows: People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 76,
+    "h": 43
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 53,
+    "h": 44
+   },
+   {
+    "name": "Search",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "More AppIcons",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 48,
+    "h": 55
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [],
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
+  "targets_under_44": [],
+  "content_px": 704,
+  "h_overflow": false
+ },
+ "TB-B-5-window-menu-393": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 44,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#2a2e36",
+     "ground": "#9ea4b0",
+     "contrast": 5.44,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": false,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 44,
+     "bar_ground": "#6688bb",
+     "bar_image": true,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#6688bb",
+     "contrast": 5.4,
+     "px": 12,
+     "weight": 700,
+     "family": "JetBrains Mono",
+     "title_plate": true,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.45
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Windows: People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 76,
+    "h": 43
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 53,
+    "h": 44
+   },
+   {
+    "name": "Search",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Close People",
+    "own": 5,
+    "occ": 4,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "To back People",
+    "own": 5,
+    "occ": 4,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "More AppIcons",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 48,
+    "h": 55
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [
+   {
+    "label": "People window menu",
+    "l": 8,
+    "t": 66,
+    "r": 385,
+    "b": 362,
+    "inside": true,
+    "rows": [
+     "Iconify \u2318 M",
+     "Zoom \u00b7 Fills the screen \u2303 M",
+     "To back \u2303 B",
+     "Close window \u2318 W",
+     "Desk \u00bb",
+     "Go \u00bb"
+    ]
+   }
+  ],
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
+  "targets_under_44": [],
+  "content_px": 704,
+  "h_overflow": false
+ },
+ "_errors_B_393": [],
+ "TB-C-1-desk-1440": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 32,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Brief",
+     "front": false,
+     "bar_h": 32,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Brief",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "The week",
+     "front": false,
+     "bar_h": 32,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "The week",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Capture",
+     "front": false,
+     "bar_h": 32,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Capture",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 32,
+     "bar_ground": "#d5d9df",
+     "bar_image": false,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#d5d9df",
+     "contrast": 13.79,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.77
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 106,
+    "h": 22
+   },
+   {
+    "name": "Desk",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 47,
+    "h": 22
+   },
+   {
+    "name": "Object",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 32,
+    "h": 22
+   },
+   {
+    "name": "Window",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 135,
+    "h": 22
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 59,
+    "h": 22
+   },
+   {
+    "name": "Search\n\u2318K",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 121,
+    "h": 22
+   },
+   {
+    "name": "Close Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close The week",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Capture",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 98,
+    "h": 66
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Agents",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Settings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Payments ledger cutover",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Platform observability",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Staff hiring loop",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Floor",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Desk memory, 8 need attention",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 91,
+    "h": 66
+   },
+   {
+    "name": "Delivery",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Panes",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Overview",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   },
+   {
+    "name": "Reset layout",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [],
+  "overlap": [],
+  "overlap_waived": [],
+  "h_overflow": false
+ },
+ "TB-C-2-closeup-1440": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 32,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Brief",
+     "front": false,
+     "bar_h": 32,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Brief",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "The week",
+     "front": false,
+     "bar_h": 32,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "The week",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Capture",
+     "front": false,
+     "bar_h": 32,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Capture",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 32,
+     "bar_ground": "#d5d9df",
+     "bar_image": false,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#d5d9df",
+     "contrast": 13.79,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.77
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 106,
+    "h": 22
+   },
+   {
+    "name": "Desk",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 47,
+    "h": 22
+   },
+   {
+    "name": "Object",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 32,
+    "h": 22
+   },
+   {
+    "name": "Window",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 135,
+    "h": 22
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 59,
+    "h": 22
+   },
+   {
+    "name": "Search\n\u2318K",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 121,
+    "h": 22
+   },
+   {
+    "name": "Close Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close The week",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Capture",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 98,
+    "h": 66
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Agents",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Settings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Payments ledger cutover",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Platform observability",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Staff hiring loop",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Floor",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Desk memory, 8 need attention",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 91,
+    "h": 66
+   },
+   {
+    "name": "Delivery",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Panes",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Overview",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   },
+   {
+    "name": "Reset layout",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [],
+  "overlap": [],
+  "overlap_waived": [],
+  "h_overflow": false
+ },
+ "TB-C-4-window-menu-1440": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 32,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Brief",
+     "front": false,
+     "bar_h": 32,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Brief",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "The week",
+     "front": false,
+     "bar_h": 32,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "The week",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "Capture",
+     "front": false,
+     "bar_h": 32,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Capture",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 32,
+     "bar_ground": "#d5d9df",
+     "bar_image": false,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#d5d9df",
+     "contrast": 13.79,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ],
+      [
+       26,
+       26
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.77
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 106,
+    "h": 22
+   },
+   {
+    "name": "Desk",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 47,
+    "h": 22
+   },
+   {
+    "name": "Object",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 32,
+    "h": 22
+   },
+   {
+    "name": "Window",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 61,
+    "h": 22
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 135,
+    "h": 22
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 59,
+    "h": 22
+   },
+   {
+    "name": "Search\n\u2318K",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 121,
+    "h": 22
+   },
+   {
+    "name": "Close Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Needs you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Brief",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close The week",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back The week",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close Capture",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back Capture",
+    "own": 0,
+    "occ": 9,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Iconify People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Zoom People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 26,
+    "h": 26
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 98,
+    "h": 66
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Agents",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Settings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Payments ledger cutover",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Platform observability",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Staff hiring loop",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 104,
+    "h": 66
+   },
+   {
+    "name": "Floor",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Desk memory, 8 need attention",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 91,
+    "h": 66
+   },
+   {
+    "name": "Delivery",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 70,
+    "h": 66
+   },
+   {
+    "name": "Panes",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 66,
+    "h": 66
+   },
+   {
+    "name": "Overview",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   },
+   {
+    "name": "Reset layout",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 28,
+    "h": 24
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [
+   {
+    "label": "People window menu",
+    "l": 671,
+    "t": 166,
+    "r": 849,
+    "b": 366,
+    "inside": true,
+    "rows": [
+     "Iconify \u2318 M",
+     "Zoom \u2303 M",
+     "To back \u2303 B",
+     "Close window \u2318 W",
+     "Desk \u00bb",
+     "Go \u00bb"
+    ]
+   }
+  ],
+  "overlap": [],
+  "overlap_waived": [],
+  "h_overflow": false
+ },
+ "_errors_C_1440": [],
+ "TB-C-3-phone-393": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 44,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 44,
+     "bar_ground": "#d5d9df",
+     "bar_image": false,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#d5d9df",
+     "contrast": 13.79,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.77
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Windows: People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 76,
+    "h": 43
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 53,
+    "h": 44
+   },
+   {
+    "name": "Search",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Close People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "To back People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "More AppIcons",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 48,
+    "h": 55
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [],
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
+  "targets_under_44": [],
+  "content_px": 704,
+  "h_overflow": false
+ },
+ "TB-C-5-window-menu-393": {
+  "titles": {
+   "windows": [
+    {
+     "name": "Needs you",
+     "front": false,
+     "bar_h": 44,
+     "bar_ground": "#9ea4b0",
+     "bar_image": false,
+     "title": "Needs you",
+     "ink": "#23262d",
+     "ground": "#9ea4b0",
+     "contrast": 6.05,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    },
+    {
+     "name": "People",
+     "front": true,
+     "bar_h": 44,
+     "bar_ground": "#d5d9df",
+     "bar_image": false,
+     "title": "People",
+     "ink": "#0b0c10",
+     "ground": "#d5d9df",
+     "contrast": 13.79,
+     "px": 13,
+     "weight": 600,
+     "family": "Inter",
+     "title_plate": false,
+     "gadgets": [
+      [
+       44,
+       44
+      ],
+      [
+       44,
+       44
+      ]
+     ],
+     "gadget_classes_ok": true
+    }
+   ],
+   "front_count": 1,
+   "front_vs_inactive_bar": 1.77
+  },
+  "small_text": [],
+  "own": [
+   {
+    "name": "HoldSpeak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Go",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Windows: People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 76,
+    "h": 43
+   },
+   {
+    "name": "Privacy and trust: \u2302 This device",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Desk memory: 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 53,
+    "h": 44
+   },
+   {
+    "name": "Search",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Close People",
+    "own": 5,
+    "occ": 4,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "To back People",
+    "own": 5,
+    "occ": 4,
+    "lost": 0,
+    "w": 44,
+    "h": 44
+   },
+   {
+    "name": "Intelligence, 8 need you",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Speak",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "Meetings",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "People",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 85,
+    "h": 54
+   },
+   {
+    "name": "More AppIcons",
+    "own": 9,
+    "occ": 0,
+    "lost": 0,
+    "w": 48,
+    "h": 55
+   }
+  ],
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "menus": [
+   {
+    "label": "People window menu",
+    "l": 8,
+    "t": 66,
+    "r": 385,
+    "b": 362,
+    "inside": true,
+    "rows": [
+     "Iconify \u2318 M",
+     "Zoom \u00b7 Fills the screen \u2303 M",
+     "To back \u2303 B",
+     "Close window \u2318 W",
+     "Desk \u00bb",
+     "Go \u00bb"
+    ]
+   }
+  ],
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "Payments ledger cutover",
+    "b": "More AppIcons",
+    "w": 48,
+    "h": 54,
+    "waiver": "more"
+   }
+  ],
+  "targets_under_44": [],
+  "content_px": 704,
+  "h_overflow": false
+ },
+ "_errors_C_393": []
+}

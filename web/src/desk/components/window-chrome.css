@@ -329,10 +329,13 @@
    ladder): the head tone sits one step above the body, separation is
    tonal (no border-bottom), and the verb buttons are full-height
    squares flush to the window edge. */
-/* PHILO-13-11 (C1) — the title bar IS the drag bar: steel with a stipple
-   (the front window: blue), an ink rule, the title on a solid plate in
-   12 px bold mono ink. It spans the frame (margin -4 px) and sits ABOVE the
-   resize edges (z-index), so every gadget owns all of its points.
+/* PHILO-13-11 (C1) — the title bar IS the drag bar: steel, an ink rule,
+   the title in 12 px bold mono. Title bar B (the owner's pick, 2026-10-03,
+   assets/titlebar-canvas/; it replaces C1's solid plate and the stipple on
+   every bar): inactive bars are FLAT steel, the title in --wb-ink-dim; only
+   the ONE front bar is blue with fine stripes (--wb-stipple-fine), the
+   title on a cut-out in the bar's own blue. It spans the frame (margin
+   -4 px) and sits ABOVE the resize edges (z-index), so every gadget owns all of its points.
    R4: this replaces HS-99-02's `.is-front .desk-pullout-head` rule
    (window-chrome.css:337 before this change): is-front now comes from the
    ONE hook, so exactly one bar is blue. --desk-window-head-fill and
@@ -350,43 +353,50 @@
   padding: 0;
   border: 0;
   border-radius: 0;
-  background: var(--wb-stipple), var(--wb-steel);
+  background: var(--wb-steel);
   /* the ink rule under the bar is drawn as a shadow, so a gadget owns the
      bar's full height (44 px at 393) */
-  box-shadow: var(--wb-raised), inset 0 -1px 0 var(--wb-ink);
+  box-shadow: inset 0 -1px 0 var(--wb-ink);
   color: var(--wb-ink);
 }
 .desk-next .desk-window-shell.is-front > .desk-pullout-head {
-  background: var(--wb-stipple), var(--wb-blue);
+  background: var(--wb-stipple-fine), var(--wb-blue);
 }
 .desk-next .desk-window-shell > .desk-pullout-head .desk-pullout-title {
   flex: 0 1 auto;
   align-self: center;
   min-width: 0;
   max-width: 45%;
-  margin: 0 6px;
-  padding: 0 8px;
+  /* 1 px off the bottom: the cut-out leaves the ink rule under the bar whole */
+  margin: 0 6px 1px;
+  padding: 0 6px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  background: var(--wb-steel);
+  background: transparent;
   color: var(--wb-ink);
-  font: 700 12px/var(--wb-bar-h) var(--font-mono);
+  font: 700 12px/calc(var(--wb-bar-h) - 2px) var(--font-mono);
   letter-spacing: 0.02em;
   text-transform: none;
 }
 .desk-next .desk-window-shell.is-front > .desk-pullout-head .desk-pullout-title {
   background: var(--wb-blue);
 }
-/* every word a host puts in its title bar is ink on the plate (R5) */
+/* every word a host puts in its title bar is ink on the bar (R5) */
 .desk-next .desk-window-shell > .desk-pullout-head :is(span, small, strong, em, p, label, .quiet) {
   color: var(--wb-ink);
+}
+/* title bar B: an inactive window's title is dimmed ink (5.44:1 on steel) */
+.desk-next .desk-window-shell:not(.is-front) > .desk-pullout-head .desk-pullout-title {
+  color: var(--wb-ink-dim);
 }
 .desk-next .desk-window-shell > .desk-pullout-head > img {
   align-self: center;
   margin-left: 6px;
 }
-/* the gadget set: bevelled boxes flush to the corners, on the bar's fill */
+/* the gadget set (title bar B): ONE grid of square cells the bar's height,
+   flush to the corners, one hairline between cells, a half-strength bevel;
+   on the front bar the cells are solid blue (the stripes stop at them) */
 .desk-next .desk-gadgets {
   display: flex;
   flex: none;
@@ -414,21 +424,28 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  box-shadow: var(--wb-raised);
+  box-shadow: var(--wb-raised-soft);
   color: var(--wb-ink);
   cursor: pointer;
 }
 .desk-next .desk-gadgets-left .desk-gadget {
-  border-right: 1px solid var(--wb-ink);
+  border-right: 1px solid var(--wb-rule);
 }
 .desk-next .desk-gadgets-right .desk-gadget {
-  border-left: 1px solid var(--wb-ink);
+  /* the hairline on the cell's left edge is an inset shadow (HS-101 rule 6:
+     no left rail) */
+  box-shadow: inset 1px 0 0 var(--wb-rule), var(--wb-raised-soft);
 }
-.desk-next .desk-pullout-head .desk-gadget:hover:not(:disabled) {
-  background: var(--wb-hover);
+.desk-next .desk-window-shell.is-front > .desk-pullout-head .desk-gadget {
+  background: var(--wb-blue);
+}
+.desk-next .desk-pullout-head .desk-gadget:hover:not(:disabled),
+.desk-next .desk-window-shell.is-front > .desk-pullout-head .desk-gadget:hover:not(:disabled) {
+  background: var(--wb-steel-2);
 }
 .desk-next .desk-pullout-head .desk-gadget:active:not(:disabled),
-.desk-next .desk-pullout-head .desk-gadget[aria-pressed="true"] {
+.desk-next .desk-pullout-head .desk-gadget[aria-pressed="true"],
+.desk-next .desk-window-shell.is-front > .desk-pullout-head .desk-gadget[aria-pressed="true"] {
   background: var(--wb-press);
   box-shadow: var(--wb-sunken);
   transform: none;
@@ -453,10 +470,9 @@
   min-height: 0;
   padding: 0 12px;
   border: 0;
-  border-left: 1px solid var(--wb-ink);
   border-radius: 0;
   background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
+  box-shadow: inset 1px 0 0 var(--wb-rule), var(--wb-raised-soft);
   color: var(--wb-ink);
   font: 700 12px var(--font-mono);
 }

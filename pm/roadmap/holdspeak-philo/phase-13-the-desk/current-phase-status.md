@@ -246,6 +246,8 @@ D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
 
+2026-10-03: **PHILO-13-11 title bar B built (the owner's pick, "B").** He said the C1 title bar "looks terrible". Three directions and the control were drawn (`assets/titlebar-canvas/`), and he picked B, Workbench refined. Inactive bars are now flat. Only the front bar has fine stripes, and its title sits on a cut-out in the bar's own blue. The gadgets sit on one grid, and 393 keeps 44 px. Title contrast is 5.40:1 on the front bar and 5.44:1 on inactive bars. Shots are in `assets/titlebar-build/`. Story 11 stays in-progress.
+
 2026-10-03: **H-rig-clearof RATIFIED by Muad'Dib; main integration confirmed before merge.** Per-width clearance and restart UI follow-ups are available; real replayed retention passes at both widths. Arrival passes at 1440 and retains the inherited missing-Capture-slot failure at 393. No story closes. [Astra lane record](lane-rig-clearof-astra.md).
 
 2026-10-03: **PHILO-13-10 (B5) done.** #739 merged at `573969dbf` after Muad'Dib's PASS. The closure rerun on main `23a6c137f` passes 242 scoped tests, the actual draft case at 1440/393 native touch, and the stored-draft operation sibling. Zero report characters entered; each fact has its source ref. C8 healed editor wrapping; the time-window request remains BACKLOG. [Closure and ledger](close-10-astra.md), [evidence](evidence-story-10.md). Self-merge on scoped proof is authorized in the dispatch.
