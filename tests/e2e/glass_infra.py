@@ -337,6 +337,72 @@ def _settle(page: Any) -> None:
     page.wait_for_timeout(120)
 
 
+# ── _rendered_text_faults: the frame glass's F3 law, for any scope ──
+#
+# PHILO-13-02 r2 (Astra's single pass on #734): a receipt check that reads
+# innerText proves nothing about readability, because innerText includes the
+# text a container clips. This reads the RENDERED boxes, the way
+# test_philo13_11_frame_glass.py F3 does: a visible text node whose range runs
+# past its nearest clipping ancestor is clipped (an ellipsis counts: the
+# words are not on the glass); and no two visible things (text runs outside
+# controls, and controls) overlap.
+
+_RENDERED_TEXT_JS = """(sel) => {
+  const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
+    return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && Number(cs.opacity) > 0.05; };
+  const out = {scopes: 0, clipped: [], overlaps: []};
+  const ctl = 'button, [role=button], input, textarea, select, a[href]';
+  for (const scope of [...document.querySelectorAll(sel)].filter(visible)) {
+    out.scopes++;
+    const boxes = [];
+    const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const text = n.textContent.trim();
+      if (!text || !visible(n.parentElement)) continue;
+      const range = document.createRange(); range.selectNodeContents(n);
+      const tr = range.getBoundingClientRect();
+      if (tr.width < 1 || tr.height < 1) continue;
+      for (let a = n.parentElement; a && a !== document.documentElement; a = a.parentElement) {
+        const cs = getComputedStyle(a);
+        const clipX = cs.overflowX !== 'visible', clipY = cs.overflowY !== 'visible';
+        if (!clipX && !clipY) continue;
+        const ar = a.getBoundingClientRect();
+        const past = (clipX && (tr.left < ar.left - 1 || tr.right > ar.right + 1 || a.scrollWidth > a.clientWidth + 1))
+          || (clipY && (tr.top < ar.top - 1 || tr.bottom > ar.bottom + 1));
+        if (past) out.clipped.push({text: text.slice(0, 60), in: (a.className || a.tagName).toString().slice(0, 60)});
+        break;
+      }
+      const holder = n.parentElement.closest(ctl);
+      if (!holder || !scope.contains(holder)) boxes.push({what: text.slice(0, 40), r: tr, el: n.parentElement});
+    }
+    for (const c of [...scope.querySelectorAll(ctl)].filter(visible)) {
+      if (c.parentElement && c.parentElement.closest(ctl)) continue;
+      boxes.push({what: (c.getAttribute('aria-label') || c.textContent || '').trim().slice(0, 40), r: c.getBoundingClientRect(), el: c});
+    }
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+      const a = boxes[i], b = boxes[j];
+      if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
+      const w = Math.min(a.r.right, b.r.right) - Math.max(a.r.left, b.r.left);
+      const h = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
+      if (w > 1 && h > 1) out.overlaps.push([a.what, b.what]);
+    }
+  }
+  return out;
+}"""
+
+
+def _rendered_text_faults(page: Any, selector: str) -> dict[str, Any]:
+    """Clipped text and overlapping text or controls inside ``selector``, as rendered."""
+    return page.evaluate(_RENDERED_TEXT_JS, selector)
+
+
+def _assert_readable(page: Any, selector: str, where: str = "") -> None:
+    """Every visible text inside ``selector`` is whole on the glass; nothing overlaps."""
+    faults = _rendered_text_faults(page, selector)
+    assert faults["scopes"], f"{where}: no visible {selector}"
+    assert not faults["clipped"] and not faults["overlaps"], f"{where}: {faults}"
+
+
 # ── _assert_clean: overflow + JS error check ──
 
 def _assert_clean(page: Any, errors: list[str]) -> None:

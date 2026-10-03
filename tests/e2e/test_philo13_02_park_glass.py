@@ -31,7 +31,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import _api, _assert_readable, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the park glass needs Playwright")
@@ -154,8 +154,11 @@ class TestParkGlass:
 
     @staticmethod
     def _shot(page: Any, name: str, width: int) -> None:
+        """Every state's footer is read AS RENDERED before its shot: the
+        receipt, the egress warning and the verbs are whole and apart."""
         _settle(page)
         page.screenshot(path=str(SHOTS / f"{name}-{width}.png"))
+        _assert_readable(page, ".surface-footer-layout", f"{name}-{width}")
 
     def _clean(self, page: Any, errors: list[str]) -> None:
         real = [e for e in errors if "ResizeObserver" not in e]

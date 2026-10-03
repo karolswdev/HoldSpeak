@@ -16,3 +16,9 @@ The shots come from `tests/e2e/test_philo13_02_park_glass.py`. Each run uses the
 | `10-workbench-claimed-refused` | C1-5i | A run claims the item between the read and the press. The receipt is `NOT PARKED · CLAIMED BY A RUN` in the danger tone. There is no Restore, and the item stays. | The glass makes the claim with the runner's own claim statement (`holdspeak/services/workbench_runner.py:257`), not with a full run. |
 
 Each case reads the row back from the hub's DB after park (kept, parked, with all its segments, intel, action items and artifacts, or its artifact link) and again after Restore (kept, active, the same rows). Each case also reloads the page.
+
+## Round 2 (Astra's single pass on #734)
+
+- The 393 footer now has two rows, as on board C1-5a-393: the egress warning on its own row, the receipt and `MD` / `SRT` / `Park` below it. This is the canvas round 3c rule, moved into `web/src/desk/surface/surface-footer.css`.
+- A park outcome wraps instead of clipping. `NOT RESTORED · THE HUB DID NOT ACCEPT THE CHANGE` shows in full, and `Retry` stays whole at both widths (`05-meeting-restore-refused-*`).
+- Each shot state is now read as rendered (`_assert_readable` in `tests/e2e/glass_infra.py`): no text clipped by its container, no overlap between text and controls in any footer.
