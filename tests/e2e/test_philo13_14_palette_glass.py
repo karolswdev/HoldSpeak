@@ -21,6 +21,11 @@ One assert per acceptance line:
 * `Draft update for Payments ledger cutover` -> the Room in its Update posture.
 * `People` -> `Open People` first, above the `People & vocabulary` note; one
   Escape closes the shelf with the query typed.
+* H-C4 (Astra #756): a meeting saved by the real meeting producer, titled
+  `Vendor roadmap review` (no name in its title or its text), whose speakers
+  are Dana Okafor and Me, is found by `Dana` through the list row's
+  `attendees`; one press opens it. Red before #756 (the list row carried no
+  attendees), green after.
 
 The on-glass reader reads the open shelf and the SEND well: zero clipped
 text, zero overlaps. Shots go to
@@ -202,6 +207,47 @@ class TestPaletteKnowsHisWeek:
             try:
                 self._walk()
                 assert self.read >= 8, self.read
+                assert not [e for e in errors if "ResizeObserver" not in e and "Failed to fetch" not in e], errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_meeting_is_found_by_an_attendee(self, width: int) -> None:
+        from datetime import datetime, timedelta
+
+        from holdspeak.meeting_session import MeetingState, TranscriptSegment
+        from playwright.sync_api import sync_playwright
+
+        start = (datetime.now() - timedelta(hours=5)).replace(microsecond=0)
+        self.db.meetings.save_meeting(MeetingState(
+            id="m-vendor", started_at=start, ended_at=start + timedelta(minutes=30), title="Vendor roadmap review",
+            segments=[TranscriptSegment(text="The second quarter plan holds.", speaker="Dana Okafor", start_time=1.0, end_time=4.0),
+                      TranscriptSegment(text="Agreed, ship the pilot.", speaker="Me", start_time=4.0, end_time=6.0)],
+            intel_status="disabled"))
+        row = next(m for m in _http(self.base, "GET", "/api/meetings?limit=24")["meetings"] if m["id"] == "m-vendor")
+        assert "dana" not in json.dumps({k: v for k, v in row.items() if k != "attendees"}).lower(), row
+        self.width, self.phone, self.read = width, width <= 720, 0
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1,
+                                      has_touch=self.phone, reduced_motion="reduce")
+            page = self.page = ctx.new_page()
+            page.set_default_timeout(45_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                self._home()
+                rows = self._query("Dana")
+                assert rows and rows[0]["id"] == "meeting:m-vendor", (row.get("attendees"), rows)
+                assert "Vendor roadmap review" in rows[0]["text"] and "MEETING" in rows[0]["text"], rows[0]
+                self._glass("#desk-tool-shelf", "C4-7")
+                self._shot("C4-7-attendee-finds-meeting")
+                self._run_top(rows)
+                self._front("Vendor roadmap review")
+                assert page.locator("#desk-tool-shelf").count() == 0
+                self._shot("C4-7b-attendee-meeting-window")
                 assert not [e for e in errors if "ResizeObserver" not in e and "Failed to fetch" not in e], errors
             finally:
                 browser.close()

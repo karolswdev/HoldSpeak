@@ -1701,7 +1701,7 @@
         {
           "path": "web/src/desk/components/DeskToolShelf.tsx",
           "symbol": "section: \"PEOPLE\",",
-          "line": 432,
+          "line": 435,
           "claim": "one PEOPLE row per relationship from GET /api/people/relationships"
         },
         {
@@ -1733,7 +1733,7 @@
         {
           "path": "web/src/desk/components/DeskToolShelf.tsx",
           "symbol": "for (const verb of weekVerbs({",
-          "line": 446,
+          "line": 449,
           "claim": "the palette renders the registry's week verbs"
         }
       ],
@@ -1759,7 +1759,7 @@
         {
           "path": "web/src/desk/components/DeskToolShelf.tsx",
           "symbol": "body: objectBody(item.ref),",
-          "line": 566,
+          "line": 569,
           "claim": "a note's body is the row's body term"
         }
       ],
