@@ -319,6 +319,11 @@ right — is the precedent this section canonizes.
 
 ### 7. The close
 
+**Amended 2026-10-03 (owner ruling): push, PR, one review, merge. CI
+does not gate; nobody watches CI before a merge; no merge-verdict
+comment. The nightly full run is where regressions are read.** The
+earlier text, kept for its reasoning:
+
 Push, PR, then **watch → read → merge as separate acts**: watch CI to
 conclusion, READ the failures, diff the failure NAMES against main's
 own CI at the fork point. Merge on zero regressions, with the verdict

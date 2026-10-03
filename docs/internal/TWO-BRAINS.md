@@ -59,6 +59,13 @@ self-report is not proof (it answered "GPT-5, default"); the rollout is.
 
 ## 3. The check law — you check him, he checks you
 
+**Amended 2026-10-03 (the owner: "I want us to move fast. Super-fast."):
+the only check that gates is ONE review of the PR before it merges, plus
+the owner's ratification of a face's canvas. Briefing workers and
+committing a doc need no prior check and no separate check record; a
+charter or canon edit is reviewed as its PR like any other change.**
+
+The text below is the earlier law, kept for its reasoning:
 **Nothing authored by one brain is acted on until the other has checked
 it.** "Authored" means: a phase charter, a story's settled design, a
 brief that changes a chartered criterion, a merge verdict, a canon edit,
@@ -85,9 +92,9 @@ UNKNOWN:             what the checker could not verify, and why
 
 Rules of the check:
 
-- **A check is recorded where the work is.** For a PR: a PR comment.
-  For a canon doc or an audit: a section headed
-  `## Check — <brain>, <date>` at the end of the doc.
+- **A check is recorded where the work is:** the PR review. No
+  separate check record in a doc, no merge-verdict comment
+  (amended 2026-10-03).
 - **A finding is a failing test.** Reproduce, classify, fix or ledger.
   The author may proceed over a finding only by naming it and the
   reason in the record; never by omission. The owner sees both minds.

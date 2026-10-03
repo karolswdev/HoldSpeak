@@ -72,11 +72,12 @@ spawn_agent(task_name="<snake_case>", model="gpt-5.6-luna",
 - One commit lane per brain; Lunas hold for SHIP and never stage or
   commit.
 
-## Tests — scoped for workers, full for you
+## Tests — the ones that cover the change
 
-- Lunas run only the focused tests their brief names. You run the full
-  suite as the lane's orchestrator, in a quiet tree (no worker editing),
-  with the commands in `CLAUDE.md` §"Test commands".
+- Lunas run only the focused tests their brief names. You run the tests
+  that cover the lane's change (the same rule as `CLAUDE.md`), with the
+  commands in `CLAUDE.md` §"Test commands". The full suite is a nightly
+  run, not a merge step (owner ruling 2026-10-03).
 - Every pytest run uses an isolated HOME; the owner's real desk DB lives
   under `Path.home()` and a bare run will write into it:
   `HOME=$(mktemp -d) uv run pytest -q …`. Never run
