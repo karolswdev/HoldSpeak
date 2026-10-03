@@ -24,7 +24,8 @@ A source path is traceability, not proof that behavior works. A proposed require
 
 Edit the source-owned contract or metadata, regenerate derived output, inspect the diff and run drift checks. Keep historical inputs intact and date snapshots. Use ASD-STE100 for user guides.
 
-The graph join `docs/generated/graph.json` is generated: run
+The graph join `docs/generated/graph.json` is generated and is not in git
+(`scripts/gen_docs.sh` writes every generated document): run
 `python scripts/philo_graph_reference.py` after a pass, the atlas, the council
 resolutions or a cited Phase 1 inventory changes, and `--check` before you
 hand over. A contradiction without a council resolution stops it; do not edit

@@ -135,7 +135,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 ## Regenerate and check
 
 Run the existing `scripts/gen_api_surface.py` when routes or client calls change,
-then `python scripts/philo_api_reference.py`. Use `--check` to detect ledger drift.
+then `python scripts/philo_api_reference.py`. The JSON ledger is not in git; `scripts/gen_docs.sh` writes it.
 The existing `tests/unit/test_api_surface.py` compares membership with the real
 assembled application. This supplementary ledger must not replace that check.
 

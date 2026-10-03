@@ -3087,19 +3087,16 @@
         {
           "path": "web/src/desk/zoneName.ts",
           "symbol": "export function",
-          "line": 14,
           "claim": "the store picks the next free default name by the hub's rule"
         },
         {
           "path": "web/src/desk/components/ZoneRenameRow.tsx",
           "symbol": "export function ZoneRenameRow",
-          "line": 11,
           "claim": "the ONE zone name field: over the zone on the Floor, in the row on the list"
         },
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"desk.new-zone\"",
-          "line": 260,
           "claim": "the face makes a zone with the New Zone verb (Floor only: needsZones)"
         }
       ],
@@ -3128,13 +3125,11 @@
         {
           "path": "web/src/desk/hooks/useUndoReceipt.ts",
           "symbol": "export function useUndoReceipt",
-          "line": 34,
           "claim": "the one undo receipt: 8 s window, Undo, 'Removal committed'"
         },
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"object.delete\"",
-          "line": 610,
           "claim": "the face deletes an object with the Delete verb"
         }
       ],
@@ -3160,7 +3155,6 @@
         {
           "path": "web/src/desk/pullouts/DecisionPullout.tsx",
           "symbol": "Decision context",
-          "line": 118,
           "claim": "the read view's context heading, drawn only with text under it"
         }
       ],

@@ -85,3 +85,9 @@ web/.glass-build.lock
 
 # playwright residue
 test-results/
+
+# Generated on demand by scripts/gen_docs.sh (owner ruling 2026-10-03): these
+# hold line numbers, test lists and input hashes, so they conflicted on every merge.
+docs/generated/api-reference.json
+docs/generated/boundary-candidates.json
+docs/generated/graph.json

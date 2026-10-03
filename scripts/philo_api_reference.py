@@ -73,8 +73,11 @@ def generate(root:Path=ROOT):
     data={'schema_version':1,'snapshot':snapshot,'route_owner':'scripts/gen_api_surface.py','generator':'scripts/philo_api_reference.py','limits':'Complete membership from committed API manifest; static handler evidence is not full semantic endpoint verification. Test candidates are search leads only. The snapshot is the Philo census baseline; handler evidence and test candidates are read from the current working tree at generation.','routes':rows}
     lines=['# API reference','','This reference supplements [API surface](API_SURFACE.md). The existing real-app','generator owns the route roster; this census adds static handler evidence.','It does not invent request/response schemas for raw `Request` handlers.','',f'Census baseline snapshot: `{snapshot}`. Handler evidence and test candidates are read from the current working tree at generation. **{len(rows)} method/route entries**.','', '**Verification boundary:** inspect the [full endpoint ledger](generated/api-reference.json)', 'and the [declared OpenAPI schemas](generated/openapi.json) for transport models.', 'The ledger records parameters, body-key reads, declared responses, literal errors,', 'service calls, source line, client tags and candidate tests. Candidate tests are', 'text matches, not assertion evidence. Helper validators, middleware, dynamically', 'composed paths and semantic authority/idempotency still require source review.', '', '## Read an endpoint', '', '1. Find its method and route in the ledger or existing API surface.', '2. Open the defining source and handler evidence. Follow raw-body validators.', '3. Follow service calls into authority, dispatch, persistence and receipt.', '4. Match the operation to the capability registry and inspect test assertions.', '5. Run the scoped tests with isolated HOME; record the actual result.', '', 'The hub transport, owner/principal checks, proposal decisions and kernel', 'execution authority are distinct. A POST can be a preview; a GET is not by', 'itself proof of safe information disclosure. See [Authority](AUTHORITY_MODEL.md)', 'and [Security](SECURITY_MODEL.md). The browser uses `web/src/lib/api.ts` and', 'the shared RuntimeBus. Companion client tags come from the existing generator.', '', '## Route groups', '', '| Defining module | Entries |', '| --- | ---: |']
     lines += [f'| `{m}` | {n} |' for m,n in sorted(counts.items())]
-    lines += ['', '## Regenerate and check', '', 'Run the existing `scripts/gen_api_surface.py` when routes or client calls change,', 'then `python scripts/philo_api_reference.py`. Use `--check` to detect ledger drift.', 'The existing `tests/unit/test_api_surface.py` compares membership with the real', 'assembled application. This supplementary ledger must not replace that check.', '', 'No OpenAPI field is treated as a complete contract when the handler parses its', 'own request. The unresolved semantic fields are visible in every endpoint row', 'and count as coverage gaps, rather than receiving a default “approved” value.', '']
+    lines += ['', '## Regenerate and check', '', 'Run the existing `scripts/gen_api_surface.py` when routes or client calls change,', 'then `python scripts/philo_api_reference.py`. The JSON ledger is not in git; `scripts/gen_docs.sh` writes it.', 'The existing `tests/unit/test_api_surface.py` compares membership with the real', 'assembled application. This supplementary ledger must not replace that check.', '', 'No OpenAPI field is treated as a complete contract when the handler parses its', 'own request. The unresolved semantic fields are visible in every endpoint row', 'and count as coverage gaps, rather than receiving a default “approved” value.', '']
     return {'docs/generated/api-reference.json':json.dumps(data,indent=2,ensure_ascii=False)+'\n','docs/API_REFERENCE.md':'\n'.join(lines)}
+
+
+UNTRACKED={'docs/generated/api-reference.json'}
 
 
 def main():
@@ -83,7 +86,12 @@ def main():
     for rel,text in generate().items():
         path=ROOT/rel
         if args.check:
-            if not path.exists() or path.read_text()!=text: bad.append(rel)
+            # The JSON ledger is not in git (owner ruling 2026-10-03): it holds
+            # line numbers and test lists, so --check proves the generator ran
+            # and its output is valid JSON with routes. The Markdown is tracked.
+            if rel in UNTRACKED:
+                if not json.loads(text).get('routes'): bad.append(rel)
+            elif not path.exists() or path.read_text()!=text: bad.append(rel)
         else:
             path.parent.mkdir(parents=True,exist_ok=True);path.write_text(text)
     if bad: raise SystemExit('API reference drift: '+', '.join(bad))

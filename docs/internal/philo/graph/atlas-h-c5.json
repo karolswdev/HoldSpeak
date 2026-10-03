@@ -206,31 +206,26 @@
         {
           "path": "web/src/desk/components/DeskListView.tsx",
           "symbol": "function FoldLine",
-          "line": 36,
           "claim": "the fold: Kind, Zone and Attention ride the name Button in a surface of 720 px or less"
         },
         {
           "path": "web/src/desk/components/DeskListView.tsx",
           "symbol": "countToken(visible.length, \"SHOWN\", \"SHOWN\")",
-          "line": 351,
           "claim": "the status says SHOWN for any count"
         },
         {
           "path": "web/src/desk/components/DeskSortableTable.tsx",
           "symbol": "function SortButton",
-          "line": 42,
           "claim": "the one sort verb is the library Button, aria-pressed on the sorted column"
         },
         {
           "path": "web/src/desk/components/DeskMenu.tsx",
           "symbol": "useLayoutEffect(() => {",
-          "line": 493,
           "claim": "the work menu keeps its measured panel inside the viewport"
         },
         {
           "path": "web/src/desk/components/list-view.css",
           "symbol": "container-name: surface;",
-          "line": 344,
           "claim": "the list face is a surface container, so its @container rules apply on the Floor's list"
         }
       ],
@@ -253,31 +248,26 @@
         {
           "path": "web/src/features/project-room/ProjectRoomCore.tsx",
           "symbol": "function ItemsSection",
-          "line": 1052,
           "claim": "the ITEMS section, after NEEDS YOU, omitted when empty, UNAVAILABLE + Retry on a failed read"
         },
         {
           "path": "web/src/features/channels/SendWell.tsx",
           "symbol": "export function DeliveryHistory",
-          "line": 29,
           "claim": "To + Mark delivered above the body of a published update, and the delivery history (PHILO-10-04: under the SEND well, story 01's one table)"
         },
         {
           "path": "web/src/features/project-room/update/UpdatePosture.tsx",
           "symbol": "countLabel(\"UPDATES\"",
-          "line": 262,
           "claim": "the update list's head counts updates"
         },
         {
           "path": "web/src/features/project-room/project-room.css",
           "symbol": ".room-ask-container {",
-          "line": 307,
           "claim": "the Ask well is in the flow at every width"
         },
         {
           "path": "web/src/desk/shell.ts",
           "symbol": "export function openProjectRoom",
-          "line": 127,
           "claim": "the one key that opens a project's Room"
         }
       ],
@@ -301,25 +291,21 @@
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
           "symbol": "data-testid=\"project-grant-chip\"",
-          "line": 395,
           "claim": "the project line's chip: RUN AND PUBLISH ALLOWED or STOPPED"
         },
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
           "symbol": "data-testid={`credential-row-${cred.id}`}",
-          "line": 973,
           "claim": "one ledger row per credential"
         },
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
           "symbol": "data-testid=\"palette-token\"",
-          "line": 978,
           "claim": "the row's palette token reads the issued name"
         },
         {
           "path": "holdspeak/web/routes/mcp_http.py",
           "symbol": "@router.put(\"/api/settings/remote/delegations/{identity}/projects/{project_id}\")",
-          "line": 458,
           "claim": "the owner's project grant: admitted, owner-only, HTTP only"
         }
       ],
@@ -341,7 +327,6 @@
         {
           "path": "web/src/pages/cores/connections/ConnectionsPane.tsx",
           "symbol": "case \"never_checked\": return \"Never checked\";",
-          "line": 52,
           "claim": "the chip's words for a provider never checked"
         }
       ],

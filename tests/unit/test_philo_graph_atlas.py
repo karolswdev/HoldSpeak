@@ -3,7 +3,7 @@
 Every check here is a reference check, never a phrase-presence check: the atlas
 validates against its schema, its ids resolve, its setup recipes name API pairs
 that EXIST in the generated OpenAPI, its fixtures hash to what it claims, and
-every source reference lands on a line that still holds the symbol it cites.
+every source reference names a file that still holds the text it cites.
 """
 from __future__ import annotations
 
@@ -251,31 +251,29 @@ def test_every_fixture_step_exists_and_hashes_as_claimed(atlas: dict) -> None:
     assert not problems, problems
 
 
-def test_every_source_reference_lands_on_its_symbol(every_atlas: dict) -> None:
-    """A line number is evidence, not identity (brief section 1).
+def source_ref_problem(ref: dict) -> str | None:
+    """Why a source reference no longer holds, or None. Line-free."""
+    target = REPO / ref["path"]
+    if not target.is_file():
+        return f"missing file {ref['path']}"
+    if ref["symbol"] not in target.read_text(errors="replace"):
+        return f"{ref['path']} no longer holds {ref['symbol']!r}"
+    return None
 
-    The cited line must still hold the cited symbol, or the reference has
-    drifted and the claim behind it is no longer proven.
+
+def test_every_source_reference_lands_on_its_symbol(every_atlas: dict) -> None:
+    """A source reference is a file and the text it cites; it has no line.
+
+    Owner ruling 2026-10-03: a line number moves with every edit above it, so
+    the fence reads the text. The cited file must still hold the cited symbol,
+    or the claim behind the reference is no longer proven.
     """
     problems: list[str] = []
     for state in every_atlas["states"]:
         for ref in state["sources"]:
-            target = REPO / ref["path"]
-            if not target.is_file():
-                problems.append(f"{state['id']}: missing file {ref['path']}")
-                continue
-            lines = target.read_text(errors="replace").splitlines()
-            if not 1 <= ref["line"] <= len(lines):
-                problems.append(
-                    f"{state['id']}: {ref['path']}:{ref['line']} is past the end of the file"
-                )
-                continue
-            line = lines[ref["line"] - 1]
-            if ref["symbol"] not in line:
-                problems.append(
-                    f"{state['id']}: {ref['path']}:{ref['line']} no longer holds "
-                    f"{ref['symbol']!r} (line reads {line.strip()[:80]!r})"
-                )
+            problem = source_ref_problem(ref)
+            if problem:
+                problems.append(f"{state['id']}: {problem}")
     assert not problems, "\n".join(problems)
 
 
@@ -479,17 +477,9 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
         for case in json.loads(path.read_text())['cases']
         if case['id'].endswith('.op') or case['id'].endswith('.op.replayed')
     ]
-    # PHILO-13 B0 owns its own atlas count; semantic checks still use siblings.
-    legacy_siblings = [
-        case
-        for path in ATLAS_FILES
-        if not path.name.startswith("atlas-phase13-")
-        for case in json.loads(path.read_text())['cases']
-        if case['id'].endswith('.op') or case['id'].endswith('.op.replayed')
-    ]
-    # Historical pre-Phase-13 total is 69; the unfiltered list remains the
-    # semantic subject, including both Phase 13 atlases. H-B0b count anchor.
-    assert len(legacy_siblings) == 69
+    # No literal count (owner ruling 2026-10-03): the checks below are
+    # semantic and read every sibling.
+    assert siblings
     sibling_ids = {case["id"] for case in siblings}
     assert READ_REFUSAL_SIBLINGS <= sibling_ids
     mutating = {
@@ -1123,13 +1113,9 @@ def test_every_council_reading_names_its_sources(atlas: dict) -> None:
         if not reading["words"].startswith("COUNCIL READING:"):
             problems.append(f"{reading['id']}: does not announce itself")
         for ref in reading["sources"]:
-            target = REPO / ref["path"]
-            if not target.is_file():
-                problems.append(f"{reading['id']}: missing file {ref['path']}")
-                continue
-            lines = target.read_text(errors="replace").splitlines()
-            if not (1 <= ref["line"] <= len(lines)) or ref["symbol"] not in lines[ref["line"] - 1]:
-                problems.append(f"{reading['id']}: {ref['path']}:{ref['line']} lost {ref['symbol']!r}")
+            problem = source_ref_problem(ref)
+            if problem:
+                problems.append(f"{reading['id']}: {problem}")
     assert not problems, problems
 
 
