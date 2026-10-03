@@ -221,30 +221,58 @@ export function meetingFailed(row: Record<string, unknown>): boolean {
   return stateToken(row).label.endsWith("FAILED");
 }
 
-/** HS-170-04 — the display headline: `N meeting(s) need a summary` (accent)
- *  or `All summaries done` (muted) or `No meetings yet` when empty.
- *  HS-201-01: a FAILED row is named instead of the all-clear. */
+/** PHILO-13-03 — the summary is LIVE: the queue holds it running, or it
+ *  waits (queued, or a retry after a failed attempt; the rail says QUEUED). */
+function summaryRunning(row: Record<string, unknown>): boolean {
+  return stateToken(row).label === "RUNNING";
+}
+function summaryQueued(row: Record<string, unknown>): boolean {
+  return stateToken(row).label === "QUEUED";
+}
+
+/** PHILO-13-03 — a summary that should exist and does not: OFF over a
+ *  transcript (the `Run summary` row), or a finished run with no stored
+ *  summary (`has_summary` false on the list row, H-A3). */
+function summaryMissing(row: Record<string, unknown>): boolean {
+  if (needsIntelligence(row)) return true;
+  return row.has_summary === false && stateToken(row).label === "RAN";
+}
+
+function counted(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
+/** HS-170-04 — the display headline. PHILO-13-03 (Astra's pass on #736):
+ *  the process state leads, as on the rail: `n meeting(s) failed`, then
+ *  `n summary/summaries running`, then `n ... queued`, then `n meeting(s)
+ *  need(s) a summary`. `All summaries done` only when no summary is live or
+ *  failed and every summary that should exist exists. `No meetings yet` when
+ *  empty. HS-201-01: never the all-clear over a FAILED row. */
 export function meetingsHeadline(
   meetingRows: Record<string, unknown>[],
   loading: boolean,
 ): { text: string; accent: boolean } {
   if (loading) return { text: "", accent: false };
   if (meetingRows.length === 0) return { text: "No meetings yet", accent: false };
-  const offWithWords = meetingRows.filter(needsIntelligence).length;
-  if (offWithWords > 0) {
-    // HS-201-04 (tenet 4): the headline names the same thing its verb
-    // does. `Run summary` under "needs intelligence" was two words for
-    // one job.
-    const noun = offWithWords === 1 ? "meeting needs a summary" : "meetings need summaries";
-    return { text: `${offWithWords} ${noun}`, accent: true };
-  }
   const failed = meetingRows.filter(meetingFailed).length;
   if (failed > 0) {
-    const noun = failed === 1 ? "meeting failed" : "meetings failed";
-    return { text: `${failed} ${noun}`, accent: true };
+    return { text: counted(failed, "meeting failed", "meetings failed"), accent: true };
+  }
+  const running = meetingRows.filter(summaryRunning).length;
+  if (running > 0) {
+    return { text: counted(running, "summary running", "summaries running"), accent: true };
+  }
+  const queued = meetingRows.filter(summaryQueued).length;
+  if (queued > 0) {
+    return { text: counted(queued, "summary queued", "summaries queued"), accent: true };
+  }
+  const missing = meetingRows.filter(summaryMissing).length;
+  if (missing > 0) {
+    // HS-201-04 (tenet 4): the headline names the same thing its verb does.
+    return { text: counted(missing, "meeting needs a summary", "meetings need summaries"), accent: true };
   }
   // PHILO-13-03 (canvas C1-4a): Meetings counts summaries, a narrower set
-  // than "needs you"; its all-clear says what it counts.
+  // than "needs you"; its all-clear says what it counts, and only when true.
   return { text: "All summaries done", accent: false };
 }
 

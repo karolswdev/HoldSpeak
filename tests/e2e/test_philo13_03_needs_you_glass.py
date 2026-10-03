@@ -239,3 +239,84 @@ class TestOneNeedsYou:
             finally:
                 (SHOTS / f"a2w-glass-{width}.json").write_text(json.dumps(record, indent=2, default=str))
                 browser.close()
+
+
+# ── Astra's pass on #736: Meetings says `All summaries done` only when true ──
+
+HEADLINE_CASES = {
+    "stored": "All summaries done",
+    "running": "1 summary running",
+    "retrying": "1 summary queued",
+}
+
+
+def _mint_headline_case(tmp_path: Path, name: str) -> None:
+    """One meeting through the stop-handoff producer and the REAL intel queue
+    executor (``scripts/philo13_meetings_headline_fixture.py``), copied into
+    the hub's database at the instant its list row was read (a held run is
+    copied while the provider holds it)."""
+    import sqlite3
+
+    import scripts.philo13_meetings_headline_fixture as fixture
+
+    rig = tmp_path / "rig"
+    rig.mkdir()
+
+    def copy(_db: Any) -> None:
+        src = sqlite3.connect(rig / name / "queue.db")
+        dst = sqlite3.connect(tmp_path / "holdspeak.db")  # _boot's DEFAULT_DB_PATH
+        src.backup(dst)
+        src.close()
+        dst.close()
+
+    fixture.ON_READ = copy
+    try:
+        rows = fixture._case(rig, name, fixture.CASES[name])
+    finally:
+        fixture.ON_READ = None
+    assert [r["id"] for r in rows] == [fixture.MEETING_ID], rows
+
+
+class TestMeetingsHeadlineTellsTheTruth:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest):
+        _ensure_build()
+        self.case = request.node.callspec.params["case"]
+        _mint_headline_case(tmp_path, self.case)
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        self.base = base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    @pytest.mark.parametrize("case", list(HEADLINE_CASES))
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_the_meetings_headline_names_the_live_fact(self, width: int, case: str) -> None:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = TestOneNeedsYou._page(self, pw, width)  # type: ignore[arg-type]
+            try:
+                wire = _api(page, "GET", "/api/meetings?limit=20", token=TOKEN)["meetings"]
+                assert len(wire) == 1, wire
+                page.wait_for_timeout(1000)
+                _settle(page)
+                TestOneNeedsYou._press(
+                    page, page.locator(".desk-dock-launch[aria-label^='Meetings']"), width)
+                window = page.locator(".desk-window[aria-label='Meetings']")
+                head = window.locator(".surface-display").first
+                head.wait_for(timeout=15_000)
+                page.wait_for_function(
+                    "(el) => el.innerText.trim().length > 0", arg=head.element_handle(), timeout=15_000)
+                _settle(page)
+                text = head.inner_text().strip()
+                (SHOTS / f"a2w-meetings-headline-{case}-{width}.json").write_text(json.dumps({
+                    "case": case, "width": width, "headline": text,
+                    "wire": {k: wire[0].get(k) for k in ("id", "intel_status", "has_summary", "intel_job")},
+                }, indent=2, default=str))
+                TestOneNeedsYou._shot(page, f"a2w-meetings-headline-{case}", width)
+                assert text == HEADLINE_CASES[case], (case, text, wire[0].get("intel_status"))
+                assert not errors, errors
+            finally:
+                browser.close()

@@ -28,7 +28,7 @@
   },
   "chair_caption": "ACTIONS 4",
   "done_latency": {
-    "ms": 32,
+    "ms": 28,
     "head": 5,
     "bell": 5,
     "intel": 5

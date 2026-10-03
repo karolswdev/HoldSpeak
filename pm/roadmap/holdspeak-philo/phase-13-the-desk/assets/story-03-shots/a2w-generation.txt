@@ -2,27 +2,35 @@ $ uv run --no-sync python scripts/gen_api_surface.py
 wrote docs/api-surface.json (715 routes)
 wrote docs/API_SURFACE.md
 EXIT: 0
+
 $ uv run --no-sync python scripts/philo_repository_census.py
 Repository census: 5 outputs written.
 EXIT: 0
+
 $ uv run --no-sync python scripts/philo_api_reference.py
 API reference generated
 EXIT: 0
+
 $ uv run --no-sync python scripts/philo_boundary_census.py
 Boundary candidate census generated
 EXIT: 0
+
 $ uv run --no-sync python scripts/philo_openapi_reference.py
 OpenAPI: 586 paths
 EXIT: 0
+
 $ uv run --no-sync python scripts/philo_doctor_reference.py
 Doctor reference: 41 check functions
 EXIT: 0
+
 $ uv run --no-sync python scripts/philo_config_reference.py
 Configuration declaration reference is current
 EXIT: 0
+
 $ uv run --no-sync python scripts/gen_operations_json.py
 WROTE docs/generated/operations.json
 EXIT: 0
+
 $ uv run --no-sync python scripts/philo_graph_reference.py
 case-revision: live-astra ran an older revision of case.j10.arrival_generate_again.retained_after_reload
 case-revision: live-astra ran an older revision of case.j10.arrival_generate_again.same_day_idempotent
@@ -415,6 +423,7 @@ subtype-normalized: state.time.next_due_sweep: astra=atlas.time; muaddib=clock -
 subtype-normalized: state.time.sweep_held_remote: astra=atlas.time; muaddib=clock -> clock (vocabulary)
 graph join generated: docs/generated/graph.json — 6472 nodes, 808 links, 85 cases, 216 observations, 112 claim reviews, 47 findings, 47 resolutions; 389 note(s)
 EXIT: 0
+
 $ uv run --no-sync python scripts/generate_capability_docs.py
 Architecture documentation generated (10 outputs).
 EXIT: 0
