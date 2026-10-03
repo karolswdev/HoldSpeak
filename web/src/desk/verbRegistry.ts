@@ -36,8 +36,8 @@ import {
 import {
   cycleWindows,
   cycleWindowsReverse,
-  maximizeFrontWindow,
-  snapFrontWindow,
+  sendFrontWindowToBack,
+  snapFrontWindow, zoomFrontWindow,
 } from "./components/window/windowCommands";
 import { toggleExpose } from "./components/window/Expose";
 
@@ -660,7 +660,8 @@ export const VERBS: Verb[] = [
   },
   {
     id: "window.minimize",
-    label: "Minimize window",
+    // PHILO-13-12 (C2): the Workbench name of the gadget (design §3).
+    label: "Iconify",
     menu: "window",
     scope: "window",
     key: "⌘M",
@@ -705,14 +706,32 @@ export const VERBS: Verb[] = [
     ghost: needWindow,
     run: () => snapFrontWindow("right"),
   },
+  // PHILO-13-12 (C2) — zoom and depth (design §3, board C1-2b). ⌘ stands
+  // for the Amiga key; ⌃M and ⌃B are the canvas's proposals, bound here.
   {
     id: "window.maximize",
-    label: "Maximize",
+    label: "Zoom",
     menu: "window",
     scope: "window",
     group: "layout",
+    key: "⌃M",
+    keywords: ["maximize", "zoom", "size"],
+    // At 393 a window fills the work area: zoom has nothing to change.
+    ghost: () =>
+      needWindow() ??
+      (typeof window !== "undefined" && window.innerWidth <= 720 ? "Fills the screen" : null),
+    run: () => zoomFrontWindow(),
+  },
+  {
+    id: "window.depth",
+    label: "To back",
+    menu: "window",
+    scope: "window",
+    group: "layout",
+    key: "⌃B",
+    keywords: ["depth", "back", "behind", "lower"],
     ghost: needWindow,
-    run: () => maximizeFrontWindow(),
+    run: () => sendFrontWindowToBack(),
   },
   // ── Window ▸ Chair (PHILO-13-11 C1, R1): the Chair's four windows, a
   // check on each open one; picking one opens it in front. Only on the

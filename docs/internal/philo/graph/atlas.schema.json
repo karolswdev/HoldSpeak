@@ -983,7 +983,8 @@
                 "restart_hub",
                 "queue_meeting_intelligence",
                 "create_repository_fixture",
-                "ingest_coder_fixture"
+                "ingest_coder_fixture",
+                "seed_needs_you_week"
               ]
             },
             "capture_as": {

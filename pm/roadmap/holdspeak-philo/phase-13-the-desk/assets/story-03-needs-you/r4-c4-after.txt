@@ -1,0 +1,24 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-13-astra/web
+
+stdout | src/desk/needsYou.test.ts > the real producer membership oracle > rejects a code mutant that skips dedupAttention on the real producer oracle
+{"mutant":"skip dedupAttention","rejection":"expected 7 to be 6 // Object.is equality","expectedCount":6,"actualCount":7,"expectedRefs":["A2 confirm the room commitment","blocker:engines","philo13-a2-A1","philo13-a2-A3","philo13-a2-A4","philo13-a2-failed-meeting"],"actualRefs":["A2 confirm the room commitment","blocker:engines","philo13-a2-A1","philo13-a2-A3","philo13-a2-A4","philo13-a2-dedup-A2","philo13-a2-failed-meeting"],"extraRef":"philo13-a2-dedup-A2"}
+
+ ↓ src/desk/needsYou.test.ts > the one needs-you membership > counts a settled R1-R3 example once and preserves each ref
+ ↓ src/desk/needsYou.test.ts > the one needs-you membership > keeps a retried job as RETRYING after its due time
+ ↓ src/desk/needsYou.test.ts > the one needs-you membership > does not infer a missing engine from an absent roster row
+ ↓ src/desk/needsYou.test.ts > the one needs-you membership > makes a failed assignment read unknown instead of clear
+ ↓ src/desk/needsYou.test.ts > the shared needs-you read > uses the producer-backed summary filter and never reads an unfiltered meeting page
+ ↓ src/desk/needsYou.test.ts > the shared needs-you read > uses the cached Room read on mount and poll, and fresh only for explicit refresh
+ ↓ src/desk/needsYou.test.ts > the shared needs-you read > paginates meetings by offset when the HTTP route omits next_cursor
+ ↓ src/desk/needsYou.test.ts > the shared needs-you read > uses shared coverage semantics when complete is true over a failed row
+ ↓ src/desk/needsYou.test.ts > the shared needs-you read > keeps the meeting-path blocker unknown when the roster read fails
+ ↓ src/desk/needsYou.test.ts > the shared needs-you read > retains the last Room rows after a later Room read fails
+ ↓ src/desk/needsYou.test.ts > the shared needs-you read > shares one in-flight read between two mounted consumers
+ ↓ src/desk/needsYou.test.ts > the real producer membership oracle > matches before/after real wire and rejects controlled wrong projections
+ ✓ src/desk/needsYou.test.ts > the real producer membership oracle > rejects a code mutant that skips dedupAttention on the real producer oracle 3837ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 12 skipped (13)
+   Start at  20:10:08
+   Duration  4.70s (transform 224ms, setup 144ms, import 300ms, tests 3.84s, environment 317ms)

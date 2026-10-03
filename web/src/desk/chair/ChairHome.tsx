@@ -41,6 +41,7 @@ import {
   StringGadget,
 } from "../surface";
 import { openIntelligence } from "../intelligenceNavigation";
+import { calendarOpener, refOpener, resolveOwner, type Opener } from "../openObject";
 import { readCoverage, type CoverageRecord } from "../coverage";
 import {
   ATTENTION_CAP,
@@ -187,6 +188,8 @@ interface DoorCard {
   owner?: string | null;
   due?: string | null;
   continuity_state?: string;
+  /** HS-150-02: the owner mapped to a People relationship (only when mapped). */
+  person_relationship_id?: string;
   lawful_verbs?: Array<{ name: string; arguments: Record<string, string | number | null | undefined>; required_arguments?: string[] }>;
 }
 
@@ -211,6 +214,8 @@ interface UpcomingItem {
   source_label?: string;
   project_id?: string;
   project_name?: string;
+  /** HS-149-03: the person a linked series belongs to (only when linked). */
+  person_relationship_id?: string;
   armed_schedule_id?: string;
   armed?: UpcomingArmed;
   state?: string;
@@ -1654,8 +1659,11 @@ function NeedsYouRow({
   const swallow = (event: React.SyntheticEvent) => {
     if (event.target !== event.currentTarget) event.stopPropagation();
   };
+  const opener = useNeedsYouOpener(item, ext._doorCard);
   return (
     <SurfaceLedgerRow
+      // PHILO-13-06 (B1): the row opens its object (a commitment, its person).
+      onToggle={opener ?? undefined}
       lead={
         <span className="arrival-source-emblem" data-testid="arrival-source-emblem">
           {emblem}
@@ -1807,6 +1815,33 @@ function NeedsYouRow({
       ) : null}
     </SurfaceLedgerRow>
   );
+}
+
+/** PHILO-13-06 (B1): what a NEEDS YOU row opens. A commitment opens its
+ *  person (the door's mapped relationship, or the aggregate's owner through
+ *  the People route); any other door card its own ref; a Room row its
+ *  Room. Null = the row names nothing that opens and draws no open. */
+function useNeedsYouOpener(item: NeedsYouItem, card?: DoorCard): Opener | null {
+  const isCommitment = item.source === "commitment" && Boolean(item.actionItemId);
+  const owner = isCommitment ? (item.owner ?? "").trim() : "";
+  const [ownerPerson, setOwnerPerson] = useState<string | null>(null);
+  useEffect(() => {
+    setOwnerPerson(null);
+    if (!owner) return;
+    let live = true;
+    void resolveOwner(owner).then((id) => { if (live) setOwnerPerson(id); });
+    return () => { live = false; };
+  }, [owner]);
+  if (card) {
+    const person = card.target_ref?.startsWith("people:")
+      ? card.target_ref
+      : card.person_relationship_id
+        ? `people:${card.person_relationship_id}`
+        : null;
+    return refOpener(person) ?? refOpener(card.open_ref) ?? refOpener(card.target_ref);
+  }
+  if (isCommitment) return ownerPerson ? refOpener(`people:${ownerPerson}`) : null;
+  return item.projectId ? () => openProjectRoom(item.projectId) : null;
 }
 
 /** The one verb of a constituent projection inside the `N SOURCES`
@@ -2127,6 +2162,8 @@ function BriefSection({
           <SurfaceLedgerRow
             key={item.id}
             primary={item.text}
+            // PHILO-13-06 (B1): the row opens the object it names.
+            onToggle={refOpener(item.source_ref) ?? undefined}
             trailing={
               <>
                 <Button
@@ -2641,6 +2678,8 @@ function CalendarMeetingsSection({
               key={ev.id}
               time={formatEventTime(ev.starts_at)}
               primary={ev.title || "Untitled event"}
+              // PHILO-13-06 (B1): its person at Prep, else its Room.
+              onToggle={calendarOpener(ev) ?? undefined}
               cells={
                 <>
                   {ev.project_name ? (
@@ -2650,7 +2689,7 @@ function CalendarMeetingsSection({
                       </span>
                       {/* HS-175 C5: Unlink beside the ROOM token -- a hover
                           verb at the desk width, visible at the phone width. */}
-                      <span className="arrival-meeting-verbs">
+                      <span className="arrival-meeting-verbs" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           dense

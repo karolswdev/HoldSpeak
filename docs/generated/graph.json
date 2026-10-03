@@ -14,7 +14,7 @@
   },
   {
    "path": "docs/generated/openapi.json",
-   "sha256": "4a7212d26810fa2c9e49236b0423b9af11a4206a4f8101297c2a6b856d26bbb8"
+   "sha256": "32dad2a06a1c57db0359a6ff4ee9356493a2a4a601efc997b12a019a81c7976b"
   },
   {
    "path": "docs/internal/philo/data/desk.json",
@@ -34,7 +34,7 @@
   },
   {
    "path": "docs/internal/philo/graph/atlas.json",
-   "sha256": "5155c0caa67b9e141142f337fe86c7d0f041dd62db8bdc25a2d92841cc0eb43b"
+   "sha256": "383bb826b160c1bdc37d6aa0bbb14ff6ad05f5e9bb71c4048668a0a31fb24c7c"
   },
   {
    "path": "docs/internal/philo/graph/council-resolutions.json",

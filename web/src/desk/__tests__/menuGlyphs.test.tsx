@@ -292,6 +292,9 @@ describe("bound-key-set byte-identical proof (HS-148-02)", () => {
       "go.configure-settings": "⌘4",
       "window.close": "⌘W",
       "window.minimize": "⌘M",
+      // PHILO-13-12 (C2): Zoom ⌃M and To back ⌃B (board C1-2b).
+      "window.maximize": "⌃M",
+      "window.depth": "⌃B",
       "window.cycle": "⌃`",
       "window.cycle-reverse": "⌃⇧`",
       "system.search": "⌘K",

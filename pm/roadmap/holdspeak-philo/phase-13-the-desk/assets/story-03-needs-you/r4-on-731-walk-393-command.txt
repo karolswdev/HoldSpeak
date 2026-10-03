@@ -1,0 +1,12 @@
+COMMAND: HOME=<fresh isolated> TMPDIR=<short isolated> PLAYWRIGHT_BROWSERS_PATH=$REAL_HOME/Library/Caches/ms-playwright uv run --no-sync --extra dev python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase13-astra.json --case case.p13.dock.needs_you_week --brain astra --viewport 393 --engine none --out .tmp/graph-walk/phase13-astra-r4-on-731/393
+
+PASS: live
+BRAIN: astra
+SOURCE: 0f32ddb87613638725ec80c471a6ced7b0b3e070 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase13-astra.json
+RUNTIME: build=['index-ChMlwlZ7.js'] hub=http://127.0.0.1:51994 db=/private/tmp/p13g.NCg9fr/tmp393/graph-walk-home-7_edqhh6/.local/share/holdspeak/holdspeak.db engine=none
+JOB: j1
+VERDICT: pass terminal=settled
+EVIDENCE: ['.tmp/graph-walk/phase13-astra-r4-on-731/393/20261003T023147Z-case.p13.dock.needs_you_week-astra-393/before.png', '.tmp/graph-walk/phase13-astra-r4-on-731/393/20261003T023147Z-case.p13.dock.needs_you_week-astra-393/after.png']
+NOTE: predicate: '5' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 29, 'y': 811, 'w': 33, 'h': 27}
+EXIT: 0

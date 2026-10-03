@@ -570,6 +570,7 @@ _UI_ONLY_VERBS = {
     "desk.arrange", "desk.reset-layout", "desk.reset-to-seed", "system.search",
     "system.sheet", "window.close", "window.minimize", "window.cycle",
     "window.cycle-reverse", "window.snap-left", "window.snap-right", "window.maximize",
+    "window.depth",
 }
 
 

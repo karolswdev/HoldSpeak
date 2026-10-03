@@ -1310,6 +1310,13 @@ button.surface-edit-in-place:hover {
 .surface-ledger-line:hover {
   background: var(--wash-1);
 }
+/* PHILO-13-06 (B1): a line that opens nothing draws no open (A.11). */
+.surface-ledger-line[data-inert] {
+  cursor: default;
+}
+.surface-ledger-line[data-inert]:hover {
+  background: none;
+}
 /* HS-111-08 — keyboard focus must read differently from a resting
    mouse: the full-width accent band edge (inset ring — never an
    outside outline that clips in the scrolling well, never a smuggled

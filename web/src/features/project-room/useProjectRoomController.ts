@@ -7,7 +7,7 @@
 // blanks the rest.
 
 import { useEffect, useMemo, useState } from "react";
-import { readableError } from "../../lib/api";
+import { plainFailure } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
 import { openSourceRef } from "../../desk/surface/citations";
 import { useCoreWings } from "../../pages/cores/core-hooks";
@@ -105,7 +105,7 @@ export function useProjectRoomController(
         setReadAt(snapshot.sinceRead.readAt);
       }
     } catch (reason) {
-      setError(readableError(reason));
+      setError(plainFailure("ROOM DID NOT LOAD", reason));
     } finally {
       setLoadStatus("ready");
     }
@@ -127,7 +127,7 @@ export function useProjectRoomController(
       setSince(sinceBody);
     } catch (reason) {
       // Detail failure does not blank the room face (WEB-STA-002)
-      if (!error) setError(readableError(reason));
+      if (!error) setError(plainFailure("ROOM DID NOT LOAD", reason));
     } finally {
       setDetailStatus("ready");
     }
@@ -175,7 +175,7 @@ export function useProjectRoomController(
         );
       }
     } catch (reason) {
-      setError(readableError(reason));
+      setError(plainFailure("NOT DONE", reason));
     }
   };
 
@@ -199,7 +199,7 @@ export function useProjectRoomController(
         rows.map((row) => (row.id === id ? updated : row)),
       );
     } catch (reason) {
-      setError(readableError(reason));
+      setError(plainFailure("NOT DONE", reason));
     } finally {
       setDecisionBusy("");
     }
@@ -226,7 +226,7 @@ export function useProjectRoomController(
       // Reload to pick up the confirmed state and new D&C row
       void load();
     } catch (reason) {
-      setError(readableError(reason));
+      setError(plainFailure("NOT DONE", reason));
     } finally {
       setProposalBusy("");
     }
@@ -239,7 +239,7 @@ export function useProjectRoomController(
       // Optimistic remove
       setProposals((prev) => prev.filter((p) => p.id !== proposalId));
     } catch (reason) {
-      setError(readableError(reason));
+      setError(plainFailure("NOT DONE", reason));
     } finally {
       setProposalBusy("");
     }
@@ -253,7 +253,7 @@ export function useProjectRoomController(
       // Reload to pick up the new Watch source
       void load();
     } catch (reason) {
-      setError(readableError(reason));
+      setError(plainFailure("NOT DONE", reason));
     } finally {
       setSuggestionBusy("");
     }
@@ -266,7 +266,7 @@ export function useProjectRoomController(
       // Optimistic remove
       setSuggestedSources((prev) => prev.filter((s) => s.reference !== ref));
     } catch (reason) {
-      setError(readableError(reason));
+      setError(plainFailure("NOT DONE", reason));
     } finally {
       setSuggestionBusy("");
     }
@@ -289,7 +289,7 @@ export function useProjectRoomController(
       setSearchHits(body.hits || []);
     } catch (reason) {
       setSearchHits([]);
-      setError(readableError(reason));
+      setError(plainFailure("NOT DONE", reason));
     } finally {
       setSearching(false);
     }

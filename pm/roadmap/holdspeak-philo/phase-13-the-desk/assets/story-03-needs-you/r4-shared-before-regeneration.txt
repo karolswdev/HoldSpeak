@@ -1,0 +1,6 @@
+$ uv run --no-sync pytest -q tests/unit/test_philo_graph_atlas.py tests/unit/test_api_surface.py tests/unit/test_philo_graph_reference.py
+EXIT: 0
+
+........................................................................ [ 57%]
+.....................................................                    [100%]
+125 passed in 5.06s

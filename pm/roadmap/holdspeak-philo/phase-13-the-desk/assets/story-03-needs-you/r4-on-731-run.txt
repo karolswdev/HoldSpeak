@@ -1,0 +1,6 @@
+COMMAND: HOME=<isolated> TMPDIR=<isolated> uv run --no-sync pytest -q tests/unit/test_philo_graph_atlas.py tests/unit/test_api_surface.py tests/unit/test_philo_graph_reference.py tests/unit/test_philo13_needs_you_fixture.py tests/unit/test_philo13_needs_you_route.py
+
+........................................................................ [ 54%]
+............................................................             [100%]
+132 passed in 13.07s
+EXIT: 0

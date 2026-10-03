@@ -93,6 +93,8 @@ export type RoomChangeRow = {
   kind: string;
   label: string;
   occurredAt: string | null;
+  /** PHILO-13-06 (B1): the object the change touched (`meeting:<id>`, …). */
+  targetRef?: string | null;
 };
 
 const CHANGE_KIND_LABELS: Record<string, string> = {
@@ -172,6 +174,7 @@ export function decodeChangeRow(raw: Record<string, unknown>): RoomChangeRow {
     kind,
     label: changeLabel(kind, summary),
     occurredAt: raw.created_at ? String(raw.created_at) : null,
+    targetRef: raw.target_ref ? String(raw.target_ref) : null,
   };
 }
 

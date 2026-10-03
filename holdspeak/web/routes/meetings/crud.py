@@ -55,6 +55,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
         tag: Optional[str] = None,
         has_open_actions: bool = False,
         parked: bool = False,
+        summary_attention: bool = False,
     ) -> Any:
         """List meetings, with HS-55-04 server-side facets composing with search.
 
@@ -80,6 +81,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
                 "tag": tag,
                 "has_open_actions": has_open_actions,
                 "parked": parked,
+                "summary_attention": summary_attention,
             })
             # The legacy endpoint was offset-based and did not expose cursors.
             result.pop("next_cursor", None)

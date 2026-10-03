@@ -4989,6 +4989,71 @@ def _input_file_record(value: str, path: Path, hub: Any) -> dict[str, Any]:
             "scope": scope}
 
 
+def _seed_needs_you_week_step(
+    step: dict[str, Any], page: Any, hub: Any, provenance: dict[str, Any],
+    variables: dict[str, Any],
+) -> dict[str, Any]:
+    """Mint the oracle through real producers inside the run-owned database."""
+    if hub is None or not getattr(hub, "db_path", None) or not hasattr(hub, "restart"):
+        raise Blocked("seed_needs_you_week needs the rig's own hub process")
+    home = guard_home(hub.home)
+    db_path = guard_path(hub.db_path, "oracle database")
+    if not _under(db_path, home) or db_path == home:
+        raise Refused("oracle database must be inside the isolated hub HOME")
+    prefix = step.get("capture_as") or "week"
+    if not isinstance(prefix, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", prefix):
+        raise Blocked("oracle capture_as must be a variable stem")
+    script = REPO / "scripts/philo13_needs_you_fixture.py"
+    command = [sys.executable, str(script), "seed", "--db", str(db_path), "--home", str(home)]
+    env = _isolated_hub_env(home, getattr(hub, "repo_root", None))
+    env["PYTHONPATH"] = str(REPO) + os.pathsep + env.get("PYTHONPATH", "")
+    try:
+        completed = subprocess.run(command, cwd=REPO, env=env, capture_output=True,
+                                   text=True, check=False, timeout=120)
+    except subprocess.TimeoutExpired as exc:
+        raise Blocked("oracle producer did not finish within 120 seconds") from exc
+    if completed.returncode:
+        detail = (completed.stderr or completed.stdout).strip()
+        raise Blocked(f"oracle producer returned {completed.returncode}: {detail[-800:]}")
+    try:
+        result = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise Blocked("oracle producer returned non-JSON output") from exc
+    if not isinstance(result, dict) or not isinstance(result.get("ids"), dict):
+        raise Blocked("oracle producer returned no fixed refs")
+    captured: dict[str, str] = {}
+    for alias, value in result["ids"].items():
+        if not isinstance(alias, str) or not re.fullmatch(r"[a-zA-Z][a-zA-Z0-9_]*", alias):
+            raise Blocked("oracle producer returned an invalid ref name")
+        if not isinstance(value, str) or not value:
+            raise Blocked("oracle producer returned an empty ref")
+        captured[f"{prefix}_{alias.lower()}"] = value
+    if not isinstance(result["ids"].get("A1"), str) or not result["ids"]["A1"]:
+        raise Blocked("oracle producer returned no A1 mutation target")
+    # The action-item route's canonical parameter is item_id. A case uses
+    # capture_as=item to bind that parameter to the real A1 producer result.
+    captured[f"{prefix}_id"] = result["ids"]["A1"]
+    variables.update(captured)
+    restart = hub.restart()
+    provenance.setdefault("restarts", []).append({**restart, "reason": "needs-you oracle producer"})
+    if isinstance(provenance.get("hub"), dict):
+        provenance["hub"].update({"pid": hub.proc.pid if hub.proc else None, "home": str(home)})
+    provenance["db_path"] = hub.db_path
+    provenance["product_wiring"] = hub.wiring
+    record = {
+        "kind": "cli", "action": "seed_needs_you_week",
+        "adapter": step.get("adapter", "stored-state-and-route-producers"),
+        "command": command, "db_path": str(db_path), "home": str(home),
+        "script_sha256": _sha256(script), "fixture": result,
+        "captured": {"prefix": prefix, "values": captured}, "restart": restart,
+    }
+    provenance["needs_you_week"] = record
+    if page is not None:
+        page.reload(wait_until="load")
+        record["page_reloaded"] = True
+    return record
+
+
 def _create_repository_fixture_step(
     step: dict[str, Any], page: Any, hub: Any, provenance: dict[str, Any],
     variables: dict[str, Any],
@@ -5497,6 +5562,8 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         return record
     if kind == "cli":
         action = step.get("action")
+        if action == "seed_needs_you_week":
+            return _seed_needs_you_week_step(step, page, hub, provenance, variables)
         if action == "create_repository_fixture":
             return _create_repository_fixture_step(step, page, hub, provenance, variables)
         if action == "ingest_coder_fixture":
@@ -5590,7 +5657,7 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
                 "implemented in this rig; the case is blocked, not claimed. The "
                 "implemented commands are actions 'restart_hub', "
                 "'queue_meeting_intelligence', 'create_repository_fixture' and "
-                "'ingest_coder_fixture'.")
+                "'ingest_coder_fixture' and 'seed_needs_you_week'.")
         if hub is None or not hasattr(hub, "restart"):
             raise Blocked("a restart_hub step needs the rig's own hub process")
         resolved_case = substitute(case or {}, variables)

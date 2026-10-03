@@ -45,15 +45,19 @@ describe("HS-148-04: registry-derivation pin", () => {
         el.querySelector(".desk-menu-label")?.textContent?.trim() ?? "",
     );
 
-    // The expected labels from the registry (maximize in non-compact mode).
+    // The expected labels from the registry (PHILO-13-12, C2: the window's
+    // menu bar — Iconify, Zoom, To back, Close window, then Desk ▸ and Go ▸).
     const minVerb = verbById("window.minimize")!;
     const maxVerb = verbById("window.maximize")!;
+    const depthVerb = verbById("window.depth")!;
     const closeVerb = verbById("window.close")!;
-    expect(labels).toEqual([
+    expect(labels.slice(0, 4)).toEqual([
       verbLabel(minVerb, CTX),
       verbLabel(maxVerb, CTX),
+      verbLabel(depthVerb, CTX),
       verbLabel(closeVerb, CTX),
     ]);
+    expect(labels).toHaveLength(6);
   });
 
   it("head menu keycaps match the verb registry keys", () => {
@@ -89,22 +93,19 @@ describe("HS-148-04: registry-derivation pin", () => {
       requestMinimize: vi.fn(),
       toggleMaximize: vi.fn(),
       requestClose: vi.fn(),
-    });
+      toBack: vi.fn(),
+    }).filter((e) => e.type === "item");
     const minVerb = verbById("window.minimize")!;
     const maxVerb = verbById("window.maximize")!;
+    const depthVerb = verbById("window.depth")!;
     const closeVerb = verbById("window.close")!;
-    expect(entries).toHaveLength(3);
-    expect(entries[0].type === "item" && entries[0].label).toBe(
-      verbLabel(minVerb, CTX),
-    );
-    expect(entries[0].type === "item" && entries[0].keycap).toBe(minVerb.key);
-    expect(entries[1].type === "item" && entries[1].label).toBe(
-      verbLabel(maxVerb, CTX),
-    );
-    expect(entries[2].type === "item" && entries[2].label).toBe(
-      verbLabel(closeVerb, CTX),
-    );
-    expect(entries[2].type === "item" && entries[2].keycap).toBe(closeVerb.key);
+    // PHILO-13-12 (C2): four window verbs, each with its registry key cap.
+    expect(entries).toHaveLength(4);
+    [minVerb, maxVerb, depthVerb, closeVerb].forEach((verb, i) => {
+      const e = entries[i];
+      expect(e.type === "item" && e.label).toBe(verbLabel(verb, CTX));
+      expect(e.type === "item" && e.keycap).toBe(verb.key);
+    });
   });
 
   it("dock chip adapter matches registry verbs", () => {
@@ -137,31 +138,40 @@ describe("HS-148-04: registry-derivation pin", () => {
     expect(entries[0].type === "item" && entries[0].label).toBe("Restore");
   });
 
-  it("compact head menu omits Maximize (no window.maximize entry)", () => {
+  // PHILO-13-12 (C2) — at 393 the head draws close and depth only; Zoom
+  // stays in the window menu, ghosted WITH its reason (a window fills the
+  // work area there, so zoom has nothing to change; UX-CANON A.11).
+  it("compact head menu keeps Zoom, ghosted with its reason", () => {
     const entries = headMenuEntries({
       maximized: false,
       compact: true,
       requestMinimize: vi.fn(),
       toggleMaximize: vi.fn(),
       requestClose: vi.fn(),
+      toBack: vi.fn(),
     });
-    expect(entries).toHaveLength(2);
-    expect(entries.every((e) => e.type === "item" && e.id !== "window.maximize")).toBe(true);
+    const zoom = entries.find((e) => e.type === "item" && e.id === "window.maximize");
+    expect(zoom && zoom.type === "item" && zoom.ghost).toBe("Fills the screen");
+    const depth = entries.find((e) => e.type === "item" && e.id === "window.depth");
+    expect(depth && depth.type === "item" && depth.ghost).toBeFalsy();
   });
 
-  it("maximized head menu shows Restore for the maximize verb", () => {
+  // PHILO-13-12 (C2) — Zoom is a toggle between two rects: the menu row
+  // keeps its one name (the canvas), the gadget carries aria-pressed.
+  it("zoomed head menu keeps the Zoom name", () => {
     const entries = headMenuEntries({
       maximized: true,
       compact: false,
       requestMinimize: vi.fn(),
       toggleMaximize: vi.fn(),
       requestClose: vi.fn(),
+      toBack: vi.fn(),
     });
     const maxEntry = entries.find(
       (e) => e.type === "item" && e.id === "window.maximize",
     );
     expect(maxEntry).toBeTruthy();
-    expect(maxEntry!.type === "item" && maxEntry!.label).toBe("Restore");
+    expect(maxEntry!.type === "item" && maxEntry!.label).toBe("Zoom");
   });
 });
 

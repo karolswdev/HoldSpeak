@@ -195,3 +195,19 @@ def test_healing(capsys):
 
     if not healed:
         print("ratchet: ceiling matches current counts -- nothing to lower")
+
+
+def test_ds6_exempts_only_the_workbench_ink_divider():
+    """PHILO-13-11: the 1px ink divider is a separator, not an accent rail.
+    Only that exact token is exempt; any other border-left stays flagged."""
+    import importlib.util, pathlib
+    spec = importlib.util.spec_from_file_location(
+        "ux_canon_scan", pathlib.Path(__file__).resolve().parents[2] / "scripts" / "ux_canon_scan.py")
+    scan = importlib.util.module_from_spec(spec); spec.loader.exec_module(scan)
+    def ds6(css):
+        return [v for v in scan.scan_file("x.css", css, css.splitlines()) if v.rule == "DS6"]
+    assert ds6(".a { border-left: 1px solid var(--wb-ink); }") == []
+    assert ds6(".a { border-left: 3px solid var(--accent); }")
+    assert ds6(".a { border-left: 2px solid var(--wb-ink); }")
+    assert ds6(".a { border-left: 1px solid var(--wb-blue); }")
+    assert ds6(".a { border-left: 1px solid #6688bb; }")

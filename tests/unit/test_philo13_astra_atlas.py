@@ -33,8 +33,10 @@ EXPECTED_CASES = {
     "case.p13.info.window",
     "case.p13.meeting.park_restore",
     "case.p13.workbench.park_restore",
+    "case.p13.dock.needs_you_week",
 }
 PARKING_CASES = {"case.p13.meeting.park_restore", "case.p13.workbench.park_restore"}
+NEEDS_YOU_CASES = {"case.p13.dock.needs_you_week"}
 
 LIFECYCLE_CASES = {
     "case.p13.roadmap.window": {
@@ -509,7 +511,7 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
     # only in the shared Phase 1–12 population fence.
     assert sum(case["id"].endswith(".op") for case in cases.values()) == 1
     faces = [case for case in cases.values()
-             if not case["id"].endswith(".op") and case["id"] not in PARKING_CASES]
+             if not case["id"].endswith(".op") and case["id"] not in PARKING_CASES | NEEDS_YOU_CASES]
     assert len(faces) == 9
     for case in faces:
         assert case["viewports"] == [1440, 393]
@@ -524,6 +526,22 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
             if step.get("action") == "reload"
         ]
         assert reload_indices, case["id"]
+
+
+def test_needs_you_case_reads_six_before_real_mutation_and_five_after_reload() -> None:
+    case = _cases()["case.p13.dock.needs_you_week"]
+    assert case["viewports"] == [1440, 393]
+    setup = case["setup"]
+    seed_index = next(i for i, step in enumerate(setup) if step.get("action") == "seed_needs_you_week")
+    six_index = next(i for i, step in enumerate(setup) if step.get("predicate") == {"kind": "readable_text", "value": "6"})
+    done_index = next(i for i, step in enumerate(setup) if step.get("path") == "/api/all-action-items/{item_id}")
+    assert seed_index < six_index < done_index
+    assert setup[six_index]["capture_shot"] is True
+    assert setup[done_index]["method"] == "PATCH"
+    assert setup[done_index]["body"] == {"status": "done"}
+    assert case["trigger"]["action"] == "reload"
+    assert case["expected"]["predicate"] == {"kind": "readable_text", "value": "5"}
+    assert "desk-dock-badge" in case["expected"]["observe_at"]
 
 
 def test_phase13_shared_semantic_guards_show_red_then_green(tmp_path, monkeypatch) -> None:
