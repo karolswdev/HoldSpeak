@@ -4867,6 +4867,7 @@ def _isolated_hub_env(
         "HOME": str(isolated_home),
         "GRAPH_WALK_REPO_ROOT": str(repo_root or ""),
         "TMUX_TMPDIR": str(isolated_home),
+        "HOLDSPEAK_PEOPLE_KEYSTORE_FILE": str(isolated_home / "people.key"),
     })
     env.pop("TMUX", None)
     env.pop("TMUX_PANE", None)
@@ -5062,6 +5063,72 @@ def _seed_needs_you_week_step(
         "captured": {"prefix": prefix, "values": captured}, "restart": restart,
     }
     provenance["needs_you_week"] = record
+    if page is not None:
+        page.reload(wait_until="load")
+        record["page_reloaded"] = True
+    return record
+
+
+def _seed_people_prep_step(
+    step: dict[str, Any], page: Any, hub: Any, provenance: dict[str, Any],
+    variables: dict[str, Any],
+) -> dict[str, Any]:
+    """Mint the B4 People oracle through the real producer fixture."""
+    if hub is None or not getattr(hub, "db_path", None) or not hasattr(hub, "restart"):
+        raise Blocked("seed_people_prep needs the rig's own hub process")
+    home = guard_home(hub.home)
+    db_path = guard_path(hub.db_path, "oracle database")
+    if not _under(db_path, home) or db_path == home:
+        raise Refused("oracle database must be inside the isolated hub HOME")
+    prefix = step.get("capture_as") or "people"
+    if not isinstance(prefix, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", prefix):
+        raise Blocked("people prep capture_as must be a variable stem")
+    script = REPO / "scripts/philo13_b4_fixture.py"
+    command = [sys.executable, str(script), "seed", "--db", str(db_path), "--home", str(home)]
+    env = _isolated_hub_env(home, getattr(hub, "repo_root", None))
+    env["PYTHONPATH"] = str(REPO) + os.pathsep + env.get("PYTHONPATH", "")
+    try:
+        completed = subprocess.run(
+            command, cwd=REPO, env=env, capture_output=True, text=True,
+            check=False, timeout=120,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise Blocked("People prep producer did not finish within 120 seconds") from exc
+    if completed.returncode:
+        detail = (completed.stderr or completed.stdout).strip()
+        raise Blocked(f"People prep producer returned {completed.returncode}: {detail[-800:]}")
+    try:
+        result = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise Blocked("People prep producer returned non-JSON output") from exc
+    if not isinstance(result, dict) or result.get("schema") != "philo13-b4-people-prep@1":
+        raise Blocked("People prep producer returned the wrong schema")
+    ids = result.get("ids")
+    required = (
+        "relationship_id", "event_id", "event_uid", "event_source_id",
+        "event_title", "project_id", "meeting_id", "session_id", "action_id",
+    )
+    if not isinstance(ids, dict) or any(not isinstance(ids.get(key), str) or not ids[key] for key in required):
+        raise Blocked("People prep producer returned incomplete fixed refs")
+    captured = {f"{prefix}_{key}": str(ids[key]) for key in required}
+    # The People route's public path parameter is canonical ``relationship_id``;
+    # retain that route spelling beside the prefixed producer refs.
+    captured["relationship_id"] = str(ids["relationship_id"])
+    variables.update(captured)
+    restart = hub.restart()
+    provenance.setdefault("restarts", []).append({**restart, "reason": "People prep producer"})
+    if isinstance(provenance.get("hub"), dict):
+        provenance["hub"].update({"pid": hub.proc.pid if hub.proc else None, "home": str(home)})
+    provenance["db_path"] = hub.db_path
+    provenance["product_wiring"] = hub.wiring
+    record = {
+        "kind": "cli", "action": "seed_people_prep",
+        "adapter": step.get("adapter", "people-prep-producer"),
+        "command": command, "db_path": str(db_path), "home": str(home),
+        "script_sha256": _sha256(script), "fixture": result,
+        "captured": {"prefix": prefix, "values": captured}, "restart": restart,
+    }
+    provenance["people_prep"] = record
     if page is not None:
         page.reload(wait_until="load")
         record["page_reloaded"] = True
@@ -5578,6 +5645,8 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         action = step.get("action")
         if action == "seed_needs_you_week":
             return _seed_needs_you_week_step(step, page, hub, provenance, variables)
+        if action == "seed_people_prep":
+            return _seed_people_prep_step(step, page, hub, provenance, variables)
         if action == "create_repository_fixture":
             return _create_repository_fixture_step(step, page, hub, provenance, variables)
         if action == "ingest_coder_fixture":
@@ -5671,7 +5740,8 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
                 "implemented in this rig; the case is blocked, not claimed. The "
                 "implemented commands are actions 'restart_hub', "
                 "'queue_meeting_intelligence', 'create_repository_fixture' and "
-                "'ingest_coder_fixture' and 'seed_needs_you_week'.")
+                "'ingest_coder_fixture', 'seed_needs_you_week' and "
+                "'seed_people_prep'.")
         if hub is None or not hasattr(hub, "restart"):
             raise Blocked("a restart_hub step needs the rig's own hub process")
         resolved_case = substitute(case or {}, variables)

@@ -5563,7 +5563,7 @@
     },
     {
       "path": "holdspeak/services/people_service.py",
-      "line": 123,
+      "line": 127,
       "kinds": [
         "http_client"
       ],
@@ -5573,7 +5573,7 @@
     },
     {
       "path": "holdspeak/services/people_service.py",
-      "line": 126,
+      "line": 130,
       "kinds": [
         "http_client"
       ],
@@ -6173,7 +6173,7 @@
     },
     {
       "path": "holdspeak/web/routes/people.py",
-      "line": 172,
+      "line": 177,
       "kinds": [
         "http_client"
       ],
@@ -6183,7 +6183,7 @@
     },
     {
       "path": "holdspeak/web/routes/people.py",
-      "line": 236,
+      "line": 241,
       "kinds": [
         "http_client"
       ],

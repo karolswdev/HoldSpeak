@@ -13,12 +13,12 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 264 / 264 |
-| Test paths | 206 / 206 |
-| Documentation paths | 226 / 226 |
-| Assertions inspected | 206 |
-| Tests executed | 174 |
-| Records with an executed assertion | 75 |
+| Source paths | 265 / 265 |
+| Test paths | 207 / 207 |
+| Documentation paths | 227 / 227 |
+| Assertions inspected | 207 |
+| Tests executed | 175 |
+| Records with an executed assertion | 76 |
 | Semantic records unresolved | 75 |
 
 ## Documentation classes
@@ -94,6 +94,7 @@ Validation errors at generation: **0**.
 | `desk.runtime` | capabilities | 2/2 | 2/2 | 2 | 0 | 1 | unresolved |
 | `desk.native_host` | capabilities | 1/1 | 0/0 | 0 | 0 | 0 | unresolved |
 | `project.update.linked_week` | capabilities | 1/1 | 2/2 | 2 | 2 | 0 | partially_evidenced |
+| `people.prep.read` | capabilities | 1/1 | 1/1 | 1 | 1 | 0 | partially_evidenced |
 | `agents.thread_persistent` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `agents.thread_tool_loop` | capabilities | 3/3 | 3/3 | 3 | 0 | 0 | unresolved |
 | `agents.interview` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |

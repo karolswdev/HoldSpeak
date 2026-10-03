@@ -560,6 +560,14 @@ def test_named_pair_observations_bind_their_read_arguments() -> None:
             continue
         bound = {step['capture_as'] for step in _acts(case) if step.get('capture_as')}
         bound |= {extra['as'] for step in _acts(case) for extra in step.get('capture_more', [])}
+        for step in _acts(case):
+            if step.get('kind') == 'cli' and step.get('action') == 'seed_people_prep':
+                prefix = step.get('capture_as') or 'people'
+                bound |= {f'{prefix}_{field}' for field in (
+                    'relationship_id', 'event_id', 'event_uid', 'event_source_id',
+                    'event_title', 'project_id', 'meeting_id', 'session_id', 'action_id',
+                )}
+                bound.add('relationship_id')
         expected = case['expected']
         reads = {key: expected.get(key) for key in ('observe_at', 'predicate', 'reads')}
         names = set(re.findall(r'\{([a-z][a-z0-9_]*)\}', json.dumps(reads)))
