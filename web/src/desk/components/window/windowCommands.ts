@@ -1,6 +1,7 @@
 import { useDesk } from "../../store";
 import { flashSwitcher } from "./Switcher";
 import { snapForPointer } from "./windowGeometry";
+import { chairPhoneToBack } from "../../chair/chairWindows";
 import {
   cycleWindows as cycleWindowsRaw,
   cycleWindowsReverse as cycleWindowsReverseRaw,
@@ -31,11 +32,30 @@ export function snapFrontWindow(side: "left" | "right"): void {
   state.focusPanel(id);
 }
 
-export function maximizeFrontWindow(): void {
+/** PHILO-13-12 (C2) — ⌃M: zoom the front window between its two
+ * remembered rects (Intuition's zoom). The same toggle as the gadget. */
+export function zoomFrontWindow(): void {
   const id = frontWindowId();
   if (!id) return;
   const state = useDesk.getState();
   if (state.panelMin.includes(id)) state.restorePanel(id);
-  if (!state.panelMax.includes(id)) state.toggleMaximizePanel(id);
-  else state.focusPanel(id);
+  state.toggleMaximizePanel(id);
+}
+
+/** Kept for its importers: zoom the front window (was: maximize only). */
+export const maximizeFrontWindow = zoomFrontWindow;
+
+/** PHILO-13-12 (C2) — depth: send this window behind every other window.
+ * The next window in the order becomes the front window (one blue window;
+ * the screen title follows it). On the phone the Chair shows one window at
+ * a time, so a Chair window sent back gives the work area to the next one. */
+export function sendWindowToBack(id: string): void {
+  useDesk.getState().sendPanelToBack(id);
+  chairPhoneToBack(id);
+}
+
+/** ⌃B — depth on the front window. */
+export function sendFrontWindowToBack(): void {
+  const id = frontWindowId();
+  if (id) sendWindowToBack(id);
 }

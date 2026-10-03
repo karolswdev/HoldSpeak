@@ -144,7 +144,7 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | PHILO-13-09 | B4 — The 1:1 finds its person | backlog | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | — |
 | PHILO-13-10 | B5 — The update writes the week | backlog | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | — |
 | PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | in-progress | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
-| PHILO-13-12 | C2 — The gadgets that are missing | backlog | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | — |
+| PHILO-13-12 | C2 — The gadgets that are missing | in-progress | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | — |
 | PHILO-13-13 | C3 — A live Dock (AppIcons) | backlog | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
 | PHILO-13-14 | C4 — A palette that knows his week and does verbs | backlog | [story-14-c4-a-palette-that-knows-his-week](./story-14-c4-a-palette-that-knows-his-week.md) | — |
 | PHILO-13-15 | C5 — Send to from any document window (the Phase 12 fold) | backlog | [story-15-c5-send-to-from-any-document-window](./story-15-c5-send-to-from-any-document-window.md) | — |

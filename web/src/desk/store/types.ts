@@ -217,6 +217,11 @@ export interface DeskState {
   panelMin: string[];
   /** Maximized windows (full stage; the saved rect is kept), persisted. */
   panelMax: string[];
+  /** PHILO-13-12 (C2) — zoom's second remembered rect per window: the
+   * user's own size and place for the zoomed state (absent = the zoomed
+   * window fills the work band). `panelRects` keeps the normal rect.
+   * Persisted with the workspace. */
+  panelZoom: Record<string, PanelRect>;
   /** Normalized, compositor-owned application windows keyed by window id. */
   windowsById: Record<string, WindowInstance>;
   /** HS-93-08 -- which expression of the Desk renders (spatial or list). */
@@ -346,6 +351,11 @@ export interface DeskState {
   minimizePanel(id: string): void;
   restorePanel(id: string): void;
   toggleMaximizePanel(id: string): void;
+  /** PHILO-13-12 (C2) — remember the zoomed rect (the user resized the
+   * zoomed window). */
+  setZoomRect(id: string, rect: PanelRect, persist?: boolean): void;
+  /** PHILO-13-12 (C2) — depth: send the window behind every other one. */
+  sendPanelToBack(id: string): void;
   /** HS-136-03: fetch scheduled recordings from the API. */
   loadSchedules(): Promise<void>;
   /** HS-136-03: create a scheduled recording via POST. */

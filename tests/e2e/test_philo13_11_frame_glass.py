@@ -10,8 +10,8 @@ The fences (each records its findings in ``frame-facts-<width>.json``):
 
   F1 one blue front window: exactly one window title bar is blue, and the
      screen title bar names that window.
-  F2 gadget ownership: close is the head's first control and iconify, zoom
-     its last (1440); every frame control owns all nine of its probe points
+  F2 gadget ownership: close is the head's first control and iconify, zoom,
+     depth its last (1440; 393: depth last, PHILO-13-12); every frame control owns all nine of its probe points
      (``elementFromPoint``), unless a window in front covers the point.
   F3 nothing clips, nothing scrolls sideways in the frame: no text in the
      screen bar, a title bar or an open menu runs past its clipping box
@@ -132,10 +132,12 @@ FRAME_JS = r"""(width) => {""" + FOLDED_WORD_JS + r"""
   for (const h of heads) {
     const btns = [...h.querySelectorAll('button')].filter(visible);
     const name = h.parentElement.getAttribute('aria-label');
-    const first = btns[0], last = btns.slice(-2);
+    // PHILO-13-12 (C2): depth is built, so the set ends iconify, zoom, depth
+    // (1440) and close ... depth (393; design §3).
+    const first = btns[0], last = btns.slice(width > 720 ? -3 : -1);
     if (!first || first.getAttribute('aria-label') !== `Close ${name}`) out.layout.push({name, first: first && label(first)});
-    if (width > 720 && !(last.length === 2 && last[0].getAttribute('aria-label') === `Iconify ${name}`
-        && last[1].getAttribute('aria-label') === `Zoom ${name}`)) out.layout.push({name, last: last.map(label)});
+    const want = width > 720 ? [`Iconify ${name}`, `Zoom ${name}`, `To back ${name}`] : [`To back ${name}`];
+    if (last.map((b) => b.getAttribute('aria-label')).join('|') !== want.join('|')) out.layout.push({name, last: last.map(label)});
   }
   const controls = [...(bar ? bar.querySelectorAll('button') : []), ...heads.flatMap((h) => [...h.querySelectorAll('button')])].filter(visible);
   for (const c of controls) {

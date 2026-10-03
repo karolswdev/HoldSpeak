@@ -773,6 +773,12 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .desk-window-actions {
     order: 2;
   }
+  /* PHILO-13-12 (C2): depth closes the one 44 px row (design §3:
+     close · the wings · the head verbs · depth). */
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .desk-gadgets-right {
+    order: 3;
+    margin-left: auto;
+  }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head.has-wings .desk-pullout-title,
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head > img {
     display: none;

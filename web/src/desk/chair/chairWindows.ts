@@ -100,6 +100,27 @@ export function closeChairWindow(id: string): void {
   });
 }
 
+/** PHILO-13-12 (C2) — depth on the phone: the Chair shows one window at a
+ * time, so a Chair window sent to the back gives the work area to the next
+ * open Chair window (the most recent first). At 1440 nothing changes here:
+ * the stacking order alone draws depth. */
+export function chairPhoneToBack(id: string): void {
+  if (!compactNow() || !chairWindowSpec(id)) return;
+  const s = useChairWindows.getState();
+  if (s.phone !== id) return;
+  // The next open Chair window after this one, in the Chair's own order
+  // (the phone mounts one Chair window, so the stacking order holds only it).
+  const ring = CHAIR_WINDOWS.filter((w) => w.phone).map((w): string => w.id);
+  const at = ring.indexOf(id);
+  for (let step = 1; step < ring.length; step++) {
+    const next = ring[(at + step) % ring.length];
+    if (!s.closed[next]) {
+      useChairWindows.setState({ phone: next });
+      return;
+    }
+  }
+}
+
 /** The Dock's Speak AppIcon at 393 on the Chair opens Capture on demand
  * (R2; the owner's "Yes" to Capture, 2026-10-02). The Chair screen calls this
  * only for a fresh press on that AppIcon (ChairDesk.tsx). True when it did. */
