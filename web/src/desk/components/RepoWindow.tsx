@@ -185,7 +185,7 @@ export function RepoWindow({
       origin={origin}
       onClose={() => useDesk.getState().closeRepositoryWindow(repositoryId)}
       wings={<SurfaceWings wings={WINGS} active={wing} onChange={setWing} />}
-      className="desk-repo-window"
+      className="desk-pullout desk-repo-window"
     >
       <div className="desk-repo-body desk-surface-body">
         {error ? <SurfaceState error={error} onRetry={retry ?? (() => void refresh())} /> : null}
