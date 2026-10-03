@@ -110,6 +110,14 @@ export function useRuntimeBus(): RuntimeBusValue {
   return value;
 }
 
+/** A chrome surface can be rendered in isolation (for example in a Desk
+ * component test) before the authenticated runtime is mounted.  Those
+ * surfaces keep their last read and simply have no live subscription until
+ * the provider exists. */
+export function useOptionalRuntimeBus(): RuntimeBusValue | null {
+  return useContext(RuntimeBusContext);
+}
+
 export function useRuntimeFrame<T = unknown>(type: string): T | null {
   const { subscribe } = useRuntimeBus();
   const [data, setData] = useState<T | null>(null);

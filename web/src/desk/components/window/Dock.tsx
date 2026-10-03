@@ -1,10 +1,11 @@
 // Dock — the application launcher + running window toolbar.
 // Extracted from DeskWindow.tsx (HS-117-04).
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { useIntelligenceAttention } from "../../intelligenceAttention";
+import { apiFetch } from "../../../lib/api";
 import { openIntelligence } from "../../intelligenceNavigation";
-import { useNeedsYou } from "../../needsYou";
+import { refreshNeedsYou, useNeedsYou } from "../../needsYou";
+import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { DOCK_SPRITES, SYSTEM } from "../../systemSprites";
 import { useDesk } from "../../store";
 import { useSettleState } from "../../settleState";
@@ -18,16 +19,193 @@ import { useLaunchers } from "./launcherRegistry";
 import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
-import { DOCK_APPLICATIONS } from "../../applications";
+import { DOCK_APPLICATIONS, applicationForAction } from "../../applications";
 import { RoomActions } from "./RoomActions";
+import {
+  dockStateLabel,
+  EMPTY_DOCK_LIVE,
+  formatDockTime,
+  latestSendOutcome,
+  nextOneOnOneLabel,
+  projectNeedsYouCounts,
+  reduceDockFrame,
+  type DockRelationshipRead,
+  type DockSendRead,
+  type DockLiveState,
+} from "./dockState";
+
+const DOCK_LIVE_FRAMES = [
+  "aftercare_ready",
+  "desk_changed",
+  "intel_complete",
+  "meeting_started",
+  "scheduled_recording.refused",
+  "scheduled_recording.started",
+  "scheduled_recording.stopped",
+  "stopped",
+] as const;
+
+interface DockReadState {
+  sendOutcome: ReturnType<typeof latestSendOutcome>;
+  nextOneOnOne: string | null;
+  sendReadAt: number | null;
+  peopleReadAt: number | null;
+}
+
+const EMPTY_DOCK_READ: DockReadState = {
+  sendOutcome: null,
+  nextOneOnOne: null,
+  sendReadAt: null,
+  peopleReadAt: null,
+};
+
+function wireRows<T>(body: unknown, key: string): T[] {
+  if (Array.isArray(body)) return body as T[];
+  if (!body || typeof body !== "object") return [];
+  const rows = (body as Record<string, unknown>)[key];
+  return Array.isArray(rows) ? rows as T[] : [];
+}
+
+async function readPeopleProjection(): Promise<{
+  nextOneOnOne: string | null;
+  complete: boolean;
+}> {
+  const body = await apiFetch<unknown>("/api/people/relationships");
+  const relationships = wireRows<DockRelationshipRead>(body, "relationships");
+  const direct = relationships.filter((relationship) =>
+    relationship.next_one_on_one !== undefined || relationship.nextOneOnOne !== undefined,
+  );
+  const ids = relationships
+    .map((relationship) => relationship.id)
+    .filter((id): id is string => Boolean(id));
+  const details = await Promise.allSettled(
+    ids.map((id) => apiFetch<unknown>(
+      `/api/people/relationships/${encodeURIComponent(id)}/brief`,
+    )),
+  );
+  const successfulDetails = details
+    .filter((detail): detail is PromiseFulfilledResult<unknown> => detail.status === "fulfilled")
+    .map((detail) => detail.value)
+    .flatMap((value) => {
+      const row = value && typeof value === "object"
+        ? value as Record<string, unknown>
+        : {};
+      return [{
+        brief: (row.brief && typeof row.brief === "object"
+          ? row.brief
+          : {}) as DockRelationshipRead,
+      }];
+    });
+  const complete = relationships.length === 0 || direct.length === relationships.length ||
+    (ids.length === relationships.length && successfulDetails.length === ids.length);
+  return {
+    nextOneOnOne: nextOneOnOneLabel([...relationships, ...successfulDetails]),
+    complete,
+  };
+}
 
 /** HS-100-11 — the dock IS the launcher: the four applications ride it
  * always (running mark when their window is open); drawers and tools
  * moved to the menu-bar bell and the search shelf. */
 const DOCK_APP_IDS = new Set<string>(
-  DOCK_APPLICATIONS.map((application) => application.windowId),
+  [...DOCK_APPLICATIONS.map((application) => application.windowId), "surface-people"],
 );
 const ACTIONABLE_LAUNCHERS = new Set(["attention", "delivery-board"]);
+const PEOPLE_APPLICATION = applicationForAction("open-people");
+const DOCK_FACE_APPLICATIONS = [
+  ...DOCK_APPLICATIONS,
+  ...(PEOPLE_APPLICATION
+    ? [{ ...PEOPLE_APPLICATION, dock: { order: 2.5, launch: "surface" as const } }]
+    : []),
+].sort((left, right) => left.dock.order - right.dock.order);
+
+/** Read the two Dock-only projections after a live invalidation.  The
+ * membership read itself is owned by useNeedsYou; this function only reads
+ * the existing Send and People boundaries needed for their AppIcon marks. */
+function useDockLiveReads(): {
+  live: DockLiveState;
+  reads: DockReadState;
+  offline: boolean;
+  lastSuccessfulAt: number | null;
+  needsYouCount: number;
+  needsYouItems: ReturnType<typeof useNeedsYou>["unmutedItems"];
+} {
+  const runtime = useOptionalRuntimeBus();
+  const runtimeState = runtime?.state ?? "offline";
+  const subscribe = runtime?.subscribe;
+  const needs = useNeedsYou({ poll: false });
+  const [live, setLive] = useState<DockLiveState>(EMPTY_DOCK_LIVE);
+  const [reads, setReads] = useState<DockReadState>(EMPTY_DOCK_READ);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastState = useRef<string | null>(runtimeState);
+
+  const refresh = useCallback(async () => {
+    if (runtimeState !== "connected") return;
+    const [sends, people] = await Promise.allSettled([
+      apiFetch<unknown>("/api/channels/sends"),
+      readPeopleProjection(),
+    ]);
+    // A live invalidation always refreshes A2 through its shared read. This
+    // explicit refresh is the event path; the Dock does not start the hook's
+    // minute poll.
+    await refreshNeedsYou(true).catch(() => undefined);
+    const readAt = Date.now();
+    setReads((previous) => ({
+      ...previous,
+      ...(sends.status === "fulfilled" ? {
+        sendOutcome: latestSendOutcome(wireRows<DockSendRead>(sends.value, "sends")),
+        sendReadAt: readAt,
+      } : {}),
+      ...(people.status === "fulfilled" && people.value.complete ? {
+        nextOneOnOne: people.value.nextOneOnOne,
+        peopleReadAt: readAt,
+      } : {}),
+    }));
+  }, [runtimeState]);
+
+  useEffect(() => {
+    if (!subscribe) {
+      void refresh();
+      return;
+    }
+    const unsubscribers = DOCK_LIVE_FRAMES.map((type) =>
+      subscribe(type, (frame) => {
+        setLive((previous) => reduceDockFrame(previous, frame));
+        if (timer.current !== null) clearTimeout(timer.current);
+        timer.current = setTimeout(() => {
+          timer.current = null;
+          void refresh();
+        }, 250);
+      }),
+    );
+    return () => {
+      unsubscribers.forEach((unsubscribe) => unsubscribe());
+      if (timer.current !== null) clearTimeout(timer.current);
+      timer.current = null;
+    };
+  }, [refresh, subscribe]);
+
+  useEffect(() => {
+    const state = runtimeState;
+    const reconnected = state === "connected" && lastState.current !== "connected";
+    lastState.current = state;
+    const hasSnapshot = reads.sendReadAt !== null || reads.peopleReadAt !== null;
+    if (state === "connected" && (reconnected || !hasSnapshot)) {
+      void refresh();
+    }
+  }, [reads.peopleReadAt, reads.sendReadAt, refresh, runtimeState]);
+
+  const lastSuccessfulAt = Math.max(reads.sendReadAt ?? 0, reads.peopleReadAt ?? 0) || null;
+
+  return {
+    live,
+    reads,
+    offline: Boolean(lastSuccessfulAt !== null && runtimeState !== "connected"),
+    lastSuccessfulAt,
+    needsYouCount: needs.count,
+    needsYouItems: needs.unmutedItems,
+  };
+}
 
 /** The dock (HS-95-03): every open window as a chip -- tap focuses (or
  * restores a parked one), x closes, loop resets the layout. Ctrl+` cycles
@@ -37,6 +215,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const panelMin = useDesk((s) => s.panelMin);
   const panelOrder = useDesk((s) => s.panelOrder);
   const windowsById = useDesk((s) => s.windowsById);
+  const recordingState = useDesk((s) => s.recording);
+  const recordingStartedAt = useDesk((s) => s.recordingStartedAt);
   const windows = useOpenWindows();
   const launchers = useLaunchers();
   // HS-111-07 — the HS-101 B8 keyboard grammar (Cmd+1-Cmd+4, Cmd+W, Cmd+M, Ctrl+`,
@@ -49,13 +229,13 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // HS-135-06: the Chair/Floor dock toggle (counsel ruling B.Q1).
   const chairSurface = useChairState((s) => s.surface);
   const toggleSurface = useChairState((s) => s.toggle);
-  const intelligenceAttention = useIntelligenceAttention();
-  // PHILO-13-03: every Desk face reads the same membership snapshot. The
-  // hook owns the shared read and its one approximately-minute poll.
-  const { count: needsYouCount } = useNeedsYou();
-  const intelligenceBadge = needsYouCount > 0
+  // PHILO-13-03 / C3: every Desk face reads the same membership snapshot.
+  // The Dock opts out of the hook's minute poll; RuntimeBus invalidations
+  // call the explicit refresh path in useDockLiveReads.
+  const { live, reads, offline, lastSuccessfulAt, needsYouCount, needsYouItems } = useDockLiveReads();
+  const intelligenceBadge = !offline && needsYouCount > 0
     ? String(needsYouCount)
-    : intelligenceAttention.briefReady ? "•" : null;
+    : null;
   // HS-99-04 — the dock chip menu (one menu vocabulary).
   const [chipMenu, setChipMenu] = useState<{
     id: string;
@@ -120,6 +300,42 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // A launcher whose surface is already a window folds into that chip;
   // it only renders as a launcher while its surface is closed.
   const shown = launchers.filter((l) => !windows.some((w) => w.id === l.id));
+  const activeProjects = useDesk((s) => s.projects).filter((project) => !project.is_archived);
+  const projectCounts = projectNeedsYouCounts(needsYouItems);
+  const meetingRows = useDesk((s) => s.items.meeting);
+  const readyMeetingIds = new Set(live.readyMeetingIds);
+  for (const meeting of meetingRows) {
+    if (
+      meeting.hasSummary ||
+      ["ready", "complete", "completed", "settled"].includes(String(meeting.intelStatus || ""))
+    ) readyMeetingIds.add(meeting.id);
+  }
+  const readyMeetingBadge = !offline && readyMeetingIds.size > 0
+    ? `READY ${readyMeetingIds.size}`
+    : null;
+  // A3 sets "recording" only after res.ok or the hub's meeting_live read.
+  // That shared read also covers a Dock mounted after the start frame.
+  // The optimistic press is "busy", so it cannot create REC here.
+  const recording = !offline && (live.recording || (recordingState === "recording"
+    ? { meetingId: "hub-confirmed", startedAt: recordingStartedAt
+      ? new Date(recordingStartedAt).toISOString() : null }
+    : null));
+  const recordingLabel = recording
+    ? `REC${recording.startedAt ? ` ${formatDockTime(recording.startedAt)}` : ""}`
+    : null;
+  const sendLabel = !offline ? dockStateLabel(live.sendOutcome || reads.sendOutcome) : null;
+  const peopleLabel = !offline && reads.nextOneOnOne
+    ? `1:1 ${formatDockTime(reads.nextOneOnOne)}`
+    : null;
+  const hiddenProjectWindowIds = new Set(
+    activeProjects
+      .filter((project) => windowsById["surface-project-memory"]?.scope === `project:${project.id}`)
+      .map((project) => `project:${project.id}`),
+  );
+  const visibleWindowChips = windows.filter((window) =>
+    !DOCK_APP_IDS.has(window.id) &&
+      !hiddenProjectWindowIds.has(windowsById[window.id]?.scope || ""),
+  );
   return (
     <div
       ref={dockRef}
@@ -128,7 +344,12 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       aria-label="Dock"
       /* HS-110-04: magnification swell removed -- the shelf is flat. */
     >
-      {DOCK_APPLICATIONS.map((application) => {
+      {offline ? (
+        <span className="desk-dock-offline" data-testid="desk-dock-offline">
+          OFFLINE · AS OF {formatDockTime(lastSuccessfulAt)}
+        </span>
+      ) : null}
+      {DOCK_FACE_APPLICATIONS.map((application) => {
         const win = windows.find((w) => w.id === application.windowId);
         // Mounted DOM refs are runtime detail; the compositor owns whether a
         // hosted application is open. Intelligence is not yet a hosted surface.
@@ -137,7 +358,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           : Boolean(win);
         const minimized = running && panelMin.includes(application.windowId);
         const badge =
-          application.windowId === "intelligence:desk"
+            application.windowId === "intelligence:desk"
             ? intelligenceBadge
             : null;
         const needsYouBadge = badge !== null && badge !== "•";
@@ -160,7 +381,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 openIntelligence({ view: "brief" });
               else
                 void import("../../shell").then((m) =>
-                  m.openSurfaceOr(application.action, application.href),
+                  m.openSurfaceOr(application.action, application.href, undefined, {
+                    origin: "dock",
+                  }),
                 );
             }}
             onContextMenu={(e) => {
@@ -188,6 +411,54 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             {badge ? (
               <span className="desk-chip desk-dock-badge" data-tone={needsYouBadge ? "warn" : undefined}>
                 {badge}
+              </span>
+            ) : null}
+            {application.windowId === "surface-meetings" && (recordingLabel || readyMeetingBadge) ? (
+              <span className="desk-dock-state" data-testid="desk-dock-meetings-state">
+                {recordingLabel || readyMeetingBadge}
+              </span>
+            ) : null}
+            {application.windowId === "intelligence:desk" && sendLabel ? (
+              <span className="desk-dock-state" data-testid="desk-dock-send-state">
+                {sendLabel}
+              </span>
+            ) : null}
+            {application.windowId === "surface-people" && peopleLabel ? (
+              <span className="desk-dock-state" data-testid="desk-dock-people-state">
+                {peopleLabel}
+              </span>
+            ) : null}
+          </Button>
+        );
+      })}
+      {activeProjects.map((project) => {
+        const projectWindow = windows.find(
+          (window) => window.id === "surface-project-memory" &&
+            windowsById["surface-project-memory"]?.scope === `project:${project.id}`,
+        );
+        const count = !offline ? projectCounts[project.id] || 0 : 0;
+        return (
+          <Button
+            key={`project:${project.id}`}
+            variant="chrome"
+            className={`desk-dock-launch desk-dock-project${projectWindow ? " is-run" : ""}`}
+            aria-label={count > 0 ? `${project.name}, ${count} need you` : project.name}
+            onClick={() => {
+              void import("../../shell").then((m) =>
+                m.openSurfaceOr(
+                  "open-project-memory",
+                  "/project-memory",
+                  `project:${project.id}`,
+                  { origin: "dock" },
+                ),
+              );
+            }}
+          >
+            <span aria-hidden="true">▤</span>
+            <span className="desk-dock-label">{project.name}</span>
+            {count > 0 ? (
+              <span className="desk-chip desk-dock-badge" data-tone="warn">
+                {count}
               </span>
             ) : null}
           </Button>
@@ -245,10 +516,10 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       })}
       <RoomActions />
       {center}
-      {windows.some((w) => !DOCK_APP_IDS.has(w.id)) ? (
+      {visibleWindowChips.length > 0 ? (
         <span className="desk-dock-sep" aria-hidden="true" />
       ) : null}
-      {windows.filter((w) => !DOCK_APP_IDS.has(w.id)).map((c) => {
+      {visibleWindowChips.map((c) => {
         const minimized = panelMin.includes(c.id);
         return (
           <span

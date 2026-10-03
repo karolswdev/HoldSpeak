@@ -5,10 +5,12 @@
  * legacy route until every surface lives in-world (HS-95-08 removes the
  * fallbacks and the guard keeps them out). */
 
-export type SurfaceOpener = (scope?: string) => void;
+export type SurfaceOpenOptions = { origin?: "dock" | "menu" | "route" };
+
+export type SurfaceOpener = (scope?: string, options?: SurfaceOpenOptions) => void;
 
 const surfaces = new Map<string, SurfaceOpener>();
-const pendingOpens: Array<{ key: string; scope?: string }> = [];
+const pendingOpens: Array<{ key: string; scope?: string; options?: SurfaceOpenOptions }> = [];
 const STAGED_SURFACE_OPEN_KEY = "hs.desk.staged-surface-open";
 
 type StagedSurfaceOpen = { key: string; scope?: string };
@@ -21,7 +23,7 @@ export function registerSurface(key: string, opener: SurfaceOpener) {
   for (let i = pendingOpens.length - 1; i >= 0; i--) {
     if (pendingOpens[i].key === key) {
       const [queued] = pendingOpens.splice(i, 1);
-      opener(queued.scope);
+      opener(queued.scope, queued.options);
     }
   }
   return () => {
@@ -31,8 +33,8 @@ export function registerSurface(key: string, opener: SurfaceOpener) {
 
 /** Open now if registered, else queue until the surface registers (the
  * demoted-route arrival path). */
-export function openSurfaceWhenReady(key: string, scope?: string): void {
-  if (!openSurface(key, scope)) pendingOpens.push({ key, scope });
+export function openSurfaceWhenReady(key: string, scope?: string, options?: SurfaceOpenOptions): void {
+  if (!openSurface(key, scope, options)) pendingOpens.push({ key, scope, options });
 }
 
 /** Stage one demoted-route intent until normal SurfaceWindows has finished
@@ -73,10 +75,10 @@ export function consumeStagedSurfaceOpen(): StagedSurfaceOpen | null {
  * first (the Chair at 393: the Speak AppIcon opens its Capture window, the
  * owner's "Yes", 2026-10-02). The answer returns true when it took the open;
  * false passes the key on to its window. Returns the unregister. */
-const firstAnswers = new Map<string, (scope?: string) => boolean>();
+const firstAnswers = new Map<string, (scope?: string, options?: SurfaceOpenOptions) => boolean>();
 export function answerSurfaceFirst(
   key: string,
-  answer: (scope?: string) => boolean,
+  answer: (scope?: string, options?: SurfaceOpenOptions) => boolean,
 ): () => void {
   firstAnswers.set(key, answer);
   return () => {
@@ -85,11 +87,11 @@ export function answerSurfaceFirst(
 }
 
 /** Open a surface in-world. False = not yet registered (legacy fallback). */
-export function openSurface(key: string, scope?: string): boolean {
-  if (firstAnswers.get(key)?.(scope)) return true;
+export function openSurface(key: string, scope?: string, options?: SurfaceOpenOptions): boolean {
+  if (firstAnswers.get(key)?.(scope, options)) return true;
   const opener = surfaces.get(key);
   if (!opener) return false;
-  opener(scope);
+  opener(scope, options);
   return true;
 }
 
@@ -109,11 +111,10 @@ export function setShellNavigator(nav: (href: string) => void): void {
 
 /** Open a surface in-world, else navigate to its legacy route. */
 export function openSurfaceOr(
-  key: string,
-  fallbackHref: string,
-  scope?: string,
+  key: string, fallbackHref: string,
+  scope?: string, options?: SurfaceOpenOptions,
 ): void {
-  if (openSurface(key, scope)) return;
+  if (openSurface(key, scope, options)) return;
   shellNavigate?.(fallbackHref);
 }
 
@@ -123,7 +124,6 @@ export function openSurfaceOr(
  * and its fallback `/projects` is no route, so eight callers opened nothing.
  * An empty id opens Desk memory unscoped, never a dead route. */
 export const PROJECT_ROOM_KEY = "open-project-memory";
-
 export function openProjectRoom(projectId: string | null | undefined): void {
   const id = (projectId ?? "").trim();
   openSurfaceOr(PROJECT_ROOM_KEY, "/project-memory", id ? `project:${id}` : undefined);

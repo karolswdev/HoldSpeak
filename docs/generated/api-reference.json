@@ -6143,7 +6143,8 @@
         "tests/unit/test_philo11_atlas.py",
         "tests/unit/test_philo11_channel_contract.py",
         "tests/unit/test_philo11_send_job.py",
-        "tests/unit/test_philo12_artifact_lifecycle.py"
+        "tests/unit/test_philo12_artifact_lifecycle.py",
+        "tests/unit/test_philo13_c3_dock.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {

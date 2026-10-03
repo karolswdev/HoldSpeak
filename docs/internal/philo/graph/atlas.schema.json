@@ -981,6 +981,7 @@
             "action": {
               "enum": [
                 "restart_hub",
+                "stop_hub",
                 "queue_meeting_intelligence",
                 "create_repository_fixture",
                 "ingest_coder_fixture",

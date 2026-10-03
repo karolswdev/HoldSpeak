@@ -145,7 +145,7 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | PHILO-13-10 | B5 — The update writes the week | backlog | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | — |
 | PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | in-progress | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
 | PHILO-13-12 | C2 — The gadgets that are missing | done | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | [evidence-story-12](./evidence-story-12.md) |
-| PHILO-13-13 | C3 — A live Dock (AppIcons) | backlog | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
+| PHILO-13-13 | C3 — A live Dock (AppIcons) | in-progress | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
 | PHILO-13-14 | C4 — A palette that knows his week and does verbs | backlog | [story-14-c4-a-palette-that-knows-his-week](./story-14-c4-a-palette-that-knows-his-week.md) | — |
 | PHILO-13-15 | C5 — Send to from any document window (the Phase 12 fold) | backlog | [story-15-c5-send-to-from-any-document-window](./story-15-c5-send-to-from-any-document-window.md) | — |
 | PHILO-13-16 | C6 — Capture from anywhere | backlog | [story-16-c6-capture-from-anywhere](./story-16-c6-capture-from-anywhere.md) | — |
@@ -315,3 +315,7 @@ Astra r2 (`checks/charter-astra-r2.md`): r1's five fixes present; three conditio
 | F2 close → reopen place untested | story 07: a close → reopen acceptance per returning family, actual atlas cases at 1440 and touch at 393 |
 | F3 Trust exempt against "Everything" | story 07: Trust **returns** (open state + rect) |
 | F4 H-B0b line ref and the shared contract | `:492` (the count); H-B0b filters the count only; the shared semantic checks cover both Phase 13 atlas files, shown red on a broken case (story 01) |
+
+## Wave 2 — H-C3 candidate, 2026-10-03
+
+H-C3 and H-C3-origin are DRAFT, UNCHECKED — awaiting Muad'Dib. [Lane report and C3-W contract](lane-13-astra.md). Live send/ready/offline/restart and refused-recording cases pass at 1440 and 393. C3-W owns the material and removal of Chair's Dock-press timer. Story 13 stays in-progress.
