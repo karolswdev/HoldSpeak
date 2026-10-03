@@ -20,7 +20,7 @@ export const useDesk = create<DeskState>()((...args) => ({
 // continue to work unchanged.
 export type { UnitPos, PanelRect, DeskView, ZoneViewPref, WindowInstance, DeskState, ScheduledRecording, ScheduledArmingState, ZoneRenameError } from "./types";
 export { GHOST_LAYOUT_KEYS, COMPACT_LIST_THRESHOLD, defaultViewFor } from "./types";
-export { loadPanelLayout } from "./compositorSlice";
+export { loadPanelLayout, isRehydratedMinimized } from "./compositorSlice";
 export {
   DESK_WORKSPACE_STORAGE_KEY,
   DESK_WORKSPACE_VERSION,

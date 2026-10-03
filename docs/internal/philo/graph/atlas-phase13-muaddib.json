@@ -444,7 +444,7 @@
         {
           "path": "web/src/desk/store/compositorSlice.ts",
           "symbol": "closePullout(id) {",
-          "line": 185,
+          "line": 246,
           "claim": "closePullout filters the open cards by equality"
         }
       ],
@@ -508,7 +508,7 @@
         {
           "path": "web/src/desk/pullouts/editors/useThoughtNoteWriter.ts",
           "symbol": "const title = thoughtTitle(",
-          "line": 143,
+          "line": 165,
           "claim": "the one writer sends that title on save"
         }
       ],

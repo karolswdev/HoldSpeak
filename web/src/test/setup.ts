@@ -11,6 +11,9 @@ beforeEach(() => {
   // must not answer the next (registered by desk/needsYou.ts, never imported
   // here, so a test's API mock still binds).
   (globalThis as { __resetNeedsYou?: () => void }).__resetNeedsYou?.();
+  // PHILO-13-07 (B2): a prior case's kept draft or window place must not
+  // answer the next (registered by desk/deskMemory.ts).
+  (globalThis as { __resetDeskMemory?: () => void }).__resetDeskMemory?.();
 });
 
 class ResizeObserverStub {

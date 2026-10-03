@@ -118,7 +118,7 @@ describe("the dock", () => {
     expect(s.panelMax).toEqual([]);
     expect(
       JSON.parse(localStorage.getItem("hs.desk.workspace.v1") || "{}").panel,
-    ).toEqual({ rects: {}, order: [], max: [] });
+    ).toEqual({ rects: {}, order: [], max: [], min: [] }); // B2: min persists, so the wipe does too
   });
 });
 

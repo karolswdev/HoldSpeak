@@ -57,13 +57,15 @@ describe("desk windows", () => {
     expect(useDesk.getState().panelOrder).toEqual(["pullout", "ask"]);
   });
 
-  it("the stacking order persists; minimize does not (HS-97-03)", () => {
+  // PHILO-13-07 (B2) supersedes HS-97-03's session-only minimize: a
+  // minimized window comes back minimized after a reload.
+  it("the stacking order persists; so does minimize (PHILO-13-07 B2)", () => {
     useDesk.getState().focusPanel("ask");
     useDesk.getState().focusPanel("pullout");
     useDesk.getState().minimizePanel("ask");
     const raw = JSON.parse(localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY) || "{}");
     expect(raw.panel.order).toEqual(["ask", "pullout"]);
-    expect(raw.panel.min).toBeUndefined();
+    expect(raw.panel.min).toEqual(["ask"]);
     expect(useDesk.getState().panelMin).toEqual(["ask"]);
   });
 

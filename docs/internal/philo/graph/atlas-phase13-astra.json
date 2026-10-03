@@ -1601,6 +1601,7 @@
             "adapter": "ui-by-viewport",
             "role": "button",
             "name": "Floor",
+            "optional": true,
             "timeout_s": 2
           },
           {

@@ -10,9 +10,15 @@
 // The stacking order and the rects stay in the desk compositor (panelOrder,
 // panelRects, panelMax) under these ids, like every other window. B2
 // (story 07) persists the four ids — open/closed, rect, zoom, order — with
-// every other window family; this store does not persist (yet).
+// every other window family: the rects and order in the compositor's part of
+// the workspace document, the closed ones and the phone's window here, in the
+// document's `chair` section.
 import { create } from "zustand";
 import { useDesk } from "../store";
+import {
+  loadDeskWorkspace,
+  saveDeskWorkspaceSection,
+} from "../store/workspaceStorage";
 import { registrySnapshot } from "../components/window/windowRegistry";
 
 export type ChairWindowKey = "needs" | "brief" | "week" | "capture";
@@ -45,10 +51,30 @@ interface ChairWindowsState {
   phone: string;
 }
 
+const storedChair = loadDeskWorkspace().chair;
+
 export const useChairWindows = create<ChairWindowsState>(() => ({
-  closed: {},
-  phone: "chair:needs",
+  closed: Object.fromEntries(
+    (storedChair?.closed ?? [])
+      .filter((id) => CHAIR_WINDOW_IDS.includes(id))
+      .map((id) => [id, true]),
+  ),
+  phone:
+    storedChair && (storedChair.phone === "" || CHAIR_WINDOW_IDS.includes(storedChair.phone))
+      ? storedChair.phone
+      : "chair:needs",
 }));
+
+// PHILO-13-07 (B2): a closed Chair window stays closed after a reload.
+useChairWindows.subscribe((s, prev) => {
+  if (s.closed === prev.closed && s.phone === prev.phone) return;
+  saveDeskWorkspaceSection({
+    chair: {
+      closed: Object.keys(s.closed).filter((id) => s.closed[id]),
+      phone: s.phone,
+    },
+  });
+});
 
 function compactNow(): boolean {
   return (

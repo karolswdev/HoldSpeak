@@ -47,7 +47,9 @@ export function makeOpenWindow<K extends string>(
       if (config.onOpen) config.onOpen(value, get, set);
       sfx("latch");
     }
-    get().focusPanel(panelId);
+    // PHILO-13-07 (B2): minimized state persists, so an open also brings a
+    // window back from its Dock chip (B1's "an open asks for the front").
+    get().restorePanel(panelId);
   };
 }
 

@@ -19,7 +19,7 @@ import {
 } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
-import { useDesk, type PanelRect } from "../store";
+import { isRehydratedMinimized, useDesk, type PanelRect } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
 import { WorkMenu } from "./DeskMenu";
 import { headMenuEntries } from "../windowMenuAdapter";
@@ -243,7 +243,11 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       typeof window.matchMedia === "function" &&
       window.matchMedia("(max-width: 720px)").matches
     )
-      return;
+      // PHILO-13-07 (B2, B0-F2): a sheet leaves the stacking order on close
+      // too. Without this, a closed sheet kept its old plane in the persisted
+      // order, and after a reload its reopen stayed BEHIND the window that
+      // opened it (the Delivery board covered the reopened Dossier at 393).
+      return () => useDesk.getState().retirePanel(id);
     const s = useDesk.getState();
     const vw = window.innerWidth || 1280;
     const vh = window.innerHeight || 800;
@@ -803,10 +807,11 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
 
   // Opening always PRESENTS the window. A stale in-session minimize
   // (window closed while parked, reopened later) would otherwise open it
-  // invisibly parked — a stranded surface. Minimize is session-scoped by
-  // design and never persisted (HS-97-03); rects/order/maximize persist.
+  // invisibly parked — a stranded surface. PHILO-13-07 (B2) supersedes
+  // HS-97-03's session-only minimize: a window that comes back after a
+  // reload minimized stays minimized until he restores or closes it.
   useEffect(() => {
-    if (open && useDesk.getState().panelMin.includes(id))
+    if (open && useDesk.getState().panelMin.includes(id) && !isRehydratedMinimized(id))
       useDesk.getState().restorePanel(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, id]);
