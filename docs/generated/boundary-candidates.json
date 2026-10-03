@@ -6603,7 +6603,7 @@
     },
     {
       "path": "web/src/components/AmbientLayer.tsx",
-      "line": 53,
+      "line": 54,
       "kinds": [
         "http_client"
       ],
@@ -6613,7 +6613,7 @@
     },
     {
       "path": "web/src/components/AmbientLayer.tsx",
-      "line": 369,
+      "line": 383,
       "kinds": [
         "http_client"
       ],

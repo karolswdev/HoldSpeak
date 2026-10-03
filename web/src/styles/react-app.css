@@ -270,6 +270,10 @@
 .ambient-aftercare-fixed {
   bottom: 104px;
 }
+/* PHILO-13-17 (C7, Q6): the eyebrow reads at 4.5:1 (4.26:1 before). */
+.ambient-aftercare .signal-eyebrow {
+  color: var(--accent-text);
+}
 .ambient-aftercare-flow {
   position: static;
   left: auto;

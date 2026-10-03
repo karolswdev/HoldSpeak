@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** PHILO-13-11 (C1 canvas ratified); this story's own canvas ratified
 - **Unblocks:** none
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
@@ -54,6 +54,7 @@ Grounding size: not sized as one move. PROVISIONAL.
 
 ## Notes
 
+- 2026-10-03 — **Muad'Dib's ruling (aftercare, decision 5 narrowed):** when the front desk window already hosts the aftercare slot for the arriving card (`web/src/components/AmbientLayer.tsx` `findAftercareSlot`, its front-window branch `frontWindowAftercareSlot`), the card lands there, Capture does not open, and the front window stays. In every other case decision 5 stands: Capture opens and the front window iconifies. Found by the build: the ratified rule iconified the meeting's own record in Meetings when its own card arrived (`tests/e2e/test_hs202_first_use_smoke.py` `record-refresh` red at 393). Built in `web/src/desk/chair/ChairDesk.tsx`; fenced by `aftercarePhone.philo1317.test.tsx` (both branches) and the glass leg S6 (`C7-6e`, `C7-6f`).
 - 2026-10-02 — canvas drawn for the owner's ruling, NOT RATIFIED: `assets/story-17-canvas/` (README lists the boards, the acceptance line each answers, the forks and the limits; it includes the owner's ruling that an arriving aftercare card opens Capture at 393). Drawn by a Fedaykin on main `76c361537`; unchecked, awaiting Astra's check, then the owner.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

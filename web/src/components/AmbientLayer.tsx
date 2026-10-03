@@ -14,6 +14,7 @@ import { Button } from "./signal/Signal";
 import { LampGadget } from "../desk/surface/gadgets";
 import { SurfaceState } from "../desk/surface/Surface";
 import { useChairState } from "../desk/chairState";
+import { useCompactViewport } from "../desk/useCompactViewport";
 import {
   handleWorkbenchRunStart,
   handleWorkbenchRunComplete,
@@ -161,6 +162,7 @@ function AftercareNote() {
   const { subscribe } = useRuntimeBus();
   const signal = useAftercare();
   const surface = useChairState((state) => state.surface);
+  const compact = useCompactViewport();
   const aftercareSlot = useAftercareSlot(surface, Boolean(signal));
   const scrolledSlot = useRef<{ signalKey: string; slot: HTMLElement } | null>(null);
   useEffect(
@@ -232,14 +234,26 @@ function AftercareNote() {
       </div>
     </aside>
   );
-  return aftercareSlot ? createPortal(card, aftercareSlot) : card;
+  if (aftercareSlot) return createPortal(card, aftercareSlot);
+  // PHILO-13-17 (C7, Q4b): at 393 on the Chair a card with no slot waits for
+  // its Capture window (in the ring until closed); it never floats over work.
+  if (surface === "chair" && compact) return null;
+  return card;
+}
+
+/** The FRONT desk window's own aftercare slot, or null. PHILO-13-17 (C7;
+ * Muad'Dib's ruling 2026-10-03): at 393 a card this slot can host lands
+ * there; Capture does not open and the front window stays. */
+export function frontWindowAftercareSlot(): HTMLElement | null {
+  if (typeof document === "undefined") return null;
+  return document.querySelector<HTMLElement>(
+    '.desk-surface-window.is-front [data-aftercare-window-slot="top"]',
+  );
 }
 
 function findAftercareSlot(surface: "chair" | "floor"): HTMLElement | null {
   if (typeof document === "undefined") return null;
-  const activeWindow = document.querySelector<HTMLElement>(
-    '.desk-surface-window.is-front [data-aftercare-window-slot="top"]',
-  );
+  const activeWindow = frontWindowAftercareSlot();
   if (activeWindow) return activeWindow;
   const anyWindow = Array.from(
     document.querySelectorAll<HTMLElement>(

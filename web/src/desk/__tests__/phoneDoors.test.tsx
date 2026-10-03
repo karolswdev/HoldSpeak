@@ -129,31 +129,36 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(ids).toEqual(["desk", "object", "go", "window"]);
   });
 
-  it("carries New Note — owner job 3's door — inside Go at phone width", () => {
+  // PHILO-13-17 (C7, Q3; ratified 2026-10-03): Go is grouped at 393 —
+  // Chair ▸ Desk ▸ Object ▸ Window ▸, then its own rows. New Note is one
+  // tap deeper (Go ▸ Desk ▸ New Note), and every menu stays a menu.
+  it("carries New Note — owner job 3's door — at Go ▸ Desk at phone width", () => {
     compact = true;
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: "Go" }), { detail: 0 });
+    fireEvent.click(screen.getByRole("menuitem", { name: /^Desk\W*$/ }));
     expect(
       screen.getByRole("menuitem", { name: /New Note/i }),
     ).toBeInTheDocument();
   });
 
-  /* Coordinator item 10 / Astra's first-use fence: the folded Go menu
-     carries about forty rows. Unscrolled, everything after the Desk group
-     sits below an 852px viewport and no pointer can reach it. */
-  it("carries Desk, Object and Window entries, in that order", () => {
+  it("carries the Desk, Object and Window menus, in that order, after Chair", () => {
     compact = true;
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: "Go" }), { detail: 0 });
-    const labels = screen.getAllByRole("menuitem").map((el) => el.textContent ?? "");
-    const at = (needle: string) =>
-      labels.findIndex((label) => label.includes(needle));
-    expect(at("New Note"), "a Desk entry").toBeGreaterThan(-1);
-    expect(at("Get Info"), "an Object entry").toBeGreaterThan(-1);
-    expect(at("Close window"), "a Window entry").toBeGreaterThan(-1);
-    expect(at("Cycle windows"), "a Window entry").toBeGreaterThan(-1);
-    expect(at("New Note")).toBeLessThan(at("Get Info"));
-    expect(at("Get Info")).toBeLessThan(at("Close window"));
+    const heads = screen
+      .getAllByRole("menuitem")
+      .filter((el) => el.getAttribute("aria-haspopup") === "menu")
+      .map((el) => el.querySelector(".desk-menu-label")?.textContent ?? "");
+    expect(heads).toEqual(["Chair", "Desk", "Object", "Window"]);
+    const open = (name: string, needle: RegExp) => {
+      fireEvent.click(screen.getByRole("menuitem", { name: new RegExp(`^${name}`) }));
+      expect(screen.getAllByRole("menuitem").some((el) => needle.test(el.textContent ?? ""))).toBe(true);
+      fireEvent.click(screen.getByRole("menuitem", { name: new RegExp(`^◂?\\s*${name}`) }));
+    };
+    open("Object", /Get Info/);
+    open("Window", /Close window/);
+    open("Window", /Cycle windows/);
   });
 
   it("lets the folded menu scroll, so its tail is reachable at 393", () => {

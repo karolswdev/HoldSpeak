@@ -9,6 +9,8 @@ is Astra's (H-B0b); this lane adds no ``.op`` sibling.
 * PHILO-13-05 (A4): ``case.p13.close.intelligence_gone``
 * PHILO-13-04 (A3): ``case.p13.record.refused_not_recording``
 * PHILO-13-16 (C6): ``case.p13.capture.titled_by_first_words``
+* PHILO-13-17 (C7): ``case.p13.phone.switcher_two_taps``,
+  ``case.p13.phone.go_desk_menu``
 * PHILO-13-15 (C5): ``case.p13.send_to.window_menu_opens_preview``
 """
 from __future__ import annotations
@@ -30,6 +32,8 @@ CASES = {
     "case.p13.close.intelligence_gone",  # PHILO-13-05
     "case.p13.record.refused_not_recording",  # PHILO-13-04
     "case.p13.capture.titled_by_first_words",  # PHILO-13-16
+    "case.p13.phone.switcher_two_taps",  # PHILO-13-17
+    "case.p13.phone.go_desk_menu",  # PHILO-13-17
     "case.p13.send_to.window_menu_opens_preview",  # PHILO-13-15
 }
 
@@ -84,7 +88,7 @@ def test_the_file_validates_against_the_atlas_schema(atlas: dict) -> None:
 def test_the_lane_case_count_and_names(atlas: dict) -> None:
     ids = {case["id"] for case in atlas["cases"]}
     assert ids == CASES
-    assert len(atlas["cases"]) == 4
+    assert len(atlas["cases"]) == 6
     # No `.op` sibling here: the shared count at test_philo_graph_atlas.py:492
     # stays Astra's (H-B0b).
     assert not [i for i in ids if i.endswith(".op") or i.endswith(".op.replayed")]
