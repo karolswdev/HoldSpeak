@@ -31,3 +31,25 @@ src/desk/needsYou.test.ts > the real producer membership oracle > rejects a code
       Tests  13 passed (13)
    Start at  21:31:49
    Duration  7.49s (transform 105ms, setup 60ms, import 146ms, tests 7.03s, environment 180ms)
+
+# Focused rerun after the CI timeout report
+
+CI run `37092990983` got past the missing interpreter and then reported that the summary-filter and real-wire oracle tests exceeded Vitest's default 5000ms timeout. The source change now sets a 15000ms per-test timeout on all three tests that invoke the Python producer; global Vitest settings and semantic assertions are unchanged.
+
+Current focused command uses the normal two-worker setting and leaves the global timeout at its default:
+The tested source is the PR worktree at HEAD `42ce859a528a6ad78c57d91e4e1842daedfa261c` with the three per-test timeout edits shown in `web/src/desk/needsYou.test.ts`.
+
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-13-web-quality-python/web
+
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  21:44:05
+   Duration  8.84s (transform 120ms, setup 146ms, import 422ms, tests 7.56s, environment 614ms)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice
