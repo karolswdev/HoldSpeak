@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** PHILO-13-11 (C1 canvas ratified); this story's own canvas ratified; PHILO-12-01 (done, merged #717)
 - **Unblocks:** PHILO-13-14 (the palette's `Send …` row uses the push seam)
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
