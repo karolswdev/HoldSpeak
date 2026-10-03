@@ -1,0 +1,197 @@
+{
+  "chair-after-depth": {
+    "wins": [
+      {
+        "name": "Brief",
+        "z": 43,
+        "front": true,
+        "blue": true,
+        "rect": [
+          0,
+          44,
+          393,
+          752
+        ]
+      }
+    ],
+    "screen": "Brief"
+  },
+  "two-windows": {
+    "wins": [
+      {
+        "name": "Needs you",
+        "z": 43,
+        "front": false,
+        "blue": false,
+        "rect": [
+          0,
+          44,
+          393,
+          752
+        ]
+      },
+      {
+        "name": "Meetings",
+        "z": 44,
+        "front": false,
+        "blue": false,
+        "rect": [
+          0,
+          44,
+          393,
+          752
+        ]
+      },
+      {
+        "name": "People",
+        "z": 45,
+        "front": true,
+        "blue": true,
+        "rect": [
+          0,
+          44,
+          393,
+          752
+        ]
+      }
+    ],
+    "screen": "People"
+  },
+  "people-head": [
+    "Close People",
+    "To back People"
+  ],
+  "after-depth": {
+    "wins": [
+      {
+        "name": "Needs you",
+        "z": 44,
+        "front": false,
+        "blue": false,
+        "rect": [
+          0,
+          44,
+          393,
+          752
+        ]
+      },
+      {
+        "name": "Meetings",
+        "z": 45,
+        "front": true,
+        "blue": true,
+        "rect": [
+          0,
+          44,
+          393,
+          752
+        ]
+      },
+      {
+        "name": "People",
+        "z": 42,
+        "front": false,
+        "blue": false,
+        "rect": [
+          0,
+          44,
+          393,
+          752
+        ]
+      }
+    ],
+    "screen": "Meetings"
+  },
+  "menu-Meetings": [
+    {
+      "label": "Meetings window menu",
+      "rows": [
+        {
+          "label": "Iconify",
+          "keycap": "⌘M",
+          "ghost": false,
+          "w": 369,
+          "h": 44
+        },
+        {
+          "label": "Zoom · Fills the screen",
+          "keycap": "⌃M",
+          "ghost": true,
+          "w": 369,
+          "h": 44
+        },
+        {
+          "label": "To back",
+          "keycap": "⌃B",
+          "ghost": false,
+          "w": 369,
+          "h": 44
+        },
+        {
+          "label": "Close window",
+          "keycap": "⌘W",
+          "ghost": false,
+          "w": 369,
+          "h": 44
+        },
+        {
+          "label": "Desk",
+          "keycap": null,
+          "ghost": false,
+          "w": 369,
+          "h": 44
+        },
+        {
+          "label": "Go",
+          "keycap": null,
+          "ghost": false,
+          "w": 369,
+          "h": 44
+        }
+      ]
+    }
+  ],
+  "after-menu-depth": {
+    "wins": [
+      {
+        "name": "Needs you",
+        "z": 45,
+        "front": true,
+        "blue": true,
+        "rect": [
+          0,
+          44,
+          393,
+          752
+        ]
+      },
+      {
+        "name": "Meetings",
+        "z": 42,
+        "front": false,
+        "blue": false,
+        "rect": [
+          0,
+          44,
+          393,
+          752
+        ]
+      },
+      {
+        "name": "People",
+        "z": 43,
+        "front": false,
+        "blue": false,
+        "rect": [
+          0,
+          44,
+          393,
+          752
+        ]
+      }
+    ],
+    "screen": "Needs you"
+  },
+  "errors": [],
+  "failures": {}
+}

@@ -1,7 +1,7 @@
 {
   "two-windows-meetings-front": {
     "width": 1440,
-    "windows": 2,
+    "windows": 6,
     "blue": [
       "Meetings"
     ],
@@ -21,7 +21,7 @@
   },
   "two-windows-room-front": {
     "width": 1440,
-    "windows": 2,
+    "windows": 6,
     "blue": [
       "Payments ledger cutover"
     ],
@@ -41,7 +41,7 @@
   },
   "window-menu-open": {
     "width": 1440,
-    "windows": 2,
+    "windows": 6,
     "blue": [
       "Payments ledger cutover"
     ],

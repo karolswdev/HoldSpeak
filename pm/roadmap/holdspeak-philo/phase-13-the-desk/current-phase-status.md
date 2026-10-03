@@ -144,7 +144,7 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | PHILO-13-09 | B4 — The 1:1 finds its person | backlog | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | — |
 | PHILO-13-10 | B5 — The update writes the week | backlog | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | — |
 | PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | in-progress | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
-| PHILO-13-12 | C2 — The gadgets that are missing | backlog | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | — |
+| PHILO-13-12 | C2 — The gadgets that are missing | done | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | [evidence-story-12](./evidence-story-12.md) |
 | PHILO-13-13 | C3 — A live Dock (AppIcons) | backlog | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
 | PHILO-13-14 | C4 — A palette that knows his week and does verbs | backlog | [story-14-c4-a-palette-that-knows-his-week](./story-14-c4-a-palette-that-knows-his-week.md) | — |
 | PHILO-13-15 | C5 — Send to from any document window (the Phase 12 fold) | backlog | [story-15-c5-send-to-from-any-document-window](./story-15-c5-send-to-from-any-document-window.md) | — |
@@ -245,6 +245,8 @@ The canvas set, in order: C1's canvas first (the frame, the chrome, the Chair, t
 D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
+
+2026-10-03: **PHILO-13-12 (C2) done** — To back (every window, menu, ⌃B, tap at 393), Intuition zoom (two remembered rects, persisted), the window's menu bar on the right button / long press with live key caps (Iconify ⌘M, Zoom ⌃M, To back ⌃B, Close ⌘W). Ledger: off-Mac Ctrl+M binds Zoom (⌃ chords first); `static-muaddib.json` still names Minimize/Maximize.
 
 2026-10-02: **PHILO-13-11 slice two, atlas round** (Astra counsel r3 on #730): 76 atlas cases in 7 files open the right Chair window through the real doors at 393 (Go ▸ Chair ▸ window; the Dock's Speak for Capture); 34 first-value preconditions read `[data-testid=chair-desk]`; walked one case per run at both widths: 59 pass, 14 blocked outside the Chair, 3 fail at 393 only. **Muad'Dib's rulings:** Capture grows to 300 px while an aftercare card stands (accepted product fix); `case.p11.meeting_summary.chair.picked` keeps a 1440 zoom step, and 'scroll Send into view on pick' goes to C5's ledger; **homed reds** — `case.closure.chain.s3_same_summary_after_restart` (+`.replayed`) at 393 → B2 (story 07 remembers the open Chair window), and `case.philo603.toast.arrival` at 393 → new handoff **H-rig-clearof** (Astra: per-width `clear_of` in graph_walk.py + atlas.schema.json). The React architecture guard: `library-css-outside: chair.css` red → green.
 
