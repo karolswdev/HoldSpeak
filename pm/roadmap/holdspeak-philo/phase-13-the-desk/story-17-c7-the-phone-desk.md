@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** PHILO-13-11 (C1 canvas ratified); this story's own canvas ratified
 - **Unblocks:** none
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
