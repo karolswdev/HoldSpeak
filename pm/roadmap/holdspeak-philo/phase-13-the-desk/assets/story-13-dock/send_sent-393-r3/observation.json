@@ -1,0 +1,2281 @@
+{
+  "id": "obs-20261003T045301Z-case.p13.dock.send_sent-astra-393",
+  "run_id": "20261003T045301Z-case.p13.dock.send_sent-astra-393",
+  "case_id": "case.p13.dock.send_sent",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j1",
+  "edge_ids": [
+    "edge.face.dock_needs_you"
+  ],
+  "state_id": "state.desk_presentation.p13_live_dock",
+  "provenance": {
+    "revision": "5912fcb9474cae7b058838f120a2c216189be89a",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "1206484818df6c35bc199c7b92603b96d83649c08a6881ba715274004c1e24a9",
+      "assets": [
+        "index-DixhVsTj.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50042",
+      "port": 50042,
+      "pid": 73607,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xtnefoc7",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xtnefoc7/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo10_atlas/gh-posted.json": "f644a565a820978e21cc6a18a5a63f7ba4b02ec17fed95217957a74abe8633b1"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T04:53:01.724533+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "the CLI process edge: gh-posted.json",
+        "substitute": "cli_runner",
+        "installed_sha256": "f644a565a820978e21cc6a18a5a63f7ba4b02ec17fed95217957a74abe8633b1"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "71d9910def57466e7c4086e62bbb74ee42313623de1bf37aedc62d31f2c08ee8",
+      "version": "phase13-astra-wave1"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "browser_context": {
+      "viewport": 393,
+      "has_touch": true
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "a RECORDING runner at the CLI channels' process edge (no real gh or acli)",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xtnefoc7",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xtnefoc7",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xtnefoc7/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xtnefoc7"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": "f644a565a820978e21cc6a18a5a63f7ba4b02ec17fed95217957a74abe8633b1"
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-02T22:53:08.034343"
+        }
+      },
+      "response_sha256": "122fd60f4b3fe64a8c2acdfd1f92436b84f135992212791d8664cef0ef6e9d2c"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-dock",
+      "done": true
+    },
+    {
+      "kind": "boundary",
+      "label": "the CLI process edge: gh-posted.json",
+      "substitute": "cli_runner",
+      "adapter": "cli-process-edge",
+      "installed_sha256": "f644a565a820978e21cc6a18a5a63f7ba4b02ec17fed95217957a74abe8633b1",
+      "seam": "holdspeak.services.channel_cli.CLI_RUNNER"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.create",
+      "args": {
+        "name": "Atlas send ledger"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "project.create",
+          "arguments": {
+            "name": "Atlas send ledger"
+          }
+        }
+      },
+      "response": {
+        "project": {
+          "changed_refs": [
+            "project:proj-2ed7f05d764b"
+          ],
+          "context": {},
+          "created_at": "2026-10-02T22:53:10.401639",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-2ed7f05d764b",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "Atlas send ledger",
+          "project_id": "proj-2ed7f05d764b",
+          "project_revision": 1,
+          "result_kind": "created",
+          "team_members": [],
+          "updated_at": "2026-10-02T22:53:10.401639"
+        },
+        "success": true
+      },
+      "domain_response": {
+        "project": {
+          "changed_refs": [
+            "project:proj-2ed7f05d764b"
+          ],
+          "context": {},
+          "created_at": "2026-10-02T22:53:10.401639",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-2ed7f05d764b",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "Atlas send ledger",
+          "project_id": "proj-2ed7f05d764b",
+          "project_revision": 1,
+          "result_kind": "created",
+          "team_members": [],
+          "updated_at": "2026-10-02T22:53:10.401639"
+        },
+        "success": true
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"project\": {\"changed_refs\": [\"project:proj-2ed7f05d764b\"], \"context\": {}, \"created_at\": \"2026-10-02T22:53:10.401639\", \"description\": \"\", \"detection_threshold\": 0.4, \"id\": \"proj-2ed7f05d764b\", \"is_archived\": false, \"keywords\": [], \"meeting_count\": 0, \"name\": \"Atlas send ledger\", \"project_id\": \"proj-2ed7f05d764b\", \"project_revision\": 1, \"result_kind\": \"created\", \"team_members\": [], \"updated_at\": \"2026-10-02T22:53:10.401639\"}, \"success\": true}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.011,
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-2ed7f05d764b"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.draft_update",
+      "args": {
+        "project_id": "proj-2ed7f05d764b",
+        "generator": "deterministic"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "project.draft_update",
+          "arguments": {
+            "project_id": "proj-2ed7f05d764b",
+            "generator": "deterministic"
+          }
+        }
+      },
+      "response": {
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "created_at": "2026-10-03T04:53:10+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "lifecycle": "draft",
+          "project_id": "proj-2ed7f05d764b",
+          "project_revision": 1,
+          "published_at": null,
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-10-03T04:53:10+00:00"
+        }
+      },
+      "domain_response": {
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "created_at": "2026-10-03T04:53:10+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "lifecycle": "draft",
+          "project_id": "proj-2ed7f05d764b",
+          "project_revision": 1,
+          "published_at": null,
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-10-03T04:53:10+00:00"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"success\": true, \"update\": {\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[]\", \"created_at\": \"2026-10-03T04:53:10+00:00\", \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_5d5c30249f8a43bb95b30f5f8ca430a5\", \"lifecycle\": \"draft\", \"project_id\": \"proj-2ed7f05d764b\", \"project_revision\": 1, \"published_at\": null, \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-10-03T04:53:10+00:00\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.007,
+      "captured": {
+        "name": "update_id",
+        "path": "update.id",
+        "value": "pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.publish_update",
+      "args": {
+        "update_id": "pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "project.publish_update",
+          "arguments": {
+            "update_id": "pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_235a45356e76474fa8d2f06c70552a0e",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1791003190.4186509,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_235a45356e76474fa8d2f06c70552a0e",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_e8baf8f544524b5bb3a81ad990bde74c",
+          "result_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "state": "succeeded",
+          "target_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+        },
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "changed_refs": [
+            "project:proj-2ed7f05d764b"
+          ],
+          "claims_json": "[]",
+          "created_at": "2026-10-03T04:53:10+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "lifecycle": "published",
+          "project_id": "proj-2ed7f05d764b",
+          "project_revision": 2,
+          "published_at": "2026-10-03T04:53:10+00:00",
+          "result_kind": "updated",
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-10-03T04:53:10+00:00"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_235a45356e76474fa8d2f06c70552a0e",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1791003190.4186509,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_235a45356e76474fa8d2f06c70552a0e",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_e8baf8f544524b5bb3a81ad990bde74c",
+          "result_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "state": "succeeded",
+          "target_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+        },
+        "success": true,
+        "update": {
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "changed_refs": [
+            "project:proj-2ed7f05d764b"
+          ],
+          "claims_json": "[]",
+          "created_at": "2026-10-03T04:53:10+00:00",
+          "draft_revision": 1,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "id": "pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "lifecycle": "published",
+          "project_id": "proj-2ed7f05d764b",
+          "project_revision": 2,
+          "published_at": "2026-10-03T04:53:10+00:00",
+          "result_kind": "updated",
+          "review_id": null,
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1}",
+          "updated_at": "2026-10-03T04:53:10+00:00"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_235a45356e76474fa8d2f06c70552a0e\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1791003190.4186509, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_235a45356e76474fa8d2f06c70552a0e\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_e8baf8f544524b5bb3a81ad990bde74c\", \"result_ref\": \"project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\", \"state\": \"succeeded\", \"target_ref\": \"project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\"}, \"success\": true, \"update\": {\"body_md\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"changed_refs\": [\"project:proj-2ed7f05d764b\"], \"claims_json\": \"[]\", \"created_at\": \"2026-10-03T04:53:10+00:00\", \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_5d5c30249f8a43bb95b30f5f8ca430a5\", \"lifecycle\": \"published\", \"project_id\": \"proj-2ed7f05d764b\", \"project_revision\": 2, \"published_at\": \"2026-10-03T04:53:10+00:00\", \"result_kind\": \"updated\", \"review_id\": null, \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":1}\", \"updated_at\": \"2026-10-03T04:53:10+00:00\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.007
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.save_destination",
+      "args": {
+        "name": "Issue42",
+        "channel": "github",
+        "repo": "acme/payments",
+        "kind": "issue",
+        "number": 42
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.save_destination",
+          "arguments": {
+            "name": "Issue42",
+            "channel": "github",
+            "repo": "acme/payments",
+            "kind": "issue",
+            "number": 42
+          }
+        }
+      },
+      "response": {
+        "destination": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "connection": {
+            "id": "wpc_github",
+            "last_checked_at": null,
+            "state": "never_checked"
+          },
+          "created_at": "2026-10-03T04:53:10+00:00",
+          "id": "chd_165dd7ab27cb5242730a19fc",
+          "name": "Issue42",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        },
+        "operation_id": "op_87b3f28d12a44343bf45029d41ccc15b",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1791003190.4296489,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_87b3f28d12a44343bf45029d41ccc15b",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_c11c517c14d54546bdb0fe90ea1ca02d",
+          "result_ref": "channel_destination:chd_165dd7ab27cb5242730a19fc",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "domain_response": {
+        "destination": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "connection": {
+            "id": "wpc_github",
+            "last_checked_at": null,
+            "state": "never_checked"
+          },
+          "created_at": "2026-10-03T04:53:10+00:00",
+          "id": "chd_165dd7ab27cb5242730a19fc",
+          "name": "Issue42",
+          "parked_at": null,
+          "state": "active",
+          "synced": false,
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        },
+        "operation_id": "op_87b3f28d12a44343bf45029d41ccc15b",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1791003190.4296489,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_87b3f28d12a44343bf45029d41ccc15b",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_c11c517c14d54546bdb0fe90ea1ca02d",
+          "result_ref": "channel_destination:chd_165dd7ab27cb5242730a19fc",
+          "state": "succeeded",
+          "target_ref": "desk:channel.save_destination"
+        },
+        "replaced": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"destination\": {\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"connection\": {\"id\": \"wpc_github\", \"last_checked_at\": null, \"state\": \"never_checked\"}, \"created_at\": \"2026-10-03T04:53:10+00:00\", \"id\": \"chd_165dd7ab27cb5242730a19fc\", \"name\": \"Issue42\", \"parked_at\": null, \"state\": \"active\", \"synced\": false, \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}, \"operation_id\": \"op_87b3f28d12a44343bf45029d41ccc15b\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1791003190.4296489, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_87b3f28d12a44343bf45029d41ccc15b\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_c11c517c14d54546bdb0fe90ea1ca02d\", \"result_ref\": \"channel_destination:chd_165dd7ab27cb5242730a19fc\", \"state\": \"succeeded\", \"target_ref\": \"desk:channel.save_destination\"}, \"replaced\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.01,
+      "captured": {
+        "name": "gh_id",
+        "path": "destination.id",
+        "value": "chd_165dd7ab27cb5242730a19fc"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.preview",
+      "args": {
+        "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+        "destination_id": "chd_165dd7ab27cb5242730a19fc"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.preview",
+          "arguments": {
+            "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+            "destination_id": "chd_165dd7ab27cb5242730a19fc"
+          }
+        }
+      },
+      "response": {
+        "badge": "cloud",
+        "channel": "github",
+        "destination_id": "chd_165dd7ab27cb5242730a19fc",
+        "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+        "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "preview": {
+          "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+        },
+        "size": 286,
+        "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+      },
+      "domain_response": {
+        "badge": "cloud",
+        "channel": "github",
+        "destination_id": "chd_165dd7ab27cb5242730a19fc",
+        "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+        "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "preview": {
+          "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+        },
+        "size": 286,
+        "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"badge\": \"cloud\", \"channel\": \"github\", \"destination_id\": \"chd_165dd7ab27cb5242730a19fc\", \"document_ref\": \"project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"size\": 286, \"title\": \"Atlas send ledger \\u2014 update r1 (2026-10-03)\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.005,
+      "captured": {
+        "name": "digest",
+        "path": "payload_digest",
+        "value": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b"
+      }
+    },
+    {
+      "kind": "check",
+      "observe_at": ".desk-dock",
+      "predicate": {
+        "kind": "text_absent",
+        "value": "SENT"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "'SENT' absent at observe_at"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub and browser; every durable source is minted through a real producer. No microphone or external send.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xtnefoc7",
+    "project_id": "proj-2ed7f05d764b",
+    "update_id": "pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+    "gh_id": "chd_165dd7ab27cb5242730a19fc",
+    "digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+    "send_op": "op_14ff00cb939a4115b697cdf7efa03c00"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "channel.send",
+    "args": {
+      "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+      "destination_id": "chd_165dd7ab27cb5242730a19fc",
+      "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "command_id": "atlas-p13-dock-sent"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 7,
+      "method": "tools/call",
+      "params": {
+        "name": "channel.send",
+        "arguments": {
+          "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "destination_id": "chd_165dd7ab27cb5242730a19fc",
+          "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "command_id": "atlas-p13-dock-sent"
+        }
+      }
+    },
+    "response": {
+      "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+      "outcome": "sent",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1791003190.778271,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_5a62068ca2064be9972c68c54e0e0018",
+        "result_ref": "channel_send:chs_88c9ac0b5c0805de4354b77a",
+        "state": "succeeded",
+        "target_ref": "document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+      },
+      "send": {
+        "account": {
+          "host": "github.com",
+          "login": "octo-owner"
+        },
+        "badge": "cloud",
+        "channel": "github",
+        "created_at": "2026-10-03T04:53:10.774281+00:00",
+        "destination_id": "chd_165dd7ab27cb5242730a19fc",
+        "destination_name": "Issue42",
+        "dispatch_seq": 1,
+        "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+        "document_json": {
+          "label": "REV 1",
+          "slug": "atlas-send-ledger",
+          "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+        },
+        "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+        "file_path": null,
+        "id": "chs_88c9ac0b5c0805de4354b77a",
+        "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "prepare_operation_id": null,
+        "prepared_by": {
+          "identity": "owner-session",
+          "kind": "owner"
+        },
+        "preview": {
+          "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+        },
+        "proof": {
+          "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+        },
+        "reason": null,
+        "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+        "settled_at": "2026-10-03T04:53:10+00:00",
+        "size": 286,
+        "state": "sent",
+        "target": {
+          "host": "github.com",
+          "kind": "issue",
+          "number": 42,
+          "repo": "acme/payments"
+        },
+        "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+      }
+    },
+    "domain_response": {
+      "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+      "outcome": "sent",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1791003190.778271,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_5a62068ca2064be9972c68c54e0e0018",
+        "result_ref": "channel_send:chs_88c9ac0b5c0805de4354b77a",
+        "state": "succeeded",
+        "target_ref": "document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+      },
+      "send": {
+        "account": {
+          "host": "github.com",
+          "login": "octo-owner"
+        },
+        "badge": "cloud",
+        "channel": "github",
+        "created_at": "2026-10-03T04:53:10.774281+00:00",
+        "destination_id": "chd_165dd7ab27cb5242730a19fc",
+        "destination_name": "Issue42",
+        "dispatch_seq": 1,
+        "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+        "document_json": {
+          "label": "REV 1",
+          "slug": "atlas-send-ledger",
+          "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+        },
+        "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+        "file_path": null,
+        "id": "chs_88c9ac0b5c0805de4354b77a",
+        "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "prepare_operation_id": null,
+        "prepared_by": {
+          "identity": "owner-session",
+          "kind": "owner"
+        },
+        "preview": {
+          "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+        },
+        "proof": {
+          "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+        },
+        "reason": null,
+        "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+        "settled_at": "2026-10-03T04:53:10+00:00",
+        "size": 286,
+        "state": "sent",
+        "target": {
+          "host": "github.com",
+          "kind": "issue",
+          "number": 42,
+          "repo": "acme/payments"
+        },
+        "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+      }
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 7,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"outcome\": \"sent\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1791003190.778271, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_5a62068ca2064be9972c68c54e0e0018\", \"result_ref\": \"channel_send:chs_88c9ac0b5c0805de4354b77a\", \"state\": \"succeeded\", \"target_ref\": \"document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\"}, \"send\": {\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-10-03T04:53:10.774281+00:00\", \"destination_id\": \"chd_165dd7ab27cb5242730a19fc\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-10-03T04:53:10.774281+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-10-03)\"}, \"document_ref\": \"project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\", \"file_path\": null, \"id\": \"chs_88c9ac0b5c0805de4354b77a\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"url\": \"https://github.com/acme/payments/issues/42#issuecomment-99001\"}, \"reason\": null, \"send_operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"settled_at\": \"2026-10-03T04:53:10+00:00\", \"size\": 286, \"state\": \"sent\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.017,
+    "captured": {
+      "name": "send_op",
+      "path": "operation_id",
+      "value": "op_14ff00cb939a4115b697cdf7efa03c00"
+    }
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "SENT"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "desk-dock-state",
+        "data-testid": "desk-dock-send-state"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 68,
+        "y": 817,
+        "w": 35,
+        "h": 15
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "e51fbe1a19f7dac4a79e249aa012a98d22fc9879195978745e305be5ed7e003b",
+      "after": "464a18467f43b4e3addac81ab0d23fcc0dd7eacfd9334bb8ac5fb2d80087db92"
+    },
+    "document_text_len": {
+      "before": 185,
+      "after": 190
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "tools/call",
+            "params": {
+              "name": "channel.sends",
+              "arguments": {
+                "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+              }
+            }
+          },
+          "response": {
+            "sends": []
+          },
+          "domain_response": {
+            "sends": []
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"sends\": []}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.008
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "channel.sends",
+          "args": {
+            "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "method": "tools/call",
+            "params": {
+              "name": "channel.sends",
+              "arguments": {
+                "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+              }
+            }
+          },
+          "response": {
+            "sends": [
+              {
+                "account": {
+                  "host": "github.com",
+                  "login": "octo-owner"
+                },
+                "badge": "cloud",
+                "channel": "github",
+                "created_at": "2026-10-03T04:53:10.774281+00:00",
+                "destination_id": "chd_165dd7ab27cb5242730a19fc",
+                "destination_name": "Issue42",
+                "dispatch_seq": 1,
+                "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+                "document_json": {
+                  "label": "REV 1",
+                  "slug": "atlas-send-ledger",
+                  "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+                },
+                "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+                "file_path": null,
+                "id": "chs_88c9ac0b5c0805de4354b77a",
+                "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+                "prepare_operation_id": null,
+                "prepared_by": {
+                  "identity": "owner-session",
+                  "kind": "owner"
+                },
+                "preview": {
+                  "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+                },
+                "proof": {
+                  "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+                },
+                "reason": null,
+                "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+                "settled_at": "2026-10-03T04:53:10+00:00",
+                "size": 286,
+                "state": "sent",
+                "target": {
+                  "host": "github.com",
+                  "kind": "issue",
+                  "number": 42,
+                  "repo": "acme/payments"
+                },
+                "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+              }
+            ]
+          },
+          "domain_response": {
+            "sends": [
+              {
+                "account": {
+                  "host": "github.com",
+                  "login": "octo-owner"
+                },
+                "badge": "cloud",
+                "channel": "github",
+                "created_at": "2026-10-03T04:53:10.774281+00:00",
+                "destination_id": "chd_165dd7ab27cb5242730a19fc",
+                "destination_name": "Issue42",
+                "dispatch_seq": 1,
+                "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+                "document_json": {
+                  "label": "REV 1",
+                  "slug": "atlas-send-ledger",
+                  "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+                },
+                "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+                "file_path": null,
+                "id": "chs_88c9ac0b5c0805de4354b77a",
+                "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+                "prepare_operation_id": null,
+                "prepared_by": {
+                  "identity": "owner-session",
+                  "kind": "owner"
+                },
+                "preview": {
+                  "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+                },
+                "proof": {
+                  "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+                },
+                "reason": null,
+                "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+                "settled_at": "2026-10-03T04:53:10+00:00",
+                "size": 286,
+                "state": "sent",
+                "target": {
+                  "host": "github.com",
+                  "kind": "issue",
+                  "number": 42,
+                  "repo": "acme/payments"
+                },
+                "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+              }
+            ]
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"sends\": [{\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-10-03T04:53:10.774281+00:00\", \"destination_id\": \"chd_165dd7ab27cb5242730a19fc\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-10-03T04:53:10.774281+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-10-03)\"}, \"document_ref\": \"project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\", \"file_path\": null, \"id\": \"chs_88c9ac0b5c0805de4354b77a\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"url\": \"https://github.com/acme/payments/issues/42#issuecomment-99001\"}, \"reason\": null, \"send_operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"settled_at\": \"2026-10-03T04:53:10+00:00\", \"size\": 286, \"state\": \"sent\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}]}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.006
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=desk-dock-send-state]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:needs",
+    "focus_label": "Needs you",
+    "url": "http://127.0.0.1:50042/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "e51fbe1a19f7dac4a79e249aa012a98d22fc9879195978745e305be5ed7e003b",
+    "document_text_len": 185,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "channel.sends",
+        "args": {
+          "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "method": "tools/call",
+          "params": {
+            "name": "channel.sends",
+            "arguments": {
+              "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+            }
+          }
+        },
+        "response": {
+          "sends": []
+        },
+        "domain_response": {
+          "sends": []
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"sends\": []}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.008
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 73607,
+        "at": "2026-10-03T04:53:10.429119+00:00",
+        "answer": 0,
+        "hold": false
+      }
+    ],
+    "at_utc": "2026-10-03T04:53:10.715551+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=desk-dock-send-state]",
+    "target_present": true,
+    "text": "SENT",
+    "attrs": {
+      "class": "desk-dock-state",
+      "data-testid": "desk-dock-send-state"
+    },
+    "rect": {
+      "x": 68,
+      "y": 817,
+      "w": 35,
+      "h": 15
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 68,
+        "y": 817,
+        "w": 35,
+        "h": 15
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 72.818359375,
+          "y": 818.875,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 72.818359375,
+          "y": 824.5,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 72.818359375,
+          "y": 830.125,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 85.8203125,
+          "y": 818.875,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 85.8203125,
+          "y": 824.5,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 85.8203125,
+          "y": 830.125,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 98.822265625,
+          "y": 818.875,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 98.822265625,
+          "y": 824.5,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 98.822265625,
+          "y": 830.125,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:needs",
+    "focus_label": "Needs you",
+    "url": "http://127.0.0.1:50042/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "464a18467f43b4e3addac81ab0d23fcc0dd7eacfd9334bb8ac5fb2d80087db92",
+    "document_text_len": 190,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "channel.sends",
+        "args": {
+          "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "method": "tools/call",
+          "params": {
+            "name": "channel.sends",
+            "arguments": {
+              "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+            }
+          }
+        },
+        "response": {
+          "sends": [
+            {
+              "account": {
+                "host": "github.com",
+                "login": "octo-owner"
+              },
+              "badge": "cloud",
+              "channel": "github",
+              "created_at": "2026-10-03T04:53:10.774281+00:00",
+              "destination_id": "chd_165dd7ab27cb5242730a19fc",
+              "destination_name": "Issue42",
+              "dispatch_seq": 1,
+              "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+              "document_json": {
+                "label": "REV 1",
+                "slug": "atlas-send-ledger",
+                "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+              },
+              "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+              "file_path": null,
+              "id": "chs_88c9ac0b5c0805de4354b77a",
+              "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "prepare_operation_id": null,
+              "prepared_by": {
+                "identity": "owner-session",
+                "kind": "owner"
+              },
+              "preview": {
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "proof": {
+                "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+              },
+              "reason": null,
+              "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+              "settled_at": "2026-10-03T04:53:10+00:00",
+              "size": 286,
+              "state": "sent",
+              "target": {
+                "host": "github.com",
+                "kind": "issue",
+                "number": 42,
+                "repo": "acme/payments"
+              },
+              "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+            }
+          ]
+        },
+        "domain_response": {
+          "sends": [
+            {
+              "account": {
+                "host": "github.com",
+                "login": "octo-owner"
+              },
+              "badge": "cloud",
+              "channel": "github",
+              "created_at": "2026-10-03T04:53:10.774281+00:00",
+              "destination_id": "chd_165dd7ab27cb5242730a19fc",
+              "destination_name": "Issue42",
+              "dispatch_seq": 1,
+              "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+              "document_json": {
+                "label": "REV 1",
+                "slug": "atlas-send-ledger",
+                "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+              },
+              "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+              "file_path": null,
+              "id": "chs_88c9ac0b5c0805de4354b77a",
+              "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "prepare_operation_id": null,
+              "prepared_by": {
+                "identity": "owner-session",
+                "kind": "owner"
+              },
+              "preview": {
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "proof": {
+                "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+              },
+              "reason": null,
+              "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+              "settled_at": "2026-10-03T04:53:10+00:00",
+              "size": 286,
+              "state": "sent",
+              "target": {
+                "host": "github.com",
+                "kind": "issue",
+                "number": 42,
+                "repo": "acme/payments"
+              },
+              "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+            }
+          ]
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"sends\": [{\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-10-03T04:53:10.774281+00:00\", \"destination_id\": \"chd_165dd7ab27cb5242730a19fc\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-10-03T04:53:10.774281+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-10-03)\"}, \"document_ref\": \"project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\", \"file_path\": null, \"id\": \"chs_88c9ac0b5c0805de4354b77a\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"url\": \"https://github.com/acme/payments/issues/42#issuecomment-99001\"}, \"reason\": null, \"send_operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"settled_at\": \"2026-10-03T04:53:10+00:00\", \"size\": 286, \"state\": \"sent\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}]}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.006
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 73607,
+        "at": "2026-10-03T04:53:10.429119+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 73607,
+        "at": "2026-10-03T04:53:10.774140+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "issue",
+          "comment",
+          "42",
+          "--repo",
+          "acme/payments",
+          "--body-file",
+          "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/holdspeak-send-1_uakm9i/payload.md"
+        ],
+        "body_sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "pid": 73607,
+        "at": "2026-10-03T04:53:10.776443+00:00",
+        "answer": 1,
+        "hold": false
+      }
+    ],
+    "at_utc": "2026-10-03T04:53:11.846196+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "channel.send",
+      "body_sha256": "feea53bd04bbf8c5fad7a37df3a4e8920b8f9fd972540018e30f1b3774cddf4a",
+      "body": {
+        "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+        "outcome": "sent",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1791003190.778271,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_5a62068ca2064be9972c68c54e0e0018",
+          "result_ref": "channel_send:chs_88c9ac0b5c0805de4354b77a",
+          "state": "succeeded",
+          "target_ref": "document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+        },
+        "send": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "created_at": "2026-10-03T04:53:10.774281+00:00",
+          "destination_id": "chd_165dd7ab27cb5242730a19fc",
+          "destination_name": "Issue42",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+          },
+          "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "file_path": null,
+          "id": "chs_88c9ac0b5c0805de4354b77a",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": null,
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+          },
+          "reason": null,
+          "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+          "settled_at": "2026-10-03T04:53:10+00:00",
+          "size": 286,
+          "state": "sent",
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"outcome\": \"sent\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1791003190.778271, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_5a62068ca2064be9972c68c54e0e0018\", \"result_ref\": \"channel_send:chs_88c9ac0b5c0805de4354b77a\", \"state\": \"succeeded\", \"target_ref\": \"document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\"}, \"send\": {\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-10-03T04:53:10.774281+00:00\", \"destination_id\": \"chd_165dd7ab27cb5242730a19fc\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-10-03T04:53:10.774281+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-10-03)\"}, \"document_ref\": \"project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\", \"file_path\": null, \"id\": \"chs_88c9ac0b5c0805de4354b77a\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"url\": \"https://github.com/acme/payments/issues/42#issuecomment-99001\"}, \"reason\": null, \"send_operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"settled_at\": \"2026-10-03T04:53:10+00:00\", \"size\": 286, \"state\": \"sent\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.send",
+      "args": {
+        "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+        "destination_id": "chd_165dd7ab27cb5242730a19fc",
+        "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "command_id": "atlas-p13-dock-sent"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.send",
+          "arguments": {
+            "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+            "destination_id": "chd_165dd7ab27cb5242730a19fc",
+            "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "command_id": "atlas-p13-dock-sent"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+        "outcome": "sent",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1791003190.778271,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_5a62068ca2064be9972c68c54e0e0018",
+          "result_ref": "channel_send:chs_88c9ac0b5c0805de4354b77a",
+          "state": "succeeded",
+          "target_ref": "document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+        },
+        "send": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "created_at": "2026-10-03T04:53:10.774281+00:00",
+          "destination_id": "chd_165dd7ab27cb5242730a19fc",
+          "destination_name": "Issue42",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+          },
+          "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "file_path": null,
+          "id": "chs_88c9ac0b5c0805de4354b77a",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": null,
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+          },
+          "reason": null,
+          "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+          "settled_at": "2026-10-03T04:53:10+00:00",
+          "size": 286,
+          "state": "sent",
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+        "outcome": "sent",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1791003190.778271,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_5a62068ca2064be9972c68c54e0e0018",
+          "result_ref": "channel_send:chs_88c9ac0b5c0805de4354b77a",
+          "state": "succeeded",
+          "target_ref": "document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+        },
+        "send": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "created_at": "2026-10-03T04:53:10.774281+00:00",
+          "destination_id": "chd_165dd7ab27cb5242730a19fc",
+          "destination_name": "Issue42",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+          },
+          "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "file_path": null,
+          "id": "chs_88c9ac0b5c0805de4354b77a",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": null,
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+          },
+          "reason": null,
+          "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+          "settled_at": "2026-10-03T04:53:10+00:00",
+          "size": 286,
+          "state": "sent",
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"outcome\": \"sent\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1791003190.778271, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_5a62068ca2064be9972c68c54e0e0018\", \"result_ref\": \"channel_send:chs_88c9ac0b5c0805de4354b77a\", \"state\": \"succeeded\", \"target_ref\": \"document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\"}, \"send\": {\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-10-03T04:53:10.774281+00:00\", \"destination_id\": \"chd_165dd7ab27cb5242730a19fc\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-10-03T04:53:10.774281+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-10-03)\"}, \"document_ref\": \"project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\", \"file_path\": null, \"id\": \"chs_88c9ac0b5c0805de4354b77a\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"url\": \"https://github.com/acme/payments/issues/42#issuecomment-99001\"}, \"reason\": null, \"send_operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"settled_at\": \"2026-10-03T04:53:10+00:00\", \"size\": 286, \"state\": \"sent\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.017,
+      "captured": {
+        "name": "send_op",
+        "path": "operation_id",
+        "value": "op_14ff00cb939a4115b697cdf7efa03c00"
+      }
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=desk-dock-send-state]",
+    "target_present": true,
+    "text": "SENT",
+    "attrs": {
+      "class": "desk-dock-state",
+      "data-testid": "desk-dock-send-state"
+    },
+    "rect": {
+      "x": 68,
+      "y": 817,
+      "w": 35,
+      "h": 15
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 68,
+        "y": 817,
+        "w": 35,
+        "h": 15
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 72.818359375,
+          "y": 818.875,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 72.818359375,
+          "y": 824.5,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 72.818359375,
+          "y": 830.125,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 85.8203125,
+          "y": 818.875,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 85.8203125,
+          "y": 824.5,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 85.8203125,
+          "y": 830.125,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 98.822265625,
+          "y": 818.875,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 98.822265625,
+          "y": 824.5,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 98.822265625,
+          "y": 830.125,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:needs",
+    "focus_label": "Needs you",
+    "url": "http://127.0.0.1:50042/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "464a18467f43b4e3addac81ab0d23fcc0dd7eacfd9334bb8ac5fb2d80087db92",
+    "document_text_len": 190,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "channel.sends",
+        "args": {
+          "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 8,
+          "method": "tools/call",
+          "params": {
+            "name": "channel.sends",
+            "arguments": {
+              "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+            }
+          }
+        },
+        "response": {
+          "sends": [
+            {
+              "account": {
+                "host": "github.com",
+                "login": "octo-owner"
+              },
+              "badge": "cloud",
+              "channel": "github",
+              "created_at": "2026-10-03T04:53:10.774281+00:00",
+              "destination_id": "chd_165dd7ab27cb5242730a19fc",
+              "destination_name": "Issue42",
+              "dispatch_seq": 1,
+              "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+              "document_json": {
+                "label": "REV 1",
+                "slug": "atlas-send-ledger",
+                "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+              },
+              "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+              "file_path": null,
+              "id": "chs_88c9ac0b5c0805de4354b77a",
+              "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "prepare_operation_id": null,
+              "prepared_by": {
+                "identity": "owner-session",
+                "kind": "owner"
+              },
+              "preview": {
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "proof": {
+                "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+              },
+              "reason": null,
+              "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+              "settled_at": "2026-10-03T04:53:10+00:00",
+              "size": 286,
+              "state": "sent",
+              "target": {
+                "host": "github.com",
+                "kind": "issue",
+                "number": 42,
+                "repo": "acme/payments"
+              },
+              "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+            }
+          ]
+        },
+        "domain_response": {
+          "sends": [
+            {
+              "account": {
+                "host": "github.com",
+                "login": "octo-owner"
+              },
+              "badge": "cloud",
+              "channel": "github",
+              "created_at": "2026-10-03T04:53:10.774281+00:00",
+              "destination_id": "chd_165dd7ab27cb5242730a19fc",
+              "destination_name": "Issue42",
+              "dispatch_seq": 1,
+              "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+              "document_json": {
+                "label": "REV 1",
+                "slug": "atlas-send-ledger",
+                "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+              },
+              "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+              "file_path": null,
+              "id": "chs_88c9ac0b5c0805de4354b77a",
+              "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+              "prepare_operation_id": null,
+              "prepared_by": {
+                "identity": "owner-session",
+                "kind": "owner"
+              },
+              "preview": {
+                "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+              },
+              "proof": {
+                "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+              },
+              "reason": null,
+              "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+              "settled_at": "2026-10-03T04:53:10+00:00",
+              "size": 286,
+              "state": "sent",
+              "target": {
+                "host": "github.com",
+                "kind": "issue",
+                "number": 42,
+                "repo": "acme/payments"
+              },
+              "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+            }
+          ]
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 8,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"sends\": [{\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-10-03T04:53:10.774281+00:00\", \"destination_id\": \"chd_165dd7ab27cb5242730a19fc\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-10-03T04:53:10.774281+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-10-03)\"}, \"document_ref\": \"project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\", \"file_path\": null, \"id\": \"chs_88c9ac0b5c0805de4354b77a\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"url\": \"https://github.com/acme/payments/issues/42#issuecomment-99001\"}, \"reason\": null, \"send_operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"settled_at\": \"2026-10-03T04:53:10+00:00\", \"size\": 286, \"state\": \"sent\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}]}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.006
+      }
+    ],
+    "cli_calls": [
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 73607,
+        "at": "2026-10-03T04:53:10.429119+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "api",
+          "user",
+          "--hostname",
+          "github.com"
+        ],
+        "body_sha256": null,
+        "pid": 73607,
+        "at": "2026-10-03T04:53:10.774140+00:00",
+        "answer": 0,
+        "hold": false
+      },
+      {
+        "argv": [
+          "gh",
+          "issue",
+          "comment",
+          "42",
+          "--repo",
+          "acme/payments",
+          "--body-file",
+          "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/holdspeak-send-1_uakm9i/payload.md"
+        ],
+        "body_sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "pid": 73607,
+        "at": "2026-10-03T04:53:10.776443+00:00",
+        "answer": 1,
+        "hold": false
+      }
+    ],
+    "at_utc": "2026-10-03T04:53:11.702854+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "channel.send",
+      "body_sha256": "feea53bd04bbf8c5fad7a37df3a4e8920b8f9fd972540018e30f1b3774cddf4a",
+      "body": {
+        "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+        "outcome": "sent",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1791003190.778271,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_5a62068ca2064be9972c68c54e0e0018",
+          "result_ref": "channel_send:chs_88c9ac0b5c0805de4354b77a",
+          "state": "succeeded",
+          "target_ref": "document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+        },
+        "send": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "created_at": "2026-10-03T04:53:10.774281+00:00",
+          "destination_id": "chd_165dd7ab27cb5242730a19fc",
+          "destination_name": "Issue42",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+          },
+          "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "file_path": null,
+          "id": "chs_88c9ac0b5c0805de4354b77a",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": null,
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+          },
+          "reason": null,
+          "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+          "settled_at": "2026-10-03T04:53:10+00:00",
+          "size": 286,
+          "state": "sent",
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"outcome\": \"sent\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1791003190.778271, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_5a62068ca2064be9972c68c54e0e0018\", \"result_ref\": \"channel_send:chs_88c9ac0b5c0805de4354b77a\", \"state\": \"succeeded\", \"target_ref\": \"document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\"}, \"send\": {\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-10-03T04:53:10.774281+00:00\", \"destination_id\": \"chd_165dd7ab27cb5242730a19fc\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-10-03T04:53:10.774281+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-10-03)\"}, \"document_ref\": \"project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\", \"file_path\": null, \"id\": \"chs_88c9ac0b5c0805de4354b77a\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"url\": \"https://github.com/acme/payments/issues/42#issuecomment-99001\"}, \"reason\": null, \"send_operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"settled_at\": \"2026-10-03T04:53:10+00:00\", \"size\": 286, \"state\": \"sent\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "channel.send",
+      "args": {
+        "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+        "destination_id": "chd_165dd7ab27cb5242730a19fc",
+        "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "command_id": "atlas-p13-dock-sent"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/call",
+        "params": {
+          "name": "channel.send",
+          "arguments": {
+            "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+            "destination_id": "chd_165dd7ab27cb5242730a19fc",
+            "preview_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+            "command_id": "atlas-p13-dock-sent"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+        "outcome": "sent",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1791003190.778271,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_5a62068ca2064be9972c68c54e0e0018",
+          "result_ref": "channel_send:chs_88c9ac0b5c0805de4354b77a",
+          "state": "succeeded",
+          "target_ref": "document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+        },
+        "send": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "created_at": "2026-10-03T04:53:10.774281+00:00",
+          "destination_id": "chd_165dd7ab27cb5242730a19fc",
+          "destination_name": "Issue42",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+          },
+          "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "file_path": null,
+          "id": "chs_88c9ac0b5c0805de4354b77a",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": null,
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+          },
+          "reason": null,
+          "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+          "settled_at": "2026-10-03T04:53:10+00:00",
+          "size": 286,
+          "state": "sent",
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+        "outcome": "sent",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1791003190.778271,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_5a62068ca2064be9972c68c54e0e0018",
+          "result_ref": "channel_send:chs_88c9ac0b5c0805de4354b77a",
+          "state": "succeeded",
+          "target_ref": "document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5"
+        },
+        "send": {
+          "account": {
+            "host": "github.com",
+            "login": "octo-owner"
+          },
+          "badge": "cloud",
+          "channel": "github",
+          "created_at": "2026-10-03T04:53:10.774281+00:00",
+          "destination_id": "chd_165dd7ab27cb5242730a19fc",
+          "destination_name": "Issue42",
+          "dispatch_seq": 1,
+          "dispatch_started_at": "2026-10-03T04:53:10.774281+00:00",
+          "document_json": {
+            "label": "REV 1",
+            "slug": "atlas-send-ledger",
+            "title": "Atlas send ledger \u2014 update r1 (2026-10-03)"
+          },
+          "document_ref": "project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5",
+          "file_path": null,
+          "id": "chs_88c9ac0b5c0805de4354b77a",
+          "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+          "prepare_operation_id": null,
+          "prepared_by": {
+            "identity": "owner-session",
+            "kind": "owner"
+          },
+          "preview": {
+            "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+          },
+          "proof": {
+            "url": "https://github.com/acme/payments/issues/42#issuecomment-99001"
+          },
+          "reason": null,
+          "send_operation_id": "op_14ff00cb939a4115b697cdf7efa03c00",
+          "settled_at": "2026-10-03T04:53:10+00:00",
+          "size": 286,
+          "state": "sent",
+          "target": {
+            "host": "github.com",
+            "kind": "issue",
+            "number": 42,
+            "repo": "acme/payments"
+          },
+          "target_digest": "76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"outcome\": \"sent\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1791003190.778271, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_5a62068ca2064be9972c68c54e0e0018\", \"result_ref\": \"channel_send:chs_88c9ac0b5c0805de4354b77a\", \"state\": \"succeeded\", \"target_ref\": \"document:project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\"}, \"send\": {\"account\": {\"host\": \"github.com\", \"login\": \"octo-owner\"}, \"badge\": \"cloud\", \"channel\": \"github\", \"created_at\": \"2026-10-03T04:53:10.774281+00:00\", \"destination_id\": \"chd_165dd7ab27cb5242730a19fc\", \"destination_name\": \"Issue42\", \"dispatch_seq\": 1, \"dispatch_started_at\": \"2026-10-03T04:53:10.774281+00:00\", \"document_json\": {\"label\": \"REV 1\", \"slug\": \"atlas-send-ledger\", \"title\": \"Atlas send ledger \\u2014 update r1 (2026-10-03)\"}, \"document_ref\": \"project_update:pupd_5d5c30249f8a43bb95b30f5f8ca430a5\", \"file_path\": null, \"id\": \"chs_88c9ac0b5c0805de4354b77a\", \"payload_digest\": \"d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b\", \"prepare_operation_id\": null, \"prepared_by\": {\"identity\": \"owner-session\", \"kind\": \"owner\"}, \"preview\": {\"text\": \"## Progress\\n\\nNo focus items in this window.\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\nNo risks or blockers in this window.\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\nNo upcoming actions.\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\"}, \"proof\": {\"url\": \"https://github.com/acme/payments/issues/42#issuecomment-99001\"}, \"reason\": null, \"send_operation_id\": \"op_14ff00cb939a4115b697cdf7efa03c00\", \"settled_at\": \"2026-10-03T04:53:10+00:00\", \"size\": 286, \"state\": \"sent\", \"target\": {\"host\": \"github.com\", \"kind\": \"issue\", \"number\": 42, \"repo\": \"acme/payments\"}, \"target_digest\": \"76e0062e1db57009eb769826f6253991d1e6888bdbfd9401705e03dda303d017\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.017,
+      "captured": {
+        "name": "send_op",
+        "path": "operation_id",
+        "value": "op_14ff00cb939a4115b697cdf7efa03c00"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'SENT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 68, 'y': 817, 'w': 35, 'h': 15} | op_facts: all 2 facts hold: the trigger outcome holds; op read #0 (channel.sends) sends.0.state holds",
+    "elapsed_s": 0.935
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'SENT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 68, 'y': 817, 'w': 35, 'h': 15} | op_facts: all 2 facts hold: the trigger outcome holds; op read #0 (channel.sends) sends.0.state holds",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.078,
+    "first_satisfied_at_s": 0.935,
+    "completion_bound_s": 40.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: readable_text: 'SENT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 68, 'y': 817, 'w': 35, 'h': 15} | op_facts: all 2 facts hold: the trigger outcome holds; op read #0 (channel.sends) sends.0.state holds"
+  ],
+  "complete": true,
+  "shots": [
+    ".tmp/graph-walk/c3/send_sent-393-r3/20261003T045301Z-case.p13.dock.send_sent-astra-393/before.png",
+    ".tmp/graph-walk/c3/send_sent-393-r3/20261003T045301Z-case.p13.dock.send_sent-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xtnefoc7/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xtnefoc7/.config/holdspeak/config.json",
+    "CLI_RUNNER f644a565a820978e21cc6a18a5a63f7ba4b02ec17fed95217957a74abe8633b1",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"a RECORDING runner at the CLI channels' process edge (no real gh or acli)\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50042",
+    "CLI_CALL [\"gh\", \"api\", \"user\", \"--hostname\"]",
+    "CLI_CALL [\"gh\", \"api\", \"user\", \"--hostname\"]",
+    "CLI_CALL [\"gh\", \"issue\", \"comment\", \"42\"]"
+  ],
+  "duration_s": 27.791
+}

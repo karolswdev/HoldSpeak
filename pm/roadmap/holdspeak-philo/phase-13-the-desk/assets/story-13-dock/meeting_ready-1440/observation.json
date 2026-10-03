@@ -1,0 +1,2390 @@
+{
+  "id": "obs-20261003T043927Z-case.p13.dock.meeting_ready-astra-1440",
+  "run_id": "20261003T043927Z-case.p13.dock.meeting_ready-astra-1440",
+  "case_id": "case.p13.dock.meeting_ready",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j1",
+  "edge_ids": [
+    "edge.face.dock_needs_you"
+  ],
+  "state_id": "state.desk_presentation.p13_live_dock",
+  "provenance": {
+    "revision": "5912fcb9474cae7b058838f120a2c216189be89a",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "c6f65323ced22e9196a03264605d82bbee90d3a45ab210e3243f98bab199c0ba",
+      "assets": [
+        "index-s790vM88.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64975",
+      "port": 64975,
+      "pid": 56605,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bt700svl",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bt700svl/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo11_documents/meeting_summary_reply.json": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+      "tests/fixtures/philo11_documents/meeting_transcript.vtt": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T04:39:28.668993+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "replayed",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "recorded meeting intelligence provider",
+        "substitute": "engine_reply",
+        "installed_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "c48a83cb64da3074feaf615337de9531cb822060909fc499fb3578653b7545bf",
+      "version": "phase13-astra-wave1"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "browser_context": {
+      "viewport": 1440,
+      "has_touch": false
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "a RECORDED provider reply at the real provider seam",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bt700svl",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bt700svl",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bt700svl/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bt700svl"
+      }
+    },
+    "engine_replay_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+    "engine_provider_url": "http://127.0.0.1:64977/v1",
+    "cli_runner_sha256": null,
+    "meeting_intelligence": [
+      {
+        "kind": "cli",
+        "action": "queue_meeting_intelligence",
+        "adapter": "production-queue",
+        "meeting_id": "34ccf360",
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bt700svl/.local/share/holdspeak/holdspeak.db",
+        "producer": "holdspeak.db.intel.IntelRepository.enqueue_intel_job",
+        "job_id": "ij_3554fc9c684c7777b2f3ef2280972177daf677799b025460590ea818fce3b6e2",
+        "transcript_hash": "3eebb12291adfc524eab0137a9dce7a89fef5b52eab08f382aa8eaa62ed8cf33",
+        "planned_route": null
+      }
+    ]
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-02T22:39:36.124348"
+        }
+      },
+      "response_sha256": "f7a7ba0e3e8ecc29bc46c74adb0ebc867cf014d3556e03ba4f5636380896cfd3"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-8ed977855ee3",
+          "name": "Dock live project",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-10-02T22:39:36.155071",
+          "updated_at": "2026-10-02T22:39:36.155071",
+          "result_kind": "created",
+          "project_id": "proj-8ed977855ee3",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-8ed977855ee3"
+          ]
+        }
+      },
+      "response_sha256": "53ad84513a966932eca21a493137820a33b96928188c84034d4e853ed0e02cdf",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-8ed977855ee3"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/setup/discover-models",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "ok": true,
+        "models": [
+          "philo11-atlas"
+        ],
+        "detail": "Found 1 model.",
+        "status": 200
+      },
+      "response_sha256": "96a392df2be73d8a3ee78bc0d3c00e3a80b97ec6b45d72ec4071081558f5088f",
+      "captured": {
+        "name": "engine_model",
+        "path": "models.0",
+        "value": "philo11-atlas"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/inference/model-library/define-endpoint",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "receipt": {
+          "kind": "model_library_provider",
+          "message": "Added to the Model Library. Assignments are unchanged.",
+          "assignments_unchanged": true,
+          "assignments_before": {
+            "heads": [
+              {
+                "assignment_key": "capability:speech.transcribe",
+                "assignment_id": "ia_c44fe5a664f44ae2a1236d49c25a752e",
+                "revision": 1,
+                "cleared": false
+              }
+            ],
+            "sha256": "sha256:694d2f161321dfe7eda585c5bc44522b48913875221d6a94b0a71c8653f7999f"
+          },
+          "assignments_after": {
+            "heads": [
+              {
+                "assignment_key": "capability:speech.transcribe",
+                "assignment_id": "ia_c44fe5a664f44ae2a1236d49c25a752e",
+                "revision": 1,
+                "cleared": false
+              }
+            ],
+            "sha256": "sha256:694d2f161321dfe7eda585c5bc44522b48913875221d6a94b0a71c8653f7999f"
+          }
+        },
+        "provider": {
+          "profile_id": "p11-recorded-engine",
+          "profile_revision": 1,
+          "binding_id": "binding-p11-recorded-engine",
+          "binding_revision": 1,
+          "provider_family": "openai_compatible",
+          "secret": {
+            "required": false,
+            "present": false
+          }
+        }
+      },
+      "response_sha256": "ab338d778a4b616b224f70ead255fc381b59861333e96ae9b310f8e6257b7e10",
+      "captured": {
+        "name": "profile_id",
+        "path": "provider.profile_id",
+        "value": "p11-recorded-engine"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/concierge/summary-selection",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "schema": "ConciergeSummaryAssignmentReceipt@1",
+        "status": "succeeded",
+        "capabilityId": "meeting.deferred_analysis",
+        "result": {
+          "capabilityId": "meeting.deferred_analysis",
+          "state": "READY",
+          "profileId": "p11-recorded-engine",
+          "profileRevision": 1,
+          "assignment": {
+            "revision": 1,
+            "entries": [
+              {
+                "profileId": "p11-recorded-engine",
+                "profileRevision": 1,
+                "label": "Recorded loopback provider",
+                "boundary": "lan",
+                "readiness": "ready"
+              }
+            ]
+          }
+        },
+        "receipt": {
+          "id": "concierge-summary-d1adef309ebd",
+          "visible": true
+        },
+        "summaryAssignment": {
+          "schema": "ConciergeSummaryAssignmentProjection@1",
+          "capabilityId": "meeting.deferred_analysis",
+          "status": "assigned",
+          "assignmentRevision": 1,
+          "profileId": "p11-recorded-engine",
+          "profileRevision": 1,
+          "label": "Recorded loopback provider",
+          "boundary": "lan",
+          "readiness": "ready"
+        }
+      },
+      "response_sha256": "44b289ed7789523d28387fc67804935a1e0fd222c57fc8954660933e306fa534"
+    },
+    {
+      "kind": "boundary",
+      "label": "recorded meeting intelligence provider",
+      "substitute": "engine_reply",
+      "adapter": "hub-engine-boundary",
+      "installed_sha256": "bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+      "seam": "holdspeak.intel.providers._configured_engine + holdspeak.intel.engine.MeetingIntel"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.import",
+      "args": {
+        "path": "/Users/karol/dev/tools/wt-philo-13-13-astra/tests/fixtures/philo11_documents/meeting_transcript.vtt",
+        "title": "Document source review"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.import",
+          "arguments": {
+            "path": "/Users/karol/dev/tools/wt-philo-13-13-astra/tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          }
+        }
+      },
+      "response": {
+        "meeting_id": "34ccf360",
+        "transcription_status": "importing"
+      },
+      "domain_response": {
+        "meeting_id": "34ccf360",
+        "transcription_status": "importing"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"meeting_id\": \"34ccf360\", \"transcription_status\": \"importing\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.004,
+      "fixture": {
+        "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+        "sha256": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "34ccf360"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects/proj-8ed977855ee3/meetings/34ccf360",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "operation_id": "op_551ad9a66f2342c8bb69a8019226699d",
+        "receipt": {
+          "receipt_id": "rcpt_ade073b6397b45af8bc0cd68ebb18ea7",
+          "operation_id": "op_551ad9a66f2342c8bb69a8019226699d",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project:proj-8ed977855ee3",
+          "created_at": 1791002376.195636,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project:proj-8ed977855ee3"
+        }
+      },
+      "response_sha256": "94a6966fa403f692fa242de05db5a1c9eeca1802753492165df6a00b1aae0130"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "34ccf360"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "transcription_status",
+        "value": "complete"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "transcription_status equals the declared value"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "34ccf360"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "segments",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "segments is non-empty"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "34ccf360"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "planned_route.selection_hash",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "planned_route.selection_hash is non-empty"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "34ccf360"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "34ccf360"
+          }
+        }
+      },
+      "response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 24.0,
+        "ended_at": "2026-10-02T22:40:00.188552",
+        "formatted_duration": "00:24",
+        "id": "34ccf360",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "parked": false,
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea",
+          "status": "ready"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 8.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Avery: We agree to use one document registry for the channel sources."
+          },
+          {
+            "device_id": null,
+            "end_time": 16.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 8.0,
+            "text": "Blair: Avery will check the frozen bytes before the next review."
+          },
+          {
+            "device_id": null,
+            "end_time": 24.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 16.0,
+            "text": "Avery: The channel reads durable records and keeps the transcript private."
+          }
+        ],
+        "started_at": "2026-10-02T22:39:36.188552",
+        "sync_modified_at": "2026-10-02T22:39:36.191700",
+        "tags": [],
+        "title": "Document source review",
+        "transcriptWords": 34,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "domain_response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 24.0,
+        "ended_at": "2026-10-02T22:40:00.188552",
+        "formatted_duration": "00:24",
+        "id": "34ccf360",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "parked": false,
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea",
+          "status": "ready"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 8.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Avery: We agree to use one document registry for the channel sources."
+          },
+          {
+            "device_id": null,
+            "end_time": 16.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 8.0,
+            "text": "Blair: Avery will check the frozen bytes before the next review."
+          },
+          {
+            "device_id": null,
+            "end_time": 24.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 16.0,
+            "text": "Avery: The channel reads durable records and keeps the transcript private."
+          }
+        ],
+        "started_at": "2026-10-02T22:39:36.188552",
+        "sync_modified_at": "2026-10-02T22:39:36.191700",
+        "tags": [],
+        "title": "Document source review",
+        "transcriptWords": 34,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 24.0, \"ended_at\": \"2026-10-02T22:40:00.188552\", \"formatted_duration\": \"00:24\", \"id\": \"34ccf360\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"parked\": false, \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea\", \"status\": \"ready\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 8.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Avery: We agree to use one document registry for the channel sources.\"}, {\"device_id\": null, \"end_time\": 16.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 8.0, \"text\": \"Blair: Avery will check the frozen bytes before the next review.\"}, {\"device_id\": null, \"end_time\": 24.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 16.0, \"text\": \"Avery: The channel reads durable records and keeps the transcript private.\"}], \"started_at\": \"2026-10-02T22:39:36.188552\", \"sync_modified_at\": \"2026-10-02T22:39:36.191700\", \"tags\": [], \"title\": \"Document source review\", \"transcriptWords\": 34, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002,
+      "captured": {
+        "name": "selection_hash",
+        "path": "planned_route.selection_hash",
+        "value": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/inference/assignments/set",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-03T04:39:36.217321Z",
+        "effective_retry_policy_id": "retry.structured.standard",
+        "entries": [
+          {
+            "boundary": "private_network",
+            "label": "Recorded loopback provider",
+            "ordinal": 1,
+            "profile_id": "p11-recorded-engine",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "readiness": "ready"
+          }
+        ],
+        "id": "ia_47dd7b6adb3a471595ba8bc704bd25e7",
+        "issues": [],
+        "retry_policy_id": null,
+        "retry_policy_source": "capability_default",
+        "revision": 1,
+        "schema": "InferenceAssignmentProjection@1",
+        "scope": {
+          "capability_id": "meeting.plugin.decision_capture",
+          "kind": "capability"
+        },
+        "sha256": "sha256:63355c48f8b6abc636ef3f9e99c8107aedc70b2e99b882294a746fa4e7198ea6",
+        "committed_effect": {
+          "created_at": "2026-10-03T04:39:36.217321Z",
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1,
+              "profile_schema_version": 2
+            }
+          ],
+          "id": "ia_47dd7b6adb3a471595ba8bc704bd25e7",
+          "retry_policy_id": null,
+          "revision": 1,
+          "schema": "InferenceAssignment@1",
+          "scope": {
+            "capability_id": "meeting.plugin.decision_capture",
+            "kind": "capability"
+          },
+          "sha256": "sha256:63355c48f8b6abc636ef3f9e99c8107aedc70b2e99b882294a746fa4e7198ea6"
+        },
+        "current": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_47dd7b6adb3a471595ba8bc704bd25e7",
+          "revision": 1,
+          "sha256": "sha256:63355c48f8b6abc636ef3f9e99c8107aedc70b2e99b882294a746fa4e7198ea6",
+          "scope": {
+            "capability_id": "meeting.plugin.decision_capture",
+            "kind": "capability"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "p11-recorded-engine",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Recorded loopback provider",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-10-03T04:39:36.217321Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        }
+      },
+      "response_sha256": "193e97f44fe373f9aab816b0090c369710d1a32d4b1fe60faac25b421d31a8c4"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-dock",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": ".desk-dock",
+      "predicate": {
+        "kind": "text_absent",
+        "value": "READY"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "'READY' absent at observe_at"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub and browser; every durable source is minted through a real producer. No microphone or external send.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bt700svl",
+    "replay_provider_url": "http://127.0.0.1:64977/v1",
+    "project_id": "proj-8ed977855ee3",
+    "engine_model": "philo11-atlas",
+    "profile_id": "p11-recorded-engine",
+    "meeting_id": "34ccf360",
+    "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea"
+  },
+  "trigger": {
+    "kind": "cli",
+    "action": "queue_meeting_intelligence",
+    "adapter": "production-queue",
+    "meeting_id": "34ccf360",
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bt700svl/.local/share/holdspeak/holdspeak.db",
+    "producer": "holdspeak.db.intel.IntelRepository.enqueue_intel_job",
+    "job_id": "ij_3554fc9c684c7777b2f3ef2280972177daf677799b025460590ea818fce3b6e2",
+    "transcript_hash": "3eebb12291adfc524eab0137a9dce7a89fef5b52eab08f382aa8eaa62ed8cf33",
+    "planned_route": null
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "READY 1"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "desk-dock-state",
+        "data-testid": "desk-dock-meetings-state"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 292,
+        "y": 868,
+        "w": 55,
+        "h": 15
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "windows": {
+      "before": [
+        {
+          "title": "Needs you",
+          "rect": {
+            "x": 14,
+            "y": 42,
+            "w": 698,
+            "h": 681
+          },
+          "visible": true
+        },
+        {
+          "title": "Brief",
+          "rect": {
+            "x": 728,
+            "y": 42,
+            "w": 698,
+            "h": 500
+          },
+          "visible": true
+        },
+        {
+          "title": "The week",
+          "rect": {
+            "x": 728,
+            "y": 558,
+            "w": 698,
+            "h": 277
+          },
+          "visible": true
+        },
+        {
+          "title": "Capture",
+          "rect": {
+            "x": 14,
+            "y": 735,
+            "w": 698,
+            "h": 100
+          },
+          "visible": true
+        }
+      ],
+      "after": [
+        {
+          "title": "Needs you",
+          "rect": {
+            "x": 14,
+            "y": 42,
+            "w": 698,
+            "h": 481
+          },
+          "visible": true
+        },
+        {
+          "title": "Brief",
+          "rect": {
+            "x": 728,
+            "y": 42,
+            "w": 698,
+            "h": 500
+          },
+          "visible": true
+        },
+        {
+          "title": "The week",
+          "rect": {
+            "x": 728,
+            "y": 558,
+            "w": 698,
+            "h": 277
+          },
+          "visible": true
+        },
+        {
+          "title": "Capture",
+          "rect": {
+            "x": 14,
+            "y": 535,
+            "w": 698,
+            "h": 300
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "09f62c9ac4237cfd5ca9b6303681597101896ec3f158eeb34bb2104ae8289cff",
+      "after": "d12189dbe45c73d533c2db08e52cc2dbc296a2c3b84483a6c87f46b69b3eb45c"
+    },
+    "document_text_len": {
+      "before": 538,
+      "after": 627
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "34ccf360"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "tools/call",
+            "params": {
+              "name": "meeting.get",
+              "arguments": {
+                "meeting_id": "34ccf360"
+              }
+            }
+          },
+          "response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 24.0,
+            "ended_at": "2026-10-02T22:40:00.188552",
+            "formatted_duration": "00:24",
+            "id": "34ccf360",
+            "intel": null,
+            "intel_job": null,
+            "intel_model_host": null,
+            "intel_status": {
+              "completed_at": null,
+              "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "requested_at": null,
+              "state": "disabled"
+            },
+            "last_refusal": null,
+            "mic_label": "Me",
+            "parked": false,
+            "planned_route": {
+              "legs": [
+                {
+                  "boundary": "lan",
+                  "deployment_revision_id": "dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9",
+                  "host": "127.0.0.1",
+                  "ordinal": 1,
+                  "profile_id": "p11-recorded-engine",
+                  "profile_revision": 1
+                }
+              ],
+              "reason_code": null,
+              "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea",
+              "status": "ready"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": null,
+            "segments": [
+              {
+                "device_id": null,
+                "end_time": 8.0,
+                "is_bookmarked": false,
+                "speaker": "Transcript",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "text": "Avery: We agree to use one document registry for the channel sources."
+              },
+              {
+                "device_id": null,
+                "end_time": 16.0,
+                "is_bookmarked": false,
+                "speaker": "Transcript",
+                "speaker_id": null,
+                "start_time": 8.0,
+                "text": "Blair: Avery will check the frozen bytes before the next review."
+              },
+              {
+                "device_id": null,
+                "end_time": 24.0,
+                "is_bookmarked": false,
+                "speaker": "Transcript",
+                "speaker_id": null,
+                "start_time": 16.0,
+                "text": "Avery: The channel reads durable records and keeps the transcript private."
+              }
+            ],
+            "started_at": "2026-10-02T22:39:36.188552",
+            "sync_modified_at": "2026-10-02T22:39:36.191700",
+            "tags": [],
+            "title": "Document source review",
+            "transcriptWords": 34,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "domain_response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 24.0,
+            "ended_at": "2026-10-02T22:40:00.188552",
+            "formatted_duration": "00:24",
+            "id": "34ccf360",
+            "intel": null,
+            "intel_job": null,
+            "intel_model_host": null,
+            "intel_status": {
+              "completed_at": null,
+              "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "requested_at": null,
+              "state": "disabled"
+            },
+            "last_refusal": null,
+            "mic_label": "Me",
+            "parked": false,
+            "planned_route": {
+              "legs": [
+                {
+                  "boundary": "lan",
+                  "deployment_revision_id": "dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9",
+                  "host": "127.0.0.1",
+                  "ordinal": 1,
+                  "profile_id": "p11-recorded-engine",
+                  "profile_revision": 1
+                }
+              ],
+              "reason_code": null,
+              "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea",
+              "status": "ready"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": null,
+            "segments": [
+              {
+                "device_id": null,
+                "end_time": 8.0,
+                "is_bookmarked": false,
+                "speaker": "Transcript",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "text": "Avery: We agree to use one document registry for the channel sources."
+              },
+              {
+                "device_id": null,
+                "end_time": 16.0,
+                "is_bookmarked": false,
+                "speaker": "Transcript",
+                "speaker_id": null,
+                "start_time": 8.0,
+                "text": "Blair: Avery will check the frozen bytes before the next review."
+              },
+              {
+                "device_id": null,
+                "end_time": 24.0,
+                "is_bookmarked": false,
+                "speaker": "Transcript",
+                "speaker_id": null,
+                "start_time": 16.0,
+                "text": "Avery: The channel reads durable records and keeps the transcript private."
+              }
+            ],
+            "started_at": "2026-10-02T22:39:36.188552",
+            "sync_modified_at": "2026-10-02T22:39:36.191700",
+            "tags": [],
+            "title": "Document source review",
+            "transcriptWords": 34,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 24.0, \"ended_at\": \"2026-10-02T22:40:00.188552\", \"formatted_duration\": \"00:24\", \"id\": \"34ccf360\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"parked\": false, \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea\", \"status\": \"ready\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 8.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Avery: We agree to use one document registry for the channel sources.\"}, {\"device_id\": null, \"end_time\": 16.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 8.0, \"text\": \"Blair: Avery will check the frozen bytes before the next review.\"}, {\"device_id\": null, \"end_time\": 24.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 16.0, \"text\": \"Avery: The channel reads durable records and keeps the transcript private.\"}], \"started_at\": \"2026-10-02T22:39:36.188552\", \"sync_modified_at\": \"2026-10-02T22:39:36.191700\", \"tags\": [], \"title\": \"Document source review\", \"transcriptWords\": 34, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.003
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "34ccf360"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 24,
+            "method": "tools/call",
+            "params": {
+              "name": "meeting.get",
+              "arguments": {
+                "meeting_id": "34ccf360"
+              }
+            }
+          },
+          "response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 24.0,
+            "ended_at": "2026-10-02T22:40:00.188552",
+            "formatted_duration": "00:24",
+            "id": "34ccf360",
+            "intel": {
+              "action_items": [
+                {
+                  "completed_at": null,
+                  "created_at": "2026-10-02T22:39:46",
+                  "delegated_at": null,
+                  "due": "2026-10-07",
+                  "id": "action_1bae34218d5f5cec3e0ad9eb",
+                  "owner": "Avery",
+                  "review_state": "pending",
+                  "reviewed_at": null,
+                  "source_timestamp": null,
+                  "status": "pending",
+                  "task": "Check the frozen bytes before the next review"
+                }
+              ],
+              "summary": "The meeting agreed to use one document registry and to check frozen bytes before review.",
+              "timestamp": 24.0,
+              "topics": [
+                "document registry",
+                "frozen bytes"
+              ]
+            },
+            "intel_duration_s": 7,
+            "intel_job": {
+              "attempts": 1,
+              "last_error": null,
+              "next_retry_at": null,
+              "requested_at": "2026-10-02T22:39:46.270818",
+              "retry_scheduled": false,
+              "status": "succeeded",
+              "updated_at": "2026-10-02T22:39:46.552881"
+            },
+            "intel_model_host": "127.0.0.1",
+            "intel_status": {
+              "completed_at": "2026-10-02T22:39:46.552881",
+              "detail": "Meeting intelligence ready.",
+              "requested_at": "2026-10-02T22:39:39.021730",
+              "state": "ready"
+            },
+            "last_refusal": null,
+            "mic_label": "Me",
+            "parked": false,
+            "planned_route": {
+              "legs": [
+                {
+                  "boundary": "lan",
+                  "deployment_revision_id": "dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9",
+                  "host": "127.0.0.1",
+                  "ordinal": 1,
+                  "profile_id": "p11-recorded-engine",
+                  "profile_revision": 1
+                }
+              ],
+              "reason_code": null,
+              "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea",
+              "status": "ready"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": null,
+            "segments": [
+              {
+                "device_id": null,
+                "end_time": 8.0,
+                "is_bookmarked": false,
+                "speaker": "Transcript",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "text": "Avery: We agree to use one document registry for the channel sources."
+              },
+              {
+                "device_id": null,
+                "end_time": 16.0,
+                "is_bookmarked": false,
+                "speaker": "Transcript",
+                "speaker_id": null,
+                "start_time": 8.0,
+                "text": "Blair: Avery will check the frozen bytes before the next review."
+              },
+              {
+                "device_id": null,
+                "end_time": 24.0,
+                "is_bookmarked": false,
+                "speaker": "Transcript",
+                "speaker_id": null,
+                "start_time": 16.0,
+                "text": "Avery: The channel reads durable records and keeps the transcript private."
+              }
+            ],
+            "started_at": "2026-10-02T22:39:36.188552",
+            "sync_modified_at": "2026-10-02T22:39:46.552881",
+            "tags": [],
+            "title": "Document source review",
+            "transcriptWords": 34,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "domain_response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 24.0,
+            "ended_at": "2026-10-02T22:40:00.188552",
+            "formatted_duration": "00:24",
+            "id": "34ccf360",
+            "intel": {
+              "action_items": [
+                {
+                  "completed_at": null,
+                  "created_at": "2026-10-02T22:39:46",
+                  "delegated_at": null,
+                  "due": "2026-10-07",
+                  "id": "action_1bae34218d5f5cec3e0ad9eb",
+                  "owner": "Avery",
+                  "review_state": "pending",
+                  "reviewed_at": null,
+                  "source_timestamp": null,
+                  "status": "pending",
+                  "task": "Check the frozen bytes before the next review"
+                }
+              ],
+              "summary": "The meeting agreed to use one document registry and to check frozen bytes before review.",
+              "timestamp": 24.0,
+              "topics": [
+                "document registry",
+                "frozen bytes"
+              ]
+            },
+            "intel_duration_s": 7,
+            "intel_job": {
+              "attempts": 1,
+              "last_error": null,
+              "next_retry_at": null,
+              "requested_at": "2026-10-02T22:39:46.270818",
+              "retry_scheduled": false,
+              "status": "succeeded",
+              "updated_at": "2026-10-02T22:39:46.552881"
+            },
+            "intel_model_host": "127.0.0.1",
+            "intel_status": {
+              "completed_at": "2026-10-02T22:39:46.552881",
+              "detail": "Meeting intelligence ready.",
+              "requested_at": "2026-10-02T22:39:39.021730",
+              "state": "ready"
+            },
+            "last_refusal": null,
+            "mic_label": "Me",
+            "parked": false,
+            "planned_route": {
+              "legs": [
+                {
+                  "boundary": "lan",
+                  "deployment_revision_id": "dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9",
+                  "host": "127.0.0.1",
+                  "ordinal": 1,
+                  "profile_id": "p11-recorded-engine",
+                  "profile_revision": 1
+                }
+              ],
+              "reason_code": null,
+              "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea",
+              "status": "ready"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": null,
+            "segments": [
+              {
+                "device_id": null,
+                "end_time": 8.0,
+                "is_bookmarked": false,
+                "speaker": "Transcript",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "text": "Avery: We agree to use one document registry for the channel sources."
+              },
+              {
+                "device_id": null,
+                "end_time": 16.0,
+                "is_bookmarked": false,
+                "speaker": "Transcript",
+                "speaker_id": null,
+                "start_time": 8.0,
+                "text": "Blair: Avery will check the frozen bytes before the next review."
+              },
+              {
+                "device_id": null,
+                "end_time": 24.0,
+                "is_bookmarked": false,
+                "speaker": "Transcript",
+                "speaker_id": null,
+                "start_time": 16.0,
+                "text": "Avery: The channel reads durable records and keeps the transcript private."
+              }
+            ],
+            "started_at": "2026-10-02T22:39:36.188552",
+            "sync_modified_at": "2026-10-02T22:39:46.552881",
+            "tags": [],
+            "title": "Document source review",
+            "transcriptWords": 34,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 24,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 24.0, \"ended_at\": \"2026-10-02T22:40:00.188552\", \"formatted_duration\": \"00:24\", \"id\": \"34ccf360\", \"intel\": {\"action_items\": [{\"completed_at\": null, \"created_at\": \"2026-10-02T22:39:46\", \"delegated_at\": null, \"due\": \"2026-10-07\", \"id\": \"action_1bae34218d5f5cec3e0ad9eb\", \"owner\": \"Avery\", \"review_state\": \"pending\", \"reviewed_at\": null, \"source_timestamp\": null, \"status\": \"pending\", \"task\": \"Check the frozen bytes before the next review\"}], \"summary\": \"The meeting agreed to use one document registry and to check frozen bytes before review.\", \"timestamp\": 24.0, \"topics\": [\"document registry\", \"frozen bytes\"]}, \"intel_duration_s\": 7, \"intel_job\": {\"attempts\": 1, \"last_error\": null, \"next_retry_at\": null, \"requested_at\": \"2026-10-02T22:39:46.270818\", \"retry_scheduled\": false, \"status\": \"succeeded\", \"updated_at\": \"2026-10-02T22:39:46.552881\"}, \"intel_model_host\": \"127.0.0.1\", \"intel_status\": {\"completed_at\": \"2026-10-02T22:39:46.552881\", \"detail\": \"Meeting intelligence ready.\", \"requested_at\": \"2026-10-02T22:39:39.021730\", \"state\": \"ready\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"parked\": false, \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea\", \"status\": \"ready\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 8.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Avery: We agree to use one document registry for the channel sources.\"}, {\"device_id\": null, \"end_time\": 16.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 8.0, \"text\": \"Blair: Avery will check the frozen bytes before the next review.\"}, {\"device_id\": null, \"end_time\": 24.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 16.0, \"text\": \"Avery: The channel reads durable records and keeps the transcript private.\"}], \"started_at\": \"2026-10-02T22:39:36.188552\", \"sync_modified_at\": \"2026-10-02T22:39:46.552881\", \"tags\": [], \"title\": \"Document source review\", \"transcriptWords\": 34, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.005
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=desk-dock-meetings-state]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:capture",
+    "focus_label": "Capture",
+    "url": "http://127.0.0.1:64975/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "09f62c9ac4237cfd5ca9b6303681597101896ec3f158eeb34bb2104ae8289cff",
+    "document_text_len": 538,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "34ccf360"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.get",
+            "arguments": {
+              "meeting_id": "34ccf360"
+            }
+          }
+        },
+        "response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 24.0,
+          "ended_at": "2026-10-02T22:40:00.188552",
+          "formatted_duration": "00:24",
+          "id": "34ccf360",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "state": "disabled"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "parked": false,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "lan",
+                "deployment_revision_id": "dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9",
+                "host": "127.0.0.1",
+                "ordinal": 1,
+                "profile_id": "p11-recorded-engine",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea",
+            "status": "ready"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 8.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Avery: We agree to use one document registry for the channel sources."
+            },
+            {
+              "device_id": null,
+              "end_time": 16.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 8.0,
+              "text": "Blair: Avery will check the frozen bytes before the next review."
+            },
+            {
+              "device_id": null,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 16.0,
+              "text": "Avery: The channel reads durable records and keeps the transcript private."
+            }
+          ],
+          "started_at": "2026-10-02T22:39:36.188552",
+          "sync_modified_at": "2026-10-02T22:39:36.191700",
+          "tags": [],
+          "title": "Document source review",
+          "transcriptWords": 34,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "domain_response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 24.0,
+          "ended_at": "2026-10-02T22:40:00.188552",
+          "formatted_duration": "00:24",
+          "id": "34ccf360",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "state": "disabled"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "parked": false,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "lan",
+                "deployment_revision_id": "dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9",
+                "host": "127.0.0.1",
+                "ordinal": 1,
+                "profile_id": "p11-recorded-engine",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea",
+            "status": "ready"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 8.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Avery: We agree to use one document registry for the channel sources."
+            },
+            {
+              "device_id": null,
+              "end_time": 16.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 8.0,
+              "text": "Blair: Avery will check the frozen bytes before the next review."
+            },
+            {
+              "device_id": null,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 16.0,
+              "text": "Avery: The channel reads durable records and keeps the transcript private."
+            }
+          ],
+          "started_at": "2026-10-02T22:39:36.188552",
+          "sync_modified_at": "2026-10-02T22:39:36.191700",
+          "tags": [],
+          "title": "Document source review",
+          "transcriptWords": 34,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 24.0, \"ended_at\": \"2026-10-02T22:40:00.188552\", \"formatted_duration\": \"00:24\", \"id\": \"34ccf360\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"parked\": false, \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea\", \"status\": \"ready\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 8.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Avery: We agree to use one document registry for the channel sources.\"}, {\"device_id\": null, \"end_time\": 16.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 8.0, \"text\": \"Blair: Avery will check the frozen bytes before the next review.\"}, {\"device_id\": null, \"end_time\": 24.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 16.0, \"text\": \"Avery: The channel reads durable records and keeps the transcript private.\"}], \"started_at\": \"2026-10-02T22:39:36.188552\", \"sync_modified_at\": \"2026-10-02T22:39:36.191700\", \"tags\": [], \"title\": \"Document source review\", \"transcriptWords\": 34, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.003
+      }
+    ],
+    "at_utc": "2026-10-03T04:39:38.373320+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=desk-dock-meetings-state]",
+    "target_present": true,
+    "text": "READY 1",
+    "attrs": {
+      "class": "desk-dock-state",
+      "data-testid": "desk-dock-meetings-state"
+    },
+    "rect": {
+      "x": 292,
+      "y": 868,
+      "w": 55,
+      "h": 15
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 292,
+        "y": 868,
+        "w": 55,
+        "h": 15
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 299.29296875,
+          "y": 869.375,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 299.29296875,
+          "y": 875,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 299.29296875,
+          "y": 880.625,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 320.0703125,
+          "y": 869.375,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 320.0703125,
+          "y": 875,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 320.0703125,
+          "y": 880.625,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 340.84765625,
+          "y": 869.375,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 340.84765625,
+          "y": 875,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        },
+        {
+          "x": 340.84765625,
+          "y": 880.625,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch > span.desk-dock-state"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 768,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:capture",
+    "focus_label": "Capture",
+    "url": "http://127.0.0.1:64975/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 481
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 535,
+          "w": 698,
+          "h": 300
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "d12189dbe45c73d533c2db08e52cc2dbc296a2c3b84483a6c87f46b69b3eb45c",
+    "document_text_len": 627,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "34ccf360"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 24,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.get",
+            "arguments": {
+              "meeting_id": "34ccf360"
+            }
+          }
+        },
+        "response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 24.0,
+          "ended_at": "2026-10-02T22:40:00.188552",
+          "formatted_duration": "00:24",
+          "id": "34ccf360",
+          "intel": {
+            "action_items": [
+              {
+                "completed_at": null,
+                "created_at": "2026-10-02T22:39:46",
+                "delegated_at": null,
+                "due": "2026-10-07",
+                "id": "action_1bae34218d5f5cec3e0ad9eb",
+                "owner": "Avery",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "status": "pending",
+                "task": "Check the frozen bytes before the next review"
+              }
+            ],
+            "summary": "The meeting agreed to use one document registry and to check frozen bytes before review.",
+            "timestamp": 24.0,
+            "topics": [
+              "document registry",
+              "frozen bytes"
+            ]
+          },
+          "intel_duration_s": 7,
+          "intel_job": {
+            "attempts": 1,
+            "last_error": null,
+            "next_retry_at": null,
+            "requested_at": "2026-10-02T22:39:46.270818",
+            "retry_scheduled": false,
+            "status": "succeeded",
+            "updated_at": "2026-10-02T22:39:46.552881"
+          },
+          "intel_model_host": "127.0.0.1",
+          "intel_status": {
+            "completed_at": "2026-10-02T22:39:46.552881",
+            "detail": "Meeting intelligence ready.",
+            "requested_at": "2026-10-02T22:39:39.021730",
+            "state": "ready"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "parked": false,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "lan",
+                "deployment_revision_id": "dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9",
+                "host": "127.0.0.1",
+                "ordinal": 1,
+                "profile_id": "p11-recorded-engine",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea",
+            "status": "ready"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 8.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Avery: We agree to use one document registry for the channel sources."
+            },
+            {
+              "device_id": null,
+              "end_time": 16.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 8.0,
+              "text": "Blair: Avery will check the frozen bytes before the next review."
+            },
+            {
+              "device_id": null,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 16.0,
+              "text": "Avery: The channel reads durable records and keeps the transcript private."
+            }
+          ],
+          "started_at": "2026-10-02T22:39:36.188552",
+          "sync_modified_at": "2026-10-02T22:39:46.552881",
+          "tags": [],
+          "title": "Document source review",
+          "transcriptWords": 34,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "domain_response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 24.0,
+          "ended_at": "2026-10-02T22:40:00.188552",
+          "formatted_duration": "00:24",
+          "id": "34ccf360",
+          "intel": {
+            "action_items": [
+              {
+                "completed_at": null,
+                "created_at": "2026-10-02T22:39:46",
+                "delegated_at": null,
+                "due": "2026-10-07",
+                "id": "action_1bae34218d5f5cec3e0ad9eb",
+                "owner": "Avery",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "status": "pending",
+                "task": "Check the frozen bytes before the next review"
+              }
+            ],
+            "summary": "The meeting agreed to use one document registry and to check frozen bytes before review.",
+            "timestamp": 24.0,
+            "topics": [
+              "document registry",
+              "frozen bytes"
+            ]
+          },
+          "intel_duration_s": 7,
+          "intel_job": {
+            "attempts": 1,
+            "last_error": null,
+            "next_retry_at": null,
+            "requested_at": "2026-10-02T22:39:46.270818",
+            "retry_scheduled": false,
+            "status": "succeeded",
+            "updated_at": "2026-10-02T22:39:46.552881"
+          },
+          "intel_model_host": "127.0.0.1",
+          "intel_status": {
+            "completed_at": "2026-10-02T22:39:46.552881",
+            "detail": "Meeting intelligence ready.",
+            "requested_at": "2026-10-02T22:39:39.021730",
+            "state": "ready"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "parked": false,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "lan",
+                "deployment_revision_id": "dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9",
+                "host": "127.0.0.1",
+                "ordinal": 1,
+                "profile_id": "p11-recorded-engine",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea",
+            "status": "ready"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 8.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Avery: We agree to use one document registry for the channel sources."
+            },
+            {
+              "device_id": null,
+              "end_time": 16.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 8.0,
+              "text": "Blair: Avery will check the frozen bytes before the next review."
+            },
+            {
+              "device_id": null,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 16.0,
+              "text": "Avery: The channel reads durable records and keeps the transcript private."
+            }
+          ],
+          "started_at": "2026-10-02T22:39:36.188552",
+          "sync_modified_at": "2026-10-02T22:39:46.552881",
+          "tags": [],
+          "title": "Document source review",
+          "transcriptWords": 34,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 24,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 24.0, \"ended_at\": \"2026-10-02T22:40:00.188552\", \"formatted_duration\": \"00:24\", \"id\": \"34ccf360\", \"intel\": {\"action_items\": [{\"completed_at\": null, \"created_at\": \"2026-10-02T22:39:46\", \"delegated_at\": null, \"due\": \"2026-10-07\", \"id\": \"action_1bae34218d5f5cec3e0ad9eb\", \"owner\": \"Avery\", \"review_state\": \"pending\", \"reviewed_at\": null, \"source_timestamp\": null, \"status\": \"pending\", \"task\": \"Check the frozen bytes before the next review\"}], \"summary\": \"The meeting agreed to use one document registry and to check frozen bytes before review.\", \"timestamp\": 24.0, \"topics\": [\"document registry\", \"frozen bytes\"]}, \"intel_duration_s\": 7, \"intel_job\": {\"attempts\": 1, \"last_error\": null, \"next_retry_at\": null, \"requested_at\": \"2026-10-02T22:39:46.270818\", \"retry_scheduled\": false, \"status\": \"succeeded\", \"updated_at\": \"2026-10-02T22:39:46.552881\"}, \"intel_model_host\": \"127.0.0.1\", \"intel_status\": {\"completed_at\": \"2026-10-02T22:39:46.552881\", \"detail\": \"Meeting intelligence ready.\", \"requested_at\": \"2026-10-02T22:39:39.021730\", \"state\": \"ready\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"parked\": false, \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea\", \"status\": \"ready\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 8.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Avery: We agree to use one document registry for the channel sources.\"}, {\"device_id\": null, \"end_time\": 16.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 8.0, \"text\": \"Blair: Avery will check the frozen bytes before the next review.\"}, {\"device_id\": null, \"end_time\": 24.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 16.0, \"text\": \"Avery: The channel reads durable records and keeps the transcript private.\"}], \"started_at\": \"2026-10-02T22:39:36.188552\", \"sync_modified_at\": \"2026-10-02T22:39:46.552881\", \"tags\": [], \"title\": \"Document source review\", \"transcriptWords\": 34, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.005
+      }
+    ],
+    "at_utc": "2026-10-03T04:39:46.763781+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=desk-dock-meetings-state]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:capture",
+    "focus_label": "Capture",
+    "url": "http://127.0.0.1:64975/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "09f62c9ac4237cfd5ca9b6303681597101896ec3f158eeb34bb2104ae8289cff",
+    "document_text_len": 538,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "34ccf360"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.get",
+            "arguments": {
+              "meeting_id": "34ccf360"
+            }
+          }
+        },
+        "response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 24.0,
+          "ended_at": "2026-10-02T22:40:00.188552",
+          "formatted_duration": "00:24",
+          "id": "34ccf360",
+          "intel": null,
+          "intel_job": {
+            "attempts": 0,
+            "last_error": null,
+            "next_retry_at": null,
+            "requested_at": "2026-10-02T22:39:39.021730",
+            "retry_scheduled": false,
+            "status": "queued",
+            "updated_at": "2026-10-02T22:39:39.021730"
+          },
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "Queued for later processing.",
+            "requested_at": "2026-10-02T22:39:39.021730",
+            "state": "queued"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "parked": false,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "lan",
+                "deployment_revision_id": "dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9",
+                "host": "127.0.0.1",
+                "ordinal": 1,
+                "profile_id": "p11-recorded-engine",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea",
+            "status": "ready"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 8.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Avery: We agree to use one document registry for the channel sources."
+            },
+            {
+              "device_id": null,
+              "end_time": 16.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 8.0,
+              "text": "Blair: Avery will check the frozen bytes before the next review."
+            },
+            {
+              "device_id": null,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 16.0,
+              "text": "Avery: The channel reads durable records and keeps the transcript private."
+            }
+          ],
+          "started_at": "2026-10-02T22:39:36.188552",
+          "sync_modified_at": "2026-10-02T22:39:39.021730",
+          "tags": [],
+          "title": "Document source review",
+          "transcriptWords": 34,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "domain_response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 24.0,
+          "ended_at": "2026-10-02T22:40:00.188552",
+          "formatted_duration": "00:24",
+          "id": "34ccf360",
+          "intel": null,
+          "intel_job": {
+            "attempts": 0,
+            "last_error": null,
+            "next_retry_at": null,
+            "requested_at": "2026-10-02T22:39:39.021730",
+            "retry_scheduled": false,
+            "status": "queued",
+            "updated_at": "2026-10-02T22:39:39.021730"
+          },
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "Queued for later processing.",
+            "requested_at": "2026-10-02T22:39:39.021730",
+            "state": "queued"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "parked": false,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "lan",
+                "deployment_revision_id": "dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9",
+                "host": "127.0.0.1",
+                "ordinal": 1,
+                "profile_id": "p11-recorded-engine",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea",
+            "status": "ready"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 8.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Avery: We agree to use one document registry for the channel sources."
+            },
+            {
+              "device_id": null,
+              "end_time": 16.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 8.0,
+              "text": "Blair: Avery will check the frozen bytes before the next review."
+            },
+            {
+              "device_id": null,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 16.0,
+              "text": "Avery: The channel reads durable records and keeps the transcript private."
+            }
+          ],
+          "started_at": "2026-10-02T22:39:36.188552",
+          "sync_modified_at": "2026-10-02T22:39:39.021730",
+          "tags": [],
+          "title": "Document source review",
+          "transcriptWords": 34,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 24.0, \"ended_at\": \"2026-10-02T22:40:00.188552\", \"formatted_duration\": \"00:24\", \"id\": \"34ccf360\", \"intel\": null, \"intel_job\": {\"attempts\": 0, \"last_error\": null, \"next_retry_at\": null, \"requested_at\": \"2026-10-02T22:39:39.021730\", \"retry_scheduled\": false, \"status\": \"queued\", \"updated_at\": \"2026-10-02T22:39:39.021730\"}, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"Queued for later processing.\", \"requested_at\": \"2026-10-02T22:39:39.021730\", \"state\": \"queued\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"parked\": false, \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_dcba1f5a04214a2ebaa666b09d094aa19ebeba233cba205484a176cad04cc8a9\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p11-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:651b25fc1a04d6c8246531a5b28cf5563d5b221d6d15d45d99008b94a0ef76ea\", \"status\": \"ready\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 8.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Avery: We agree to use one document registry for the channel sources.\"}, {\"device_id\": null, \"end_time\": 16.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 8.0, \"text\": \"Blair: Avery will check the frozen bytes before the next review.\"}, {\"device_id\": null, \"end_time\": 24.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 16.0, \"text\": \"Avery: The channel reads durable records and keeps the transcript private.\"}], \"started_at\": \"2026-10-02T22:39:36.188552\", \"sync_modified_at\": \"2026-10-02T22:39:39.021730\", \"tags\": [], \"title\": \"Document source review\", \"transcriptWords\": 34, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.006
+      }
+    ],
+    "at_utc": "2026-10-03T04:39:39.942950+00:00",
+    "predicate_satisfied": false,
+    "reading": "all_of part readable_text: the named text scope is absent or hidden",
+    "elapsed_s": 1.435
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'READY 1' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 292, 'y': 868, 'w': 55, 'h': 15} | op_facts: all 1 facts hold: op read #0 (meeting.read) intel.summary holds",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 8.256,
+    "first_satisfied_at_s": 8.119,
+    "completion_bound_s": 40.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: readable_text: 'READY 1' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 292, 'y': 868, 'w': 55, 'h': 15} | op_facts: all 1 facts hold: op read #0 (meeting.read) intel.summary holds"
+  ],
+  "complete": true,
+  "shots": [
+    ".tmp/graph-walk/c3/meeting_ready-1440/20261003T043927Z-case.p13.dock.meeting_ready-astra-1440/before.png",
+    ".tmp/graph-walk/c3/meeting_ready-1440/20261003T043927Z-case.p13.dock.meeting_ready-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bt700svl/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bt700svl/.config/holdspeak/config.json",
+    "ENGINE_REPLAY bd59e11fc5f01e9c6e0329d48c1f8acb7bd19fbd78bf0972274aaa42161b2dc7",
+    "ENGINE_PROVIDER http://127.0.0.1:64977/v1",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"a RECORDED provider reply at the real provider seam\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64975"
+  ],
+  "duration_s": 19.197
+}

@@ -1,0 +1,16 @@
+web/src/desk/applications.ts:416 => action: "review-calendar-snapshot",
+web/src/desk/DeskApp.tsx:269 => {!arrivalRequired && roadmapWindows.map((roadmap) => (
+web/src/desk/DeskApp.tsx:276 => {!arrivalRequired && repositoryWindows.map((repository) => (
+web/src/desk/DeskApp.tsx:267 => {!arrivalRequired && <DeliveryDossierWindow />}
+web/src/desk/DeskApp.tsx:268 => {!arrivalRequired && <DeliveryTerminalWindow />}
+web/src/desk/pullouts/registry.ts:33 => chain: ChainPullout,
+web/src/desk/pullouts/registry.ts:35 => coder: CoderPullout,
+web/src/desk/pullouts/registry.ts:36 => directory: DirectoryPullout,
+web/src/desk/gl/WorldStage.tsx:276 => <InfoWindow key={w.ref} refId={w.ref} origin={w.origin} />
+holdspeak/db/meetings.py:1223 => def delete_meeting(self, meeting_id: str) -> bool:
+holdspeak/db/workbenches.py:362 => def delete(self, item_id: str) -> bool:
+web/src/desk/needsYou.ts:233 => export function computeNeedsYou(
+web/src/desk/components/window/dockState.ts:72 => export function reduceDockFrame(
+holdspeak/services/project_update_service.py:1529 => def draft_update(
+holdspeak/services/project_update_service.py:1997 => def _read_week_sources(
+15 exact anchors verified against e9b01e227c0836ae90f4d82dc4e571868a0a8a7b ; 23 cases; 6 states

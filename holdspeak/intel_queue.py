@@ -608,6 +608,9 @@ def _process_bound_intel_job(
             lease.mark_lost()
             return False
         outcome = "succeeded"
+        # Durable-before-observable: the Dock's aftercare frame must have a
+        # durable unseen row before the websocket callback can publish it.
+        db.meetings.mark_ready_unseen(job.meeting_id)
         if on_meeting_ready is not None:
             try:
                 on_meeting_ready(job.meeting_id)

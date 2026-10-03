@@ -5576,6 +5576,24 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         return record
     if kind == "cli":
         action = step.get("action")
+        if action == "stop_hub":
+            # A real socket loss for the Dock case, restricted to this rig's
+            # owned child. Restart uses the existing same-HOME process path.
+            if hub is None or not isinstance(hub, Hub) or hub.proc is None:
+                raise Blocked("stop_hub needs the rig's owned hub process")
+            home = guard_home(hub.home)
+            db_path = guard_path(hub.db_path, "hub database")
+            if not _under(db_path, home):
+                raise Refused("stop_hub database is outside the run HOME")
+            pid = hub.proc.pid
+            hub.stop()
+            record = {"kind": "cli", "action": action, "stopped_pid": pid,
+                      "home": str(home), "db_path": str(db_path),
+                      "returncode": hub.proc.poll()}
+            if record["returncode"] is None:
+                raise Blocked("stop_hub did not stop its child")
+            provenance.setdefault("hub_stops", []).append(record)
+            return record
         if action == "seed_needs_you_week":
             return _seed_needs_you_week_step(step, page, hub, provenance, variables)
         if action == "create_repository_fixture":

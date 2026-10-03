@@ -35,7 +35,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime, timezone
-from typing import Any, Mapping, Optional
+from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.db.channels import now_iso, settle_in_transaction
 from holdspeak.logging_config import get_logger
@@ -66,8 +66,8 @@ def _handle() -> Any:
 class ChannelService:
     """The one service behind every ``channel.*`` operation (HTTP, MCP and the rig reach it)."""
 
-    def __init__(self, db: Any) -> None:
-        self._db = db
+    def __init__(self, db: Any, *, on_changed: Callable[[str, str, str], None] | None = None) -> None:
+        self._db, self._on_changed = db, on_changed
 
     # ── views ──────────────────────────────────────────────────────────
 
@@ -593,7 +593,10 @@ class ChannelService:
             if exc.reason not in STRICT_CONFLICTS:
                 raise
             # The reaper (or a take-over) ended it first, with the row: its settle answers.
-        return self._answer(self._db.channel_sends.get(row["id"]))
+        settled = self._db.channel_sends.get(row["id"])
+        if settled is not None and str(settled.get("state") or "") in {"sent", "failed", "unknown"}:
+            self._changed(str(row["id"]), str(settled["state"]))
+        return self._answer(settled)
 
     def _close_as_row(self, handle: Any, row: Mapping[str, Any]) -> dict[str, Any]:
         """A take-over that finds its row already settled: the kernel state follows the row."""
@@ -608,6 +611,14 @@ class ChannelService:
                 if exc.reason not in STRICT_CONFLICTS:
                     raise
         return self._answer(row)
+
+    def _changed(self, send_id: str, state: str) -> None:
+        if self._on_changed is None:
+            return
+        try:
+            self._on_changed("send", str(send_id), str(state))
+        except Exception:  # pragma: no cover - a dead socket never undoes a send
+            pass
 
 
 __all__ = ["ChannelService"]

@@ -15,18 +15,23 @@
  *
  * If the adoption is refused, the note still opens: the words must always
  * have a home, even on the ordinary note face.
+ *
+ * PHILO-13-16 (C6): the Desk menu's `Write a thought` (⌃T, verbRegistry.ts)
+ * calls this from any window. The note is born `Thought`; the writer gives it
+ * its first words on save (thoughtTitle.ts).
  */
 import { apiFetch } from "../lib/api";
 import { useDesk } from "./store";
 import { reportWriteFailure, clearWriteFailure } from "./hooks/useWriteReceipt";
 import { adoptThought, thoughtForNote } from "./thoughts";
+import { NEW_THOUGHT_TITLE } from "./thoughtTitle";
 
 export async function openNewThought(): Promise<void> {
   let noteId = "";
   try {
     const created = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
       method: "POST",
-      json: { title: "Thought", body_markdown: "", tags: [] },
+      json: { title: NEW_THOUGHT_TITLE, body_markdown: "", tags: [] },
     });
     noteId = String(created.note?.id ?? "");
     clearWriteFailure();

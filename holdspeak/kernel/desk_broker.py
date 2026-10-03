@@ -173,6 +173,23 @@ def reap(store: Any, operation: Mapping[str, Any], state: str, reason: str) -> b
             return False
         raise
     journal_receipt(store, ended, str((receipt or {}).get("outcome") or reason))
+    # H-C3: a liveness recovery can settle a channel send without returning
+    # through ChannelService._settle. Announce that durable UNKNOWN after the
+    # kernel transaction, so the Dock's existing desk_changed consumer learns
+    # about the same terminal row.
+    if str(operation.get("name") or "") == "channel.send":
+        try:
+            with store._connection() as conn:
+                send = conn.execute(
+                    "SELECT id, state FROM channel_sends WHERE send_operation_id=?",
+                    (str(operation.get("operation_id") or ""),),
+                ).fetchone()
+            if send is not None and str(send["state"] or "") in {"sent", "failed", "unknown"}:
+                from ..runtime.composition import notify_desk_changed
+
+                notify_desk_changed("send", str(send["id"]), str(send["state"]))
+        except Exception:  # pragma: no cover - recovery must not fail its receipt
+            pass
     return True
 
 

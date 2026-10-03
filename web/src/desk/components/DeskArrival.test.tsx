@@ -195,7 +195,7 @@ describe("Phase 93 Desk arrival", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /Project Orion/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("option", { name: /Project Orion/ }));
-    expect(openProject).toHaveBeenCalledWith("project:orion");
+    expect(openProject).toHaveBeenCalledWith("project:orion", undefined);
     expect(openToolInspector).not.toHaveBeenCalledWith("project", "orion");
 
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));

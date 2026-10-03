@@ -64,13 +64,13 @@
         {
           "path": "web/src/App.tsx",
           "symbol": "App",
-          "line": 67,
+          "line": 46,
           "claim": "/desk and unknown paths redirect to /."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "DeskApp",
-          "line": 184,
+          "line": 86,
           "claim": "DeskApp composes the Workbench shell."
         }
       ],
@@ -165,13 +165,13 @@
         {
           "path": "web/src/desk/components/window/windowGeometry.ts",
           "symbol": "clampRect",
-          "line": 119,
+          "line": 175,
           "claim": "Window rectangles are clamped to the work band and minimum dimensions."
         },
         {
           "path": "web/src/desk/components/DeskWindow.tsx",
           "symbol": "DeskWindowFrame",
-          "line": 556,
+          "line": 586,
           "claim": "The shared frame owns geometry and focus callbacks."
         }
       ],
@@ -387,13 +387,13 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "Verb",
-          "line": 28,
+          "line": 57,
           "claim": "Definitions include ids, labels, availability and runner behavior."
         },
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "VERBS",
-          "line": 136,
+          "line": 167,
           "claim": "The registry enumerates Desk verbs."
         }
       ],
@@ -405,7 +405,7 @@
         },
         {
           "path": "web/src/desk/__tests__/keymap.test.ts",
-          "node": "a ghosted verb refuses quietly (\u2318W with no window open)",
+          "node": "a ghosted verb refuses quietly (⌘W with no window open)",
           "assertion": "The keymap does not run a ghosted verb.",
           "execution": "not_run"
         }
@@ -499,13 +499,13 @@
         {
           "path": "web/src/desk/dropMatrix.ts",
           "symbol": "DROP_MATRIX",
-          "line": 9,
+          "line": 22,
           "claim": "The matrix enumerates supported kind pairs and named effects."
         },
         {
           "path": "web/src/desk/components/GlassDropLayer.tsx",
           "symbol": "GlassDropLayer",
-          "line": 9,
+          "line": 17,
           "claim": "External files are accepted only over a release target."
         }
       ],
@@ -603,13 +603,13 @@
         {
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "DESK_WORKSPACE_STORAGE_KEY",
-          "line": 8,
+          "line": 10,
           "claim": "The key is hs.desk.workspace.v1."
         },
         {
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "loadDeskWorkspace",
-          "line": 112,
+          "line": 82,
           "claim": "Wrong version, invalid JSON and invalid shape return an empty workspace."
         }
       ],
@@ -703,7 +703,7 @@
         {
           "path": "web/src/runtime/RuntimeBus.tsx",
           "symbol": "RuntimeBusProvider",
-          "line": 13,
+          "line": 26,
           "claim": "RuntimeBus owns the socket, states, ping and bounded reconnect policy."
         },
         {
@@ -826,6 +826,107 @@
       "owner_observed": false
     },
     {
+      "id": "desk.dock.live",
+      "name": "Read live Dock state",
+      "purpose": "Read meeting, send, recording and connection state from Dock AppIcons.",
+      "domain": "desk",
+      "status": "partial",
+      "status_reason": "H-C3 state and launch origin are implemented; C3-W styling and Chair origin adoption remain with the faces lane.",
+      "exposure": "user",
+      "surfaces": [
+        "Desk Dock"
+      ],
+      "entry_points": [
+        "web/src/desk/components/window/Dock.tsx::Dock"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "runtime frames",
+        "durable sends",
+        "durable unseen meeting readiness",
+        "People briefs",
+        "active projects",
+        "A2 membership"
+      ],
+      "outputs": [
+        "READY",
+        "REC",
+        "SENT",
+        "SEND FAILED",
+        "UNKNOWN",
+        "OFFLINE AS OF",
+        "per-app badges",
+        "explicit Dock launch origin"
+      ],
+      "persistence": [
+        "meeting_ready_reads: ready_at and read_at"
+      ],
+      "apis": [
+        "GET /api/channels/sends",
+        "GET /api/people/relationships",
+        "GET /api/people/relationships/{relationship_id}/brief",
+        "GET /api/meetings/ready",
+        "POST /api/meetings/{meeting_id}/ready/read"
+      ],
+      "configuration": [],
+      "dependencies": [
+        "RuntimeBus",
+        "useNeedsYou",
+        "recordingSlice",
+        "B4 brief"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Authenticated hub frames and owner routes provide state. Opening an AppIcon uses the existing shell.",
+      "egress_possible": false,
+      "egress": "The Dock reads state and opens surfaces. It does not send data.",
+      "side_effect": "local_reversible",
+      "authority": "The hub owns recording and send outcomes. Completion producers store unseen readiness; opening a meeting acknowledges it.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/window/Dock.tsx",
+          "symbol": "Dock",
+          "line": 260,
+          "claim": "The Dock projects hub state and sends explicit launch origin to the shell."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_philo13_c3_dock.py",
+          "node": "test_real_channel_settlement_emits_dock_invalidation",
+          "assertion": "The real channel producer persists each terminal outcome and emits the matching hub frame.",
+          "execution": "passed"
+        }
+      ],
+      "docs": [
+        "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-13-c3-a-live-dock.md"
+      ],
+      "limitations": [
+        "C3-W must finish styling and adopt launch origin in Chair.",
+        "No physical recording was attempted; the rig refuses microphone starts.",
+        "The People clock requires H-B4.",
+        "Muad'Dib's single-pass conditions are recorded in checks/c3-744-conditions.md; C3-W and the owner's sitting remain open."
+      ],
+      "failure_states": [
+        "runtime disconnected",
+        "domain read failed",
+        "send failed",
+        "send outcome unknown",
+        "recording refused"
+      ],
+      "replacement": null,
+      "evidence_level": "tests_executed",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
       "id": "project.update.linked_week",
       "name": "Draft a project update",
       "purpose": "Draft an update from linked meeting summaries, decisions and owned actions.",
@@ -925,7 +1026,7 @@
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "DeskApp",
-          "line": 184,
+          "line": 86,
           "claim": "DeskApp mounts the Desk composition."
         }
       ],
@@ -955,7 +1056,7 @@
         {
           "path": "web/src/desk/world.ts",
           "symbol": "worldObjects",
-          "line": 18,
+          "line": 103,
           "claim": "World descriptors contain stable object fields and placement."
         }
       ],
@@ -984,7 +1085,7 @@
         {
           "path": "web/src/desk/components/DeskWindow.tsx",
           "symbol": "DeskWindowFrame",
-          "line": 556,
+          "line": 586,
           "claim": "The shared frame owns window interactions."
         }
       ],
@@ -1015,7 +1116,7 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "VERBS",
-          "line": 136,
+          "line": 167,
           "claim": "The registry enumerates Desk verbs."
         }
       ],
@@ -1072,7 +1173,7 @@
         {
           "path": "web/src/runtime/RuntimeBus.tsx",
           "symbol": "RuntimeBusProvider",
-          "line": 13,
+          "line": 26,
           "claim": "RuntimeBus owns one guarded runtime socket and connection state."
         }
       ],
@@ -1102,7 +1203,7 @@
         {
           "path": "web/src/lib/api.ts",
           "symbol": "apiFetch",
-          "line": 14,
+          "line": 44,
           "claim": "The API helper issues requests and maps non-2xx responses to ApiError."
         }
       ],
@@ -1137,7 +1238,7 @@
         {
           "path": "web/src/runtime/RuntimeBus.tsx",
           "symbol": "RuntimeBusProvider",
-          "line": 13,
+          "line": 26,
           "claim": "The bus owns WebSocket connection state and event delivery."
         }
       ],
@@ -1172,7 +1273,7 @@
         {
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "DESK_WORKSPACE_STORAGE_KEY",
-          "line": 8,
+          "line": 10,
           "claim": "Workspace arrangement uses the versioned localStorage key."
         }
       ],
@@ -1235,7 +1336,7 @@
         {
           "path": "web/src/desk/world.ts",
           "symbol": "WorldObject",
-          "line": 18,
+          "line": 10,
           "claim": "World objects carry id, kind, label, subtitle, position and visual fields."
         }
       ],
@@ -1260,7 +1361,7 @@
         {
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "DeskWorkspaceDocumentV1",
-          "line": 67,
+          "line": 15,
           "claim": "Persisted workspace includes panel rect, window rect/order/max, zones and preferences."
         }
       ],
@@ -1285,7 +1386,7 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "Verb",
-          "line": 28,
+          "line": 57,
           "claim": "Verb definitions encode id, label, scope, availability and runner."
         }
       ],
@@ -1311,7 +1412,7 @@
         {
           "path": "web/src/desk/surface/patterns/ProvenanceChip.tsx",
           "symbol": "Receipt",
-          "line": 36,
+          "line": 37,
           "claim": "Receipt renders status, label and timestamp fields."
         }
       ],
@@ -1339,7 +1440,7 @@
         {
           "path": "web/src/lib/api.ts",
           "symbol": "apiFetch",
-          "line": 14,
+          "line": 44,
           "claim": "The API helper is the browser HTTP boundary."
         }
       ],
@@ -1368,7 +1469,7 @@
         {
           "path": "web/src/runtime/RuntimeBus.tsx",
           "symbol": "RuntimeBusProvider",
-          "line": 80,
+          "line": 26,
           "claim": "Malformed frames are ignored and reconnect is bounded."
         }
       ],
@@ -1396,7 +1497,7 @@
         {
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "loadDeskWorkspace",
-          "line": 112,
+          "line": 82,
           "claim": "Invalid records are rejected and replaced by defaults."
         }
       ],

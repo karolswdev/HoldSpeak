@@ -342,7 +342,7 @@
       "sources": [
         {
           "claim": "The API helper issues requests and maps non-2xx responses to ApiError.",
-          "line": 14,
+          "line": 44,
           "path": "web/src/lib/api.ts",
           "symbol": "apiFetch"
         }
@@ -377,7 +377,7 @@
       "sources": [
         {
           "claim": "The bus owns WebSocket connection state and event delivery.",
-          "line": 13,
+          "line": 26,
           "path": "web/src/runtime/RuntimeBus.tsx",
           "symbol": "RuntimeBusProvider"
         }
@@ -411,7 +411,7 @@
       "sources": [
         {
           "claim": "Workspace arrangement uses the versioned localStorage key.",
-          "line": 8,
+          "line": 10,
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "DESK_WORKSPACE_STORAGE_KEY"
         }

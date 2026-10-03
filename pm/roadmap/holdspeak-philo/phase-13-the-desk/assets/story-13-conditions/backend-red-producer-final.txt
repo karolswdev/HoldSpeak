@@ -1,0 +1,45 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_real_bound_queue_completion_creates_unread_ready_marker _________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-331/test_real_bound_queue_completi0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d541ba0>
+
+    def test_real_bound_queue_completion_creates_unread_ready_marker(tmp_path: Path, monkeypatch) -> None:
+        """The production queue completion, not a test-only helper, creates READY."""
+        from tests.unit.test_meeting_deferred_admission import _queue_rig, _queued_meeting
+        from holdspeak.intel_queue import _process_bound_intel_job
+        from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+    
+        db, broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+        state = _queued_meeting(db, "m-produced-ready")
+        claimed = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+        assert claimed is not None
+        frames: list[str] = []
+    
+        assert _process_bound_intel_job(
+            db,
+            claimed,
+            broker,
+            on_meeting_ready=frames.append,
+            retry_base_seconds=1,
+            retry_max_seconds=1,
+            retry_max_attempts=4,
+        ) is True
+    
+        assert frames == [state.id]
+        # Read the durable producer seam directly so this fence fails clearly on
+        # the pre-C3 source even before repository convenience methods exist.
+        with db._connection() as conn:
+            table = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'meeting_ready_reads'"
+            ).fetchone()
+>           assert table is not None, "real completion must have a durable readiness table"
+E           AssertionError: real completion must have a durable readiness table
+E           assert None is not None
+
+/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.FTMjzdRLgn/tests/unit/test_philo13_c3_ready.py:111: AssertionError
+=========================== short test summary info ============================
+FAILED ../../../../../var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.FTMjzdRLgn/tests/unit/test_philo13_c3_ready.py::test_real_bound_queue_completion_creates_unread_ready_marker
+1 failed in 7.18s
+old_tree=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.FTMjzdRLgn

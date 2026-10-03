@@ -6422,13 +6422,13 @@
         },
         {
           "claim": "/desk and unknown paths redirect to /.",
-          "line": 67,
+          "line": 46,
           "path": "web/src/App.tsx",
           "symbol": "App"
         },
         {
           "claim": "DeskApp composes the Workbench shell.",
-          "line": 184,
+          "line": 86,
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "DeskApp"
         }
@@ -6522,13 +6522,13 @@
       "sources": [
         {
           "claim": "Window rectangles are clamped to the work band and minimum dimensions.",
-          "line": 119,
+          "line": 175,
           "path": "web/src/desk/components/window/windowGeometry.ts",
           "symbol": "clampRect"
         },
         {
           "claim": "The shared frame owns geometry and focus callbacks.",
-          "line": 556,
+          "line": 586,
           "path": "web/src/desk/components/DeskWindow.tsx",
           "symbol": "DeskWindowFrame"
         }
@@ -6744,13 +6744,13 @@
       "sources": [
         {
           "claim": "Definitions include ids, labels, availability and runner behavior.",
-          "line": 28,
+          "line": 57,
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "Verb"
         },
         {
           "claim": "The registry enumerates Desk verbs.",
-          "line": 136,
+          "line": 167,
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "VERBS"
         }
@@ -6857,13 +6857,13 @@
       "sources": [
         {
           "claim": "The matrix enumerates supported kind pairs and named effects.",
-          "line": 9,
+          "line": 22,
           "path": "web/src/desk/dropMatrix.ts",
           "symbol": "DROP_MATRIX"
         },
         {
           "claim": "External files are accepted only over a release target.",
-          "line": 9,
+          "line": 17,
           "path": "web/src/desk/components/GlassDropLayer.tsx",
           "symbol": "GlassDropLayer"
         }
@@ -6961,13 +6961,13 @@
       "sources": [
         {
           "claim": "The key is hs.desk.workspace.v1.",
-          "line": 8,
+          "line": 10,
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "DESK_WORKSPACE_STORAGE_KEY"
         },
         {
           "claim": "Wrong version, invalid JSON and invalid shape return an empty workspace.",
-          "line": 112,
+          "line": 82,
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "loadDeskWorkspace"
         }
@@ -7063,7 +7063,7 @@
       "sources": [
         {
           "claim": "RuntimeBus owns the socket, states, ping and bounded reconnect policy.",
-          "line": 13,
+          "line": 26,
           "path": "web/src/runtime/RuntimeBus.tsx",
           "symbol": "RuntimeBusProvider"
         },
@@ -7173,6 +7173,107 @@
       ],
       "tests": [],
       "trust_boundary": "A future native adapter is a separate authority boundary; the browser surface must receive only typed, permitted results."
+    },
+    {
+      "apis": [
+        "GET /api/channels/sends",
+        "GET /api/people/relationships",
+        "GET /api/people/relationships/{relationship_id}/brief",
+        "GET /api/meetings/ready",
+        "POST /api/meetings/{meeting_id}/ready/read"
+      ],
+      "authority": "The hub owns recording and send outcomes. Completion producers store unseen readiness; opening a meeting acknowledges it.",
+      "configuration": [],
+      "dependencies": [
+        "RuntimeBus",
+        "useNeedsYou",
+        "recordingSlice",
+        "B4 brief"
+      ],
+      "docs": [
+        "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-13-c3-a-live-dock.md"
+      ],
+      "domain": "desk",
+      "egress": "The Dock reads state and opens surfaces. It does not send data.",
+      "egress_possible": false,
+      "entry_points": [
+        "web/src/desk/components/window/Dock.tsx::Dock"
+      ],
+      "evidence_level": "tests_executed",
+      "exposure": "user",
+      "failure_states": [
+        "runtime disconnected",
+        "domain read failed",
+        "send failed",
+        "send outcome unknown",
+        "recording refused"
+      ],
+      "id": "desk.dock.live",
+      "inputs": [
+        "runtime frames",
+        "durable sends",
+        "durable unseen meeting readiness",
+        "People briefs",
+        "active projects",
+        "A2 membership"
+      ],
+      "kernel_operations": [],
+      "limitations": [
+        "C3-W must finish styling and adopt launch origin in Chair.",
+        "No physical recording was attempted; the rig refuses microphone starts.",
+        "The People clock requires H-B4.",
+        "Muad'Dib's single-pass conditions are recorded in checks/c3-744-conditions.md; C3-W and the owner's sitting remain open."
+      ],
+      "model_requirements": [],
+      "name": "Read live Dock state",
+      "network_requirements": [],
+      "outputs": [
+        "READY",
+        "REC",
+        "SENT",
+        "SEND FAILED",
+        "UNKNOWN",
+        "OFFLINE AS OF",
+        "per-app badges",
+        "explicit Dock launch origin"
+      ],
+      "owner_observed": false,
+      "persistence": [
+        "meeting_ready_reads: ready_at and read_at"
+      ],
+      "platforms": {
+        "aipi": "unknown",
+        "ipad": "unknown",
+        "linux_wayland": "unknown",
+        "linux_x11": "unknown",
+        "macos": "unknown"
+      },
+      "purpose": "Read meeting, send, recording and connection state from Dock AppIcons.",
+      "release_availability": "unverified",
+      "replacement": null,
+      "side_effect": "local_reversible",
+      "sources": [
+        {
+          "claim": "The Dock projects hub state and sends explicit launch origin to the shell.",
+          "line": 260,
+          "path": "web/src/desk/components/window/Dock.tsx",
+          "symbol": "Dock"
+        }
+      ],
+      "status": "partial",
+      "status_reason": "H-C3 state and launch origin are implemented; C3-W styling and Chair origin adoption remain with the faces lane.",
+      "surfaces": [
+        "Desk Dock"
+      ],
+      "tests": [
+        {
+          "assertion": "The real channel producer persists each terminal outcome and emits the matching hub frame.",
+          "execution": "passed",
+          "node": "test_real_channel_settlement_emits_dock_invalidation",
+          "path": "tests/unit/test_philo13_c3_dock.py"
+        }
+      ],
+      "trust_boundary": "Authenticated hub frames and owner routes provide state. Opening an AppIcon uses the existing shell."
     },
     {
       "apis": [

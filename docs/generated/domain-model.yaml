@@ -375,7 +375,7 @@
       "sources": [
         {
           "claim": "World objects carry id, kind, label, subtitle, position and visual fields.",
-          "line": 18,
+          "line": 10,
           "path": "web/src/desk/world.ts",
           "symbol": "WorldObject"
         }
@@ -400,7 +400,7 @@
       "sources": [
         {
           "claim": "Persisted workspace includes panel rect, window rect/order/max, zones and preferences.",
-          "line": 67,
+          "line": 15,
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "DeskWorkspaceDocumentV1"
         }
@@ -426,7 +426,7 @@
       "sources": [
         {
           "claim": "Verb definitions encode id, label, scope, availability and runner.",
-          "line": 28,
+          "line": 57,
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "Verb"
         }
@@ -452,7 +452,7 @@
       "sources": [
         {
           "claim": "Receipt renders status, label and timestamp fields.",
-          "line": 36,
+          "line": 37,
           "path": "web/src/desk/surface/patterns/ProvenanceChip.tsx",
           "symbol": "Receipt"
         }

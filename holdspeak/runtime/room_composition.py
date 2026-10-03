@@ -73,7 +73,12 @@ def compose_room_services(services: Any, ctx: Any, db: Any, observer: Any) -> No
         # PHILO-10-01: the Send's one service (every channel.* operation).
         from holdspeak.services.channel_service import ChannelService
 
-        channels = ChannelService(db)
+        channels = ChannelService(
+            db,
+            on_changed=lambda kind, obj_id, op: services.emit_desk_changed(
+                kind, obj_id, op
+            ),
+        )
     for name, instance in (("project_service", project), ("project_delta_service", delta),
                            ("project_update_service", update), ("project_door_service", door),
                            ("watch_service", watch), ("project_steward_service", steward),
