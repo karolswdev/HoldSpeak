@@ -16,9 +16,9 @@ stdout | src/desk/needsYou.test.ts > the real producer membership oracle > rejec
  ↓ src/desk/needsYou.test.ts > the shared needs-you read > retains the last Room rows after a later Room read fails
  ↓ src/desk/needsYou.test.ts > the shared needs-you read > shares one in-flight read between two mounted consumers
  ↓ src/desk/needsYou.test.ts > the real producer membership oracle > matches before/after real wire and rejects controlled wrong projections
- ✓ src/desk/needsYou.test.ts > the real producer membership oracle > rejects a code mutant that skips dedupAttention on the real producer oracle 1800ms
+ ✓ src/desk/needsYou.test.ts > the real producer membership oracle > rejects a code mutant that skips dedupAttention on the real producer oracle 3837ms
 
  Test Files  1 passed (1)
       Tests  1 passed | 12 skipped (13)
-   Start at  19:27:29
-   Duration  2.26s (transform 100ms, setup 59ms, import 151ms, tests 1.80s, environment 173ms)
+   Start at  20:10:08
+   Duration  4.70s (transform 224ms, setup 144ms, import 300ms, tests 3.84s, environment 317ms)

@@ -131,4 +131,4 @@ tests/unit/test_philo13_needs_you_route.py::test_summary_attention_filters_befor
 tests/unit/test_philo13_needs_you_route.py::test_cached_needs_you_route_rebuilds_after_real_action_item_status_mutation
 tests/unit/test_philo13_needs_you_route.py::test_completed_meeting_action_does_not_hide_same_title_overdue_milestone
 
-132 tests collected in 0.74s
+132 tests collected in 0.81s

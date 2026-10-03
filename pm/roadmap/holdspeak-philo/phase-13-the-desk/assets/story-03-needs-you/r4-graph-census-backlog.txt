@@ -62,4 +62,4 @@ note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
 note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
 note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
 census: 42 new, 0 removed, 0 changed, 0 stale, 5 miscited, 0 unread, 14 subtype conflict note(s) against docs/generated/graph.json (source_commit f575a582)
-EXIT: 1 (42 new source entries without graph edges; 5 miscited historical references)
+EXIT: 1

@@ -33,12 +33,20 @@ WROTE docs/generated/operations.json
 EXIT: 0
 
 $ uv run --no-sync python scripts/philo_graph_reference.py
+case-revision: live-astra ran an older revision of case.j10.arrival_generate_again.retained_after_reload
+case-revision: live-astra ran an older revision of case.j10.arrival_generate_again.same_day_idempotent
 case-revision: live-astra ran an older revision of case.j10.arrival_generate_brief.generated_empty
+case-revision: live-astra ran an older revision of case.j10.arrival_generate_brief.populated
 case-revision: live-astra ran an older revision of case.j10.arrival_reload.reload_persisted
 case-revision: live-astra ran an older revision of case.j10.brief_item_shelf.acknowledged
 case-revision: live-astra ran an older revision of case.j10.brief_item_shelf.deferred
 case-revision: live-astra ran an older revision of case.j10.brief_item_shelf.refused
+case-revision: live-astra ran an older revision of case.j10.brief_latest.absent
 case-revision: live-astra ran an older revision of case.j10.route_brief_generate.load_failure
+case-revision: live-astra ran an older revision of case.j10.route_generate_again.retained_after_reload
+case-revision: live-astra ran an older revision of case.j11.thought_keep.kept
+case-revision: live-astra ran an older revision of case.j11.write_a_thought.create_refused
+case-revision: live-astra ran an older revision of case.j11.write_a_thought.window_open
 case-revision: live-astra ran an older revision of case.j4.meeting_stop.capture_finalized
 case-revision: live-astra ran an older revision of case.j4.meeting_stop.transcription_absent
 case-revision: live-astra ran an older revision of case.j4.meetings_import.imported
@@ -57,13 +65,27 @@ case-revision: live-astra ran an older revision of case.j6.run_summary.summary_t
 case-revision: live-astra ran an older revision of case.j9.route_presentation_restore.restored
 case-revision: live-astra ran an older revision of case.j9.shade_acknowledge.acknowledged
 case-revision: live-astra ran an older revision of case.j9.shade_dismiss.dismissed
+case-revision: live-astra ran an older revision of case.j9.shade_open.door_absent
 case-revision: live-muaddib ran an older revision of case.j10.arrival_generate_again.next_day
+case-revision: live-muaddib ran an older revision of case.j10.arrival_generate_again.retained_after_reload
+case-revision: live-muaddib ran an older revision of case.j10.arrival_generate_again.same_day_idempotent
 case-revision: live-muaddib ran an older revision of case.j10.arrival_generate_brief.generated_empty
+case-revision: live-muaddib ran an older revision of case.j10.arrival_generate_brief.populated
 case-revision: live-muaddib ran an older revision of case.j10.arrival_reload.reload_persisted
 case-revision: live-muaddib ran an older revision of case.j10.brief_item_shelf.acknowledged
 case-revision: live-muaddib ran an older revision of case.j10.brief_item_shelf.deferred
 case-revision: live-muaddib ran an older revision of case.j10.brief_item_shelf.refused
+case-revision: live-muaddib ran an older revision of case.j10.brief_latest.absent
 case-revision: live-muaddib ran an older revision of case.j10.route_brief_generate.load_failure
+case-revision: live-muaddib ran an older revision of case.j10.route_generate_again.retained_after_reload
+case-revision: live-muaddib ran an older revision of case.j11.thought_keep.kept
+case-revision: live-muaddib ran an older revision of case.j11.write_a_thought.create_refused
+case-revision: live-muaddib ran an older revision of case.j11.write_a_thought.window_open
+case-revision: live-muaddib ran an older revision of case.j3.concierge_add_check.refused
+case-revision: live-muaddib ran an older revision of case.j3.concierge_add_engine.add_ready
+case-revision: live-muaddib ran an older revision of case.j3.concierge_check.engine_unreachable
+case-revision: live-muaddib ran an older revision of case.j3.concierge_use_for_summaries.assigned_ready
+case-revision: live-muaddib ran an older revision of case.j3.profile_delete.profile_missing
 case-revision: live-muaddib ran an older revision of case.j3.speech_missing.row_stays
 case-revision: live-muaddib ran an older revision of case.j4.meeting_stop.capture_finalized
 case-revision: live-muaddib ran an older revision of case.j4.meeting_stop.transcription_absent
@@ -87,6 +109,7 @@ case-revision: live-muaddib ran an older revision of case.j7.hub_restart.intel_r
 case-revision: live-muaddib ran an older revision of case.j9.route_presentation_restore.restored
 case-revision: live-muaddib ran an older revision of case.j9.shade_acknowledge.acknowledged
 case-revision: live-muaddib ran an older revision of case.j9.shade_dismiss.dismissed
+case-revision: live-muaddib ran an older revision of case.j9.shade_open.door_absent
 case-revision: live-muaddib ran an older revision of case.j9.shade_open.door_stale
 case-revision: static-astra ran an older revision of case.beyond.first_words_reload.retained_draft
 case-revision: static-astra ran an older revision of case.j1.first_words_continue_later.draft_custody
@@ -108,11 +131,17 @@ case-revision: static-astra ran an older revision of case.j10.brief_item_shelf.r
 case-revision: static-astra ran an older revision of case.j10.brief_latest.absent
 case-revision: static-astra ran an older revision of case.j10.route_brief_generate.load_failure
 case-revision: static-astra ran an older revision of case.j11.thought_keep.kept
+case-revision: static-astra ran an older revision of case.j11.write_a_thought.create_refused
+case-revision: static-astra ran an older revision of case.j11.write_a_thought.window_open
 case-revision: static-astra ran an older revision of case.j2.arrival_load.engines_both_missing
 case-revision: static-astra ran an older revision of case.j2.arrival_load.read_pending
 case-revision: static-astra ran an older revision of case.j2.arrival_load.read_unknown
 case-revision: static-astra ran an older revision of case.j2.arrival_load.summary_missing_only
+case-revision: static-astra ran an older revision of case.j3.concierge_add_check.refused
+case-revision: static-astra ran an older revision of case.j3.concierge_add_engine.add_ready
+case-revision: static-astra ran an older revision of case.j3.concierge_check.engine_unreachable
 case-revision: static-astra ran an older revision of case.j3.concierge_use_for_summaries.assigned_ready
+case-revision: static-astra ran an older revision of case.j3.profile_delete.profile_missing
 case-revision: static-astra ran an older revision of case.j3.speech_missing.row_stays
 case-revision: static-astra ran an older revision of case.j4.meeting_stop.capture_finalized
 case-revision: static-astra ran an older revision of case.j4.meeting_stop.transcription_absent
@@ -135,6 +164,7 @@ case-revision: static-astra ran an older revision of case.j7.hub_restart.intel_r
 case-revision: static-astra ran an older revision of case.j9.route_presentation_restore.restored
 case-revision: static-astra ran an older revision of case.j9.shade_acknowledge.acknowledged
 case-revision: static-astra ran an older revision of case.j9.shade_dismiss.dismissed
+case-revision: static-astra ran an older revision of case.j9.shade_open.door_absent
 case-revision: static-astra ran an older revision of case.j9.shade_open.door_present
 case-revision: static-astra ran an older revision of case.j9.shade_open.door_stale
 case-revision: static-astra ran an older revision of case.j9.shade_receipt_open.rhythm_face
@@ -158,11 +188,17 @@ case-revision: static-muaddib ran an older revision of case.j10.brief_item_shelf
 case-revision: static-muaddib ran an older revision of case.j10.brief_latest.absent
 case-revision: static-muaddib ran an older revision of case.j10.route_brief_generate.load_failure
 case-revision: static-muaddib ran an older revision of case.j11.thought_keep.kept
+case-revision: static-muaddib ran an older revision of case.j11.write_a_thought.create_refused
+case-revision: static-muaddib ran an older revision of case.j11.write_a_thought.window_open
 case-revision: static-muaddib ran an older revision of case.j2.arrival_load.engines_both_missing
 case-revision: static-muaddib ran an older revision of case.j2.arrival_load.read_pending
 case-revision: static-muaddib ran an older revision of case.j2.arrival_load.read_unknown
 case-revision: static-muaddib ran an older revision of case.j2.arrival_load.summary_missing_only
+case-revision: static-muaddib ran an older revision of case.j3.concierge_add_check.refused
+case-revision: static-muaddib ran an older revision of case.j3.concierge_add_engine.add_ready
+case-revision: static-muaddib ran an older revision of case.j3.concierge_check.engine_unreachable
 case-revision: static-muaddib ran an older revision of case.j3.concierge_use_for_summaries.assigned_ready
+case-revision: static-muaddib ran an older revision of case.j3.profile_delete.profile_missing
 case-revision: static-muaddib ran an older revision of case.j3.speech_missing.row_stays
 case-revision: static-muaddib ran an older revision of case.j4.meeting_stop.capture_finalized
 case-revision: static-muaddib ran an older revision of case.j4.meeting_stop.transcription_absent
@@ -185,6 +221,7 @@ case-revision: static-muaddib ran an older revision of case.j7.hub_restart.intel
 case-revision: static-muaddib ran an older revision of case.j9.route_presentation_restore.restored
 case-revision: static-muaddib ran an older revision of case.j9.shade_acknowledge.acknowledged
 case-revision: static-muaddib ran an older revision of case.j9.shade_dismiss.dismissed
+case-revision: static-muaddib ran an older revision of case.j9.shade_open.door_absent
 case-revision: static-muaddib ran an older revision of case.j9.shade_open.door_present
 case-revision: static-muaddib ran an older revision of case.j9.shade_open.door_stale
 case-revision: static-muaddib ran an older revision of case.j9.shade_receipt_open.rhythm_face
@@ -385,7 +422,7 @@ subtype-normalized: state.projections.door.stale: astra=atlas.projections; muadd
 subtype-normalized: state.projections.receipt.resolved: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)
 subtype-normalized: state.time.next_due_sweep: astra=atlas.time; muaddib=clock -> clock (vocabulary)
 subtype-normalized: state.time.sweep_held_remote: astra=atlas.time; muaddib=clock -> clock (vocabulary)
-graph join generated: docs/generated/graph.json — 6472 nodes, 808 links, 85 cases, 216 observations, 112 claim reviews, 47 findings, 47 resolutions; 352 note(s)
+graph join generated: docs/generated/graph.json — 6472 nodes, 808 links, 85 cases, 216 observations, 112 claim reviews, 47 findings, 47 resolutions; 389 note(s)
 EXIT: 0
 
 $ uv run --no-sync python scripts/generate_capability_docs.py

@@ -2,7 +2,7 @@
 $ uv run --no-sync python -m unittest discover -s tests/unit -p test_docs_navigation.py
 .........
 ----------------------------------------------------------------------
-Ran 9 tests in 0.003s
+Ran 9 tests in 0.006s
 
 OK
 EXIT: 0
