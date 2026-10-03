@@ -15318,6 +15318,16 @@
               "title": "Has Open Actions",
               "type": "boolean"
             }
+          },
+          {
+            "in": "query",
+            "name": "parked",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Parked",
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -15402,7 +15412,7 @@
     },
     "/api/meetings/{meeting_id}": {
       "delete": {
-        "description": "Delete a meeting (HS-55-02: e.g. a failed import's honest row).",
+        "description": "Park a meeting while retaining its transcript and related work.",
         "operationId": "api_delete_meeting_api_meetings__meeting_id__delete",
         "parameters": [
           {
@@ -15450,6 +15460,16 @@
             "schema": {
               "title": "Meeting Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_parked",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Parked",
+              "type": "boolean"
             }
           }
         ],
@@ -16384,6 +16404,46 @@
           }
         },
         "summary": "Api Decide Meeting Proposal"
+      }
+    },
+    "/api/meetings/{meeting_id}/restore": {
+      "post": {
+        "description": "Restore a parked meeting with all retained work intact.",
+        "operationId": "api_restore_meeting_api_meetings__meeting_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meeting_id",
+            "required": true,
+            "schema": {
+              "title": "Meeting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Restore Meeting Api Meetings  Meeting Id  Restore Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Restore Meeting"
       }
     },
     "/api/meetings/{meeting_id}/sync-conflicts": {
@@ -27700,6 +27760,16 @@
               "title": "Workbench Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "parked",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Parked",
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -28070,6 +28140,84 @@
         "summary": "Api Add Item"
       }
     },
+    "/api/workbenches/{workbench_id}/items/park": {
+      "post": {
+        "operationId": "api_park_items_api_workbenches__workbench_id__items_park_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workbench_id",
+            "required": true,
+            "schema": {
+              "title": "Workbench Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Park Items Api Workbenches  Workbench Id  Items Park Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Park Items"
+      }
+    },
+    "/api/workbenches/{workbench_id}/items/restore": {
+      "post": {
+        "operationId": "api_restore_items_api_workbenches__workbench_id__items_restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workbench_id",
+            "required": true,
+            "schema": {
+              "title": "Workbench Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Restore Items Api Workbenches  Workbench Id  Items Restore Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Restore Items"
+      }
+    },
     "/api/workbenches/{workbench_id}/items/{item_id}": {
       "delete": {
         "operationId": "api_delete_item_api_workbenches__workbench_id__items__item_id__delete",
@@ -28162,6 +28310,54 @@
           }
         },
         "summary": "Api Update Item"
+      }
+    },
+    "/api/workbenches/{workbench_id}/items/{item_id}/restore": {
+      "post": {
+        "operationId": "api_restore_item_api_workbenches__workbench_id__items__item_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workbench_id",
+            "required": true,
+            "schema": {
+              "title": "Workbench Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Restore Item Api Workbenches  Workbench Id  Items  Item Id  Restore Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Restore Item"
       }
     },
     "/api/workbenches/{workbench_id}/items/{item_id}/retry-mint": {

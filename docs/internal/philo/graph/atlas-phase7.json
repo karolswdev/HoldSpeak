@@ -3694,7 +3694,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "Review decision: {title}",
-          "line": 1095,
+          "line": 1096,
           "claim": "the brief lists each proposed desk decision as 'Review decision: <title>'"
         },
         {

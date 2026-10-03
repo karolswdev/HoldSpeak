@@ -176,13 +176,14 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "meeting.list",
-        "description": "List or search archived meetings; optional filters.",
+        "description": "List or search active meetings; set parked to list retained parked meetings.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "query": {"type": "string"}, "from_date": {"type": "string"},
                 "to_date": {"type": "string"}, "speaker": {"type": "string"},
                 "tag": {"type": "string"}, "has_open_actions": {"type": "boolean"},
+                "parked": {"type": "boolean", "description": "List parked meetings only."},
                 "limit": {"type": "integer", "minimum": 1, "maximum": 500},
                 "cursor": {"type": ["string", "integer"]},
             },
@@ -194,7 +195,7 @@ TOOLS: list[dict[str, Any]] = [
         "description": "Get one stored meeting.",
         "inputSchema": {
             "type": "object",
-            "properties": {"meeting_id": {"type": "string"}, "include": {"type": "string"}},
+            "properties": {"meeting_id": {"type": "string"}, "include": {"type": "string"}, "include_parked": {"type": "boolean", "description": "Read a retained parked meeting."}},
             "required": ["meeting_id"],
             "additionalProperties": False,
         },
@@ -258,7 +259,7 @@ TOOLS.extend([
     _workbench_tool("workbench.update", "Update supplied closed Workbench configuration fields.", {"workbench_id": {"type": "string"}, "fields": _WORKBENCH_FIELDS_SCHEMA}, ["workbench_id", "fields"]),
     _workbench_tool("workbench.delete", "Delete a Workbench.", {"workbench_id": {"type": "string"}}, ["workbench_id"]),
     _workbench_tool("workbench.update_item", "Update supplied fields of a Workbench item.", {"workbench_id": {"type": "string"}, "item_id": {"type": "string"}, "fields": {"type": "object", "description": "Item patch fields."}}, ["workbench_id", "item_id", "fields"]),
-    _workbench_tool("workbench.delete_item", "Delete a Workbench item.", {"workbench_id": {"type": "string"}, "item_id": {"type": "string"}}, ["workbench_id", "item_id"]),
+    _workbench_tool("workbench.delete_item", "Park a Workbench item; its retained work stays available.", {"workbench_id": {"type": "string"}, "item_id": {"type": "string"}}, ["workbench_id", "item_id"]),
     _workbench_tool("workbench.list_runs", "List Workbench runs.", {"workbench_id": {"type": "string"}}, ["workbench_id"]),
     _workbench_tool("recipe.list", "List Agent recipes.", {}),
     _workbench_tool("recipe.get", "Get an Agent recipe.", {"recipe_id": {"type": "string"}}, ["recipe_id"]),
@@ -301,8 +302,8 @@ TOOLS.extend([
     ),
     _mcp_tool(
         "meeting.delete",
-        "Delete a stored meeting when it should no longer be retained.",
-        {"meeting_id": {"type": "string", "description": "Meeting identifier to delete."}},
+        "Park a stored meeting while retaining its transcript and related work.",
+        {"meeting_id": {"type": "string", "description": "Meeting identifier to park."}},
         ["meeting_id"],
     ),
     _mcp_tool(
@@ -1007,7 +1008,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     if name == "workbench.delete_item":
         item_id = str(args.get("item_id") or "")
         workbenches.delete_item(principal, str(args.get("workbench_id") or ""), item_id)
-        return {"deleted": True, "id": item_id}
+        return {"parked": True, "id": item_id}
     if name == "workbench.list_runs":
         return workbenches.list_runs(principal, str(args.get("workbench_id") or ""))
     if name == "recipe.list":
@@ -1053,10 +1054,10 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     if name == "kernel.receipt":
         return ops().invoke(principal, "kernel.receipt.read", {"operation_id": str(args.get("operation_id") or "")})
     if name == "meeting.list":
-        allowed = ("query", "from_date", "to_date", "limit", "cursor", "speaker", "tag", "has_open_actions")
+        allowed = ("query", "from_date", "to_date", "limit", "cursor", "speaker", "tag", "has_open_actions", "parked")
         return ops().invoke(principal, "meeting.list", {key: args[key] for key in allowed if key in args})
     if name == "meeting.get":
-        return ops().invoke(principal, "meeting.read", {"meeting_id": str(args.get("meeting_id") or ""), "include": args.get("include")})
+        return ops().invoke(principal, "meeting.read", {"meeting_id": str(args.get("meeting_id") or ""), "include": args.get("include"), "include_parked": args.get("include_parked")})
     if name == "meeting.import":
         return _meeting_import(ops(), meetings, principal, args)
     if name == "meeting.start_capture":
@@ -1072,7 +1073,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     if name == "meeting.delete":
         meeting_id = str(args.get("meeting_id") or "")
         meetings.delete_meeting(principal, meeting_id)
-        return {"deleted": True, "id": meeting_id}
+        return {"parked": True, "id": meeting_id}
     if name == "meeting.export":
         return meetings.export_meeting(principal, str(args.get("meeting_id") or ""), str(args.get("format") or ""))
     if name == "dictation.list":

@@ -249,21 +249,23 @@ class ProposalRepository(BaseRepository):
         state: Optional[str] = None,
     ) -> list[Proposal]:
         """List proposals filtered by meeting, project, or state."""
-        clauses = []
+        clauses = ["(p.meeting_id IS NULL OR m.parked = 0)"]
         params: list[Any] = []
         if meeting_id is not None:
-            clauses.append("meeting_id = ?")
+            clauses.append("p.meeting_id = ?")
             params.append(meeting_id)
         if project_id is not None:
-            clauses.append("project_id = ?")
+            clauses.append("p.project_id = ?")
             params.append(project_id)
         if state is not None:
-            clauses.append("state = ?")
+            clauses.append("p.state = ?")
             params.append(state)
         where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
         with self._connection() as conn:
             rows = conn.execute(
-                f"SELECT * FROM follow_through_proposals{where} ORDER BY created_at DESC",
+                f"SELECT p.* FROM follow_through_proposals p "
+                f"LEFT JOIN meetings m ON m.id = p.meeting_id{where} "
+                "ORDER BY p.created_at DESC",
                 params,
             ).fetchall()
         return [self._to_proposal(r) for r in rows]

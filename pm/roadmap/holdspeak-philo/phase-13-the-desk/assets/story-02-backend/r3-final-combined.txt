@@ -1,0 +1,173 @@
+PHILO-13-02 final required combined scoped verification
+
+Command: HOME/TMPDIR=<isolated temporary directory> uv run pytest -q tests/unit/test_philo13_meeting_parking.py tests/unit/test_philo_graph_atlas.py tests/unit/test_api_surface.py tests/unit/test_philo_graph_reference.py
+Exit code: 1
+
+.....................................F...F.......F...................... [ 48%]
+............................................................F........... [ 96%]
+.....                                                                    [100%]
+=================================== FAILURES ===================================
+__ test_every_source_reference_lands_on_its_symbol[atlas-phase13-astra.json] ___
+
+every_atlas = {'atlas_version': 'phase13-astra-wave1', 'cases': [{'applicability': 'applicable', 'completion_bound_s': 30, 'edge_ids... 'source': 'datetime.datetime.now() inside the hub process', 'status': 'available', ...}], 'council_readings': [], ...}
+
+    def test_every_source_reference_lands_on_its_symbol(every_atlas: dict) -> None:
+        """A line number is evidence, not identity (brief section 1).
+
+        The cited line must still hold the cited symbol, or the reference has
+        drifted and the claim behind it is no longer proven.
+        """
+        problems: list[str] = []
+        for state in every_atlas["states"]:
+            for ref in state["sources"]:
+                target = REPO / ref["path"]
+                if not target.is_file():
+                    problems.append(f"{state['id']}: missing file {ref['path']}")
+                    continue
+                lines = target.read_text(errors="replace").splitlines()
+                if not 1 <= ref["line"] <= len(lines):
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} is past the end of the file"
+                    )
+                    continue
+                line = lines[ref["line"] - 1]
+                if ref["symbol"] not in line:
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} no longer holds "
+                        f"{ref['symbol']!r} (line reads {line.strip()[:80]!r})"
+                    )
+>       assert not problems, "\n".join(problems)
+E       AssertionError: state.meetings.p13_park_restore: holdspeak/db/meetings.py:1068 no longer holds 'def delete_meeting' (line reads 'def update_meeting_metadata(')
+E       assert not ["state.meetings.p13_park_restore: holdspeak/db/meetings.py:1068 no longer holds 'def delete_meeting' (line reads 'def update_meeting_metadata(')"]
+
+tests/unit/test_philo_graph_atlas.py:279: AssertionError
+______ test_every_source_reference_lands_on_its_symbol[atlas-phase7.json] ______
+
+every_atlas = {'atlas_version': 'phase7-desk', 'cases': [{'applicability': 'applicable', 'completion_bound_s': 45, 'edge_ids': ['edg... 'source': 'datetime.datetime.now() inside the hub process', 'status': 'available', ...}], 'council_readings': [], ...}
+
+    def test_every_source_reference_lands_on_its_symbol(every_atlas: dict) -> None:
+        """A line number is evidence, not identity (brief section 1).
+
+        The cited line must still hold the cited symbol, or the reference has
+        drifted and the claim behind it is no longer proven.
+        """
+        problems: list[str] = []
+        for state in every_atlas["states"]:
+            for ref in state["sources"]:
+                target = REPO / ref["path"]
+                if not target.is_file():
+                    problems.append(f"{state['id']}: missing file {ref['path']}")
+                    continue
+                lines = target.read_text(errors="replace").splitlines()
+                if not 1 <= ref["line"] <= len(lines):
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} is past the end of the file"
+                    )
+                    continue
+                line = lines[ref["line"] - 1]
+                if ref["symbol"] not in line:
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} no longer holds "
+                        f"{ref['symbol']!r} (line reads {line.strip()[:80]!r})"
+                    )
+>       assert not problems, "\n".join(problems)
+E       AssertionError: state.desk_presentation.p7_decision_lifecycle: holdspeak/services/monday_brief_service.py:1095 no longer holds 'Review decision: {title}' (line reads 'section="decisions",')
+E       assert not ['state.desk_presentation.p7_decision_lifecycle: holdspeak/services/monday_brief_service.py:1095 no longer holds \'Review decision: {title}\' (line reads \'section="decisions",\')']
+
+tests/unit/test_philo_graph_atlas.py:279: AssertionError
+_________ test_every_source_reference_lands_on_its_symbol[atlas.json] __________
+
+every_atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_every_source_reference_lands_on_its_symbol(every_atlas: dict) -> None:
+        """A line number is evidence, not identity (brief section 1).
+
+        The cited line must still hold the cited symbol, or the reference has
+        drifted and the claim behind it is no longer proven.
+        """
+        problems: list[str] = []
+        for state in every_atlas["states"]:
+            for ref in state["sources"]:
+                target = REPO / ref["path"]
+                if not target.is_file():
+                    problems.append(f"{state['id']}: missing file {ref['path']}")
+                    continue
+                lines = target.read_text(errors="replace").splitlines()
+                if not 1 <= ref["line"] <= len(lines):
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} is past the end of the file"
+                    )
+                    continue
+                line = lines[ref["line"] - 1]
+                if ref["symbol"] not in line:
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} no longer holds "
+                        f"{ref['symbol']!r} (line reads {line.strip()[:80]!r})"
+                    )
+>       assert not problems, "\n".join(problems)
+E       AssertionError: state.projections.attention.unseen: holdspeak/db/projections.py:590 no longer holds 'attention_state' (line reads ')')
+E         state.projections.attention.unseen: holdspeak/db/projections.py:498 no longer holds 'attention_state' (line reads 'summary="Open the Meeting for its durable checkpoint, transcript, and recovery a')
+E         state.projections.attention.needs_attention: holdspeak/db/projections.py:590 no longer holds 'needs_attention' (line reads ')')
+E         state.projections.attention.needs_attention: holdspeak/db/projections.py:498 no longer holds 'needs_attention' (line reads 'summary="Open the Meeting for its durable checkpoint, transcript, and recovery a')
+E         state.projections.receipt.resolved: holdspeak/db/projections.py:706 no longer holds 'resolved' (line reads 'id=f"pipeline:{row[\'event_id\']}",')
+E         state.projections.receipt.resolved: holdspeak/db/projections.py:699 no longer holds 'receipt' (line reads '# carries no door and the shade draws no verb for it.')
+E         state.projections.door.present: holdspeak/db/projections.py:692 no longer holds 'detail_url' (line reads '')
+E         state.projections.door.absent: holdspeak/db/projections.py:692 no longer holds 'detail_url' (line reads '')
+E         state.projections.door.stale: holdspeak/db/projections.py:586 no longer holds 'meetings.get' (line reads 'failed = state == "failed"')
+E         state.projections.door.stale: holdspeak/db/projections.py:595 no longer holds 'detail_url' (line reads 'title=f"{label} {\'failed\' if failed else state}",')
+E         state.projections.source_kind.meeting: holdspeak/db/projections.py:485 no longer holds '_meetings' (line reads 'return result')
+E         state.projections.source_kind.intel_job: holdspeak/db/projections.py:552 no longer holds '_jobs' (line reads 'source_kind="artifact", source_id=str(row["id"]),')
+E         state.projections.source_kind.intel_job: holdspeak/db/projections.py:554 no longer holds 'intel_jobs' (line reads 'detail_url=f"/?open={row[\'id\']}",')
+E         state.projections.source_kind.pipeline_event: holdspeak/db/projections.py:640 no longer holds '_pipeline_events' (line reads 'actual_destination="this_machine", authority_basis="cadence_policy",')
+E         state.projections.source_kind.pipeline_event: holdspeak/db/projections.py:652 no longer holds 'HeartbeatService' (line reads 'surfaced (local reads are too noisy for the shade).  Each row')
+E         state.projections.source_kind.cadence_loop: holdspeak/db/projections.py:599 no longer holds '_cadence' (line reads 'actual_destination="configured_inference_target", authority_basis="configured_qu')
+E         state.projections.source_kind.cadence_loop: holdspeak/db/projections.py:603 no longer holds 'actionable' (line reads 'detail_url=f"/history?meeting={mid}", severity="error" if failed else "normal",')
+E         state.projections.source_kind.dictation_journal: holdspeak/db/projections.py:413 no longer holds '_dictation' (line reads 'return result')
+E         state.projections.source_kind.dictation_journal: holdspeak/db/projections.py:434 no longer holds 'dictation_journal' (line reads 'attempt=1, outcome="warning" if needs else "completed",')
+E         state.projections.source_kind.steering_audit: holdspeak/db/projections.py:440 no longer holds '_steering' (line reads 'return result')
+E         state.projections.source_kind.steering_audit: holdspeak/db/projections.py:476 no longer holds 'steering_audit' (line reads 'authority_basis=authority_basis, attempt=1, outcome=outcome,')
+E         state.projections.source_kind.artifact: holdspeak/db/projections.py:530 no longer holds '_artifacts' (line reads 'detail_url=f"/history?meeting={mid}", severity="warning",')
+E         state.projections.source_kind.artifact: holdspeak/db/projections.py:534 no longer holds 'needs_review' (line reads 'def _artifacts(self, conn: Any, meetings: dict[str, str]) -> list[DeskProjection')
+E         state.projections.source_kind.meeting_sync_conflict: holdspeak/db/projections.py:507 no longer holds '_sync_conflicts' (line reads 'return result')
+E         state.projections.source_kind.meeting_sync_conflict: holdspeak/db/projections.py:521 no longer holds 'paired_device' (line reads 'title="Sync conflict resolved" if resolved else "Meeting sync needs a choice",')
+E         state.projections.source_kind.plugin_job: holdspeak/db/projections.py:554 no longer holds 'plugin_run_jobs' (line reads 'detail_url=f"/?open={row[\'id\']}",')
+E         state.projections.outcome.failed: holdspeak/db/projections.py:685 no longer holds 'outcome' (line reads 'import json as _json')
+E         state.briefs.generated_empty: holdspeak/services/monday_brief_service.py:1530 no longer holds 'is_empty' (line reads 'sections=sections,')
+E         state.briefs.item.deferred: holdspeak/services/monday_brief_service.py:1454 no longer holds 'SHELF_STATES' (line reads '"""')
+E         state.meetings.capture.provisional: holdspeak/db/projections.py:490 no longer holds 'active' (line reads 'status = str(row["capture_status"] or "finalized")')
+E         state.meetings.capture.recording: holdspeak/db/projections.py:490 no longer holds 'recording' (line reads 'status = str(row["capture_status"] or "finalized")')
+E         state.meetings.capture.recording: holdspeak/db/projections.py:495 no longer holds 'Meeting is recording' (line reads 'projection_kind="attention" if needs or active else "receipt",')
+E         state.meetings.capture.finalized: holdspeak/db/projections.py:495 no longer holds 'Meeting saved' (line reads 'projection_kind="attention" if needs or active else "receipt",')
+E         state.meetings.capture.capture_failed: holdspeak/db/projections.py:489 no longer holds 'capture_failed' (line reads 'for row in conn.execute("SELECT * FROM meetings WHERE parked = 0").fetchall():')
+E         state.meetings.capture.recoverable: holdspeak/db/projections.py:489 no longer holds 'recoverable' (line reads 'for row in conn.execute("SELECT * FROM meetings WHERE parked = 0").fetchall():')
+E         state.meetings.capture.recovered: holdspeak/db/projections.py:489 no longer holds 'recovered' (line reads 'for row in conn.execute("SELECT * FROM meetings WHERE parked = 0").fetchall():')
+E         state.meetings.capture.recovered: holdspeak/db/intel.py:1216 no longer holds 'recovered' (line reads "AND j.status = 'queued'")
+E         state.meetings.intel.queued: holdspeak/db/projections.py:590 no longer holds 'unseen' (line reads ')')
+E         state.meetings.intel.failed: holdspeak/db/projections.py:590 no longer holds 'failed' (line reads ')')
+E         state.meetings.intel.retry_after_failure: holdspeak/db/projections.py:560 no longer holds 'lineage_leaves' (line reads 'for table, source_kind in (("intel_jobs", "intel_job"), ("plugin_run_jobs", "plu')
+E       assert not ["state.projections.attention.unseen: holdspeak/db/projections.py:590 no longer holds 'attention_state' (line reads ')...rojections.py:699 no longer holds 'receipt' (line reads '# carries no door and the shade draws no verb for it.')", ...]
+
+tests/unit/test_philo_graph_atlas.py:279: AssertionError
+________________________ test_committed_join_is_current ________________________
+
+joined = ({'cases': [{'applicability': 'applicable', 'completion_bound_s': 120, 'edge_ids': ['edge.route.meeting_capture_recove..._shelf.refused', 'case-revision: live-astra ran an older revision of case.j10.route_brief_generate.load_failure', ...])
+
+    def test_committed_join_is_current(joined):
+        """--check's own comparison: the file on disk is the join of the inputs."""
+        graph, _ = joined
+>       assert (ROOT / gen.OUTPUT).read_text(encoding="utf-8") == gen.render(graph)
+E       assert '{\n "schema_...n  }\n ]\n}\n' == '{\n "schema_...n  }\n ]\n}\n'
+E
+E         Skipping 535 identical leading characters in diff, use -v to show
+E         Skipping 6307275 identical trailing characters in diff, use -v to show
+E         - sha256": "4a7212d26810fa2c9e49236b0423b9af11a4206a4f8101297c2a6b856d26bbb8"
+E         + sha256": "b854d43773c55206ee284fb77c5da1cb1bfba469736bf4bf3ee079551973b2c7"
+E             },
+
+tests/unit/test_philo_graph_reference.py:108: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase13-astra.json]
+FAILED tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase7.json]
+FAILED tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas.json]
+FAILED tests/unit/test_philo_graph_reference.py::test_committed_join_is_current
+4 failed, 145 passed in 12.73s

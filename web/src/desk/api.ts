@@ -826,6 +826,30 @@ export async function loadAll(): Promise<LoadResult> {
   return { items, profiles, projects, inferenceTargets, models, status, error, failed };
 }
 
+/** PHILO-13-02 — parking uses the existing Meeting delete route. */
+export async function parkMeeting(id: string): Promise<void> {
+  await apiFetch<Record<string, unknown>>(`/api/meetings/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+/** PHILO-13-02 — the explicit Parked view asks the server for parked rows. */
+export async function fetchParkedMeetings(): Promise<Meeting[]> {
+  const data = await apiFetch<Record<string, unknown>>("/api/meetings?parked=true");
+  return wireArray(data, "meetings")
+    .map(fromWireMeeting)
+    .filter((meeting): meeting is Meeting => meeting !== null);
+}
+
+/** PHILO-13-02 — restore returns the restored Meeting record. */
+export async function restoreMeeting(id: string): Promise<Meeting | null> {
+  const data = await apiFetch<Record<string, unknown>>(
+    `/api/meetings/${encodeURIComponent(id)}/restore`,
+    { method: "POST" },
+  );
+  return fromWireMeeting(wireRaw(data, "meeting"));
+}
+
 /* ── Workbench detail endpoints (HS-117-13) ──────────────────────────── */
 
 import type {
@@ -898,7 +922,7 @@ export async function updateWorkbenchItem(
   );
 }
 
-export async function deleteWorkbenchItem(
+export async function parkWorkbenchItem(
   workbenchId: string,
   itemId: string,
 ): Promise<void> {
@@ -906,6 +930,64 @@ export async function deleteWorkbenchItem(
     `/api/workbenches/${encodeURIComponent(workbenchId)}/items/${encodeURIComponent(itemId)}`,
     { method: "DELETE" },
   );
+}
+
+export async function restoreWorkbenchItem(
+  workbenchId: string,
+  itemId: string,
+): Promise<WorkbenchItem | null> {
+  const data = await apiFetch<Record<string, unknown>>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/items/${encodeURIComponent(itemId)}/restore`,
+    { method: "POST" },
+  );
+  return (wireRaw(data, "item") as WorkbenchItem | null) || null;
+}
+
+export async function parkWorkbenchItems(
+  workbenchId: string,
+  itemIds: string[],
+): Promise<string[]> {
+  const data = await apiFetch<Record<string, unknown>>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/items/park`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ item_ids: itemIds }),
+    },
+  );
+  return wireArray(data, "parked").filter((id): id is string => typeof id === "string");
+}
+
+export async function restoreWorkbenchItems(
+  workbenchId: string,
+  itemIds: string[],
+): Promise<string[]> {
+  const data = await apiFetch<Record<string, unknown>>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/items/restore`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ item_ids: itemIds }),
+    },
+  );
+  return wireArray(data, "restored").filter((id): id is string => typeof id === "string");
+}
+
+export async function fetchParkedWorkbenchItems(
+  workbenchId: string,
+): Promise<WorkbenchItem[]> {
+  const data = await apiFetch<Record<string, unknown>>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}?parked=true`,
+  );
+  const workbench = wireRaw(data, "workbench");
+  return wireArray(workbench, "items") as WorkbenchItem[];
+}
+
+export async function deleteWorkbenchItem(
+  workbenchId: string,
+  itemId: string,
+): Promise<void> {
+  await parkWorkbenchItem(workbenchId, itemId);
 }
 
 export async function triggerWorkbenchRun(workbenchId: string): Promise<void> {

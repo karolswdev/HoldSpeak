@@ -1,0 +1,23 @@
+PHILO-13-02 r3 parking-fence RED proof
+
+Command (isolated HOME):
+HOME=$(mktemp -d) uv run pytest -q tests/unit/test_philo13_meeting_parking.py tests/unit/test_philo_graph_atlas.py tests/unit/test_api_surface.py tests/unit/test_philo_graph_reference.py
+
+The new producer-backed fences were added before the implementation. Their
+expected RED failures were:
+
+  test_bound_intel_claim_initial_fence_reads_real_parked_meeting
+  test_bound_intel_claim_recheck_fence_rejects_meeting_parked_during_prepare
+  test_follow_through_action_read_hides_parked_meeting_and_restores_it
+  test_project_stats_hide_parked_meeting_actions_and_artifacts
+  test_meeting_watch_source_hides_parked_meeting_and_restores_it
+  test_intel_job_list_hides_parked_meeting_and_restores_it
+  test_loop_collector_hides_parked_meeting_decision_and_restores_it
+  test_room_commitment_read_hides_parked_source_and_restores_it
+  test_recall_hides_parked_commitment_but_keeps_promoted_decision_record
+
+Result: 13 failed, 135 passed in 10.81s. The nine names above failed on
+parked rows still being returned. Four mandatory graph/reference failures
+were pre-existing branch drift (atlas source anchors and generated join
+digest) and are retained as inherited verification debt; the API surface
+tests passed.

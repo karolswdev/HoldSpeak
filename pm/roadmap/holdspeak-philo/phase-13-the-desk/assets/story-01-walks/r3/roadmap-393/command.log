@@ -1,0 +1,10 @@
+$ uv run --extra dev python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase13-astra.json --case case.p13.roadmap.window --brain astra --viewport 393 --engine none --no-build --out pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-walks/r3/roadmap-393
+PASS: live
+BRAIN: astra
+SOURCE: 0fc58fc6d00f6b7708771c033c11390f36419a46 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase13-astra.json
+RUNTIME: build=['index-DfIFMe16.js'] hub=http://127.0.0.1:52245 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo13-roadmap-393-yefvczvo/tmp/graph-walk-home-6jfusyc2/.local/share/holdspeak/holdspeak.db engine=none
+JOB: j1
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-walks/r3/roadmap-393/20261002T220536Z-case.p13.roadmap.window-astra-393/before.png', 'pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-walks/r3/roadmap-393/20261002T220536Z-case.p13.roadmap.window-astra-393/after.png']
+NOTE: predicate: 'Roadmap not found' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 0, 'y': 317, 'w': 393, 'h': 360}

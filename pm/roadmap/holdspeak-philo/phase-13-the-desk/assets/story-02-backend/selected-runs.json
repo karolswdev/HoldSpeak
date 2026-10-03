@@ -1,0 +1,70 @@
+[
+  {
+    "label": "meeting-1440-final",
+    "observation": "assets/story-02-backend/final/meeting-1440-final/20261002T034710Z-case.p13.meeting.park_restore-astra-1440/observation.json",
+    "case": "case.p13.meeting.park_restore",
+    "verdict": "pass",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "notes": [
+      "predicate: GET /api/meetings answered 200 with 1 row(s) {'id': 'e64c2be6', 'parked': False}; GET /api/meetings?parked=true answered 200 with 0 row(s) {'id': 'e64c2be6'}; GET /api/meetings/e64c2be6 answered 200 with 1 row(s) {'text': 'Blair: Avery will check the frozen bytes before the next review.'}"
+    ]
+  },
+  {
+    "label": "meeting-393-final",
+    "observation": "assets/story-02-backend/final/meeting-393-final/20261002T034814Z-case.p13.meeting.park_restore-astra-393/observation.json",
+    "case": "case.p13.meeting.park_restore",
+    "verdict": "pass",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "notes": [
+      "predicate: GET /api/meetings answered 200 with 1 row(s) {'id': 'eb02dba6', 'parked': False}; GET /api/meetings?parked=true answered 200 with 0 row(s) {'id': 'eb02dba6'}; GET /api/meetings/eb02dba6 answered 200 with 1 row(s) {'text': 'Blair: Avery will check the frozen bytes before the next review.'}"
+    ]
+  },
+  {
+    "label": "workbench-1440-final",
+    "observation": "assets/story-02-backend/final/workbench-1440-final/20261002T034924Z-case.p13.workbench.park_restore-astra-1440/observation.json",
+    "case": "case.p13.workbench.park_restore",
+    "verdict": "pass",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "notes": [
+      "predicate: GET /api/workbenches/workbench_49bba7a0c5d7 answered 200 with 1 row(s) {'id': 'wbi_504266359872', 'parked': False, 'result': 'Atlas retained result'}; GET /api/workbenches/workbench_49bba7a0c5d7 answered 200 with 1 row(s) {'id': 'wbi_92e4718baf44', 'parked': False, 'body': 'Keep the second work body'}; GET /api/workbenches/workbench_49bba7a0c5d7?parked=true answered 200 with 0 row(s) {'id': 'wbi_504266359872'}; GET /api/workbenches/workbench_49bba7a0c5d7?parked=true answered 200 with 0 row(s) {'id': 'wbi_92e4718baf44'}"
+    ]
+  },
+  {
+    "label": "workbench-393-final",
+    "observation": "assets/story-02-backend/final/workbench-393-final/20261002T035047Z-case.p13.workbench.park_restore-astra-393/observation.json",
+    "case": "case.p13.workbench.park_restore",
+    "verdict": "pass",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "notes": [
+      "predicate: GET /api/workbenches/workbench_4fedb0f9f0cc answered 200 with 1 row(s) {'id': 'wbi_1af6bf156707', 'parked': False, 'result': 'Atlas retained result'}; GET /api/workbenches/workbench_4fedb0f9f0cc answered 200 with 1 row(s) {'id': 'wbi_da3079175bf3', 'parked': False, 'body': 'Keep the second work body'}; GET /api/workbenches/workbench_4fedb0f9f0cc?parked=true answered 200 with 0 row(s) {'id': 'wbi_1af6bf156707'}; GET /api/workbenches/workbench_4fedb0f9f0cc?parked=true answered 200 with 0 row(s) {'id': 'wbi_da3079175bf3'}"
+    ]
+  }
+]

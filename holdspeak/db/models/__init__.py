@@ -58,6 +58,7 @@ class MeetingSummary:
     # stored summary. This is separate from intel status or the configured
     # route.
     has_summary: bool = False
+    parked: bool = False
 
 
 @dataclass
@@ -1178,6 +1179,7 @@ class WorkbenchItemRecord:
     last_modified: str = ""
     claimed_at: Optional[str] = None
     completed_at: Optional[str] = None
+    parked: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1197,6 +1199,7 @@ class WorkbenchItemRecord:
             "last_modified": self.last_modified,
             "claimed_at": self.claimed_at,
             "completed_at": self.completed_at,
+            "parked": self.parked,
         }
 
 

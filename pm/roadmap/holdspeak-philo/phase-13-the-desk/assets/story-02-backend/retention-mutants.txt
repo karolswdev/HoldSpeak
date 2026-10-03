@@ -1,0 +1,69 @@
+RED holdspeak/db/meetings.py:MeetingRepository.delete_meeting from c7073f9
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_repository_parks_and_restores_without_deleting_retained_work _______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-123/test_repository_parks_and_rest0')
+
+    def test_repository_parks_and_restores_without_deleting_retained_work(tmp_path: Path) -> None:
+        db = Database(tmp_path / "meeting-parking.db")
+        state = _meeting()
+        db.meetings.save_meeting(state)
+        db.plugins.record_artifact(
+            artifact_id="a1-artifact",
+            meeting_id=state.id,
+            artifact_type="handoff",
+            title="Retained handoff",
+            body_markdown="The body remains while parked.",
+        )
+        db.projects.create_project(project_id="a1-project", name="A1 project")
+        db.projects.associate_meeting_project(
+            meeting_id=state.id, project_id="a1-project", source="test", confidence=0.9
+        )
+        before = _related_rows(db, state.id)
+        assert len(before["segments"]) == 2
+        assert len(before["intel"]) == 1
+        assert len(before["actions"]) == 1
+        assert len(before["artifacts"]) == 1
+        assert len(before["project_links"]) == 1
+    
+        assert db.meetings.delete_meeting(state.id) is True
+        with db._connection() as conn:
+            retained_row = conn.execute(
+                "SELECT parked FROM meetings WHERE id = ?", (state.id,)
+            ).fetchone()
+>       assert retained_row is not None
+E       assert None is not None
+
+tests/unit/test_philo13_meeting_parking.py:160: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo13_meeting_parking.py::test_repository_parks_and_restores_without_deleting_retained_work
+1 failed in 0.89s
+
+RESTORED SHA256 72941da657f1c4bc131b49f4786e521b0afb7d9310542a519091c98515b2d892 holdspeak/db/meetings.py
+RED holdspeak/db/workbenches.py:WorkbenchItemRepository.delete from c7073f9
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________ test_legacy_repository_delete_parks_and_repeats_are_idempotent ________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-124/test_legacy_repository_delete_0')
+
+    def test_legacy_repository_delete_parks_and_repeats_are_idempotent(tmp_path: Path) -> None:
+        db = Database(tmp_path / "workbench-delete-compat.db")
+        workbench, items = _seed(db)
+        assert db.workbench_items.delete(items[0].id) is True
+        with db._connection() as conn:
+            retained_row = conn.execute(
+                "SELECT id FROM workbench_items WHERE id = ?", (items[0].id,)
+            ).fetchone()
+>       assert retained_row is not None
+E       assert None is not None
+
+tests/unit/test_philo13_workbench_parking.py:268: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo13_workbench_parking.py::test_legacy_repository_delete_parks_and_repeats_are_idempotent
+1 failed in 0.95s
+
+RESTORED SHA256 89b78dd61340e6071c7adb199d5190ae9ca36e520d02c073f27f4950735b2863 holdspeak/db/workbenches.py
+..                                                                       [100%]
+2 passed in 1.14s

@@ -695,7 +695,11 @@ def test_confirm_after_the_meeting_was_deleted_is_a_named_refusal(tmp_path, monk
     _drain()
     svc = ProposalBridgeService(db)
     rows = _proposals(db, "m-gone")
-    assert db.meetings.delete_meeting("m-gone") is True
+    # Historical/orphan fixture: this guard represents a parent row that was
+    # physically removed before normal DELETE became parking.  Keep the
+    # producer path above real, then isolate the old missing-parent state here.
+    with db._connection() as conn:
+        conn.execute("DELETE FROM meetings WHERE id = ?", ("m-gone",))
     result = svc.confirm_proposal(OWNER, rows[0]["id"])
     assert result["code"] == "meeting_deleted", result
     assert result["error"].endswith(".")

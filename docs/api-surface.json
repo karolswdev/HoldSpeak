@@ -3682,6 +3682,16 @@
       ]
     },
     {
+      "path": "/api/meetings/{meeting_id}/restore",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.crud",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/meetings/{meeting_id}/sync-conflicts",
       "methods": [
         "GET"
@@ -6482,6 +6492,26 @@
       ]
     },
     {
+      "path": "/api/workbenches/{workbench_id}/items/park",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/items/restore",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/workbenches/{workbench_id}/items/{item_id}",
       "methods": [
         "DELETE"
@@ -6495,6 +6525,16 @@
       "path": "/api/workbenches/{workbench_id}/items/{item_id}",
       "methods": [
         "PUT"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/items/{item_id}/restore",
+      "methods": [
+        "POST"
       ],
       "module": "web.routes.primitives.workbenches",
       "consumers": [

@@ -66,9 +66,15 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to create workbench")
 
     @router.get("/api/workbenches/{workbench_id}")
-    async def api_get_workbench(workbench_id: str, request: Request) -> Any:
+    async def api_get_workbench(
+        workbench_id: str, request: Request, parked: bool = False
+    ) -> Any:
         try:
-            return JSONResponse({"workbench": _svc().get_workbench(_principal(request), workbench_id)})
+            return JSONResponse(
+                {"workbench": _svc().get_workbench(
+                    _principal(request), workbench_id, parked=parked
+                )}
+            )
         except NotFound:
             return _not_found("workbench", workbench_id)
         except Exception as exc:
@@ -134,14 +140,68 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
     @router.delete("/api/workbenches/{workbench_id}/items/{item_id}")
     async def api_delete_item(workbench_id: str, item_id: str, request: Request) -> Any:
         try:
-            _svc().delete_item(_principal(request), workbench_id, item_id)
-            return JSONResponse({"success": True})
+            item = _svc().delete_item(_principal(request), workbench_id, item_id)
+            return JSONResponse({"success": True, "parked": item_id, "item": item})
         except NotFound:
             return _not_found("item", item_id)
         except ConflictError as exc:
             return JSONResponse({"error": str(exc)}, status_code=409)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to delete item")
+
+    @router.post("/api/workbenches/{workbench_id}/items/park")
+    async def api_park_items(workbench_id: str, request: Request) -> Any:
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        try:
+            result = _svc().park_items(
+                _principal(request), workbench_id, body.get("item_ids")
+            )
+            return JSONResponse(result)
+        except NotFound as exc:
+            return _not_found(exc.kind, exc.id)
+        except (ValidationError, ValueError) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except ConflictError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=409)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to park Workbench items")
+
+    @router.post("/api/workbenches/{workbench_id}/items/restore")
+    async def api_restore_items(workbench_id: str, request: Request) -> Any:
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        try:
+            result = _svc().restore_items(
+                _principal(request), workbench_id, body.get("item_ids")
+            )
+            return JSONResponse(result)
+        except NotFound as exc:
+            return _not_found(exc.kind, exc.id)
+        except (ValidationError, ValueError) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except ConflictError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=409)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to restore Workbench items")
+
+    @router.post("/api/workbenches/{workbench_id}/items/{item_id}/restore")
+    async def api_restore_item(workbench_id: str, item_id: str, request: Request) -> Any:
+        try:
+            item = _svc().restore_item(_principal(request), workbench_id, item_id)
+            return JSONResponse({"item": item})
+        except NotFound:
+            return _not_found("item", item_id)
+        except ConflictError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=409)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to restore Workbench item")
 
     @router.post("/api/workbenches/{workbench_id}/items/{item_id}/retry-mint")
     async def api_retry_mint(workbench_id: str, item_id: str, request: Request) -> Any:

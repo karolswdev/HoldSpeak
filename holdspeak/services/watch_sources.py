@@ -436,7 +436,10 @@ class MeetingWatchSource:
         with db._connection() as conn:
             # 1. Find meetings linked to this project
             meeting_rows = conn.execute(
-                "SELECT meeting_id FROM meeting_projects WHERE project_id = ?",
+                """SELECT mp.meeting_id
+                   FROM meeting_projects mp
+                   JOIN meetings m ON m.id = mp.meeting_id
+                   WHERE mp.project_id = ? AND m.parked = 0""",
                 (project_id,),
             ).fetchall()
             if not meeting_rows:
@@ -450,7 +453,7 @@ class MeetingWatchSource:
                 f"""SELECT id, title, started_at, ended_at,
                            intel_status, intel_completed_at
                     FROM meetings
-                    WHERE id IN ({placeholders})
+                    WHERE id IN ({placeholders}) AND parked = 0
                     ORDER BY started_at DESC""",
                 meeting_ids,
             ).fetchall()

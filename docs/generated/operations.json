@@ -265,6 +265,13 @@
               "null"
             ]
           },
+          "parked": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "When true, list parked meetings only."
+          },
           "limit": {
             "type": "integer",
             "description": "Clamped to 1..500; default 50."
@@ -315,6 +322,13 @@
               "null"
             ],
             "description": "Optional detail selector (MCP)."
+          },
+          "include_parked": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "When true, read a retained parked meeting."
           }
         },
         "required": [

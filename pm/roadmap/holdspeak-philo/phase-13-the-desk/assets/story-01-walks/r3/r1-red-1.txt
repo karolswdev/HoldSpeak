@@ -1,0 +1,15 @@
+........................................................................ [ 57%]
+.....................................................F                   [100%]
+=================================== FAILURES ===================================
+____ test_phase13_coder_fence_rejects_stale_page_then_accepts_produced_door ____
+
+    def test_phase13_coder_fence_rejects_stale_page_then_accepts_produced_door() -> None:
+        """The real committed case omits a post-ingestion refresh; the fixed case owns it."""
+>       with pytest.raises(AssertionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'AssertionError'>
+
+tests/unit/test_philo13_astra_atlas.py:566: Failed
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo13_astra_atlas.py::test_phase13_coder_fence_rejects_stale_page_then_accepts_produced_door
+1 failed, 125 passed in 6.07s
