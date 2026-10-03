@@ -7662,7 +7662,7 @@
       "sources": [
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
-          "symbol": "export function SendWell",
+          "symbol": "export function SendWell({ doc, sendsRead, onSettled, head }: {",
           "claim": "the SEND well: destinations, the pick, the preview, Send, the latest receipt"
         },
         {

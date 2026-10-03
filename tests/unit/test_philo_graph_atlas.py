@@ -251,14 +251,78 @@ def test_every_fixture_step_exists_and_hashes_as_claimed(atlas: dict) -> None:
     assert not problems, problems
 
 
-def source_ref_problem(ref: dict) -> str | None:
-    """Why a source reference no longer holds, or None. Line-free."""
-    target = REPO / ref["path"]
-    if not target.is_file():
-        return f"missing file {ref['path']}"
-    if ref["symbol"] not in target.read_text(errors="replace"):
+def _one_spacing(text: str) -> str:
+    return " ".join(text.split())
+
+
+def source_ref_problem(ref: dict, text: str | None = None) -> str | None:
+    """Why a source reference no longer holds, or None.
+
+    Line-free, and exact: the cited text is in the cited file in EXACTLY ONE
+    place (runs of white space compare as one space, so a citation can span
+    two lines). An import and a render site that share a name are two places;
+    the citation must be long enough to name the one it claims. ``text``
+    replaces the file's content (the mutation tests).
+    """
+    if text is None:
+        target = REPO / ref["path"]
+        if not target.is_file():
+            return f"missing file {ref['path']}"
+        text = target.read_text(errors="replace")
+    count = _one_spacing(text).count(_one_spacing(ref["symbol"]))
+    if count == 0:
         return f"{ref['path']} no longer holds {ref['symbol']!r}"
+    if count > 1:
+        return (
+            f"{ref['path']} holds {ref['symbol']!r} in {count} places; cite a longer, "
+            "specific snippet (the declaration or render site the claim is about)"
+        )
     return None
+
+
+OP_CASES_PATH = Path(__file__).with_name("philo_atlas_op_cases.txt")
+
+
+def missing_op_cases(case_ids) -> list[str]:
+    """The tracked operation siblings that are not in ``case_ids``."""
+    required = {
+        line.strip()
+        for line in OP_CASES_PATH.read_text().splitlines()
+        if line.strip() and not line.startswith("#")
+    }
+    return sorted(required - set(case_ids))
+
+
+def test_a_removed_operation_sibling_is_named() -> None:
+    """Mutation: the atlas without one `.op` case fails the pair fence."""
+    gone = "case.j10.route_generate_again.same_day_same_id.op"
+    ids = {
+        case["id"]
+        for path in ATLAS_FILES
+        for case in json.loads(path.read_text())["cases"]
+    }
+    assert gone in ids and missing_op_cases(ids) == []
+    assert missing_op_cases(ids - {gone}) == [gone]
+
+
+def test_a_citation_that_only_the_import_holds_fails() -> None:
+    """Mutation: with the Dossier mount gone from DeskApp, the reference
+    fails although the import still holds the name."""
+    path = "web/src/desk/DeskApp.tsx"
+    astra = json.loads((ATLAS_PATH.parent / "atlas-phase13-astra.json").read_text())
+    ref = next(
+        ref
+        for state in astra["states"]
+        for ref in state["sources"]
+        if ref["path"] == path and "<DeliveryDossierWindow" in ref["symbol"]
+    )
+    assert source_ref_problem(ref) is None
+    lines = (REPO / path).read_text().splitlines()
+    kept = [line for line in lines if "<DeliveryDossierWindow" not in line]
+    assert len(kept) == len(lines) - 1 and any("DeliveryDossierWindow" in line for line in kept)
+    assert "no longer holds" in source_ref_problem(ref, "\n".join(kept))
+    # The short name is in two places (import and mount): refused as ambiguous.
+    assert "cite a longer" in source_ref_problem({**ref, "symbol": "DeliveryDossierWindow"})
 
 
 def test_every_source_reference_lands_on_its_symbol(every_atlas: dict) -> None:
@@ -477,9 +541,10 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
         for case in json.loads(path.read_text())['cases']
         if case['id'].endswith('.op') or case['id'].endswith('.op.replayed')
     ]
-    # No literal count (owner ruling 2026-10-03): the checks below are
-    # semantic and read every sibling.
-    assert siblings
+    # No literal count (owner ruling 2026-10-03). The pairs must stay
+    # complete: every sibling the tracked list names is still in the atlas.
+    missing = missing_op_cases(case['id'] for case in siblings)
+    assert not missing, f"operation siblings left the atlas: {missing}"
     sibling_ids = {case["id"] for case in siblings}
     assert READ_REFUSAL_SIBLINGS <= sibling_ids
     mutating = {

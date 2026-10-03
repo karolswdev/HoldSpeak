@@ -135,10 +135,11 @@ def test_the_reload_claim_points_at_the_quiet_branch(atlas: dict) -> None:
             if ref["path"] == "web/src/desk/chair/ChairHome.tsx"]
     assert refs
     for ref in refs:
-        # Line-free (owner ruling 2026-10-03): one place that holds the cited
-        # text is the quiet branch. It draws the brief's own headline; the
-        # untriaged branch (BriefSection rows) never does.
+        # Line-free (owner ruling 2026-10-03): the cited text is in exactly
+        # one place, and that place is the quiet branch. It draws the brief's
+        # own headline; the untriaged branch (BriefSection rows) never does.
         windows = ["\n".join(lines[at: at + 5])
                    for at, text in enumerate(lines) if ref["symbol"] in text]
-        assert any("arrival-brief-headline" in window and "BriefSection" not in window
-                   for window in windows), (ref, windows)
+        assert len(windows) == 1, (ref, windows)
+        assert "arrival-brief-headline" in windows[0], (ref, windows)
+        assert "BriefSection" not in windows[0], (ref, windows)

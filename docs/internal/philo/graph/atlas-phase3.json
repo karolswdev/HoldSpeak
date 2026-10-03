@@ -7962,7 +7962,7 @@
       "sources": [
         {
           "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-          "symbol": "documentThought",
+          "symbol": "const [documentThought, setDocumentThought] = useState(projection.thought || initialThought);",
           "claim": "the Thought window holds the note it opened"
         },
         {

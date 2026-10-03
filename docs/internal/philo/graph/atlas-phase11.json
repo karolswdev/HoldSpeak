@@ -6754,7 +6754,7 @@
       "sources": [
         {
           "path": "holdspeak/services/document_sources.py",
-          "symbol": "DOCUMENT_SOURCES",
+          "symbol": "DOCUMENT_SOURCES: dict[str, DocumentSource] = {",
           "claim": "the registry contains the seven new document source kinds"
         },
         {

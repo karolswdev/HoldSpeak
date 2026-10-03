@@ -3086,7 +3086,7 @@
       "sources": [
         {
           "path": "web/src/desk/zoneName.ts",
-          "symbol": "export function",
+          "symbol": "export function normalizeZoneName(raw: string): string {",
           "claim": "the store picks the next free default name by the hub's rule"
         },
         {

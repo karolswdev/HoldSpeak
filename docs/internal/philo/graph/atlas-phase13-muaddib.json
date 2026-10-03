@@ -3505,7 +3505,7 @@
         },
         {
           "path": "web/src/desk/components/Pullout.tsx",
-          "symbol": "onClose={() => closePullout(pulloutId)}",
+          "symbol": "open onClose={() => closePullout(pulloutId)}",
           "claim": "Close removes exactly the store's entry"
         },
         {
@@ -3827,7 +3827,7 @@
         },
         {
           "path": "web/src/desk/returningWindows.tsx",
-          "symbol": "rememberWindow(\"delivery-dossier\", {",
+          "symbol": "if (s.dossier?.kind === \"story\") { rememberWindow(\"delivery-dossier\", {",
           "claim": "the dossier's story is kept while it is open"
         },
         {

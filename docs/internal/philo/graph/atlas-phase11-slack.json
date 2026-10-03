@@ -9172,17 +9172,17 @@
         },
         {
           "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-          "symbol": "MeetingSendWell",
+          "symbol": "<MeetingSendWell meetingId={id} title={meetingTitle}",
           "claim": "The Meetings record renders the well for a stored summary."
         },
         {
           "path": "web/src/desk/pullouts/MeetingPullout.tsx",
-          "symbol": "MeetingSendWell",
+          "symbol": "<MeetingSendWell meetingId={o.id} title={String(detail.title ?? o.title ?? \"Meeting\")}",
           "claim": "The meeting window renders the same well."
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "MeetingSendWellLazy",
+          "symbol": "import { MeetingSendWellLazy } from \"../../meetings/MeetingSendWellLazy\";",
           "claim": "The unfolded Chair meeting row renders the well."
         },
         {
@@ -9281,7 +9281,7 @@
         },
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
-          "symbol": "Destinations",
+          "symbol": "<Destinations />",
           "claim": "Settings keeps the channel destination group as the supported path."
         }
       ],
@@ -9306,7 +9306,7 @@
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "brief-send",
+          "symbol": "{brief ? <BriefSendWells key=\"brief-send\" brief={brief} /> : null}",
           "claim": "The Chair keeps the same brief SEND well across the last-item branch."
         }
       ],

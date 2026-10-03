@@ -257,12 +257,12 @@
         },
         {
           "path": "web/src/features/project-room/update/UpdatePosture.tsx",
-          "symbol": "countLabel(\"UPDATES\"",
+          "symbol": "<SurfaceLedger count={countLabel(\"UPDATES\", ctrl.updates.length)} cols=\"room\">",
           "claim": "the update list's head counts updates"
         },
         {
           "path": "web/src/features/project-room/project-room.css",
-          "symbol": ".room-ask-container {",
+          "symbol": "/* ── Condition 7: ask well sticky at the foot of a wide window ── */ .room-ask-container {",
           "claim": "the Ask well is in the flow at every width"
         },
         {
@@ -290,7 +290,7 @@
       "sources": [
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
-          "symbol": "data-testid=\"project-grant-chip\"",
+          "symbol": ": <StateChip state=\"idle\" label={PROJECT_GRANT_WORDS.stopped} data-testid=\"project-grant-chip\" />;",
           "claim": "the project line's chip: RUN AND PUBLISH ALLOWED or STOPPED"
         },
         {

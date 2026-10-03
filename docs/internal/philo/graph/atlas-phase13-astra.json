@@ -5305,12 +5305,12 @@
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
-          "symbol": "DeliveryDossierWindow",
+          "symbol": "{!arrivalRequired && <DeliveryDossierWindow />}",
           "claim": "The Delivery dossier mounts in the Desk."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
-          "symbol": "DeliveryTerminalWindow",
+          "symbol": "{!arrivalRequired && <DeliveryTerminalWindow />}",
           "claim": "The Delivery terminal mounts in the Desk."
         },
         {
@@ -5330,7 +5330,7 @@
         },
         {
           "path": "web/src/desk/gl/WorldStage.tsx",
-          "symbol": "InfoWindow",
+          "symbol": "<InfoWindow key={w.ref} refId={w.ref} origin={w.origin} />",
           "claim": "Info windows mount from the Floor."
         }
       ],
@@ -5435,7 +5435,7 @@
       "sources": [
         {
           "path": "holdspeak/services/project_update_service.py",
-          "symbol": "def draft_update",
+          "symbol": "def draft_update(",
           "claim": "The project update composer persists a deterministic draft after reading the pinned Room and linked week sources."
         },
         {
