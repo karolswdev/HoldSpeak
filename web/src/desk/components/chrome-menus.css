@@ -695,6 +695,26 @@
 .desk-next .desk-menubar .desk-chrome-tr {
   align-items: center;
 }
+/* PHILO-13-11 close (§4: one line): at the desk the status plates and the
+   clock never wrap below the bar. Under a receipt in the bar the screen
+   title and the receipt's label give up the width (both ellipsize; the
+   receipt's verbs keep theirs); this cluster holds. 393 has its own row. */
+@media (min-width: 721px) {
+  .desk-next .desk-menubar .desk-chrome-tr {
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+  }
+  .desk-next .desk-menubar .desk-chrome-receipt {
+    display: flex;
+    align-items: center;
+  }
+  .desk-next .desk-menubar .desk-chrome-receipt .write-receipt {
+    min-width: 0;
+  }
+  .desk-next .desk-menubar .desk-chrome-receipt .write-receipt .btn {
+    flex-shrink: 0;
+  }
+}
 /* the front window's name: the screen's title (DeskChrome.tsx ScreenTitle) */
 .desk-next .desk-screen-title {
   display: inline-flex;

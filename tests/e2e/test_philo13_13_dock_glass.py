@@ -321,6 +321,19 @@ class TestLiveDock:
                 self._refresh_from_hub(page, width)
                 receipt = self._outage_receipt(page)
                 proof["outage_receipt"] = receipt
+                # PHILO-13-11 close (design §4): the screen bar stays ONE line
+                # with the receipt in it -- the status plates and the clock do
+                # not wrap below the bar onto the windows.
+                spill = page.evaluate("""() => {
+                    const bar = document.querySelector('.desk-menubar').getBoundingClientRect();
+                    return [...document.querySelectorAll('.desk-menubar .desk-chrome-tr > *')]
+                      .map((e) => ({el: (e.getAttribute('aria-label') || e.textContent || e.className).trim().slice(0, 40),
+                                    r: e.getBoundingClientRect()}))
+                      .filter((x) => x.r.width > 0 && x.r.height > 0 && (x.r.top < bar.top - 0.5 || x.r.bottom > bar.bottom + 0.5))
+                      .map((x) => ({el: x.el, top: Math.round(x.r.top), bottom: Math.round(x.r.bottom), bar: Math.round(bar.bottom)}));
+                }""")
+                proof["screen_bar_spill"] = spill
+                assert not spill, f"the screen bar wraps under the outage receipt: {spill}"
                 assert page.get_by_label("Preparing HoldSpeak").count() == 0, "the error face replaced the Desk"
                 assert dock.is_visible() and offline.is_visible()
                 page.screenshot(path=str(SHOTS / f"dock-08b-outage-receipt-{width}.png"))

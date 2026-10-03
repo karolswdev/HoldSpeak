@@ -247,6 +247,23 @@ class TestTheGadgets:
                 zoomed = _rect(st, "Meetings")
                 if zoom.get_attribute("aria-pressed") != "true" or zoomed == prior:
                     fails["G2 zoom fills the work band"] = {"prior": prior, "zoomed": zoomed}
+                # PHILO-13-11 close (board C1-2d): the zoomed window fills the
+                # screen between the screen bar and the shelf -- its head flush
+                # under the bar (no window behind peeks above it) and its foot
+                # and sizing gadget clear of the Dock (the 76 px shelf of C3-W).
+                band = page.evaluate("""() => {
+                    const bar = document.querySelector('.desk-menubar').getBoundingClientRect();
+                    const dock = document.querySelector('.desk-dock').getBoundingClientRect();
+                    const win = document.querySelector(".desk-window-shell[aria-label='Meetings']").getBoundingClientRect();
+                    const grip = document.querySelector(".desk-window-shell[aria-label='Meetings'] .desk-window-grip");
+                    const g = grip.getBoundingClientRect();
+                    const hit = document.elementFromPoint(g.left + g.width / 2, g.top + g.height / 2);
+                    return {bar_bottom: Math.round(bar.bottom), dock_top: Math.round(dock.top),
+                            top: Math.round(win.top), bottom: Math.round(win.bottom), grip_owned: grip.contains(hit)};
+                }""")
+                facts["zoom-band"] = band
+                if abs(band["top"] - band["bar_bottom"]) > 2 or band["bottom"] > band["dock_top"] + 1 or not band["grip_owned"]:
+                    fails["G2 zoom fills the screen between the bar and the shelf"] = band
                 page.screenshot(path=str(SHOTS / "build-C1-2d-zoom-1440.png"))
                 # The user sizes the zoomed window: the sizing gadget, dragged.
                 grip = meetings.locator(".desk-window-grip").bounding_box()
