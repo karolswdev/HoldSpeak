@@ -23,3 +23,15 @@ bundle gate passed (Desk JS 1350572 B; Desk CSS 333495 B; source maps 0)
 ..........                                                               [100%]
 154 passed in 87.25s (0:01:27)
 ```
+
+### Captured run — 2026-10-03T02:01:03Z
+
+- **Command:** `bash -c set -eo pipefail; H=$(mktemp -d); trap "rm -rf \"$H\"" EXIT INT TERM; HOME=$H HOLDSPEAK_EVIDENCE_WRITE=1 PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run pytest -q tests/e2e/test_philo13_12_gadgets_glass.py tests/e2e/test_philo13_11_frame_glass.py --basetemp=$H/bt -p no:cacheprovider 2>&1 | tail -2`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0ec04525250481e1cf84709bee9a2ecc74ca16bc
+
+```text
+.....                                                                    [100%]
+5 passed in 75.61s (0:01:15)
+```
