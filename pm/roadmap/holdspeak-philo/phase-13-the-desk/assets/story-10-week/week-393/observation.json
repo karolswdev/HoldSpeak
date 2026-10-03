@@ -1,0 +1,1806 @@
+{
+  "id": "obs-20261003T040858Z-case.p13.update.linked_week-astra-393",
+  "run_id": "20261003T040858Z-case.p13.update.linked_week-astra-393",
+  "case_id": "case.p13.update.linked_week",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j1",
+  "edge_ids": [
+    "edge.face.room_updates"
+  ],
+  "state_id": "state.desk_presentation.p13_week",
+  "provenance": {
+    "revision": "5912fcb9474cae7b058838f120a2c216189be89a",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "4bb923cf11a2fd78d8111b8e3d2f810751a58f7e9e5435ad2a0d979de80423b8",
+      "assets": [
+        "index-B5oLvEP0.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:62655",
+      "port": 62655,
+      "pid": 27322,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nrr9vkw7",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nrr9vkw7/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo13_b5_week_summary_reply.json": "1f727cd7c540e1db20a3488da217747a439f78383576a6c6ee9c4927cde56d82",
+      "tests/fixtures/philo13_b5_week_transcript.vtt": "8878aa8c55da727de14a2ec94104e7966984514a3512dc805ddd0c5afef72d16"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T04:08:58.965125+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "replayed",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "recorded meeting intelligence provider",
+        "substitute": "engine_reply",
+        "installed_sha256": "1f727cd7c540e1db20a3488da217747a439f78383576a6c6ee9c4927cde56d82"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "d0a30f536e5c4af8ea12516275c5e02d58c816c5d26ec1ea2de1c58b59572332",
+      "version": "phase13-astra-wave2"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "browser_context": {
+      "viewport": 393,
+      "has_touch": true
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "a RECORDED provider reply at the real provider seam",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nrr9vkw7",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nrr9vkw7",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nrr9vkw7/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nrr9vkw7"
+      }
+    },
+    "engine_replay_sha256": "1f727cd7c540e1db20a3488da217747a439f78383576a6c6ee9c4927cde56d82",
+    "engine_provider_url": "http://127.0.0.1:62656/v1",
+    "cli_runner_sha256": null,
+    "meeting_intelligence": [
+      {
+        "kind": "cli",
+        "action": "queue_meeting_intelligence",
+        "adapter": "production-queue",
+        "meeting_id": "3230f2cc",
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nrr9vkw7/.local/share/holdspeak/holdspeak.db",
+        "producer": "holdspeak.db.intel.IntelRepository.enqueue_intel_job",
+        "job_id": "ij_6edd860be15f82f502550ad5c524c6541084af9ebe4d10a1fa5fd3cdc36b20d0",
+        "transcript_hash": "af3498822c67bd06691169de750d3516799f7159d2df0633b95e015d685beb16",
+        "planned_route": null
+      }
+    ]
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-02T22:09:03.404136"
+        }
+      },
+      "response_sha256": "505b7c19faa8d47a93310d293ad1aa4fafcd9f84bcccba67bc5c2b40ddd8ccf8"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-183583531ef7",
+          "name": "B5 Payments ledger cutover",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-10-02T22:09:03.455130",
+          "updated_at": "2026-10-02T22:09:03.455130",
+          "result_kind": "created",
+          "project_id": "proj-183583531ef7",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-183583531ef7"
+          ]
+        }
+      },
+      "response_sha256": "b83320b0e7b7e86e9fd651ef68b855baee7bcb9fc3c4dd863ece3bf120232f53",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-183583531ef7"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/setup/discover-models",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "ok": true,
+        "models": [
+          "philo13-b5-atlas"
+        ],
+        "detail": "Found 1 model.",
+        "status": 200
+      },
+      "response_sha256": "d89d5ce51995cc79d8cc9f9202fac1dd64e7aa1b4fe798119e7644bc9313769c",
+      "captured": {
+        "name": "engine_model",
+        "path": "models.0",
+        "value": "philo13-b5-atlas"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/inference/model-library/define-endpoint",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "receipt": {
+          "kind": "model_library_provider",
+          "message": "Added to the Model Library. Assignments are unchanged.",
+          "assignments_unchanged": true,
+          "assignments_before": {
+            "heads": [
+              {
+                "assignment_key": "capability:speech.transcribe",
+                "assignment_id": "ia_808f14e111e84292b706287828339cf1",
+                "revision": 1,
+                "cleared": false
+              }
+            ],
+            "sha256": "sha256:951a5b3423444aa7bac7b0c942fea40c79713cc8b534ed75bcd549cbdc87ec4c"
+          },
+          "assignments_after": {
+            "heads": [
+              {
+                "assignment_key": "capability:speech.transcribe",
+                "assignment_id": "ia_808f14e111e84292b706287828339cf1",
+                "revision": 1,
+                "cleared": false
+              }
+            ],
+            "sha256": "sha256:951a5b3423444aa7bac7b0c942fea40c79713cc8b534ed75bcd549cbdc87ec4c"
+          }
+        },
+        "provider": {
+          "profile_id": "p13-b5-recorded-engine",
+          "profile_revision": 1,
+          "binding_id": "binding-p13-b5-recorded-engine",
+          "binding_revision": 1,
+          "provider_family": "openai_compatible",
+          "secret": {
+            "required": false,
+            "present": false
+          }
+        }
+      },
+      "response_sha256": "882ab84cdf2841741201f7d3a0cc3a9a24dfc688870c61d538e13d5136757278",
+      "captured": {
+        "name": "profile_id",
+        "path": "provider.profile_id",
+        "value": "p13-b5-recorded-engine"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/concierge/summary-selection",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "schema": "ConciergeSummaryAssignmentReceipt@1",
+        "status": "succeeded",
+        "capabilityId": "meeting.deferred_analysis",
+        "result": {
+          "capabilityId": "meeting.deferred_analysis",
+          "state": "READY",
+          "profileId": "p13-b5-recorded-engine",
+          "profileRevision": 1,
+          "assignment": {
+            "revision": 1,
+            "entries": [
+              {
+                "profileId": "p13-b5-recorded-engine",
+                "profileRevision": 1,
+                "label": "Recorded loopback provider",
+                "boundary": "lan",
+                "readiness": "ready"
+              }
+            ]
+          }
+        },
+        "receipt": {
+          "id": "concierge-summary-a9368e8bd198",
+          "visible": true
+        },
+        "summaryAssignment": {
+          "schema": "ConciergeSummaryAssignmentProjection@1",
+          "capabilityId": "meeting.deferred_analysis",
+          "status": "assigned",
+          "assignmentRevision": 1,
+          "profileId": "p13-b5-recorded-engine",
+          "profileRevision": 1,
+          "label": "Recorded loopback provider",
+          "boundary": "lan",
+          "readiness": "ready"
+        }
+      },
+      "response_sha256": "40eddf4fb6f993d6e347baecc994823f50eadac2887801206fe171fdb5de8f91"
+    },
+    {
+      "kind": "boundary",
+      "label": "recorded meeting intelligence provider",
+      "substitute": "engine_reply",
+      "adapter": "hub-engine-boundary",
+      "installed_sha256": "1f727cd7c540e1db20a3488da217747a439f78383576a6c6ee9c4927cde56d82",
+      "seam": "holdspeak.intel.providers._configured_engine + holdspeak.intel.engine.MeetingIntel"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.import",
+      "args": {
+        "path": "/Users/karol/dev/tools/wt-philo-13-10-astra/tests/fixtures/philo13_b5_week_transcript.vtt",
+        "title": "B5 ledger cutover sync"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.import",
+          "arguments": {
+            "path": "/Users/karol/dev/tools/wt-philo-13-10-astra/tests/fixtures/philo13_b5_week_transcript.vtt",
+            "title": "B5 ledger cutover sync"
+          }
+        }
+      },
+      "response": {
+        "meeting_id": "3230f2cc",
+        "transcription_status": "importing"
+      },
+      "domain_response": {
+        "meeting_id": "3230f2cc",
+        "transcription_status": "importing"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"meeting_id\": \"3230f2cc\", \"transcription_status\": \"importing\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.006,
+      "fixture": {
+        "path": "tests/fixtures/philo13_b5_week_transcript.vtt",
+        "sha256": "8878aa8c55da727de14a2ec94104e7966984514a3512dc805ddd0c5afef72d16"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "3230f2cc"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects/proj-183583531ef7/meetings/3230f2cc",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "operation_id": "op_8404a842191547feb8109f1f25c1921c",
+        "receipt": {
+          "receipt_id": "rcpt_eb58ca19852a49a3b4a6b66801b4001a",
+          "operation_id": "op_8404a842191547feb8109f1f25c1921c",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project:proj-183583531ef7",
+          "created_at": 1791000543.508864,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project:proj-183583531ef7"
+        }
+      },
+      "response_sha256": "6363132f2eec656a46f05d059bbfff04dd707cf4c65694ddd1274e1802e85f6b"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "3230f2cc"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "transcription_status",
+        "value": "complete"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "transcription_status equals the declared value"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "3230f2cc"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "segments",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "segments is non-empty"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "3230f2cc"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "planned_route.selection_hash",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "planned_route.selection_hash is non-empty"
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "3230f2cc"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "3230f2cc"
+          }
+        }
+      },
+      "response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 32.0,
+        "ended_at": "2026-10-02T22:09:35.495897",
+        "formatted_duration": "00:32",
+        "id": "3230f2cc",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "parked": false,
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_c8c5e4d3e99ebc803d06b6150e7cd42423a6fbed0721f4252b5351feb372ccf5",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p13-b5-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:eb7270f5d2ad37269870dd15dfa6435d0abcf6b9db87b18852225b3a200971c9",
+          "status": "ready"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 8.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Avery: We agree to use the controlled migration window."
+          },
+          {
+            "device_id": null,
+            "end_time": 16.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 8.0,
+            "text": "Avery: Avery will confirm the migration window before the cutover."
+          },
+          {
+            "device_id": null,
+            "end_time": 24.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 16.0,
+            "text": "Morgan: Morgan will send the rollback checklist before the cutover."
+          },
+          {
+            "device_id": null,
+            "end_time": 32.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 24.0,
+            "text": "Avery: The ledger cutover is ready for the controlled migration."
+          }
+        ],
+        "started_at": "2026-10-02T22:09:03.495897",
+        "sync_modified_at": "2026-10-02T22:09:03.500622",
+        "tags": [],
+        "title": "B5 ledger cutover sync",
+        "transcriptWords": 39,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "domain_response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 32.0,
+        "ended_at": "2026-10-02T22:09:35.495897",
+        "formatted_duration": "00:32",
+        "id": "3230f2cc",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "parked": false,
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_c8c5e4d3e99ebc803d06b6150e7cd42423a6fbed0721f4252b5351feb372ccf5",
+              "host": "127.0.0.1",
+              "ordinal": 1,
+              "profile_id": "p13-b5-recorded-engine",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:eb7270f5d2ad37269870dd15dfa6435d0abcf6b9db87b18852225b3a200971c9",
+          "status": "ready"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 8.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Avery: We agree to use the controlled migration window."
+          },
+          {
+            "device_id": null,
+            "end_time": 16.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 8.0,
+            "text": "Avery: Avery will confirm the migration window before the cutover."
+          },
+          {
+            "device_id": null,
+            "end_time": 24.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 16.0,
+            "text": "Morgan: Morgan will send the rollback checklist before the cutover."
+          },
+          {
+            "device_id": null,
+            "end_time": 32.0,
+            "is_bookmarked": false,
+            "speaker": "Transcript",
+            "speaker_id": null,
+            "start_time": 24.0,
+            "text": "Avery: The ledger cutover is ready for the controlled migration."
+          }
+        ],
+        "started_at": "2026-10-02T22:09:03.495897",
+        "sync_modified_at": "2026-10-02T22:09:03.500622",
+        "tags": [],
+        "title": "B5 ledger cutover sync",
+        "transcriptWords": 39,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 32.0, \"ended_at\": \"2026-10-02T22:09:35.495897\", \"formatted_duration\": \"00:32\", \"id\": \"3230f2cc\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"parked\": false, \"planned_route\": {\"legs\": [{\"boundary\": \"lan\", \"deployment_revision_id\": \"dep_c8c5e4d3e99ebc803d06b6150e7cd42423a6fbed0721f4252b5351feb372ccf5\", \"host\": \"127.0.0.1\", \"ordinal\": 1, \"profile_id\": \"p13-b5-recorded-engine\", \"profile_revision\": 1}], \"reason_code\": null, \"selection_hash\": \"sha256:eb7270f5d2ad37269870dd15dfa6435d0abcf6b9db87b18852225b3a200971c9\", \"status\": \"ready\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 8.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Avery: We agree to use the controlled migration window.\"}, {\"device_id\": null, \"end_time\": 16.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 8.0, \"text\": \"Avery: Avery will confirm the migration window before the cutover.\"}, {\"device_id\": null, \"end_time\": 24.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 16.0, \"text\": \"Morgan: Morgan will send the rollback checklist before the cutover.\"}, {\"device_id\": null, \"end_time\": 32.0, \"is_bookmarked\": false, \"speaker\": \"Transcript\", \"speaker_id\": null, \"start_time\": 24.0, \"text\": \"Avery: The ledger cutover is ready for the controlled migration.\"}], \"started_at\": \"2026-10-02T22:09:03.495897\", \"sync_modified_at\": \"2026-10-02T22:09:03.500622\", \"tags\": [], \"title\": \"B5 ledger cutover sync\", \"transcriptWords\": 39, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003,
+      "captured": {
+        "name": "selection_hash",
+        "path": "planned_route.selection_hash",
+        "value": "sha256:eb7270f5d2ad37269870dd15dfa6435d0abcf6b9db87b18852225b3a200971c9"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/inference/assignments/set",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-03T04:09:03.552061Z",
+        "effective_retry_policy_id": "retry.structured.standard",
+        "entries": [
+          {
+            "boundary": "private_network",
+            "label": "Recorded loopback provider",
+            "ordinal": 1,
+            "profile_id": "p13-b5-recorded-engine",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "readiness": "ready"
+          }
+        ],
+        "id": "ia_5b350dbf56dd4eb6897b2f51435dde07",
+        "issues": [],
+        "retry_policy_id": null,
+        "retry_policy_source": "capability_default",
+        "revision": 1,
+        "schema": "InferenceAssignmentProjection@1",
+        "scope": {
+          "capability_id": "meeting.plugin.decision_capture",
+          "kind": "capability"
+        },
+        "sha256": "sha256:7e8512cde301b66e8e0e0f904647fbe2d10a8384b31d7125d10228ad66db8312",
+        "committed_effect": {
+          "created_at": "2026-10-03T04:09:03.552061Z",
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "p13-b5-recorded-engine",
+              "profile_revision": 1,
+              "profile_schema_version": 2
+            }
+          ],
+          "id": "ia_5b350dbf56dd4eb6897b2f51435dde07",
+          "retry_policy_id": null,
+          "revision": 1,
+          "schema": "InferenceAssignment@1",
+          "scope": {
+            "capability_id": "meeting.plugin.decision_capture",
+            "kind": "capability"
+          },
+          "sha256": "sha256:7e8512cde301b66e8e0e0f904647fbe2d10a8384b31d7125d10228ad66db8312"
+        },
+        "current": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_5b350dbf56dd4eb6897b2f51435dde07",
+          "revision": 1,
+          "sha256": "sha256:7e8512cde301b66e8e0e0f904647fbe2d10a8384b31d7125d10228ad66db8312",
+          "scope": {
+            "capability_id": "meeting.plugin.decision_capture",
+            "kind": "capability"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "p13-b5-recorded-engine",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Recorded loopback provider",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-10-03T04:09:03.552061Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        }
+      },
+      "response_sha256": "6b3f4994a3f381f1f28342669ac9b5e23bde42a3f1294ded7f848dedd30ce689"
+    },
+    {
+      "kind": "cli",
+      "action": "queue_meeting_intelligence",
+      "adapter": "production-queue",
+      "meeting_id": "3230f2cc",
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nrr9vkw7/.local/share/holdspeak/holdspeak.db",
+      "producer": "holdspeak.db.intel.IntelRepository.enqueue_intel_job",
+      "job_id": "ij_6edd860be15f82f502550ad5c524c6541084af9ebe4d10a1fa5fd3cdc36b20d0",
+      "transcript_hash": "af3498822c67bd06691169de750d3516799f7159d2df0633b95e015d685beb16",
+      "planned_route": null
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "3230f2cc"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "intel.summary",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 11.69,
+      "holds": true,
+      "reading": "intel.summary is non-empty"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings/3230f2cc/follow-through-proposals",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "proposals",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "proposals is non-empty"
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/meetings/3230f2cc/follow-through-proposals",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "meeting_id": "3230f2cc",
+        "proposals": [
+          {
+            "id": "prop-bd345905d9c94d25",
+            "meeting_id": "3230f2cc",
+            "project_id": "proj-183583531ef7",
+            "kind": "decision",
+            "text": "Use the controlled migration window",
+            "owner_hint": null,
+            "due_hint": null,
+            "owner": null,
+            "due": null,
+            "owner_supplied": null,
+            "due_supplied": null,
+            "source_artifact_id": "art-36abd3b44cb7acde4a92",
+            "source_plugin": "decision_capture",
+            "segment_timestamp": 4.0,
+            "speaker_label": null,
+            "model_host": "127.0.0.1",
+            "state": "proposed",
+            "original_text": "Use the controlled migration window",
+            "decision_record_id": null,
+            "rationale": "The rollback path is tested",
+            "commitment_id": null,
+            "created_at": "2026-10-02T22:09:15.861757",
+            "decided_at": null,
+            "retry_key": "701b866fa90d31b6e20a998af6d3e3af",
+            "extraction_revision": "af3498822c67bd06691169de750d3516799f7159d2df0633b95e015d685beb16",
+            "job_id": "ij_294825c47347b2d487cf1a08a74cfa489d411626fbb844a892bded8094a2009b",
+            "job_attempt": 1,
+            "extraction_model": "philo13-b5-atlas",
+            "span_start": 0.0,
+            "span_end": 8.0,
+            "segment_index": 0,
+            "claim_kind": "proposal",
+            "support": "supported",
+            "support_record": {
+              "method": "field_mapping",
+              "source_version": "af3498822c67bd06691169de750d3516799f7159d2df0633b95e015d685beb16",
+              "source_refs": [
+                "meeting:3230f2cc#segment:0"
+              ],
+              "fields": [
+                "segments.text"
+              ]
+            },
+            "acceptance": "unreviewed",
+            "unknowns": [],
+            "edited_at": null,
+            "text_edited": false
+          }
+        ]
+      },
+      "response_sha256": "53da06b13978b96ca3afcdd4359d47c78ee8c90726c37ac29191005f57aef1c7",
+      "captured": {
+        "name": "proposal_id",
+        "path": "proposals",
+        "value": "prop-bd345905d9c94d25",
+        "match": {
+          "kind": "decision"
+        }
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/proposals/prop-bd345905d9c94d25/confirm",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "proposal_id": "prop-bd345905d9c94d25",
+        "state": "confirmed",
+        "original_text": "Use the controlled migration window",
+        "decision_id": "dec-122433b754ca4d8c",
+        "decision_record_id": "record-a88f8a7b8a384f44",
+        "action_item_id": "action-9fde1727bf7d4576",
+        "commitment_id": "commitment-54d27e4e220c4c36",
+        "replayed": false,
+        "proposal": {
+          "id": "prop-bd345905d9c94d25",
+          "meeting_id": "3230f2cc",
+          "project_id": "proj-183583531ef7",
+          "kind": "decision",
+          "text": "Use the controlled migration window",
+          "owner_hint": null,
+          "due_hint": null,
+          "owner": null,
+          "due": null,
+          "owner_supplied": null,
+          "due_supplied": null,
+          "source_artifact_id": "art-36abd3b44cb7acde4a92",
+          "source_plugin": "decision_capture",
+          "segment_timestamp": 4.0,
+          "speaker_label": null,
+          "model_host": "127.0.0.1",
+          "state": "confirmed",
+          "original_text": "Use the controlled migration window",
+          "decision_record_id": "record-a88f8a7b8a384f44",
+          "rationale": "The rollback path is tested",
+          "commitment_id": "commitment-54d27e4e220c4c36",
+          "created_at": "2026-10-02T22:09:15.861757",
+          "decided_at": "2026-10-02T22:09:15.903599",
+          "retry_key": "701b866fa90d31b6e20a998af6d3e3af",
+          "extraction_revision": "af3498822c67bd06691169de750d3516799f7159d2df0633b95e015d685beb16",
+          "job_id": "ij_294825c47347b2d487cf1a08a74cfa489d411626fbb844a892bded8094a2009b",
+          "job_attempt": 1,
+          "extraction_model": "philo13-b5-atlas",
+          "span_start": 0.0,
+          "span_end": 8.0,
+          "segment_index": 0,
+          "claim_kind": "proposal",
+          "support": "supported",
+          "support_record": {
+            "method": "field_mapping",
+            "source_version": "af3498822c67bd06691169de750d3516799f7159d2df0633b95e015d685beb16",
+            "source_refs": [
+              "meeting:3230f2cc#segment:0"
+            ],
+            "fields": [
+              "segments.text"
+            ]
+          },
+          "acceptance": "accepted",
+          "unknowns": [],
+          "edited_at": null,
+          "text_edited": false
+        }
+      },
+      "response_sha256": "31b2214f821d78a429d7a9ac3b78bf13def81d033eeafb707b0d29c7ca1420c0",
+      "captured": {
+        "name": "confirmed_id",
+        "path": "decision_record_id",
+        "value": "record-a88f8a7b8a384f44"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/decision-records",
+      "adapter": "http-route",
+      "status": 200,
+      "response": [
+        {
+          "id": "record-a88f8a7b8a384f44",
+          "decision_text": "Use the controlled migration window",
+          "rationale": "The rollback path is tested",
+          "alternatives": "",
+          "owner": null,
+          "review_date": "",
+          "lifecycle": "active",
+          "source_type": "meeting",
+          "source_id": "dec-122433b754ca4d8c",
+          "created_at": "2026-10-02T22:09:15.903572",
+          "updated_at": "2026-10-02T22:09:15.903572",
+          "deleted": 0
+        }
+      ],
+      "response_sha256": "a42ab0151099ba3cb9ab78b9cf332bf8e32c7ca805e11fb9b361f46e24bc69fd",
+      "captured": {
+        "name": "record_id",
+        "path": "/",
+        "value": "record-a88f8a7b8a384f44",
+        "match": {
+          "id": "record-a88f8a7b8a384f44"
+        }
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "project.resource.add",
+      "args": {
+        "project_id": "proj-183583531ef7",
+        "resource_ref": "decision_record:record-a88f8a7b8a384f44",
+        "relationship": "member"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 45,
+        "method": "tools/call",
+        "params": {
+          "name": "project.resource.add",
+          "arguments": {
+            "project_id": "proj-183583531ef7",
+            "resource_ref": "decision_record:record-a88f8a7b8a384f44",
+            "relationship": "member"
+          }
+        }
+      },
+      "response": {
+        "operation_id": "op_40b4135ae6034ac6bd33dfaf7bdce2d0",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1791000555.9083788,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_40b4135ae6034ac6bd33dfaf7bdce2d0",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_2dd8563474454502924f9ffb29439c9f",
+          "result_ref": "project:proj-183583531ef7",
+          "state": "succeeded",
+          "target_ref": "project:proj-183583531ef7"
+        },
+        "resource": {
+          "changed_refs": [
+            "project:proj-183583531ef7"
+          ],
+          "confidence": 1.0,
+          "created_at": "2026-10-02T22:09:15.908087",
+          "deleted": false,
+          "id": "proj-183583531ef7|decision_record:record-a88f8a7b8a384f44",
+          "last_modified": "2026-10-02T22:09:15.908087",
+          "project_id": "proj-183583531ef7",
+          "project_revision": 3,
+          "relationship": "member",
+          "resource_ref": "decision_record:record-a88f8a7b8a384f44",
+          "result_kind": "linked",
+          "source": "manual"
+        }
+      },
+      "domain_response": {
+        "operation_id": "op_40b4135ae6034ac6bd33dfaf7bdce2d0",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1791000555.9083788,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_40b4135ae6034ac6bd33dfaf7bdce2d0",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_2dd8563474454502924f9ffb29439c9f",
+          "result_ref": "project:proj-183583531ef7",
+          "state": "succeeded",
+          "target_ref": "project:proj-183583531ef7"
+        },
+        "resource": {
+          "changed_refs": [
+            "project:proj-183583531ef7"
+          ],
+          "confidence": 1.0,
+          "created_at": "2026-10-02T22:09:15.908087",
+          "deleted": false,
+          "id": "proj-183583531ef7|decision_record:record-a88f8a7b8a384f44",
+          "last_modified": "2026-10-02T22:09:15.908087",
+          "project_id": "proj-183583531ef7",
+          "project_revision": 3,
+          "relationship": "member",
+          "resource_ref": "decision_record:record-a88f8a7b8a384f44",
+          "result_kind": "linked",
+          "source": "manual"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 45,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"operation_id\": \"op_40b4135ae6034ac6bd33dfaf7bdce2d0\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1791000555.9083788, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_40b4135ae6034ac6bd33dfaf7bdce2d0\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_2dd8563474454502924f9ffb29439c9f\", \"result_ref\": \"project:proj-183583531ef7\", \"state\": \"succeeded\", \"target_ref\": \"project:proj-183583531ef7\"}, \"resource\": {\"changed_refs\": [\"project:proj-183583531ef7\"], \"confidence\": 1.0, \"created_at\": \"2026-10-02T22:09:15.908087\", \"deleted\": false, \"id\": \"proj-183583531ef7|decision_record:record-a88f8a7b8a384f44\", \"last_modified\": \"2026-10-02T22:09:15.908087\", \"project_id\": \"proj-183583531ef7\", \"project_revision\": 3, \"relationship\": \"member\", \"resource_ref\": \"decision_record:record-a88f8a7b8a384f44\", \"result_kind\": \"linked\", \"source\": \"manual\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "selector": "[id='desk-palette-option-project.open.proj-183583531ef7']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=room-body]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "selector": "[data-testid=updates-verb]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=update-verb-draft-deterministic]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "the producer prefix mints one linked meeting summary, one decision, and two owned action items from the real queue",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nrr9vkw7",
+    "replay_provider_url": "http://127.0.0.1:62656/v1",
+    "project_id": "proj-183583531ef7",
+    "engine_model": "philo13-b5-atlas",
+    "profile_id": "p13-b5-recorded-engine",
+    "meeting_id": "3230f2cc",
+    "selection_hash": "sha256:eb7270f5d2ad37269870dd15dfa6435d0abcf6b9db87b18852225b3a200971c9",
+    "proposal_id": "prop-bd345905d9c94d25",
+    "confirmed_id": "record-a88f8a7b8a384f44",
+    "record_id": "record-a88f8a7b8a384f44"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-touch",
+    "adapter_requested": "ui-by-viewport",
+    "selector": "[data-testid=update-verb-draft-deterministic]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "B\nI\nU\nH1\nH2\nH3\nList\n1.\n</>\nLink\nQuote\n## Progress\n\n\n- Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\n\n\n## Decisions\n\n\n- Decision: Use the controlled migration window -- active\n\n\n## Risks & Blockers\n\n\nNo risks or blockers in this window.\n\n\n## Dependencies\n\n\nNo dependencies tracked.\n\n\n## Next Actions\n\n\n- Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\n- Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\n\n\n## Source Coverage\n\n\nAll sources consulted successfully."
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "update-body-editor",
+        "data-testid": "update-body-editor"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 14,
+        "y": 198,
+        "w": 365,
+        "h": 622
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "body",
+      "after": "div.update-body-editor > div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content"
+    },
+    "focus_label": {
+      "before": "HoldSpeak\nGo\nB5 Payments ledger cutover\n\u2192 EXTERNAL REACH ENA",
+      "after": "Update body"
+    },
+    "document_text_sha256": {
+      "before": "56bd07d0d217d2e52f91507f9102d542150b81d33454c730049c1d8b57c73128",
+      "after": "f1eeaea8d0680e18facb5ddb61fad44c5c63c0fd652a43199205621eaad3082d"
+    },
+    "document_text_len": {
+      "before": 573,
+      "after": 1666
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/projects/proj-183583531ef7/updates",
+          "status": 200,
+          "payload": {
+            "updates": []
+          },
+          "body_sha256": "d212f2fe10f7ab99646286081c49e11c4be58bbb3de276bc0c3ae451ef1abcb3"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/projects/proj-183583531ef7/updates",
+          "status": 200,
+          "payload": {
+            "updates": [
+              {
+                "id": "pupd_5afbf411ef6c49cb98780f69cbc28441",
+                "project_id": "proj-183583531ef7",
+                "project_revision": 3,
+                "review_id": null,
+                "lifecycle": "draft",
+                "draft_revision": 1,
+                "body_md": "## Progress\n\n- Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\n\n## Decisions\n\n- Decision: Use the controlled migration window -- active\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\n- Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+                "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:3230f2cc\"],\"section\":\"progress\",\"span_id\":\"s_progress_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\",\"summary\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:3230f2cc\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"decision\",\"refs\":[\"decision:record-a88f8a7b8a384f44\"],\"section\":\"decisions\",\"span_id\":\"s_decisions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"text\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"decision:record-a88f8a7b8a384f44\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Decision: Use the controlled migration window -- active\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"action_item:action_a324abba8c51be002d393557\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"task\",\"owner\",\"status\",\"due\"],\"method\":\"field_mapping\",\"source_refs\":[\"action_item:action_a324abba8c51be002d393557\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"action_item:action_233bbc447535d0280029e25b\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_meeting_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"task\",\"owner\",\"status\",\"due\"],\"method\":\"field_mapping\",\"source_refs\":[\"action_item:action_233bbc447535d0280029e25b\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\"}]",
+                "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"action_item:action_233bbc447535d0280029e25b\",\"action_item:action_a324abba8c51be002d393557\",\"decision:record-a88f8a7b8a384f44\",\"meeting:3230f2cc\"]}",
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "created_at": "2026-10-03T04:09:18+00:00",
+                "updated_at": "2026-10-03T04:09:18+00:00",
+                "published_at": null,
+                "fallback_reason": null,
+                "fallback_receipt": null,
+                "deliveries": [],
+                "generatorHost": null,
+                "generatorModel": null
+              }
+            ]
+          },
+          "body_sha256": "26e969e4d6894f547a28f6d1dc5a63fee14a37d10b9122f67b864f3a2c4155bc"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=update-body-editor]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\nB5 Payments ledger cutover\n\u2192 EXTERNAL REACH ENA",
+    "url": "http://127.0.0.1:62655/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "B5 Payments ledger cutover",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "56bd07d0d217d2e52f91507f9102d542150b81d33454c730049c1d8b57c73128",
+    "document_text_len": 573,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-183583531ef7/updates",
+        "status": 200,
+        "payload": {
+          "updates": []
+        },
+        "body_sha256": "d212f2fe10f7ab99646286081c49e11c4be58bbb3de276bc0c3ae451ef1abcb3"
+      }
+    ],
+    "at_utc": "2026-10-03T04:09:18.381809+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=update-body-editor]",
+    "target_present": true,
+    "text": "B\nI\nU\nH1\nH2\nH3\nList\n1.\n</>\nLink\nQuote\n## Progress\n\n\n- Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\n\n\n## Decisions\n\n\n- Decision: Use the controlled migration window -- active\n\n\n## Risks & Blockers\n\n\nNo risks or blockers in this window.\n\n\n## Dependencies\n\n\nNo dependencies tracked.\n\n\n## Next Actions\n\n\n- Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\n- Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\n\n\n## Source Coverage\n\n\nAll sources consulted successfully.",
+    "attrs": {
+      "class": "update-body-editor",
+      "data-testid": "update-body-editor"
+    },
+    "rect": {
+      "x": 14,
+      "y": 198,
+      "w": 365,
+      "h": 622
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 14,
+        "y": 198,
+        "w": 365,
+        "h": 622
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 59.625,
+          "y": 275.7109375,
+          "owned": true,
+          "owner": "div.update-posture > div.update-editor > div.update-body-editor > div.desk-editor > div.desk-editor-toolbar > button.btn--chrome.desk-chip"
+        },
+        {
+          "x": 59.625,
+          "y": 508.84375,
+          "owned": true,
+          "owner": "div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content > div.cm-line"
+        },
+        {
+          "x": 59.625,
+          "y": 741.9765625,
+          "owned": false,
+          "owner": "div#surface-project-memory > footer.desk-surface-foot.surface-footer > div.surface-footer-layout"
+        },
+        {
+          "x": 196.5,
+          "y": 275.7109375,
+          "owned": true,
+          "owner": "div.update-posture > div.update-editor > div.update-body-editor > div.desk-editor > div.desk-editor-toolbar > button.btn--chrome.desk-chip"
+        },
+        {
+          "x": 196.5,
+          "y": 508.84375,
+          "owned": true,
+          "owner": "div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content > div.cm-line"
+        },
+        {
+          "x": 196.5,
+          "y": 741.9765625,
+          "owned": false,
+          "owner": "div#surface-project-memory > footer.desk-surface-foot.surface-footer > div.surface-footer-layout > div.surface-footer-verbs > button.btn.btn--secondary"
+        },
+        {
+          "x": 333.375,
+          "y": 275.7109375,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.update-posture > div.update-editor > div.update-body-editor > div.desk-editor > div.desk-editor-toolbar"
+        },
+        {
+          "x": 333.375,
+          "y": 508.84375,
+          "owned": true,
+          "owner": "div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content > div.cm-line"
+        },
+        {
+          "x": 333.375,
+          "y": 741.9765625,
+          "owned": false,
+          "owner": "div#surface-project-memory > footer.desk-surface-foot.surface-footer > div.surface-footer-layout > div.surface-footer-verbs > button.btn.btn--primary"
+        }
+      ],
+      "all_owned": false
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div.update-body-editor > div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content",
+    "focus_label": "Update body",
+    "url": "http://127.0.0.1:62655/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "B5 Payments ledger cutover",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "f1eeaea8d0680e18facb5ddb61fad44c5c63c0fd652a43199205621eaad3082d",
+    "document_text_len": 1666,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-183583531ef7/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_5afbf411ef6c49cb98780f69cbc28441",
+              "project_id": "proj-183583531ef7",
+              "project_revision": 3,
+              "review_id": null,
+              "lifecycle": "draft",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\n- Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\n\n## Decisions\n\n- Decision: Use the controlled migration window -- active\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\n- Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:3230f2cc\"],\"section\":\"progress\",\"span_id\":\"s_progress_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\",\"summary\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:3230f2cc\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"decision\",\"refs\":[\"decision:record-a88f8a7b8a384f44\"],\"section\":\"decisions\",\"span_id\":\"s_decisions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"text\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"decision:record-a88f8a7b8a384f44\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Decision: Use the controlled migration window -- active\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"action_item:action_a324abba8c51be002d393557\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"task\",\"owner\",\"status\",\"due\"],\"method\":\"field_mapping\",\"source_refs\":[\"action_item:action_a324abba8c51be002d393557\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"action_item:action_233bbc447535d0280029e25b\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_meeting_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"task\",\"owner\",\"status\",\"due\"],\"method\":\"field_mapping\",\"source_refs\":[\"action_item:action_233bbc447535d0280029e25b\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\"}]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"action_item:action_233bbc447535d0280029e25b\",\"action_item:action_a324abba8c51be002d393557\",\"decision:record-a88f8a7b8a384f44\",\"meeting:3230f2cc\"]}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-03T04:09:18+00:00",
+              "updated_at": "2026-10-03T04:09:18+00:00",
+              "published_at": null,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "26e969e4d6894f547a28f6d1dc5a63fee14a37d10b9122f67b864f3a2c4155bc"
+      }
+    ],
+    "at_utc": "2026-10-03T04:09:19.497581+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/projects/proj-183583531ef7/updates/draft",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/projects/proj-183583531ef7/updates/draft",
+        "status": 200,
+        "body_sha256": "ff941105d4e06e79b68cbc91d3869843340ee5e5cda5691d93570d0aae9f7244",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/projects/proj-183583531ef7/updates/draft"
+      },
+      "why": "chosen by the declared trigger_route POST /api/projects/proj-183583531ef7/updates/draft",
+      "seen": [
+        {
+          "method": "POST",
+          "path": "/api/projects/proj-183583531ef7/updates/draft",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/proj-183583531ef7/updates",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/projects/proj-183583531ef7/updates/draft",
+      "status": 200,
+      "body_sha256": "ff941105d4e06e79b68cbc91d3869843340ee5e5cda5691d93570d0aae9f7244",
+      "body": {
+        "success": true,
+        "update": {
+          "id": "pupd_5afbf411ef6c49cb98780f69cbc28441",
+          "project_id": "proj-183583531ef7",
+          "project_revision": 3,
+          "review_id": null,
+          "lifecycle": "draft",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\n- Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\n\n## Decisions\n\n- Decision: Use the controlled migration window -- active\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\n- Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:3230f2cc\"],\"section\":\"progress\",\"span_id\":\"s_progress_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\",\"summary\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:3230f2cc\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"decision\",\"refs\":[\"decision:record-a88f8a7b8a384f44\"],\"section\":\"decisions\",\"span_id\":\"s_decisions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"text\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"decision:record-a88f8a7b8a384f44\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Decision: Use the controlled migration window -- active\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"action_item:action_a324abba8c51be002d393557\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"task\",\"owner\",\"status\",\"due\"],\"method\":\"field_mapping\",\"source_refs\":[\"action_item:action_a324abba8c51be002d393557\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"action_item:action_233bbc447535d0280029e25b\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_meeting_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"task\",\"owner\",\"status\",\"due\"],\"method\":\"field_mapping\",\"source_refs\":[\"action_item:action_233bbc447535d0280029e25b\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\"}]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"action_item:action_233bbc447535d0280029e25b\",\"action_item:action_a324abba8c51be002d393557\",\"decision:record-a88f8a7b8a384f44\",\"meeting:3230f2cc\"]}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-10-03T04:09:18+00:00",
+          "updated_at": "2026-10-03T04:09:18+00:00",
+          "published_at": null,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generatorHost": null,
+          "generatorModel": null
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/projects/proj-183583531ef7/updates/draft"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=update-body-editor]",
+    "target_present": true,
+    "text": "B\nI\nU\nH1\nH2\nH3\nList\n1.\n</>\nLink\nQuote\n## Progress\n\n\n- Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\n\n\n## Decisions\n\n\n- Decision: Use the controlled migration window -- active\n\n\n## Risks & Blockers\n\n\nNo risks or blockers in this window.\n\n\n## Dependencies\n\n\nNo dependencies tracked.\n\n\n## Next Actions\n\n\n- Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\n- Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\n\n\n## Source Coverage\n\n\nAll sources consulted successfully.",
+    "attrs": {
+      "class": "update-body-editor",
+      "data-testid": "update-body-editor"
+    },
+    "rect": {
+      "x": 14,
+      "y": 198,
+      "w": 365,
+      "h": 622
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 14,
+        "y": 198,
+        "w": 365,
+        "h": 622
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 59.625,
+          "y": 275.7109375,
+          "owned": true,
+          "owner": "div.update-posture > div.update-editor > div.update-body-editor > div.desk-editor > div.desk-editor-toolbar > button.btn--chrome.desk-chip"
+        },
+        {
+          "x": 59.625,
+          "y": 508.84375,
+          "owned": true,
+          "owner": "div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content > div.cm-line"
+        },
+        {
+          "x": 59.625,
+          "y": 741.9765625,
+          "owned": false,
+          "owner": "div#surface-project-memory > footer.desk-surface-foot.surface-footer > div.surface-footer-layout"
+        },
+        {
+          "x": 196.5,
+          "y": 275.7109375,
+          "owned": true,
+          "owner": "div.update-posture > div.update-editor > div.update-body-editor > div.desk-editor > div.desk-editor-toolbar > button.btn--chrome.desk-chip"
+        },
+        {
+          "x": 196.5,
+          "y": 508.84375,
+          "owned": true,
+          "owner": "div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content > div.cm-line"
+        },
+        {
+          "x": 196.5,
+          "y": 741.9765625,
+          "owned": false,
+          "owner": "div#surface-project-memory > footer.desk-surface-foot.surface-footer > div.surface-footer-layout > div.surface-footer-verbs > button.btn.btn--secondary"
+        },
+        {
+          "x": 333.375,
+          "y": 275.7109375,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.update-posture > div.update-editor > div.update-body-editor > div.desk-editor > div.desk-editor-toolbar"
+        },
+        {
+          "x": 333.375,
+          "y": 508.84375,
+          "owned": true,
+          "owner": "div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content > div.cm-line"
+        },
+        {
+          "x": 333.375,
+          "y": 741.9765625,
+          "owned": false,
+          "owner": "div#surface-project-memory > footer.desk-surface-foot.surface-footer > div.surface-footer-layout > div.surface-footer-verbs > button.btn.btn--primary"
+        }
+      ],
+      "all_owned": false
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div.update-body-editor > div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content",
+    "focus_label": "Update body",
+    "url": "http://127.0.0.1:62655/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "B5 Payments ledger cutover",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "f1eeaea8d0680e18facb5ddb61fad44c5c63c0fd652a43199205621eaad3082d",
+    "document_text_len": 1666,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-183583531ef7/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_5afbf411ef6c49cb98780f69cbc28441",
+              "project_id": "proj-183583531ef7",
+              "project_revision": 3,
+              "review_id": null,
+              "lifecycle": "draft",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\n- Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\n\n## Decisions\n\n- Decision: Use the controlled migration window -- active\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\n- Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:3230f2cc\"],\"section\":\"progress\",\"span_id\":\"s_progress_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\",\"summary\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:3230f2cc\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"decision\",\"refs\":[\"decision:record-a88f8a7b8a384f44\"],\"section\":\"decisions\",\"span_id\":\"s_decisions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"text\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"decision:record-a88f8a7b8a384f44\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Decision: Use the controlled migration window -- active\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"action_item:action_a324abba8c51be002d393557\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"task\",\"owner\",\"status\",\"due\"],\"method\":\"field_mapping\",\"source_refs\":[\"action_item:action_a324abba8c51be002d393557\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"action_item:action_233bbc447535d0280029e25b\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_meeting_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"task\",\"owner\",\"status\",\"due\"],\"method\":\"field_mapping\",\"source_refs\":[\"action_item:action_233bbc447535d0280029e25b\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\"}]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"action_item:action_233bbc447535d0280029e25b\",\"action_item:action_a324abba8c51be002d393557\",\"decision:record-a88f8a7b8a384f44\",\"meeting:3230f2cc\"]}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-03T04:09:18+00:00",
+              "updated_at": "2026-10-03T04:09:18+00:00",
+              "published_at": null,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ]
+        },
+        "body_sha256": "26e969e4d6894f547a28f6d1dc5a63fee14a37d10b9122f67b864f3a2c4155bc"
+      }
+    ],
+    "at_utc": "2026-10-03T04:09:19.366747+00:00",
+    "trigger_response_capture": {
+      "rule": "the declared trigger_route POST /api/projects/proj-183583531ef7/updates/draft",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/projects/proj-183583531ef7/updates/draft",
+        "status": 200,
+        "body_sha256": "ff941105d4e06e79b68cbc91d3869843340ee5e5cda5691d93570d0aae9f7244",
+        "source": "ui-network",
+        "chosen_by": "the declared trigger_route POST /api/projects/proj-183583531ef7/updates/draft"
+      },
+      "why": "chosen by the declared trigger_route POST /api/projects/proj-183583531ef7/updates/draft",
+      "seen": [
+        {
+          "method": "POST",
+          "path": "/api/projects/proj-183583531ef7/updates/draft",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/proj-183583531ef7/updates",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/projects/proj-183583531ef7/updates/draft",
+      "status": 200,
+      "body_sha256": "ff941105d4e06e79b68cbc91d3869843340ee5e5cda5691d93570d0aae9f7244",
+      "body": {
+        "success": true,
+        "update": {
+          "id": "pupd_5afbf411ef6c49cb98780f69cbc28441",
+          "project_id": "proj-183583531ef7",
+          "project_revision": 3,
+          "review_id": null,
+          "lifecycle": "draft",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\n- Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\n\n## Decisions\n\n- Decision: Use the controlled migration window -- active\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\n- Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:3230f2cc\"],\"section\":\"progress\",\"span_id\":\"s_progress_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\",\"summary\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:3230f2cc\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Meeting summary: B5 ledger cutover sync -- The ledger cutover is ready for the controlled migration.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"decision\",\"refs\":[\"decision:record-a88f8a7b8a384f44\"],\"section\":\"decisions\",\"span_id\":\"s_decisions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"text\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"decision:record-a88f8a7b8a384f44\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Decision: Use the controlled migration window -- active\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"action_item:action_a324abba8c51be002d393557\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"task\",\"owner\",\"status\",\"due\"],\"method\":\"field_mapping\",\"source_refs\":[\"action_item:action_a324abba8c51be002d393557\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Action: Confirm the migration window -- pending, owner Avery, due 2026-10-06\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"action_item:action_233bbc447535d0280029e25b\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_meeting_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"task\",\"owner\",\"status\",\"due\"],\"method\":\"field_mapping\",\"source_refs\":[\"action_item:action_233bbc447535d0280029e25b\"],\"source_version\":\"project:proj-183583531ef7@r3\"},\"text\":\"Action: Send the rollback checklist -- pending, owner Morgan, due 2026-10-07\"}]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"action_item:action_233bbc447535d0280029e25b\",\"action_item:action_a324abba8c51be002d393557\",\"decision:record-a88f8a7b8a384f44\",\"meeting:3230f2cc\"]}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-10-03T04:09:18+00:00",
+          "updated_at": "2026-10-03T04:09:18+00:00",
+          "published_at": null,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generatorHost": null,
+          "generatorModel": null
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/projects/proj-183583531ef7/updates/draft"
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/projects/proj-183583531ef7/updates/draft answered 200, wanted 200 (body sha256 ff941105d4e0); response body matches its declared fields | text_contains: 'The ledger cutover is ready for the controlled migration.' in observe_at text | text_contains: 'Decision: Use the controlled migration window' in observe_at text | text_contains: 'Action: Confirm the migration window' in observe_at text | text_contains: 'owner Avery' in observe_at text | text_contains: 'Action: Send the rollback checklist' in observe_at text | text_contains: 'owner Morgan' in observe_at text | text_contains: 'All sources consulted successfully.' in observe_at text | protocol_reads: GET /api/projects/proj-183583531ef7/updates answered 200 with 1 row(s) {'generator': 'deterministic', 'lifecycle': 'draft'}",
+    "elapsed_s": 0.938
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/projects/proj-183583531ef7/updates/draft answered 200, wanted 200 (body sha256 ff941105d4e0); response body matches its declared fields | text_contains: 'The ledger cutover is ready for the controlled migration.' in observe_at text | text_contains: 'Decision: Use the controlled migration window' in observe_at text | text_contains: 'Action: Confirm the migration window' in observe_at text | text_contains: 'owner Avery' in observe_at text | text_contains: 'Action: Send the rollback checklist' in observe_at text | text_contains: 'owner Morgan' in observe_at text | text_contains: 'All sources consulted successfully.' in observe_at text | protocol_reads: GET /api/projects/proj-183583531ef7/updates answered 200 with 1 row(s) {'generator': 'deterministic', 'lifecycle': 'draft'}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.066,
+    "first_satisfied_at_s": 0.938,
+    "completion_bound_s": 90.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_status: POST /api/projects/proj-183583531ef7/updates/draft answered 200, wanted 200 (body sha256 ff941105d4e0); response body matches its declared fields | text_contains: 'The ledger cutover is ready for the controlled migration.' in observe_at text | text_contains: 'Decision: Use the controlled migration window' in observe_at text | text_contains: 'Action: Confirm the migration window' in observe_at text | text_contains: 'owner Avery' in observe_at text | text_contains: 'Action: Send the rollback checklist' in observe_at text | text_contains: 'owner Morgan' in observe_at text | text_contains: 'All sources consulted successfully.' in observe_at text | protocol_reads: GET /api/projects/proj-183583531ef7/updates answered 200 with 1 row(s) {'generator': 'deterministic', 'lifecycle': 'draft'}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/projects/proj-183583531ef7/updates/draft",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/projects/proj-183583531ef7/updates/draft",
+      "status": 200,
+      "body_sha256": "ff941105d4e06e79b68cbc91d3869843340ee5e5cda5691d93570d0aae9f7244",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/projects/proj-183583531ef7/updates/draft"
+    },
+    "why": "chosen by the declared trigger_route POST /api/projects/proj-183583531ef7/updates/draft",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/projects/proj-183583531ef7/updates/draft",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-183583531ef7/updates",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    ".tmp/graph-walk/b5/week-393/20261003T040858Z-case.p13.update.linked_week-astra-393/before.png",
+    ".tmp/graph-walk/b5/week-393/20261003T040858Z-case.p13.update.linked_week-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nrr9vkw7/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-nrr9vkw7/.config/holdspeak/config.json",
+    "ENGINE_REPLAY 1f727cd7c540e1db20a3488da217747a439f78383576a6c6ee9c4927cde56d82",
+    "ENGINE_PROVIDER http://127.0.0.1:62656/v1",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"a RECORDED provider reply at the real provider seam\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:62655"
+  ],
+  "duration_s": 21.114
+}
