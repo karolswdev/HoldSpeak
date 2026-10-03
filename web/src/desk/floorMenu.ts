@@ -15,6 +15,7 @@ import {
 } from "./verbRegistry";
 import type { WorkMenuEntry } from "./components/DeskMenu";
 import type { WorldMenuTarget } from "./gl/engine";
+import { qualifiedRef } from "./api";
 
 const FLOOR_CTX: VerbContext = { selectedRef: null };
 
@@ -75,7 +76,9 @@ export function zoneMenuEntries(
   origin: { x: number; y: number },
 ): WorkMenuEntry[] {
   const ctx: VerbContext = {
-    selectedRef: `directory:${target.id}`,
+    // The canonical Zone ref (`zone:<id>`): objectByRef resolves it;
+    // `directory:<id>` resolved nothing and disabled Open (B0-F7).
+    selectedRef: qualifiedRef("directory", target.id),
     origin,
   };
   return ["object.open", "object.info", "zone.focus", "object.rename"]

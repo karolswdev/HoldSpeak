@@ -1669,7 +1669,7 @@
         {
           "path": "web/src/desk/components/DeskWindow.tsx",
           "symbol": "entries={withSendTo(sendToEntry(id), headMenuEntries({",
-          "line": 1011,
+          "line": 1015,
           "claim": "the window menu leads with Send to ▸ from the window's own document"
         },
         {

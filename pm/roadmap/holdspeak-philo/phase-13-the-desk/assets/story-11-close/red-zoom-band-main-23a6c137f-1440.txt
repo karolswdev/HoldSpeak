@@ -1,0 +1,244 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________________ TestTheGadgets.test_gadgets_1440 _______________________
+
+self = <tests.e2e.test_philo13_12_gadgets_glass.TestTheGadgets object at 0x10854b610>
+
+    def test_gadgets_1440(self) -> None:
+        from playwright.sync_api import sync_playwright
+    
+        width = 1440
+        facts: dict[str, Any] = {}
+        fails: dict[str, Any] = {}
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                # G1 on the Chair: Needs you to back, another Chair window is front.
+                needs = page.get_by_role("button", name="To back Needs you")
+                needs.click()
+                st = self._stack(page)
+                facts["chair-after-depth"] = st
+                if _behind(st, "Needs you"):
+                    fails["G1 Chair: depth"] = _behind(st, "Needs you")
+    
+                # Two desk windows: the Room, then Meetings in front.
+                _stage(page, "open-project-memory", "project:p-ledger")
+                page.locator(".desk-dock [aria-label^='Meetings']").first.click()
+                meetings = page.locator(".desk-window-shell[aria-label='Meetings']")
+                meetings.wait_for()
+                st = self._stack(page)
+                if _one_blue(st, "Meetings"):
+                    fails["G1 setup: Meetings front"] = st
+                page.screenshot(path=str(SHOTS / "build-C1-2c-before-depth-1440.png"))
+    
+                # G1 the depth gadget.
+                meetings.get_by_role("button", name="To back Meetings").click()
+                st = self._stack(page)
+                facts["after-depth-gadget"] = st
+                faults = _one_blue(st, ROOM) + _behind(st, "Meetings")
+                if faults:
+                    fails["G1 depth gadget"] = faults
+                page.screenshot(path=str(SHOTS / "build-C1-2c-depth-to-back-1440.png"))
+    
+                # G4 ⌃B: the front window (the Room) goes to the back.
+                page.keyboard.press("Control+b")
+                st = self._stack(page)
+                facts["after-ctrl-b"] = st
+                # Behind every window (the Chair's windows are windows too).
+                faults = _behind(st, ROOM)
+                if faults:
+                    fails["G4 ⌃B runs To back"] = faults
+    
+                # G2 zoom: the two remembered rects. Meetings comes forward
+                # from its Dock AppIcon.
+                page.locator(".desk-dock [aria-label^='Meetings']").first.click()
+                page.wait_for_timeout(300)
+                # The owner arranges Meetings first (a drag of its title bar):
+                # the normal rect is his, and the workspace keeps it.
+                title = meetings.locator(".desk-pullout-title").bounding_box()
+                assert title
+                tx, ty = title["x"] + title["width"] / 2, title["y"] + title["height"] / 2
+                page.mouse.move(tx, ty)
+                page.mouse.down()
+                page.mouse.move(tx + 40, ty + 30, steps=8)
+                page.mouse.up()
+                prior = _rect(self._stack(page), "Meetings")
+                zoom = meetings.get_by_role("button", name="Zoom Meetings")
+                zoom.click()
+                st = self._stack(page)
+                zoomed = _rect(st, "Meetings")
+                if zoom.get_attribute("aria-pressed") != "true" or zoomed == prior:
+                    fails["G2 zoom fills the work band"] = {"prior": prior, "zoomed": zoomed}
+                # PHILO-13-11 close (board C1-2d): the zoomed window fills the
+                # screen between the screen bar and the shelf -- its head flush
+                # under the bar (no window behind peeks above it) and its foot
+                # and sizing gadget clear of the Dock (the 76 px shelf of C3-W).
+                band = page.evaluate("""() => {
+                    const bar = document.querySelector('.desk-menubar').getBoundingClientRect();
+                    const dock = document.querySelector('.desk-dock').getBoundingClientRect();
+                    const win = document.querySelector(".desk-window-shell[aria-label='Meetings']").getBoundingClientRect();
+                    const grip = document.querySelector(".desk-window-shell[aria-label='Meetings'] .desk-window-grip");
+                    const g = grip.getBoundingClientRect();
+                    const hit = document.elementFromPoint(g.left + g.width / 2, g.top + g.height / 2);
+                    return {bar_bottom: Math.round(bar.bottom), dock_top: Math.round(dock.top),
+                            top: Math.round(win.top), bottom: Math.round(win.bottom), grip_owned: grip.contains(hit)};
+                }""")
+                facts["zoom-band"] = band
+                if abs(band["top"] - band["bar_bottom"]) > 2 or band["bottom"] > band["dock_top"] + 1 or not band["grip_owned"]:
+                    fails["G2 zoom fills the screen between the bar and the shelf"] = band
+                page.screenshot(path=str(SHOTS / "build-C1-2d-zoom-1440.png"))
+                # The user sizes the zoomed window: the sizing gadget, dragged.
+                grip = meetings.locator(".desk-window-grip").bounding_box()
+                assert grip, "the zoomed window has no sizing gadget"
+                gx, gy = grip["x"] + grip["width"] / 2, grip["y"] + grip["height"] / 2
+                page.mouse.move(gx, gy)
+                page.mouse.down()
+                page.mouse.move(gx - 240, gy - 160, steps=12)
+                page.mouse.up()
+                sized = _rect(self._stack(page), "Meetings")
+                if sized == zoomed:
+                    fails["G2 the zoomed state resizes"] = {"zoomed": zoomed, "sized": sized}
+                zoom.click()
+                back = _rect(self._stack(page), "Meetings")
+                if back != prior:
+                    fails["G2 zoom back restores the exact prior rect"] = {"prior": prior, "back": back}
+                zoom.click()
+                again = _rect(self._stack(page), "Meetings")
+                if again != sized:
+                    fails["G2 zoom again restores the remembered zoomed rect"] = {"sized": sized, "again": again}
+                doc = page.evaluate(DOC_JS) or {}
+                panel = doc.get("panel", {})
+                mid = next((k for k in (panel.get("zoom") or {}) if "meeting" in k.lower()), None)
+                facts["workspace-panel"] = panel
+                if not mid or mid not in panel.get("rects", {}) or mid not in panel.get("max", []):
+                    fails["G2 both rects in the workspace document"] = panel
+                # Each survives a reload: Meetings comes back zoomed at the
+                # remembered zoomed rect, and zooms back to the prior rect.
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                meetings.wait_for()
+                page.wait_for_timeout(800)
+                reloaded = _rect(self._stack(page), "Meetings")
+                if reloaded != sized or zoom.get_attribute("aria-pressed") != "true":
+                    fails["G2 the zoomed rect survives a reload"] = {"sized": sized, "reloaded": reloaded}
+                # G4 ⌃M: zoom back by key.
+                page.keyboard.press("Control+m")
+                page.wait_for_timeout(300)
+                if zoom.get_attribute("aria-pressed") != "false" or _rect(self._stack(page), "Meetings") != prior:
+                    fails["G4 ⌃M runs Zoom"] = _rect(self._stack(page), "Meetings")
+    
+                # G3 the right button in the BODY of Meetings (the front window).
+                box = meetings.bounding_box()
+                assert box
+                page.mouse.click(box["x"] + box["width"] * 0.5, box["y"] + box["height"] * 0.55, button="right")
+                page.locator(".desk-head-menu").first.wait_for()
+                self._check_menu(page, "Meetings", width, facts, fails)
+                page.locator(".desk-head-menu [role^='menuitem']", has_text="Desk").first.hover()
+                page.wait_for_timeout(400)
+                page.screenshot(path=str(SHOTS / "build-C1-2b-window-menu-amiga-keys-1440.png"))
+                # The submenu sits beside its panel, never over it.
+                over = page.evaluate("""() => { const [p, sb] = [...document.querySelectorAll('.desk-menu-list')].map((m) => m.getBoundingClientRect());
+                  return sb ? (sb.left < p.right - 1 && sb.right > p.left + 1) : null; }""")
+                if over is not False:
+                    fails["G3 Desk ▸ opens beside the menu, not over it"] = over
+                sub = page.locator(".desk-work-submenu [role^='menuitem']").all_inner_texts()
+                facts["desk-submenu"] = sub
+                if not any("New Note" in s for s in sub):
+                    fails["G3 Desk ▸ carries the registry verbs"] = sub
+                page.keyboard.press("Escape")
+                page.keyboard.press("Escape")
+    
+                # G4 the other shortcuts, each by its verb's effect.
+                page.keyboard.press("Meta+k")
+                ok_k = page.locator("#desk-palette-listbox").is_visible()
+                page.keyboard.press("Escape")
+                page.keyboard.press("Meta+/")
+                page.wait_for_timeout(300)
+                ok_sheet = page.locator(".desk-shortcut-sheet").is_visible()
+                page.keyboard.press("Escape")
+                page.keyboard.press("Control+ArrowUp")
+                page.wait_for_timeout(400)
+                ok_expose = page.locator(".desk-expose").count() > 0
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(300)
+                facts["keys"] = {"⌘K": ok_k, "⌘/": ok_sheet, "⌃↑": ok_expose}
+                for k, ok in facts["keys"].items():
+                    if not ok:
+                        fails[f"G4 {k} runs its verb"] = False
+                # ⌘M iconifies the front window; its Dock chip brings it back.
+                front = next(w["name"] for w in self._stack(page)["wins"] if w["front"])
+                page.keyboard.press("Meta+m")
+                page.wait_for_timeout(600)
+                if any(w["name"] == front for w in self._stack(page)["wins"]):
+                    fails["G4 ⌘M runs Iconify"] = front
+                # ⌘W closes the front window.
+                st = self._stack(page)
+                front = next((w["name"] for w in st["wins"] if w["front"]), None)
+                page.keyboard.press("Meta+w")
+                page.wait_for_timeout(600)
+                if front and any(w["name"] == front for w in self._stack(page)["wins"]):
+                    fails["G4 ⌘W runs Close window"] = front
+                # ⌘N makes a note (the one create path).
+                before = len(self._notes(page))
+                page.keyboard.press("Meta+n")
+                page.wait_for_timeout(1200)
+                if len(self._notes(page)) != before + 1:
+                    fails["G4 ⌘N runs New Note"] = {"before": before, "after": len(self._notes(page))}
+    
+                facts["errors"] = [e for e in errors if "ResizeObserver" not in e]
+                facts["failures"] = fails
+                (SHOTS / "gadget-facts-1440.json").write_text(json.dumps(facts, indent=2, ensure_ascii=False) + "\n")
+                assert not facts["errors"], facts["errors"]
+>               assert not fails, json.dumps(fails, indent=2, ensure_ascii=False)
+E               AssertionError: {
+E                   "G2 zoom fills the screen between the bar and the shelf": {
+E                     "bar_bottom": 28,
+E                     "dock_top": 824,
+E                     "top": 54,
+E                     "bottom": 848,
+E                     "grip_owned": false
+E                   },
+E                   "G2 the zoomed state resizes": {
+E                     "zoomed": [
+E                       10,
+E                       54,
+E                       1420,
+E                       794
+E                     ],
+E                     "sized": [
+E                       10,
+E                       54,
+E                       1420,
+E                       794
+E                     ]
+E                   },
+E                   "G2 both rects in the workspace document": {
+E                     "rects": {
+E                       "surface-meetings": {
+E                         "x": 790,
+E                         "y": 229,
+E                         "w": 640,
+E                         "h": 619
+E                       }
+E                     },
+E                     "order": [
+E                       "surface-project-memory",
+E                       "chair:brief",
+E                       "chair:week",
+E                       "chair:capture",
+E                       "chair:needs",
+E                       "surface-meetings"
+E                     ],
+E                     "max": [
+E                       "surface-meetings"
+E                     ]
+E                   }
+E                 }
+E               assert not {'G2 both rects in the workspace document': {'max': ['surface-meetings'], 'order': ['surface-project-memory', 'chair:b...he screen between the bar and the shelf': {'bar_bottom': 28, 'bottom': 848, 'dock_top': 824, 'grip_owned': False, ...}}
+
+tests/e2e/test_philo13_12_gadgets_glass.py:370: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_philo13_12_gadgets_glass.py::TestTheGadgets::test_gadgets_1440
+1 failed in 24.44s
