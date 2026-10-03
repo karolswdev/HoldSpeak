@@ -54,5 +54,6 @@ Grounding size: not sized as one move. PROVISIONAL.
 
 ## Notes
 
+- 2026-10-02 — canvas drawn for the owner's ruling, NOT RATIFIED: `assets/story-17-canvas/` (README lists the boards, the acceptance line each answers, the forks and the limits; it includes the owner's ruling that an arriving aftercare card opens Capture at 393). Drawn by a Fedaykin on main `76c361537`; unchecked, awaiting Astra's check, then the owner.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

@@ -74,6 +74,7 @@ Grounding size: M (`grounding/faces-jobs.md:155`; `grounding/structure.md:304`).
 
 ## Notes
 
+- 2026-10-02 — canvas drawn for the owner's ruling, NOT RATIFIED: `assets/story-15-canvas/` (README lists the boards, the acceptance line each answers, the forks and the limits). Drawn by a Fedaykin on main `76c361537` (the C1 frame and C2 window menu built); unchecked, awaiting Astra's check, then the owner.
 - 2026-10-01 — `web/src/meetings/MeetingSendWell.tsx` and `web/src/desk/components/DeskMenuBar.tsx` are not named in PROPOSAL §4's map; assigned to this lane (status file, "File ownership").
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
