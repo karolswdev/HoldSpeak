@@ -109,15 +109,15 @@ export function readDestinations(): Promise<void> {
 const factKey = (kind: "meeting" | "project", id: string) => `${kind}:${id}`;
 const factOfKey = <T,>(k: string): Fact<T> => (S.facts.get(k) as Fact<T> | undefined) ?? { state: "unread" };
 
-/** The latest published update: the greatest `published_at`; on a tie, the
- *  first the hub lists (the tie rule, Muad'Dib 2026-09-30; the read's own
- *  order is handoff H-C5). */
-export function latestPublished(updates: { id: unknown; lifecycle?: unknown; status?: unknown; published_at?: unknown }[]): string | null {
-  const list = updates
-    .map((u, i) => ({ u, i }))
-    .filter(({ u }) => (u.lifecycle ?? u.status) === "published")
-    .sort((a, b) => String(b.u.published_at ?? "").localeCompare(String(a.u.published_at ?? "")) || a.i - b.i);
-  return list.length ? String(list[0].u.id) : null;
+/** The latest published update, as the hub names it (H-C5, #752): the read
+ *  carries `latest_published_update_id` (published_at DESC, rowid DESC; null
+ *  = none). The face applies no rule of its own. An answer without the field
+ *  is not a known value: the read failed. */
+export function latestPublished(body: Record<string, unknown>): { known: true; id: string | null } | { known: false } {
+  const v = body.latest_published_update_id;
+  if (v === null) return { known: true, id: null };
+  if (typeof v === "string" && v) return { known: true, id: v };
+  return { known: false };
 }
 
 /** Read one fact. A known value stays shown while it is read again; an
@@ -137,7 +137,8 @@ export function readFact(kind: "meeting" | "project", id: string): Promise<void>
         const intel = (b.intel ?? {}) as Record<string, unknown>;
         S.facts.set(k, { state: "known", value: !!String(intel.summary ?? b.summary ?? "").trim() });
       } else {
-        S.facts.set(k, { state: "known", value: latestPublished((b.updates ?? []) as never[]) });
+        const latest = latestPublished(b);
+        S.facts.set(k, latest.known ? { state: "known", value: latest.id } : { state: "failed" });
       }
     })
     .catch(() => { S.facts.set(k, { state: "failed" }); })

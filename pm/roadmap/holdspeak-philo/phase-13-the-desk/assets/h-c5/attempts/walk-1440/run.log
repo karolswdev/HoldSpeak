@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: fc12a18d56868fc95a3310eb9cf99c0421a25730 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-h-c5.json
+RUNTIME: build=['index-mWEQn6_e.js'] hub=http://127.0.0.1:62064 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0t_ze4aj/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p9
+VERDICT: blocked terminal=None
+EVIDENCE: []
+NOTE: BLOCKED: headless mode refuses UI/face steps: no Page is opened

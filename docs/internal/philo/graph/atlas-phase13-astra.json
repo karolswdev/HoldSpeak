@@ -2599,7 +2599,7 @@
           "observe_at": ".desk-dock",
           "predicate": {
             "kind": "text_absent",
-            "value": "SEND FAILED"
+            "value": "FAILED"
           },
           "timeout_s": 5,
           "why": "The result mark is absent before Send."
@@ -2626,7 +2626,7 @@
           "predicates": [
             {
               "kind": "readable_text",
-              "value": "SEND FAILED"
+              "value": "FAILED"
             },
             {
               "kind": "op_facts",
@@ -4961,25 +4961,25 @@
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "roadmapWindows.map",
-          "line": 269,
+          "line": 277,
           "claim": "Roadmap windows mount in the Desk compositor."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "repositoryWindows.map",
-          "line": 276,
+          "line": 284,
           "claim": "Repository windows mount in the Desk compositor."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "DeliveryDossierWindow",
-          "line": 267,
+          "line": 275,
           "claim": "The Delivery dossier mounts in the Desk."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "DeliveryTerminalWindow",
-          "line": 268,
+          "line": 276,
           "claim": "The Delivery terminal mounts in the Desk."
         },
         {

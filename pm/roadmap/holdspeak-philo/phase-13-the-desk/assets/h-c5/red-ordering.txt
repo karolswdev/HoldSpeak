@@ -1,0 +1,102 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+_ TestLatestPublishedOrdering.test_no_published_update_is_null_and_draft_order_is_preserved _
+
+self = <tests.integration.test_update_routes.TestLatestPublishedOrdering object at 0x10ebf5950>
+rig = (<holdspeak.db.core.Database object at 0x10eb778c0>, <starlette.testclient.TestClient object at 0x10ef7ef90>)
+
+    def test_no_published_update_is_null_and_draft_order_is_preserved(self, rig) -> None:
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-order-drafts")
+    
+        empty = client.get(f"/api/projects/{pid}/updates")
+        assert empty.status_code == 200
+>       assert empty.json() == {
+            "updates": [],
+            "latest_published_update_id": None,
+        }
+E       AssertionError: assert {'updates': []} == {'latest_publ...'updates': []}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Right contains 1 more item:
+E         {'latest_published_update_id': None}
+E         Use -v to get more diff
+
+tests/integration/test_update_routes.py:260: AssertionError
+_ TestLatestPublishedOrdering.test_same_second_equal_revision_uses_later_rowid _
+
+self = <tests.integration.test_update_routes.TestLatestPublishedOrdering object at 0x10ebf5e50>
+rig = (<holdspeak.db.core.Database object at 0x10eed1d10>, <starlette.testclient.TestClient object at 0x10f03b4d0>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ef82650>
+
+    def test_same_second_equal_revision_uses_later_rowid(self, rig, monkeypatch) -> None:
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-order-tie")
+        _set_update_clock(monkeypatch, "2026-07-01T10:00:00")
+    
+        first = _draft(client, pid)
+        first_published = _publish(client, first["id"])
+        second = _draft(client, pid)
+        second_published = _publish(client, second["id"])
+        assert first_published["draft_revision"] == second_published["draft_revision"] == 1
+        assert first_published["published_at"] == second_published["published_at"]
+    
+        first_rowid = _rowid(db, first["id"])
+        second_rowid = _rowid(db, second["id"])
+        assert second_rowid > first_rowid
+    
+        response = client.get(f"/api/projects/{pid}/updates")
+        assert response.status_code == 200
+        body = response.json()
+>       assert [row["id"] for row in body["updates"][:2]] == [
+            second["id"], first["id"],
+        ]
+E       AssertionError: assert ['pupd_859a3b...ed3ca13a44c6'] == ['pupd_40b948...84510f9c2d26']
+E         
+E         At index 0 diff: 'pupd_859a3b27ad4f4035aadc84510f9c2d26' != 'pupd_40b948703c0c43a59fd4ed3ca13a44c6'
+E         Use -v to get more diff
+
+tests/integration/test_update_routes.py:309: AssertionError
+_ TestLatestPublishedOrdering.test_published_at_beats_draft_revision_for_later_revision_one _
+
+self = <tests.integration.test_update_routes.TestLatestPublishedOrdering object at 0x10ec3d6e0>
+rig = (<holdspeak.db.core.Database object at 0x10f190550>, <starlette.testclient.TestClient object at 0x10f1f0910>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f1bfe30>
+
+    def test_published_at_beats_draft_revision_for_later_revision_one(self, rig, monkeypatch) -> None:
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-order-published-at")
+    
+        _set_update_clock(monkeypatch, "2026-08-01T12:00:00")
+        first = _draft(client, pid)
+        second = _regenerate(client, first["id"])
+        third = _regenerate(client, second["id"])
+        assert third["draft_revision"] == 3
+        high_revision = _publish(client, third["id"])
+    
+        # This publication is inserted later but has the later timestamp and
+        # starts at revision 1 after the first row is already published.
+        _set_update_clock(monkeypatch, "2026-08-02T12:00:00")
+        later = _draft(client, pid)
+        assert later["draft_revision"] == 1
+        later_published = _publish(client, later["id"])
+        assert high_revision["published_at"] < later_published["published_at"]
+        assert _rowid(db, later["id"]) > _rowid(db, high_revision["id"])
+    
+        response = client.get(f"/api/projects/{pid}/updates")
+        assert response.status_code == 200
+        body = response.json()
+>       assert [row["id"] for row in body["updates"][:2]] == [
+            later["id"], high_revision["id"],
+        ]
+E       AssertionError: assert ['pupd_72956a...219e2731fa2c'] == ['pupd_2f3a8e...21a706aac0be']
+E         
+E         At index 0 diff: 'pupd_72956a76686c4412864b21a706aac0be' != 'pupd_2f3a8e73a563413f8e6fa6e0a202bf07'
+E         Use -v to get more diff
+
+tests/integration/test_update_routes.py:347: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/test_update_routes.py::TestLatestPublishedOrdering::test_no_published_update_is_null_and_draft_order_is_preserved
+FAILED tests/integration/test_update_routes.py::TestLatestPublishedOrdering::test_same_second_equal_revision_uses_later_rowid
+FAILED tests/integration/test_update_routes.py::TestLatestPublishedOrdering::test_published_at_beats_draft_revision_for_later_revision_one
+3 failed in 1.39s

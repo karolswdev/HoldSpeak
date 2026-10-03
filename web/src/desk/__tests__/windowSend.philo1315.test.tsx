@@ -21,7 +21,7 @@ vi.mock("../../pages/cores/connections/api", async () => {
 });
 
 import {
-  SEND_TO, latestPublished, pickFor, primeSendTo, readDestinations, resetSendTo, sendToEntry, withSendTo,
+  SEND_TO, latestPublished, pickFor, primeSendTo, readDestinations, resetSendTo, sendToEntry, windowDoc, withSendTo,
 } from "../windowSend";
 import { SendWells, pickDestination, pickedDestination, resetSendStore } from "../surface/send";
 import { MeetingSendWell } from "../../meetings/MeetingSendWell";
@@ -125,7 +125,7 @@ describe("the reads: CHECKING, CAN'T CHECK, OFFLINE, a known absence", () => {
 
   it("the Room with no published update: withheld", async () => {
     useDesk.setState({ windowsById: { "surface-project-memory": { id: "surface-project-memory", kind: "surface", applicationKey: "project-memory", scope: "project:p2", persistence: "workspace" } } } as never);
-    routes["GET /api/projects/p2/updates"] = () => ({ updates: [{ id: "u1", lifecycle: "draft", published_at: null }] });
+    routes["GET /api/projects/p2/updates"] = () => ({ updates: [{ id: "u1", lifecycle: "draft", published_at: null }], latest_published_update_id: null });
     await readDestinations();
     primeSendTo("surface-project-memory");
     await settle();
@@ -145,32 +145,36 @@ describe("the reads: CHECKING, CAN'T CHECK, OFFLINE, a known absence", () => {
     expect(labels(e)).toEqual(["Team updates · FILE"]);
   });
 
-  // H-C5 (open, Astra's lane): the tie rule is "the greatest published_at, then
-  // the greatest rowid". The read (holdspeak/db/updates.py list_updates) orders
-  // by draft_revision DESC, created_at DESC and carries no rowid, so the face
-  // CANNOT apply the rowid half. The interim rule takes the greatest
-  // published_at and, on a tie, the FIRST row the hub lists: it ASSUMES the
-  // producer lists the later insert first. These cases state that assumption;
-  // they prove nothing about the hub. When Astra's read orders by
-  // published_at DESC, rowid DESC, the tie case becomes a glass fence through
-  // the real routes (two publishes inside one second) and this file switches
-  // to it.
+  // H-C5 (#752): the hub names the latest published update in the read
+  // (`latest_published_update_id`: published_at DESC, then rowid DESC; null =
+  // none). The face takes that field and applies no rule of its own. The
+  // same-second tie through the real routes is fenced in the glass
+  // (tests/e2e/test_philo13_15_send_to_glass.py, the tie case).
   const SAME_SECOND = "2026-10-02T09:00:00";
-  const pub = (id: string, published_at: string | null, lifecycle = "published") => ({ id, lifecycle, published_at });
+  const row = (id: string, rev: number) => ({ id, lifecycle: "published", published_at: SAME_SECOND, draft_revision: rev });
 
-  it("the greatest published_at wins, wherever the hub lists it", () => {
-    expect(latestPublished([pub("u0", "2026-10-01T09:00:00"), pub("u2", SAME_SECOND), pub("u3", null, "draft")])).toBe("u2");
-    expect(latestPublished([pub("u2", SAME_SECOND), pub("u0", "2026-10-01T09:00:00")])).toBe("u2");
-    expect(latestPublished([pub("u0", "2026-10-01", "superseded")])).toBeNull();
+  it("a same-second tie: the window links the update the hub NAMES, not the first row or the highest revision", async () => {
+    useDesk.setState({ windowsById: { "surface-project-memory": { id: "surface-project-memory", kind: "surface", applicationKey: "project-memory", scope: "project:pt", persistence: "workspace" } } } as never);
+    // The list's first row and the highest revision are both `high`; the hub names `later`.
+    routes["GET /api/projects/pt/updates"] = () => ({ updates: [row("high", 3), row("later", 1)], latest_published_update_id: "later" });
+    await readDestinations();
+    primeSendTo("surface-project-memory");
+    await settle();
+    expect(sub(sendToEntry("surface-project-memory")).label).toBe(SEND_TO.label);
+    expect(windowDoc("surface-project-memory")).toMatchObject({ kind: "project", id: "pt", update: { state: "known", value: "later" } });
+    expect(latestPublished({ updates: [row("high", 3), row("later", 1)], latest_published_update_id: "later" })).toEqual({ known: true, id: "later" });
   });
 
-  it("a same-second tie follows the PRODUCER'S ORDER (the interim assumption, not the tie rule)", () => {
-    // The answer is whichever the hub listed first: swap the list, the answer swaps.
-    expect(latestPublished([pub("later", SAME_SECOND), pub("earlier", SAME_SECOND)])).toBe("later");
-    expect(latestPublished([pub("earlier", SAME_SECOND), pub("later", SAME_SECOND)])).toBe("earlier");
+  it("null names no published update (withheld); a read without the field is a failed read (CAN'T CHECK)", async () => {
+    expect(latestPublished({ updates: [], latest_published_update_id: null })).toEqual({ known: true, id: null });
+    expect(latestPublished({ updates: [row("u1", 1)] })).toEqual({ known: false });
+    useDesk.setState({ windowsById: { "surface-project-memory": { id: "surface-project-memory", kind: "surface", applicationKey: "project-memory", scope: "project:px", persistence: "workspace" } } } as never);
+    routes["GET /api/projects/px/updates"] = () => ({ updates: [row("u1", 1)] });
+    await readDestinations();
+    primeSendTo("surface-project-memory");
+    await settle();
+    expect(sub(sendToEntry("surface-project-memory")).label).toBe(SEND_TO.cantCheck);
   });
-
-  it.todo("H-C5: two publishes inside one second through the real routes; the read names the later insert (after Astra's read fix)");
 });
 
 describe("the push seam and the pick", () => {

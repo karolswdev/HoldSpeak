@@ -256,6 +256,7 @@ class TestSendToGlass:
         _ensure_build()
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
         self.server, self.base, self.home = server, base, tmp_path / "home"
+        self.monkeypatch = monkeypatch
         from holdspeak.db import get_database
 
         self.db = get_database()
@@ -426,6 +427,55 @@ class TestSendToGlass:
         """Astra C5 check, condition 2: a REAL FILE send of the summary, its answer held; he
         switches to Digest; the answer is released. The window still shows the summary's result."""
         self._session(width, lambda si, folder: self._form_switch_mid_send(si, folder))
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_the_same_second_tie_links_the_later_publication(self, width: int) -> None:
+        """H-C5 (#752): two publications inside ONE second through the real routes (draft,
+        regenerate, publish; then draft, publish). The higher draft revision is the earlier
+        insert. The hub names the later insert in `latest_published_update_id`; Send to ▸
+        from the Room opens THAT update's well."""
+        self._session(width, lambda si, folder: self._same_second_tie(si))
+
+    def _same_second_tie(self, si: StandIns) -> None:
+        import holdspeak.db.updates as updates_db
+
+        page = self.page
+        instant = (datetime.now() + timedelta(days=1)).replace(microsecond=0).astimezone()
+
+        class _OneSecond:                       # the repository's clock, frozen on one second
+            @staticmethod
+            def now(tz: Any = None) -> datetime:
+                return instant.replace(tzinfo=None) if tz is None else instant.astimezone(tz)
+
+        real_clock = updates_db.datetime
+        self.monkeypatch.setattr(updates_db, "datetime", _OneSecond)
+        post = lambda path, body=None: _api(page, "POST", path, body or {}, token=TOKEN)["update"]  # noqa: E731
+        first = post("/api/projects/p-ledger/updates/draft", {"generator": "deterministic"})
+        high = post(f"/api/updates/{first['id']}/regenerate", {"generator": "deterministic"})
+        high = post(f"/api/updates/{high['id']}/publish")
+        later = post("/api/projects/p-ledger/updates/draft", {"generator": "deterministic"})
+        later = post(f"/api/updates/{later['id']}/publish")
+        self.monkeypatch.setattr(updates_db, "datetime", real_clock)   # only the clock (undo() would also undo the rig's HOME)
+        assert high["published_at"] == later["published_at"], (high["published_at"], later["published_at"])
+        assert high["draft_revision"] > later["draft_revision"], (high, later)
+        with self.db._connection() as conn:
+            rowid = dict(conn.execute("SELECT id, rowid FROM project_updates WHERE id IN (?, ?)", (high["id"], later["id"])).fetchall())
+        assert rowid[later["id"]] > rowid[high["id"]], rowid
+        read = _api(page, "GET", "/api/projects/p-ledger/updates", token=TOKEN)
+        assert read["latest_published_update_id"] == later["id"], read["latest_published_update_id"]
+
+        self._open_surface("open-project-memory", "project:p-ledger", ROOM)
+        assert self._send_to(ROOM) == "Send to"
+        self._pick("Team updates")
+        well = page.locator(f"[id='{ROOM}'] [data-testid=send-well][data-doc='project_update:{later['id']}']")
+        well.locator("[data-testid=send-open] [data-testid=send-preview]").wait_for(timeout=T)
+        assert page.locator(f"[id='{ROOM}'] [data-testid=send-well][data-doc='project_update:{high['id']}']").count() == 0
+        self._wait(900)
+        self._glass("C5-19")
+        self._shot("C5-19-same-second-tie-later-publication")
+        assert self._db_sends(f"project_update:{later['id']}") == []
 
     def _session(self, width: int, run: Any, *, adjacent: bool = False) -> None:
         from playwright.sync_api import sync_playwright
