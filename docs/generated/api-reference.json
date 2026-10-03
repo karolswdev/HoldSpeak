@@ -5750,6 +5750,7 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/e2e/test_philo13_11_chair_glass.py",
+        "tests/e2e/test_philo13_11_titlebar_glass.py",
         "tests/e2e/test_philo13_13_dock_glass.py",
         "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/e2e/test_philo13_15_send_to_glass.py",
@@ -5820,6 +5821,7 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/e2e/test_philo13_11_chair_glass.py",
+        "tests/e2e/test_philo13_11_titlebar_glass.py",
         "tests/e2e/test_philo13_13_dock_glass.py",
         "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/e2e/test_philo13_15_send_to_glass.py",
@@ -16331,7 +16333,9 @@
       ],
       "source": "holdspeak/web/routes/follow_through.py",
       "handler_evidence": [],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/e2e/test_philo13_09_prep_glass.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -26191,10 +26195,12 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26228,10 +26234,12 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26265,9 +26273,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26301,9 +26311,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26337,9 +26349,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26373,9 +26387,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26409,9 +26425,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26445,9 +26463,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26481,9 +26501,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26517,9 +26539,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26553,9 +26577,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26589,9 +26615,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26625,9 +26653,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26661,9 +26691,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26697,9 +26729,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -26733,9 +26767,11 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
-        "tests/unit/test_people_routes.py"
+        "tests/unit/test_people_routes.py",
+        "tests/unit/test_philo13_b4_prep.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -37126,6 +37162,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_calendar_settings.py",
@@ -37253,6 +37290,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_calendar_settings.py",
@@ -38836,8 +38874,10 @@
         "tests/e2e/test_philo13_05_close_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
         "tests/e2e/test_philo13_08_decide_glass.py",
+        "tests/e2e/test_philo13_09_prep_glass.py",
         "tests/e2e/test_philo13_11_chair_glass.py",
         "tests/e2e/test_philo13_11_frame_glass.py",
+        "tests/e2e/test_philo13_11_titlebar_glass.py",
         "tests/e2e/test_philo13_12_gadgets_glass.py",
         "tests/e2e/test_philo13_13_dock_glass.py",
         "tests/e2e/test_philo13_14_palette_glass.py",

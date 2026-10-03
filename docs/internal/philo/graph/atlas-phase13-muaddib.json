@@ -1513,6 +1513,132 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.p13.people.prep_link",
+      "job": "j7",
+      "edge_ids": [
+        "edge.face.people_prep"
+      ],
+      "state_id": "state.people.p13_prep_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub with the B4 real producer refs (seed_people_prep); nothing is linked until his press, at 1440 and 393."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before the People producer."
+        },
+        {
+          "kind": "cli",
+          "action": "seed_people_prep",
+          "capture_as": "people",
+          "adapter": "people-prep-producer",
+          "why": "Mint the calendar, meeting, People, project, alias, and agenda through their real producers in the run-owned HOME."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "people"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-deck-row[id=\"desk-palette-option-desk.open-people\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": "#surface-people",
+          "state": "visible",
+          "timeout_s": 15
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "#surface-people button:has-text(\"Priya Sharma\")"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "tab",
+          "name": "Prep"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": "[data-testid=\"prep-link-suggestion\"]",
+          "state": "visible",
+          "timeout_s": 15
+        },
+        {
+          "kind": "check",
+          "observe_at": "[data-testid=\"prep-owed\"]",
+          "predicate": {
+            "kind": "readable_text",
+            "value": "Send the dry-run report"
+          },
+          "timeout_s": 10,
+          "capture_shot": true,
+          "why": "Prep shows what Priya owes from the meeting before he links the 1:1."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Link this 1:1"
+      },
+      "expected": {
+        "observe_at": "[data-testid=\"people-next-1on1\"]",
+        "predicate": {
+          "kind": "readable_text",
+          "value": "NEXT 1:1"
+        },
+        "words": "Prep offers the calendar 1:1 whose title holds Priya's alias; his press on Link this 1:1 links it through the existing route, and NEXT 1:1 shows with a formatted time."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
     }
   ],
   "states": [
@@ -1829,6 +1955,44 @@
       ],
       "reachable_by": [
         "case.p13.palette.draft_update"
+      ]
+    },
+    {
+      "id": "state.people.p13_prep_face",
+      "family": "briefs",
+      "values": {
+        "lifecycle": "real ICS suggestion, Prep, his press on Link this 1:1, NEXT 1:1",
+        "truth": "the suggestion links nothing by itself; Prep shows the agenda, what the report owes and her projects"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "function LinkSuggestions(",
+          "line": 575,
+          "claim": "A calendar event whose title holds the alias shows with a library Link this 1:1 Button; the press calls the existing calendar-links route."
+        },
+        {
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "function NextOneOnOneSide(",
+          "line": 612,
+          "claim": "The Now side reads the linked 1:1 with the header's formatter; a failed brief read is a named failure with Try again."
+        },
+        {
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "function shortDay(",
+          "line": 561,
+          "claim": "A date-only deadline stays its calendar day in the desk's zone."
+        },
+        {
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "data-testid=\"people-next-1on1\"",
+          "line": 353,
+          "claim": "NEXT 1:1 reads the hub's linked event through one formatter."
+        }
+      ],
+      "reachable_by": [
+        "case.p13.people.prep_link"
       ]
     }
   ],

@@ -15,6 +15,7 @@ is Astra's (H-B0b); this lane adds no ``.op`` sibling.
 * PHILO-13-14 (C4): ``case.p13.palette.person_opens_her_window``,
   ``case.p13.palette.prep_one_on_one``, ``case.p13.palette.thought_word_finds_it``,
   ``case.p13.palette.send_opens_preview``, ``case.p13.palette.draft_update``
+* PHILO-13-09 (B4-W): ``case.p13.people.prep_link``
 """
 from __future__ import annotations
 
@@ -43,6 +44,7 @@ CASES = {
     "case.p13.palette.thought_word_finds_it",  # PHILO-13-14
     "case.p13.palette.send_opens_preview",  # PHILO-13-14
     "case.p13.palette.draft_update",  # PHILO-13-14
+    "case.p13.people.prep_link",  # PHILO-13-09 (B4-W)
 }
 
 GENERAL = [
@@ -96,13 +98,13 @@ def test_the_file_validates_against_the_atlas_schema(atlas: dict) -> None:
 def test_the_lane_case_count_and_names(atlas: dict) -> None:
     ids = {case["id"] for case in atlas["cases"]}
     assert ids == CASES
-    assert len(atlas["cases"]) == 11
+    assert len(atlas["cases"]) == 12
     # No `.op` sibling here: the shared count at test_philo_graph_atlas.py:492
     # stays Astra's (H-B0b).
     assert not [i for i in ids if i.endswith(".op") or i.endswith(".op.replayed")]
 
 
-def test_both_cases_are_face_cases_at_both_widths(atlas: dict) -> None:
+def test_every_case_is_a_face_case_at_both_widths(atlas: dict) -> None:
     for case in atlas["cases"]:
         assert case["applicability"] == "applicable", case["id"]
         assert sorted(case["viewports"]) == [393, 1440], case["id"]

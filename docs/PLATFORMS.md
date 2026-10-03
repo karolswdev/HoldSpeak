@@ -318,6 +318,11 @@ Missing shards: **none**.
 | `project.update.linked_week` | `linux_wayland` | unknown | built_unreleased |
 | `project.update.linked_week` | `linux_x11` | unknown | built_unreleased |
 | `project.update.linked_week` | `macos` | unknown | built_unreleased |
+| `people.prep.read` | `aipi` | unknown | partial |
+| `people.prep.read` | `ipad` | unknown | partial |
+| `people.prep.read` | `linux_wayland` | unknown | partial |
+| `people.prep.read` | `linux_x11` | unknown | partial |
+| `people.prep.read` | `macos` | unknown | partial |
 | `agents.thread_persistent` | `aipi` | not_applicable | experimental |
 | `agents.thread_persistent` | `ipad` | best_effort | experimental |
 | `agents.thread_persistent` | `linux_wayland` | degraded | experimental |

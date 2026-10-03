@@ -1041,6 +1041,88 @@
       "evidence_level": "tests_executed",
       "release_availability": "unverified",
       "owner_observed": false
+    },
+    {
+      "id": "people.prep.read",
+      "name": "Read 1:1 preparation",
+      "purpose": "Read a report's linked 1:1, agenda, project and owned meeting actions.",
+      "domain": "desk",
+      "status": "partial",
+      "status_reason": "H-B4 data is implemented and tested; B4-W face wiring remains with the faces lane.",
+      "exposure": "user",
+      "surfaces": [
+        "People Prep data"
+      ],
+      "entry_points": [
+        "holdspeak/services/people_service.py::PeopleService.one_on_one_brief"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "relationship id",
+        "saved aliases",
+        "calendar links"
+      ],
+      "outputs": [
+        "calendar suggestions",
+        "next event",
+        "agenda",
+        "owned actions",
+        "projects"
+      ],
+      "persistence": [],
+      "apis": [
+        "GET /api/people/relationships/{relationship_id}/brief"
+      ],
+      "configuration": [],
+      "dependencies": [
+        "PeopleService",
+        "encrypted People store"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "The owner reads the encrypted People relationship and stored calendar, project and meeting context. A suggested calendar link needs explicit confirmation.",
+      "egress_possible": false,
+      "egress": "The brief read sends no data off device.",
+      "side_effect": "none",
+      "authority": "The People owner route admits the read.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/services/people_service.py",
+          "symbol": "PeopleService.one_on_one_brief",
+          "line": 373,
+          "claim": "The transient brief includes the linked calendar event, saved agenda, alias-owned meeting actions and projects."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_philo13_b4_prep.py",
+          "node": "test_brief_suggests_alias_event_without_linking_and_returns_next_prep_data",
+          "assertion": "Real ICS, meeting and People producers yield a suggestion, confirmed event and the report-owned open actions; completed and parked work stays out.",
+          "execution": "passed"
+        }
+      ],
+      "docs": [
+        "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-09-b4-the-one-on-one-finds-its-person.md"
+      ],
+      "limitations": [
+        "B4-W must wire PeopleCore before the story is done.",
+        "Muad'Dib has not checked this candidate."
+      ],
+      "failure_states": [
+        "People store unavailable",
+        "Plaintext context unavailable"
+      ],
+      "replacement": null,
+      "evidence_level": "tests_executed",
+      "release_availability": "unverified",
+      "owner_observed": false
     }
   ],
   "components": [

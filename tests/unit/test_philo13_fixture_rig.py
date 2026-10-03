@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import json
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -299,6 +300,7 @@ def test_hub_environment_and_teardown_never_use_inherited_tmux_socket(
     env = rig._isolated_hub_env(tmp_path, inherited=inherited)
     assert env["HOME"] == str(tmp_path)
     assert env["TMUX_TMPDIR"] == str(tmp_path)
+    assert env["HOLDSPEAK_PEOPLE_KEYSTORE_FILE"] == str(tmp_path / "people.key")
     assert "TMUX" not in env and "TMUX_PANE" not in env
 
     calls: list[dict[str, object]] = []
@@ -315,7 +317,48 @@ def test_hub_environment_and_teardown_never_use_inherited_tmux_socket(
     assert calls[0]["command"] == ["tmux", "kill-server"]
     kill_env = calls[0]["env"]
     assert kill_env["TMUX_TMPDIR"] == str(tmp_path)
+    assert kill_env["HOLDSPEAK_PEOPLE_KEYSTORE_FILE"] == str(tmp_path / "people.key")
     assert "TMUX" not in kill_env and "TMUX_PANE" not in kill_env
+
+
+def test_seed_people_prep_runs_the_real_fixture_in_the_owned_key_world(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rig = _rig()
+    hub = _Hub(tmp_path)
+    provenance: dict[str, object] = {"fixture_hashes": {}, "hub": {"pid": 11}}
+    variables: dict[str, object] = {}
+    ids = {
+        "relationship_id": "relationship",
+        "event_id": "event",
+        "event_uid": "uid",
+        "event_source_id": "source",
+        "event_title": "1:1 Priya / Karol",
+        "project_id": "project",
+        "meeting_id": "meeting",
+        "session_id": "session",
+        "action_id": "action",
+    }
+
+    def fake_run(command, **kwargs):
+        assert command[2] == "seed"
+        assert kwargs["env"]["HOLDSPEAK_PEOPLE_KEYSTORE_FILE"] == str(tmp_path / "people.key")
+        return subprocess.CompletedProcess(
+            command, 0, stdout=json.dumps({
+                "schema": "philo13-b4-people-prep@1", "ids": ids,
+            }), stderr="",
+        )
+
+    monkeypatch.setattr(rig.subprocess, "run", fake_run)
+    record = rig._seed_people_prep_step(
+        {"kind": "cli", "action": "seed_people_prep", "capture_as": "people"},
+        None, hub, provenance, variables,
+    )
+
+    assert record["action"] == "seed_people_prep"
+    assert variables["people_relationship_id"] == "relationship"
+    assert variables["people_event_uid"] == "uid"
+    assert hub.restarts == 1
 
 
 def test_hub_tmux_teardown_does_not_mislabel_permission_error_as_no_server(

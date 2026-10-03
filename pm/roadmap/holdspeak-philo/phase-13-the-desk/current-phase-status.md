@@ -141,7 +141,7 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | PHILO-13-06 | B1 — One open grammar | done | [story-06-b1-one-open-grammar](./story-06-b1-one-open-grammar.md) | [evidence-story-06](./evidence-story-06.md) |
 | PHILO-13-07 | B2 — The Desk remembers | backlog | [story-07-b2-the-desk-remembers](./story-07-b2-the-desk-remembers.md) | — |
 | PHILO-13-08 | B3 — Decide where the meeting is | done | [story-08-b3-decide-where-the-meeting-is](./story-08-b3-decide-where-the-meeting-is.md) | [evidence-story-08](./evidence-story-08.md) |
-| PHILO-13-09 | B4 — The 1:1 finds its person | backlog | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | — |
+| PHILO-13-09 | B4 — The 1:1 finds its person | done | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | [evidence-story-09](./evidence-story-09.md) |
 | PHILO-13-10 | B5 — The update writes the week | done | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | [evidence-story-10](./evidence-story-10.md) |
 | PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | done | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | [evidence-story-11](./evidence-story-11.md) |
 | PHILO-13-12 | C2 — The gadgets that are missing | done | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | [evidence-story-12](./evidence-story-12.md) |
@@ -329,3 +329,8 @@ Astra r2 (`checks/charter-astra-r2.md`): r1's five fixes present; three conditio
 H-C3 / #744 (integrated through main `e9b01e227` / C6): Muad'Dib MERGE-WITH-CONDITIONS; C1 and C2 paid under the owner's single-pass merge instruction. READY is durable and unseen, clears on open, and stays clear after reload. [Lane report, proof and full failure ledger](lane-13-astra.md). Eight condition walks pass at 1440/393. Full-suite failures are classified, with two Dock clipping cases assigned to C3-W. C3-W retains CSS, SENT time and Chair's Dock-press timer. Story 13 stays in-progress. H-B4 / #742 was rebased and pushed as `f9106fd9`; it remains open for B4-W and must not merge alone.
 
 2026-10-03: H-rig-clearof counsel and mechanical integration are recorded in [the lane report](lane-rig-clearof-astra.md). Muad'Dib homes the remaining 393 arrival face fix to PHILO-13-17/C7.
+## Wave 2 — H-B4 candidate, 2026-10-03
+
+H-B4 is DRAFT, UNCHECKED — awaiting Muad'Dib. [Lane report and B4-W contract](lane-09-astra.md). The live brief read passes; Prep at both widths still omits the report-owned action and project. Story 09 stays in-progress until B4-W and counsel are complete.
+
+H-B4 #742: mechanical rebase onto `76c361537` verified with 156 tests. Remains open for B4-W; story 09 is in-progress. See [lane report](lane-09-astra.md).
