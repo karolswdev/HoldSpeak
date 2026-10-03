@@ -11145,7 +11145,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "!briefLoading && !brief",
-          "line": 1199,
+          "line": 1204,
           "claim": "the Chair draws 'No brief yet' and Generate only when the read ANSWERED null (a failed read takes the branch above it, PHILO-3-03)"
         }
       ],
@@ -11164,13 +11164,13 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setBriefLoading",
-          "line": 486,
+          "line": 481,
           "claim": "the Chair starts with briefLoading true"
         },
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "SurfaceState",
-          "line": 303,
+          "line": 300,
           "claim": "the Brief pull-out draws the loading state first"
         }
       ],
@@ -11189,13 +11189,13 @@
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "generating",
-          "line": 311,
+          "line": 308,
           "claim": "the pull-out's verb reads Generating... while the POST is in flight"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "generating",
-          "line": 672,
+          "line": 631,
           "claim": "the Chair's head Generate is disabled and GENERATING… holds the status slot in flight (PHILO-4-01)"
         }
       ],
@@ -11214,7 +11214,7 @@
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "SurfaceState",
-          "line": 305,
+          "line": 302,
           "claim": "a failed read draws the error state with a Retry"
         }
       ],
@@ -11233,7 +11233,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setGenerateFailed",
-          "line": 641,
+          "line": 488,
           "claim": "the Chair names a failed generation BRIEF DID NOT GENERATE · <cause> in the status slot, no Retry (PHILO-4-01)"
         }
       ],
@@ -11258,7 +11258,7 @@
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "is_empty",
-          "line": 313,
+          "line": 310,
           "claim": "the pull-out draws No changes for an empty brief"
         },
         {
@@ -11289,7 +11289,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefItems",
-          "line": 772,
+          "line": 777,
           "claim": "the Chair reads items only from a brief that is not empty"
         }
       ],
@@ -11309,7 +11309,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "arrival-brief",
-          "line": 1258,
+          "line": 171,
           "claim": "a brief with nothing untriaged keeps its own section, headline and Generate after a reload (the quiet branch)"
         }
       ],
@@ -11336,7 +11336,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefShelf",
-          "line": 780,
+          "line": 785,
           "claim": "the Chair's untriaged list is the items with no shelf key"
         }
       ],
@@ -11430,7 +11430,7 @@
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "person-sections-unavailable",
-          "line": 456,
+          "line": 455,
           "claim": "the face draws that unavailability"
         }
       ],
@@ -11760,7 +11760,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "hasTranscript",
-          "line": 2250,
+          "line": 2287,
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
       ],
@@ -13369,13 +13369,13 @@
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "setSelectedId",
-          "line": 163,
+          "line": 160,
           "claim": "the Brief pull-out holds one selected item"
         },
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "selectedPerson",
-          "line": 487,
+          "line": 488,
           "claim": "the selection decides which verbs the foot carries"
         }
       ],
@@ -13454,13 +13454,13 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "re-reads",
-          "line": 583,
+          "line": 577,
           "claim": "the Chair is a face that re-reads on arrival"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "apiFetch",
-          "line": 489,
+          "line": 18,
           "claim": "the brief read is one of those re-reads"
         }
       ],

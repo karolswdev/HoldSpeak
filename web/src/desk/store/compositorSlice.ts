@@ -152,7 +152,10 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
         if (!open.some((p) => p.id === id))
           set({ pullouts: [...open, { id, origin: origin ?? null }] });
         set({ editingId: null });
-        get().focusPanel(`pullout:${id}`);
+        // PHILO-13-06 (B1): an open asks for the window in front, also when
+        // it sits iconified on its Dock chip (393: a Chair window iconifies
+        // the desk windows), never a press that leaves it hidden.
+        get().restorePanel(`pullout:${id}`);
         break;
       }
       case "window": {
@@ -255,7 +258,8 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
         [application.windowId]: instance,
       },
     });
-    get().focusPanel(application.windowId);
+    // PHILO-13-06 (B1): in front, also from its Dock chip (iconified).
+    get().restorePanel(application.windowId);
     if (application.surface.maximized && !get().panelMax.includes(application.windowId))
       get().toggleMaximizePanel(application.windowId);
   },

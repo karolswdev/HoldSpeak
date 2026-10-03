@@ -1,0 +1,135 @@
+{
+ "width": 1440,
+ "touch": false,
+ "row_taps": 4,
+ "frame_taps": 0,
+ "dead": 0,
+ "steps": [
+  {
+   "what": "brief row -> the decision",
+   "dead": false,
+   "front": [
+    "Adopt OpenTelemetry for all services"
+   ],
+   "opened": [
+    "Adopt OpenTelemetry for all services"
+   ]
+  },
+  {
+   "what": "commitment row -> its person",
+   "dead": false,
+   "front": [
+    "People"
+   ],
+   "opened": [
+    "People"
+   ]
+  },
+  {
+   "what": "1:1 row -> Priya on Prep",
+   "dead": false,
+   "front": [
+    "People"
+   ],
+   "opened": []
+  },
+  {
+   "what": "calendar row -> its Room",
+   "dead": false,
+   "front": [
+    "Payments ledger cutover"
+   ],
+   "opened": [
+    "Payments ledger cutover"
+   ]
+  }
+ ],
+ "lens_after_1on1": "Prep",
+ "j1_gestures": 3,
+ "reopen_prep": {
+  "lens_after_now": "Now",
+  "row_taps": 1,
+  "frame_taps": 0,
+  "dead": 0,
+  "steps": [
+   {
+    "what": "1:1 row again -> Prep",
+    "dead": false,
+    "front": [
+     "People"
+    ],
+    "opened": []
+   }
+  ],
+  "lens": "Prep"
+ },
+ "room_step": {
+  "what": "calendar row -> its Room",
+  "dead": false,
+  "front": [
+   "Payments ledger cutover"
+  ],
+  "opened": [
+   "Payments ledger cutover"
+  ]
+ },
+ "j3": {
+  "row_taps": 1,
+  "frame_taps": 0,
+  "dead": 0,
+  "steps": [
+   {
+    "what": "J3: 1:1 row -> Priya on Prep",
+    "dead": false,
+    "front": [
+     "People"
+    ],
+    "opened": [
+     "People"
+    ]
+   }
+  ],
+  "windows_before": [
+   "Needs you",
+   "Brief",
+   "The week",
+   "Capture"
+  ],
+  "lens": "Prep"
+ },
+ "intel_people": 1,
+ "intelligence": {
+  "row_taps": 1,
+  "frame_taps": 0,
+  "dead": 0,
+  "steps": [
+   {
+    "what": "Intelligence BRIEF row -> the decision",
+    "dead": false,
+    "front": [
+     "Adopt OpenTelemetry for all services"
+    ],
+    "opened": [
+     "Adopt OpenTelemetry for all services"
+    ]
+   }
+  ]
+ },
+ "intel_footer": "SELECTED \u00b7 REVIEW DECISION",
+ "brief_people": {
+  "row_taps": 1,
+  "frame_taps": 0,
+  "dead": 0,
+  "steps": [
+   {
+    "what": "Brief -> Open person",
+    "dead": false,
+    "front": [
+     "People"
+    ],
+    "opened": []
+   }
+  ]
+ },
+ "errors": []
+}

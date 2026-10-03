@@ -265,7 +265,9 @@ describe("BriefView person sections", () => {
     });
     fireEvent.click(screen.getByTestId("verb-open-person"));
 
-    expect(openSurfaceOr).toHaveBeenCalledWith("people", "/people", "rel-ewa");
+    // PHILO-13-06 (B1): the key that dispatches (`open-people`) on that
+    // relationship's scope; the old key `people` dispatched nowhere.
+    expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:rel-ewa");
   });
 
   it("receipt items still show Acknowledge/Defer/Speak verbs", async () => {

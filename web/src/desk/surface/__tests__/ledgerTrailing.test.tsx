@@ -5,7 +5,7 @@ import { SurfaceLedger, SurfaceLedgerRow } from "../Surface";
 
 describe("SurfaceLedgerRow trailing prop", () => {
   it("renders a trailing slot after cells", () => {
-    render(
+    const { container } = render(
       <SurfaceLedger count="ITEMS 2">
         <SurfaceLedgerRow
           primary="Deploy pipeline"
@@ -15,7 +15,8 @@ describe("SurfaceLedgerRow trailing prop", () => {
       </SurfaceLedger>,
     );
     expect(screen.getByTestId("trailing-chevron")).toBeInTheDocument();
-    const line = screen.getByRole("button");
+    // PHILO-13-06 (B1): a row with no open has no button role (inert).
+    const line = container.querySelector(".surface-ledger-line");
     expect(line).toHaveAttribute("data-has-trailing", "true");
   });
 

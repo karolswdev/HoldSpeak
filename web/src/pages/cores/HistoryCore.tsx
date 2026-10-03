@@ -8,8 +8,21 @@ import { Button } from "../../components/signal/Signal";
 import { apiFetch, apiBlob, readableError } from "../../lib/api";
 import { asRows } from "../pageSupport";
 import { useResource } from "../pageSupport";
-import { ConfirmVerb, SurfaceSplit } from "../../desk/surface/Surface";
-import { countToken } from "../../desk/surface";
+import { SurfaceSplit } from "../../desk/surface/Surface";
+import {
+  countToken,
+  ParkReceipt,
+  ParkedStrip,
+  parkClock,
+  parkedOutcome,
+  restoredOutcome,
+  restoreFailedOutcome,
+  notParkedOutcome,
+  type ParkOutcome,
+  type ParkedRow,
+} from "../../desk/surface";
+import { fetchParkedMeetings, parkMeeting, restoreMeeting } from "../../desk/api";
+import { writeFailureReason } from "../../desk/hooks/useWriteReceipt";
 import { EgressChip, StringGadget, CheckGadget } from "../../desk/surface/gadgets";
 import { StateChip } from "../../desk/surface/patterns/StateChip";
 import {
@@ -26,7 +39,7 @@ import { useRuntimeBus, useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { onReturnToTask } from "../../desk/returnToTask";
 import { renderHeroSlot } from "./core-layout";
 import {
-  WINGS, clockTime, download, needsIntelligence, summaryIsOff, meetingsHeadline,
+  WINGS, clockTime, ledgerDate, download, needsIntelligence, summaryIsOff, meetingsHeadline,
   hasOpenMeetingActions,
   type Receipt, type DetailView,
   MeetingDetail, ImportSection, CatalogRail, DoorSection,
@@ -45,7 +58,14 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const wings = useCoreWings(WINGS, "outcomes", "Meeting plumbing");
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
-  const [removing, setRemoving] = useState(false);
+  // PHILO-13-02 (A1-F): Park, never delete. One press, no confirm (Restore
+  // undoes it); the outcome is a receipt in the footer's receipt slot.
+  const [parking, setParking] = useState(false);
+  const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
+  const [parked, setParked] = useState<ParkedRow[]>([]);
+  const [parkedOn, setParkedOn] = useState(false);
+  const [restoredId, setRestoredId] = useState<string | null>(null);
+  const parkTimes = useRef(new Map<string, string>());
   const [openedRequestedMeetingId, setOpenedRequestedMeetingId] = useState<
     string | null
   >(null);
@@ -115,6 +135,33 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     () => asRows(meetings.data, ["meetings"]),
     [meetings.data],
   );
+
+  // PHILO-13-02: the parked meetings, read through H-A1's client. A row
+  // parked here shows its park time; one parked earlier shows its date.
+  const loadParked = useCallback(async () => {
+    try {
+      const rows = await fetchParkedMeetings();
+      setParked(
+        rows.map((m) => ({
+          id: m.id,
+          title: m.title,
+          at: parkTimes.current.get(m.id) ?? ledgerDate(m.startedAt),
+        })),
+      );
+    } catch {
+      // The strip keeps its last read; the list's own state says the rest.
+    }
+  }, []);
+  useEffect(() => {
+    void loadParked();
+  }, [loadParked, meetings.data]);
+  useEffect(() => {
+    if (!parked.length) setParkedOn(false);
+  }, [parked.length]);
+  // A later receipt (export, queued run) takes the slot from the park outcome.
+  useEffect(() => {
+    if (receipt) setParkOutcome(null);
+  }, [receipt]);
 
   // HS-201-11: the HAS OPEN ACTIONS facet is drawn only when an open
   // action exists for it to find. `/api/all-action-items` already reaches
@@ -456,29 +503,47 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       });
     }
   };
-  const removeSelected = async () => {
+  // PHILO-13-02 (A1-F) — Park and Restore (C1-5a–e).
+  const showParkOutcome = (outcome: ParkOutcome) => {
+    setReceipt(null);
+    setParkOutcome(outcome);
+  };
+  const parkSelected = async () => {
     if (!selected) return;
-    setRemoving(true);
+    const id = String(selected.id);
+    setParking(true);
     try {
-      await apiFetch(`/api/meetings/${encodeURIComponent(String(selected.id))}`, {
-        method: "DELETE",
-      });
+      await parkMeeting(id);
+      const at = parkClock();
+      parkTimes.current.set(id, at);
       setSelected(null);
-      setReceipt({ text: `DELETED ${clockTime(new Date().toISOString())}` });
+      showParkOutcome(parkedOutcome([id], at));
       void meetings.reload();
+      void loadParked();
     } catch (reason) {
-      setReceipt({
-        text: `REFUSED · ${readableError(reason)}`,
-        tone: "danger",
-      });
+      showParkOutcome(notParkedOutcome(writeFailureReason(reason)));
     } finally {
-      setRemoving(false);
+      setParking(false);
+    }
+  };
+  const restoreParked = async (ids: string[]) => {
+    try {
+      await Promise.all(ids.map((id) => restoreMeeting(id)));
+      for (const id of ids) parkTimes.current.delete(id);
+      showParkOutcome(restoredOutcome(ids));
+      setParkedOn(false);
+      setRestoredId(ids[ids.length - 1] ?? null);
+      void meetings.reload();
+      void loadParked();
+    } catch {
+      showParkOutcome(restoreFailedOutcome(ids));
     }
   };
 
   const rail = (
     <CatalogRail
       meetingRows={meetingRows}
+      restoredId={restoredId}
       meetings={meetings}
       selected={selected}
       setSelected={setSelected}
@@ -604,10 +669,20 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         </div>
       ) : null}
 
+      {/* PHILO-13-02: the PARKED token (absent at zero); on, the parked
+          rows take the list's place, each with Restore. */}
+      <ParkedStrip
+        rows={parked}
+        on={parkedOn}
+        onToggle={setParkedOn}
+        onRestore={(ids) => void restoreParked(ids)}
+        data-testid="meetings-parked"
+      />
+
       {/* The stream + detail split */}
       <div className="surface-split-railed">
         <SurfaceSplit
-          main={rail}
+          main={parkedOn ? null : rail}
           detailOpen={Boolean(selected)}
           detail={detailPane("outcomes")}
         />
@@ -633,15 +708,23 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       {reviewOwnsFooter ? null : <SurfaceFooter
         egress={footerEgress}
         receipt={
-          <span
-            className="surface-footer-receipt-line"
-            data-tone={receipt?.tone}
-            role="status"
-          >
-            {receipt
-              ? receipt.text
-              : countToken(meetingRows.length, "RECORD") ?? "RECORDS"}
-          </span>
+          parkOutcome ? (
+            <ParkReceipt
+              outcome={parkOutcome}
+              onRestore={(ids) => void restoreParked(ids)}
+              data-testid="meetings-park-receipt"
+            />
+          ) : (
+            <span
+              className="surface-footer-receipt-line"
+              data-tone={receipt?.tone}
+              role="status"
+            >
+              {receipt
+                ? receipt.text
+                : countToken(meetingRows.length, "RECORD") ?? "RECORDS"}
+            </span>
+          )
         }
         verbs={
           selected && wings.view !== "record" ? (
@@ -652,12 +735,14 @@ export function HistoryCore({ hero, scope }: CoreProps) {
               <Button dense variant="ghost" onClick={() => void exportMeeting("srt")}>
                 SRT
               </Button>
-              <ConfirmVerb
-                label="Delete"
-                confirmLabel="Delete?"
-                busy={removing}
-                onConfirm={() => void removeSelected()}
-              />
+              <Button
+                dense
+                variant="ghost"
+                disabled={parking}
+                onClick={() => void parkSelected()}
+              >
+                Park
+              </Button>
             </span>
           ) : null
         }

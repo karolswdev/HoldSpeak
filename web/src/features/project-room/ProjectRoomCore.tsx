@@ -49,6 +49,7 @@ import { onReturnToTask, rememberTaskFocus } from "../../desk/returnToTask";
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
+import { refOpener } from "../../desk/openObject";
 import { useDesk } from "../../desk/store";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type {
@@ -1956,6 +1957,7 @@ interface HistoryEntry {
   time: string;
   source: string;
   occurredAt: string;
+  targetRef: string | null;
 }
 
 const HISTORY_FILTERS = [
@@ -1976,6 +1978,7 @@ function changeToHistoryEntry(c: RoomChangeRow): HistoryEntry {
     time: c.occurredAt ? formatTimeShort(c.occurredAt) : "",
     source,
     occurredAt: c.occurredAt || "",
+    targetRef: c.targetRef ?? null,
   };
 }
 
@@ -2063,14 +2066,32 @@ function HistoryWing({
         {days.map((day) => (
           <SurfaceStreamDay key={day.label} label={day.label}>
             {day.entries.map((entry) => (
-              <SurfaceStreamEntry key={entry.id} when={entry.time} dense>
-                <span data-testid="history-entry">{entry.phrase}</span>
-              </SurfaceStreamEntry>
+              <HistoryEntryRow key={entry.id} entry={entry} />
             ))}
           </SurfaceStreamDay>
         ))}
       </SurfaceStream>
     </div>
+  );
+}
+
+/** PHILO-13-06 (B1): an activity row opens the object it touched; a row
+ *  about the Room itself names nothing to open and draws no verb. */
+function HistoryEntryRow({ entry }: { entry: HistoryEntry }) {
+  // A change to the Room itself (`project:<id>`) opens what is already open.
+  const open = entry.targetRef?.startsWith("project:") ? null : refOpener(entry.targetRef);
+  return (
+    <SurfaceStreamEntry
+      when={entry.time}
+      dense
+      verbs={open ? (
+        <Button dense variant="ghost" onClick={open} aria-label={`Open: ${entry.phrase}`} data-testid="history-entry-open">
+          Open
+        </Button>
+      ) : undefined}
+    >
+      <span data-testid="history-entry">{entry.phrase}</span>
+    </SurfaceStreamEntry>
   );
 }
 
@@ -2301,7 +2322,12 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
       ) : loading ? (
         <div className="room-loading"><p className="room-empty-line">Loading…</p></div>
       ) : ctrl.error ? (
-        <div className="room-error"><p className="room-empty-line">{ctrl.error}</p></div>
+        // PHILO-13-04 ledger, paid in B1: a plain failure name and Try again,
+        // never the hub's own text (plainFailure in the controller).
+        <div className="room-error" role="alert" data-testid="room-load-failed">
+          <span className="surface-token" data-chip>{ctrl.error}</span>
+          <Button dense variant="primary" onClick={handleRefresh} data-testid="room-load-retry">Try again</Button>
+        </div>
       ) : null}
       <SurfaceFooter
         receipt={footerReceipt}

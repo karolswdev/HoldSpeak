@@ -135,6 +135,16 @@ export {
   type ProjectButtonProps,
   LedgerRemainder,
   type LedgerRemainderProps,
+  ParkReceipt,
+  ParkedStrip,
+  parkClock,
+  parkedOutcome,
+  restoredOutcome,
+  restoreFailedOutcome,
+  notParkedOutcome,
+  RESTORE_REFUSED,
+  type ParkOutcome,
+  type ParkedRow,
 } from "./patterns";
 
 export { MicButton, type MicState } from "./controls/MicButton";

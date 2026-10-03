@@ -6,6 +6,7 @@ import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch } from "../../lib/api";
 import { plainFailure } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
+import { PERSON_OPEN_EVENT, type PersonOpenRequest } from "../../desk/openObject";
 import { announceTaskReturn, taskFocusPending } from "../../desk/returnToTask";
 import { CycleGadget, EgressChip, PadGadget, StringGadget } from "../../desk/surface/gadgets";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
@@ -161,6 +162,18 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const requestedRelationshipId = relationshipScope?.includes(":") ? relationshipScope.split(":")[0] : relationshipScope;
   const requestedLens = relationshipScope?.includes(":") ? relationshipScope.split(":")[1] as Lens : null;
   const [projectFilter, setProjectFilter] = useState<string | null>(requestedProjectId);
+  // PHILO-13-06 (Astra's pass): each explicit open is a request; a repeat
+  // open with the same scope re-applies its lens (Prep → Now → Prep again).
+  const [lensRequest, setLensRequest] = useState<{ lens: Lens; seq: number } | null>(null);
+  useEffect(() => {
+    const onOpen = (event: Event) => {
+      const request = (event as CustomEvent<PersonOpenRequest>).detail;
+      if (!request?.lens) return;
+      setLensRequest({ lens: request.lens as Lens, seq: request.seq });
+    };
+    window.addEventListener(PERSON_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(PERSON_OPEN_EVENT, onOpen);
+  }, []);
 
   const clearProtected = useCallback(() => {
     setRelationships([]);
@@ -271,7 +284,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     <SurfaceSplit
       detailOpen={Boolean(selected)}
       main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} projectFilter={projectFilter} onClearProjectFilter={() => setProjectFilter(null)} />}
-      detail={selected ? <RelationshipPane relationship={selected} initialLens={requestedLens} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); }} /> : undefined}
+      detail={selected ? <RelationshipPane relationship={selected} initialLens={requestedLens} lensRequest={lensRequest} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); }} /> : undefined}
     />
   </div>;
 }
@@ -303,8 +316,12 @@ function Roster({ relationships, selectedId, newName, setNewName, newKind, setNe
 /** HS-172-05: concern focus for Now wing opened from Prep summary rows. */
 type NowConcern = "prs" | "assignments" | "commitments" | null;
 
-function RelationshipPane({ relationship, initialLens, onRefresh, onProtectedFailure, onArchived, onBack }: { relationship: RelationshipDetail; initialLens?: Lens | null; onRefresh(): void; onProtectedFailure(cause: unknown): void; onArchived(): void; onBack(): void }) {
+function RelationshipPane({ relationship, initialLens, lensRequest = null, onRefresh, onProtectedFailure, onArchived, onBack }: { relationship: RelationshipDetail; initialLens?: Lens | null; lensRequest?: { lens: Lens; seq: number } | null; onRefresh(): void; onProtectedFailure(cause: unknown): void; onArchived(): void; onBack(): void }) {
   const [lens, setLens] = useState<Lens>(initialLens || "now");
+  // PHILO-13-06 (B1): a row that opens this person on a lens (a 1:1 → Prep)
+  // moves the open window to that lens.
+  useEffect(() => { if (initialLens) setLens(initialLens); }, [initialLens]);
+  useEffect(() => { if (lensRequest) setLens(lensRequest.lens); }, [lensRequest]);
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
   const [nowConcern, setNowConcern] = useState<NowConcern>(null);
   const [prepBrief, setPrepBrief] = useState<OneOnOneBrief | null>(null);

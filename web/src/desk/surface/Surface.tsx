@@ -776,7 +776,7 @@ export function SurfaceLedger({
   // HS-111-08 — roving focus is kit law: ONE Tab stop for the whole
   // ledger, arrows walk rows; every consumer inherits (audit §3.1).
   const rootRef = useRef<HTMLDivElement>(null);
-  useRovingRows(rootRef, { selector: ".surface-ledger-line" });
+  useRovingRows(rootRef, { selector: ".surface-ledger-line:not([data-inert])" });
   return (
     <div ref={rootRef} className="surface-ledger" data-cols={cols}>
       <div className="surface-ledger-head">
@@ -837,6 +837,7 @@ export function SurfaceLedgerRow({
   children?: ReactNode;
   "data-testid"?: string;
 }) {
+  const inert = !onToggle && !onLineKeyDown && !onLineContextMenu;
   return (
     <li className="surface-ledger-row" data-open={open || undefined} data-wrap={wrap || undefined}>
       {/* HS-200-42 (counsel F3 — a SPECIES fix, not a face fix): the line
@@ -849,13 +850,17 @@ export function SurfaceLedgerRow({
        *  identical class, grid slot and CSS (`.surface-ledger-line` resets
        *  border/background/font, so no pixel moves), and the trailing slot
        *  swallows its own clicks and keys. */}
+      {/* PHILO-13-06 (B1): a line with no `onToggle` opens nothing, so it
+       *  draws no open (A.11): no button role, no tab stop, no pointer, no
+       *  hover band (`data-inert`, surface.css). Its trailing verbs stay. */}
       <div
-        role="button"
-        tabIndex={0}
+        role={inert ? undefined : "button"}
+        tabIndex={inert ? undefined : 0}
         className="surface-ledger-line"
         data-testid={dataTestId}
+        data-inert={inert || undefined}
         data-has-trailing={trailing != null || undefined}
-        aria-expanded={expands ? open || false : undefined}
+        aria-expanded={expands && !inert ? open || false : undefined}
         aria-label={lineLabel}
         onClick={onToggle}
         onKeyDown={(e) => {

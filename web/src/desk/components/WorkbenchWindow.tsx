@@ -28,18 +28,32 @@ import {
   updateWorkbenchField,
   addWorkbenchItem,
   updateWorkbenchItem,
-  deleteWorkbenchItem,
+  parkWorkbenchItem,
+  parkWorkbenchItems,
+  restoreWorkbenchItems,
+  fetchParkedWorkbenchItems,
   triggerWorkbenchRun,
   clearWorkbenchMemory,
   promoteMemoryToSkill,
   retryMint,
 } from "../api";
 import { usePrimitiveDetail } from "../hooks/usePrimitiveDetail";
-import { useUndoReceipt } from "../hooks/useUndoReceipt";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useWriteReceipt, type WriteAttempt } from "../hooks/useWriteReceipt";
 import { boundaryEgressLamp } from "../inferenceEgress";
-import { apiRequest } from "../../lib/api";
+import { ApiError, apiRequest } from "../../lib/api";
+import { Button } from "../../components/signal/Signal";
+import {
+  ParkReceipt,
+  ParkedStrip,
+  parkClock,
+  parkedOutcome,
+  restoredOutcome,
+  restoreFailedOutcome,
+  notParkedOutcome,
+  type ParkOutcome,
+  type ParkedRow,
+} from "../surface";
 
 /** HS-151-07: inlined from the retired chat.ts — recipe keep is not a thread
  * operation; the /api/recipes/{id}/keep route lives on independently. */
@@ -606,8 +620,11 @@ function WorkbenchItemCard({
   onRemove,
   onCopy,
   write,
+  restored = false,
 }: {
   item: WorkbenchItem;
+  /** PHILO-13-02 — the item Restore just brought back: in view, marked. */
+  restored?: boolean;
   expanded: boolean;
   recipeId: string | null;
   workbenchId: string;
@@ -620,6 +637,10 @@ function WorkbenchItemCard({
   write: WriteAttempt;
 }) {
   const chip = STATUS_CHIPS[item.status] || STATUS_CHIPS.pending;
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (restored) cardRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [restored]);
   const egressLamp = item.result_egress?.boundary
     ? boundaryEgressLamp(item.result_egress.boundary)
     : null;
@@ -712,7 +733,12 @@ function WorkbenchItemCard({
   const legacyKeep = item.status === "done" && !!item.result && !hasMintedArtifact && !item.mint_attempted;
 
   return (
-    <div className="wb-card" data-status={item.status}>
+    <div
+      ref={cardRef}
+      className="wb-card"
+      data-status={item.status}
+      data-restored={restored || undefined}
+    >
       {/* ── head line ──────────────────────────────────────────── */}
       <button
         type="button"
@@ -903,22 +929,16 @@ function WorkbenchItemCard({
               </button>
             ) : null}
             {item.status === "pending" ? (
-              <button
-                type="button"
-                className="desk-chip quiet"
-                onClick={dismissItem}
-              >
+              <Button dense variant="ghost" onClick={dismissItem}>
                 Dismiss
-              </button>
+              </Button>
             ) : null}
+            {/* PHILO-13-02: Park, never delete (one press; Restore undoes
+                it). A claimed item shows no Park (today's rule stays). */}
             {item.status !== "claimed" ? (
-              <button
-                type="button"
-                className="desk-chip quiet"
-                onClick={() => onRemove(item)}
-              >
-                Remove
-              </button>
+              <Button dense variant="ghost" onClick={() => onRemove(item)}>
+                Park
+              </Button>
             ) : null}
           </div>
         </div>
@@ -965,7 +985,6 @@ export function WorkbenchWindow({
   const loadSkills = skillsHook.refresh;
   const loadAutomations = automationsHook.refresh;
   const loadResourceful = resourcefulHook.refresh;
-  const { remove, receipt: undoReceipt, phase: undoPhase } = useUndoReceipt();
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   // HS-132-06 — every write verb in this window reports here; the receipt
   // seats in the footer's receipt slot, never over the work.
@@ -976,6 +995,39 @@ export function WorkbenchWindow({
     failure: writeFailure,
     receipt: writeReceipt,
   } = useWriteReceipt();
+  // PHILO-13-02 (A1-F): the park outcome, the parked items, the Parked filter.
+  const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
+  const [parked, setParked] = useState<ParkedRow[]>([]);
+  const [parkedOn, setParkedOn] = useState(false);
+  const [restoredId, setRestoredId] = useState<string | null>(null);
+  const parkTimes = useRef(new Map<string, string>());
+  const loadParked = useCallback(async () => {
+    try {
+      const rows = await fetchParkedWorkbenchItems(workbenchId);
+      setParked(
+        rows.map((item) => ({
+          id: item.id,
+          title: item.title,
+          at:
+            parkTimes.current.get(item.id) ??
+            (item.last_modified ? parkClock(new Date(item.last_modified)) : ""),
+        })),
+      );
+    } catch {
+      // The strip keeps its last read.
+    }
+  }, [workbenchId]);
+  useEffect(() => {
+    void loadParked();
+  }, [loadParked, detail]);
+  useEffect(() => {
+    if (!parked.length) setParkedOn(false);
+  }, [parked.length]);
+  // A copy receipt takes the slot from the park outcome.
+  const copying = Boolean(copyReceipt);
+  useEffect(() => {
+    if (copying) setParkOutcome(null);
+  }, [copying]);
 
   const [expanded, setExpanded] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -1199,28 +1251,53 @@ export function WorkbenchWindow({
 
   /* ── item actions ──────────────────────────────────────────────── */
 
-  const handleRemove = (item: WorkbenchItem) => {
-    // PHILO-8-02 round five: a new Remove of this item supersedes its old
-    // refusal (another item's failure stays).
-    if (writeFailure?.verb === "REMOVE ITEM" && writeFailure.subject === item.id) clearWrite();
-    remove(
-      item.title,
-      // Round four: the commit answers the one result contract (true when the
-      // hub took it), so a refusal frees the item for another Remove.
-      () =>
-        write(
-          "REMOVE ITEM",
-          async () => {
-            await deleteWorkbenchItem(workbenchId, item.id);
+  /* PHILO-13-02 (A1-F) — Park, never delete (C1-5f–j). One press parks at
+     once (no confirm, no countdown): Restore undoes it. The outcome is a
+     receipt in the footer's receipt slot; a refusal by the hub stays in the
+     write channel with Retry; a run's claim is refused in place. */
+  const parkItems = (targets: WorkbenchItem[], verb: string) => {
+    const ids = targets.map((item) => item.id);
+    if (!ids.length) return Promise.resolve();
+    // A new Park of this item supersedes its old refusal (another item's
+    // failure stays).
+    if (writeFailure && ids.length === 1 && writeFailure.subject === ids[0]) clearWrite();
+    return write(
+      verb,
+      async () => {
+        try {
+          if (ids.length === 1) await parkWorkbenchItem(workbenchId, ids[0]);
+          else await parkWorkbenchItems(workbenchId, ids);
+        } catch (cause) {
+          if (cause instanceof ApiError && cause.status === 409) {
+            setParkOutcome(notParkedOutcome("CLAIMED BY A RUN"));
             load();
-          },
-          { subject: item.id },
-        ).then((result) => result.ok),
-      () => load(),
-      // PHILO-8-02 round three: keyed, so a second Remove of this item never
-      // opens a second Undo for an item already gone.
-      item.id,
-    );
+            return;
+          }
+          throw cause;
+        }
+        const at = parkClock();
+        for (const id of ids) parkTimes.current.set(id, at);
+        setParkOutcome(parkedOutcome(ids, at));
+        setParkedOn(false);
+        load();
+        void loadParked();
+      },
+      { subject: ids.length === 1 ? ids[0] : undefined },
+    ).then(() => undefined);
+  };
+  const handleRemove = (item: WorkbenchItem) => void parkItems([item], "PARK ITEM");
+  const restoreParked = async (ids: string[]) => {
+    try {
+      await restoreWorkbenchItems(workbenchId, ids);
+      for (const id of ids) parkTimes.current.delete(id);
+      setParkOutcome(restoredOutcome(ids));
+      setParkedOn(false);
+      setRestoredId(ids[0] ?? null);
+      load();
+      void loadParked();
+    } catch {
+      setParkOutcome(restoreFailedOutcome(ids));
+    }
   };
 
   const addItem = async () => {
@@ -1308,17 +1385,8 @@ export function WorkbenchWindow({
           (i) => i.status === "done" || i.status === "dismissed",
         );
         if (!doneItems.length) break;
-        remove(
-          countToken(doneItems.length, "DONE ITEM") ?? "done items",
-          () =>
-            write("CLEAR DONE", async () => {
-              for (const item of doneItems) {
-                await deleteWorkbenchItem(workbenchId, item.id);
-              }
-              load();
-            }).then((result) => result.ok),
-          () => load(),
-        );
+        // PHILO-13-02: bulk park, one PARKED n receipt (C1-5j).
+        await parkItems(doneItems, "CLEAR DONE");
         break;
       }
       case "set-schedule": {
@@ -1429,6 +1497,7 @@ export function WorkbenchWindow({
   if (!wb) return null;
   const name = String(wb.name || "Workbench");
   const items = detail?.items || [];
+  const doneCount = items.filter((i) => i.status === "done" || i.status === "dismissed").length;
   const lastRun = detail?.last_run;
   const isConfigured = !!detail?.recipe_id;
   const showConfig = configOpen ?? !isConfigured;
@@ -1597,9 +1666,17 @@ export function WorkbenchWindow({
                 />
               ) : null}
 
-              {items.map((item) => (
+              <ParkedStrip
+                rows={parked}
+                on={parkedOn}
+                onToggle={setParkedOn}
+                onRestore={(ids) => void restoreParked(ids)}
+                data-testid="wb-parked"
+              />
+              {(parkedOn ? [] : items).map((item) => (
                 <WorkbenchItemCard
                   key={item.id}
+                  restored={restoredId === item.id}
                   item={item}
                   expanded={expanded === item.id}
                   recipeId={detail?.recipe_id || null}
@@ -1616,6 +1693,24 @@ export function WorkbenchWindow({
               ))}
             </div>
 
+            {/* PHILO-13-02: the voice intent "Clear done", also a visible
+                verb while done items exist; it parks them all (C1-5j). */}
+            {doneCount > 0 && !parkedOn ? (
+              <div className="wb-clear-done">
+                <Button
+                  dense
+                  variant="ghost"
+                  onClick={() =>
+                    void parkItems(
+                      items.filter((i) => i.status === "done" || i.status === "dismissed"),
+                      "CLEAR DONE",
+                    )
+                  }
+                >
+                  Clear done
+                </Button>
+              </div>
+            ) : null}
             {/* ── voice proposal strip ───────────────────────────────── */}
             {voiceProposal ? (
               <div className="wb-proposal-strip">
@@ -1905,12 +2000,16 @@ export function WorkbenchWindow({
 
       <SurfaceFooter
         receipt={
-          // PHILO-8-02 round five: a live Undo (its window, or its commit in
-          // flight) is never hidden. Otherwise (HS-132-06) a refused write
-          // outranks the quieter receipts.
-          (undoPhase === "pending" || undoPhase === "committing" ? undoReceipt : null) ||
+          // HS-132-06: a refused write outranks the quieter receipts; then
+          // PHILO-13-02's park outcome (PARKED + Restore, RESTORED, refusals).
           writeReceipt ||
-          undoReceipt ||
+          (parkOutcome ? (
+            <ParkReceipt
+              outcome={parkOutcome}
+              onRestore={(ids) => void restoreParked(ids)}
+              data-testid="wb-park-receipt"
+            />
+          ) : null) ||
           copyReceipt || (
             <span className="wb-footer-status">
               {countToken(items.length, "ITEM") ?? "No items"}

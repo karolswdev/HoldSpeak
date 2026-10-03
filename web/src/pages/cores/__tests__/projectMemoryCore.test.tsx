@@ -325,7 +325,9 @@ describe("Project Memory", () => {
     apiFetch.mockRejectedValue(new Error("Network failure"));
     render(<ProjectMemoryCore scope="project:p1" />);
 
-    expect(await screen.findByText("Network failure")).toBeTruthy();
+    // PHILO-13-06 (B1, the A3 ledger): a plain failure name, never the hub's text.
+    expect(await screen.findByText("ROOM DID NOT LOAD · DID NOT WORK")).toBeTruthy();
+    expect(document.body.textContent).not.toContain("Network failure");
   });
 
   it("turns the unscoped surface into the Desk memory recall face", async () => {

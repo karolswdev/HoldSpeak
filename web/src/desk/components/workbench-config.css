@@ -699,3 +699,15 @@
     margin-left: 0;
   }
 }
+
+/* PHILO-13-02 (A1-F) — the visible "Clear done" verb (C1-5j) and the item
+   Restore brought back, marked (C1-5h). */
+.desk-next .wb-clear-done {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 0;
+}
+.desk-next .wb-card[data-restored] .wb-card-title {
+  outline: 2px solid var(--wb-blue);
+  outline-offset: 1px;
+}

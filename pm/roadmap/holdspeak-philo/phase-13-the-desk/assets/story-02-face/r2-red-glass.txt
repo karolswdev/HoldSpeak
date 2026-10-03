@@ -1,0 +1,14 @@
+# r2 RED on 23d5731b CSS (the new rendered fence, product CSS unchanged)
+tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_meeting_park_parked_filter_restore_and_reload[1440] FAILED [ 16%]
+tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_meeting_park_parked_filter_restore_and_reload[393] FAILED [ 33%]
+tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_workbench_item_park_single_bulk_restore_and_reload[1440] PASSED [ 50%]
+tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_workbench_item_park_single_bulk_restore_and_reload[393] PASSED [ 66%]
+tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_a_claimed_item_is_refused_in_place[1440] PASSED [ 83%]
+tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_a_claimed_item_is_refused_in_place[393] PASSED [100%]
+                failed = self._receipt(page, "meetings-park-receipt", "^NOT RESTORED")
+                assert failed == "NOT RESTORED · THE HUB DID NOT ACCEPT THE CHANGE", failed
+E       AssertionError: 05-meeting-restore-refused-1440: {'scopes': 1, 'clipped': [{'text': 'NOT RESTORED · THE HUB DID NOT ACCEPT THE CHANGE', 'in': 'surface-footer-receipt-line'}], 'overlaps': [['NOT RESTORED · THE HUB DID NOT ACCEPT TH', 'Retry']]}
+E       AssertionError: 01-meeting-selected-park-393: {'scopes': 1, 'clipped': [], 'overlaps': [['NO SUMMARY ROUTE · NO ASSIGNMENT', 'MD'], ['NO SUMMARY ROUTE · NO ASSIGNMENT', 'SRT']]}
+FAILED tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_meeting_park_parked_filter_restore_and_reload[1440]
+FAILED tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_meeting_park_parked_filter_restore_and_reload[393]
+==================== 2 failed, 4 passed in 88.59s (0:01:28) ====================
