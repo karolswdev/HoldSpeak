@@ -1,0 +1,38 @@
+{
+ "width": 1440,
+ "touch": false,
+ "frame_taps": 0,
+ "suggestion": "NEXT 1:1\n1:1 Priya / Karol\nTODAY 11:50 PM \u00b7 B4 calendar\nLink this 1:1",
+ "header_before_link": 0,
+ "links_before_press": 0,
+ "header_after_link": "NEXT 1:1 \u00b7 TODAY 11:50 PM",
+ "now_side": "NEXT 1:1\nTODAY 11:50 PM",
+ "people_iso": [],
+ "row_taps": 1,
+ "front_after_row": [
+  "People"
+ ],
+ "lens_after_row": "Prep",
+ "agenda": "AGENDA 1\nReview the dry-run report",
+ "owed": "WAITING ON PRIYA\nSend the dry-run report\n1:1 Priya / Karol",
+ "projects": "PROJECTS\nB4 Dry-run project",
+ "prep_iso": [],
+ "prep_header": "NEXT 1:1 \u00b7 TODAY 11:50 PM",
+ "readable": {
+  "scopes": 1,
+  "clipped": [],
+  "overlaps": []
+ },
+ "readable_scrolled": {
+  "scopes": 1,
+  "clipped": [],
+  "overlaps": []
+ },
+ "front_after_owed": [
+  {
+   "title": "Meetings",
+   "text": "Meetings OUTCOMES REVIEW RECORD ARTIFACTS \u2699\ufe0e Nothing needs you Record meeting Import HAS OPEN ACTIONS PARKED 1 1:1 Priya / Karol OCT 04 \u00b7 SUMMARY STORED 1:1 Pri"
+  }
+ ],
+ "errors": []
+}

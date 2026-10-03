@@ -6,7 +6,8 @@ import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch } from "../../lib/api";
 import { plainFailure } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
-import { PERSON_OPEN_EVENT, type PersonOpenRequest } from "../../desk/openObject";
+import { PERSON_OPEN_EVENT, refOpener, type PersonOpenRequest } from "../../desk/openObject";
+import { composePeoplePrep, readPeoplePrep, type PeoplePrepData, type PrepCalendarEvent } from "../../desk/people/prepData";
 import { announceTaskReturn, taskFocusPending } from "../../desk/returnToTask";
 import { CycleGadget, EgressChip, PadGadget, StringGadget } from "../../desk/surface/gadgets";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
@@ -309,7 +310,7 @@ function Roster({ relationships, selectedId, newName, setNewName, newKind, setNe
       <CycleGadget label="Relationship" value={newKind} onChange={(value) => setNewKind(value as RelationshipKind)} options={[{ value: "direct_report", label: "Direct report" }, { value: "peer", label: "Peer" }, { value: "extended", label: "Extended" }]} />
       <Button dense disabled={!newName.trim() || busy} loading={busy} onClick={onCreate}>Add</Button>
     </div>
-    {!ordered.length ? <div className="people-empty-roster" data-testid="people-empty-roster">{projectFilter ? <span className="surface-token" data-testid="people-roster-none-linked">NO ONE LINKED YET</span> : <p className="people-empty-lead">Add a relationship to start</p>}</div> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} title={relationship.display_name} detail={`${relationshipLabel(relationship.relationship_kind)}${relationship.next_one_on_one ? ` · ${relationship.next_one_on_one}` : ""}`} meta={relationship.manager_commitment_count ? `You owe ${relationship.manager_commitment_count}` : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
+    {!ordered.length ? <div className="people-empty-roster" data-testid="people-empty-roster">{projectFilter ? <span className="surface-token" data-testid="people-roster-none-linked">NO ONE LINKED YET</span> : <p className="people-empty-lead">Add a relationship to start</p>}</div> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} title={relationship.display_name} detail={`${relationshipLabel(relationship.relationship_kind)}${relationship.next_one_on_one ? ` · ${shortWhen(relationship.next_one_on_one)}` : ""}`} meta={relationship.manager_commitment_count ? `You owe ${relationship.manager_commitment_count}` : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
   </SurfaceSection>;
 }
 
@@ -337,8 +338,7 @@ function RelationshipPane({ relationship, initialLens, lensRequest = null, onRef
   }, [relationship.id]);
   const links = relationship.calendar_links ?? [];
   const linkedKeys = new Set(links.map((l) => `${l.uid}:${l.source_id}`));
-  const nextLinked = upcomingEvents.find((ev) => linkedKeys.has(`${ev.uid}:${ev.source_id}`));
-  const nextLabel = nextLinked ? shortWhen(nextLinked.starts_at) : null;
+  const nextLabel = shortWhen(relationship.next_one_on_one ?? upcomingEvents.find((ev) => linkedKeys.has(`${ev.uid}:${ev.source_id}`))?.starts_at ?? "") || null; // PHILO-13-09: the hub's linked event first; one formatter
   const openConcern = useCallback((concern: NowConcern, brief: OneOnOneBrief) => {
     setPrepBrief(brief);
     setNowConcern(concern);
@@ -355,7 +355,7 @@ function RelationshipPane({ relationship, initialLens, lensRequest = null, onRef
       {([['now', 'Now'], ['prep', 'Prep'], ['one-on-ones', '1:1s'], ['context', 'Context'], ['history', 'History'], ['info', 'Info']] as const).map(([id, label]) => <Button key={id} dense variant="ghost" role="tab" aria-selected={lens === id} onClick={() => switchLens(id)}>{label}</Button>)}
     </div>
     {lens === "now" ? <NowLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} concern={nowConcern} prepBrief={prepBrief} /> : null}
-    {lens === "prep" ? <PrepLens relationship={relationship} onProtectedFailure={onProtectedFailure} onOpenConcern={openConcern} /> : null}
+    {lens === "prep" ? <PrepLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onOpenConcern={openConcern} /> : null}
     {lens === "one-on-ones" ? <OneOnOnes relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} /> : null}
     {lens === "context" ? <ContextLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} /> : null}
     {lens === "history" ? <HistoryLens relationship={relationship} /> : null}
@@ -398,7 +398,7 @@ export function capTokens(items: string[], max: number = 3): string {
 /** HS-149-04 / HS-172-05: the Prep lens -- the 1:1 brief enrichment.
  * Display step = the person's name. Summary rows (absent at zero).
  * AGENDA section. Footer THIS DEVICE + PREPARED hh:mm. */
-function PrepLens({ relationship, onProtectedFailure, onOpenConcern }: { relationship: RelationshipDetail; onProtectedFailure(cause: unknown): void; onOpenConcern(concern: NowConcern, brief: OneOnOneBrief): void }) {
+function PrepLens({ relationship, onRefresh, onProtectedFailure, onOpenConcern }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; onOpenConcern(concern: NowConcern, brief: OneOnOneBrief): void }) {
   const [brief, setBrief] = useState<OneOnOneBrief | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -406,6 +406,7 @@ function PrepLens({ relationship, onProtectedFailure, onOpenConcern }: { relatio
     const now = new Date();
     return now.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
   });
+  const links = linkKey(relationship);
   useEffect(() => {
     setLoading(true); setError("");
     void apiFetch<{ brief: OneOnOneBrief }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/brief`)
@@ -419,7 +420,7 @@ function PrepLens({ relationship, onProtectedFailure, onOpenConcern }: { relatio
         }
       })
       .finally(() => setLoading(false));
-  }, [relationship.id]);
+  }, [relationship.id, links]);
   if (loading) return <SurfaceState loading />;
   if (error) return <SurfaceState error={error} data-testid="prep-locked" />;
   if (!brief) return <SurfaceState empty emptyLabel="Brief unavailable" />;
@@ -434,7 +435,11 @@ function PrepLens({ relationship, onProtectedFailure, onOpenConcern }: { relatio
   const overdueCount = overdueCommitments.length;
   const lm = brief.last_meeting;
   const displayName = brief.display_name ?? relationship.display_name;
-  const agendaCount = brief.agenda_items.length;
+  // PHILO-13-09 (B4-W): the agenda, what the report owes, her projects and
+  // the calendar suggestion come through the one client contract.
+  const prep = composePeoplePrep(brief);
+  const agendaCount = prep.agenda.length;
+  const firstName = displayName.trim().split(/\s+/)[0] || displayName;
 
   // PR reference tokens: cap at 3 then +N
   const prNumbers = (ws?.prs_waiting ?? []).map((pr) => `#${pr.pr_number}`);
@@ -508,11 +513,35 @@ function PrepLens({ relationship, onProtectedFailure, onOpenConcern }: { relatio
       ) : null}
     </div>
 
+    {!prep.nextOneOnOne ? <LinkSuggestions relationship={relationship} prep={prep} onLinked={onRefresh} onProtectedFailure={onProtectedFailure} testId="prep-link-suggestion" /> : null}
+
     {/* AGENDA section (unchanged from existing) */}
     {agendaCount > 0 ? (
       <div data-testid="prep-agenda">
         <SurfaceSection label={`Agenda ${agendaCount}`}>
-          <SurfaceRows>{brief.agenda_items.map((item) => <SurfaceRow key={item.id} title={item.body} />)}</SurfaceRows>
+          <SurfaceRows>{prep.agenda.map((item) => <SurfaceRow key={item.id} title={item.body} />)}</SurfaceRows>
+        </SurfaceSection>
+      </div>
+    ) : null}
+
+    {/* PHILO-13-09: what the report owes from meetings; each row opens its meeting. */}
+    {prep.openMeetingActions.length ? (
+      <div data-testid="prep-owed">
+        <SurfaceSection label={`Waiting on ${firstName}`}>
+          <SurfaceRows>{prep.openMeetingActions.map((action) => <SurfaceRow
+            key={action.id}
+            title={action.task}
+            detail={[action.meeting_title, action.due ? `BY ${shortDay(action.due)}` : null].filter(Boolean).join(" · ") || undefined}
+            onOpen={refOpener(`meeting:${action.meeting_id}`) ?? undefined}
+          />)}</SurfaceRows>
+        </SurfaceSection>
+      </div>
+    ) : null}
+
+    {prep.projects.length ? (
+      <div data-testid="prep-projects">
+        <SurfaceSection label="Projects">
+          <SurfaceRows>{prep.projects.map((project) => <SurfaceRow key={project.id} title={project.name} onOpen={refOpener(`project:${project.id}`) ?? undefined} />)}</SurfaceRows>
         </SurfaceSection>
       </div>
     ) : null}
@@ -522,6 +551,81 @@ function PrepLens({ relationship, onProtectedFailure, onOpenConcern }: { relatio
       egress={<EgressChip label="THIS DEVICE" scope="local" />}
       receipt={<span className="people-prep-receipt" data-testid="prep-receipt">PREPARED {preparedAt}</span>}
     />
+  </div>;
+}
+
+/** A due date as a short day (`FRI`); never the raw ISO string. */
+function shortDay(isoDate: string): string {
+  const d = new Date(isoDate);
+  return Number.isNaN(d.getTime()) ? isoDate : d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
+}
+
+/** The relationship's linked series, as one key: a change re-reads the brief. */
+function linkKey(relationship: Relationship): string {
+  return (relationship.calendar_links ?? []).map((l) => `${l.uid}:${l.source_id}`).join("|");
+}
+
+/** PHILO-13-09 (B4-W): a calendar event whose title holds the report's alias.
+ * The custody rule: a suggestion never links by itself; his press on
+ * `Link this 1:1` calls the existing calendar-links route. Withheld when empty. */
+function LinkSuggestions({ relationship, prep, onLinked, onProtectedFailure, testId }: { relationship: RelationshipDetail; prep: PeoplePrepData; onLinked(): void; onProtectedFailure(cause: unknown): void; testId: string }) {
+  const [busy, setBusy] = useState(false);
+  const series = useMemo(() => {
+    const seen = new Set<string>();
+    return prep.calendarLinkSuggestions.filter((ev) => {
+      const key = `${ev.uid}:${ev.source_id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [prep.calendarLinkSuggestions]);
+  if (!series.length) return null;
+  const link = async (ev: PrepCalendarEvent) => {
+    setBusy(true);
+    try {
+      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/calendar-links`, {
+        method: "POST",
+        json: { uid: ev.uid, source_id: ev.source_id, label: ev.title },
+      });
+      onLinked();
+    } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
+  };
+  return <div data-testid={testId}>
+    <SurfaceSection label="Next 1:1">
+      <SurfaceRows>{series.map((ev) => <SurfaceRow
+        key={`${ev.uid}:${ev.source_id}`}
+        title={ev.title}
+        detail={[shortWhen(ev.starts_at), ev.source_label].filter(Boolean).join(" · ")}
+        verbs={<Button dense variant="primary" loading={busy} disabled={busy} onClick={() => void link(ev)}>Link this 1:1</Button>}
+      />)}</SurfaceRows>
+    </SurfaceSection>
+  </div>;
+}
+
+/** PHILO-13-09 (B4-W): the Now lens's side section. The linked 1:1 reads as
+ * the header does (`shortWhen`); with none linked, the calendar suggestion;
+ * only with neither, "No 1:1 planned". */
+function NextOneOnOneSide({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
+  const [prep, setPrep] = useState<PeoplePrepData | null>(null);
+  const [read, setRead] = useState(false);
+  const nextAt = relationship.next_one_on_one ?? null;
+  const links = linkKey(relationship);
+  useEffect(() => {
+    if (nextAt) return;
+    let live = true;
+    setRead(false);
+    void readPeoplePrep(relationship.id)
+      .then((next) => { if (live) setPrep(next); })
+      .catch(() => { if (live) setPrep(null); })
+      .finally(() => { if (live) setRead(true); });
+    return () => { live = false; };
+  }, [relationship.id, nextAt, links]);
+  const label = nextAt ? shortWhen(nextAt) : "";
+  const suggested = !nextAt && prep && prep.calendarLinkSuggestions.length > 0;
+  return <div data-testid="people-next-side">
+    {label ? <SurfaceSection label="Next 1:1"><span className="people-next-side">{label}</span></SurfaceSection>
+      : suggested ? <LinkSuggestions relationship={relationship} prep={prep} onLinked={onRefresh} onProtectedFailure={onProtectedFailure} testId="people-next-suggestion" />
+        : <SurfaceSection label="Next 1:1">{read || nextAt ? <SurfaceState empty emptyLabel="No 1:1 planned" /> : <SurfaceState loading />}</SurfaceSection>}
   </div>;
 }
 
@@ -745,7 +849,7 @@ function NowLens({ relationship, onRefresh, onProtectedFailure, concern, prepBri
   return <SurfaceColumns main={<>
     <SurfaceSection label="You owe"><SurfaceRows>{(relationship.commitments ?? []).length ? (relationship.commitments ?? []).map((item) => <SurfaceRow key={item.id} selected={selectedCommitment?.id === item.id} title={item.body} detail={item.due ?? undefined} meta={item.execution_links?.length ? "Workbench linked" : "Open"} onOpen={() => setSelectedCommitment(item)} />) : <SurfaceState empty emptyLabel="No commitments" />}</SurfaceRows>{selectedCommitment ? <CommitmentInspector commitment={selectedCommitment} onClose={() => setSelectedCommitment(null)} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}</SurfaceSection>
     <SurfaceSection label="Open requests"><div className="people-new"><StringGadget label="Request" value={request} onChange={setRequest} placeholder="Request" /><Button dense disabled={!request.trim() || busy} onClick={() => void createRequest()}>Add</Button></div><SurfaceRows>{(relationship.requests ?? []).filter((item) => item.state === "requested").map((item) => <SurfaceRow key={item.id} title={item.body} verbs={<Button dense onClick={() => void accept(item.id)}>Accept</Button>} />)}</SurfaceRows></SurfaceSection>
-  </>} side={<SurfaceSection label="Next 1:1"><SurfaceState empty={!relationship.next_one_on_one} emptyLabel="No 1:1 planned">{relationship.next_one_on_one}</SurfaceState></SurfaceSection>} />;
+  </>} side={<NextOneOnOneSide relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} />} />;
 }
 
 function CommitmentInspector({ commitment, onClose, onRefresh, onProtectedFailure }: { commitment: Commitment; onClose(): void; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {

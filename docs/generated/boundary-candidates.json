@@ -8383,7 +8383,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 84,
+      "line": 85,
       "kinds": [
         "http_client"
       ],
@@ -8393,7 +8393,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 211,
+      "line": 212,
       "kinds": [
         "http_client"
       ],
@@ -8403,7 +8403,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 554,
+      "line": 586,
       "kinds": [
         "http_client"
       ],
@@ -8413,7 +8413,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 565,
+      "line": 658,
       "kinds": [
         "http_client"
       ],
@@ -8423,7 +8423,17 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 611,
+      "line": 669,
+      "kinds": [
+        "http_client"
+      ],
+      "excerpt": "await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/calendar-links`, {",
+      "line_sha256": "e1e8cd75c441a06315a30b0a957a4954782c6bcaeb3032637743bc2ef08c6419",
+      "review": "candidate_only"
+    },
+    {
+      "path": "web/src/pages/cores/PeopleCore.tsx",
+      "line": 715,
       "kinds": [
         "http_client"
       ],
@@ -8433,7 +8443,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 623,
+      "line": 727,
       "kinds": [
         "http_client"
       ],
@@ -8443,7 +8453,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 647,
+      "line": 751,
       "kinds": [
         "http_client"
       ],
@@ -8453,7 +8463,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 648,
+      "line": 752,
       "kinds": [
         "http_client"
       ],
@@ -8463,7 +8473,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 649,
+      "line": 753,
       "kinds": [
         "http_client"
       ],
@@ -8473,7 +8483,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 668,
+      "line": 772,
       "kinds": [
         "http_client"
       ],
@@ -8483,7 +8493,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 669,
+      "line": 773,
       "kinds": [
         "http_client"
       ],
@@ -8493,7 +8503,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 747,
+      "line": 851,
       "kinds": [
         "http_client"
       ],
@@ -8503,7 +8513,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 763,
+      "line": 867,
       "kinds": [
         "http_client"
       ],
@@ -8513,7 +8523,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 764,
+      "line": 868,
       "kinds": [
         "http_client"
       ],
@@ -8523,7 +8533,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 781,
+      "line": 885,
       "kinds": [
         "http_client"
       ],
@@ -8533,7 +8543,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 782,
+      "line": 886,
       "kinds": [
         "http_client"
       ],
@@ -8543,7 +8553,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 787,
+      "line": 891,
       "kinds": [
         "http_client"
       ],
