@@ -79,6 +79,35 @@ WHOLE = "(sel) => {" + JS_LIB + r"""
 }"""
 
 
+# Astra canvas r1, condition 6: C1's TARGETS44 counts a point covered by the menu bar or the Dock as
+# "occluded" (another layer), so a content control under chrome passes. For C7 the chrome must own NO
+# point of a content control's 44 px band: every fully visible control inside a window (menus excepted),
+# nine points of its box grown to 44 x 44; a point whose top element is in the menu bar or the Dock fails.
+CHROME_OWNS = "() => {" + JS_LIB + r"""
+  const out = [];
+  for (const t of document.querySelectorAll('button, a[href], [role=button], [role=menuitem], [role=tab], [role=checkbox], input:not([type=hidden]), select, textarea')) {
+    if (!shown(t) || !t.closest('.desk-window-shell') || t.closest('[role=menu], .desk-menubar, .desk-dock')) continue;
+    if (t.parentElement && t.parentElement.closest('button, [role=button], a[href], [role=menuitem]')) continue;
+    const v = vrect(t); if (!v.full) continue;
+    const cx = (v.l + v.r) / 2, cy = (v.t + v.b) / 2, hw = Math.max(22, v.w / 2), hh = Math.max(22, v.h / 2);
+    const w0 = (document.elementFromPoint(cx, cy) || { closest: () => null }).closest('.desk-window-shell');
+    if (w0 && w0 !== t.closest('.desk-window-shell')) continue;   // a window behind another window: not on the glass
+    const hits = nine(cx - hw, cy - hh, cx + hw, cy + hh).map(([x, y]) => document.elementFromPoint(x, y)).filter((h) => h && h.closest('.desk-menubar, .desk-dock'));
+    if (hits.length) out.push({ name: (t.getAttribute('aria-label') || t.innerText || '').toString().trim().replace(/\s+/g, ' ').slice(0, 32), chrome_points: hits.length, w: Math.round(v.w), h: Math.round(v.h) });
+  }
+  return out;
+}"""
+
+# Astra canvas r1, condition 4: a desktop submenu opens NEXT TO its parent panel (its left edge at the
+# parent's right edge, or its right edge at the parent's left edge, within 3 px; tops overlap).
+SUBMENU_ADJ = r"""() => {
+  const subs = [...document.querySelectorAll('[role=menu].desk-work-submenu')].filter((m) => m.getBoundingClientRect().width);
+  return subs.map((m) => { const p = m.parentElement.closest('[role=menu]'); const r = m.getBoundingClientRect(), q = p.getBoundingClientRect();
+    const right = Math.abs(r.left - q.right) <= 3, left = Math.abs(r.right - q.left) <= 3;
+    return { label: m.getAttribute('aria-label'), adjacent: (right || left) && r.top < q.bottom && r.bottom > q.top, side: right ? 'right' : left ? 'left' : 'apart', gap_right: Math.round(r.left - q.right) }; });
+}"""
+
+
 class Runner:
     """One width: a fresh stack (hub + vite on a scratch HOME), a page, shoot() with the fences."""
 
@@ -90,7 +119,8 @@ class Runner:
         self.errors: list[str] = []
         self.state = state
         self.only = os.environ.get("ONLY", "")
-        self.scope44: str | None = None   # JS returning the names of the story's own targets
+        self.scope44: str | None = None
+        self.strict_chrome = False   # C7 sets it (condition 6)
 
     # ── hands ──
     def ev(self, js: str, arg=None):
@@ -200,6 +230,9 @@ class Runner:
             f["content_px"] = self.ev(CONTENT)
         if whole:
             f["whole"] = {s: self.ev(WHOLE, s) for s in whole}
+        f["submenus"] = self.ev(SUBMENU_ADJ)
+        if self.strict_chrome and self.phone:
+            f["chrome_owns_content"] = self.ev(CHROME_OWNS)
         f["intended_front"] = front
         if extra:
             f.update(extra)
@@ -217,6 +250,10 @@ class Runner:
             "no clipped text": not f["clip"]["clipped"],
             "no rendered overlap": not f["overlap"],
         }
+        if not self.phone:
+            law["a desktop submenu opens next to its parent panel"] = all(m["adjacent"] for m in f["submenus"])
+        if self.strict_chrome and self.phone:
+            law["C7: the menu bar and the Dock own no point of a content control's 44 px band"] = not f["chrome_owns_content"]
         if whole:
             for s, w in f["whole"].items():
                 law[f"whole on screen: {s}"] = bool(w.get("whole"))

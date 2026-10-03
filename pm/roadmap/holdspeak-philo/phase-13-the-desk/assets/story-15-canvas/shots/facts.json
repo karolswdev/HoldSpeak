@@ -1,6 +1,6 @@
 {
  "_seat_guard_1440": [
-  "PHILO-13-15/17 SEAT GUARD (c5): 7 files, 8 seats, every anchor met"
+  "PHILO-13-15/17 SEAT GUARD (c5): 8 files, 9 seats, every anchor met"
  ],
  "C5-1-window-menu-send-to-1440": {
   "small_text": [],
@@ -65,6 +65,14 @@
   },
   "overlap": [],
   "overlap_waived": [],
+  "submenus": [
+   {
+    "label": "Send to submenu",
+    "adjacent": true,
+    "side": "left",
+    "gap_right": -351
+   }
+  ],
   "intended_front": "Ledger cutover sync"
  },
  "C5-3-picked-preview-in-view-1440": {
@@ -136,6 +144,7 @@
     "top": 408
    }
   },
+  "submenus": [],
   "intended_front": "Ledger cutover sync",
   "hub_sends_before_send": 0
  },
@@ -208,6 +217,7 @@
     "top": 508
    }
   },
+  "submenus": [],
   "intended_front": "Ledger cutover sync",
   "picked": "PAY-118"
  },
@@ -280,6 +290,7 @@
     "top": 508
    }
   },
+  "submenus": [],
   "intended_front": "Ledger cutover sync",
   "doc": "meeting_digest:m-standup",
   "picked": "PAY-118"
@@ -339,6 +350,7 @@
     "top": 263
    }
   },
+  "submenus": [],
   "intended_front": "Ledger cutover sync"
  },
  "C5-5-sent-file-1440": {
@@ -396,6 +408,7 @@
     "top": 159
    }
   },
+  "submenus": [],
   "intended_front": "Ledger cutover sync",
   "hub_sends_after_send": 1
  },
@@ -454,6 +467,7 @@
     "top": 277
    }
   },
+  "submenus": [],
   "intended_front": "Freeze the old ledger on Nov 5"
  },
  "C5-7-unknown-1440": {
@@ -511,6 +525,7 @@
     "top": 355
    }
   },
+  "submenus": [],
   "intended_front": "Adopt OpenTelemetry for all services"
  },
  "C5-8-withheld-no-summary-1440": {
@@ -562,6 +577,7 @@
   },
   "overlap": [],
   "overlap_waived": [],
+  "submenus": [],
   "intended_front": "Vendor call"
  },
  "C5-2-object-menu-send-to-1440": {
@@ -629,6 +645,14 @@
   },
   "overlap": [],
   "overlap_waived": [],
+  "submenus": [
+   {
+    "label": "Send to submenu",
+    "adjacent": true,
+    "side": "right",
+    "gap_right": 1
+   }
+  ],
   "intended_front": "Cutover requirements"
  },
  "C5-12-artifact-window-well-1440": {
@@ -698,6 +722,7 @@
     "top": 368
    }
   },
+  "submenus": [],
   "intended_front": "Cutover requirements",
   "raw_in_artifact": 0
  },
@@ -760,6 +785,14 @@
   },
   "overlap": [],
   "overlap_waived": [],
+  "submenus": [
+   {
+    "label": "Send to submenu",
+    "adjacent": true,
+    "side": "left",
+    "gap_right": -347
+   }
+  ],
   "intended_front": "Freeze the old ledger on Nov 5"
  },
  "C5-10a-room-checking-1440": {
@@ -831,32 +864,40 @@
     "waiver": "sticky"
    },
    {
-    "a": "FRI 23:52",
+    "a": "SAT 00:42",
     "b": "Choose",
     "w": 58,
     "h": 16,
     "waiver": "sticky"
    },
    {
-    "a": "Nothing since 23:52",
+    "a": "Nothing since 00:42",
     "b": "Ask this project",
     "w": 295,
     "h": 8,
     "waiver": "sticky"
    },
    {
-    "a": "Nothing since 23:52",
+    "a": "Nothing since 00:42",
     "b": "Speak",
     "w": 34,
     "h": 7,
     "waiver": "sticky"
    },
    {
-    "a": "Nothing since 23:52",
+    "a": "Nothing since 00:42",
     "b": "Choose",
     "w": 61,
     "h": 2,
     "waiver": "sticky"
+   }
+  ],
+  "submenus": [
+   {
+    "label": "Send to · CHECKING submenu",
+    "adjacent": true,
+    "side": "right",
+    "gap_right": 1
    }
   ],
   "intended_front": "Payments ledger cutover"
@@ -930,37 +971,123 @@
     "waiver": "sticky"
    },
    {
-    "a": "FRI 23:52",
+    "a": "SAT 00:42",
     "b": "Choose",
     "w": 58,
     "h": 16,
     "waiver": "sticky"
    },
    {
-    "a": "Nothing since 23:52",
+    "a": "Nothing since 00:42",
     "b": "Ask this project",
     "w": 295,
     "h": 8,
     "waiver": "sticky"
    },
    {
-    "a": "Nothing since 23:52",
+    "a": "Nothing since 00:42",
     "b": "Speak",
     "w": 34,
     "h": 7,
     "waiver": "sticky"
    },
    {
-    "a": "Nothing since 23:52",
+    "a": "Nothing since 00:42",
     "b": "Choose",
     "w": 61,
     "h": 2,
     "waiver": "sticky"
    }
   ],
+  "submenus": [
+   {
+    "label": "Send to · CAN'T CHECK submenu",
+    "adjacent": true,
+    "side": "right",
+    "gap_right": 1
+   }
+  ],
   "intended_front": "Payments ledger cutover"
  },
- "C5-11-room-update-picked-1440": {
+ "C5-10c-room-pick-opens-failure-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "SR",
+    "b": "Ask this project",
+    "w": 9,
+    "h": 18,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Sam Rivera",
+    "b": "Ask this project",
+    "w": 81,
+    "h": 21,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Open: Sam Rivera",
+    "b": "Choose",
+    "w": 40,
+    "h": 21,
+    "waiver": "sticky"
+   }
+  ],
+  "whole": {
+   "[id='surface-project-memory'] [data-testid=c5-room-read-failed] [data-testid=c5-latest-unreadable]": {
+    "found": true,
+    "whole": true,
+    "w": 764,
+    "h": 24,
+    "top": 142
+   },
+   "[id='surface-project-memory'] [data-testid=c5-room-read-failed] [data-testid=c5-latest-unreadable-retry]": {
+    "found": true,
+    "whole": true,
+    "w": 54,
+    "h": 24,
+    "top": 142
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "C5-11-room-retry-recovers-1440": {
   "small_text": [],
   "raw_buttons": [],
   "menus": [],
@@ -1020,6 +1147,7 @@
     "top": 253
    }
   },
+  "submenus": [],
   "intended_front": "Payments ledger cutover"
  },
  "C5-15-brief-window-picked-1440": {
@@ -1089,6 +1217,7 @@
     "top": 202
    }
   },
+  "submenus": [],
   "intended_front": "Brief"
  },
  "C5-16a-offline-menu-1440": {
@@ -1154,6 +1283,14 @@
   },
   "overlap": [],
   "overlap_waived": [],
+  "submenus": [
+   {
+    "label": "Send to · OFFLINE submenu",
+    "adjacent": true,
+    "side": "left",
+    "gap_right": -351
+   }
+  ],
   "intended_front": "Adopt OpenTelemetry for all services"
  },
  "C5-16b-offline-well-1440": {
@@ -1195,11 +1332,12 @@
   },
   "overlap": [],
   "overlap_waived": [],
+  "submenus": [],
   "intended_front": "Adopt OpenTelemetry for all services"
  },
  "_browser_errors_1440": [],
  "_seat_guard_393": [
-  "PHILO-13-15/17 SEAT GUARD (c5): 7 files, 8 seats, every anchor met"
+  "PHILO-13-15/17 SEAT GUARD (c5): 8 files, 9 seats, every anchor met"
  ],
  "C5-1-window-menu-send-to-393": {
   "small_text": [],
@@ -1265,6 +1403,7 @@
    }
   ],
   "content_px": 704,
+  "submenus": [],
   "intended_front": "Ledger cutover sync"
  },
  "C5-3-picked-preview-in-view-393": {
@@ -1351,6 +1490,7 @@
     "top": 420
    }
   },
+  "submenus": [],
   "intended_front": "Ledger cutover sync",
   "hub_sends_before_send": 0
  },
@@ -1438,6 +1578,7 @@
     "top": 520
    }
   },
+  "submenus": [],
   "intended_front": "Ledger cutover sync",
   "picked": "PAY-118"
  },
@@ -1525,6 +1666,7 @@
     "top": 520
    }
   },
+  "submenus": [],
   "intended_front": "Ledger cutover sync",
   "doc": "meeting_digest:m-standup",
   "picked": "PAY-118"
@@ -1599,6 +1741,7 @@
     "top": 261
    }
   },
+  "submenus": [],
   "intended_front": "Ledger cutover sync"
  },
  "C5-5-sent-file-393": {
@@ -1671,6 +1814,7 @@
     "top": 157
    }
   },
+  "submenus": [],
   "intended_front": "Ledger cutover sync",
   "hub_sends_after_send": 1
  },
@@ -1729,6 +1873,7 @@
     "top": 227
    }
   },
+  "submenus": [],
   "intended_front": "Freeze the old ledger on Nov 5"
  },
  "C5-7-unknown-393": {
@@ -1786,6 +1931,7 @@
     "top": 258
    }
   },
+  "submenus": [],
   "intended_front": "Adopt OpenTelemetry for all services"
  },
  "C5-8-withheld-no-summary-393": {
@@ -1945,6 +2091,7 @@
    }
   ],
   "content_px": 704,
+  "submenus": [],
   "intended_front": "Vendor call"
  },
  "C5-2-object-menu-send-to-393": {
@@ -2039,6 +2186,7 @@
    }
   ],
   "content_px": 704,
+  "submenus": [],
   "intended_front": "Cutover requirements"
  },
  "C5-12-artifact-window-well-393": {
@@ -2110,6 +2258,7 @@
     "top": 285
    }
   },
+  "submenus": [],
   "intended_front": "Cutover requirements",
   "raw_in_artifact": 0
  },
@@ -2224,6 +2373,7 @@
    }
   ],
   "content_px": 704,
+  "submenus": [],
   "intended_front": "Freeze the old ledger on Nov 5"
  },
  "C5-10a-room-checking-393": {
@@ -2275,6 +2425,7 @@
   "targets_under_44": [],
   "inherited_under_44": [],
   "content_px": 704,
+  "submenus": [],
   "intended_front": "Payments ledger cutover"
  },
  "C5-10b-room-cant-check-393": {
@@ -2326,9 +2477,68 @@
   "targets_under_44": [],
   "inherited_under_44": [],
   "content_px": 704,
+  "submenus": [],
   "intended_front": "Payments ledger cutover"
  },
- "C5-11-room-update-picked-393": {
+ "C5-10c-room-pick-opens-failure-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[id='surface-project-memory'] [data-testid=c5-room-read-failed] [data-testid=c5-latest-unreadable]": {
+    "found": true,
+    "whole": true,
+    "w": 365,
+    "h": 52,
+    "top": 132
+   },
+   "[id='surface-project-memory'] [data-testid=c5-room-read-failed] [data-testid=c5-latest-unreadable-retry]": {
+    "found": true,
+    "whole": true,
+    "w": 54,
+    "h": 24,
+    "top": 146
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "C5-11-room-retry-recovers-393": {
   "small_text": [],
   "raw_buttons": [],
   "menus": [],
@@ -2391,6 +2601,7 @@
     "top": 348
    }
   },
+  "submenus": [],
   "intended_front": "Payments ledger cutover"
  },
  "C5-15-brief-window-picked-393": {
@@ -2460,6 +2671,7 @@
     "top": 405
    }
   },
+  "submenus": [],
   "intended_front": "Brief"
  },
  "C5-16a-offline-menu-393": {
@@ -2511,6 +2723,7 @@
   "targets_under_44": [],
   "inherited_under_44": [],
   "content_px": 704,
+  "submenus": [],
   "intended_front": "Adopt OpenTelemetry for all services"
  },
  "C5-16b-offline-well-393": {
@@ -2552,6 +2765,7 @@
   "targets_under_44": [],
   "inherited_under_44": [],
   "content_px": 704,
+  "submenus": [],
   "intended_front": "Adopt OpenTelemetry for all services"
  },
  "_browser_errors_393": [],

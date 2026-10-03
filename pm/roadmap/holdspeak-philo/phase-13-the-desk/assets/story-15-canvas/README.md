@@ -1,8 +1,20 @@
 # PHILO-13-15 (C5) canvas: Send to ▸ from any document window
 
-**Status: DRAFT, for Astra's check and then the owner's ruling. NOT RATIFIED** (UX-CANON A.2: the canvas comes before the build). Nothing here is built in product code. Every change lives under `harness/`.
+**Status: DRAFT, round two (Astra canvas r1 RATIFY-WITH-CONDITIONS paid, below), for the owner's ruling. NOT RATIFIED** (UX-CANON A.2: the canvas comes before the build). Nothing here is built in product code. Every change lives under `harness/`.
 
 Sources: the story (`../../story-15-c5-send-to-from-any-document-window.md`), Phase 12's design (`../../../phase-12-send-from-the-floor/design/floor-send.md` §2, §3, §6, §7) and its canvases F–J (`../../../phase-12-send-from-the-floor/assets/story-02-canvas/`), the ratified C1 look (`../../design/workbench-look.md`), fork 5 (the default stands: the title-bar menu and the Object menu, one composition).
+
+## Round two: Astra canvas r1 (RATIFY-WITH-CONDITIONS), paid
+
+All the recommended defaults stand, `--accent-text` among them.
+
+| Condition | The canvas now | Boards |
+|---|---|---|
+| 2 the combined phone Send path; nested submenus stop after the first level at 393 (`web/src/desk/components/DeskMenu.tsx:612`, `setOpenSub={() => {}}`) | **Build obligation of C5/C7 (named):** at 393 a submenu inside a submenu opens, and the back row climbs one level (`harness/seats-common.mjs`, DeskMenu seat (a)). The path `Go ▸ Object ▸ Send to ▸ destination` is tapped through to the preview as one composition (C5 + C7 shims loaded together) | `../story-17-canvas/shots/C7-10a/b/c-393` |
+| 4 desktop submenus opened at the far right | **Build obligation of C5/C7 (named):** a submenu opens NEXT TO its parent panel: the right side if it fits, otherwise the left side (DeskMenu seat (b)). Main's fallback clamped it to the viewport's right edge. New fence: every desktop submenu's edge touches its parent's edge (3 px or less), and their tops overlap | C5-1, C5-2, C5-9, C5-10a, C5-10b, C5-16a (1440) |
+| 5 the failed Room read | A pick under `CAN'T CHECK` opens the Room's SEND well with the failure in view: the species' own `Unreadable` line, `CANNOT READ LATEST UPDATE` + `Retry` (the species word; Astra wrote "Try again"). The runner no longer clears the failure before the pick (it is fenced as still held). Retry is the real read and recovers to the picked update's well, in view (P8, S4) | C5-10c (new), C5-11 (now the recovery) |
+
+Conditions 1, 3 and 6 are C7's (`../story-17-canvas/README.md`).
 
 ## What the boards are
 
@@ -30,7 +42,8 @@ Sources: the story (`../../story-15-c5-send-to-from-any-document-window.md`), Ph
 | C5-9 no-destination-add | no saved destination: `Send to ▸ Add destination` | 3 (`Add destination` with none) |
 | C5-10a room-checking | the Room while the latest-update read is pending: `Send to · CHECKING` (not a refusal) | "Refusals": `pending` never refuses |
 | C5-10b room-cant-check | the read failed: `Send to · CAN'T CHECK`; the rows stay | Scope "The reads": a failed read shows `CAN'T CHECK` |
-| C5-11 room-update-picked | the Room's latest published update in the Update posture, its well picked, in view, clear of the sticky Back strip | the project kind; Scope "The arrival" |
+| C5-10c room-pick-opens-failure | the pick under the held failure opens the Room's SEND well: `CANNOT READ LATEST UPDATE` + `Retry`, whole on screen | Scope "The reads": a failed read still opens the well |
+| C5-11 room-retry-recovers | Retry (the real read) recovers: the latest published update in the Update posture, its well picked, in view, clear of the sticky Back strip; the failure line is gone | the project kind; Scope "The arrival" |
 | C5-12 artifact-window-well | the artifact window's own SEND well on `artifact:<id>`, picked and in view; its Copy, Dictate and lineage verbs are library Buttons (0 raw `<button>`) | "Artifact": picked; no raw `<button>` |
 | C5-15 brief-window-picked | the Chair's Brief window: `Send to ▸` picks into its own well | the brief kind |
 | C5-16a offline-menu | the hub does not answer: `Send to · OFFLINE`; the rows are the last read | the send states: offline |
@@ -40,16 +53,18 @@ Not drawn, on purpose (Tenet 1): the Room open on another update switching to th
 
 ## Measurements
 
-Read from `shots/facts.json` (run of 2026-10-02 on main `76c361537`; `ALL FENCES HELD`, exit 0):
+Read from `shots/facts.json` (run of 2026-10-03, round two, on main `76c361537`; `ALL FENCES HELD`, exit 0):
 
 | Measure | Value |
 |---|---|
-| Boards | 36 (18 at 1440, 18 at 393), each width on its own hub and HOME |
-| Seat guard (both widths) | `PHILO-13-15/17 SEAT GUARD (c5): 7 files, 8 seats, every anchor met` |
+| Boards | 38 (19 at 1440, 19 at 393), each width on its own hub and HOME |
+| Seat guard (both widths) | `PHILO-13-15/17 SEAT GUARD (c5): 8 files, 9 seats, every anchor met` |
 | Fence failures / browser errors | 0 / 0 |
-| Boards with exactly one blue title bar; the intended window in front, on the glass | 36 of 36 |
+| Boards with exactly one blue title bar; the intended window in front, on the glass | 38 of 38 |
 | Texts under 4.5:1 (3:1 large), in place / under 12 px / clipped / sideways strips / rendered overlaps | 0 / 0 / 0 / 0 / 0 |
+| Desktop submenus next to their parent panel | 6 of 6 (right side: C5-2, C5-10a, C5-10b; left side, where the right does not fit: C5-1, C5-9, C5-16a) |
 | Arrival boards with the window name, the picked row, the preview's first field and Send each whole on screen, with no rig scroll | 6 of 6 per width (C5-3, C5-11 (the Room's name is in its wings row: the row, the field and Send), C5-12, C5-13, C5-14, C5-15); C5-4–7 check the name and the open row |
+| The failed read at the pick (C5-10c) | held failed, the failure line and Retry whole on screen; after Retry the line is gone and the well is picked (C5-11), at both widths |
 | Hub send rows before / after Send (C5-3 / C5-5) | 0 / 1, at both widths |
 | Raw `<button>` in the artifact window | 0 (main: three raw `<button>` sites in `web/src/desk/pullouts/ArtifactPullout.tsx`) |
 | 393: C5's own targets under 44 × 44 / the front window's content | 0 / 704 px |
@@ -60,13 +75,14 @@ Read from `shots/facts.json` (run of 2026-10-02 on main `76c361537`; `ALL FENCES
 
 1. **Where `Send to ▸` sits in the window menu.** (a) first, its own group above Iconify; (b) after Close window. **Recommended: (a)**, because it is the 3-gesture path and the menu's only document verb.
 2. **Offline.** (a) `Send to · OFFLINE` keeps the last-read rows, and a pick opens the well, which names what it cannot read; (b) withhold `Send to` while the hub does not answer. **Recommended: (a)**, the same rule as `CAN'T CHECK`: an unknown never withholds, and the well tells the truth.
-3. **The 393 Object menu.** On main the Object verbs ride flat inside Go, and `Send to ▸` leads that group (C5-2-393). C7's canvas proposes `Go ▸ Object ▸` (story 17, board C7-5b). **Recommended: take C7's grouping**. C5 then needs no Go-specific placement.
+3. **The 393 Object menu.** On main the Object verbs ride flat inside Go, and `Send to ▸` leads that group (C5-2-393). With C7's grouping, `Go ▸ Object ▸ Send to ▸` is the phone path (C7-10a–c). **Recommended (Astra: stands): take C7's grouping**. The nested submenu at 393 is a build obligation (round two).
 4. **The SENDING chip colour.** On main its word reads 4.26:1 (`--accent`), and the canvas draws it on `--accent-text` (P7; this also changes the PREPARED chip, the same species). **Recommended: yes**. The build edits `surface/patterns/state-chip.css`.
 
 ## Limits (what the boards are not)
 
 - The stand-in destinations' SEND answers come from the shim. Only `Team updates` is a real send. The real-send legs for Slack, Jira, GitHub, Confluence and email are the story's acceptance, not this canvas.
 - The menu reads its destinations and facts in the shim. The rig starts the read before it opens the menu. An open menu that re-renders on a read transition is a build fence (Phase 12 story 03 notes).
+- Two build obligations are drawn here, not built: the nested submenu at 393 and the adjacent desktop submenu (`harness/seats-common.mjs`, DeskMenu). The build moves both into `web/src/desk/components/DeskMenu.tsx` with C5 or C7, whichever lands first.
 - The meeting form picker is a native `<select>` (CycleGadget). C5-14 drives it with `select_option` at both widths. That proves the Digest state, not the gesture.
 - The Meetings window's document is read from its open record's well (stand-in S3).
 - Not verified: the owner's browser, a real touch device (393 is a touch-enabled headless viewport).

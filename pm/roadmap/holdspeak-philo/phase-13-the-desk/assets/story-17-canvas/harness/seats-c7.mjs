@@ -19,4 +19,10 @@ export default [
     ["function publish(next: AftercareSignal | null) {\n  aftercare = next;",
       `function publish(next: AftercareSignal | null) {\n  const __c7Was = aftercare;\n  aftercare = next;\n  ${G}.__c7Aftercare?.(next, __c7Was);`],
   ]],
+  // Q4b (Astra canvas r1, condition 1): at 393 on the Chair an undismissed card with no slot waits for its
+  // Capture window (still in the ring) instead of the fixed overlay over work.
+  ["src/components/AmbientLayer.tsx", null, [
+    ["  return aftercareSlot ? createPortal(card, aftercareSlot) : card;",
+      `  return aftercareSlot ? createPortal(card, aftercareSlot) : (${G}.__c7HoldCard?.() ? null : card);`],
+  ]],
 ];

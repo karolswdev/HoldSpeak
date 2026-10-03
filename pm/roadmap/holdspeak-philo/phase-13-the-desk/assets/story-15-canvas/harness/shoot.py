@@ -200,12 +200,17 @@ def boards(r: board.Runner) -> None:
     ev("() => window.__c5.hold('project:p-ledger', 'failed')")
     send_to(ROOM, read_first=False)
     f = r.shoot("C5-10b-room-cant-check", "Payments ledger cutover")
-    r.escape()
-    ev("() => window.__c5.hold('project:p-ledger', null)")
-    send_to(ROOM)
+    # Condition 5: the pick under CAN'T CHECK (the failure still held) opens the well with the failure in view.
     r.pick_row("Team updates")
-    settle(3000)
-    r.shoot("C5-11-room-update-picked", "Payments ledger cutover", whole=picked_whole(ROOM, phone)[1:])
+    settle(1500)
+    w = "[id='surface-project-memory'] [data-testid=c5-room-read-failed]"
+    r.shoot("C5-10c-room-pick-opens-failure", "Payments ledger cutover",
+            whole=[f"{w} [data-testid=c5-latest-unreadable]", f"{w} [data-testid=c5-latest-unreadable-retry]"],
+            checks={"the failure is still held at the pick": ev("() => window.__c5.facts()['project:p-ledger']?.state === 'failed'")})
+    # Recovery: Retry reads again (the real read), then the picked update's well opens in view.
+    r.tap(r.page.locator(f"{w} [data-testid=c5-latest-unreadable-retry]"), 3500)
+    r.shoot("C5-11-room-retry-recovers", "Payments ledger cutover", whole=picked_whole(ROOM, phone)[1:],
+            checks={"the failure line is gone": not ev(f"() => !!document.querySelector(\"{w}\")")})
     r.close_all()
 
     # ── C5-15 the Chair's Brief window ──

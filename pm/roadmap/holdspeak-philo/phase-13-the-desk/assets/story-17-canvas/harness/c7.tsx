@@ -23,6 +23,8 @@
  *   Q4 AFTERCARE: an arriving aftercare card opens the Capture window at 393 (the owner's
  *      ruling), so the card lands in its slot and never floats over work.
  *      (web/src/components/AmbientLayer.tsx / chairWindows.ts openCaptureOnPhone.)
+ *   Q4b Capture stays in the ring once it has opened at 393, until it is closed; while it is not
+ *      the window in front, an undismissed card waits for it (never the fixed overlay over work).
  *   Q5 44 PX IN EVERY WINDOW: at 393 every control in a window's body and footer owns 44 x 44
  *      (C1 R2's rule, not yet applied to every host on main: the meeting window's `Dictate about
  *      this` / `Record follow-up` are 27 px tall, its artifact rows 38 px, Meetings' `Open` 24 px).
@@ -50,18 +52,30 @@ q5.id = "c7-proposal";
 q5.textContent = `@media (max-width: 720px) {
   .desk-next .desk-window-shell.is-sheet :is(.surface-footer-verbs, .desk-pullout-body, .desk-surface-body) :is(button, [role=button], a[href]) { min-height: 44px; min-width: 44px; }
 }
-.desk-next .ambient-aftercare .signal-eyebrow { color: var(--accent-text); }`;
-const keepLast = () => { if (document.head.lastElementChild !== q5) document.head.appendChild(q5); };
+.desk-next .ambient-aftercare .signal-eyebrow { color: var(--accent-text); }
+/* Q2 (Astra canvas r1, condition 3): the title text truncates, never the chevron. */
+.desk-next .c7-switcher { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; height: 100%; }
+.desk-next .c7-switcher-name { color: inherit; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desk-next .c7-switcher-mark { flex: 0 0 auto; }
+.desk-next .desk-screen-title:has(.c7-switcher) { min-width: 0; overflow: hidden; }`;
+// the two stories' proposal styles stay last together (never move each other: no ping-pong)
+const keepLast = () => { let n = q5.nextElementSibling; while (n && /^c[57]-proposal$/.test(n.id)) n = n.nextElementSibling; if (n || !q5.parentNode) document.head.appendChild(q5); };
 keepLast();
 new MutationObserver(keepLast).observe(document.head, { childList: true });
 
 /* ── the ring of open windows (Q1, Q2) ── */
 type Ring = { id: string; label: string; chair: boolean }[];
+/** Q4b: Capture joins the ring when it opens at 393 (Speak, an aftercare card) and stays until it is closed. */
+let captureInRing = false;
+useChairWindows.subscribe((st) => {
+  if (st.phone === "chair:capture") captureInRing = true;
+  if (st.closed["chair:capture"]) captureInRing = false;
+});
 function ring(): Ring {
   const closed = useChairWindows.getState().closed;
   const onChair = useChairState.getState().surface === "chair";
   const chair = onChair
-    ? CHAIR_WINDOWS.filter((w) => !closed[w.id] && (w.phone || useChairWindows.getState().phone === w.id))
+    ? CHAIR_WINDOWS.filter((w) => !closed[w.id] && (w.phone || (w.id === "chair:capture" && (captureInRing || useChairWindows.getState().phone === w.id))))
       .map((w) => ({ id: w.id, label: w.title, chair: true }))
     : [];
   const desk = registrySnapshot.filter((w) => w.dock && !w.id.startsWith("chair:")).map((w) => ({ id: w.id, label: w.label, chair: false }));
@@ -117,10 +131,11 @@ function Switcher({ name }: { name: string }) {
   }));
   return (
     <span className="desk-screen-title" data-testid="desk-screen-title">
-      <Button variant="chrome" className="desk-screen-name c7-switcher" aria-haspopup="menu" aria-expanded={Boolean(at)}
+      <Button variant="chrome" className="c7-switcher" aria-haspopup="menu" aria-expanded={Boolean(at)}
         aria-label={`Windows: ${name}`} data-testid="c7-switcher"
         onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setAt(at ? null : { x: r.left, y: r.bottom }); }}>
-        {name} ▾
+        <span className="desk-screen-name c7-switcher-name">{name}</span>
+        <span className="c7-switcher-mark" aria-hidden="true" data-testid="c7-switcher-mark">▾</span>
       </Button>
       {at ? <WorkMenu className="desk-head-menu" label="Open windows" x={at.x} y={at.y} entries={entries} onClose={() => setAt(null)} /> : null}
     </span>
@@ -142,7 +157,7 @@ G.__c7GoGroups = (out: WorkMenuEntry[], menuEntries: (id: string, out: WorkMenuE
   const heads: WorkMenuEntry[] = [
     ...(chair ? [chair] : []),
     { type: "sub", id: "c7-go-desk", label: "Desk", entries: group("desk") },
-    { type: "sub", id: "c7-go-object", label: "Object", entries: group("object") },
+    { type: "sub", id: "c7-go-object", label: "Object", entries: (() => { const e = group("object"); G.__c5BarSend?.("object", false, e); return e; })() },
     { type: "sub", id: "c7-go-window", label: "Window", entries: win },
     { type: "sep", id: "c7-go-sep" },
   ];
@@ -150,6 +165,8 @@ G.__c7GoGroups = (out: WorkMenuEntry[], menuEntries: (id: string, out: WorkMenuE
 };
 
 /* Q4: an arriving aftercare card opens Capture at 393. */
+/** Q4b: at 393 on the Chair, a card with no slot (Capture is not the window in front) is held, never fixed. */
+G.__c7HoldCard = () => compactNow() && useChairState.getState().surface === "chair";
 G.__c7Aftercare = (next: unknown, was: unknown) => {
   if (next && !was && compactNow() && useChairState.getState().surface === "chair") openChairWindow("chair:capture");
 };

@@ -27,6 +27,8 @@
  *      buttons are library Buttons.
  *   P7 the SENDING chip (StateChip `active`) draws its word on `--accent-text`: on main it reads 4.26:1
  *      (`--accent`), under the 4.5:1 floor C1 ratified (the build edits surface/patterns/state-chip.css).
+ *   P8 a pick under `CAN'T CHECK` opens the Room's SEND well with the failure in view
+ *      (CANNOT READ LATEST UPDATE + Retry); Retry recovers to the picked update well.
  *   P6 offline (the hub does not answer): `Send to · OFFLINE`; the rows are
  *      the last read; a pick opens the well, which says what it cannot read.
  *
@@ -39,6 +41,8 @@
  *      FAILED, UNKNOWN). NOTHING LEAVES THE MACHINE.
  *   S2 `none` answers the destinations read with no rows; `offline` makes
  *      every /api request fail as a dropped connection would.
+ *   S4 `hold` keeps one read `loading` or `failed`; a held failure lasts until Retry, and the
+ *      retried read is the REAL read.
  *   S3 the Meetings window's document is read from its open record's SEND
  *      well (the build reads HistoryCore's selection).
  */
@@ -47,6 +51,9 @@ import { frontWindowId } from "@w/desk/components/window/windowRegistry";
 import { authenticatedHeaders } from "@w/lib/auth";
 import { CHANNEL_WORD, requestDestinationsFocus } from "@w/features/channels/channels";
 import type { WorkMenuEntry } from "@w/desk/components/DeskMenu";
+import { createRoot, type Root } from "react-dom/client";
+import { SurfaceSection } from "@w/desk/surface";
+import { Unreadable } from "@w/desk/surface/send/SendWell";
 
 type AnyRec = Record<string, any>;
 const G = globalThis as any;
@@ -55,7 +62,8 @@ const G = globalThis as any;
 const p7 = document.createElement("style");
 p7.id = "c5-proposal";
 p7.textContent = '.desk-next .surface-state-chip[data-state="active"] { color: var(--accent-text); }';
-const keepLast = () => { if (document.head.lastElementChild !== p7) document.head.appendChild(p7); };
+// the two stories' proposal styles stay last together (never move each other: no ping-pong)
+const keepLast = () => { let n = p7.nextElementSibling; while (n && /^c[57]-proposal$/.test(n.id)) n = n.nextElementSibling; if (n || !p7.parentNode) document.head.appendChild(p7); };
 keepLast();
 new MutationObserver(keepLast).observe(document.head, { childList: true });
 
@@ -266,6 +274,7 @@ G.__c5BarSend = (menuId: string, compact: boolean, out: WorkMenuEntry[]) => {
   if (!s) return;
   if (menuId === "object" && !compact) { out.unshift(s, { type: "sep", id: "c5-bar-sep" }); return; }
   if (menuId === "go" && compact) {
+    if (out.some((e) => e.type === "sub" && e.id === "c7-go-object")) return;   // C7's grouped Go carries it inside Object ▸
     const at = out.findIndex((e) => e.type === "item" && e.id.startsWith("object."));
     if (at >= 0) out.splice(at, 0, s); else out.push(s);
   }
@@ -333,8 +342,43 @@ function pick(winId: string, dest: AnyRec, waited = 0) {
     }
     case "project":
       if (d.update.state === "known" && d.update.value) roomLink(d.id, d.update.value, dest.id);
-      break;   // CAN'T CHECK: the Room is open; its own Update well tells the truth
+      else if (d.update.state === "failed") failedWell(winId, d.id, dest.id);   // P8
+      break;
   }
+}
+
+/* P8 (Astra canvas r1, condition 5): a pick under CAN'T CHECK opens the Room's SEND well with the
+ * failure in view -- the SendWell species' own `Unreadable` line (CANNOT READ LATEST UPDATE + Retry) --
+ * and Retry reads again: known -> the Room link to that update with the picked destination. */
+let failRoot: Root | null = null;
+let failHost: HTMLElement | null = null;
+function closeFailed() { failRoot?.unmount(); failHost?.remove(); failRoot = null; failHost = null; }
+function failedWell(winId: string, projectId: string, destId: string) {
+  closeFailed();
+  const body = document.getElementById(winId)?.querySelector<HTMLElement>(".desk-surface-body");
+  if (!body) return;
+  failHost = document.createElement("div");
+  failHost.dataset.testid = "c5-room-read-failed";
+  body.prepend(failHost);
+  body.scrollTop = 0;
+  failRoot = createRoot(failHost);
+  const retry = () => {
+    delete M.hold[`project:${projectId}`];   // S4: the hub answers this time (the real read)
+    facts.delete(`project:${projectId}`);
+    const f = read("project", projectId);
+    const wait = (n = 0) => {
+      const g = fact(`project:${projectId}`);
+      if (g.state === "known") { closeFailed(); if (g.value) roomLink(projectId, g.value, destId); return; }
+      if (g.state === "failed") { failedWell(winId, projectId, destId); return; }
+      if (n < 100) window.setTimeout(() => wait(n + 1), 100);
+    };
+    void f; wait();
+  };
+  failRoot.render(
+    <div data-send="well" data-testid="send-well" data-doc={`project:${projectId}`} role="group" aria-label="Send the latest update">
+      <SurfaceSection label="SEND"><Unreadable what="LATEST UPDATE" testid="c5-latest-unreadable" onRetry={retry} /></SurfaceSection>
+    </div>,
+  );
 }
 
 /* G8: Summary -> Digest -> Follow-up keeps the picked destination. */

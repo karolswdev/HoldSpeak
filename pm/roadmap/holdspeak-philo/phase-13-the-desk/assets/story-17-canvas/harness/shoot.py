@@ -36,6 +36,7 @@ def frame_px(f: dict) -> int:
 
 def boards(r: board.Runner) -> None:
     ev, settle, phone = r.ev, r.settle, r.phone
+    r.strict_chrome = True   # condition 6: the menu bar and the Dock own no content hit point
 
     def phone_laws(f: dict | None) -> None:
         if f is None or not phone:
@@ -47,11 +48,32 @@ def boards(r: board.Runner) -> None:
         if (f.get("content_px") or 0) < CONTENT_MIN:
             r.fails.append(f"{f['_key']}: the front window's content is {f.get('content_px')} px (< {CONTENT_MIN})")
 
+    def chevron(f: dict) -> None:
+        """Condition 3: the switcher's ▾ is PAINTED on the glass: whole, on top at its centre, and the
+        pixels of its box change when it alone is hidden (two screenshots of that box)."""
+        m = r.page.locator("[data-testid=c7-switcher-mark]")
+        if not m.count():
+            r.fails.append(f"{f['_key']}: no switcher chevron")
+            return
+        w = ev(board.WHOLE, "[data-testid=c7-switcher-mark]")
+        b = m.first.bounding_box()
+        clip = {"x": b["x"], "y": b["y"], "width": max(1, b["width"]), "height": max(1, b["height"])}
+        shown = r.page.screenshot(clip=clip)
+        ev("() => { document.querySelector('[data-testid=c7-switcher-mark]').style.visibility = 'hidden'; }")
+        hidden = r.page.screenshot(clip=clip)
+        ev("() => { document.querySelector('[data-testid=c7-switcher-mark]').style.visibility = ''; }")
+        name_cut = ev("() => { const n = document.querySelector('.c7-switcher-name'); return n ? n.scrollWidth > n.clientWidth + 1 : null; }")
+        f["chevron"] = {"whole": w.get("whole"), "painted": shown != hidden, "box": [round(b["x"]), round(b["y"]), round(b["width"]), round(b["height"])], "title_text_truncated": name_cut}
+        if not (w.get("whole") and shown != hidden):
+            r.fails.append(f"{f['_key']}: the switcher chevron is not painted whole ({f['chevron']})")
+
     def shoot(board_id: str, front: str | None, **kw):
         f = r.shoot(board_id, front, **kw)
         if f is not None:
             f["_key"] = f"{board_id}-{r.width}"
             phone_laws(f)
+            if phone:
+                chevron(f)
         return f
 
     def swipe(direction: int):
@@ -78,7 +100,7 @@ def boards(r: board.Runner) -> None:
         settle(1500)
         ev("(w) => window.__cOpen.focus(w)", "chair:capture")
         settle(800)
-        shoot("C7-6-aftercare-opens-capture", "Capture",
+        shoot("C7-6a-aftercare-arrives", "Capture",
               checks={"the card sits in the Capture window's slot": ev("() => !!document.querySelector(\"[id='chair:capture'] [data-aftercare-slot] .ambient-aftercare\")")})
         return
 
@@ -137,14 +159,32 @@ def boards(r: board.Runner) -> None:
     shoot("C7-5c-go-window", None)
     r.escape()
 
-    # ── C7-6 aftercare: an arriving card opens Capture; it never floats over work ──
+    # ── C7-6 aftercare (condition 1): arrival -> swipe away -> return; Capture stays in the ring; the card never floats ──
+    r.close_all()
     ev("() => import('/src/desk/chair/chairWindows.ts').then((m) => m.openChairWindow('chair:week'))")
     settle(1200)
     ev("() => import('/src/desk/intelligenceAttention.ts').then((m) => m.publishAftercare({ meeting_id: 'm-standup', title: 'Ledger cutover sync', open_total: 2, decided_total: 1 }))")
     settle(1800)
-    shoot("C7-6-aftercare-opens-capture", "Capture",
-          checks={"the card sits in the Capture window's slot": ev("() => !!document.querySelector(\"[id='chair:capture'] [data-aftercare-slot] .ambient-aftercare\")"),
-                  "no fixed card over work": not ev("() => !!document.querySelector('.ambient-aftercare-fixed')")})
+    card_in_capture = "() => !!document.querySelector(\"[id='chair:capture'] [data-aftercare-slot] .ambient-aftercare\")"
+    no_fixed = "() => !document.querySelector('.ambient-aftercare-fixed')"
+    in_ring = "() => window.__c7.ring().some((w) => w.id === 'chair:capture')"
+    shoot("C7-6a-aftercare-arrives", "Capture",
+          checks={"the card sits in the Capture window's slot": ev(card_in_capture), "no fixed card over work": ev(no_fixed)})
+    swipe(+1)
+    away = ev("() => window.__c7.current()")
+    shoot("C7-6b-aftercare-swipe-away", None,
+          checks={"a swipe leaves Capture": away != "chair:capture", "no fixed card over work": ev(no_fixed),
+                  "Capture stays in the ring": ev(in_ring)}, extra={"after_swipe": away})
+    r.tap(r.page.locator("[data-testid=c7-switcher]"), 700)
+    f = shoot("C7-6c-aftercare-switcher-lists-capture", None)
+    if f is not None and not any(x.startswith("Capture") for m in f["menus"] for x in m["rows"]):
+        r.fails.append(f"C7-6c-{r.width}: the switcher does not list Capture")
+    r.escape()
+    swipe(-1)
+    back = ev("() => window.__c7.current()")
+    shoot("C7-6d-aftercare-return", "Capture",
+          checks={"a swipe back returns to Capture": back == "chair:capture", "the card is still in Capture's slot": ev(card_in_capture),
+                  "no fixed card over work": ev(no_fixed)}, extra={"after_swipe": back})
     ev("() => import('/src/desk/intelligenceAttention.ts').then((m) => m.dismissAftercare())")
     settle(600)
 
@@ -157,7 +197,39 @@ def boards(r: board.Runner) -> None:
     ev("() => window.__cOpen.open('meeting:m-standup')")
     settle(2500)
     shoot("C7-8-footer-verbs-44", "Ledger cutover sync")
+    # Condition 6, the mutation proof on this real board: the Dock moved up 24 px over the footer verbs.
+    ev("() => { const s = document.createElement('style'); s.id = 'c7-mutant'; s.textContent = '.desk-dock { transform: translateY(-24px) !important; }'; document.head.appendChild(s); }")
+    settle(500)
+    strict = ev(board.CHROME_OWNS)
+    lenient = ev(board.TARGETS44)
+    ev("() => document.getElementById('c7-mutant')?.remove()")
+    settle(400)
+    r.facts[f"_mutation_chrome_{r.width}"] = {"mutant": ".desk-dock translateY(-24px) over the meeting window's footer verbs (C7-8)",
+                                              "c1_targets44": "CAUGHT" if lenient else "MISSED", "c1_caught": lenient[:4],
+                                              "strict_chrome_fence": "CAUGHT" if strict else "MISSED", "strict_caught": strict[:4]}
+    if not strict:
+        r.fails.append(f"C7-8-{r.width}: the chrome fence MISSED the Dock over the footer verbs")
+    print("mutation", r.facts[f"_mutation_chrome_{r.width}"], flush=True)
+
+    # ── C7-10 the combined phone Send path (condition 2): Go ▸ Object ▸ Send to ▸ destination -> preview ──
+    ev("(w) => window.__c5.docOf(w)", "pullout:meeting:m-standup")   # the window's read starts (as the menus do)
+    settle(1200)
+    r.tap(r.page.locator(".desk-verbbar [data-menu-id=go] button"), 700)
+    r.open_sub("Object")
+    f = shoot("C7-10a-go-object-send-to", None)
+    if f is not None and not any(x.startswith("Send to") for m in f["menus"] for x in m["rows"]):
+        r.fails.append(f"C7-10a-{r.width}: Go ▸ Object has no Send to")
+    r.open_sub("Send to")
+    f = shoot("C7-10b-go-object-send-to-rows", None)
+    if f is not None and not any(x.startswith("Team updates") for m in f["menus"] for x in m["rows"]):
+        r.fails.append(f"C7-10b-{r.width}: the nested Send to has no destination rows")
+    r.pick_row("Slack #leads")
+    settle(1800)
+    W = "[id='pullout:meeting:m-standup']"
+    shoot("C7-10c-go-send-to-preview", "Ledger cutover sync",
+          whole=[f"{W} li.surface-ledger-row:has([data-testid=send-open]) .surface-primary", f"{W} [data-testid=send-open] [data-testid=send-preview-field] dd",
+                 f"{W} [data-testid=send-open] [data-testid=send-verbs] .btn--primary"])
 
 
 if __name__ == "__main__":
-    sys.exit(board.main(SHOTS, "C7", "c7", boards))
+    sys.exit(board.main(SHOTS, "C7", "c5,c7", boards))
