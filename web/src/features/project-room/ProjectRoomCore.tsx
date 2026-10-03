@@ -49,7 +49,7 @@ import { onReturnToTask, rememberTaskFocus } from "../../desk/returnToTask";
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
-import { refOpener } from "../../desk/openObject";
+import { ROOM_UPDATES_EVENT, refOpener, takeRoomUpdatesRequest } from "../../desk/openObject";
 import { useDesk } from "../../desk/store";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type {
@@ -86,6 +86,9 @@ import { RoomPeopleSection, monogram } from "./RoomPeopleSection";
 import "./project-room.css";
 import { RecallFace } from "./recall/RecallFace";
 import { DecisionRecordPreparedChip, DecisionRecordSendWells } from "../../desk/documentSendsLazy";
+import { fetchUpdates } from "./update/api";
+import { Unreadable } from "../../desk/surface/send";
+import { retryRoomLink, useRoomSendLink } from "../../desk/windowSend";
 
 /* ── sub-components (kept for backward-compat re-exports) ── */
 
@@ -2135,6 +2138,42 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     ctrl.projectId, () => void ctrl.load(),
   );
 
+  // PHILO-13-15 (C5): the Room link { projectId, updateId, destinationId }
+  // from `Send to ▸`: the linked update opens in the Update posture (also
+  // when the Room is open on another update), its well picked. A failed
+  // latest-update read opens the SEND well with the failure and Retry (P8).
+  const { openUpdate } = updateCtrl;
+  const openLinkedUpdate = useCallback(async (updateId: string) => {
+    if (!ctrl.projectId) return false;
+    // A failed read rejects: the link shows the failure with Retry (windowSend.tsx).
+    const u = (await fetchUpdates(ctrl.projectId)).find((x) => x.id === updateId);
+    if (!u) return false;
+    openUpdate(u);
+    return true;
+  }, [ctrl.projectId, openUpdate]);
+  const sendFailed = useRoomSendLink(ctrl.projectId, openLinkedUpdate);
+
+  // PHILO-13-14 (C4): the palette's `Draft update for <project>` opens this
+  // Room in its Update posture, as the `Draft update` Button does.
+  const { enterUpdates } = updateCtrl;
+  useEffect(() => {
+    const projectId = ctrl.projectId;
+    if (!projectId) return;
+    const take = () => { if (takeRoomUpdatesRequest(projectId)) void enterUpdates(); };
+    take();
+    window.addEventListener(ROOM_UPDATES_EVENT, take);
+    return () => window.removeEventListener(ROOM_UPDATES_EVENT, take);
+  }, [ctrl.projectId, enterUpdates]);
+  const sendFailure = sendFailed && ctrl.projectId ? (
+    <div data-send="well" data-testid="send-well" data-doc={`project:${ctrl.projectId}`} role="group"
+      aria-label="Send the latest update">
+      <SurfaceSection label="SEND">
+        <Unreadable what="LATEST UPDATE" testid="room-latest-unreadable"
+          onRetry={() => retryRoomLink(ctrl.projectId as string)} />
+      </SurfaceSection>
+    </div>
+  ) : null;
+
   // HS-200-41 — one controller, two faces: UNFINISHED sits in the body as a
   // section, the well stays sticky at the foot (F5).
   const askCtrl = useRoomAsk(ctrl.projectId, ctrl.projectName);
@@ -2191,6 +2230,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     return (
       <>
         {hero ? hero(<Button dense variant="ghost" onClick={handleRefresh}>Refresh</Button>) : null}
+        {sendFailure}
         <UpdatePosture ctrl={updateCtrl} />
       </>
     );
@@ -2259,6 +2299,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
       {hero ? hero(<Button dense variant="ghost" onClick={handleRefresh}>Refresh</Button>) : null}
       {ctrl.room ? (
         <div className="room-body" data-testid="room-body">
+          {sendFailure}
           {ctrl.view === "room" ? (
             <>
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>

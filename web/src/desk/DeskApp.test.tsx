@@ -206,6 +206,21 @@ describe("DeskApp arrival state", () => {
     expect(screen.queryByTestId("dock")).not.toBeInTheDocument();
   });
 
+  it("C3-W: a later read that loses setup keeps the Desk, the Dock and the frame (no failure face)", () => {
+    state.arrivalRequired = false;
+    state.surface = "chair";
+    const view = render(<DeskApp />);
+    expect(screen.getByTestId("dock")).toBeInTheDocument();
+    // the hub goes down: the next refresh resolves with no setup snapshot
+    state.setupAvailable = false;
+    view.rerender(<DeskApp />);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Preparing HoldSpeak")).not.toBeInTheDocument();
+    expect(screen.getByTestId("dock")).toBeInTheDocument();
+    expect(screen.getByTestId("desk-chrome")).toBeInTheDocument();
+    expect(screen.getByTestId("normal-chair")).toBeInTheDocument();
+  });
+
   it("keeps the normal Chair and chrome when the server no longer requires arrival", () => {
     state.arrivalRequired = false;
     state.surface = "chair";

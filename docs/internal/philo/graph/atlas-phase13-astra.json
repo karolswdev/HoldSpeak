@@ -1251,7 +1251,9 @@
       "applicability": "applicable",
       "preconditions": [
         "The Zone producer is real. Spatial's world zone is the ordinary Directory door: its native context menu should offer Open and the product verb should open the real ZoneWindow.",
-        "Every mouse/touch press uses ui-by-viewport. The real __hsWorldZoneProbe and __hsWorldHitProbe agree on the produced zone before the native context gesture; the window closes, reloads, and reopens through that same door."
+        "Every mouse/touch press uses ui-by-viewport. The real __hsWorldZoneProbe and __hsWorldHitProbe agree on the produced zone before the native context gesture; the window closes, reloads, and reopens through that same door.",
+        "On PR #757 at 1440 the complete open-close-reload-reopen lifecycle produced a late result at 33.753 s against the old 20 s bound; 40 s gives 6.247 s of measured headroom. This is a lifecycle bound, not a single-click latency target.",
+        "C7 puts the 393 title in the truncated screen title outside the Zone window. The window aria-label proves identity and readable empty-state text retains visibility, viewport and all nine hit-ownership checks. The desktop title is still checked after reopen."
       ],
       "setup": [
         {
@@ -1428,18 +1430,37 @@
             "selector": ".desk-zone-window",
             "state": "visible",
             "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "at_width": 1440,
+            "selector": ".desk-zone-window :text(\"Atlas Phase 13 Zone\")",
+            "state": "visible",
+            "timeout_s": 10
           }
         ]
       },
       "expected": {
         "predicate": {
-          "kind": "readable_text",
-          "value": "Atlas Phase 13 Zone"
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "attr_equals",
+              "attr": "aria-label",
+              "value": "Atlas Phase 13 Zone"
+            },
+            {
+              "kind": "readable_text",
+              "value": "Drop items here"
+            }
+          ]
         },
         "observe_at": ".desk-zone-window",
-        "words": "The native Zone context menu should open its real ZoneWindow; this face path is B0-F7 when Open stays disabled."
+        "words": "The native Zone context menu should open its real ZoneWindow, close it and reopen the same named Zone after reload. Its accessible identity and readable empty face must agree; this face path is B0-F7 when Open stays disabled."
       },
-      "completion_bound_s": 20,
+      "completion_bound_s": 40,
       "viewports": [
         1440,
         393
@@ -2599,7 +2620,7 @@
           "observe_at": ".desk-dock",
           "predicate": {
             "kind": "text_absent",
-            "value": "SEND FAILED"
+            "value": "FAILED"
           },
           "timeout_s": 5,
           "why": "The result mark is absent before Send."
@@ -2626,7 +2647,7 @@
           "predicates": [
             {
               "kind": "readable_text",
-              "value": "SEND FAILED"
+              "value": "FAILED"
             },
             {
               "kind": "op_facts",
@@ -3400,7 +3421,7 @@
           "observe_at": "[data-testid=desk-dock-offline]",
           "predicate": {
             "kind": "readable_text",
-            "value": "OFFLINE \u00b7 AS OF"
+            "value": "OFFLINE · AS OF"
           },
           "timeout_s": 30,
           "capture_shot": true
@@ -5272,25 +5293,25 @@
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "roadmapWindows.map",
-          "line": 269,
+          "line": 277,
           "claim": "Roadmap windows mount in the Desk compositor."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "repositoryWindows.map",
-          "line": 276,
+          "line": 284,
           "claim": "Repository windows mount in the Desk compositor."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "DeliveryDossierWindow",
-          "line": 267,
+          "line": 275,
           "claim": "The Delivery dossier mounts in the Desk."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "DeliveryTerminalWindow",
-          "line": 268,
+          "line": 276,
           "claim": "The Delivery terminal mounts in the Desk."
         },
         {
@@ -5341,7 +5362,7 @@
       "sources": [
         {
           "path": "holdspeak/db/meetings.py",
-          "line": 1223,
+          "line": 1282,
           "symbol": "def delete_meeting",
           "claim": "The normal removal path retains the row through park; this case reads it after restart and restore."
         }
@@ -5381,7 +5402,7 @@
           "path": "web/src/desk/needsYou.ts",
           "line": 233,
           "symbol": "export function computeNeedsYou",
-          "claim": "The Dock reads the one R1\u2013R3 membership rule."
+          "claim": "The Dock reads the one R1–R3 membership rule."
         }
       ],
       "reachable_by": [

@@ -113,6 +113,9 @@ export interface Meeting {
   startedAt: string; // ISO-8601 UTC
   endedAt?: string | null;
   segments?: MeetingSegment[];
+  /** PHILO-13-14 (H-C4): the list row's attendees (distinct speakers plus the
+   *  linked calendar event's attendees), as the hub names them. */
+  attendees?: string[];
   segmentCount?: number;
   actionItemCount?: number;
   durationSeconds?: number | null;

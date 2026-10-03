@@ -23,7 +23,7 @@ from typing import Any
 
 import pytest
 
-from .chair_windows import open_chair_window
+from .chair_windows import go_group, open_chair_window
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle
 from tests._evidence import evidence_dir
 
@@ -88,9 +88,11 @@ class TestCaptureFromAnywhere:
         return page.locator(THOUGHT).count()
 
     def _open_from_menu(self, page: Any, width: int) -> Any:
-        # 1440: the Desk menu; 393: the one phone door (Go) carries every menu's verbs.
+        # 1440: the Desk menu; 393: the one phone door, Go ▸ Desk (PHILO-13-17 groups Go).
         menu = "desk" if width >= 720 else "go"
         self._press(page, page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button"), width)
+        if width < 720:  # PHILO-13-17 (C7, Q3): Go ▸ Desk ▸ at 393
+            go_group(page, "Desk", lambda loc: self._press(page, loc, width))
         item = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Write a thought')")
         item.wait_for()
         return item

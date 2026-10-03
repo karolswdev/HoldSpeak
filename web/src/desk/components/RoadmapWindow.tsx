@@ -80,7 +80,7 @@ export function RoadmapWindow({ slug, origin }: { slug: string; origin?: { x: nu
       origin={origin}
       onClose={close}
       wings={<SurfaceWings wings={WINGS} active={active} onChange={setActive} />}
-      className="desk-roadmap-window"
+      className="desk-pullout desk-roadmap-window"
     >
       <div className="desk-roadmap-body">
         {detailHook.loading && !detail ? <SurfaceState loading /> : null}

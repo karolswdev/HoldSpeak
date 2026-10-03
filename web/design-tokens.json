@@ -1397,6 +1397,26 @@
         "name": "--wb-stipple",
         "value": "repeating-linear-gradient(180deg, transparent 0 3px, rgba(0, 0, 0, 0.16) 3px 4px)",
         "doc": "PHILO-13-11 (C1) Workbench Steel: the drag bar: 1 px lines every 4 px"
+      },
+      {
+        "name": "--wb-stipple-fine",
+        "value": "repeating-linear-gradient(180deg, transparent 0 2px, rgba(11, 12, 16, 0.07) 2px 3px)",
+        "doc": "PHILO-13-11 title bar B (owner pick 2026-10-03): the FRONT drag bar only: 1 px lines every 3 px, 7 % ink"
+      },
+      {
+        "name": "--wb-ink-dim",
+        "value": "#2a2e36",
+        "doc": "PHILO-13-11 title bar B (owner pick 2026-10-03): an inactive window's title (5.44:1 on steel)"
+      },
+      {
+        "name": "--wb-rule",
+        "value": "rgba(11, 12, 16, 0.45)",
+        "doc": "PHILO-13-11 title bar B (owner pick 2026-10-03): the hairline between gadget cells"
+      },
+      {
+        "name": "--wb-raised-soft",
+        "value": "inset 1px 1px 0 rgba(255, 255, 255, 0.36), inset -1px -1px 0 rgba(0, 0, 0, 0.25)",
+        "doc": "PHILO-13-11 title bar B (owner pick 2026-10-03): a gadget cell, the raised bevel at half strength"
       }
     ]
   },

@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   dockStateLabel,
   EMPTY_DOCK_LIVE,
+  formatDockTime,
   latestSendOutcome,
+  latestSendSettle,
   nextOneOnOneLabel,
   projectNeedsYouCounts,
   reduceDockFrame,
@@ -96,5 +98,27 @@ describe("H-C3 Dock live reducer", () => {
       { state: "sent", dispatch_seq: 8, settled_at: "2026-10-02T10:00:00Z" },
       { state: "failed", dispatch_seq: 2, settled_at: "2026-10-02T11:00:00Z" },
     ])).toBe("failed");
+  });
+});
+
+describe("C3-W the SENT time (board C1-8a)", () => {
+  it("reads a settled send's time as 24-hour hh:mm", () => {
+    // A local wall-clock instant: the Dock prints the owner's local time.
+    const at = new Date(2026, 9, 3, 14, 2).toISOString();
+    expect(formatDockTime(at)).toBe("14:02");
+    expect(dockStateLabel("sent", at)).toBe("SENT 14:02");
+    // Only SENT carries the time; the other outcomes read as drawn (C1-8b).
+    expect(dockStateLabel("failed", at)).toBe("SEND FAILED");
+    expect(dockStateLabel("unknown", at)).toBe("UNKNOWN");
+    expect(dockStateLabel("sent")).toBe("SENT");
+  });
+
+  it("keeps the latest terminal send's settle time", () => {
+    expect(latestSendSettle([
+      { state: "sent", settled_at: "2026-10-03T12:00:00Z" },
+      { state: "sent", settled_at: "2026-10-03T13:00:00Z" },
+      { state: "dispatching", created_at: "2026-10-03T14:00:00Z" },
+    ])).toEqual({ outcome: "sent", at: "2026-10-03T13:00:00Z" });
+    expect(latestSendSettle([])).toBeNull();
   });
 });

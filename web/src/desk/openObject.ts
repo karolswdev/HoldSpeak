@@ -39,6 +39,27 @@ export function openPerson(relationshipId: string, lens?: PersonLens): void {
   }
 }
 
+/** PHILO-13-14 (C4) — `Draft update for <project>`: the Room opens and goes to
+ * its Update posture, as its own `Draft update` Button does. The Room takes
+ * the request once (a reload does not replay it). */
+export const ROOM_UPDATES_EVENT = "holdspeak:room-updates";
+const roomUpdates = new Set<string>();
+
+export function openProjectUpdates(projectId: string): void {
+  const id = projectId.trim();
+  if (!id) return;
+  roomUpdates.add(id);
+  openProjectRoom(id);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent<string>(ROOM_UPDATES_EVENT, { detail: id }));
+  }
+}
+
+/** True once for each request to open `projectId`'s Room in its Update posture. */
+export function takeRoomUpdatesRequest(projectId: string | null | undefined): boolean {
+  return !!projectId && roomUpdates.delete(projectId);
+}
+
 /** Refs the citation species opens in a window of their own. */
 const WINDOW_REF = /^(meeting|decision|note|artifact|thread):\S/;
 const FOLLOW_THROUGH_REF = /^(?:follow-through|action_item):(.+)$/;

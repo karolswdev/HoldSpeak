@@ -1,0 +1,743 @@
+Revision: 2e4b446c4df66c54b773086b19612c17c71dd1a8
+Command: uv run pytest -q tests/unit/test_desk_locks.py::test_the_front_door_is_the_desk_with_the_guard tests/unit/test_hs175_calendar_sources.py::TestCalendarSourcesRoute::test_source_stats_from_db tests/unit/test_hs175_calendar_sources.py::TestCalendarSourcesRoute::test_matched_this_week tests/unit/test_hs175_calendar_sources.py::TestSourcesPayloadClocks::test_event_count_names_what_it_counts tests/unit/test_hs175_calendar_sources.py::TestSourcesPayloadClocks::test_last_read_is_an_instant_and_a_local_clock tests/unit/test_hs175_calendar_sources.py::TestSourcesPayloadClocks::test_matched_this_week_uses_the_local_week tests/unit/test_hs175_calendar_sources.py::TestDstEdgeSources::test_matched_this_week_across_fall_back tests/integration/test_web_setup_route.py::test_dashboard_owns_first_value_without_redirecting tests/unit/test_one_path_cardinality.py::test_cancellation_after_provider_return_is_one_child_one_receipt_one_physical_attempt tests/unit/test_philo10_atlas.py::test_the_counts_over_every_atlas_file tests/unit/test_product_copy.py::test_primary_copy_has_no_prohibited_operational_drift tests/unit/test_philo9_atlas.py::test_the_counts_over_every_atlas_file tests/unit/test_philo9_compat.py::test_the_http_routes_keep_their_envelopes_and_statuses tests/unit/test_residual_service_admission.py::test_a_cancelled_cadence_parent_never_publishes_its_late_draft
+HOME: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pr757-baseline-unit-ppc0ao_v
+FFFFFFFF.FFFF.                                                           [100%]
+=================================== FAILURES ===================================
+________________ test_the_front_door_is_the_desk_with_the_guard ________________
+
+    def test_the_front_door_is_the_desk_with_the_guard() -> None:
+        routes = (REPO / "web/src/routes.tsx").read_text(encoding="utf-8")
+        desk = (REPO / "web/src/desk/DeskApp.tsx").read_text(encoding="utf-8")
+        assert 'path: "/"' in routes and 'label: "Desk"' in routes
+>       assert "setup?.arrival_required" in desk, "the first-value state left the front door"
+E       AssertionError: the first-value state left the front door
+E       assert 'setup?.arrival_required' in "// The Desk route — the web app's front door (HS-73-02).\n//\n// React + Vite in the one Web tree. Full-bleed: the wo...SnapGhost />}\n      {!arrivalRequired && <Expose />}\n      {!arrivalRequired && <Switcher />}\n    </div>\n  );\n}\n"
+
+tests/unit/test_desk_locks.py:86: AssertionError
+______________ TestCalendarSourcesRoute.test_source_stats_from_db ______________
+
+self = <tests.unit.test_hs175_calendar_sources.TestCalendarSourcesRoute object at 0x10c438290>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-529/test_source_stats_from_db0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11144c9d0>
+
+    def test_source_stats_from_db(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Source stats (calendar_count, last_seen) come from calendar_events."""
+        db, config = _setup(tmp_path, monkeypatch)
+        from holdspeak.config.integrations import CalendarSource, CalendarConfig
+    
+        sid = str(uuid.uuid4())
+        source = CalendarSource(id=sid, label="WORK", url="/tmp/cal.ics", enabled=True)
+        config.calendar = CalendarConfig(sources=[source])
+        config.save()
+    
+        # Seed two events with the same source but different UIDs.
+        now = time.time()
+        from holdspeak.db.calendar_events import CalendarEvent
+>       db.calendar_events.replace_projection(
+            "rev1",
+            [
+                _make_event("e1", "uid1", "Standup", "2026-09-08T10:00:00Z", "2026-09-08T11:00:00Z"),
+                _make_event("e2", "uid2", "Review", "2026-09-09T14:00:00Z", "2026-09-09T15:00:00Z"),
+            ],
+            seen_at=now,
+            source_id=sid,
+            source_label="WORK",
+        )
+
+tests/unit/test_hs175_calendar_sources.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.calendar_events.CalendarEventRepository object at 0x11147c2f0>
+subscription_revision = 'rev1'
+events = [<tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x111480050>, <tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x1113a16d0>]
+
+    def replace_projection(
+        self,
+        subscription_revision: str,
+        events: Iterable[CalendarEventProjection],
+        *,
+        seen_at: float,
+        source_id: str = "",
+        source_label: str = "",
+    ) -> None:
+        """Atomically replace the projection for one source.
+    
+        When ``source_id`` is set (multi-source mode), only that source's
+        rows are deleted before inserting.  When empty (legacy single-source
+        callers), all rows are deleted -- preserving the old behaviour.
+        """
+        revision = str(subscription_revision)
+        sid = str(source_id)
+        slabel = str(source_label)
+        desired = tuple(events)
+        with self._connection() as conn:
+            # The source owns its whole projection. Clear its old/current rows
+            # in the transaction before inserting the complete desired set,
+            # rather than depending on a clock value being unique across
+            # refreshes. A transaction rollback restores the prior working
+            # projection if any insert fails.
+            if sid:
+                conn.execute(
+                    "DELETE FROM calendar_events WHERE source_id = ?", (sid,)
+                )
+            else:
+                conn.execute("DELETE FROM calendar_events")
+            for event in desired:
+                conn.execute(
+                    """INSERT INTO calendar_events
+                       (id, uid, title, starts_at, ends_at, location, meeting_url,
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(id) DO UPDATE SET
+                           uid=excluded.uid,
+                           title=excluded.title,
+                           starts_at=excluded.starts_at,
+                           ends_at=excluded.ends_at,
+                           location=excluded.location,
+                           meeting_url=excluded.meeting_url,
+                           last_seen_at=excluded.last_seen_at,
+                           subscription_revision=excluded.subscription_revision,
+                           source_id=excluded.source_id,
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
+                    (
+                        str(event.id),
+                        str(event.uid),
+                        str(event.title or ""),
+                        str(event.starts_at),
+                        str(event.ends_at),
+                        str(event.location) if event.location is not None else None,
+                        str(event.meeting_url) if event.meeting_url is not None else None,
+                        float(seen_at),
+                        revision,
+                        sid,
+                        slabel,
+>                       json.dumps(event.attendees),
+                                   ^^^^^^^^^^^^^^^
+                    ),
+                )
+E               AttributeError: '_FakeEvent' object has no attribute 'attendees'
+
+holdspeak/db/calendar_events.py:128: AttributeError
+_______________ TestCalendarSourcesRoute.test_matched_this_week ________________
+
+self = <tests.unit.test_hs175_calendar_sources.TestCalendarSourcesRoute object at 0x10c25c380>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-529/test_matched_this_week0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111419370>
+
+    def test_matched_this_week(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """matched_this_week counts events with calendar_event_projects links this week."""
+        db, config = _setup(tmp_path, monkeypatch)
+        from holdspeak.config.integrations import CalendarSource, CalendarConfig
+        from holdspeak.web.routes.calendar_sources import _iso_week_range_local
+    
+        sid = str(uuid.uuid4())
+        source = CalendarSource(id=sid, label="WORK", url="/tmp/cal.ics", enabled=True)
+        config.calendar = CalendarConfig(sources=[source])
+        config.meeting.auto_record = "room_linked"
+        config.save()
+    
+        week_start, week_end = _iso_week_range_local()
+    
+        # Seed an event within this week.
+        from datetime import datetime, timezone, timedelta
+        now = datetime.now(timezone.utc)
+        # Find a time this week.
+        monday = now - timedelta(days=now.weekday())
+        event_time = monday.replace(hour=10, minute=0, second=0, microsecond=0)
+        if event_time < now:
+            event_time = now + timedelta(hours=1)
+        event_iso = event_time.isoformat(timespec="seconds").replace("+00:00", "Z")
+        end_iso = (event_time + timedelta(hours=1)).isoformat(timespec="seconds").replace("+00:00", "Z")
+    
+        eid = str(uuid.uuid4())
+>       db.calendar_events.replace_projection(
+            "rev1",
+            [_make_event(eid, "uid-match", "Standup", event_iso, end_iso)],
+            seen_at=time.time(),
+            source_id=sid,
+            source_label="WORK",
+        )
+
+tests/unit/test_hs175_calendar_sources.py:142: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.calendar_events.CalendarEventRepository object at 0x1114f4e10>
+subscription_revision = 'rev1'
+events = [<tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x11157c7d0>]
+
+    def replace_projection(
+        self,
+        subscription_revision: str,
+        events: Iterable[CalendarEventProjection],
+        *,
+        seen_at: float,
+        source_id: str = "",
+        source_label: str = "",
+    ) -> None:
+        """Atomically replace the projection for one source.
+    
+        When ``source_id`` is set (multi-source mode), only that source's
+        rows are deleted before inserting.  When empty (legacy single-source
+        callers), all rows are deleted -- preserving the old behaviour.
+        """
+        revision = str(subscription_revision)
+        sid = str(source_id)
+        slabel = str(source_label)
+        desired = tuple(events)
+        with self._connection() as conn:
+            # The source owns its whole projection. Clear its old/current rows
+            # in the transaction before inserting the complete desired set,
+            # rather than depending on a clock value being unique across
+            # refreshes. A transaction rollback restores the prior working
+            # projection if any insert fails.
+            if sid:
+                conn.execute(
+                    "DELETE FROM calendar_events WHERE source_id = ?", (sid,)
+                )
+            else:
+                conn.execute("DELETE FROM calendar_events")
+            for event in desired:
+                conn.execute(
+                    """INSERT INTO calendar_events
+                       (id, uid, title, starts_at, ends_at, location, meeting_url,
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(id) DO UPDATE SET
+                           uid=excluded.uid,
+                           title=excluded.title,
+                           starts_at=excluded.starts_at,
+                           ends_at=excluded.ends_at,
+                           location=excluded.location,
+                           meeting_url=excluded.meeting_url,
+                           last_seen_at=excluded.last_seen_at,
+                           subscription_revision=excluded.subscription_revision,
+                           source_id=excluded.source_id,
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
+                    (
+                        str(event.id),
+                        str(event.uid),
+                        str(event.title or ""),
+                        str(event.starts_at),
+                        str(event.ends_at),
+                        str(event.location) if event.location is not None else None,
+                        str(event.meeting_url) if event.meeting_url is not None else None,
+                        float(seen_at),
+                        revision,
+                        sid,
+                        slabel,
+>                       json.dumps(event.attendees),
+                                   ^^^^^^^^^^^^^^^
+                    ),
+                )
+E               AttributeError: '_FakeEvent' object has no attribute 'attendees'
+
+holdspeak/db/calendar_events.py:128: AttributeError
+________ TestSourcesPayloadClocks.test_event_count_names_what_it_counts ________
+
+self = <tests.unit.test_hs175_calendar_sources.TestSourcesPayloadClocks object at 0x10c440190>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-529/test_event_count_names_what_it0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111355f20>
+
+    def test_event_count_names_what_it_counts(self, tmp_path, monkeypatch):
+        """C9(b): COUNT(DISTINCT uid) is the VEVENT count -> ``event_count``."""
+        db, config = _setup(tmp_path, monkeypatch)
+        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        sid = _seed_source(config)
+>       db.calendar_events.replace_projection(
+            "rev1",
+            [_make_event("e1", "uid1", "Standup", "2026-09-08T10:00:00Z", "2026-09-08T11:00:00Z"),
+             _make_event("e2", "uid2", "Review", "2026-09-09T14:00:00Z", "2026-09-09T15:00:00Z")],
+            seen_at=time.time(), source_id=sid, source_label="WORK",
+        )
+
+tests/unit/test_hs175_calendar_sources.py:263: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.calendar_events.CalendarEventRepository object at 0x11157f750>
+subscription_revision = 'rev1'
+events = [<tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x1114c3250>, <tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x1114c3390>]
+
+    def replace_projection(
+        self,
+        subscription_revision: str,
+        events: Iterable[CalendarEventProjection],
+        *,
+        seen_at: float,
+        source_id: str = "",
+        source_label: str = "",
+    ) -> None:
+        """Atomically replace the projection for one source.
+    
+        When ``source_id`` is set (multi-source mode), only that source's
+        rows are deleted before inserting.  When empty (legacy single-source
+        callers), all rows are deleted -- preserving the old behaviour.
+        """
+        revision = str(subscription_revision)
+        sid = str(source_id)
+        slabel = str(source_label)
+        desired = tuple(events)
+        with self._connection() as conn:
+            # The source owns its whole projection. Clear its old/current rows
+            # in the transaction before inserting the complete desired set,
+            # rather than depending on a clock value being unique across
+            # refreshes. A transaction rollback restores the prior working
+            # projection if any insert fails.
+            if sid:
+                conn.execute(
+                    "DELETE FROM calendar_events WHERE source_id = ?", (sid,)
+                )
+            else:
+                conn.execute("DELETE FROM calendar_events")
+            for event in desired:
+                conn.execute(
+                    """INSERT INTO calendar_events
+                       (id, uid, title, starts_at, ends_at, location, meeting_url,
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(id) DO UPDATE SET
+                           uid=excluded.uid,
+                           title=excluded.title,
+                           starts_at=excluded.starts_at,
+                           ends_at=excluded.ends_at,
+                           location=excluded.location,
+                           meeting_url=excluded.meeting_url,
+                           last_seen_at=excluded.last_seen_at,
+                           subscription_revision=excluded.subscription_revision,
+                           source_id=excluded.source_id,
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
+                    (
+                        str(event.id),
+                        str(event.uid),
+                        str(event.title or ""),
+                        str(event.starts_at),
+                        str(event.ends_at),
+                        str(event.location) if event.location is not None else None,
+                        str(event.meeting_url) if event.meeting_url is not None else None,
+                        float(seen_at),
+                        revision,
+                        sid,
+                        slabel,
+>                       json.dumps(event.attendees),
+                                   ^^^^^^^^^^^^^^^
+                    ),
+                )
+E               AttributeError: '_FakeEvent' object has no attribute 'attendees'
+
+holdspeak/db/calendar_events.py:128: AttributeError
+___ TestSourcesPayloadClocks.test_last_read_is_an_instant_and_a_local_clock ____
+
+self = <tests.unit.test_hs175_calendar_sources.TestSourcesPayloadClocks object at 0x10c4402d0>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-529/test_last_read_is_an_instant_a0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111356690>
+denver = None
+
+    def test_last_read_is_an_instant_and_a_local_clock(self, tmp_path, monkeypatch, denver):
+        """C8: ``last_read_at`` is ISO-UTC (the browser formats it); the
+        hub-local ``last_read`` reads 17:47 for 23:47Z at -06:00."""
+        db, config = _setup(tmp_path, monkeypatch)
+        from datetime import datetime, timezone
+        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        sid = _seed_source(config)
+        seen = datetime(2026, 9, 5, 23, 47, 0, tzinfo=timezone.utc).timestamp()
+>       db.calendar_events.replace_projection(
+            "rev1",
+            [_make_event("e1", "uid1", "Standup", "2026-09-08T10:00:00Z", "2026-09-08T11:00:00Z")],
+            seen_at=seen, source_id=sid, source_label="WORK",
+        )
+
+tests/unit/test_hs175_calendar_sources.py:283: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.calendar_events.CalendarEventRepository object at 0x1114bc770>
+subscription_revision = 'rev1'
+events = [<tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x1114c3610>]
+
+    def replace_projection(
+        self,
+        subscription_revision: str,
+        events: Iterable[CalendarEventProjection],
+        *,
+        seen_at: float,
+        source_id: str = "",
+        source_label: str = "",
+    ) -> None:
+        """Atomically replace the projection for one source.
+    
+        When ``source_id`` is set (multi-source mode), only that source's
+        rows are deleted before inserting.  When empty (legacy single-source
+        callers), all rows are deleted -- preserving the old behaviour.
+        """
+        revision = str(subscription_revision)
+        sid = str(source_id)
+        slabel = str(source_label)
+        desired = tuple(events)
+        with self._connection() as conn:
+            # The source owns its whole projection. Clear its old/current rows
+            # in the transaction before inserting the complete desired set,
+            # rather than depending on a clock value being unique across
+            # refreshes. A transaction rollback restores the prior working
+            # projection if any insert fails.
+            if sid:
+                conn.execute(
+                    "DELETE FROM calendar_events WHERE source_id = ?", (sid,)
+                )
+            else:
+                conn.execute("DELETE FROM calendar_events")
+            for event in desired:
+                conn.execute(
+                    """INSERT INTO calendar_events
+                       (id, uid, title, starts_at, ends_at, location, meeting_url,
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(id) DO UPDATE SET
+                           uid=excluded.uid,
+                           title=excluded.title,
+                           starts_at=excluded.starts_at,
+                           ends_at=excluded.ends_at,
+                           location=excluded.location,
+                           meeting_url=excluded.meeting_url,
+                           last_seen_at=excluded.last_seen_at,
+                           subscription_revision=excluded.subscription_revision,
+                           source_id=excluded.source_id,
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
+                    (
+                        str(event.id),
+                        str(event.uid),
+                        str(event.title or ""),
+                        str(event.starts_at),
+                        str(event.ends_at),
+                        str(event.location) if event.location is not None else None,
+                        str(event.meeting_url) if event.meeting_url is not None else None,
+                        float(seen_at),
+                        revision,
+                        sid,
+                        slabel,
+>                       json.dumps(event.attendees),
+                                   ^^^^^^^^^^^^^^^
+                    ),
+                )
+E               AttributeError: '_FakeEvent' object has no attribute 'attendees'
+
+holdspeak/db/calendar_events.py:128: AttributeError
+_____ TestSourcesPayloadClocks.test_matched_this_week_uses_the_local_week ______
+
+self = <tests.unit.test_hs175_calendar_sources.TestSourcesPayloadClocks object at 0x10c1ceea0>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-529/test_matched_this_week_uses_th0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1114e8e50>
+denver = None
+
+    def test_matched_this_week_uses_the_local_week(self, tmp_path, monkeypatch, denver):
+        """A linked event on Sunday 23:00 Denver (Monday 05:00Z) counts THIS
+        week; one at Sunday 23:00 Denver LAST week does not (H4-1 inverted)."""
+        from datetime import timedelta
+        from holdspeak.services.project_service import local_week_bounds, utc_z
+        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        db, config = _setup(tmp_path, monkeypatch)
+        sid = _seed_source(config, auto_record="room_linked")
+        monday, next_monday = local_week_bounds()
+        e_in, e_out = str(uuid.uuid4()), str(uuid.uuid4())
+>       db.calendar_events.replace_projection(
+            "rev1",
+            [_make_event(e_in, "in", "Late Sunday", utc_z(next_monday - timedelta(hours=1)), utc_z(next_monday)),
+             _make_event(e_out, "out", "Last Sunday", utc_z(monday - timedelta(hours=1)), utc_z(monday))],
+            seen_at=time.time(), source_id=sid, source_label="WORK",
+        )
+
+tests/unit/test_hs175_calendar_sources.py:302: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.calendar_events.CalendarEventRepository object at 0x1114d28b0>
+subscription_revision = 'rev1'
+events = [<tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x1114c3b10>, <tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x1114c3d90>]
+
+    def replace_projection(
+        self,
+        subscription_revision: str,
+        events: Iterable[CalendarEventProjection],
+        *,
+        seen_at: float,
+        source_id: str = "",
+        source_label: str = "",
+    ) -> None:
+        """Atomically replace the projection for one source.
+    
+        When ``source_id`` is set (multi-source mode), only that source's
+        rows are deleted before inserting.  When empty (legacy single-source
+        callers), all rows are deleted -- preserving the old behaviour.
+        """
+        revision = str(subscription_revision)
+        sid = str(source_id)
+        slabel = str(source_label)
+        desired = tuple(events)
+        with self._connection() as conn:
+            # The source owns its whole projection. Clear its old/current rows
+            # in the transaction before inserting the complete desired set,
+            # rather than depending on a clock value being unique across
+            # refreshes. A transaction rollback restores the prior working
+            # projection if any insert fails.
+            if sid:
+                conn.execute(
+                    "DELETE FROM calendar_events WHERE source_id = ?", (sid,)
+                )
+            else:
+                conn.execute("DELETE FROM calendar_events")
+            for event in desired:
+                conn.execute(
+                    """INSERT INTO calendar_events
+                       (id, uid, title, starts_at, ends_at, location, meeting_url,
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(id) DO UPDATE SET
+                           uid=excluded.uid,
+                           title=excluded.title,
+                           starts_at=excluded.starts_at,
+                           ends_at=excluded.ends_at,
+                           location=excluded.location,
+                           meeting_url=excluded.meeting_url,
+                           last_seen_at=excluded.last_seen_at,
+                           subscription_revision=excluded.subscription_revision,
+                           source_id=excluded.source_id,
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
+                    (
+                        str(event.id),
+                        str(event.uid),
+                        str(event.title or ""),
+                        str(event.starts_at),
+                        str(event.ends_at),
+                        str(event.location) if event.location is not None else None,
+                        str(event.meeting_url) if event.meeting_url is not None else None,
+                        float(seen_at),
+                        revision,
+                        sid,
+                        slabel,
+>                       json.dumps(event.attendees),
+                                   ^^^^^^^^^^^^^^^
+                    ),
+                )
+E               AttributeError: '_FakeEvent' object has no attribute 'attendees'
+
+holdspeak/db/calendar_events.py:128: AttributeError
+__________ TestDstEdgeSources.test_matched_this_week_across_fall_back __________
+
+self = <tests.unit.test_hs175_calendar_sources.TestDstEdgeSources object at 0x10c440550>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-529/test_matched_this_week_across_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1114e9850>
+denver = None
+
+    def test_matched_this_week_across_fall_back(self, tmp_path, monkeypatch, denver):
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        from holdspeak.services.project_service import utc_z
+        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        db, config = _setup(tmp_path, monkeypatch)
+        sid = _seed_source(config, auto_record="room_linked")
+        tz = ZoneInfo("America/Denver")
+        now_fixed = datetime(2026, 11, 1, 20, 0, tzinfo=tz).astimezone()
+        rows = {
+            "e-mon": datetime(2026, 10, 26, 0, 30, tzinfo=tz),   # in (Monday 00:30 MDT)
+            "e-sun": datetime(2026, 11, 1, 0, 30, tzinfo=tz),    # in
+            "e-prev": datetime(2026, 10, 25, 23, 30, tzinfo=tz), # out (Sunday before)
+        }
+>       db.calendar_events.replace_projection(
+            "rev1",
+            [_make_event(eid, eid, eid, utc_z(local), utc_z(local)) for eid, local in rows.items()],
+            seen_at=time.time(), source_id=sid, source_label="WORK",
+        )
+
+tests/unit/test_hs175_calendar_sources.py:562: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.calendar_events.CalendarEventRepository object at 0x1114e2c30>
+subscription_revision = 'rev1'
+events = [<tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x111540190>, <tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x111540410>, <tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x111540690>]
+
+    def replace_projection(
+        self,
+        subscription_revision: str,
+        events: Iterable[CalendarEventProjection],
+        *,
+        seen_at: float,
+        source_id: str = "",
+        source_label: str = "",
+    ) -> None:
+        """Atomically replace the projection for one source.
+    
+        When ``source_id`` is set (multi-source mode), only that source's
+        rows are deleted before inserting.  When empty (legacy single-source
+        callers), all rows are deleted -- preserving the old behaviour.
+        """
+        revision = str(subscription_revision)
+        sid = str(source_id)
+        slabel = str(source_label)
+        desired = tuple(events)
+        with self._connection() as conn:
+            # The source owns its whole projection. Clear its old/current rows
+            # in the transaction before inserting the complete desired set,
+            # rather than depending on a clock value being unique across
+            # refreshes. A transaction rollback restores the prior working
+            # projection if any insert fails.
+            if sid:
+                conn.execute(
+                    "DELETE FROM calendar_events WHERE source_id = ?", (sid,)
+                )
+            else:
+                conn.execute("DELETE FROM calendar_events")
+            for event in desired:
+                conn.execute(
+                    """INSERT INTO calendar_events
+                       (id, uid, title, starts_at, ends_at, location, meeting_url,
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(id) DO UPDATE SET
+                           uid=excluded.uid,
+                           title=excluded.title,
+                           starts_at=excluded.starts_at,
+                           ends_at=excluded.ends_at,
+                           location=excluded.location,
+                           meeting_url=excluded.meeting_url,
+                           last_seen_at=excluded.last_seen_at,
+                           subscription_revision=excluded.subscription_revision,
+                           source_id=excluded.source_id,
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
+                    (
+                        str(event.id),
+                        str(event.uid),
+                        str(event.title or ""),
+                        str(event.starts_at),
+                        str(event.ends_at),
+                        str(event.location) if event.location is not None else None,
+                        str(event.meeting_url) if event.meeting_url is not None else None,
+                        float(seen_at),
+                        revision,
+                        sid,
+                        slabel,
+>                       json.dumps(event.attendees),
+                                   ^^^^^^^^^^^^^^^
+                    ),
+                )
+E               AttributeError: '_FakeEvent' object has no attribute 'attendees'
+
+holdspeak/db/calendar_events.py:128: AttributeError
+_____________ test_dashboard_owns_first_value_without_redirecting ______________
+
+    def test_dashboard_owns_first_value_without_redirecting() -> None:
+        resp = _client().get("/")
+        assert resp.status_code == 200
+        desk = (_REPO / "web" / "src" / "desk" / "DeskApp.tsx").read_text()
+>       assert "setup?.arrival_required" in desk
+E       assert 'setup?.arrival_required' in "// The Desk route — the web app's front door (HS-73-02).\n//\n// React + Vite in the one Web tree. Full-bleed: the wo...SnapGhost />}\n      {!arrivalRequired && <Expose />}\n      {!arrivalRequired && <Switcher />}\n    </div>\n  );\n}\n"
+
+tests/integration/test_web_setup_route.py:46: AssertionError
+____________________ test_the_counts_over_every_atlas_file _____________________
+
+    def test_the_counts_over_every_atlas_file() -> None:
+        # PHILO-13 (H-B0b principle): each ``atlas-phase13-*`` file is counted by
+        # its own lane's test file (one count, one owner), so this count leaves
+        # them out. Only the count: the general fences still read every file.
+        have = {
+            path.name: len(json.loads(path.read_text())["cases"])
+            for path in general.ATLAS_FILES
+            if not path.name.startswith("atlas-phase13-")
+        }
+>       assert have == COUNTS
+E       AssertionError: assert {'atlas-h-c5....son': 22, ...} == {'atlas-phase...json': 2, ...}
+E         
+E         Omitting 10 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'atlas-h-c5.json': 1}
+E         Use -v to get more diff
+
+tests/unit/test_philo10_atlas.py:133: AssertionError
+____________ test_primary_copy_has_no_prohibited_operational_drift _____________
+
+    def test_primary_copy_has_no_prohibited_operational_drift() -> None:
+        recorded = _recorded_copy_debt()
+        problems = [
+            item
+            for item in violations(inventory(REPO))
+            if (str(item.path), item.rule_id, item.text) not in recorded
+        ]
+>       assert not problems, "Primary product-copy drift:\n  " + "\n  ".join(
+            f"{item.path}:{item.line}: {item.rule_id}: {item.text}"
+            for item in problems
+        )
+E       AssertionError: Primary product-copy drift:
+E           web/src/desk/windowSend.tsx:279: failure-missing-facts: [data-testid=send-preview], [data-testid=preview-refused], [data-testid=preview-failed]
+E       assert not [CopyViolation(rule_id='failure-missing-facts', path='web/src/desk/windowSend.tsx', line=279, text='[data-testid=send-...xt valid action, and the destination when relevant (missing: retained_work, next_action, destination_when_relevant).')]
+
+tests/unit/test_product_copy.py:74: AssertionError
+____________________ test_the_counts_over_every_atlas_file _____________________
+
+    def test_the_counts_over_every_atlas_file() -> None:
+        # PHILO-13 (H-B0b principle): each ``atlas-phase13-*`` file is counted by
+        # its own lane's test file (one count, one owner), so this count leaves
+        # them out. Only the count: the general fences still read every file.
+        have = {
+            path.name: len(json.loads(path.read_text())["cases"])
+            for path in general.ATLAS_FILES
+            if not path.name.startswith("atlas-phase13-")
+        }
+>       assert have == COUNTS
+E       AssertionError: assert {'atlas-h-c5....son': 22, ...} == {'atlas-phase...json': 2, ...}
+E         
+E         Omitting 10 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'atlas-h-c5.json': 1}
+E         Use -v to get more diff
+
+tests/unit/test_philo9_atlas.py:111: AssertionError
+____________ test_the_http_routes_keep_their_envelopes_and_statuses ____________
+
+hub = <test_philo5_the_loop.Hub object at 0x115044050>
+room = {'meeting': 'm-compat', 'pid': 'proj-502a26409bb3', 'update': 'pupd_fa71574b312a49e3b3def18e5fae0ebd'}
+
+    def test_the_http_routes_keep_their_envelopes_and_statuses(hub: Hub, room: dict[str, str]) -> None:
+        c, pid = hub.client, room["pid"]
+        ok = [
+            ("GET", "/api/projects", None, {"projects"}),
+            ("GET", f"/api/projects/{pid}/items", None, {"items", "limit", "offset"}),
+            ("POST", f"/api/projects/{pid}/items", {"item_type": "milestone", "title": "M"}, {"success", "item"}),
+            ("GET", f"/api/projects/{pid}/resources", None, {"resources"}),
+            ("GET", f"/api/projects/{pid}/updates", None, {"updates"}),
+            ("PATCH", f"/api/projects/{pid}", {"description": "d"}, {"success", "project"}),
+        ]
+        for method, path, body, keys in ok:
+            resp = c.request(method, path, json=body) if body is not None else c.request(method, path)
+            assert resp.status_code == 200, (path, resp.text)
+>           assert _keys(resp.json()) == keys, (path, sorted(resp.json()))
+E           AssertionError: ('/api/projects/proj-502a26409bb3/updates', ['latest_published_update_id', 'updates'])
+E           assert {'latest_publ...d', 'updates'} == {'updates'}
+E             
+E             Extra items in the left set:
+E             'latest_published_update_id'
+E             Use -v to get more diff
+
+tests/unit/test_philo9_compat.py:128: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_desk_locks.py::test_the_front_door_is_the_desk_with_the_guard
+FAILED tests/unit/test_hs175_calendar_sources.py::TestCalendarSourcesRoute::test_source_stats_from_db
+FAILED tests/unit/test_hs175_calendar_sources.py::TestCalendarSourcesRoute::test_matched_this_week
+FAILED tests/unit/test_hs175_calendar_sources.py::TestSourcesPayloadClocks::test_event_count_names_what_it_counts
+FAILED tests/unit/test_hs175_calendar_sources.py::TestSourcesPayloadClocks::test_last_read_is_an_instant_and_a_local_clock
+FAILED tests/unit/test_hs175_calendar_sources.py::TestSourcesPayloadClocks::test_matched_this_week_uses_the_local_week
+FAILED tests/unit/test_hs175_calendar_sources.py::TestDstEdgeSources::test_matched_this_week_across_fall_back
+FAILED tests/integration/test_web_setup_route.py::test_dashboard_owns_first_value_without_redirecting
+FAILED tests/unit/test_philo10_atlas.py::test_the_counts_over_every_atlas_file
+FAILED tests/unit/test_product_copy.py::test_primary_copy_has_no_prohibited_operational_drift
+FAILED tests/unit/test_philo9_atlas.py::test_the_counts_over_every_atlas_file
+FAILED tests/unit/test_philo9_compat.py::test_the_http_routes_keep_their_envelopes_and_statuses
+12 failed, 2 passed in 5.04s
+
+Exit: 1

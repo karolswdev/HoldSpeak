@@ -32,3 +32,18 @@ def open_chair_window(page: Any, name: str) -> Any:
         page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')").click()
     win.first.wait_for()
     return win.first
+
+
+def go_group(page: Any, group: str, press: Any = None) -> Any:
+    """PHILO-13-17 (C7, Q3; ratified 2026-10-03): at 393 Go is grouped,
+    `Chair ▸ Desk ▸ Object ▸ Window ▸`, then its own rows. With Go open, open
+    one group (the panel is replaced, a back row first) and return the menu."""
+    import re
+
+    row = page.locator(".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']").filter(
+        has=page.locator(".desk-menu-label", has_text=re.compile(rf"^{re.escape(group)}$")))
+    row.first.wait_for()
+    row.first.scroll_into_view_if_needed()
+    (press or (lambda loc: loc.click()))(row.first)
+    page.locator(".desk-verbbar-menu .desk-menu-back", has_text=group).wait_for()
+    return page.locator(".desk-verbbar-menu")

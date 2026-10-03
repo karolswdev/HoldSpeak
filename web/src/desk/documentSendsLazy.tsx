@@ -10,6 +10,7 @@ const Brief = lazy(() => load().then((m) => ({ default: m.BriefSendWells })));
 const Head = lazy(() => load().then((m) => ({ default: m.BriefHeadVerbs })));
 const Desk = lazy(() => load().then((m) => ({ default: m.DeskDecisionSendWells })));
 const Record = lazy(() => load().then((m) => ({ default: m.DecisionRecordSendWells })));
+const Artifact = lazy(() => load().then((m) => ({ default: m.ArtifactSendWells })));
 const Chip = lazy(() => load().then((m) => ({ default: m.DecisionRecordPreparedChip })));
 
 type P<T> = T extends React.LazyExoticComponent<infer C> ? ComponentProps<C> : never;
@@ -21,3 +22,4 @@ export const BriefHeadVerbs = (p: P<typeof Head> & { children: ReactNode }) => (
 export const DeskDecisionSendWells = (p: P<typeof Desk>) => <Suspense fallback={null}><Desk {...p} /></Suspense>;
 export const DecisionRecordSendWells = (p: P<typeof Record>) => <Suspense fallback={null}><Record {...p} /></Suspense>;
 export const DecisionRecordPreparedChip = (p: P<typeof Chip>) => <Suspense fallback={null}><Chip {...p} /></Suspense>;
+export const ArtifactSendWells = (p: P<typeof Artifact>) => <Suspense fallback={null}><Artifact {...p} /></Suspense>;

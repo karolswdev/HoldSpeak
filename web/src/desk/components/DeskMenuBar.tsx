@@ -24,6 +24,8 @@ import {
 import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { useCompactViewport } from "../useCompactViewport";
 import { Button } from "../../components/signal/Signal";
+import { frontSendTo, primeSendTo, useSendToTick } from "../windowSend";
+import { frontWindowId } from "./window/windowRegistry";
 
 const MENUS: { id: MenuId; label: string }[] = [
   { id: "desk", label: "Desk" },
@@ -31,6 +33,31 @@ const MENUS: { id: MenuId; label: string }[] = [
   { id: "go", label: "Go" },
   { id: "window", label: "Window" },
 ];
+
+/** PHILO-13-17 (C7, Q3; ratified 2026-10-03) — Go at 393: `Chair ▸`
+ * (lifted out of Window), `Desk ▸`, `Object ▸`, `Window ▸`, then Go's own
+ * rows. The Desk, Object and Window menus stay menus, one tap each. Pure:
+ * `group(id)` is the menu bar's own builder over the one verb registry. */
+export function groupGoForPhone(
+  goRows: WorkMenuEntry[],
+  group: (id: MenuId) => WorkMenuEntry[],
+): WorkMenuEntry[] {
+  const win = group("window");
+  const chairAt = win.findIndex((e) => e.type === "sub" && e.label === "Chair");
+  const chair = chairAt >= 0 ? win.splice(chairAt, 1)[0] : null;
+  const trim = (rows: WorkMenuEntry[]) => {
+    while (rows.length && rows[0].type === "sep") rows.shift();
+    while (rows.length && rows[rows.length - 1].type === "sep") rows.pop();
+    return rows;
+  };
+  const heads: WorkMenuEntry[] = [
+    ...(chair ? [chair] : []),
+    { type: "sub", id: "go-desk", label: "Desk", entries: trim(group("desk")) },
+    { type: "sub", id: "go-object", label: "Object", entries: trim(group("object")) },
+    { type: "sub", id: "go-window", label: "Window", entries: trim(win) },
+  ];
+  return goRows.length ? [...heads, { type: "sep", id: "go-sep" }, ...goRows] : heads;
+}
 
 export function DeskMenuBar() {
   const settled = useSettleState((s) => s.settled);
@@ -53,6 +80,12 @@ export function DeskMenuBar() {
   const selectedIds = useDesk((s) => s.selectedIds);
   // PHILO-8-01 — re-render on a face change: the Chair withholds zone verbs.
   useChairState((s) => s.surface);
+  // PHILO-13-15 (C5): an open menu re-renders when a Send to read lands;
+  // the Object menu (393: Go) reads the front window's facts as it opens.
+  useSendToTick(open !== null);
+  useEffect(() => {
+    if (open === "object" || (compact && open === "go")) primeSendTo(frontWindowId());
+  }, [open, compact]);
   const ctx: VerbContext = {
     selectedRef: selectedIds.length === 1 ? selectedIds[0] : null,
   };
@@ -77,6 +110,17 @@ export function DeskMenuBar() {
 
   const menuEntries = (id: MenuId, out: WorkMenuEntry[]): void => {
     let lastGroup: string | undefined;
+    // PHILO-13-15 (C5, fork 5): the Object menu leads with the front
+    // window's `Send to ▸`, its own group (the same composition as the
+    // window menu). At 393 it leads the Object group inside Go.
+    if (id === "object") {
+      const sendTo = frontSendTo();
+      if (sendTo) {
+        if (out.length) out.push({ type: "sep", id: "sep-send-to-lead" });
+        out.push(sendTo);
+        lastGroup = "send-to";   // the first verb opens its own group
+      }
+    }
     // PHILO-13-11 (C1, slice two): a verb with a `submenu` rides in ONE
     // submenu of that name (Window ▸ Chair), at the place of its first verb.
     const subs = new Map<string, WorkMenuEntry[]>();
@@ -116,9 +160,13 @@ export function DeskMenuBar() {
   const entries = (id: MenuId): WorkMenuEntry[] => {
     const out: WorkMenuEntry[] = [];
     menuEntries(id, out);
-    // The one phone door carries every menu's verbs, in bar order.
-    if (compact && id === "go")
-      for (const m of MENUS) if (m.id !== "go") menuEntries(m.id, out);
+    // The one phone door carries every menu, grouped (PHILO-13-17, C7 Q3):
+    // Chair ▸ Desk ▸ Object ▸ Window ▸ first, then Go's own rows.
+    if (compact && id === "go") return groupGoForPhone(out, (m) => {
+      const e: WorkMenuEntry[] = [];
+      menuEntries(m, e);
+      return e;
+    });
     return out;
   };
 

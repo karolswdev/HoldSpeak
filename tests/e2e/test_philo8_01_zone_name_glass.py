@@ -22,6 +22,7 @@ from typing import Any
 
 import pytest
 
+from .chair_windows import go_group
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair
 from tests._evidence import evidence_dir
 
@@ -177,6 +178,8 @@ class TestZoneNameGlass:
                 # The Chair's menu bar (1440: the Desk menu; 393: the one phone door).
                 menu = "desk" if width > 720 else "go"
                 page.locator(f".desk-verbbar-item[data-menu-id={menu}] button").first.click()
+                if width <= 720:  # PHILO-13-17 (C7, Q3): Go ▸ Desk ▸ at 393
+                    go_group(page, "Desk")
                 page.get_by_role("menuitem", name=re.compile("New Note")).first.wait_for(timeout=15_000)
                 assert page.get_by_role("menuitem", name=re.compile("New Zone")).count() == 0
                 page.screenshot(path=str(SHOTS / f"chair-menu-{width}.png"))

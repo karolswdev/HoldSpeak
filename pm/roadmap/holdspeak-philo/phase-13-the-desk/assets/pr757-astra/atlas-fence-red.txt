@@ -1,0 +1,73 @@
+.........................F......                                         [100%]
+=================================== FAILURES ===================================
+_____ test_phase13_case_fence_rejects_old_doors_then_accepts_current_atlas _____
+
+    def test_phase13_case_fence_rejects_old_doors_then_accepts_current_atlas() -> None:
+        proper = _atlas()
+>       _assert_phase13_case_fence(proper)
+
+tests/unit/test_philo13_astra_atlas.py:711: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+atlas = {'atlas_version': 'phase13-astra-wave1', 'cases': [{'applicability': 'applicable', 'completion_bound_s': 30, 'edge_ids... 'source': 'datetime.datetime.now() inside the hub process', 'status': 'available', ...}], 'council_readings': [], ...}
+
+    def _assert_phase13_case_fence(atlas: dict) -> None:
+        """Keep each corrected door live and reject the three old case paths."""
+        cases = {case["id"]: case for case in atlas["cases"]}
+        calendar = cases["case.p13.calendar.snapshot_window"]
+        assert calendar["applicability"] == "applicable"
+        expected = calendar["expected"]
+        assert expected["predicate"] == {
+            "kind": "readable_text",
+            "value": "no_vision_model_assigned",
+        }
+        assert expected["observe_at"] == "[role=region][aria-label^=Calendar]"
+    
+        press_actions = {"click", "click_role", "focus", "press", "scroll_into_view", "set_input_files"}
+        for step in _steps(calendar):
+            if step.get("kind") == "ui" and step.get("action") in press_actions:
+                assert step.get("adapter") == "ui-by-viewport", step
+    
+        trigger_steps = _steps({"setup": [], "trigger": calendar["trigger"]})
+        close_index = next(
+            i for i, step in enumerate(trigger_steps)
+            if step.get("action") == "click"
+            and '[role="region"][aria-label="Calendar snapshot"] button[aria-label^="Close "]' in step.get("selector", "")
+        )
+        assert trigger_steps[close_index + 1]["action"] == "wait_for"
+        assert trigger_steps[close_index + 1]["state"] == "hidden"
+        reload_index = next(
+            i for i, step in enumerate(trigger_steps[close_index + 1:], close_index + 1)
+            if step.get("action") == "reload"
+        )
+        assert reload_index > close_index
+        assert any(
+            step.get("action") == "wait_for"
+            and step.get("selector") == '[role="region"][aria-label="Calendar snapshot"]'
+            for step in trigger_steps[reload_index + 1:]
+        )
+    
+        directory = cases["case.p13.directory.zone"]
+        assert directory["applicability"] == "applicable"
+>       assert directory["expected"]["predicate"] == {
+            "kind": "all_of",
+            "predicates": [
+                {"kind": "attr_equals", "attr": "aria-label", "value": "Atlas Phase 13 Zone"},
+                {"kind": "readable_text", "value": "Drop items here"},
+            ],
+        }
+E       AssertionError: assert {'kind': 'rea...hase 13 Zone'} == {'kind': 'all...items here'}]}
+E         
+E         Differing items:
+E         {'kind': 'readable_text'} != {'kind': 'all_of'}
+E         Left contains 1 more item:
+E         {'value': 'Atlas Phase 13 Zone'}
+E         Right contains 1 more item:
+E         {'predicates': [{'attr': 'aria-label',...
+E         
+E         ...Full output truncated (4 lines hidden), use '-vv' to show
+
+tests/unit/test_philo13_astra_atlas.py:433: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo13_astra_atlas.py::test_phase13_case_fence_rejects_old_doors_then_accepts_current_atlas
+1 failed, 31 passed in 0.63s

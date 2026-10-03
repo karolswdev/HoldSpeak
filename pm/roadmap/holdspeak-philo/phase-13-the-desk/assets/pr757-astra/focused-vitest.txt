@@ -1,0 +1,32 @@
+Focused command (run from `web/`):
+
+```text
+PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH npm exec vitest run src/desk/__tests__/zoneMenuOpen.philo1301.test.ts src/desk/__tests__/factoryWindowsFloat.philo1301.test.ts --maxWorkers=2
+```
+
+Exact run output:
+
+```text
+npm warn Unknown cli config "--maxWorkers". This will stop working in the next major version of npm.
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-13-pr757-astra/web
+
+
+ Test Files  2 passed (2)
+      Tests  8 passed (8)
+   Start at  12:55:07
+   Duration  546ms (transform 188ms, setup 125ms, import 243ms, tests 6ms, environment 354ms)
+```
+
+Collected names (`vitest list`):
+
+```text
+src/desk/__tests__/factoryWindowsFloat.philo1301.test.ts > factory windows float > the pullout class is the one that positions a window
+src/desk/__tests__/factoryWindowsFloat.philo1301.test.ts > factory windows float > ZoneWindow wears desk-pullout
+src/desk/__tests__/factoryWindowsFloat.philo1301.test.ts > factory windows float > InfoWindow wears desk-pullout
+src/desk/__tests__/factoryWindowsFloat.philo1301.test.ts > factory windows float > RoadmapWindow wears desk-pullout
+src/desk/__tests__/factoryWindowsFloat.philo1301.test.ts > factory windows float > RepoWindow wears desk-pullout
+src/desk/__tests__/factoryWindowsFloat.philo1301.test.ts > factory windows float > WorkbenchWindow wears desk-pullout
+src/desk/__tests__/zoneMenuOpen.philo1301.test.ts > zone context menu > offers Open, Get Info and Focus for a real Zone
+src/desk/__tests__/zoneMenuOpen.philo1301.test.ts > zone context menu > Open opens the ZoneWindow for that Zone
+```

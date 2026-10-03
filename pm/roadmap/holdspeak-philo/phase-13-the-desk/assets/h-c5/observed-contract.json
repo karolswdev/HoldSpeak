@@ -1,0 +1,46 @@
+[
+  {
+    "viewport": 1440,
+    "verdict": "pass",
+    "revision": "2d1d791a0b12b1f42fecdec0903a74a86a1e7d0b",
+    "dirty": true,
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur3n5c3k/.local/share/holdspeak/holdspeak.db",
+    "console_errors": [],
+    "latest_published_update_id": "pupd_eae58da756d04cb68eb298aa8a201c49",
+    "publications": [
+      {
+        "id": "pupd_eae58da756d04cb68eb298aa8a201c49",
+        "draft_revision": 1,
+        "published_at": "2026-10-03T16:53:47+00:00"
+      },
+      {
+        "id": "pupd_915dc0db709d43408380d8bc261ffdec",
+        "draft_revision": 2,
+        "published_at": "2026-10-03T16:53:47+00:00"
+      }
+    ],
+    "observation": ".tmp/h-c5/final-1440/20261003T165342Z-case.h_c5.update.latest_first-astra-1440/observation.json"
+  },
+  {
+    "viewport": 393,
+    "verdict": "pass",
+    "revision": "2d1d791a0b12b1f42fecdec0903a74a86a1e7d0b",
+    "dirty": true,
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-y1dyfjwp/.local/share/holdspeak/holdspeak.db",
+    "console_errors": [],
+    "latest_published_update_id": "pupd_d2c829f3f6d441259039637c61b49851",
+    "publications": [
+      {
+        "id": "pupd_d2c829f3f6d441259039637c61b49851",
+        "draft_revision": 1,
+        "published_at": "2026-10-03T16:54:42+00:00"
+      },
+      {
+        "id": "pupd_b048f7944c114f159483e9453bf28b52",
+        "draft_revision": 2,
+        "published_at": "2026-10-03T16:54:42+00:00"
+      }
+    ],
+    "observation": ".tmp/h-c5/final-393/20261003T165435Z-case.h_c5.update.latest_first-astra-393/observation.json"
+  }
+]

@@ -7277,7 +7277,8 @@
     },
     {
       "apis": [
-        "POST /api/projects/{project_id}/updates/draft"
+        "POST /api/projects/{project_id}/updates/draft",
+        "GET /api/projects/{project_id}/updates"
       ],
       "authority": "The existing project.draft_update operation admits the write.",
       "configuration": [],
@@ -7318,7 +7319,8 @@
       "outputs": [
         "update body",
         "source claims",
-        "source coverage"
+        "source coverage",
+        "latest_published_update_id on the update list read; null when the filtered list has no publication"
       ],
       "owner_observed": false,
       "persistence": [
@@ -7331,7 +7333,7 @@
         "linux_x11": "unknown",
         "macos": "unknown"
       },
-      "purpose": "Draft an update from linked meeting summaries, decisions and owned actions.",
+      "purpose": "Draft an update from linked meeting summaries, decisions and owned actions. Find the latest published update.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "local_reversible",
@@ -7341,6 +7343,18 @@
           "line": 1997,
           "path": "holdspeak/services/project_update_service.py",
           "symbol": "ProjectUpdateService._read_week_sources"
+        },
+        {
+          "claim": "Published updates come first, ordered by published_at descending then rowid descending; unpublished rows retain draft revision and creation order.",
+          "line": 172,
+          "path": "holdspeak/db/updates.py",
+          "symbol": "UpdatesRepository.list_updates"
+        },
+        {
+          "claim": "The list response exposes latest_published_update_id so the face does not sort publications.",
+          "line": 49,
+          "path": "holdspeak/web/routes/project_updates.py",
+          "symbol": "build_project_updates_router"
         }
       ],
       "status": "built_unreleased",
@@ -7361,6 +7375,18 @@
           "execution": "passed",
           "node": "test_deterministic_draft_never_calls_model_boundary",
           "path": "tests/unit/test_philo13_b5_week.py"
+        },
+        {
+          "assertion": "Real route publications in the same second select the greater rowid even when its draft revision is lower.",
+          "execution": "passed",
+          "node": "test_same_second_published_tie_ignores_high_draft_revision",
+          "path": "tests/integration/test_update_routes.py"
+        },
+        {
+          "assertion": "The greater publication timestamp wins over a greater rowid; the filtered draft-only read has no latest publication.",
+          "execution": "passed",
+          "node": "test_published_at_beats_later_rowid",
+          "path": "tests/integration/test_update_routes.py"
         }
       ],
       "trust_boundary": "The deterministic generator reads stored project and meeting data. It does not call a model."

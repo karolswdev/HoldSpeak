@@ -8,7 +8,9 @@
 //     library Button in its place; Window ▸ Chair reopens it too.
 //   - 393 (R2): one window at a time fills the work area; Needs you first;
 //     Capture opens on demand from the Speak AppIcon (no permanent strip).
-import { useEffect, useLayoutEffect, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
+import { useAftercare } from "../intelligenceAttention";
+import { frontWindowAftercareSlot } from "../../components/AmbientLayer";
 import { Button } from "../../components/signal/Signal";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { GadgetGlyph } from "../components/window/GadgetGlyph";
@@ -19,6 +21,7 @@ import {
   CHAIR_WINDOWS,
   CHAIR_WINDOW_IDS,
   closeChairWindow,
+  keepCaptureInRing,
   openCaptureOnPhone,
   openChairWindow,
   useChairWindows,
@@ -27,9 +30,6 @@ import {
 } from "./chairWindows";
 
 export type ChairDeskProps = Record<ChairWindowKey, ReactNode>;
-
-/** How long a press on the Dock's Speak AppIcon arms the Capture answer. */
-const DOCK_PRESS_MS = 1500;
 
 function ChairWindow({
   spec,
@@ -89,29 +89,35 @@ export function ChairDesk(props: ChairDeskProps) {
   const phone = useChairWindows((s) => s.phone);
 
   // Muad'Dib's ruling: ONLY the Dock's Speak AppIcon opens Capture at 393.
-  // Go ▸ Speak, the verb and ⌘1 keep opening the Speak window. The Dock's
-  // launch logic is not ours to change (Dock.tsx is Astra's), so the press
-  // on the AppIcon arms the answer here: a capture-phase listener notes a
-  // press on the Dock's Speak AppIcon, and the shell's "dictate" key is
-  // answered only while that press is fresh (the Dock opens through an
-  // async import, so the window is a short time, not the same tick).
+  // Go ▸ Speak, the verb and ⌘1 keep opening the Speak window. PHILO-13-13
+  // C3-W: the Dock says so itself — its launches carry `origin: "dock"`
+  // (SurfaceOpenOptions, #744), so the Chair reads the origin and no press
+  // window is needed.
+  useEffect(
+    () =>
+      answerSurfaceFirst("dictate", (_scope, options) =>
+        options?.origin === "dock" && openCaptureOnPhone(),
+      ),
+    [],
+  );
+  // PHILO-13-17 (C7, Q4; the owner's ruling): at 393 an arriving aftercare
+  // card opens Capture, so the card lands in its slot (a desk window in
+  // front iconifies, never closes). Muad'Dib's ruling 2026-10-03: when the
+  // front desk window already hosts the card's slot (the meeting's own
+  // record in Meetings), the card lands there and nothing moves. A card
+  // already waiting when the Chair mounts keeps Capture in the ring (Q4b)
+  // without taking the front.
+  const aftercare = useAftercare();
+  const seenCard = useRef<string | null | undefined>(undefined);
   useEffect(() => {
-    let armedAt = -Infinity;
-    const arm = (e: Event) => {
-      const t = e.target as Element | null;
-      if (t?.closest?.(".desk-dock [aria-label^='Speak']")) armedAt = performance.now();
-    };
-    document.addEventListener("click", arm, true);
-    const off = answerSurfaceFirst("dictate", () => {
-      const fromDock = performance.now() - armedAt < DOCK_PRESS_MS;
-      armedAt = -Infinity;
-      return fromDock && openCaptureOnPhone();
-    });
-    return () => {
-      document.removeEventListener("click", arm, true);
-      off();
-    };
-  }, []);
+    const key = aftercare ? `${aftercare.meetingId}:${aftercare.title}` : null;
+    const first = seenCard.current === undefined;
+    const arrived = key !== null && key !== seenCard.current;
+    seenCard.current = key;
+    if (!arrived) return;
+    if (first) keepCaptureInRing();
+    else if (!frontWindowAftercareSlot()) openCaptureOnPhone();
+  }, [aftercare]);
   // Parent layout effects run after the windows present themselves.
   useLayoutEffect(() => {
     raiseNeedsAmongChair();

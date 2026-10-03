@@ -434,12 +434,23 @@ def _assert_phase13_case_fence(atlas: dict) -> None:
     directory = cases["case.p13.directory.zone"]
     assert directory["applicability"] == "applicable"
     assert directory["expected"]["predicate"] == {
-        "kind": "readable_text",
-        "value": "Atlas Phase 13 Zone",
+        "kind": "all_of",
+        "predicates": [
+            {"kind": "attr_equals", "attr": "aria-label", "value": "Atlas Phase 13 Zone"},
+            {"kind": "readable_text", "value": "Drop items here"},
+        ],
     }
+    assert directory["completion_bound_s"] == 40
+    assert any("33.753 s" in text and "40 s" in text for text in directory["preconditions"])
     assert directory["expected"]["observe_at"] == ".desk-zone-window"
     assert "should open its real ZoneWindow" in directory["expected"]["words"]
     assert directory["trigger"]["action"] == "world_context_menu"
+    assert any(
+        step.get("action") == "wait_for" and step.get("at_width") == 1440
+        and step.get("selector") == '.desk-zone-window :text("Atlas Phase 13 Zone")'
+        and step.get("state") == "visible"
+        for step in directory["trigger"].get("then", [])
+    ), "the desktop title remains visible after reopen"
     zone_doors = [
         step for step in _steps(directory)
         if step.get("action") == "world_context_menu"
@@ -538,7 +549,8 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
         assert case["viewports"] == [1440, 393]
         assert case["applicability"] == "applicable", case["id"]
         # A DOM-only text match passed an off-screen Repository in the real walk.
-        assert case["expected"]["predicate"]["kind"] == "readable_text", case["id"]
+        expected_kind = "all_of" if case["id"] == "case.p13.directory.zone" else "readable_text"
+        assert case["expected"]["predicate"]["kind"] == expected_kind, case["id"]
         steps = _steps(case)
         close_index = next(i for i, step in enumerate(steps) if 'Close ' in step.get("selector", ""))
         assert steps[close_index + 1]["state"] == "hidden", case["id"]

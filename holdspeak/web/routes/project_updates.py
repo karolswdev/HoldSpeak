@@ -67,7 +67,21 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
             updates = ops().invoke(principal(request), "project.list_updates", {
                 "project_id": project_id, "lifecycle": lifecycle,
             })
-            return JSONResponse({"updates": [_enrich_update(u) for u in updates]})
+            enriched = [_enrich_update(u) for u in updates]
+            # The null value is intentional when the lifecycle filter returns
+            # no published rows, including a draft-only request.
+            latest_published_update_id = next(
+                (
+                    update["id"]
+                    for update in enriched
+                    if update.get("lifecycle") == "published"
+                ),
+                None,
+            )
+            return JSONResponse({
+                "updates": enriched,
+                "latest_published_update_id": latest_published_update_id,
+            })
         except NotFound as exc:
             return JSONResponse(
                 {"code": exc.code, "message": exc.detail},

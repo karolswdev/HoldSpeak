@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** PHILO-13-11 (C1 canvas ratified); this story's own canvas ratified; PHILO-12-01 (done, merged #717)
 - **Unblocks:** PHILO-13-14 (the palette's `Send …` row uses the push seam)
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
@@ -74,6 +74,7 @@ Grounding size: M (`grounding/faces-jobs.md:155`; `grounding/structure.md:304`).
 
 ## Notes
 
+- 2026-10-03 — H-C5 paid by Astra (#752, f6e98ca3): the updates read names `latest_published_update_id` (published_at DESC, rowid DESC). The face takes that field; the face-side sort is gone (`web/src/desk/windowSend.tsx`). The same-second tie is fenced through the real routes in the glass at 1440 and 393 (`tests/e2e/test_philo13_15_send_to_glass.py`, `test_the_same_second_tie_links_the_later_publication`) and against the field in vitest. Astra's check on #749, conditions 1 and 2, paid in 5643a952.
 - 2026-10-02 — canvas drawn for the owner's ruling, NOT RATIFIED: `assets/story-15-canvas/` (README lists the boards, the acceptance line each answers, the forks and the limits). Drawn by a Fedaykin on main `76c361537` (the C1 frame and C2 window menu built); unchecked, awaiting Astra's check, then the owner.
 - 2026-10-01 — `web/src/meetings/MeetingSendWell.tsx` and `web/src/desk/components/DeskMenuBar.tsx` are not named in PROPOSAL §4's map; assigned to this lane (status file, "File ownership").
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
