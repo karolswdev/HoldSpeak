@@ -3454,7 +3454,9 @@
       "id": "project.update.linked_week@aipi",
       "platform": "aipi",
       "source_ids": [
-        "holdspeak/services/project_update_service.py"
+        "holdspeak/services/project_update_service.py",
+        "holdspeak/db/updates.py",
+        "holdspeak/web/routes/project_updates.py"
       ],
       "status": "built_unreleased"
     },
@@ -3464,7 +3466,9 @@
       "id": "project.update.linked_week@ipad",
       "platform": "ipad",
       "source_ids": [
-        "holdspeak/services/project_update_service.py"
+        "holdspeak/services/project_update_service.py",
+        "holdspeak/db/updates.py",
+        "holdspeak/web/routes/project_updates.py"
       ],
       "status": "built_unreleased"
     },
@@ -3474,7 +3478,9 @@
       "id": "project.update.linked_week@linux_wayland",
       "platform": "linux_wayland",
       "source_ids": [
-        "holdspeak/services/project_update_service.py"
+        "holdspeak/services/project_update_service.py",
+        "holdspeak/db/updates.py",
+        "holdspeak/web/routes/project_updates.py"
       ],
       "status": "built_unreleased"
     },
@@ -3484,7 +3490,9 @@
       "id": "project.update.linked_week@linux_x11",
       "platform": "linux_x11",
       "source_ids": [
-        "holdspeak/services/project_update_service.py"
+        "holdspeak/services/project_update_service.py",
+        "holdspeak/db/updates.py",
+        "holdspeak/web/routes/project_updates.py"
       ],
       "status": "built_unreleased"
     },
@@ -3494,7 +3502,9 @@
       "id": "project.update.linked_week@macos",
       "platform": "macos",
       "source_ids": [
-        "holdspeak/services/project_update_service.py"
+        "holdspeak/services/project_update_service.py",
+        "holdspeak/db/updates.py",
+        "holdspeak/web/routes/project_updates.py"
       ],
       "status": "built_unreleased"
     },

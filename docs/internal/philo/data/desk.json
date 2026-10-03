@@ -929,7 +929,7 @@
     {
       "id": "project.update.linked_week",
       "name": "Draft a project update",
-      "purpose": "Draft an update from linked meeting summaries, decisions and owned actions.",
+      "purpose": "Draft an update from linked meeting summaries, decisions and owned actions. Find the latest published update.",
       "domain": "desk",
       "status": "built_unreleased",
       "status_reason": "Implemented in the PHILO-13-10 candidate; the paired producer tests passed. Muad'Dib has not checked this candidate.",
@@ -957,13 +957,15 @@
       "outputs": [
         "update body",
         "source claims",
-        "source coverage"
+        "source coverage",
+        "latest_published_update_id on the update list read; null when the filtered list has no publication"
       ],
       "persistence": [
         "project_updates"
       ],
       "apis": [
-        "POST /api/projects/{project_id}/updates/draft"
+        "POST /api/projects/{project_id}/updates/draft",
+        "GET /api/projects/{project_id}/updates"
       ],
       "configuration": [],
       "dependencies": [
@@ -986,6 +988,18 @@
           "symbol": "ProjectUpdateService._read_week_sources",
           "line": 1997,
           "claim": "Reads active linked meeting summaries, owned open actions and Room decisions."
+        },
+        {
+          "path": "holdspeak/db/updates.py",
+          "symbol": "UpdatesRepository.list_updates",
+          "line": 172,
+          "claim": "Published updates come first, ordered by published_at descending then rowid descending; unpublished rows retain draft revision and creation order."
+        },
+        {
+          "path": "holdspeak/web/routes/project_updates.py",
+          "symbol": "build_project_updates_router",
+          "line": 49,
+          "claim": "The list response exposes latest_published_update_id so the face does not sort publications."
         }
       ],
       "tests": [
@@ -999,6 +1013,18 @@
           "path": "tests/unit/test_philo13_b5_week.py",
           "node": "test_deterministic_draft_never_calls_model_boundary",
           "assertion": "The deterministic path does not access the model broker.",
+          "execution": "passed"
+        },
+        {
+          "path": "tests/integration/test_update_routes.py",
+          "node": "test_same_second_published_tie_ignores_high_draft_revision",
+          "assertion": "Real route publications in the same second select the greater rowid even when its draft revision is lower.",
+          "execution": "passed"
+        },
+        {
+          "path": "tests/integration/test_update_routes.py",
+          "node": "test_published_at_beats_later_rowid",
+          "assertion": "The greater publication timestamp wins over a greater rowid; the filtered draft-only read has no latest publication.",
           "execution": "passed"
         }
       ],

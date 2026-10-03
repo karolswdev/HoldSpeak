@@ -177,7 +177,12 @@ class UpdatesRepository(BaseRepository):
         review_id: Optional[str] = None,
         limit: int = 200,
     ) -> list[dict[str, Any]]:
-        """List updates for a project, optionally filtered."""
+        """List updates for a project, optionally filtered.
+
+        Published rows sort first by ``published_at`` and SQLite insertion
+        order (``rowid``); unpublished rows retain draft revision and
+        creation order.  A lifecycle filter applies before this ordering.
+        """
         clean_pid = str(project_id).strip()
         clauses = ["project_id = ?"]
         params: list[Any] = [clean_pid]
@@ -192,7 +197,13 @@ class UpdatesRepository(BaseRepository):
             rows = conn.execute(
                 f"SELECT * FROM project_updates "
                 f"WHERE {' AND '.join(clauses)} "
-                f"ORDER BY draft_revision DESC, created_at DESC LIMIT ?",
+                "ORDER BY "
+                "CASE WHEN lifecycle = 'published' THEN 0 ELSE 1 END, "
+                "CASE WHEN lifecycle = 'published' THEN published_at END DESC, "
+                "CASE WHEN lifecycle = 'published' THEN rowid END DESC, "
+                "CASE WHEN lifecycle <> 'published' THEN draft_revision END DESC, "
+                "CASE WHEN lifecycle <> 'published' THEN created_at END DESC "
+                "LIMIT ?",
                 tuple(params),
             ).fetchall()
         return [dict(r) for r in rows]

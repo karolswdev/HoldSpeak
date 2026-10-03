@@ -1,0 +1,6 @@
+tests/integration/test_update_routes.py::TestLatestPublishedOrdering::test_no_published_update_is_null_and_draft_order_is_preserved
+tests/integration/test_update_routes.py::TestLatestPublishedOrdering::test_same_second_equal_revision_uses_later_rowid
+tests/integration/test_update_routes.py::TestLatestPublishedOrdering::test_same_second_published_tie_ignores_high_draft_revision
+tests/integration/test_update_routes.py::TestLatestPublishedOrdering::test_published_at_beats_later_rowid
+
+4 tests collected in 0.60s
