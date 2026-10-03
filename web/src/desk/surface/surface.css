@@ -3841,6 +3841,11 @@ button.surface-edit-in-place:hover {
   padding-left: 6px;
   padding-right: 6px;
 }
+/* PHILO-13-02 — the meeting Restore brought back is marked (C1-5d). */
+.meetings-stream-row[data-restored] .meetings-stream-title {
+  outline: 2px solid var(--wb-blue);
+  outline-offset: 1px;
+}
 
 /* The body is a clickable div (role="button"), not a <button>. */
 .meetings-stream-row-body {

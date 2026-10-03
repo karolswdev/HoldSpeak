@@ -74,7 +74,8 @@
 }
 
 /* HS-129-05 — migrated receipt-bar children retain their prior slot face. */
-.desk-next .surface-footer-receipt > .surface-footer-receipt-line {
+.desk-next .surface-footer-receipt > .surface-footer-receipt-line,
+.desk-next .surface-footer-receipt > .park-receipt > .surface-footer-receipt-line {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -86,8 +87,23 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.desk-next .surface-footer-receipt > .surface-footer-receipt-line[data-tone="danger"] {
+.desk-next .surface-footer-receipt > .surface-footer-receipt-line[data-tone="danger"],
+.desk-next .surface-footer-receipt > .park-receipt > .surface-footer-receipt-line[data-tone="danger"] {
   color: var(--danger);
+}
+/* PHILO-13-02 r2 — a park outcome (PARKED, RESTORED, NOT RESTORED, NOT
+   PARKED) wraps instead of clipping, and its Restore / Retry stays whole. */
+.desk-next .surface-footer-receipt > .park-receipt {
+  min-width: 0;
+  max-width: 100%;
+}
+.desk-next .surface-footer-receipt > .park-receipt > .surface-footer-receipt-line {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+.desk-next .surface-footer-receipt > .park-receipt > .btn {
+  flex: none;
 }
 .desk-next .surface-footer-verbs > .surface-footer-verbs-group {
   flex: none;
@@ -101,15 +117,19 @@
     height: auto;
     min-height: 36px;
   }
+  /* PHILO-13 C1 round 3c (board C1-5a-393, ported from the canvas
+     harness): two rows. The egress chip has its own row; the receipt and
+     the verbs sit below it, so a long warning never runs under MD / SRT. */
   .desk-next .surface-footer-layout {
     grid-template-columns: minmax(0, 1fr) max-content;
-    grid-template-areas: "egress verbs" "receipt receipt";
+    grid-template-areas: "egress egress" "receipt verbs";
     min-height: 36px;
     row-gap: 3px;
+    padding: 4px 0;
   }
   .desk-next .surface-footer-egress { grid-area: egress; }
-  .desk-next .surface-footer-verbs { grid-area: verbs; }
-  .desk-next .surface-footer-receipt { grid-area: receipt; min-height: 27px; }
+  .desk-next .surface-footer-verbs { grid-area: verbs; flex-wrap: wrap; }
+  .desk-next .surface-footer-receipt { grid-area: receipt; min-height: 27px; justify-content: flex-start; }
   .desk-next .surface-footer-receipt:empty { display: none; }
 }
 
