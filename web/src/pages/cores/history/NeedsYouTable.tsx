@@ -69,7 +69,8 @@ export function NeedsYouTable({
     <div className="meetings-detail-needs" data-testid="meeting-needs-you">
       <div className="meetings-detail-needs-head">
         <span className="surface-caption">
-          {countLabel("NEEDS YOU", needsCount)}
+          {/* PHILO-13-03: this meeting's proposals, narrower than "needs you". */}
+          {countLabel("TO REVIEW", needsCount)}
         </span>
         {showReview ? (
           <Button

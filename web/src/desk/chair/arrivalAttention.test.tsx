@@ -95,7 +95,7 @@ describe("Arrival attention (HS-200-15)", () => {
 
     expect(screen.getByTestId("arrival-display").textContent).toBe("17 need you across 3 projects");
     const section = screen.getByTestId("arrival-needs-you");
-    expect(section.textContent).toContain("NEEDS YOU 5 OF 17");
+    expect(section.textContent).toContain("ACTIONS 5 OF 17");
     const rows = within(section).getAllByTestId("arrival-needs-you-row");
     expect(rows).toHaveLength(5);
     // Ranked: the overdue row first, then due today.
@@ -117,7 +117,7 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(screen.getByTestId("arrival-needs-you-remainder-count").textContent).toBe("12 MORE");
     fireEvent.click(screen.getByRole("button", { name: "Show all: the remaining 12" }));
     expect(within(section).getAllByTestId("arrival-needs-you-row")).toHaveLength(17);
-    expect(section.textContent).toContain("NEEDS YOU 17");
+    expect(section.textContent).toContain("ACTIONS 17");
     expect(screen.queryByTestId("arrival-needs-you-remainder-count")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /^Show fewer/ }));
     expect(within(section).getAllByTestId("arrival-needs-you-row")).toHaveLength(5);
@@ -167,7 +167,7 @@ describe("Arrival attention (HS-200-15)", () => {
     fireEvent.click(within(strip).getByRole("button", { name: "OVERDUE" }));
     const section = screen.getByTestId("arrival-needs-you");
     expect(within(section).getAllByTestId("arrival-needs-you-row")).toHaveLength(1);
-    expect(section.textContent).toContain("NEEDS YOU 1");
+    expect(section.textContent).toContain("ACTIONS 1");
     fireEvent.click(within(strip).getByRole("button", { name: "NOT RUN" }));
     expect(screen.getByTestId("arrival-needs-you-none").textContent).toBe("NOTHING NOT RUN");
     fireEvent.click(within(strip).getByRole("button", { name: "RANKED" }));
@@ -181,7 +181,7 @@ describe("Arrival attention (HS-200-15)", () => {
     await waitFor(() => expect(screen.getByTestId("arrival-needs-you")).toBeTruthy(), { timeout: 5000 });
     expect(screen.getByTestId("arrival-display").textContent).toBe("3 need you");
     expect(screen.queryByRole("group", { name: "Project" })).toBeNull();
-    expect(screen.getByTestId("arrival-needs-you").textContent).toContain("NEEDS YOU 3");
+    expect(screen.getByTestId("arrival-needs-you").textContent).toContain("ACTIONS 3");
     expect(screen.queryByTestId("arrival-needs-you-remainder")).toBeNull();
   });
 

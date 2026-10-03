@@ -245,9 +245,12 @@ export function SystemShade({
       {/* HS-171-04: sections with zero items are ABSENT (A.8). When
           every section is empty the shade shows one muted line. */}
       {(needsAttentionCount + gate.held.length) > 0 ? (
-        <section className="desk-shade-group" aria-label="Needs you">
+        <section className="desk-shade-group" aria-label="Needs attention">
+          {/* PHILO-13-03: held proposals and receipts that need attention are
+              a narrower set than "needs you" (the bell's one number), so the
+              caption says what it counts. */}
           <h4>
-            Needs you <b>&middot; {needsAttentionCount + gate.held.length}</b>
+            Needs attention <b>&middot; {needsAttentionCount + gate.held.length}</b>
           </h4>
           {gate.held.map((proposal) => (
             <div className="desk-shade-item desk-gate-item" key={proposal.id}>
@@ -502,7 +505,7 @@ function ShadeCoverage({
 
 // ── HS-171-04: PROJECTS section in the shade ─────────────────────────
 //
-// FIRST section, above Needs you. ABSENT when no Room has items (A.8).
+// FIRST section, above Needs attention. ABSENT when no Room has items (A.8).
 // One row per Room with items; muted Rooms dimmed with a MUTED token
 // and excluded from the caption count.
 
@@ -526,7 +529,8 @@ function ShadeProjects({
   const activeItems = rooms
     .filter((r) => !r.muted)
     .reduce((n, r) => n + r.items.length, 0);
-  const captionCount = countToken(activeItems, "NEEDS YOU", "NEED YOU");
+  // PHILO-13-03: a Room's open items are narrower than "needs you".
+  const captionCount = countToken(activeItems, "OPEN");
 
   return (
     <section
@@ -541,7 +545,7 @@ function ShadeProjects({
       {rooms.map((room) => {
         const roomCount = countToken(
           room.muted ? 0 : room.items.length,
-          "NEEDS YOU", "NEED YOU",
+          "OPEN",
         );
         const firstWhy = room.items[0]?.why || "";
         return (

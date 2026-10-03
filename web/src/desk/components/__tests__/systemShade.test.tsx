@@ -46,7 +46,7 @@ describe("SystemShade (canon §6.1)", () => {
     render(
       <SystemShade open onClose={onClose} onOpenMemory={onOpenMemory} />,
     );
-    expect(screen.getByText(/Needs you/)).toBeTruthy();
+    expect(screen.getByText(/Needs attention/)).toBeTruthy();
     expect(
       screen.getByText("Send to Slack: the standup recap"),
     ).toBeTruthy();

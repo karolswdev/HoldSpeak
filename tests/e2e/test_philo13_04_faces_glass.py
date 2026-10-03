@@ -703,7 +703,8 @@ class TestMeetingsRailNamesStored:
                 assert token(A3W_FAILED) == "FAILED"
                 # This hub has no drainer, so the queued run says so (HS-200-42).
                 assert token(A3W_QUEUED) in {"QUEUED", "NOT DRAINING"}
-                assert token(A3W_OUTCOMES) == "5 NEED YOU"
+                # PHILO-13-03: a meeting's proposals are TO REVIEW.
+                assert token(A3W_OUTCOMES) == "5 TO REVIEW"
                 assert token(A3W_STORED) == "SUMMARY STORED"
                 meetings.get_by_test_id(f"meeting-row-{A3W_FAILED}").scroll_into_view_if_needed()
                 TestFacesDoNotLie._shot(page, "meetings-rail-precedence", width)
@@ -777,7 +778,7 @@ class TestMeetingsRailNamesStored:
                 assert entered.is_set() and not release.is_set()
                 TestFacesDoNotLie._shot(page, "meetings-rail-running", width)
                 assert row.get_by_test_id("state-token").inner_text() == "RUNNING"
-                assert not row.get_by_text("NEED YOU").count()
+                assert not row.get_by_text("TO REVIEW").count()
                 assert not errors, errors
             finally:
                 release.set()
