@@ -61,9 +61,11 @@ describe("the machine ledger", () => {
   const ledgerFixture = (children?: import("react").ReactNode) => (
     <SurfaceLedger count="3 ROWS">
       <ul>
-        <SurfaceLedgerRow primary="alpha entry" expands={false} />
-        <SurfaceLedgerRow primary="beta entry" expands={false} />
-        <SurfaceLedgerRow primary="gamma entry" expands={false}>
+        {/* PHILO-13-06 (B1): the keyboard law walks rows that open; a row
+            with no open is inert (no tab stop), so the fixture rows open. */}
+        <SurfaceLedgerRow primary="alpha entry" expands={false} onToggle={() => {}} />
+        <SurfaceLedgerRow primary="beta entry" expands={false} onToggle={() => {}} />
+        <SurfaceLedgerRow primary="gamma entry" expands={false} onToggle={() => {}}>
           {children}
         </SurfaceLedgerRow>
       </ul>

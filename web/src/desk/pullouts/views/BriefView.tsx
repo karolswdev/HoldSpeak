@@ -8,6 +8,7 @@ import { SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
 import { SurfaceFooter } from "../../surface/SurfaceFooter";
 import { StateChip, countToken } from "../../surface";
 import { BriefSendWells } from "../../documentSendsLazy";
+import { openPerson, refOpener } from "../../openObject";
 
 interface BriefItem {
   id: string;
@@ -147,10 +148,6 @@ function parseLookbackItem(item: BriefItem): {
     return { kind, primary, detail: item.detail ?? null };
   }
   return { kind: null, primary: item.text, detail: item.detail ?? null };
-}
-
-function sourceLabel(sourceRef: string): string {
-  return sourceRef.replace(/:/g, " · ").replace(/_/g, " ");
 }
 
 /* ================================================================== */
@@ -382,7 +379,6 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
           <div className="intelligence-brief-flat" data-testid="brief-lookback-rows">
             {lookbackItems.map((item) => {
               const state = shelf[item.id];
-              const isOpen = selectedId === item.id;
               const emblem = sourceEmblem(item.source_ref);
               const parsed = parseLookbackItem(item);
               return (
@@ -396,8 +392,11 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
                       tabIndex={0}
                       onClick={() => {
                         const ftId = item.source_ref?.match(/^(?:follow-through|action_item):(.+)$/)?.[1];
-                        if (ftId && onOpenFollowThrough) onOpenFollowThrough(ftId);
-                        else setSelectedId(isOpen ? null : item.id);
+                        if (ftId && onOpenFollowThrough) { onOpenFollowThrough(ftId); return; }
+                        // PHILO-13-06 (B1): the row opens the object it names in
+                        // its own window, and stays selected here for triage.
+                        setSelectedId(item.id);
+                        refOpener(item.source_ref)?.();
                       }}
                       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.currentTarget.click(); }}
                     >
@@ -478,16 +477,18 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
           (selectedPerson
             ? `PERSON · ${selectedPerson.display_name}`
             : selected
-              ? `SELECTED · ${sourceLabel(selected.source_ref ?? selected.id)}`
+              ? `SELECTED · ${parseLookbackItem(selected).kind ?? "ITEM"}`
               : undefined)
         }
         verbs={
-          selectedPerson ? (
+          // PHILO-13-04 ledger, paid in B1 (A.11): a brief that did not load
+          // has nothing to acknowledge, defer or speak; its Try again stands.
+          error ? null : selectedPerson ? (
             <>
               <Button dense disabled={addingAgenda} onClick={() => void addToAgenda(selectedPerson.relationship_id)} data-testid="verb-add-agenda">
                 Add to 1:1 agenda
               </Button>
-              <Button dense variant="ghost" onClick={() => openSurfaceOr("people", "/people", selectedPerson.relationship_id)} data-testid="verb-open-person">
+              <Button dense variant="ghost" onClick={() => openPerson(selectedPerson.relationship_id)} data-testid="verb-open-person">
                 Open person
               </Button>
             </>

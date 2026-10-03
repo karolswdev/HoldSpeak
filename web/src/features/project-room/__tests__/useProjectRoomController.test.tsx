@@ -122,7 +122,9 @@ describe("useProjectRoomController — loadStatus discrimination", () => {
     apiFetchMock.mockRejectedValue(new Error("Server down"));
     const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
     await waitFor(() => expect(result.current.loadStatus).toBe("ready" satisfies LoadStatus));
-    expect(result.current.error).toBe("Server down");
+    // PHILO-13-06 (B1, the A3 ledger): a plain failure name, never the hub's text.
+    expect(result.current.error).toBe("ROOM DID NOT LOAD · DID NOT WORK");
+    expect(result.current.error).not.toContain("Server down");
   });
 
   it("exposes view and setView from the wings", async () => {
@@ -220,7 +222,8 @@ describe("useProjectRoomController — /room first render (HS-158-05)", () => {
 
     // Detail failed but room data intact
     await waitFor(() => expect(result.current.detailStatus).toBe("ready"));
-    expect(result.current.error).toBe("Detail failed");
+    // PHILO-13-06 (B1, the A3 ledger): a plain failure name, never the hub's text.
+    expect(result.current.error).toBe("ROOM DID NOT LOAD · DID NOT WORK");
     expect(result.current.room?.project.name).toBe("Test project");
   });
 
