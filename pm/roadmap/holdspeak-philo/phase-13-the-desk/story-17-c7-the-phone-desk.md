@@ -28,7 +28,7 @@ At 393 the menu bar (48 px, only Go; the clock wraps), the capture bar and a two
 
 ## Acceptance criteria
 
-- [ ] Canvas ratified by the owner (his word recorded) before the first face commit.
+- [x] Canvas ratified by the owner (his word recorded) before the first face commit. **RATIFIED 2026-10-03: "Ratify, build it (Recommended)"** on the page https://claude.ai/artifact/EvmqHZkrnKGfxdQgAqNX7Y, after Astra p13-c57-canvas-check RATIFY-WITH-CONDITIONS (six conditions paid in round two, 3ed1ba43); all six recommended defaults stand.
 - [ ] Window content ≥ 700 of 852 px at 393 on every walked surface (red on main: ~540–631).
 - [ ] One window at a time; a touch swipe moves to the next open window and back.
 - [ ] No chrome owns a content verb's hit point (`elementFromPoint` at each verb's centre and its 44 px band, touch); the capture-bar overlap and G5 are red on main, green here.

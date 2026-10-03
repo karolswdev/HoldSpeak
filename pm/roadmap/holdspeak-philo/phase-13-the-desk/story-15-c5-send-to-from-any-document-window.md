@@ -35,7 +35,7 @@ The title-bar right-click builds Minimize / Maximize / Close only (`web/src/desk
 
 ## Acceptance criteria
 
-- [ ] Canvas ratified by the owner (his word recorded) before the first face commit.
+- [x] Canvas ratified by the owner (his word recorded) before the first face commit. **RATIFIED 2026-10-03: "Ratify, build it (Recommended)"** on the page https://claude.ai/artifact/EvmqHZkrnKGfxdQgAqNX7Y, after Astra p13-c57-canvas-check RATIFY-WITH-CONDITIONS (six conditions paid in round two, 3ed1ba43); all six recommended defaults stand.
 - [ ] Send from an open meeting in 3 gestures (right-click title → `Send to ▸` → destination; then Send) at 1440 and at 393 (touch long-press); the preview arrives in view.
 - [ ] `Send to ▸` from one composition in the title-bar menu and the Object menu for each sendable kind; withheld where it cannot send; `Add destination` with none.
 - [ ] Zero `channel_sends` rows and zero kernel operations until he presses Send.
