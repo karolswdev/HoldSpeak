@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** PHILO-13-11's C1 canvas ratified (the material); this story's own canvas ratified
 - **Unblocks:** none
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
@@ -63,3 +63,7 @@ Grounding size: S (`grounding/faces-jobs.md:158`). PROVISIONAL.
 ## RATIFIED by the owner — 2026-10-03
 
 On the page https://claude.ai/artifact/V9yuy6rPpNJL5hCtcenTq7 (the built B3 shots, `assets/story-08-shots/`, on the owner-ratified Workbench material), the owner answered verbatim: **"Ratify, merge it"**. Muad'Dib's ruling on the backend finding: the meeting and project refs ride the existing fields and edges (tags `meeting:`/`project:`, context, the project resources edge) — no new backend field (Tenet 1). Ledger to Astra: memory's project filter keys `desk_decision:<id>` while faces file `decision:<id>` (`holdspeak/db/memory.py:78`, `:1326`) — pre-existing.
+
+## Closed — 2026-10-03
+
+Decide in the meeting record: 2 gestures at 1440 and touch 393; the decision carries its meeting and project (tags + context + the project resources edge, DB read back); ⌘K New Decision writes nothing until named; abandoned tries leave no record. Astra's single pass (a draft followed into another meeting) paid — the well is keyed by meeting id, drafts kept per meeting. Owner ratified the face ("Ratify, merge it"). Capture `evidence-story-08.md` (vitest 911, tsc, guard, pytest 133).
